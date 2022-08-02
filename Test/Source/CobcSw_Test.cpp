@@ -3,7 +3,7 @@
 
 auto main() -> int
 {
-  auto const lib = cobc::Library{};
+    auto const lib = cobc::Library{};
 
-  return lib.name == "CobcSw" ? 0 : 1;
+    return lib.name == "CobcSw" ? 0 : 1;
 }
