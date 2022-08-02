@@ -128,7 +128,12 @@ root of the project that looks something like the following:
     {
       "name": "dev-common",
       "hidden": true,
-      "inherits": ["dev-mode", "clang-tidy", "cppcheck", "ci-unix"],
+      "inherits": [
+        "dev-mode",
+        "clang-tidy",
+        "cppcheck",
+        "ci-unix"
+      ],
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -154,7 +159,10 @@ root of the project that looks something like the following:
     {
       "name": "dev-coverage",
       "binaryDir": "${sourceDir}/build/coverage",
-      "inherits": ["dev-mode", "coverage-unix"],
+      "inherits": [
+        "dev-mode",
+        "coverage-unix"
+      ],
       "toolchainFile": "/usr/local/src/rodos/cmake/port/linux-x86.cmake"
     }
   ],
