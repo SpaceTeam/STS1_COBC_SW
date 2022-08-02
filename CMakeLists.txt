@@ -37,12 +37,6 @@ find_rodos()
 
 target_link_libraries(CobcSw_HelloWorld PRIVATE CobcSw_Lib rodos::rodos)
 
-# ---- Install rules ----
-
-if(NOT CMAKE_SKIP_INSTALL_RULES)
-    include(cmake/install-rules.cmake)
-endif()
-
 # ---- Developer mode ----
 
 if(NOT CobcSw_DEVELOPER_MODE)

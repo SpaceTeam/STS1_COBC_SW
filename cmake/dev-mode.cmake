@@ -2,28 +2,17 @@ include(cmake/folders.cmake)
 
 include(CTest)
 if(BUILD_TESTING)
-  add_subdirectory(Test)
+    add_subdirectory(Test)
 endif()
-
-add_custom_target(
-    run-exe
-    COMMAND CobcSw_HelloWorld
-    VERBATIM
-)
-add_dependencies(run-exe CobcSw_HelloWorld)
 
 option(BUILD_MCSS_DOCS "Build documentation using Doxygen and m.css" OFF)
 if(BUILD_MCSS_DOCS)
-  include(cmake/docs.cmake)
+    include(cmake/docs.cmake)
 endif()
 
 option(ENABLE_COVERAGE "Enable coverage support separate from CTest's" OFF)
 if(ENABLE_COVERAGE)
-  include(cmake/coverage.cmake)
-endif()
-
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-  include(cmake/open-cpp-coverage.cmake OPTIONAL)
+    include(cmake/coverage.cmake)
 endif()
 
 include(cmake/lint-targets.cmake)
