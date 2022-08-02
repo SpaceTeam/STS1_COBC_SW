@@ -1,5 +1,5 @@
 install(
-    TARGETS CobcSw_exe
+    TARGETS CobcSw_HelloWorld
     RUNTIME COMPONENT CobcSw_Runtime
 )
 

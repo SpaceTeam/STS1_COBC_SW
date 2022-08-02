@@ -1,7 +1,12 @@
 #pragma once
 
-#include <string>
+#include <etl/string.h>
 
+#include <string_view>
+
+
+namespace cobc
+{
 /**
  * @brief The core implementation of the executable
  *
@@ -10,12 +15,16 @@
  * test the implementation for the executable, because the logic is nicely
  * separated from the command-line logic implemented in the main function.
  */
-struct library
+struct Library
 {
-  /**
-   * @brief Simply initializes the name member to the name of the project
-   */
-  library();
+    /**
+     * @brief Simply initializes the name member to the name of the project
+     */
+    Library();
 
-  std::string name;
+    static constexpr auto maxShortNameLength = 8;
+
+    std::string_view name;
+    etl::string<maxShortNameLength> shortName;
 };
+}

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.22)
 
 include(cmake/prelude.cmake)
 
@@ -12,36 +12,39 @@ project(
 
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
+include(cmake/custom-commands.cmake)
 
 # ---- Declare library ----
 
 add_library(
-    CobcSw_lib OBJECT
-    source/lib.cpp
+    CobcSw_Lib OBJECT
+    Source/Lib.cpp
 )
 
 target_include_directories(
-    CobcSw_lib ${warning_guard}
+    CobcSw_Lib ${warning_guard}
     PUBLIC
-    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>"
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/Source>"
 )
 
-target_compile_features(CobcSw_lib PUBLIC cxx_std_20)
+target_compile_features(CobcSw_Lib PUBLIC cxx_std_20)
 
 # ---- Declare executable ----
 
-add_executable(CobcSw_exe source/main.cpp)
-add_executable(CobcSw::exe ALIAS CobcSw_exe)
+add_executable(CobcSw_HelloWorld Source/HelloWorld.cpp)
+add_executable(CobcSw::exe ALIAS CobcSw_HelloWorld)
 
 set_target_properties(
-    CobcSw_exe PROPERTIES
-    OUTPUT_NAME CobcSw
-    EXPORT_NAME exe
+    CobcSw_HelloWorld PROPERTIES
+    OUTPUT_NAME HelloWorld
+    EXPORT_NAME HelloWorld
 )
 
-target_compile_features(CobcSw_exe PRIVATE cxx_std_20)
+target_compile_features(CobcSw_HelloWorld PRIVATE cxx_std_20)
 
-target_link_libraries(CobcSw_exe PRIVATE CobcSw_lib)
+find_rodos()
+
+target_link_libraries(CobcSw_HelloWorld PRIVATE CobcSw_Lib rodos::rodos)
 
 # ---- Install rules ----
 

@@ -2,15 +2,15 @@ include(cmake/folders.cmake)
 
 include(CTest)
 if(BUILD_TESTING)
-  add_subdirectory(test)
+  add_subdirectory(Test)
 endif()
 
 add_custom_target(
     run-exe
-    COMMAND CobcSw_exe
+    COMMAND CobcSw_HelloWorld
     VERBATIM
 )
-add_dependencies(run-exe CobcSw_exe)
+add_dependencies(run-exe CobcSw_HelloWorld)
 
 option(BUILD_MCSS_DOCS "Build documentation using Doxygen and m.css" OFF)
 if(BUILD_MCSS_DOCS)

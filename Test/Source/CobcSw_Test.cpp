@@ -1,8 +1,9 @@
-#include "lib.hpp"
+#include "Lib.hpp"
+
 
 auto main() -> int
 {
-  auto const lib = library {};
+  auto const lib = cobc::Library{};
 
   return lib.name == "CobcSw" ? 0 : 1;
 }
