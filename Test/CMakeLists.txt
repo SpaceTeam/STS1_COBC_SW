@@ -6,11 +6,10 @@ project(CobcSwTests LANGUAGES CXX)
 
 # ---- Tests ----
 
-add_executable(CobcSw_Test Source/CobcSw_Test.cpp)
-target_link_libraries(CobcSw_Test PRIVATE CobcSw_Lib)
-target_compile_features(CobcSw_Test PRIVATE cxx_std_20)
-
+add_executable(CobcSw_Test)
 add_test(NAME CobcSw_Test COMMAND CobcSw_Test)
+
+add_subdirectory(Source)
 
 # ---- End-of-file commands ----
 

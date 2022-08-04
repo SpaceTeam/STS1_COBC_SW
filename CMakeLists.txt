@@ -14,28 +14,12 @@ include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 include(cmake/custom-commands.cmake)
 
-# ---- Declare library ----
+# ---- Declare targets ----
 
-add_library(CobcSw_Lib OBJECT Source/Lib.cpp)
+add_library(CobcSw_Lib OBJECT)
+add_program(HelloWorld)
 
-target_include_directories(
-    CobcSw_Lib ${warning_guard} PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/Source>"
-)
-
-target_compile_features(CobcSw_Lib PUBLIC cxx_std_20)
-
-# ---- Declare executable ----
-
-add_executable(CobcSw_HelloWorld Source/HelloWorld.cpp)
-add_executable(CobcSw::exe ALIAS CobcSw_HelloWorld)
-
-set_target_properties(CobcSw_HelloWorld PROPERTIES OUTPUT_NAME HelloWorld EXPORT_NAME HelloWorld)
-
-target_compile_features(CobcSw_HelloWorld PRIVATE cxx_std_20)
-
-find_rodos()
-
-target_link_libraries(CobcSw_HelloWorld PRIVATE CobcSw_Lib rodos::rodos)
+add_subdirectory(Source)
 
 # ---- Developer mode ----
 
