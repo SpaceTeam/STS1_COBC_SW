@@ -5,7 +5,7 @@
 # Targets necessary to build the project must be provided unconditionally, so
 # consumers can trivially build and package the project
 if(PROJECT_IS_TOP_LEVEL)
-  option(CobcSw_DEVELOPER_MODE "Enable developer mode" OFF)
+    option(CobcSw_DEVELOPER_MODE "Enable developer mode" OFF)
 endif()
 
 # ---- Warning guard ----
@@ -16,13 +16,13 @@ endif()
 # add_subdirectory or FetchContent is used to consume this project
 set(warning_guard "")
 if(NOT PROJECT_IS_TOP_LEVEL)
-  option(
-      CobcSw_INCLUDES_WITH_SYSTEM
-      "Use SYSTEM modifier for CobcSw's includes, disabling warnings"
-      ON
-  )
-  mark_as_advanced(CobcSw_INCLUDES_WITH_SYSTEM)
-  if(CobcSw_INCLUDES_WITH_SYSTEM)
-    set(warning_guard SYSTEM)
-  endif()
+    option(
+        CobcSw_INCLUDES_WITH_SYSTEM
+        "Use SYSTEM modifier for CobcSw's includes, disabling warnings"
+        ON
+    )
+    mark_as_advanced(CobcSw_INCLUDES_WITH_SYSTEM)
+    if(CobcSw_INCLUDES_WITH_SYSTEM)
+        set(warning_guard SYSTEM)
+    endif()
 endif()
