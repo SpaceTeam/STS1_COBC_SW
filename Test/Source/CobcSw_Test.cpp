@@ -1,9 +1,18 @@
 #include "Lib.hpp"
 
+#include <catch2/catch_test_macros.hpp>
 
-auto main() -> int
+
+TEST_CASE("Always passes")
 {
-    auto const lib = cobc::Library{};
+    REQUIRE(true);
+}
 
-    return lib.name == "CobcSw" ? 0 : 1;
+
+TEST_CASE("Library is called 'CobcSw'")
+{
+    const auto lib = cobc::Library();
+
+    const auto nameIsCorrect = lib.name == "CobcSw";
+    REQUIRE(nameIsCorrect);
 }
