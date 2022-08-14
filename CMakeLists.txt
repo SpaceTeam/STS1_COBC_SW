@@ -14,6 +14,11 @@ include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 include(cmake/custom-commands.cmake)
 
+# ---- Find dependencies ----
+
+find_package_and_notify(etl)
+find_rodos()
+
 # ---- Declare targets ----
 
 add_library(CobcSw_Lib OBJECT)

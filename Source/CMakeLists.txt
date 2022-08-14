@@ -1,9 +1,3 @@
-# --- Find Packages ---
-find_package_and_notify(etl)
-find_rodos()
-
-# --- Define target properties ---
-
 target_sources(CobcSw_Lib PRIVATE Lib.cpp)
 target_include_directories(
     CobcSw_Lib ${warning_guard} PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/Source>"
