@@ -229,4 +229,4 @@ TBD
 
 # Licensing
 
-See the [LICENSE](LICENSE.md) document.
+See the [LICENSE](LICENSE) document.
