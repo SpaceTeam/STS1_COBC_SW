@@ -164,6 +164,7 @@ root:
 ```sh
 cmake --preset=dev-linux-x86
 cmake --build --preset=dev-linux-x86
+cmake --build build/linux-x86 -t Tests
 ctest --preset=dev-linux-x86
 ```
 
