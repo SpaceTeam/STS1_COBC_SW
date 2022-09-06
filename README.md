@@ -1,15 +1,37 @@
 # STS1 COBC SW
 
-This project contains the software of the communication and onboard computer (COBC) of Space Team
-Satellite 1 (STS1).
+This project contains the software of the communication and onboard computer (COBC) of
+Space Team Satellite 1 (STS1).
 
 
 ## Building and hacking
 
-Here is some wisdom to help you build this project as a developer. It uses CMake, assumes that you
-are developing on Linux and that the required compilers and tools are installed. See [this wiki
-page](https://wiki.tust.at/books/sts1/page/setup-compilers-and-tools#bkmrk-gnu-arm-embedded-too) for
-more information on the latter.
+### With Docker containers
+
+The easiest way to build this project is with [Docker](https://www.docker.com/). The
+[tuwienspaceteam/sts1-cobc](https://hub.docker.com/r/tuwienspaceteam/sts1-cobc) image is
+specifically designed for that purpose. It comes with all required compilers, toolchains,
+libraries and tools. If you don't want to cross-compile and are only interested in running
+the software and tests on Linux than use the tags with a `-linux-x86` suffix. They are
+quite a bit smaller because they do not have the GNU ARM Toolchain installed.
+
+<!-- TODO: More details on how to use the Docker container. -->
+
+
+### Without Docker containers
+
+If you don't want to use Docker containers but install and build everything locally on
+your machine here is some wisdom to help you with that. The project uses CMake, assumes
+that you are developing on Linux and that the required compilers and tools are installed.
+See [this wiki
+page](https://wiki.tust.at/books/sts1/page/setup-compilers-and-tools#bkmrk-gnu-arm-embedded-too)
+for more information on the latter.
+
+Even when not using the Docker image, it is still very instructive to look at the Docker
+files
+([here](https://github.com/SpaceTeam/STS1_COBC_Docker/blob/master/linux-x86/Dockerfile)
+and [here](https://github.com/SpaceTeam/STS1_COBC_Docker/blob/master/full/Dockerfile)) to
+see how to properly install the compilers, tools and dependencies.
 
 
 ### Dependencies
@@ -26,95 +48,24 @@ Quick installation instructions for those can be found
 
 ### Toolchain files
 
-Generally, toolchain files are specific to the target platforms as well as your environment and
-setup but not to your project. Therefore they are not supplied with this repo and should be kept at
-some "global" directory (I, e.g., use `~/programming/cmake/`). A toolchain file for an STM32F411 can
-look something like the following:
-
-```cmake
-# ##################################################################################################
-# Cross compiler toolchain
-# ##################################################################################################
-
-set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR ARM)
-
-set(TOOLCHAIN_PREFIX arm-none-eabi-)
-
-# Find path to the cross compiler toolchain
-execute_process(
-    COMMAND which ${TOOLCHAIN_PREFIX}gcc
-    OUTPUT_VARIABLE BINUTILS_PATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-# Use newlib nano because it is smaller
-set(CMAKE_EXE_LINKER_FLAGS_INIT "--specs=nano.specs")
-
-set(CMAKE_C_COMPILER ${TOOLCHAIN_PREFIX}gcc)
-set(CMAKE_ASM_COMPILER ${CMAKE_C_COMPILER})
-set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PREFIX}g++)
-
-set(CMAKE_OBJCOPY
-    ${TOOLCHAIN_PREFIX}objcopy
-    CACHE INTERNAL "objcopy tool"
-)
-set(CMAKE_OBJDUMP
-    ${TOOLCHAIN_PREFIX}objdump
-    CACHE INTERNAL "objdump tool"
-)
-set(CMAKE_SIZE_UTIL
-    ${TOOLCHAIN_PREFIX}size
-    CACHE INTERNAL "size tool"
-)
-
-set(CMAKE_FIND_ROOT_PATH ${BINUTILS_PATH})
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-
-# ##################################################################################################
-# Platform specific configuration
-# ##################################################################################################
-
-# Root folder containing platform specific stuff like libraries
-set(platform_root "/usr/local/stm32f411")
-list(APPEND CMAKE_FIND_ROOT_PATH "${platform_root}")
-# For some reason the toolchain file always runs twice, so REMOVE_DUPLICATES is used to get rid of
-# the 2. platform_root that gets appended
-list(REMOVE_DUPLICATES CMAKE_FIND_ROOT_PATH)
-
-set(linker_script "${platform_root}/src/rodos/src/bare-metal/stm32f4/scripts/stm32f411xe_flash.ld")
-message("Linker script used: ${linker_script}")
-
-# TODO: Find out why if(NOT DEFINED HSE_VALUE) does not work as expected and fails the second time
-# the toolchain file is run
-message("HSE value used: ${HSE_VALUE}")
-add_compile_definitions(HSE_VALUE=${HSE_VALUE} HSE_STARTUP_TIMEOUT=10000000)
-add_compile_definitions(USE_STDPERIPH_DRIVER STM32F411xE)
-
-set(compile_and_link_options -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp)
-
-add_compile_options(${compile_and_link_options})
-add_compile_options(-gdwarf-2 -mthumb -g3)
-
-add_link_options(${compile_and_link_options})
-add_link_options(-Wl,-T${linker_script})
-add_link_options(
-    -nostartfiles -Xlinker --gc-sections -fno-unwind-tables -fno-asynchronous-unwind-tables
-)
-```
-
-You must at least change the `platform_root` variable to point to the directory in which you install
-all your cross-compiled libraries for the target platform (=STM32F411).
+Toolchain files are used when cross-compiling and are specific to your target platform,
+environment and setup but not to your project. Therefore they are not supplied with this
+repo and should be kept at some "global" directory (I, e.g., use `~/programming/cmake/`).
+The repo of the sts1-cobc Docker image contains an appropriate [toolchain file targeting
+an
+STM32F411](https://github.com/SpaceTeam/STS1_COBC_Docker/blob/master/full/stm32f411.cmake).
+You can use this as a template for your own toolchain files. Just change the
+`platform_root` variable to point to the directory where you install all your
+cross-compiled libraries for the target platform.
 
 
 ### Presets
 
 This project makes use of [CMake
-presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) to simplify the process of
-configuring the project. As a developer, you should create a `CMakeUserPresets.json` file at the
-root of the project that looks something like the following:
+presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) to simplify the
+process of configuring the project. As a developer, you should create a
+`CMakeUserPresets.json` file at the root of the project that looks something like the
+following:
 
 ```json
 {
@@ -196,18 +147,19 @@ root of the project that looks something like the following:
 }
 ```
 
-The path to the toolchain files depend on your setup. The number of jobs given in the build and test
-presets must be adapted by you as well and should ideally be set to the number of threads available
-on your CPU.
+The path to the toolchain files depend on your setup. The number of jobs given in the
+build and test presets must be adapted by you as well and should ideally be set to the
+number of threads available on your CPU.
 
-In general, `CMakeUserPresets.json` is the perfect place in which you can put all sorts of things
-that you would otherwise want to pass to the configure command in the terminal.
+In general, `CMakeUserPresets.json` is the perfect place in which you can put all sorts of
+things that you would otherwise want to pass to the configure command in the terminal.
 
 
-### Configure, build and test on Linux
+### Configure, build and test locally on Linux
 
-If you followed the above instructions, then you can configure, build and test the project on Linux
-respectively with the following commands from the project root:
+If you followed the above instructions, then you can configure, build and test the project
+on your local Linux machine respectively with the following commands from the project
+root:
 
 ```sh
 cmake --preset=dev-linux-x86
@@ -226,7 +178,12 @@ To run the code execute
 
 TBD
 
+```sh
+cmake --preset=dev-cobc
+cmake --build --preset=dev-cobc
+```
+
 
 # Licensing
 
-See the [LICENSE](LICENSE.md) document.
+See the [LICENSE](LICENSE) document.
