@@ -129,21 +129,6 @@
       }
     },
     {
-      "name": "ci-build",
-      "binaryDir": "${sourceDir}/build",
-      "hidden": true
-    },
-    {
-      "name": "ci-ubuntu",
-      "inherits": [
-        "ci-build",
-        "ci-unix",
-        "clang-tidy",
-        "cppcheck",
-        "dev-mode"
-      ]
-    },
-    {
       "name": "ci-linux-x86",
       "binaryDir": "${sourceDir}/build/linux-x86",
       "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],

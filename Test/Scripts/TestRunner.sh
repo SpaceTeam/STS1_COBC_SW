@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "::: Running $1 against $2"
+echo "::: Running $1"
 set -e
 # Kill test executable (with SIGKILL) after 8 seconds.  Necessary
 # because sometimes tests might deadlock.

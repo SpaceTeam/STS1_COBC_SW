@@ -1,3 +1,2 @@
-Hello World from CobcSw!
-Hello World from CS!
+Hello, World!
 hw_resetAndReboot() -> exit

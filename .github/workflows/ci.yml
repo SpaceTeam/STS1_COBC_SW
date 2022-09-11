@@ -155,6 +155,7 @@ jobs:
     runs-on: ubuntu-latest
 
     if: github.event_name == 'release'
+      && github.repository_owner == 'SpaceTeam'
 
     steps:
     - uses: actions/checkout@v2
