@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.22)
 include(cmake/prelude.cmake)
 
 project(
-    CobcSw
+    Sts1CobcSw
     VERSION 0.1.0
-    DESCRIPTION "Communication and onboard computer software for Space Team Sat 1"
+    DESCRIPTION "Software for the Communication and onboard computer of Space Team Sat 1"
     HOMEPAGE_URL "https://github.com/SpaceTeam/STS1_COBC_SW"
     LANGUAGES CXX
 )
@@ -21,17 +21,19 @@ find_rodos()
 
 # ---- Declare targets ----
 
-add_library(CobcSw_Lib OBJECT)
-add_program(HelloWorld)
+add_library(Sts1CobcSw_Dummy OBJECT)
+add_program(HelloDummy)
 
-add_subdirectory(Source)
+all_targets_include_directories("$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
+
+add_subdirectory(${PROJECT_NAME})
 
 # ---- Developer mode ----
 
-if(NOT CobcSw_DEVELOPER_MODE)
+if(NOT Sts1CobcSw_DEVELOPER_MODE)
     return()
 elseif(NOT PROJECT_IS_TOP_LEVEL)
     message(AUTHOR_WARNING "Developer mode is intended for developers of CobcSw")
 endif()
 
-include(cmake/dev-mode.cmake)
+# include(cmake/dev-mode.cmake)
