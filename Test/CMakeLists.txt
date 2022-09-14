@@ -7,9 +7,7 @@ if(NOT (CMAKE_SYSTEM_NAME STREQUAL Linux))
     return()
 endif()
 
-project(CobcSwTests LANGUAGES CXX)
-
-include(${CMAKE_SOURCE_DIR}/cmake/custom-commands.cmake)
+project(Sts1CobcSwTests LANGUAGES CXX)
 
 # ---- Find libraries ----
 
@@ -18,33 +16,31 @@ find_package_and_notify(etl)
 find_package_and_notify(type_safe)
 find_rodos()
 
-
 # ---- Tests ----
 
-# Initialize variables
-set(output_files "")
+# # Initialize variables
+# set(output_files "")
 
-# Add golden tests
-set(golden_tests_folder "${CMAKE_CURRENT_SOURCE_DIR}/Source/GoldenTests")
-add_golden_test(FILE "${golden_tests_folder}/HelloWorld.cpp" LIB rodos::rodos)
-add_golden_test(FILE "${golden_tests_folder}/HelloCobc.cpp" LIB rodos::rodos CobcSw_Lib)
+# # Add golden tests
+# set(golden_tests_folder "${CMAKE_CURRENT_SOURCE_DIR}/GoldenTests")
+# add_golden_test(FILE "${golden_tests_folder}/HelloWorld.cpp" LIB rodos::rodos)
+# add_golden_test(FILE "${golden_tests_folder}/HelloCobc.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
 
-# Create a single target for all BlackBox tests.
-add_custom_target(BlackBoxTests DEPENDS "${output_files}")
+# # Create a single target for all golden tests
+# add_custom_target(GoldenTests DEPENDS "${output_files}")
 
-add_executable(CobcSw_Test EXCLUDE_FROM_ALL)
+# Add unit tests
+add_executable(Sts1CobcSwTests_Dummy EXCLUDE_FROM_ALL)
 
+# # Add a custom target that depends on all tests
+# add_custom_target(Tests)
+# add_dependencies(Tests GoldenTests Sts1CobcSwTests_Dummy)
 
-# ---- Main test target ----
-add_custom_target(Tests)
-add_dependencies(Tests BlackBoxTests CobcSw_Test)
-
-add_subdirectory(Source)
+add_subdirectory(UnitTests)
 
 include(Catch)
-catch_discover_tests(CobcSw_Test)
-
+catch_discover_tests(Sts1CobcSwTests_Dummy)
 
 # ---- End-of-file commands ----
 
-add_folders(Tests)
+add_folders(Test)

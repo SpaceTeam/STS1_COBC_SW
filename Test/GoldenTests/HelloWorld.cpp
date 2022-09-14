@@ -1,7 +1,9 @@
 #include <rodos.h>
 
+
 uint32_t printfMask = 0;
-namespace cobc
+
+namespace sts1cobcsw
 {
 class HelloWorld : public StaticThread<>
 {

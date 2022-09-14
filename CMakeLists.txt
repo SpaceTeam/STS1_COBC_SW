@@ -36,4 +36,4 @@ elseif(NOT PROJECT_IS_TOP_LEVEL)
     message(AUTHOR_WARNING "Developer mode is intended for developers of CobcSw")
 endif()
 
-# include(cmake/dev-mode.cmake)
+include(cmake/dev-mode.cmake)

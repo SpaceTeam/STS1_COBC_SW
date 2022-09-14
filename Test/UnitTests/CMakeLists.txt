@@ -1,0 +1,2 @@
+target_sources(Sts1CobcSwTests_Dummy PRIVATE Dummy.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Sts1CobcSw_Dummy Catch2::Catch2WithMain)
