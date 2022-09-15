@@ -210,7 +210,7 @@ following:
       "name": "dev-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
       "inherits": "dev-common",
-      "toolchainFile": "~/programming/cmake/stm32f411.cmake",
+      "toolchainFile": "~/programming/STS1_COBC_Docker/full/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"
       }
