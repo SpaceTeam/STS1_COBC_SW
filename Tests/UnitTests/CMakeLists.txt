@@ -1,4 +1,4 @@
-add_executable(Sts1CobcSwTests_Dummy Dummy.test.cpp)
+add_program(Dummy Dummy.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Sts1CobcSw_Dummy Catch2::Catch2WithMain)
 
 get_property(
