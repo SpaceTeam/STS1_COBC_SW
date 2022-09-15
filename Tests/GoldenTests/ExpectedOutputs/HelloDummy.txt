@@ -1,0 +1,2 @@
+Hello, Sts1CobcSw!
+hw_resetAndReboot() -> exit

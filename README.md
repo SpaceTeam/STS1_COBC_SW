@@ -4,6 +4,114 @@ This project contains the software of the communication and onboard computer (CO
 Space Team Satellite 1 (STS1).
 
 
+## Project layout
+
+The following ideas are mainly stolen from [P1204R0 – Canonical Project
+Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
+
+- "All" file and folder names uses UpperCamalCase (unfortunately cmake-init uses different
+  cases so this is a lot to change and `docs/` or `cmake/` might stay in the wrong case
+  for a while).
+- Top level directory is project name in UpperCamalCase or GitHub repo name (unfortunately
+  we use a different naming convention with SHOUTING_CASE on GitHub).
+- Source code is in sub directory named after the project (no GitHub name this time and no
+  `Source` or `Include` folders).
+- The project namespace is called `sts1cobcsw`.
+- Only the top level directory is added to the include path so that all includes must
+  spell out the directory structure, e.g., `#include <Sts1CobcSw/Hal/IoNames.hpp>`.
+- Also, all includes, even the "project local" ones use `<>` instead of `""`.
+- Subfolders for the source code should comprise somewhat standalone "components".
+- There should be an OBJECT or INTERFACE library target for each component (this should
+  make linking source code dependencies for tests easier).
+- Each subfolder should have its own `CMakeLists.txt`
+- Each component should introduce its own nested namespace.
+- Rodos already provides some kind of hardware abstraction. `Hal/` should therefore
+  provide type-safe and more specifically named C++ wrappers for this low-level Rodos
+  stuff.
+- `Periphery/` should contain abstractions for the external periphery the COBC
+  communicates with, like sensors or memory chips. The EDU also kinda fits here.
+- All CMake targets are prefixed with the project name: `Sts1CobcSw_CobcSw`,
+  `Sts1CobcSw_Hal`, etc.
+- Everything test related is in `Tests/` and its subdirectories.
+- Tests have the `.test.cpp` extension (no `_Test` suffix or `Test_` prefix, etc.) and are
+  named after the class, file, functionality, interface or whatever else they test.
+- Hardware tests should be similar to unit tests and check simple functionalities of
+  low-level code. They should also be somewhat automatable with the help of the whole
+  FlatSat setup (UCI UART, LabJack, etc.)
+- Golden Tests are used for high level integration/system tests. We should be able to run
+  them on the FlatSat too, because `PRINTF()` prints to the UCI UART which is connected to
+  the PC.
+
+The following shows how the directory structure could actually look like.
+
+```
+Sts1CobcSw/
+├── .github/
+├── CMake/
+├── Docs/
+├── Sts1CobcSw/
+│   ├── Hal/
+│   │   ├── PinNames.hpp
+│   │   ├── IoNames.hpp
+│   │   ├── Usart.cpp
+│   │   ├── Usart.hpp
+│   │   ├── Spi.cpp
+│   │   ├── Spi.hpp
+│   │   ├── Communication.hpp   (maybe just this instead?)
+│   │   └── ...
+│   │
+│   ├── Periphery/
+│   │   ├── Edu.cpp
+│   │   ├── Edu.hpp
+│   │   ├── W25q01jvzeiq.cpp  (Name of the flash chip)
+│   │   ├── W25q01jvzeiq.hpp
+│   │   ├── AnotherChipName.cpp
+│   │   ├── AnotherChipName.hpp
+│   │   └── ...
+│   │
+│   ├── ShouldThisEvenBeInASubfolder/
+│   │   ├── TelemetryMemory.cpp
+│   │   ├── TelemetryMemory.hpp
+│   │   ├── CobcFileSystem.cpp
+│   │   ├── CobcFileSystem.hpp
+│   │   ├── PersistantState.cpp
+│   │   ├── PersistantState.hpp
+│   │   └── ...
+│   │
+│   ├── AntennaDeploymentThread.cpp
+│   ├── AntennaDeploymentThread.hpp
+│   ├── SensorThread.cpp
+│   ├── SensorThread.hpp
+│   ├── CommandParser.cpp
+│   ├── CommandParser.hpp
+|   └── ...
+│
+├── Tests/
+|   ├── GoldenTests/
+│   │   ├── ExpectedOutputs/
+│   │   ├── Scripts/
+│   │   ├── ICantThingOfAGoodName.test.cpp
+│   │   └── ...
+│   ├── HardwareTests/
+│   │   ├── GpioPins.test.cpp
+│   │   ├── Usart.test.cpp
+│   │   ├── W25q01jvzeiq.test.cpp
+│   │   └── ...
+│   ├── UnitTests/
+│   │   ├── CommandParser.test.cpp
+│   │   └── ...
+│   └── ...
+│
+├── .clang-format
+├── .gitignore
+├── CMakeLists.txt
+├── CMakePresets.json
+├── LICENSE
+├── README.md
+└── ...
+```
+
+
 ## Building and hacking
 
 ### With Docker containers
@@ -102,7 +210,7 @@ following:
       "name": "dev-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
       "inherits": "dev-common",
-      "toolchainFile": "~/programming/cmake/stm32f411.cmake",
+      "toolchainFile": "~/programming/STS1_COBC_Docker/full/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"
       }

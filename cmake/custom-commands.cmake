@@ -30,12 +30,12 @@ function(find_rodos)
 endfunction()
 
 function(add_program program_name)
-    add_executable(CobcSw_${program_name} ${ARGN})
-    set_target_properties(CobcSw_${program_name} PROPERTIES OUTPUT_NAME ${program_name})
+    add_executable(${PROJECT_NAME}_${program_name} ${ARGN})
+    set_target_properties(${PROJECT_NAME}_${program_name} PROPERTIES OUTPUT_NAME ${program_name})
 
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         # Automatically call objcopy on the executable targets after the build
-        objcopy_target(CobcSw_${program_name})
+        objcopy_target(${PROJECT_NAME}_${program_name})
     endif()
 endfunction()
 
@@ -51,43 +51,15 @@ function(objcopy_target target_name)
     )
 endfunction()
 
-macro(add_golden_test)
-    set(options "")
-    set(oneValueArgs FILE)
-    set(multiValueArgs LIB)
-    cmake_parse_arguments(GT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    # Make test file relative to the Test directory
-    cmake_path(RELATIVE_PATH GT_FILE BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    OUTPUT_VARIABLE GT_FILE)
-
-    get_filename_component(filename ${GT_FILE} NAME_WE)
-    string(REGEX REPLACE "[^A-Za-z0-9_]" "_" test_name ${GT_FILE})
-
-    add_executable("${test_name}_Bin" EXCLUDE_FROM_ALL ${GT_FILE})
-    target_link_libraries("${test_name}_Bin" PUBLIC ${GT_LIB})
-
-    add_custom_command(
-        OUTPUT
-        "${test_name}_Bin.output"
-        COMMAND
-        bash
-        ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/TestRunner.sh
-        $<TARGET_FILE:${test_name}_Bin>
-        DEPENDS
-        ${test_name}_Bin Scripts/TestRunner.sh)
-
-    list(APPEND output_files "${test_name}_Bin.output")
-
-    add_custom_target(${test_name}-clean
-        COMMAND
-        ${CMAKE_COMMAND} -E remove -f
-        "${test_name}_Bin.output")
-
-    add_test(
-        NAME
-        ${filename}_Test
-        COMMAND
-        diff ${test_name}_Bin.output ${CMAKE_CURRENT_SOURCE_DIR}/ExpectedOutputs/${filename}.txt
+function(all_targets_include_directories include_directories)
+    get_property(
+        target_names
+        DIRECTORY ${PROJECT_SOURCE_DIR}
+        PROPERTY BUILDSYSTEM_TARGETS
     )
-endmacro()
+    message("Setting include directory to ${include_directories} for targets:")
+    foreach(target IN LISTS target_names)
+        message("- ${target}")
+        target_include_directories(${target} ${warning_guard} PUBLIC ${include_directories})
+    endforeach()
+endfunction()
