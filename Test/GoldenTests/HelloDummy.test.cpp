@@ -7,7 +7,7 @@ uint32_t printfMask = 0;
 
 namespace sts1cobcsw
 {
-class HelloDummyOnce : public StaticThread<>
+class HelloDummy : public StaticThread<>
 {
     void run() override
     {
@@ -19,5 +19,5 @@ class HelloDummyOnce : public StaticThread<>
     }
 };
 
-auto const helloDummyOnce = HelloDummyOnce();
+auto const helloDummy = HelloDummy();
 }

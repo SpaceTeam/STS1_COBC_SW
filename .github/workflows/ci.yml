@@ -53,8 +53,8 @@ jobs:
     - name: Configure
       run: cmake --preset=ci-coverage
 
-    - name: Build Rodos tests
-      run: cmake --build build/coverage -t Tests -j 2
+    - name: Build all tests
+      run: cmake --build build/coverage -t AllTests -j 2
 
     - name: Test
       working-directory: build/coverage
@@ -80,11 +80,8 @@ jobs:
     - name: Configure
       run: cmake --preset=ci-sanitize
 
-    - name: Build
-      run: cmake --build build/sanitize -j 2
-
-    - name: Build Rodos tests
-      run: cmake --build build/sanitize -t Tests -j 2
+    - name: Build all tests
+      run: cmake --build build/sanitize -t AllTests -j 2
 
     - name: Test
       working-directory: build/sanitize
@@ -138,11 +135,8 @@ jobs:
     - name: Configure linux-x86
       run: cmake --preset=ci-linux-x86
 
-    - name: Build linux-x86
-      run: cmake --build build/linux-x86 -j 2
-
-    - name: Build Rodos tests
-      run: cmake --build build/linux-x86 -t Tests -j 2
+    - name: Build all tests
+      run: cmake --build build/linux-x86 -t AllTests -j 2
 
     - name: Test
       working-directory: build/linux-x86/Test
@@ -173,7 +167,7 @@ jobs:
 
     - name: Build docs
       run: cmake -B build -D "CMAKE_PROJECT_INCLUDE=$PWD/cmake/docs.cmake"
-        && cmake --build build --target docs
+        && cmake --build build -t docs
 
     - name: Deploy docs
       uses: peaceiris/actions-gh-pages@v3

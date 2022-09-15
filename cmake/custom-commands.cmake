@@ -57,47 +57,41 @@ function(all_targets_include_directories include_directories)
         DIRECTORY ${PROJECT_SOURCE_DIR}
         PROPERTY BUILDSYSTEM_TARGETS
     )
-    message("-- Setting include directory to ${include_directories} for targets:")
+    message("Setting include directory to ${include_directories} for targets:")
     foreach(target IN LISTS target_names)
-        message("-- - ${target}")
-        target_include_directories(
-            ${target} ${warning_guard} PUBLIC ${include_directories}
-        )
+        message("- ${target}")
+        target_include_directories(${target} ${warning_guard} PUBLIC ${include_directories})
     endforeach()
 endfunction()
 
 macro(add_golden_test)
     set(options "")
-    set(oneValueArgs FILE)
-    set(multiValueArgs LIB)
-    cmake_parse_arguments(GT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    set(one_value_args FILE)
+    set(multi_value_args LIB)
+    cmake_parse_arguments(GT "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
 
-    # Make test file relative to the Test directory
-    cmake_path(
-        RELATIVE_PATH GT_FILE BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE GT_FILE
-    )
+    get_filename_component(test_filename ${GT_FILE} NAME_WE)
+    set(target_name ${PROJECT_NAME}_${test_filename})
 
-    get_filename_component(filename ${GT_FILE} NAME_WE)
-    string(REGEX REPLACE "[^A-Za-z0-9_]" "_" test_name ${GT_FILE})
-
-    add_executable("${test_name}_Bin" EXCLUDE_FROM_ALL ${GT_FILE})
-    target_link_libraries("${test_name}_Bin" PUBLIC ${GT_LIB})
+    add_executable(${target_name} EXCLUDE_FROM_ALL ${GT_FILE})
+    set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${test_filename})
+    target_link_libraries(${target_name} PUBLIC ${GT_LIB})
 
     add_custom_command(
-        OUTPUT "${test_name}_Bin.output"
-        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/TestRunner.sh
-                $<TARGET_FILE:${test_name}_Bin>
-        DEPENDS ${test_name}_Bin Scripts/TestRunner.sh
+        OUTPUT "${test_filename}.output"
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/Scripts/TestRunner.sh"
+                $<TARGET_FILE:${target_name}>
+        DEPENDS ${target_name} Scripts/TestRunner.sh
     )
 
-    list(APPEND output_files "${test_name}_Bin.output")
+    list(APPEND output_files "${test_filename}.output")
 
     add_custom_target(
-        ${test_name}-clean COMMAND ${CMAKE_COMMAND} -E remove -f "${test_name}_Bin.output"
+        ${target_name}_Clean COMMAND ${CMAKE_COMMAND} -E remove -f "${test_filename}.output"
     )
 
-    add_test(NAME ${filename}_Test
-             COMMAND diff ${test_name}_Bin.output
-                     ${CMAKE_CURRENT_SOURCE_DIR}/ExpectedOutputs/${filename}.txt
+    add_test(NAME ${test_filename}_Test
+             COMMAND diff "${test_filename}.output"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/ExpectedOutputs/${test_filename}.txt"
     )
 endmacro()

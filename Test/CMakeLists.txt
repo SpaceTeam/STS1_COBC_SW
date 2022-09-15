@@ -18,28 +18,11 @@ find_rodos()
 
 # ---- Tests ----
 
-# # Initialize variables
-# set(output_files "")
+add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
+add_subdirectory(GoldenTests EXCLUDE_FROM_ALL)
 
-# # Add golden tests
-# set(golden_tests_folder "${CMAKE_CURRENT_SOURCE_DIR}/GoldenTests")
-# add_golden_test(FILE "${golden_tests_folder}/HelloWorld.cpp" LIB rodos::rodos)
-# add_golden_test(FILE "${golden_tests_folder}/HelloCobc.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
-
-# # Create a single target for all golden tests
-# add_custom_target(GoldenTests DEPENDS "${output_files}")
-
-# Add unit tests
-add_executable(Sts1CobcSwTests_Dummy EXCLUDE_FROM_ALL)
-
-# # Add a custom target that depends on all tests
-# add_custom_target(Tests)
-# add_dependencies(Tests GoldenTests Sts1CobcSwTests_Dummy)
-
-add_subdirectory(UnitTests)
-
-include(Catch)
-catch_discover_tests(Sts1CobcSwTests_Dummy)
+add_custom_target(AllTests)
+add_dependencies(AllTests AllUnitTests AllGoldenTests)
 
 # ---- End-of-file commands ----
 
