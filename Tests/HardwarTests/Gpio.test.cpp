@@ -32,7 +32,7 @@ class GpioTest : public RODOS::StaticThread<>
             for(auto & i : pinsToTest)
             {
                 // TODO: Provide a better abstraction for setting and reading single pins. That cast
-                // is just aweful. I think an overload vor bool, type_safe::bool_t and maybe an enum
+                // is just awful. I think an overload vor bool, type_safe::bool_t and maybe an enum
                 // (class) would be a good idea.
                 i.setPins(static_cast<uint32_t>(bool(toggle)));
             }
