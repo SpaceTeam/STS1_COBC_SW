@@ -2,7 +2,7 @@ include(cmake/folders.cmake)
 
 include(CTest)
 if(BUILD_TESTING)
-    add_subdirectory(Test)
+    add_subdirectory(Tests)
 endif()
 
 option(BUILD_MCSS_DOCS "Build documentation using Doxygen and m.css" OFF)

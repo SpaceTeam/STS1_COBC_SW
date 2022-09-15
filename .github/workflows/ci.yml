@@ -139,7 +139,7 @@ jobs:
       run: cmake --build build/linux-x86 -t AllTests -j 2
 
     - name: Test
-      working-directory: build/linux-x86/Test
+      working-directory: build/linux-x86/Tests
       run: ctest --output-on-failure -C Release -j 2
 
   docs:

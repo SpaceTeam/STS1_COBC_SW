@@ -26,4 +26,4 @@ add_dependencies(AllTests AllUnitTests AllGoldenTests)
 
 # ---- End-of-file commands ----
 
-add_folders(Test)
+add_folders(Tests)
