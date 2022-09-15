@@ -2,11 +2,6 @@
 # from it, i.e. the testing is done only from the build tree and is not feasible from an install
 # location
 
-# Only include tests when building for Linux
-if(NOT (CMAKE_SYSTEM_NAME STREQUAL Linux))
-    return()
-endif()
-
 project(Sts1CobcSwTests LANGUAGES CXX)
 
 # ---- Find libraries ----
@@ -18,11 +13,15 @@ find_rodos()
 
 # ---- Tests ----
 
-add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
-add_subdirectory(GoldenTests EXCLUDE_FROM_ALL)
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+    add_subdirectory(GoldenTests EXCLUDE_FROM_ALL)
+    add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
 
-add_custom_target(AllTests)
-add_dependencies(AllTests AllUnitTests AllGoldenTests)
+    add_custom_target(AllTests)
+    add_dependencies(AllTests AllUnitTests AllGoldenTests)
+elseif(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    add_subdirectory(HardwarTests EXCLUDE_FROM_ALL)
+endif()
 
 # ---- End-of-file commands ----
 
