@@ -33,11 +33,14 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
 - All CMake targets are prefixed with the project name: `Sts1CobcSw_CobcSw`,
   `Sts1CobcSw_Hal`, etc.
 - Everything test related is in `Tests/` and its subdirectories.
-- Unit test have the `.test.cpp` extension (no `_Test` suffix or `Test_` prefix, etc.) and
-  are named after the file they test.
-- Hardware tests should be the equivalent of unit tests for low-level code. The code for
-  some external chip, e.g., could be tested by reading its ID or who-am-I register. In the future we should also automate these tests with the FlatSat and labjack setup.
-- Golden Tests are used for high level integration/system tests.
+- Tests have the `.test.cpp` extension (no `_Test` suffix or `Test_` prefix, etc.) and are
+  named after the class, file, functionality, interface or whatever else they test.
+- Hardware tests should be similar to unit tests and check simple functionalities of
+  low-level code. They should also be somewhat automatable with the help of the whole
+  FlatSat setup (UCI UART, LabJack, etc.)
+- Golden Tests are used for high level integration/system tests. We should be able to run
+  them on the FlatSat too, because `PRINTF()` prints to the UCI UART which is connected to
+  the PC.
 
 The following shows how the directory structure could actually look like.
 
@@ -87,7 +90,7 @@ Sts1CobcSw/
 |   ├── GoldenTests/
 │   │   ├── ExpectedOutputs/
 │   │   ├── Scripts/
-│   │   ├── ICantThingOfAGoodName.cpp
+│   │   ├── ICantThingOfAGoodName.test.cpp
 │   │   └── ...
 │   ├── HardwareTests/
 │   │   ├── GpioPins.test.cpp
