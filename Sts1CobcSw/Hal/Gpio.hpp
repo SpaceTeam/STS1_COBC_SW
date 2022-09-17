@@ -14,20 +14,29 @@ namespace sts1cobcsw::hal
     };
 
     /**
-     * @brief Possible initial values of a single GPIO pin
+     * @brief Possible values of a single GPIO pin
      */
-    enum class InitVal{
-        zeroInit,
-        oneInit
+    enum class PinVal{
+        zero,
+        one
     };
 
     /**
-     * @brief A wrapper for the init function of a GPIO pin
+     * @brief A wrapper for the init function of a GPIO pin. Only allows for single pins to be initialized
      * 
-     * @param pinType The pin type (Input/Output)
-     * @param initVal The initial value for output pins (ZeroInit/OneInit)
+     * @param pin The pin to be initialized
+     * @param pinType The pin type (input/output)
+     * @param initVal The initial value for output pins (zero/one)
      * 
      * @returns Returns 0 on success, -1 on failure
      */
-    auto InitGpioPin(RODOS::HAL_GPIO &pin, PinType pinType, InitVal initVal);
+    auto InitPin(RODOS::HAL_GPIO &pin, PinType pinType, PinVal initVal);
+
+    /**
+     * @brief A wrapper for the setPins function of a GPIO pin.
+     * 
+     * @param pin The pin to be set
+     * @param pinVal The value to be set (zero/one)
+     */
+    void SetPin(RODOS::HAL_GPIO &pin, PinVal pinVal);
 }
