@@ -2,16 +2,14 @@
 #include <rodos.h>
 
 namespace sts1cobcsw::hal{
-    auto InitPin(RODOS::GPIO_PIN pin, PinType pinType, PinVal initVal) -> int32_t{
-        RODOS::HAL_GPIO halGpio(pin);
+    auto InitPin(RODOS::HAL_GPIO &pin, PinType pinType, PinVal initVal) -> int32_t{
         bool isOutput = (pinType == PinType::output);
         uint32_t initValUint = (initVal == PinVal::zero ? 0 : 1);
-        return halGpio.init(isOutput, 1, initValUint);
+        return pin.init(isOutput, 1, initValUint);
     }
 
-    void SetPin(RODOS::GPIO_PIN pin, PinVal pinVal){
-        RODOS::HAL_GPIO halGpio(pin);
+    void SetPin(RODOS::HAL_GPIO &pin, PinVal pinVal){
         uint32_t pinValUint = (pinVal == PinVal::zero ? 0 : 1);
-        halGpio.setPins(pinValUint);
+        pin.setPins(pinValUint);
     }
 }

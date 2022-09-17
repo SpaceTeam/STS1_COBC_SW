@@ -31,7 +31,7 @@ namespace sts1cobcsw::hal
      * 
      * @returns Returns 0 on success, -1 on failure
      */
-    auto InitPin(RODOS::GPIO_PIN pin, PinType pinType, PinVal initVal) -> int32_t;
+    auto InitPin(RODOS::HAL_GPIO &pin, PinType pinType, PinVal initVal) -> int32_t;
 
     /**
      * @brief A wrapper for the setPins function of a GPIO pin.
@@ -39,5 +39,5 @@ namespace sts1cobcsw::hal
      * @param pin The pin to be set
      * @param pinVal The value to be set (zero/one)
      */
-    void SetPin(RODOS::GPIO_PIN pin, PinVal pinVal);
+    void SetPin(RODOS::HAL_GPIO &pin, PinVal pinVal);
 }
