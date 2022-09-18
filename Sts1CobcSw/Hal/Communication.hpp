@@ -1,8 +1,8 @@
 #pragma once
 
-#include <rodos.h>
-
 #include <etl/string.h>
+
+#include <rodos.h>
 
 #include <concepts>
 #include <cstddef>
