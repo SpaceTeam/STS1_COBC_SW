@@ -4,8 +4,11 @@
 
 namespace sts1cobcsw::hal
 {
+inline constexpr auto ledPin = pa13;
+
 inline constexpr auto eduUartIndex = RODOS::UART_IDX1;
 inline constexpr auto eduUartRxPin = pa10;
+inline constexpr auto eduUartTxPin = pa15;
 
 inline constexpr auto uciUartIndex = RODOS::UART_IDX2;
 inline constexpr auto uciUartTxPin = pa2;
