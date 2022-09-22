@@ -7,7 +7,7 @@ namespace sts1cobcsw::hal
 auto InitPin(RODOS::HAL_GPIO & pin, PinType pinType, type_safe::bool_t initVal) -> int32_t
 {
     bool isOutput = (pinType == PinType::output);
-    uint32_t initValUint = (pinVal ? 1U : 0U);
+    uint32_t initValUint = (initVal ? 1U : 0U);
     return pin.init(isOutput, 1, initValUint);
 }
 
