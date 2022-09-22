@@ -4,16 +4,16 @@
 
 namespace sts1cobcsw::hal
 {
-auto InitPin(RODOS::HAL_GPIO & pin, PinType pinType, PinVal initVal) -> int32_t
+auto InitPin(RODOS::HAL_GPIO & pin, PinType pinType, type_safe::bool_t initVal) -> int32_t
 {
     bool isOutput = (pinType == PinType::output);
-    uint32_t initValUint = (initVal == PinVal::zero ? 0 : 1);
+    uint32_t initValUint = (pinVal ? 1U : 0U);
     return pin.init(isOutput, 1, initValUint);
 }
 
-void SetPin(RODOS::HAL_GPIO & pin, PinVal pinVal)
+void SetPin(RODOS::HAL_GPIO & pin, type_safe::bool_t pinVal)
 {
-    uint32_t pinValUint = (pinVal == PinVal::zero ? 0 : 1);
+    uint32_t pinValUint = (pinVal ? 1U : 0U);
     pin.setPins(pinValUint);
 }
 }
