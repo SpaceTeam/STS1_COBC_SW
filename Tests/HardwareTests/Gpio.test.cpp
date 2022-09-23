@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/Hal/Gpio.hpp>
+#include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <type_safe/types.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -8,8 +10,15 @@
 namespace sts1cobcsw
 {
 // TODO: Define proper names in Hal/PinNames.hpp and Hal/IoNames.hpp
-auto pinsToTest = std::to_array<RODOS::HAL_GPIO>({RODOS::GPIO_037});
+// auto pinsToTest = std::to_array<RODOS::HAL_GPIO>({RODOS::GPIO_037});
 
+
+auto pinsToTest = std::to_array<RODOS::HAL_GPIO>(
+    {hal::pa1,  hal::pa2,  hal::pa3,  hal::pa5,  hal::pa6,  hal::pa7,  hal::pa8,  hal::pa9,
+     hal::pa10, hal::pa11, hal::pa12, hal::pa13, hal::pa14, hal::pa15, hal::pb0,  hal::pb1,
+     hal::pb3,  hal::pb4,  hal::pb5,  hal::pb6,  hal::pb7,  hal::pb8,  hal::pb9,  hal::pb12,
+     hal::pb13, hal::pb14, hal::pb15, hal::pc0,  hal::pc1,  hal::pc2,  hal::pc3,  hal::pc4,
+     hal::pc5,  hal::pc7,  hal::pc9,  hal::pc10, hal::pc11, hal::pc12, hal::pc13, hal::pd2});
 
 class GpioTest : public RODOS::StaticThread<>
 {
@@ -17,9 +26,7 @@ class GpioTest : public RODOS::StaticThread<>
     {
         for(auto & pin : pinsToTest)
         {
-            // TODO: Provide a better abstraction for initializing pins. Boolean options/flags are
-            // terrible. Use enum classes instead.
-            pin.init(/*isOutput=*/true, 1, 0);
+            hal::InitPin(pin, hal::PinType::output, false);
         }
     }
 
@@ -31,12 +38,8 @@ class GpioTest : public RODOS::StaticThread<>
         {
             for(auto & i : pinsToTest)
             {
-                // TODO: Provide a better abstraction for setting and reading single pins. That cast
-                // is just awful. I think an overload vor bool, type_safe::bool_t and maybe an enum
-                // (class) would be a good idea.
-                i.setPins(static_cast<uint32_t>(bool(toggle)));
+                hal::SetPin(i, toggle);
             }
-            toggle = not toggle;
         }
     }
 };

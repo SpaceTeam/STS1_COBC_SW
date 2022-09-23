@@ -1,5 +1,11 @@
 add_program(Gpio Gpio.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Gpio PUBLIC rodos::rodos type_safe)
+target_link_libraries(Sts1CobcSwTests_Gpio PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
+
+add_program(Uart Uart.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Uart PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
+
+add_program(Spi Spi.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Spi PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
 
 get_property(
     all_hw_test_targets

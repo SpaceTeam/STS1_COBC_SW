@@ -1,8 +1,8 @@
 #pragma once
 
-#include <etl/string.h>
+#include <rodos_no_using_namespace.h>
 
-#include <rodos.h>
+#include <etl/string.h>
 
 #include <concepts>
 #include <cstddef>
@@ -42,8 +42,8 @@ inline auto WriteTo(Writable auto * communicationInterface, std::span<T, size> d
 
     while(nSentBytes < bytes.size())
     {
-        nSentBytes +=
-            communicationInterface->write(bytes.data() + nSentBytes, bytes.size() - nSentBytes);
+        nSentBytes += communicationInterface->write(bytes.data() + nSentBytes,
+                                                           bytes.size() - nSentBytes);
     }
 }
 
