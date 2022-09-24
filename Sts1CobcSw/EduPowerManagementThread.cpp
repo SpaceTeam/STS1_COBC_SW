@@ -1,3 +1,6 @@
+//! @file
+//! @brief  Manages the power of the EDU module
+
 #include <Sts1CobcSw/Hal/Gpio.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
