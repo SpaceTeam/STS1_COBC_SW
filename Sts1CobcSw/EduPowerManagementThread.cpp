@@ -32,13 +32,15 @@ class EduPowerManagementThread : public StaticThread<>
 
     void run() override
     {
-        auto const startTime = RODOS::NOW();
+        // TODO : Get this from edu queue
+        auto const startTime = RODOS::NOW() + 20 * RODOS::SECONDS);
 
         ts::bool_t const epsBatteryIsGood = epsBatteryGoodGpio.readPins() != 0;
         ts::bool_t const eduHasUpdate = eduHasUpdateGpio.readPins() != 0;
 
         auto eduIsAlive = false;
         eduIsAliveBuffer.get(eduIsAlive);
+
         auto delayTime = std::max(startTime - RODOS::NOW(), 0 * MILLISECONDS);
 
         constexpr auto eduBootTime = 2 * SECONDS;
