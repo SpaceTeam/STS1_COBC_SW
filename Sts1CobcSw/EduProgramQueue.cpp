@@ -2,17 +2,10 @@
 
 #include <tuple>
 
+#include <Sts1CobcSw/EduProgramQueue.hpp>
+
 namespace sts1cobcsw
 {
-// A queue consists of :
-// Program ID 	: 2 bytes, according to EDU PDD 6.1.1
-// Queue ID 	: 2 bytes, according to EDU PDD 6.1.2
-// Start Time 	: 4 bytes, EPOCH time
-// Timeout 		: 2 bytes, according to EDU PDD 6.1.2
-using QueueEntry = std::tuple<uint16_t, uint16_t, uint32_t, uint16_t>;
-
-// Define the maximum size of our queue
-constexpr auto eduProgramQueueSize = 20;
 
 // Use a commbuffer to share the edu program queue among differents threads
 // such as edu listener or initialize
