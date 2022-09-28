@@ -16,11 +16,36 @@ namespace ts = type_safe;
 
 auto epsBatteryGoodGpio = HAL_GPIO(hal::epsBatteryGoodPin);
 auto eduHasUpdateGpio = HAL_GPIO(hal::eduUpdatePin);
+auto eduEnableGpio = HAL_GPIO(hal::eduEnabledPin);
 
 // TODO : move this in another file like in rpg
 RODOS::Topic<bool> eduIsAliveTopic(-1, "eduHeartBeatsTopic");
 auto eduIsAliveBuffer = CommBuffer<bool>();
 auto eduIsAliveSubscriber = Subscriber(eduIsAliveTopic, eduIsAliveBuffer, "eduIsAliveSubscriber");
+
+
+/**
+ * @brief Turn Edu off.
+ */
+void TurnOffEdu()
+{
+    hal::SetPin(eduEnableGpio, true);
+
+    // Set EduShouldBePowered to False
+    // TODO when we'll have a persistant state
+}
+
+/**
+ * @brief Turn Edu on.
+ */
+void TurnOnEdu() {
+
+    // Used to enable the EDU module, pulling it to low enables the EDU
+    hal::SetPin(eduEnableGpio, false)
+
+    // Set EduShouldBePowered to True
+    // TODO done when we'll have a persistant state
+}
 
 class EduPowerManagementThread : public StaticThread<>
 {
@@ -28,12 +53,13 @@ class EduPowerManagementThread : public StaticThread<>
     {
         hal::InitPin(epsBatteryGoodGpio, hal::PinType::input, hal::PinVal::zero);
         hal::InitPin(eduHasUpdateGpio, hal::PinType::input, hal::PinVal::zero);
+        hal::InitPin(eduEnableGpio, hal::PinType::output, hal::PinVal::zero);
     }
 
     void run() override
     {
         // TODO : Get this from edu queue
-        auto const startTime = RODOS::NOW() + 20 * RODOS::SECONDS);
+        auto const startTime = RODOS::NOW() + 20 * RODOS::SECONDS;
 
         ts::bool_t const epsBatteryIsGood = epsBatteryGoodGpio.readPins() != 0;
         ts::bool_t const eduHasUpdate = eduHasUpdateGpio.readPins() != 0;
@@ -52,20 +78,20 @@ class EduPowerManagementThread : public StaticThread<>
             {
                 if(true /*not (eduHasUpdate or delayTime < 60 * SECONDS or any archives on cobc) */)
                 {
-                    PRINTF("TURN OFF EDU");
+                    TurnOffEdu()
                 }
             }
             else
             {
                 if(delayTime < eduBootTime + eduBootTimeMargin)
                 {
-                    PRINTF("TURN ON EDU");
+                    TurnOffEdu()
                 }
             }
         }
         else
         {
-            PRINTF("TURN OFF EDU");
+            TurnOffEdu()
         }
 
         RODOS::AT(NOW() + 2 * MILLISECONDS);
