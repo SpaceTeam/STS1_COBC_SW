@@ -38,8 +38,8 @@ void TurnOffEdu()
 /**
  * @brief Turn Edu on.
  */
-void TurnOnEdu() {
-
+void TurnOnEdu()
+{
     // Used to enable the EDU module, pulling it to low enables the EDU
     hal::SetPin(eduEnableGpio, false)
 
@@ -76,16 +76,17 @@ class EduPowerManagementThread : public StaticThread<>
         {
             if(eduIsAlive)
             {
-                if(true /*not (eduHasUpdate or delayTime < 60 * SECONDS or any archives on cobc) */)
+                // TODO ! also perform a check about archives on cobc
+                if(eduHasUpdate or delayTime < 60 * RODOS::SECONDS)
                 {
-                    TurnOffEdu()
+                    TurnOffEdu();
                 }
             }
             else
             {
                 if(delayTime < eduBootTime + eduBootTimeMargin)
                 {
-                    TurnOffEdu()
+                    TurnOffEdu();
                 }
             }
         }
