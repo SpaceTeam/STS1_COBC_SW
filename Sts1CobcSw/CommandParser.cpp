@@ -1,10 +1,9 @@
-#include "CommandParser.hpp"
+#include <Sts1CobcSw/CobcCommands.hpp>
+#include <Sts1CobcSw/CommandParser.hpp>
+#include <Sts1CobcSw/Topics.hpp>
 
-#include "CobcCommands.hpp"
-#include "Communication.hpp"
-#include "Topics.hpp"
-#include "Utility.hpp"
-
+#include <Sts1CobcSw/Hal/Communication.hpp>
+#include <Sts1CobcSw/Util/Util.hpp>
 #include <type_safe/index.hpp>
 #include <type_safe/types.hpp>
 
@@ -16,12 +15,18 @@
 
 #include <cstring>
 
+
 namespace RODOS
 {
 // Include the following line to be able to read from UART when compiling for STM32
 // NOLINTNEXTLINE(readability-identifier-naming)
-extern HAL_UART uart_stdout;
+// extern HAL_UART uart_stdout;
+
+// On linux :
+// NOLINTNEXTLINE(readability-identifier-naming)
+HAL_UART uart_stdout(RODOS::UART_IDX2);
 }
+
 
 namespace ts = type_safe;
 
@@ -108,9 +113,12 @@ constexpr auto dataFrameSize = 1_usize + 1_usize + sizeof(int32_t) + 1_usize;
 
 auto ParseEduDataFrame(const etl::string<dataFrameSize.get()> & dataFrame)
 {
+    RODOS::PRINTF("Entering ParseEduDataFrame() ...\n");
+    // Do nothing
     auto index = 1_usize;
     auto id = 0_u8;
     auto data = 0_i32;
+
     util::CopyFrom(dataFrame, &index, &id);
     util::CopyFrom(dataFrame, &index, &data);
 
@@ -144,8 +152,14 @@ auto ParseEduDataFrame(const etl::string<dataFrameSize.get()> & dataFrame)
     }
 }
 
+
 class EduReaderThread : public RODOS::StaticThread<>
 {
+  public:
+    EduReaderThread() : StaticThread("EduReaderThread")
+    {
+    }
+  private:
     void init() override
     {
         constexpr auto baudrate = 9'600;
@@ -154,6 +168,7 @@ class EduReaderThread : public RODOS::StaticThread<>
 
     void run() override
     {
+        RODOS::PRINTF("Entering EDU Data reader\n");
         constexpr auto startCharacter = '?';
 
         auto eduDataFrame = etl::string<dataFrameSize.get()>();
@@ -164,7 +179,7 @@ class EduReaderThread : public RODOS::StaticThread<>
             auto nReadCharacters = ts::size_t(eduUart.read(&readCharacter, 1));
             if(nReadCharacters != 0U)
             {
-                // PRINTF("%c", readCharacter);
+                RODOS::PRINTF("%c\n", readCharacter);
                 if(readCharacter == startCharacter)
                 {
                     startWasDetected = true;
