@@ -1,6 +1,8 @@
 //! @file
 //! @brief  Manages the power of the EDU module
 
+#include <Sts1CobcSw/CobcCommands.hpp>
+
 #include <Sts1CobcSw/Hal/Gpio.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
@@ -23,29 +25,6 @@ RODOS::Topic<bool> eduIsAliveTopic(-1, "eduHeartBeatsTopic");
 auto eduIsAliveBuffer = CommBuffer<bool>();
 auto eduIsAliveSubscriber = Subscriber(eduIsAliveTopic, eduIsAliveBuffer, "eduIsAliveSubscriber");
 
-
-/**
- * @brief Turn Edu off.
- */
-void TurnOffEdu()
-{
-    hal::SetPin(eduEnableGpio, true);
-
-    // Set EduShouldBePowered to False
-    // TODO when we'll have a persistant state
-}
-
-/**
- * @brief Turn Edu on.
- */
-void TurnOnEdu()
-{
-    // Used to enable the EDU module, pulling it to low enables the EDU
-    hal::SetPin(eduEnableGpio, false)
-
-    // Set EduShouldBePowered to True
-    // TODO done when we'll have a persistant state
-}
 
 class EduPowerManagementThread : public StaticThread<>
 {
@@ -77,25 +56,25 @@ class EduPowerManagementThread : public StaticThread<>
             if(eduIsAlive)
             {
                 // TODO ! also perform a check about archives on cobc
-                if(eduHasUpdate or delayTime < 60 * RODOS::SECONDS)
+                if(not (eduHasUpdate or delayTime < 60 * RODOS::SECONDS))
                 {
-                    TurnOffEdu();
+                    TurnEduOff();
                 }
             }
             else
             {
                 if(delayTime < eduBootTime + eduBootTimeMargin)
                 {
-                    TurnOffEdu();
+                    TurnEduOn();
                 }
             }
         }
         else
         {
-            TurnOffEdu()
+            TurnEduOff();
         }
 
-        RODOS::AT(NOW() + 2 * MILLISECONDS);
+        RODOS::AT(NOW() + 2 * RODOS::SECONDS);
     }
 };
 auto const eduPowerManagementThread = EduPowerManagementThread();
