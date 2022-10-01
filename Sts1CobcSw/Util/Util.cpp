@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Util/UtilNames.hpp>
 
 #include <iostream>
+#include <span>
 #include <vector>
 
 namespace sts1cobcsw::util
@@ -16,9 +17,9 @@ auto BytesToUint16(uint8_t msb, uint8_t lsb) -> uint16_t
 auto BytesToUint32(uint8_t firstByte, uint8_t secondByte, uint8_t thirdByte, uint8_t fourthByte)
     -> uint32_t
 {
-    uint32_t retVal = 0U | static_cast<uint16_t>(firstByte << threeBytesWidth)
-                    | static_cast<uint16_t>(secondByte << twoBytesWidth)
-                    | static_cast<uint16_t>(thirdByte << oneByteWidth) | fourthByte;
+    uint32_t retVal = 0U | static_cast<uint32_t>(firstByte << threeBytesWidth)
+                    | static_cast<uint32_t>(secondByte << twoBytesWidth)
+                    | static_cast<uint32_t>(thirdByte << oneByteWidth) | fourthByte;
     return retVal;
 }
 

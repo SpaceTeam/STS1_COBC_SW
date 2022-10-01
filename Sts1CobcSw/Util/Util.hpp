@@ -18,7 +18,7 @@ namespace sts1cobcsw::util
 auto BytesToUint16(uint8_t msb, uint8_t lsb) -> uint16_t;
 
 /**
- * @brief Converts two bytes into a uint16_t
+ * @brief Converts two bytes into a uint32_t
  *
  * @param firstByte The most significant byte
  * @param secondByte The second most significant byte
@@ -27,7 +27,8 @@ auto BytesToUint16(uint8_t msb, uint8_t lsb) -> uint16_t;
  *
  * @returns The combined uint32_t
  */
-auto BytesToUint32(uint8_t firstByte, uint8_t secondByte, uint8_t thirdByte, uint8_t fourthByte) -> uint32_t;
+auto BytesToUint32(uint8_t firstByte, uint8_t secondByte, uint8_t thirdByte, uint8_t fourthByte)
+    -> uint32_t;
 
 /**
  * @brief Converts a sequence of uint32_t elements to a uint8_t vector
