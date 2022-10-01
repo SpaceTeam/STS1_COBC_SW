@@ -187,6 +187,7 @@ auto EduUartInterface::ExecuteProgram(uint16_t programId, uint16_t queueId, uint
 // TODO(Daniel): refactor, too complex
 auto EduUartInterface::GetStatus()
     -> std::tuple<EduStatusType, uint16_t, uint16_t, uint8_t, EduErrorCode>
+
 {
     // Values to be returned
     uint8_t statusType = invalidStatus;

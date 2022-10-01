@@ -14,7 +14,7 @@ class HelloDummy : public StaticThread<>
         printfMask = 1;
         auto const dummy = Dummy();
 
-        PRINTF("Hello, %s!\n", dummy.name.data());
+        RODOS::PRINTF("Hello, %s!\n", dummy.name.data());
         hwResetAndReboot();
     }
 };

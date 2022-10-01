@@ -10,7 +10,7 @@ class HelloWorld : public StaticThread<>
     void run() override
     {
         printfMask = 1;
-        PRINTF("Hello, World!\n");
+        RODOS::PRINTF("Hello, World!\n");
         hwResetAndReboot();
     }
 };

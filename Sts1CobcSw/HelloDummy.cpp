@@ -13,7 +13,7 @@ class HelloDummy : public StaticThread<>
 
         TIME_LOOP(0, 500 * MILLISECONDS)
         {
-            PRINTF("Hello %s!\n", dummy.name.data());
+            RODOS::PRINTF("Hello %s!\n", dummy.name.data());
         }
     }
 };
