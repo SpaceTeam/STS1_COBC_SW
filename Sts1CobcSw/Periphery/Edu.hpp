@@ -26,7 +26,7 @@ class EduUartInterface
 
     /**
      * @brief Flush the EDU UART read buffer.
-     * 
+     *
      * This can be used to clear all buffer data after an error to request
      * a resend.
      */
@@ -56,12 +56,15 @@ class EduUartInterface
      * @brief Issues a command to execute a student program on the EDU.
      *
      * Execute Program (COBC <-> EDU):
-     * -> [DATA: 1 byte]
-     * -> [Command Header: 1 byte]
-     * -> [Program ID: 2 bytes]
-     * -> [Queue ID: 2 bytes]
-     * -> [Timeout: 2 bytes]
-     * <- [N/ACK: 1 byte]
+     * -> [Command Header]
+     * -> [Program ID]
+     * -> [Queue ID]
+     * -> [Timeout]
+     * <- [N/ACK]
+     * <- [N/ACK]
+     *
+     * The first N/ACK confirms a valid data packet,
+     * the second N/ACK confirms that the program has been started.
      *
      * @param programId The student program ID
      * @param queueId The student program queue ID
@@ -80,17 +83,34 @@ class EduUartInterface
      * Results ready: [1 byte: 0x02][2 bytes: Program ID][2 bytes: Queue ID]
      *
      * Get Status (COBC <-> EDU):
-     * -> [DATA: 1 byte]
-     * -> [Command Header: 1 byte]
-     * <- [N/ACK: 1 byte]
-     * <- [DATA: 1 byte]
-     * <- [Status: 1/5/6 bytes]
-     * -> [N/ACK: 1 byte]
+     * -> [Command Header]
+     * <- [N/ACK]
+     * <- [DATA]
+     * <- [Status]
+     * -> [N/ACK]
      *
      * @returns A tuple containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error Code).
      * Values in square brackets are only valid if the relevant Status Type is returned.
      */
     auto GetStatus() -> std::tuple<EduStatusType, uint16_t, uint16_t, uint8_t, EduErrorCode>;
+
+    /**
+     * @brief Issued a command to update the EDU time.
+     *
+     * Update Time:
+     * -> [Command Header]
+     * -> [Timestamp]
+     * <- [N/ACK]
+     * <- [N/ACK]
+     *
+     * The first N/ACK confirms a valid data packet,
+     * the second N/ACK confirms the time update.
+     *
+     * @param timestamp A unix timestamp
+     *
+     * @returns A relevant error code
+     */
+    auto UpdateTime(uint32_t timestamp) -> EduErrorCode;
 
     // TODO
     // auto StoreArchive() -> int32_t;

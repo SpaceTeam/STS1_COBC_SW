@@ -95,13 +95,14 @@ auto EduUartInterface::SendData(std::span<uint8_t> data) -> EduErrorCode
         hal::WriteTo(&mEduUart_, data);
         hal::WriteTo(&mEduUart_, std::span<uint32_t>(crc));
 
-        std::cout << "Send data:\n";
-        std::cout << "Len: " << std::hex << len[0] << "\n";
-        for(size_t i = 0; i < nBytes; i++)
-        {
-            std::cout << "Data[" << i << "]:" << std::hex << static_cast<int>(data[i]) << "\n";
-        }
-        std::cout << "CRC32: " << std::hex << crc[0] << "\n";
+        // Code for checking a data packet on linux
+        // std::cout << "Send data:\n";
+        // std::cout << "Len: " << std::hex << len[0] << "\n";
+        // for(size_t i = 0; i < nBytes; i++)
+        // {
+        //     std::cout << "Data[" << i << "]:" << std::hex << static_cast<int>(data[i]) << "\n";
+        // }
+        // std::cout << "CRC32: " << std::hex << crc[0] << "\n";
 
         // Data is always answered by N/ACK
         uint8_t recvAck = 0;
@@ -350,5 +351,51 @@ auto EduUartInterface::GetStatus()
     }
     SendCommand(cmdAck);
     return {statusTypeRet, programId, queueId, exitCode, EduErrorCode::success};
+}
+
+auto EduUartInterface::UpdateTime(uint32_t timestamp) -> EduErrorCode
+{
+    std::vector<uint32_t> tsUint32 = {timestamp};
+    std::vector<uint8_t> tsUint8 = util::VecUint32ToUint8(tsUint32);
+
+    EduErrorCode errorCode;
+    for(size_t errorCnt = 0; errorCnt < maxNackRetries; errorCnt++)
+    {
+        {
+            // Send data and check for success, otherwise flush the UART and retry
+            errorCode = SendData(std::span<uint8_t>(tsUint8));
+            if(errorCode == EduErrorCode::success)
+            {
+                break;
+            }
+            FlushUartBuffer();
+        }
+    }
+
+    // If the error code does not show success, return the error
+    if(errorCode != EduErrorCode::success)
+    {
+        return errorCode;
+    }
+
+    // On success, wait for second N/ACK
+    mEduUart_.suspendUntilDataReady(NOW() + eduTimeout);
+    uint8_t nackBuf = 0;
+    auto retVal = mEduUart_.read(&nackBuf, 1);
+
+    if(retVal == 0)
+    {
+        return EduErrorCode::errorTimeout;
+    }
+    if(nackBuf == cmdNack)
+    {
+        return EduErrorCode::errorNack;
+    }
+    if(nackBuf != cmdAck)
+    {
+        return EduErrorCode::errorInvalidResult;
+    }
+
+    return EduErrorCode::success;
 }
 }
