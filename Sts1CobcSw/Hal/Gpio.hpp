@@ -10,7 +10,7 @@
 namespace sts1cobcsw::hal
 {
 /**
- * @brief The pin types of a GPIO pin
+ * @brief The pin types of a GPIO pin.
  */
 enum class PinType
 {
@@ -20,7 +20,7 @@ enum class PinType
 
 /**
  * @brief A wrapper for the init function of a GPIO pin. Only allows for single pins to be
- * initialized
+ * initialized.
  *
  * @param pin The pin to be initialized
  * @param pinType The pin type (input/output)
@@ -37,4 +37,13 @@ auto InitPin(RODOS::HAL_GPIO & pin, PinType pinType, type_safe::bool_t initVal) 
  * @param pinVal The value to be set
  */
 void SetPin(RODOS::HAL_GPIO & pin, type_safe::bool_t pinVal);
+
+/**
+ * @brief A wrapper for the readPins function of a GPIO pin.
+ *
+ * @param pin The pin to be read
+ *
+ * @returns true if the pin is set high, false otherwise
+ */
+auto ReadPin(RODOS::HAL_GPIO & pin) -> type_safe::bool_t;
 }

@@ -16,4 +16,12 @@ void SetPin(RODOS::HAL_GPIO & pin, type_safe::bool_t pinVal)
     uint32_t pinValUint = (pinVal ? 1U : 0U);
     pin.setPins(pinValUint);
 }
+
+
+auto ReadPin(RODOS::HAL_GPIO & pin) -> type_safe::bool_t
+{
+    auto pinVal = pin.readPins();
+    type_safe::bool_t boolVal = (pinVal != 0U);
+    return boolVal;
+}
 }
