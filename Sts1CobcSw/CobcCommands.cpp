@@ -26,4 +26,9 @@ void TurnEduOff()
     // The enable pin uses inverted logic: 1 = disable
     eduEnabledGpio.setPins(1U);
 }
+
+void UpdateUtcOffset() {
+    PRINTF("Update UTC offset");
+    // TODO
+}
 }

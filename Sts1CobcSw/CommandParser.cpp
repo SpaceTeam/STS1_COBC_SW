@@ -18,22 +18,14 @@
 
 namespace RODOS
 {
-// Include the following line to be able to read from UART when compiling for STM32
-// NOLINTNEXTLINE(readability-identifier-naming)
-// extern HAL_UART uart_stdout;
-
-// On linux :
+#if defined(LINUX_SYSTEM)
 // NOLINTNEXTLINE(readability-identifier-naming)
 HAL_UART uart_stdout(RODOS::UART_IDX2);
+#elif defined(GENERIC_SYSTEM)
+// NOLINTNEXTLINE(readability-identifier-naming)
+extern HAL_UART uart_stdout;
+#endif
 }
-
-
-namespace ts = type_safe;
-
-using ts::operator""_u8;
-using ts::operator""_i32;
-using ts::operator""_usize;
-
 
 namespace sts1cobcsw
 {
@@ -54,6 +46,11 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
             case '2':
             {
                 TurnEduOff();
+                return;
+            }
+            case '3':
+            {
+                UpdateUtcOffset();
                 return;
             }
             default:
@@ -86,6 +83,7 @@ class CommandParserThread : public RODOS::StaticThread<>
             auto nReadCharacters = ts::size_t(RODOS::uart_stdout.read(&readCharacter, 1));
             if(nReadCharacters != 0U)
             {
+                RODOS::PRINTF("Read a charactere\n");
                 if(readCharacter == startCharacter)
                 {
                     startWasDetected = true;
@@ -108,100 +106,15 @@ class CommandParserThread : public RODOS::StaticThread<>
 } commandParserThread;
 
 
-// startByte + 1 Id byte + 4 data bytes + endByte
-constexpr auto dataFrameSize = 1_usize + 1_usize + sizeof(int32_t) + 1_usize;
-
-auto ParseEduDataFrame(const etl::string<dataFrameSize.get()> & dataFrame)
+class GsFaker : public RODOS::StaticThread<>
 {
-    RODOS::PRINTF("Entering ParseEduDataFrame() ...\n");
-    // Do nothing
-    auto index = 1_usize;
-    auto id = 0_u8;
-    auto data = 0_i32;
-
-    util::CopyFrom(dataFrame, &index, &id);
-    util::CopyFrom(dataFrame, &index, &data);
-
-    constexpr auto temperatureId = 1;
-    constexpr auto accelerationXId = 2;
-    constexpr auto accelerationYId = 3;
-    constexpr auto accelerationZId = 4;
-    constexpr auto brightnessId = 5;
-
-    //    PRINTF("Received data (%ld) at id = %d\n",data.get(), id.get());
-
-    switch(id.get())
-    {
-        case temperatureId:
-            temperatureTopic.publish(data);
-            break;
-        case accelerationXId:
-            accelerationXTopic.publish(data);
-            break;
-        case accelerationYId:
-            accelerationYTopic.publish(data);
-            break;
-        case accelerationZId:
-            accelerationZTopic.publish(data);
-            break;
-        case brightnessId:
-            brightnessTopic.publish(data);
-            break;
-        default:;
-            // Too bad
-    }
-}
-
-
-class EduReaderThread : public RODOS::StaticThread<>
-{
-  public:
-    EduReaderThread() : StaticThread("EduReaderThread")
-    {
-    }
-  private:
-    void init() override
-    {
-        constexpr auto baudrate = 9'600;
-        eduUart.init(baudrate);
-    }
-
     void run() override
     {
-        RODOS::PRINTF("Entering EDU Data reader\n");
-        constexpr auto startCharacter = '?';
+        constexpr auto temperatureCommand = "$51\n";
 
-        auto eduDataFrame = etl::string<dataFrameSize.get()>();
-        ts::bool_t startWasDetected = false;
-        while(true)
-        {
-            char readCharacter = 0;
-            auto nReadCharacters = ts::size_t(eduUart.read(&readCharacter, 1));
-            if(nReadCharacters != 0U)
-            {
-                RODOS::PRINTF("%c\n", readCharacter);
-                if(readCharacter == startCharacter)
-                {
-                    startWasDetected = true;
-                    eduDataFrame.clear();
-                    eduDataFrame += startCharacter;
-                }
-                else if(startWasDetected)
-                {
-                    eduDataFrame += readCharacter;
-                    if(eduDataFrame.full())
-                    {
-                        // Command full
-                        // TODO maybe check that endbyte is correct
-                        ParseEduDataFrame(eduDataFrame);
-                        startWasDetected = false;
-                    }
-                }
-            }
-            eduUart.suspendUntilDataReady();
-        }
+        RODOS::AT(RODOS::NOW() + 2 * RODOS::SECONDS);
+        RODOS::PRINTF("Writing to uart_stdout");
+        hal::WriteTo(&RODOS::uart_stdout, temperatureCommand);
     }
-} eduReaderThread;
-
-
+} gsFaker;
 }

@@ -33,6 +33,16 @@ function(add_program program_name)
     add_executable(${PROJECT_NAME}_${program_name} ${ARGN})
     set_target_properties(${PROJECT_NAME}_${program_name} PROPERTIES OUTPUT_NAME ${program_name})
 
+    # Add a definition of the target system
+    if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+	    target_compile_definitions(${PROJECT_NAME}_${program_name} PUBLIC GENERIC_SYSTEM) 
+    elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
+	    target_compile_definitions(${PROJECT_NAME}_${program_name} PUBLIC LINUX_SYSTEM)
+    else()
+	    message(SEND_ERROR "CMAKE_SYSTEM_NAME is neither Generic nor Linux")
+    endif()
+
+
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         # Automatically call objcopy on the executable targets after the build
         objcopy_target(${PROJECT_NAME}_${program_name})

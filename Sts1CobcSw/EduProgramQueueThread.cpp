@@ -27,17 +27,17 @@ auto AddQueueEntry(const QueueEntry & eduEntry)
     eduProgramQueue.push_back(eduEntry);
 }
 
-auto GetProgId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint index)
+auto GetProgId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
 {
     return std::get<0>(queue.at(index));
 }
 
-auto GetQueueId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint index)
+auto GetQueueId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
 {
     return std::get<1>(queue.at(index));
 }
 
-auto GetTimeout(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint index)
+auto GetTimeout(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
 {
     return std::get<3>(queue.at(index));
 }
