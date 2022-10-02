@@ -1,3 +1,5 @@
+add_subdirectory(EduCmdTests)
+
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
 
