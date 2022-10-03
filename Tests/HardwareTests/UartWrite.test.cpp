@@ -1,11 +1,3 @@
-//! @file
-//! @brief  A program for testing the two UARTs of the COBC.
-//!
-//! If you flash `HelloUart.bin` onto the COBC, the messages "Hello from UART1" and "Hello from
-//! UART2" are alternately written every 500 ms to the COBC EDU UART and the COBC UCI UART,
-//! respectively. Both UARTs use the same configuration: 115200 baud, 8 data bits, no parity, 1 stop
-//! bit.
-
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/Gpio.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>

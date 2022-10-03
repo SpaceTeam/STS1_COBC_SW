@@ -1,24 +1,3 @@
-//! @file
-//! @brief  A program for testing the four SPIs of the COBC.
-//!
-//! Prerequisites:
-//!   - requires UART2 = COBC UCI UART to work
-//!
-//! Preparation:
-//!   - short MISO and MOSI lines of SPI1 to SPI4
-//!
-//! If you flash `HelloSpi.bin` onto the COBC, the messages "Hello from SPI#!" with # = 1–4, are
-//! written every 2 s to the MOSI line of the corresponding SPI. The matching MISO line is read at
-//! the same time. The thusly received message is printed to the COBC UCI UART. If, e.g., the round
-//! trip of the SPI2 message was successful, the UART output looks something like the following.
-//!
-//! ```
-//! Writing to SPI2
-//! nReceivedBytes = 16
-//! answer = 'Hello from SPI2!'
-//! ```
-
-
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/Gpio.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
