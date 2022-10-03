@@ -9,16 +9,14 @@
 
 namespace sts1cobcsw
 {
-// TODO: Define proper names in Hal/PinNames.hpp and Hal/IoNames.hpp
-// auto pinsToTest = std::to_array<RODOS::HAL_GPIO>({RODOS::GPIO_037});
 
-
+// pa2, pa3 are tested by printing to UCI UART
 auto pinsToTest = std::to_array<RODOS::HAL_GPIO>(
-    {hal::pa1,  hal::pa2,  hal::pa3,  hal::pa5,  hal::pa6,  hal::pa7,  hal::pa8,  hal::pa9,
-     hal::pa10, hal::pa11, hal::pa12, hal::pa13, hal::pa14, hal::pa15, hal::pb0,  hal::pb1,
-     hal::pb3,  hal::pb4,  hal::pb5,  hal::pb6,  hal::pb7,  hal::pb8,  hal::pb9,  hal::pb12,
-     hal::pb13, hal::pb14, hal::pb15, hal::pc0,  hal::pc1,  hal::pc2,  hal::pc3,  hal::pc4,
-     hal::pc5,  hal::pc7,  hal::pc9,  hal::pc10, hal::pc11, hal::pc12, hal::pc13, hal::pd2});
+    {hal::pa1,  hal::pa5,  hal::pa6,  hal::pa7,  hal::pa8,  hal::pa9,  hal::pa10, hal::pa11,
+     hal::pa12, hal::pa13, hal::pa14, hal::pa15, hal::pb0,  hal::pb1,  hal::pb3,  hal::pb4,
+     hal::pb5,  hal::pb6,  hal::pb7,  hal::pb8,  hal::pb9,  hal::pb12, hal::pb13, hal::pb14,
+     hal::pb15, hal::pc0,  hal::pc1,  hal::pc2,  hal::pc3,  hal::pc4,  hal::pc5,  hal::pc7,
+     hal::pc9,  hal::pc10, hal::pc11, hal::pc12, hal::pc13, hal::pd2});
 
 class GpioTest : public RODOS::StaticThread<>
 {
@@ -34,12 +32,16 @@ class GpioTest : public RODOS::StaticThread<>
     {
         type_safe::bool_t toggle = true;
 
-        TIME_LOOP(0, 100 * RODOS::MILLISECONDS)
+        TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
         {
             for(auto & i : pinsToTest)
             {
                 hal::SetPin(i, toggle);
+                PRINTF("Current pin set %s \n", (toggle ? "true" : "false"));
+                PRINTF("Current pin read %s \n", (hal::ReadPin(i) ? "true" : "false"));
             }
+
+            toggle = not toggle;
         }
     }
 };
