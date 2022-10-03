@@ -20,7 +20,7 @@ auto greenLed = RODOS::HAL_GPIO(hal::ledPin);
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
-class UartWrite : public RODOS::StaticThread<>
+class UartWriteTest : public RODOS::StaticThread<>
 {
     void init() override
     {
@@ -52,5 +52,5 @@ class UartWrite : public RODOS::StaticThread<>
 };
 
 
-auto const uartWrite = UartWrite();
+auto const uartWriteTest = UartWriteTest();
 }
