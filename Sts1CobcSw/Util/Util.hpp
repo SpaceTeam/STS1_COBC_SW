@@ -77,7 +77,17 @@ auto VecUint16ToUint8(std::span<uint16_t> src) -> std::vector<uint8_t>;
  */
 auto Crc32(std::span<uint8_t> data) -> uint32_t;
 
-
+/**
+ * @brief Copy a variable to a buffer.
+ *
+ * During the process, the position parameter is updated, so that one can chain
+ * multiple calls to CopyTo(). The size of the variable that must be copied from
+ * the buffer is the size of the value parameter.
+ *
+ * @param buffer  The buffer our data is copied to.
+ * @param position The position in the buffer our data is copied to.
+ * @param value The value to be copied to the buffer.
+ */
 auto CopyTo(std::span<std::byte> buffer, ts::size_t * const position, auto value)
 {
     auto newPosition = *position + sizeof(value);
@@ -85,7 +95,17 @@ auto CopyTo(std::span<std::byte> buffer, ts::size_t * const position, auto value
     *position = newPosition;
 }
 
-
+/**
+ * @brief Copy a value from a buffer to a variable.
+ *
+ * During the process, the position parameter is updated, so that one can chain
+ * multiple calls to CopyFrom(). The size of the variable that must be copied from
+ * the buffer is the size of the value parameter.
+ *
+ * @param buffer The buffer our data is copied from.
+ * @param position The position in the buffer our data is copied from.
+ * @param value The variable that will hold our copied value. 
+ */
 template<std::size_t size>
 auto CopyFrom(etl::string<size> const & buffer, ts::size_t * const position, auto * value)
 {
@@ -94,8 +114,11 @@ auto CopyFrom(etl::string<size> const & buffer, ts::size_t * const position, aut
     *position = newPosition;
 }
 
-
-
+/*
+* @brief A concept to ensure an object is writable
+*
+* For RODOS, this applies to HAL_UART and HAL_SPI classes.
+*/
 template<typename T>
 concept Writable = requires(T t, void const * sendBuf, std::size_t len)
 {
@@ -105,6 +128,12 @@ concept Writable = requires(T t, void const * sendBuf, std::size_t len)
         } -> std::integral;
 };
 
+/**
+ * @brief Write a std::span to a writable object
+ *
+ * @param communicationInterface A writable object.
+ * @param data The data to write to the communication interface.
+ */
 template<typename T, std::size_t size>
 inline auto WriteTo(Writable auto * communicationInterface, std::span<T, size> data)
 {
@@ -118,6 +147,13 @@ inline auto WriteTo(Writable auto * communicationInterface, std::span<T, size> d
     }
 }
 
+/**
+ * @brief Write a std::string_view to a writable object
+ *
+ * @param communicationInterface A writable object.
+ * @param message The data to write to the communication interface.
+ *
+ */
 inline auto WriteTo(Writable auto * communicationInterface, std::string_view message)
 {
     std::size_t nSentBytes = 0;
