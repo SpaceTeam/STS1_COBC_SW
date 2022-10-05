@@ -9,10 +9,10 @@
 
 namespace sts1cobcsw::periphery
 {
-
 class EduUartInterface
 {
-    RODOS::HAL_UART mEduUart_ = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
+    RODOS::HAL_UART mEduUart_ =
+        RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
     bool mIsInitialized_ = false;
 
     /**
@@ -27,7 +27,7 @@ class EduUartInterface
 
     /**
      * @brief Flush the EDU UART read buffer.
-     * 
+     *
      * This can be used to clear all buffer data after an error to request
      * a resend.
      */

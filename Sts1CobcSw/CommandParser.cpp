@@ -70,7 +70,13 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
 
     // NOLINTNEXTLINE
-    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %ld/%ld/%ld %ld:%ld:%f\n", day, month, year,hour, min, sec);
+    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %ld/%ld/%ld %ld:%ld:%f\n",
+                  day,
+                  month,
+                  year,
+                  hour,
+                  min,
+                  sec);
 
     constexpr auto typeIndex = 5;
     auto commandId = command[typeIndex];

@@ -104,7 +104,7 @@ auto CopyTo(std::span<std::byte> buffer, ts::size_t * const position, auto value
  *
  * @param buffer The buffer our data is copied from.
  * @param position The position in the buffer our data is copied from.
- * @param value The variable that will hold our copied value. 
+ * @param value The variable that will hold our copied value.
  */
 template<std::size_t size>
 auto CopyFrom(etl::string<size> const & buffer, ts::size_t * const position, auto * value)
@@ -115,10 +115,10 @@ auto CopyFrom(etl::string<size> const & buffer, ts::size_t * const position, aut
 }
 
 /*
-* @brief A concept to ensure an object is writable
-*
-* For RODOS, this applies to HAL_UART and HAL_SPI classes.
-*/
+ * @brief A concept to ensure an object is writable
+ *
+ * For RODOS, this applies to HAL_UART and HAL_SPI classes.
+ */
 template<typename T>
 concept Writable = requires(T t, void const * sendBuf, std::size_t len)
 {

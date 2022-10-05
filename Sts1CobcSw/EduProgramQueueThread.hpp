@@ -25,5 +25,5 @@ using QueueEntry = std::tuple<uint16_t, uint16_t, uint32_t, uint16_t>;
 // Queue ID		: 2 bytes
 // Status		: A string ? with max 2 characters
 constexpr auto statusMaxSize = 2;
-using StatusHistoryEntry  = std::tuple<uint16_t, uint16_t, etl::string<statusMaxSize>>;
+using StatusHistoryEntry = std::tuple<uint16_t, uint16_t, etl::string<statusMaxSize>>;
 }

@@ -42,11 +42,10 @@ inline auto WriteTo(Writable auto * communicationInterface, std::span<T, size> d
 
     while(nSentBytes < bytes.size())
     {
-        nSentBytes += communicationInterface->write(bytes.data() + nSentBytes,
-                                                           bytes.size() - nSentBytes);
+        nSentBytes +=
+            communicationInterface->write(bytes.data() + nSentBytes, bytes.size() - nSentBytes);
     }
 }
-
 
 
 inline auto WriteTo(Writable auto * communicationInterface, std::string_view message)

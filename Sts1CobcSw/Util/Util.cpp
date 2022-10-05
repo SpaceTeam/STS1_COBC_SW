@@ -6,7 +6,6 @@
 
 namespace sts1cobcsw::util
 {
-
 auto BytesToUint16(uint8_t msb, uint8_t lsb) -> uint16_t
 {
     uint16_t retVal = 0U | static_cast<uint16_t>(msb << oneByteWidth) | lsb;
@@ -62,8 +61,8 @@ auto Crc32(std::span<uint8_t> data) -> uint32_t
     for(size_t i = 0; i < nBytes; i++)
     {
         const uint32_t lookupIndex = ((crc32 >> 24U) ^ data[i]) & 0xFFU;
-        crc32 =
-            (crc32 << oneByteWidth) ^ crcTable[lookupIndex];  // CRCTable is an array of 256 32-bit constants
+        crc32 = (crc32 << oneByteWidth)
+              ^ crcTable[lookupIndex];  // CRCTable is an array of 256 32-bit constants
     }
 
     return crc32;

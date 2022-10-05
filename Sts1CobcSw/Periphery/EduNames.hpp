@@ -1,4 +1,5 @@
 #include <timemodel.h>
+
 #include <cstddef>
 
 namespace sts1cobcsw::periphery

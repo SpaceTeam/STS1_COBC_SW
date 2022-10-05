@@ -14,9 +14,9 @@
 namespace sts1cobcsw
 {
 using RODOS::AT;
+using RODOS::MILLISECONDS;
 using RODOS::NOW;
 using RODOS::SECONDS;
-using RODOS::MILLISECONDS;
 // Define our Edu Program Queue
 etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue;
 

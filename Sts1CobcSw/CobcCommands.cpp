@@ -1,7 +1,5 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
-
 #include <Sts1CobcSw/CommandParser.hpp>
-
 
 #include <rodos_no_using_namespace.h>
 
@@ -27,7 +25,8 @@ void TurnEduOff()
     eduEnabledGpio.setPins(1U);
 }
 
-void UpdateUtcOffset() {
+void UpdateUtcOffset()
+{
     PRINTF("Update UTC offset");
     // TODO
 }

@@ -10,7 +10,6 @@
 
 namespace sts1cobcsw::periphery
 {
-
 EduUartInterface::EduUartInterface()
 {
     // EDU PDD agrees with the default baudrate (115200 bit/s)
