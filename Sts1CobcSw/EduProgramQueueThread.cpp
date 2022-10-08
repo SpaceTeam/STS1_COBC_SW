@@ -60,11 +60,19 @@ class EduQueueThread : public RODOS::StaticThread<>
 
     void run() override
     {
-        for(;;)
+        while(true)
         {
             RODOS::PRINTF("Hello from EduQueueThread\n");
 
+            if(eduProgramQueue.empty())
+            {
+                RODOS::PRINTF("Edu Program Queue is empty, thread set to sleep until end of time");
+                AT(RODOS::END_OF_TIME);
+            }
+
             constexpr auto eduCommunicationDelay = 2 * SECONDS;
+
+            // WIP, for testing purpose
             auto const startTime = NOW() + 3 * SECONDS;
             auto const delayTime = std::max(startTime - NOW(), 0 * MILLISECONDS);
 
