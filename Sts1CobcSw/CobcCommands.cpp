@@ -30,4 +30,11 @@ void UpdateUtcOffset()
     PRINTF("Update UTC offset");
     // TODO
 }
+
+void BuildQueue() {
+    PRINTF("Build a program queue");
+    // TODO
+}
+
+
 }

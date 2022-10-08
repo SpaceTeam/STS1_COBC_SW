@@ -14,4 +14,5 @@ constexpr auto commandSize = 6_usize;
 void TurnEduOn();
 void TurnEduOff();
 void UpdateUtcOffset();
+void BuildQueue();
 }

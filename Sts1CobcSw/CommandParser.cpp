@@ -17,6 +17,7 @@
 #include <etl/string.h>
 #include <etl/string_view.h>
 
+#include <cinttypes>
 #include <cstring>
 
 
@@ -37,6 +38,27 @@ namespace ts = type_safe;
 using ts::operator""_usize;
 
 constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
+
+// Helper function to print time to uart_stdout;
+void PrintTime()
+{
+    int32_t year = 0;
+    int32_t month = 0;
+    int32_t day = 0;
+    int32_t hour = 0;
+    int32_t min = 0;
+    double sec = 0;
+
+    auto sysUTC = RODOS::sysTime.getUTC();
+    RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
+    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %ld/%ld/%ld %ld:%ld:%f\n",
+                  day,    // NOLINT
+                  month,  // NOLINT
+                  year,   // NOLINT
+                  hour,   // NOLINT
+                  min,    // NOLINT
+                  sec);
+}
 
 auto DispatchCommand(const etl::string<commandSize.get()> & command)
 {
@@ -59,24 +81,6 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
 
     // Set UTC :
     RODOS::sysTime.setUTC(utcStamp - rodosUnixOffset);
-
-    int32_t year = 0;
-    int32_t month = 0;
-    int32_t day = 0;
-    int32_t hour = 0;
-    int32_t min = 0;
-    double sec = 0;
-    auto sysUTC = RODOS::sysTime.getUTC();
-    RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
-
-    // NOLINTNEXTLINE
-    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %ld/%ld/%ld %ld:%ld:%f\n",
-                  day,
-                  month,
-                  year,
-                  hour,
-                  min,
-                  sec);
 
     constexpr auto typeIndex = 5;
     auto commandId = command[typeIndex];
@@ -102,6 +106,12 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
                 UpdateUtcOffset();
                 return;
             }
+            case '4':
+            {
+                BuildQueue();
+                return;
+            }
+
             default:
             {
                 break;
