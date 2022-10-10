@@ -108,7 +108,12 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
             }
             case '4':
             {
+                // Program ID 	: 2 bytes, according to EDU PDD 6.1.1
+                // Queue ID 	: 2 bytes, according to EDU PDD 6.1.2
+                // Start Time 	: 4 bytes, EPOCH time
+                // Timeout 		: 2 bytes, according to EDU PDD 6.1.2
                 BuildQueue();
+
                 return;
             }
 

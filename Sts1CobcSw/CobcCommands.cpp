@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
 #include <Sts1CobcSw/CommandParser.hpp>
+#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -31,9 +32,16 @@ void UpdateUtcOffset()
     // TODO
 }
 
+static TimeEventTest te01;
+
 void BuildQueue() {
+
     PRINTF("Build a program queue");
-    // TODO
+
+    // TODO actual parsing of the queue
+        
+    // When the queue is parsed, we can resume the EduProgramQueueThread
+    te01.handle();
 }
 
 

@@ -17,6 +17,7 @@ using RODOS::AT;
 using RODOS::MILLISECONDS;
 using RODOS::NOW;
 using RODOS::SECONDS;
+
 // Define our Edu Program Queue
 etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue;
 
@@ -45,6 +46,7 @@ auto GetTimeout(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint
 auto eduUartInterface = periphery::EduUartInterface();
 
 auto currentQueueId = 0U;
+auto endOfQueueReached = false;
 
 class EduQueueThread : public RODOS::StaticThread<>
 {
@@ -112,5 +114,26 @@ class EduQueueThread : public RODOS::StaticThread<>
     }
 };
 
-auto const eduQueueThread = EduQueueThread();
+auto eduQueueThread = EduQueueThread();
+
+/*
+class TimeEventTest : public RODOS::TimeEvent
+{
+  public:
+    void handle() override
+    {
+        RODOS::PRINTF("Time Event at %3.9f\n", RODOS::SECONDS_NOW());
+        eduQueueThread.resume();
+        RODOS::PRINTF("Testwaiter resumed from me\n");
+    }
+};*/
+
+void TimeEventTest::handle()
+{
+    RODOS::PRINTF("Time Event at %3.9f\n", RODOS::SECONDS_NOW());
+    eduQueueThread.resume();
+    RODOS::PRINTF("EduQueueThread resumed from me\n");
+}
+
+
 }
