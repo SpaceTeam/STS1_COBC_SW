@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/EduProgramQueue.hpp>
+#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 
 #include <rodos.h>
 

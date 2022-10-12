@@ -82,6 +82,7 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     // Set UTC :
     RODOS::sysTime.setUTC(utcStamp - rodosUnixOffset);
 
+    // 1 byte for type index
     constexpr auto typeIndex = 5;
     auto commandId = command[typeIndex];
 
@@ -112,6 +113,31 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
                 // Queue ID 	: 2 bytes, according to EDU PDD 6.1.2
                 // Start Time 	: 4 bytes, EPOCH time
                 // Timeout 		: 2 bytes, according to EDU PDD 6.1.2
+                constexpr auto queueEntrySize = 10;
+
+
+                position = 6U;
+                int16_t length = 0;
+                util::CopyFrom(command, &position, &length);
+
+                if(length % queueEntrySize != 0)
+                {
+                    break;
+                }
+
+                for(int i = 0; i < length / 10; i = i + 10)
+                {
+                    int16_t a = 0;
+                    util::CopyFrom(command, &position, &a);
+                    int16_t b = 0;
+                    util::CopyFrom(command, &position, &b);
+                    int64_t c = 0;
+                    util::CopyFrom(command, &position, &c);
+                    int16_t d = 0;
+                    util::CopyFrom(command, &position, &d);
+                }
+
+
                 BuildQueue();
 
                 return;
