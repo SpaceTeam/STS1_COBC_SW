@@ -1,5 +1,6 @@
-Element 0 in entry 0 is : 2
-Element 1 in entry 0 is : 1
-Element 2 in entry 0 is : 200
-Element 3 in entry 0 is : 42
+Our timesamp is : 1672531200000000000
+DateUTC(DD/MM/YYYY HH:MIN:SS) : 1/1/2023 0:0:0.000
+command ID is character : 4
+Length of data is 30
+Number of queue entries : 3
 hw_resetAndReboot() -> exit

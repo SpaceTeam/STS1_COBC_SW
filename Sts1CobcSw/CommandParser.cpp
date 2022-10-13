@@ -19,11 +19,13 @@
 
 #include <cinttypes>
 #include <cstring>
+#include <span>
 
 
 namespace RODOS
 {
 #if defined(LINUX_SYSTEM)
+// TODO: remove this
 // NOLINTNEXTLINE(readability-identifier-naming)
 HAL_UART uart_stdout(RODOS::UART_IDX2);
 #elif defined(GENERIC_SYSTEM)
@@ -37,9 +39,11 @@ namespace sts1cobcsw
 namespace ts = type_safe;
 using ts::operator""_usize;
 
+
+// Number of seconds between 1st January 1970 and 1st January 2000
 constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 
-// Helper function to print time to uart_stdout;
+//! @brief Print utc system time in human readable format
 void PrintTime()
 {
     int32_t year = 0;
@@ -60,16 +64,15 @@ void PrintTime()
                   sec);
 }
 
+
 auto DispatchCommand(const etl::string<commandSize.get()> & command)
 {
-    // TODO : WIP
-
     auto targetIsCobc = true;
     ts::size_t position = 1_usize;
-
+    uint32_t utc = 0;
+    int8_t commandId = 0;
 
     // Read the 4 bytes value
-    uint32_t utc = 0;
     util::CopyFrom(command, &position, &utc);
     // Convert it to 8 bytes
     auto utcStamp = static_cast<int64_t>(utc);
@@ -82,10 +85,10 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     // Set UTC :
     RODOS::sysTime.setUTC(utcStamp - rodosUnixOffset);
 
-    // 1 byte for type index
-    constexpr auto typeIndex = 5;
-    auto commandId = command[typeIndex];
+    // Check that system UTC is correct
+    PrintTime();
 
+    util::CopyFrom(command, &position, &commandId);
     RODOS::PRINTF("command ID is character : %c\n", commandId);
 
     if(targetIsCobc)
@@ -109,14 +112,8 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
             }
             case '4':
             {
-                // Program ID 	: 2 bytes, according to EDU PDD 6.1.1
-                // Queue ID 	: 2 bytes, according to EDU PDD 6.1.2
-                // Start Time 	: 4 bytes, EPOCH time
-                // Timeout 		: 2 bytes, according to EDU PDD 6.1.2
                 constexpr auto queueEntrySize = 10;
 
-
-                position = 6U;
                 int16_t length = 0;
                 util::CopyFrom(command, &position, &length);
 
@@ -125,20 +122,22 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
                     break;
                 }
 
-                for(int i = 0; i < length / 10; i = i + 10)
+                auto const nbQueueEntries = length / queueEntrySize;
+                RODOS::PRINTF("Number of queue entries : %d", nbQueueEntries);
+
+                for(auto i = 0; i < nbQueueEntries; ++i)
                 {
-                    int16_t a = 0;
-                    util::CopyFrom(command, &position, &a);
-                    int16_t b = 0;
-                    util::CopyFrom(command, &position, &b);
-                    int64_t c = 0;
-                    util::CopyFrom(command, &position, &c);
-                    int16_t d = 0;
-                    util::CopyFrom(command, &position, &d);
+                    int16_t progId = 0;
+                    util::CopyFrom(command, &position, &progId);
+                    int16_t queueId = 0;
+                    util::CopyFrom(command, &position, &queueId);
+                    int64_t startTime = 0;
+                    util::CopyFrom(command, &position, &startTime);
+                    int16_t maxRunTime = 0;
+                    util::CopyFrom(command, &position, &maxRunTime);
+
+                    // TODO: AddQueueEntry(std::tie(progId, queueId, startTime, maxRunTime));
                 }
-
-
-                BuildQueue();
 
                 return;
             }
@@ -232,60 +231,12 @@ class GsFaker : public RODOS::StaticThread<>
     // 06 : Return list of files in the COBC file system.
     // 07 : Return list of programs on EDU.
 
-    // TODO move this to a .hpp file
-    static constexpr auto generalPurposeUpload = 0x01;
-    static constexpr auto buildQueue = 0x02;
-    static constexpr auto returnAvailableResults = 0x03;
-    static constexpr auto returnSpecificResult = 0x04;
-    static constexpr auto deleteFromCobc = 0x05;
-    static constexpr auto listCobcFiles = 0x06;
-    static constexpr auto listEduProgram = 0x07;
-
     void run() override
     {
-        // Start Byte
-        constexpr auto startByte = '$';
-        // 1st January 2022, for testing purpose
-        constexpr ts::int32_t utcStamp = 1640991600;
-        // Type
-        constexpr auto type = ts::narrow_cast<ts::int8_t>(generalPurposeUpload);
-        // Length
-        constexpr auto length = ts::narrow_cast<ts::int16_t>(1);
-        // Value
-        constexpr auto value = ts::narrow_cast<ts::int8_t>(42);
-        // Stop Byte
-        constexpr auto stopByte = '\n';
-        uint8_t checksum = 0;
+        // Create a false command and parse it directly
+        // DispatchCommandTest();
+        RODOS::hwResetAndReboot();
 
-        // Trying to define length as sizeof(value.get()) results in an error
-        // (this is not a constexpr) and a warning (sizeof usage considered suspicious).
-        // So we have to check that :
-        RODOS_ASSERT_IFNOT_RETURN_VOID(sizeof(value) == length.get())
-
-        constexpr auto gsCommandSize = sizeof(startByte) + sizeof(utcStamp) + sizeof(type)
-                                     + sizeof(length) + sizeof(value) + sizeof(checksum)
-                                     + sizeof(stopByte);
-
-        auto command = std::array<std::byte, gsCommandSize>{};
-        auto position = 0_usize;
-        util::CopyTo(command, &position, startByte);
-        util::CopyTo(command, &position, utcStamp);
-        util::CopyTo(command, &position, type);
-        util::CopyTo(command, &position, length);
-        util::CopyTo(command, &position, value);
-        checksum = ComputeChecksum(std::span(command));
-        util::CopyTo(command, &position, checksum);
-        util::CopyTo(command, &position, stopByte);
-
-        // Stop printing stuff
-        RODOS::AT(RODOS::END_OF_TIME);
-
-        TIME_LOOP(0, 2 * RODOS::SECONDS)
-        {
-            // RODOS::PRINTF("Writing to uart_stdout");
-            util::WriteTo(&RODOS::uart_stdout, std::span(command));
         }
-    }
 } gsFaker;
-
 }

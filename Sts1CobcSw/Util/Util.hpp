@@ -114,6 +114,15 @@ auto CopyFrom(etl::string<size> const & buffer, ts::size_t * const position, aut
     *position = newPosition;
 }
 
+auto CopyFrom(std::span<std::byte> buffer, ts::size_t * const position, auto * value)
+{
+    auto newPosition = *position + sizeof(*value);
+    std::memcpy(value, &buffer[(*position).get()], sizeof(*value));
+    *position = newPosition;
+}
+
+
+
 /*
  * @brief A concept to ensure an object is writable
  *
