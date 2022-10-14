@@ -15,7 +15,7 @@ class HelloDummy : public StaticThread<>
 
         uint16_t progID = 2;
         uint16_t queueID = 1;
-        // TODO put some real time here, this is from dataflow game
+        // TODO: put some real time here, this is from dataflow game
         constexpr uint64_t startTime = 200;
         constexpr uint16_t timeout = 42;
 

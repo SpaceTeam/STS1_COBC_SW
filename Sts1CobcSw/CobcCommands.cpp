@@ -4,7 +4,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-// TODO why is this here ?
+// TODO: why is this here ?
 //#include <stm32f4xx_rtc.h>
 
 using RODOS::PRINTF;
@@ -29,17 +29,16 @@ void TurnEduOff()
 void UpdateUtcOffset()
 {
     PRINTF("Update UTC offset");
-    // TODO
 }
 
 static TimeEventTest te01;
 
-void BuildQueue() {
-
+void BuildQueue()
+{
     PRINTF("Build a program queue");
 
-    // TODO actual parsing of the queue
-        
+    // TODO: The actual parsing is done in command parser, call this function at the end or move
+    // this time event handle there
     // When the queue is parsed, we can resume the EduProgramQueueThread
     te01.handle();
 }

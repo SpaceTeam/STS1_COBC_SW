@@ -93,7 +93,7 @@ class EduUartInterface
      */
     auto GetStatus() -> std::tuple<EduStatusType, uint16_t, uint16_t, uint8_t, EduErrorCode>;
 
-    // TODO
+    // TODO:
     // auto StoreArchive() -> int32_t;
     // auto StopProgram() -> int32_t;
     // auto GetStatus() -> int32_t;

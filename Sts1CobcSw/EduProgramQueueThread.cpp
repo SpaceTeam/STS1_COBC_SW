@@ -94,7 +94,7 @@ class EduQueueThread : public RODOS::StaticThread<>
             // Suspend until delay time - 2 seconds
             AT(NOW() + delayTime - eduCommunicationDelay);
 
-            // TODO : Send UTC estimation date to edu
+            // TODO: Send UTC estimation date to edu
             // eduUartInterface.updateTime();
 
             // Start Process

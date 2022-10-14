@@ -72,20 +72,10 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     uint32_t utc = 0;
     int8_t commandId = 0;
 
-    // Read the 4 bytes value
     util::CopyFrom(command, &position, &utc);
-    // Convert it to 8 bytes
     auto utcStamp = static_cast<int64_t>(utc);
-    // Convert it to nanoseconds.
     utcStamp = utcStamp * RODOS::SECONDS;
-
-    // NOLINTNEXTLINE
-    RODOS::PRINTF("Our timesamp is : %lld\n", utcStamp);
-
-    // Set UTC :
     RODOS::sysTime.setUTC(utcStamp - rodosUnixOffset);
-
-    // Check that system UTC is correct
     PrintTime();
 
     util::CopyFrom(command, &position, &commandId);
@@ -112,6 +102,7 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
             }
             case '4':
             {
+                // TODO: Get that value from the using queueEntry
                 constexpr auto queueEntrySize = 10;
 
                 int16_t length = 0;
@@ -201,7 +192,7 @@ auto ComputeChecksum(std::span<std::byte, size> data)
     static_assert(size >= 3,
                   "The size of 'beacon' must be >= 3 because the start, stop and "
                   "checksum bytes are not included in the computation.");
-    // TODO fix this mess with type safe
+    // TODO: fix this mess with type safe
     return static_cast<uint8_t>(std::accumulate(std::begin(data) + 1,
                                                 std::end(data) - 2,
                                                 0,
