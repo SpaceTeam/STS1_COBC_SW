@@ -1,27 +1,27 @@
 #include <Sts1CobcSw/Hal/Gpio.hpp>
 
-#include <rodos.h>
 
 namespace sts1cobcsw::hal
 {
-auto InitPin(RODOS::HAL_GPIO & pin, PinType pinType, type_safe::bool_t initVal) -> int32_t
+void SetPinDirection(RODOS::HAL_GPIO * pin, PinDirection direction)
 {
-    bool isOutput = (pinType == PinType::output);
-    uint32_t initValUint = (initVal ? 1U : 0U);
-    return pin.init(isOutput, 1, initValUint);
-}
-
-void SetPin(RODOS::HAL_GPIO & pin, type_safe::bool_t pinVal)
-{
-    uint32_t pinValUint = (pinVal ? 1U : 0U);
-    pin.setPins(pinValUint);
+    auto isOutput = (direction == PinDirection::out);
+    pin->reset();
+    pin->init(isOutput, 1);
 }
 
 
-auto ReadPin(RODOS::HAL_GPIO & pin) -> type_safe::bool_t
+void SetPin(RODOS::HAL_GPIO & pin, PinState state)
 {
-    auto pinVal = pin.readPins();
-    type_safe::bool_t boolVal = (pinVal != 0U);
-    return boolVal;
+    auto pinValue = (state == PinState::set ? 1U : 0U);
+    pin.setPins(pinValue);
+}
+
+
+auto ReadPin(RODOS::HAL_GPIO & pin)
+{
+    auto pinValue = pin.readPins();
+    auto pinState = (pinValue == 0U) ? PinState::reset : PinState::set;
+    return pinState;
 }
 }

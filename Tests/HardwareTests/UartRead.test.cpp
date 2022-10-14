@@ -36,22 +36,22 @@ class UartReadTest : public RODOS::StaticThread<>
 
         auto toggle = true;
 
-        TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
+        TIME_LOOP(0, 100 * RODOS::MILLISECONDS)
         {
             // Toggle LED to ensure MCU activity
             hal::SetPin(greenLed, toggle);
 
             // Check EDU UART
-            uint8_t eduChar = 0;
+            char eduChar = 0;
             if(eduUart.read(&eduChar, 1) > 0)
             {
-                PRINTF("%c", eduChar);
+                RODOS::PRINTF("%c", eduChar);
             }
 
             uint8_t uciChar = 0;
             if(uciUart.read(&uciChar, 1) > 0)
             {
-                PRINTF("%c", uciChar);
+                RODOS::PRINTF("%c", uciChar);
             }
 
             toggle = not toggle;

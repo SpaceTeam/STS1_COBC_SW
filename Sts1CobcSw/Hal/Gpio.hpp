@@ -1,49 +1,31 @@
 #pragma once
 
-#include <Sts1CobcSw/Hal/PinNames.hpp>
-#include <type_safe/types.hpp>
-
-#include <rodos.h>
+#include <rodos_no_using_namespace.h>
 
 #include <cstdint>
 
+
 namespace sts1cobcsw::hal
 {
-/**
- * @brief The pin types of a GPIO pin.
- */
-enum class PinType
+enum class PinDirection
 {
-    input,
-    output
+    in,
+    out
 };
 
-/**
- * @brief A wrapper for the init function of a GPIO pin. Only allows for single pins to be
- * initialized.
- *
- * @param pin The pin to be initialized
- * @param pinType The pin type (input/output)
- * @param initVal The initial value for output pins
- *
- * @returns Returns 0 on success, -1 on failure
- */
-auto InitPin(RODOS::HAL_GPIO & pin, PinType pinType, type_safe::bool_t initVal) -> int32_t;
 
-/**
- * @brief A wrapper for the setPins function of a GPIO pin.
- *
- * @param pin The pin to be set
- * @param pinVal The value to be set
- */
-void SetPin(RODOS::HAL_GPIO & pin, type_safe::bool_t pinVal);
+enum class PinState
+{
+    set,
+    reset
+};
 
-/**
- * @brief A wrapper for the readPins function of a GPIO pin.
- *
- * @param pin The pin to be read
- *
- * @returns true if the pin is set high, false otherwise
- */
-auto ReadPin(RODOS::HAL_GPIO & pin) -> type_safe::bool_t;
+
+void SetPinDirection(RODOS::HAL_GPIO * pin, PinDirection direction);
+
+
+void SetPin(RODOS::HAL_GPIO * pin, PinState state);
+
+
+auto ReadPin(RODOS::HAL_GPIO const & pin) -> PinState;
 }
