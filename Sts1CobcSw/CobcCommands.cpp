@@ -16,6 +16,7 @@ void TurnEduOn()
 {
     PRINTF("*Turn on EDU*\n");
     // The enable pin uses inverted logic: 0 = enable
+    // Set EduShouldBePowered auf True
     hal::SetPin(eduEnableGpio, false);
 }
 
@@ -24,6 +25,7 @@ void TurnEduOff()
 {
     PRINTF("*Turn off EDU*\n");
     // The enable pin uses inverted logic: 1 = disable
+    // Set EduShouldBePowered auf False
     hal::SetPin(eduEnableGpio, true);
 }
 }
