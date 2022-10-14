@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
 #include <Sts1CobcSw/CommandParser.hpp>
+#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Topics.hpp>
 
 #include <Sts1CobcSw/Hal/Communication.hpp>
@@ -17,9 +18,9 @@
 #include <etl/string.h>
 #include <etl/string_view.h>
 
-#include <cinttypes>
 #include <cstring>
 #include <span>
+#include <tuple>
 
 
 namespace RODOS
@@ -38,7 +39,6 @@ namespace sts1cobcsw
 {
 namespace ts = type_safe;
 using ts::operator""_usize;
-
 
 // Number of seconds between 1st January 1970 and 1st January 2000
 constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
@@ -136,8 +136,9 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
                     int16_t maxRunTime = 0;
                     util::CopyFrom(command, &position, &maxRunTime);
 
-                    // TODO: AddQueueEntry(std::tie(progId, queueId, startTime, maxRunTime));
+                    AddQueueEntry(std::make_tuple(progId, queueId, startTime, maxRunTime));
                 }
+                ResetQueueId();
 
                 return;
             }
@@ -210,33 +211,4 @@ auto ComputeChecksum(std::span<std::byte, size> data)
                                                     return sum + x;
                                                 }));
 }
-
-class GsFaker : public RODOS::StaticThread<>
-{
-    // Proposal for the command format :
-    //  Start Byte                                  -> 1 byte
-    //  Timestamp                                   -> 4 bytes
-    //  Type (or Tag, what kind of command this is) -> 1 byte
-    //  Length (the length of the data)             -> 2 bytes
-    //  Value (the actual value)                    -> Length bytes
-    //  checksum                                    -> 1 byte
-    //  Stop Byte                                   -> 1 byte
-
-    // For instance, a few tags
-    // 01 : General Purpose Upload.
-    // 02 : Build Queue.
-    // 03 : Return List of available results.
-    // 04 : Return specific results.
-    // 05 : Delete file from COBC file system.
-    // 06 : Return list of files in the COBC file system.
-    // 07 : Return list of programs on EDU.
-
-    void run() override
-    {
-        // Create a false command and parse it directly
-        // DispatchCommandTest();
-        RODOS::hwResetAndReboot();
-
-        }
-} gsFaker;
 }

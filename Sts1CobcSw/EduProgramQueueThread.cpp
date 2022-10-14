@@ -23,9 +23,19 @@ etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue;
 
 RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
 
-auto AddQueueEntry(const QueueEntry & eduEntry)
+auto currentQueueId = 0U;
+auto endOfQueueReached = false;
+
+void AddQueueEntry(const QueueEntry & eduEntry)
 {
     eduProgramQueue.push_back(eduEntry);
+}
+
+//! @brief Set QueueId back to 0 and endOfQueueReached back to false
+void ResetQueueId()
+{
+    currentQueueId = 0U;
+    endOfQueueReached = false;
 }
 
 auto GetProgId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
@@ -45,8 +55,6 @@ auto GetTimeout(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint
 
 auto eduUartInterface = periphery::EduUartInterface();
 
-auto currentQueueId = 0U;
-auto endOfQueueReached = false;
 
 class EduQueueThread : public RODOS::StaticThread<>
 {
@@ -69,6 +77,11 @@ class EduQueueThread : public RODOS::StaticThread<>
             if(eduProgramQueue.empty())
             {
                 RODOS::PRINTF("Edu Program Queue is empty, thread set to sleep until end of time");
+                AT(RODOS::END_OF_TIME);
+            }
+            else if(endOfQueueReached)
+            {
+                RODOS::PRINTF("End of queue reached, thread set to sleep until end of time");
                 AT(RODOS::END_OF_TIME);
             }
 
@@ -107,6 +120,7 @@ class EduQueueThread : public RODOS::StaticThread<>
             currentQueueId++;
             if(currentQueueId >= eduProgramQueue.size())
             {
+                endOfQueueReached = true;
                 // Suspend thread forever
                 AT(RODOS::END_OF_TIME);
             }
@@ -115,18 +129,6 @@ class EduQueueThread : public RODOS::StaticThread<>
 };
 
 auto eduQueueThread = EduQueueThread();
-
-/*
-class TimeEventTest : public RODOS::TimeEvent
-{
-  public:
-    void handle() override
-    {
-        RODOS::PRINTF("Time Event at %3.9f\n", RODOS::SECONDS_NOW());
-        eduQueueThread.resume();
-        RODOS::PRINTF("Testwaiter resumed from me\n");
-    }
-};*/
 
 void TimeEventTest::handle()
 {

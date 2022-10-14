@@ -12,7 +12,6 @@ namespace sts1cobcsw
 constexpr auto eduProgramQueueSize = 20;
 constexpr auto statusHistorySize = 20;
 
-
 // A queue consists of :
 // Program ID 	: 2 bytes, according to EDU PDD 6.1.1
 // Queue ID 	: 2 bytes, according to EDU PDD 6.1.2
@@ -20,6 +19,10 @@ constexpr auto statusHistorySize = 20;
 // Timeout 		: 2 bytes, according to EDU PDD 6.1.2
 // That adds up to 10 bytes in total
 using QueueEntry = std::tuple<uint16_t, uint16_t, uint32_t, uint16_t>;
+
+void AddQueueEntry(const QueueEntry & eduEntry);
+
+void ResetQueueId();
 
 // A stus and history entry consists of :
 // Progam ID 	: 2 bytes
@@ -30,10 +33,7 @@ using StatusHistoryEntry = std::tuple<uint16_t, uint16_t, etl::string<statusMaxS
 
 class TimeEventTest : public RODOS::TimeEvent
 {
-	public:
-	void handle() override;
+  public:
+    void handle() override;
 };
-
-
-
 }
