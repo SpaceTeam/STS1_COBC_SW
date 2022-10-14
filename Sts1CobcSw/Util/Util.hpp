@@ -114,6 +114,7 @@ auto CopyFrom(etl::string<size> const & buffer, ts::size_t * const position, aut
     *position = newPosition;
 }
 
+// TODO: documentation
 auto CopyFrom(std::span<std::byte> buffer, ts::size_t * const position, auto * value)
 {
     auto newPosition = *position + sizeof(*value);

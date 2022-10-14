@@ -72,6 +72,7 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     uint32_t utc = 0;
     int8_t commandId = 0;
 
+    // TODO: UnixToRodosTime
     util::CopyFrom(command, &position, &utc);
     auto utcStamp = static_cast<int64_t>(utc);
     utcStamp = utcStamp * RODOS::SECONDS;
@@ -83,6 +84,8 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
 
     if(targetIsCobc)
     {
+        // TODO: Use an enum, or better names
+        // enum class char
         switch(commandId)
         {
             case '1':
@@ -102,7 +105,9 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
             }
             case '4':
             {
-                // TODO: Get that value from the using queueEntry
+                // TODO: Factorise
+                // elt::vector queueEntries ParseEntry()
+                // TODO: Get that value from the 'using queueEntry = '
                 constexpr auto queueEntrySize = 10;
 
                 int16_t length = 0;
@@ -127,16 +132,12 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
                     int16_t maxRunTime = 0;
                     util::CopyFrom(command, &position, &maxRunTime);
 
+                    // Not a tuple anymore
                     AddQueueEntry(std::make_tuple(progId, queueId, startTime, maxRunTime));
                 }
-                ResetQueueId();
+                ResetQueueIndex();
 
                 return;
-            }
-
-            default:
-            {
-                break;
             }
         }
     }

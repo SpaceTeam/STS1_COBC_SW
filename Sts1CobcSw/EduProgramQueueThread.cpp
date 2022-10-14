@@ -23,8 +23,8 @@ etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue;
 
 RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
 
-auto currentQueueId = 0U;
-auto endOfQueueReached = false;
+auto queueIndex = 0U;
+auto endOfQueueIsReached = false;
 
 void AddQueueEntry(const QueueEntry & eduEntry)
 {
@@ -32,23 +32,26 @@ void AddQueueEntry(const QueueEntry & eduEntry)
 }
 
 //! @brief Set QueueId back to 0 and endOfQueueReached back to false
-void ResetQueueId()
+void ResetQueueIndex()
 {
-    currentQueueId = 0U;
-    endOfQueueReached = false;
+    // The queue ID is not the index,
+    queueIndex = 0U;
+    endOfQueueIsReached = false;
 }
 
-auto GetProgId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
+// const to the right of the type
+// TODO: Not using at()
+auto ProgramId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
 {
     return std::get<0>(queue.at(index));
 }
 
-auto GetQueueId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
+auto QueueId(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
 {
     return std::get<1>(queue.at(index));
 }
 
-auto GetTimeout(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
+auto Timeout(const etl::vector<QueueEntry, eduProgramQueueSize> & queue, uint32_t index)
 {
     return std::get<3>(queue.at(index));
 }
@@ -62,6 +65,7 @@ class EduQueueThread : public RODOS::StaticThread<>
     {
         int16_t progId = 1;
         int16_t queueId = 3;
+        // TODO: constexpr variable
         int64_t startTime = (4 + 4 + 2) * SECONDS;
         int64_t maxRunTime = 4 * SECONDS;
 
@@ -79,7 +83,9 @@ class EduQueueThread : public RODOS::StaticThread<>
                 RODOS::PRINTF("Edu Program Queue is empty, thread set to sleep until end of time");
                 AT(RODOS::END_OF_TIME);
             }
-            else if(endOfQueueReached)
+            // TODO:
+            // if vector.size() == currentQueueId
+            else if(endOfQueueIsReached)
             {
                 RODOS::PRINTF("End of queue reached, thread set to sleep until end of time");
                 AT(RODOS::END_OF_TIME);
@@ -87,41 +93,48 @@ class EduQueueThread : public RODOS::StaticThread<>
 
             constexpr auto eduCommunicationDelay = 2 * SECONDS;
 
-            // WIP, for testing purpose
+            // TODO: This is for testing purpose, next step is fetching the real time from the build
+            // queue command
+            // max(startTime - toUnix(getUTC()))
             auto const startTime = NOW() + 3 * SECONDS;
             auto const delayTime = std::max(startTime - NOW(), 0 * MILLISECONDS);
 
             // Suspend until delay time - 2 seconds
             AT(NOW() + delayTime - eduCommunicationDelay);
 
-            // TODO: Send UTC estimation date to edu
-            // eduUartInterface.updateTime();
+            // TODO: Send UTC estimation date to edu (Unix)
+            // auto sysUTC = RODOS::sysTime.getUTC();
+            // sysUTC = sysUtC / RODOS::NANOSECONDS
+            // sysUTC = sysUtc + rodosOffset
+            // eduUartInterface.updateTime(sysUtc);
 
             // Start Process
-            auto const programId = GetProgId(eduProgramQueue, currentQueueId);
-            auto const queueId = GetQueueId(eduProgramQueue, currentQueueId);
-            auto const timeout = GetTimeout(eduProgramQueue, currentQueueId);
+            // TODO: Name the function after what it returns
+            auto const programId = ProgramId(eduProgramQueue, queueIndex);
+            auto const queueId = QueueId(eduProgramQueue, queueIndex);
+            auto const timeout = Timeout(eduProgramQueue, queueIndex);
 
             auto eduAnswer = eduUartInterface.ExecuteProgram(programId, queueId, timeout);
 
             // Suspend Self for execution time
-            auto const exetime = NOW() + timeout + 2 * SECONDS;
-            AT(NOW() + exetime);
+            // TODO: Check that timeout is correctly converted in seconds
+            auto const executionTime = timeout + 2 * SECONDS;
+            AT(NOW() + executionTime);
 
             // Create status and history entry and set status
-            etl::string<statusMaxSize> status = "1x";
-            if(eduAnswer == periphery::EduErrorCode::success)
-            {
-                status = "1";
-            }
-            statusHistory.put(std::make_tuple(programId, queueId, status));
+            // Use enums
+            // etl::string<statusMaxSize> status = "1x";
+            // if(eduAnswer == periphery::EduErrorCode::success)
+            //{
+            //    status = "1";
+            //}
+            // statusHistory.put(std::make_tuple(programId, queueId, status));
 
             // Set current Queue ID to next
-            currentQueueId++;
-            if(currentQueueId >= eduProgramQueue.size())
+            queueIndex++;
+            if(queueIndex >= eduProgramQueue.size())
             {
-                endOfQueueReached = true;
-                // Suspend thread forever
+                endOfQueueIsReached = true;
                 AT(RODOS::END_OF_TIME);
             }
         }
@@ -130,7 +143,7 @@ class EduQueueThread : public RODOS::StaticThread<>
 
 auto eduQueueThread = EduQueueThread();
 
-void TimeEventTest::handle()
+void TimeEvent::handle()
 {
     RODOS::PRINTF("Time Event at %3.9f\n", RODOS::SECONDS_NOW());
     eduQueueThread.resume();
