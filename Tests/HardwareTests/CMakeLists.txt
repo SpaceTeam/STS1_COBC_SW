@@ -1,11 +1,8 @@
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
 
-add_program(UartWrite UartWrite.test.cpp)
-target_link_libraries(Sts1CobcSwTests_UartWrite PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
-
-add_program(UartRead UartRead.test.cpp)
-target_link_libraries(Sts1CobcSwTests_UartRead PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
+add_program(Uart Uart.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Uart PUBLIC rodos::rodos Sts1CobcSw_Hal)
 
 add_program(Spi Spi.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Spi PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
