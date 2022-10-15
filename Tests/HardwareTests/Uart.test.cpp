@@ -1,10 +1,14 @@
 //! @file
-//! @brief  A program for testing the two UARTs of the COBC.
+//! @brief A program to test reading from the UCI/EDU UART
 //!
-//! If you flash `HelloUart.bin` onto the COBC, the messages "Hello from UART1" and "Hello from
-//! UART2" are alternately written every 500 ms to the COBC EDU UART and the COBC UCI UART,
-//! respectively. Both UARTs use the same configuration: 115200 baud, 8 data bits, no parity, 1 stop
-//! bit.
+//! Preparation:
+//!     - Prepare any program that prints/reads to/from the EDU UART on the EDU
+//!     - Connect the UCI UART to a computer to use with HTERM, Putty, etc.
+//!
+//! After flashing the COBC, the program will
+//! 1) Reflect messages from the EDU and print them to the UCI UART
+//! 2) Reflect messages from the UCI
+//! ```
 
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/Gpio.hpp>
@@ -13,7 +17,8 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <string_view>
+#include <array>
+
 
 namespace RODOS
 {
@@ -24,42 +29,55 @@ extern HAL_UART uart_stdout;
 
 namespace sts1cobcsw
 {
-RODOS::HAL_GPIO greenLed(hal::ledPin);
+auto greenLed = RODOS::HAL_GPIO(hal::ledPin);
+auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
+auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+constexpr auto receiveBufferSize = 64;
 
-RODOS::HAL_UART uart1(RODOS::UART_IDX1, RODOS::GPIO_009, RODOS::GPIO_010);
 
-class HelloUart : public RODOS::StaticThread<>
+class UartReadTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        hal::InitPin(greenLed, hal::PinType::output, false);
-        constexpr auto baudrate = 9'600;
-        uart1.init(baudrate);
+        hal::SetPinDirection(&greenLed, hal::PinDirection::out);
+        eduUart.init();
+        uciUart.init();
     }
 
 
     void run() override
     {
-        using std::operator""sv;
-
-        auto toggle = true;
-
-        TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
+        while(true)
         {
-            greenLed.setPins(static_cast<uint32_t>(toggle));
-            if(toggle)
+            // Check EDU UART
+            // Use an array so we can use WriteTo immediately
+            std::array<uint8_t, receiveBufferSize> eduReceiveBuffer = {};
+            auto nEduReceivedBytes =
+                eduUart.read(eduReceiveBuffer.begin(), eduReceiveBuffer.size());
+
+            if(nEduReceivedBytes > 0)
             {
-                hal::WriteTo(&RODOS::uart_stdout, "Hello from uart2\n");
+                auto trimmedEduMessage = std::span{eduReceiveBuffer.begin(), nEduReceivedBytes};
+                // Reflect to EDU and also print to UCI UART
+                hal::WriteTo(&eduUart, trimmedEduMessage);
+                hal::WriteTo(&uciUart, trimmedEduMessage);
             }
-            else
+
+            // Check UCI UART
+            std::array<uint8_t, receiveBufferSize> uciReceiveBuffer = {};
+            auto nUciReceivedBytes =
+                uciUart.read(uciReceiveBuffer.begin(), uciReceiveBuffer.size());
+
+            if(nUciReceivedBytes > 0)
             {
-                hal::WriteTo(&RODOS::uart_stdout, "Hello from uart1\n");
+                auto trimmedUciMessage = std::span{uciReceiveBuffer.begin(), nUciReceivedBytes};
+                // Reflect to UCI UART
+                hal::WriteTo(&uciUart, trimmedUciMessage);
             }
-            toggle = not toggle;
         }
     }
 };
 
 
-auto const helloUart = HelloUart();
+auto const uartReadTest = UartReadTest();
 }
