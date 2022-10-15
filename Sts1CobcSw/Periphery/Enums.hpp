@@ -5,6 +5,7 @@ namespace sts1cobcsw::periphery
     enum class EduErrorCode
     {
         success,
+        successEof,
         errorBufferTooSmall,
         errorUartNotInitialized,
         errorTimeout,

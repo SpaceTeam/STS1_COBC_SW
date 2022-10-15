@@ -23,7 +23,7 @@ auto BytesToUint32(uint8_t firstByte, uint8_t secondByte, uint8_t thirdByte, uin
     return retVal;
 }
 
-auto VecUint32ToUint8(std::span<uint32_t> src) -> std::vector<uint8_t>
+/*auto VecUint32ToUint8(std::span<uint32_t> src) -> std::vector<uint8_t>
 {
     size_t srcSize = src.size();
 
@@ -38,9 +38,9 @@ auto VecUint32ToUint8(std::span<uint32_t> src) -> std::vector<uint8_t>
     }
 
     return dest;
-}
+}*/
 
-auto VecUint16ToUint8(std::span<uint16_t> src) -> std::vector<uint8_t>
+/*auto VecUint16ToUint8(std::span<uint16_t> src) -> std::vector<uint8_t>
 {
     size_t srcSize = src.size();
 
@@ -53,7 +53,7 @@ auto VecUint16ToUint8(std::span<uint16_t> src) -> std::vector<uint8_t>
     }
 
     return dest;
-}
+}*/
 
 auto Crc32(std::span<uint8_t> data) -> uint32_t
 {

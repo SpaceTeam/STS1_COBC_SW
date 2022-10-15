@@ -1,8 +1,11 @@
 #pragma once
 
+#include <Sts1CobcSw/Util/UtilNames.hpp>
+
+#include <array>
 #include <cstdint>
 #include <span>
-#include <vector>
+//#include <vector>
 
 namespace sts1cobcsw::util
 {
@@ -41,7 +44,19 @@ auto BytesToUint32(uint8_t firstByte, uint8_t secondByte, uint8_t thirdByte, uin
  *
  * @returns The uint8_t vector
  */
-auto VecUint32ToUint8(std::span<uint32_t> src) -> std::vector<uint8_t>;
+// auto VecUint32ToUint8(std::span<uint32_t> src) -> std::vector<uint8_t>;
+template<std::size_t size>
+void ArrayUint32ToUint8(std::array<uint32_t, size> & src, std::array<uint8_t, 4 * size> & dest)
+{
+    for(size_t i = 0; i < dest.size(); i++)
+    {
+        dest[4 * i] = (src[i] & uint32FirstByteMask) >> threeBytesWidth;
+        dest[4 * i + 1] = (src[i] & uint32SecondByteMask) >> twoBytesWidth;
+        dest[4 * i + 2] = (src[i] & uint32ThirdByteMask) >> oneByteWidth;
+        dest[4 * i + 3] = (src[i] & uint32FourthByteMask);
+    }
+}
+
 
 /**
  * @brief Converts a sequence of uint16_t elements to a uint8_t vector
@@ -54,16 +69,25 @@ auto VecUint32ToUint8(std::span<uint32_t> src) -> std::vector<uint8_t>;
  *
  * @returns The uint8_t vector
  */
-auto VecUint16ToUint8(std::span<uint16_t> src) -> std::vector<uint8_t>;
-
+// auto VecUint16ToUint8(std::span<uint16_t> src) -> std::vector<uint8_t>;
+template<std::size_t size>
+void ArrayUint16ToUint8(std::array<uint16_t, size> & src, std::array<uint8_t, 2 * size> & dest)
+{
+    for(size_t i = 0; i < dest.size(); i++)
+    {
+        dest[2 * i] = (src[i] & uint16FirstByteMask) >> oneByteWidth;
+        dest[2 * i + 1] = (src[i] & uint16SecondByteMask);
+    }
+}
 /**
  * @brief Implementation of the CRC32/MPEG-2 algorithm.
  *
  * https://en.wikipedia.org/wiki/Cyclic_redundancy_check  -> What is CRC
- * https://reveng.sourceforge.io/crc-catalogue/all.htm    -> Description of MPEG-2 implementation
- * https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html        -> Rust implementation on the EDU side
- * https://gist.github.com/Miliox/b86b60b9755faf3bd7cf    -> C++ implementation of MPEG-2
- * https://crccalc.com/                                   -> To check the implementation
+ * https://reveng.sourceforge.io/crc-catalogue/all.htm    -> Description of MPEG-2
+ * implementation https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html        -> Rust implementation
+ * on the EDU side https://gist.github.com/Miliox/b86b60b9755faf3bd7cf    -> C++ implementation
+ * of MPEG-2 https://crccalc.com/                                   -> To check the
+ * implementation
  *
  * @param data The data over which the checksum is calculated
  *
