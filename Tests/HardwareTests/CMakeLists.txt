@@ -9,6 +9,9 @@ target_link_libraries(Sts1CobcSwTests_Uart PUBLIC rodos::rodos type_safe Sts1Cob
 add_program(Spi Spi.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Spi PUBLIC rodos::rodos type_safe Sts1CobcSw_Hal)
 
+add_program(Crc32 Crc32.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Crc32 PUBLIC rodos::rodos type_safe Sts1CobcSw_Util)
+
 get_property(
     all_hw_test_targets
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

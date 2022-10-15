@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 
+#include <stm32f4xx_crc.h>
+
 #include <rodos.h>
 
 #include <cstdint>
