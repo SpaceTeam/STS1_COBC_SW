@@ -11,14 +11,14 @@ void SetPinDirection(RODOS::HAL_GPIO * pin, PinDirection direction)
 }
 
 
-void SetPin(RODOS::HAL_GPIO & pin, PinState state)
+void SetPin(RODOS::HAL_GPIO * pin, PinState state)
 {
     auto pinValue = (state == PinState::set ? 1U : 0U);
-    pin.setPins(pinValue);
+    pin->setPins(pinValue);
 }
 
 
-auto ReadPin(RODOS::HAL_GPIO & pin)
+auto ReadPin(RODOS::HAL_GPIO & pin) -> PinState
 {
     auto pinValue = pin.readPins();
     auto pinState = (pinValue == 0U) ? PinState::reset : PinState::set;

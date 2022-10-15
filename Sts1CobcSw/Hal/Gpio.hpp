@@ -27,5 +27,5 @@ void SetPinDirection(RODOS::HAL_GPIO * pin, PinDirection direction);
 void SetPin(RODOS::HAL_GPIO * pin, PinState state);
 
 
-auto ReadPin(RODOS::HAL_GPIO const & pin) -> PinState;
+auto ReadPin(RODOS::HAL_GPIO & pin) -> PinState;
 }
