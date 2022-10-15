@@ -33,6 +33,7 @@
 using RODOS::HAL_SPI;
 using RODOS::PRINTF;
 
+
 namespace sts1cobcsw
 {
 auto spis = std::array{
@@ -51,6 +52,7 @@ class SpiTest : public RODOS::StaticThread<>
             spi.init();
         }
     }
+
 
     void run() override
     {
