@@ -1,5 +1,5 @@
 add_program(Dummy Dummy.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Sts1CobcSw_Dummy Catch2::Catch2WithMain)
+target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
 
 get_property(
     all_unit_test_targets
