@@ -37,16 +37,17 @@ inline auto WriteTo(auto * communicationInterface, std::string_view message)
 
 
 template<std::size_t size>
-inline auto ReadFrom(auto * communicationInterface, std::span<std::byte, size> readBuffer)
+[[nodiscard]] inline auto ReadFrom(auto * communicationInterface,
+                                   std::span<std::byte, size> readBuffer)
 {
     return communicationInterface->read(readBuffer.data(), readBuffer.size());
 }
 
 
 template<std::size_t size>
-inline auto WriteToReadFrom(auto * communicationInterface,
-                            std::string_view message,
-                            etl::string<size> * answer)
+[[nodiscard]] inline auto WriteToReadFrom(auto * communicationInterface,
+                                          std::string_view message,
+                                          etl::string<size> * answer)
 {
     answer->initialize_free_space();
     auto nReceivedBytes = communicationInterface->writeRead(
