@@ -20,16 +20,8 @@
 #include <cstddef>
 
 
-namespace RODOS
-{
-// NOLINTNEXTLINE(readability-identifier-naming)
-extern HAL_UART uart_stdout;
-}
-
-
 namespace sts1cobcsw
 {
-auto greenLed = RODOS::HAL_GPIO(hal::ledPin);
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
@@ -38,7 +30,6 @@ class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        hal::SetPinDirection(&greenLed, hal::PinDirection::out);
         eduUart.init();
         uciUart.init();
     }
