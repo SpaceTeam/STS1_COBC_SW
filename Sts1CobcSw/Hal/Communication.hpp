@@ -4,12 +4,9 @@
 
 #include <etl/string.h>
 
-#include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <span>
 #include <string_view>
-#include <type_traits>
 
 
 namespace sts1cobcsw::hal
@@ -36,6 +33,13 @@ inline auto WriteTo(auto * communicationInterface, std::string_view message)
         nSentBytes +=
             communicationInterface->write(message.data() + nSentBytes, message.size() - nSentBytes);
     }
+}
+
+
+template<std::size_t size>
+inline auto ReadFrom(auto * communicationInterface, std::span<std::byte, size> readBuffer)
+{
+    return communicationInterface->read(readBuffer.data(), readBuffer.size());
 }
 
 
