@@ -19,9 +19,10 @@
 //! ```
 
 #include <Sts1CobcSw/Hal/Communication.hpp>
-#include <Sts1CobcSw/Hal/Gpio.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
+
 #include <type_safe/types.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -29,6 +30,7 @@
 #include <etl/string.h>
 
 #include <string_view>
+
 
 using RODOS::HAL_SPI;
 using RODOS::PRINTF;
@@ -38,7 +40,7 @@ namespace sts1cobcsw
 {
 auto spis = std::array{
     HAL_SPI(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin),
-    HAL_SPI(hal::cobcSpiIndex, hal::rfSpiMisoPin, hal::framSpiMisoPin, hal::framSpiMosiPin),
+    HAL_SPI(hal::cobcSpiIndex, hal::framSpiSckPin, hal::framSpiMisoPin, hal::framSpiMosiPin),
     HAL_SPI(hal::cobcSpiIndex, hal::cobcSpiSckPin, hal::cobcSpiMisoPin, hal::cobcSpiMosiPin),
     HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin)};
 

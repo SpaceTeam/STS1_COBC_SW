@@ -8,40 +8,32 @@
 //! After flashing the COBC, the program will
 //! 1) Reflect messages from the EDU and print them to the UCI UART
 //! 2) Reflect messages from the UCI
-//! ```
 
 #include <Sts1CobcSw/Hal/Communication.hpp>
-#include <Sts1CobcSw/Hal/Gpio.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
-
-
-namespace RODOS
-{
-// NOLINTNEXTLINE(readability-identifier-naming)
-extern HAL_UART uart_stdout;
-}
+#include <cstddef>
+#include <span>
 
 
 namespace sts1cobcsw
 {
-auto greenLed = RODOS::HAL_GPIO(hal::ledPin);
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
-constexpr auto receiveBufferSize = 64;
 
 
-class UartReadTest : public RODOS::StaticThread<>
+class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        hal::SetPinDirection(&greenLed, hal::PinDirection::out);
-        eduUart.init();
-        uciUart.init();
+        constexpr auto uartBaudRate = 115200;
+        eduUart.init(uartBaudRate);
+        uciUart.init(uartBaudRate);
     }
 
 
@@ -49,28 +41,25 @@ class UartReadTest : public RODOS::StaticThread<>
     {
         while(true)
         {
-            // Check EDU UART
-            // Use an array so we can use WriteTo immediately
-            std::array<uint8_t, receiveBufferSize> eduReceiveBuffer = {};
-            auto nEduReceivedBytes =
-                eduUart.read(eduReceiveBuffer.begin(), eduReceiveBuffer.size());
+            constexpr auto readBufferSize = 64;
 
-            if(nEduReceivedBytes > 0)
+            // Check EDU UART
+            auto eduReadBuffer = std::array<std::byte, readBufferSize>{};
+            auto nReadBytes = hal::ReadFrom(&eduUart, std::span(eduReadBuffer));
+            if(nReadBytes > 0)
             {
-                auto trimmedEduMessage = std::span{eduReceiveBuffer.begin(), nEduReceivedBytes};
+                auto trimmedMessage = std::span(begin(eduReadBuffer), nReadBytes);
                 // Reflect to EDU and also print to UCI UART
-                hal::WriteTo(&eduUart, trimmedEduMessage);
-                hal::WriteTo(&uciUart, trimmedEduMessage);
+                hal::WriteTo(&eduUart, trimmedMessage);
+                hal::WriteTo(&uciUart, trimmedMessage);
             }
 
             // Check UCI UART
-            std::array<uint8_t, receiveBufferSize> uciReceiveBuffer = {};
-            auto nUciReceivedBytes =
-                uciUart.read(uciReceiveBuffer.begin(), uciReceiveBuffer.size());
-
-            if(nUciReceivedBytes > 0)
+            auto uciReadBuffer = std::array<std::byte, readBufferSize>{};
+            nReadBytes = hal::ReadFrom(&uciUart, std::span(uciReadBuffer));
+            if(nReadBytes > 0)
             {
-                auto trimmedUciMessage = std::span{uciReceiveBuffer.begin(), nUciReceivedBytes};
+                auto trimmedUciMessage = std::span(begin(uciReadBuffer), nReadBytes);
                 // Reflect to UCI UART
                 hal::WriteTo(&uciUart, trimmedUciMessage);
             }
@@ -79,5 +68,5 @@ class UartReadTest : public RODOS::StaticThread<>
 };
 
 
-auto const uartReadTest = UartReadTest();
+auto const uartTest = UartTest();
 }
