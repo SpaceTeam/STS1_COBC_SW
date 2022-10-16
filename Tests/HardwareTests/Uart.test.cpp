@@ -18,6 +18,7 @@
 
 #include <array>
 #include <cstddef>
+#include <span>
 
 
 namespace sts1cobcsw
@@ -30,8 +31,9 @@ class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        eduUart.init();
-        uciUart.init();
+        constexpr auto uartBaudRate = 115200;
+        eduUart.init(uartBaudRate);
+        uciUart.init(uartBaudRate);
     }
 
 
@@ -46,7 +48,7 @@ class UartTest : public RODOS::StaticThread<>
             auto nReadBytes = hal::ReadFrom(&eduUart, std::span(eduReadBuffer));
             if(nReadBytes > 0)
             {
-                auto trimmedMessage = std::span(eduReadBuffer.begin(), nReadBytes);
+                auto trimmedMessage = std::span(begin(eduReadBuffer), nReadBytes);
                 // Reflect to EDU and also print to UCI UART
                 hal::WriteTo(&eduUart, trimmedMessage);
                 hal::WriteTo(&uciUart, trimmedMessage);
@@ -57,7 +59,7 @@ class UartTest : public RODOS::StaticThread<>
             nReadBytes = hal::ReadFrom(&uciUart, std::span(uciReadBuffer));
             if(nReadBytes > 0)
             {
-                auto trimmedUciMessage = std::span(uciReadBuffer.begin(), nReadBytes);
+                auto trimmedUciMessage = std::span(begin(uciReadBuffer), nReadBytes);
                 // Reflect to UCI UART
                 hal::WriteTo(&uciUart, trimmedUciMessage);
             }
