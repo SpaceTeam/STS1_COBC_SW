@@ -40,7 +40,7 @@ namespace sts1cobcsw
 {
 auto spis = std::array{
     HAL_SPI(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin),
-    HAL_SPI(hal::cobcSpiIndex, hal::rfSpiMisoPin, hal::framSpiMisoPin, hal::framSpiMosiPin),
+    HAL_SPI(hal::cobcSpiIndex, hal::framSpiSckPin, hal::framSpiMisoPin, hal::framSpiMosiPin),
     HAL_SPI(hal::cobcSpiIndex, hal::cobcSpiSckPin, hal::cobcSpiMisoPin, hal::cobcSpiMosiPin),
     HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin)};
 
