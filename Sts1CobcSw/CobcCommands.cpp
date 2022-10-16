@@ -31,7 +31,7 @@ void UpdateUtcOffset()
     PRINTF("Update UTC offset");
 }
 
-static TimeEventTest te01;
+static TimeEvent te01;
 
 void BuildQueue()
 {

@@ -12,30 +12,44 @@ namespace sts1cobcsw
 constexpr auto eduProgramQueueSize = 20;
 constexpr auto statusHistorySize = 20;
 
-// A queue consists of :
-// Program ID 	: 2 bytes, according to EDU PDD 6.1.1
-// Queue ID 	: 2 bytes, according to EDU PDD 6.1.2
-// Start Time 	: 4 bytes, EPOCH time
-// Timeout 		: 2 bytes, according to EDU PDD 6.1.2
-// That adds up to 10 bytes in total
-// No tuples, just struct
-using QueueEntry = std::tuple<uint16_t, uint16_t, uint32_t, uint16_t>;
-
-void AddQueueEntry(const QueueEntry & eduEntry);
-
-void ResetQueueIndex();
-
-
-// A stus and history entry consists of :
-// Progam ID 	: 2 bytes
-// Queue ID		: 2 bytes
-// Status		: A string ? with max 2 characters
-constexpr auto statusMaxSize = 2;
-using StatusHistoryEntry = std::tuple<uint16_t, uint16_t, etl::string<statusMaxSize>>;
-
 class TimeEvent : public RODOS::TimeEvent
 {
   public:
     void handle() override;
 };
+
+enum class EduProgramStatus
+{
+    programRunning = 1,
+    programCouldNotBeStarted = 2,
+    programExecutionFailed = 3,
+    programExecutionFinishedSuccessfully = 4,
+    resultFileTransferFinished = 5,
+    resultSentToRf = 6,
+    ackFromGround = 7,
+    resultFileDeleted = 8,
+};
+
+struct QueueEntry
+{
+    uint16_t programId;
+    uint16_t queueId;
+    uint32_t startTime;
+    uint16_t timeout;
+};
+
+constexpr auto queueEntrySize = 10;
+
+struct StatusHistoryEntry
+{
+    uint16_t programId;
+    uint16_t queueId;
+    uint8_t status;
+};
+
+
+void AddQueueEntry(const QueueEntry & eduEntry);
+
+void ResetQueueIndex();
+
 }

@@ -40,7 +40,7 @@ namespace sts1cobcsw
 namespace ts = type_safe;
 using ts::operator""_usize;
 
-// Number of seconds between 1st January 1970 and 1st January 2000
+// Number of nanoseconds between 1st January 1970 and 1st January 2000
 constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 
 //! @brief Print utc system time in human readable format
@@ -64,19 +64,34 @@ void PrintTime()
                   sec);
 }
 
+//! @brief Given a time in seconds since January 1st 1970, return a time in nanoseconds since
+//! January 1st 2000.
+auto UnixToRodosTime(int32_t const unixTime)
+{
+    auto rodosTime = static_cast<int64_t>(unixTime);
+    rodosTime = rodosTime * RODOS::SECONDS;
+    rodosTime = rodosTime - rodosUnixOffset;
+    return rodosTime;
+}
+
+
+enum class CommandType
+{
+    turnEduOn = '1',
+    turnEduOff = '2',
+    updateUtcOffset = '3',
+    buildQueue = '4'
+};
 
 auto DispatchCommand(const etl::string<commandSize.get()> & command)
 {
     auto targetIsCobc = true;
     ts::size_t position = 1_usize;
-    uint32_t utc = 0;
-    int8_t commandId = 0;
+    int32_t utc = 0;
+    CommandType commandId;
 
-    // TODO: UnixToRodosTime
     util::CopyFrom(command, &position, &utc);
-    auto utcStamp = static_cast<int64_t>(utc);
-    utcStamp = utcStamp * RODOS::SECONDS;
-    RODOS::sysTime.setUTC(utcStamp - rodosUnixOffset);
+    RODOS::sysTime.setUTC(UnixToRodosTime(utc));
     PrintTime();
 
     util::CopyFrom(command, &position, &commandId);
@@ -84,32 +99,25 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
 
     if(targetIsCobc)
     {
-        // TODO: Use an enum, or better names
-        // enum class char
         switch(commandId)
         {
-            case '1':
+            case CommandType::turnEduOn:
             {
                 TurnEduOn();
                 return;
             }
-            case '2':
+            case CommandType::turnEduOff:
             {
                 TurnEduOff();
                 return;
             }
-            case '3':
+            case CommandType::updateUtcOffset:
             {
                 UpdateUtcOffset();
                 return;
             }
-            case '4':
+            case CommandType::buildQueue:
             {
-                // TODO: Factorise
-                // elt::vector queueEntries ParseEntry()
-                // TODO: Get that value from the 'using queueEntry = '
-                constexpr auto queueEntrySize = 10;
-
                 int16_t length = 0;
                 util::CopyFrom(command, &position, &length);
 
@@ -123,17 +131,20 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
 
                 for(auto i = 0; i < nbQueueEntries; ++i)
                 {
-                    int16_t progId = 0;
+                    uint16_t progId = 0;
                     util::CopyFrom(command, &position, &progId);
-                    int16_t queueId = 0;
+                    uint16_t queueId = 0;
                     util::CopyFrom(command, &position, &queueId);
-                    int64_t startTime = 0;
+                    uint32_t startTime = 0;
                     util::CopyFrom(command, &position, &startTime);
-                    int16_t maxRunTime = 0;
-                    util::CopyFrom(command, &position, &maxRunTime);
+                    uint16_t timeout = 0;
+                    util::CopyFrom(command, &position, &timeout);
 
-                    // Not a tuple anymore
-                    AddQueueEntry(std::make_tuple(progId, queueId, startTime, maxRunTime));
+                    auto queueEntry = QueueEntry{.programId = progId,
+                                                 .queueId = queueId,
+                                                 .startTime = startTime,
+                                                 .timeout = timeout};
+                    AddQueueEntry(queueEntry);
                 }
                 ResetQueueIndex();
 
