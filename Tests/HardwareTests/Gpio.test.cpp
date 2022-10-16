@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Hal/Gpio.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 
 #include <type_safe/types.hpp>

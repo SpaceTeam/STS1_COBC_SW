@@ -19,7 +19,7 @@
 //! ```
 
 #include <Sts1CobcSw/Hal/Communication.hpp>
-#include <Sts1CobcSw/Hal/Gpio.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 
@@ -30,6 +30,7 @@
 #include <etl/string.h>
 
 #include <string_view>
+
 
 using RODOS::HAL_SPI;
 using RODOS::PRINTF;
