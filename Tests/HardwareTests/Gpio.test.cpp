@@ -11,7 +11,7 @@
 namespace sts1cobcsw
 {
 // pa2, pa3 are automatically tested by printing to UCI UART (PRINTF)
-auto pinsToTest = std::to_array<RODOS::HAL_GPIO>(
+auto pinsToTest = std::to_array<hal::GpioPin>(
     {hal::pa1,  hal::pa5,  hal::pa6,  hal::pa7,  hal::pa8,  hal::pa9,  hal::pa10, hal::pa11,
      hal::pa12, hal::pa13, hal::pa14, hal::pa15, hal::pb0,  hal::pb1,  hal::pb3,  hal::pb4,
      hal::pb5,  hal::pb6,  hal::pb7,  hal::pb8,  hal::pb9,  hal::pb12, hal::pb13, hal::pb14,
@@ -25,7 +25,7 @@ class GpioTest : public RODOS::StaticThread<>
     {
         for(auto & pin : pinsToTest)
         {
-            hal::SetPinDirection(&pin, hal::PinDirection::out);
+            pin.Direction(hal::PinDirection::out);
         }
     }
 
@@ -38,10 +38,10 @@ class GpioTest : public RODOS::StaticThread<>
         {
             for(auto & pin : pinsToTest)
             {
-                hal::SetPin(&pin, toggle ? hal::PinState::set : hal::PinState::reset);
+                toggle ? pin.Set() : pin.Reset();
                 RODOS::PRINTF("Current pin set to %s \n", (toggle ? "true" : "false"));
                 RODOS::PRINTF("Current pin reads %s \n",
-                              (hal::ReadPin(pin) == hal::PinState::set ? "true" : "false"));
+                              (pin.Read() == hal::PinState::set ? "true" : "false"));
             }
             toggle = not toggle;
         }

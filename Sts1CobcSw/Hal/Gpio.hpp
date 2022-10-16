@@ -13,7 +13,6 @@ enum class PinDirection
     out
 };
 
-
 enum class PinState
 {
     set,
@@ -21,11 +20,49 @@ enum class PinState
 };
 
 
-void SetPinDirection(RODOS::HAL_GPIO * pin, PinDirection direction);
+class GpioPin
+{
+  public:
+    // Implicit conversion from GPIO_PIN is very convenient (see Gpio.test.cpp)
+    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
+    GpioPin(RODOS::GPIO_PIN pinIndex);
+
+    auto Direction(PinDirection pinDirection) -> void;
+    auto Set() -> void;
+    auto Reset() -> void;
+    auto Read() const -> PinState;
+
+  private:
+    mutable RODOS::HAL_GPIO pin_;
+};
 
 
-void SetPin(RODOS::HAL_GPIO * pin, PinState state);
+inline GpioPin::GpioPin(RODOS::GPIO_PIN pinIndex) : pin_(pinIndex)
+{
+}
 
 
-auto ReadPin(RODOS::HAL_GPIO & pin) -> PinState;
+inline auto GpioPin::Direction(PinDirection pinDirection) -> void
+{
+    pin_.reset();
+    pin_.init(pinDirection == PinDirection::out, 1, 0);
+}
+
+
+inline auto GpioPin::Set() -> void
+{
+    pin_.setPins(1U);
+}
+
+
+inline auto GpioPin::Reset() -> void
+{
+    pin_.setPins(0U);
+}
+
+
+inline auto GpioPin::Read() const -> PinState
+{
+    return pin_.readPins() == 0U ? PinState::reset : PinState::set;
+}
 }
