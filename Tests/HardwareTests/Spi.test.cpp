@@ -22,6 +22,7 @@
 #include <Sts1CobcSw/Hal/Gpio.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
+
 #include <type_safe/types.hpp>
 
 #include <rodos_no_using_namespace.h>
