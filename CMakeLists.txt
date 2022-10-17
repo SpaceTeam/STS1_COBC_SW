@@ -17,7 +17,6 @@ include(cmake/custom-commands.cmake)
 # ---- Find dependencies ----
 
 find_package_and_notify(etl)
-find_package_and_notify(cppserdes)
 find_rodos()
 
 # ---- Declare targets ----
@@ -25,7 +24,6 @@ find_rodos()
 add_library(Sts1CobcSw_Dummy OBJECT)
 add_library(Sts1CobcSw_Hal INTERFACE)
 add_program(HelloDummy)
-add_program(HelloSerial)
 
 # All targets must only add the top level project directory as PUBLIC include directory
 all_targets_include_directories("$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
