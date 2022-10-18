@@ -1,6 +1,9 @@
 add_program(Dummy Dummy.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
 
+add_program(Serialize Serialize.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Serialize PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serialize)
+
 get_property(
     all_unit_test_targets
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
