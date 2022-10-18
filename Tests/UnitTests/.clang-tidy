@@ -24,7 +24,8 @@ Checks: "*,\
   -llvmlibc-*,\
   -misc-non-private-member-variables-in-classes,\
   -mpi-*,\
-  -openmp-*"
+  -openmp-*,\
+  -readability-function-cognitive-complexity"
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
