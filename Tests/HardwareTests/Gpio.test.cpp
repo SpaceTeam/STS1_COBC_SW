@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 
 #include <type_safe/types.hpp>
@@ -11,12 +12,10 @@
 namespace sts1cobcsw
 {
 // pa2, pa3 are automatically tested by printing to UCI UART (PRINTF)
-auto pinsToTest = std::to_array<hal::GpioPin>(
-    {hal::pa1,  hal::pa5,  hal::pa6,  hal::pa7,  hal::pa8,  hal::pa9,  hal::pa10, hal::pa11,
-     hal::pa12, hal::pa13, hal::pa14, hal::pa15, hal::pb0,  hal::pb1,  hal::pb3,  hal::pb4,
-     hal::pb5,  hal::pb6,  hal::pb7,  hal::pb8,  hal::pb9,  hal::pb12, hal::pb13, hal::pb14,
-     hal::pb15, hal::pc0,  hal::pc1,  hal::pc2,  hal::pc3,  hal::pc4,  hal::pc5,  hal::pc7,
-     hal::pc9,  hal::pc10, hal::pc11, hal::pc12, hal::pc13, hal::pd2});
+// TODO: Find out which pins we can safely use here. The problem is that some pins cause a short and
+// therefore a reset of the COBC when used in this test. The LED pin has to work for this test
+// though.
+auto pinsToTest = std::to_array<hal::GpioPin>({hal::ledPin});
 
 
 class GpioTest : public RODOS::StaticThread<>
@@ -39,9 +38,9 @@ class GpioTest : public RODOS::StaticThread<>
             for(auto & pin : pinsToTest)
             {
                 toggle ? pin.Set() : pin.Reset();
-                RODOS::PRINTF("Current pin set to %s \n", (toggle ? "true" : "false"));
-                RODOS::PRINTF("Current pin reads %s \n",
-                              (pin.Read() == hal::PinState::set ? "true" : "false"));
+                RODOS::PRINTF("Pin was %s and reads %s\n",
+                              toggle ? "  set" : "reset",                             // NOLINT
+                              pin.Read() == hal::PinState::set ? "  set" : "reset");  // NOLINT
             }
             toggle = not toggle;
         }
