@@ -47,11 +47,11 @@ constexpr auto operator"" _B(unsigned long long number)  // NOLINT(google-runtim
 
 
 template<typename T>
-constexpr auto SerializeTo(Byte * destination, T data) -> Byte *;
+constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *;
 
 
 template<TriviallySerializable T>
-constexpr auto SerializeTo(Byte * destination, T data) -> Byte *
+constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *
 {
     std::memcpy(destination, &data, serialSize<T>);
     return destination + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -59,7 +59,7 @@ constexpr auto SerializeTo(Byte * destination, T data) -> Byte *
 
 
 template<typename T>
-constexpr auto Serialize(T data)
+constexpr auto Serialize(T const & data)
 {
     auto buffer = SerialBuffer<T>{};
     SerializeTo(buffer.data(), data);

@@ -107,7 +107,7 @@ constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::i16), decltype
 //    serialized to the given memory destination. The returned pointer must point to the next free
 //    byte in memory.
 template<>
-constexpr auto SerializeTo<S>(Byte * destination, S data) -> Byte *
+constexpr auto SerializeTo<S>(Byte * destination, S const & data) -> Byte *
 {
     destination = SerializeTo(destination, data.i16);
     destination = SerializeTo(destination, data.u32);
