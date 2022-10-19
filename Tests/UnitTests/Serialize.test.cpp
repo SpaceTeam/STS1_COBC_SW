@@ -10,7 +10,15 @@
 
 namespace ts = type_safe;
 
+using ts::operator""_i8;
+using ts::operator""_u16;
+using ts::operator""_i32;
+
+using sts1cobcsw::serialize::Byte;
+using sts1cobcsw::serialize::operator""_B;
 using sts1cobcsw::serialize::Serialize;
+using sts1cobcsw::serialize::SerializeTo;
+using sts1cobcsw::serialize::serialSize;
 
 
 TEST_CASE("TriviallySerializable")
@@ -55,11 +63,6 @@ TEST_CASE("TriviallySerializable")
 
 TEST_CASE("Serialize TriviallySerializable types")
 {
-    using ts::operator""_i8;
-    using ts::operator""_u16;
-    using sts1cobcsw::serialize::Byte;
-    using sts1cobcsw::serialize::operator""_B;
-
     auto byteBuffer = Serialize(std::byte{0xAA});
     auto int8Buffer = Serialize(-4_i8);
     auto uint16Buffer = Serialize(11_u16);
@@ -81,4 +84,41 @@ TEST_CASE("Serialize TriviallySerializable types")
     REQUIRE(int8IsCorrectlySerialized);
     REQUIRE(uint16IsCorrectlySerialized);
     REQUIRE(int32IsCorrectlySerialized);
+}
+
+
+// The following shows everything that is necessary to serialize a user-defined type
+struct S
+{
+    ts::uint16_t i16 = 0_u16;
+    ts::int32_t u32 = 0_i32;
+};
+
+
+namespace sts1cobcsw::serialize
+{
+template<>
+constexpr std::size_t serialSize<S> = serialSize<decltype(S::i16)> + serialSize<decltype(S::u32)>;
+
+
+template<>
+constexpr auto SerializeTo<S>(Byte * destination, S data) -> Byte *
+{
+    destination = SerializeTo(destination, data.i16);
+    destination = SerializeTo(destination, data.u32);
+    return destination;
+}
+}
+
+
+TEST_CASE("Serialize user-defined types")
+{
+    auto sBuffer = Serialize(S{0xABCD_u16, 0x12345678_i32});
+
+    REQUIRE(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
+
+    auto structIsCorrectlySerialized =
+        (sBuffer[0] == 0xCD_B and sBuffer[1] == 0xAB_B and sBuffer[2] == 0x78_B
+         and sBuffer[3] == 0x56_B and sBuffer[4] == 0x34_B and sBuffer[5] == 0x12_B);
+    REQUIRE(structIsCorrectlySerialized);
 }

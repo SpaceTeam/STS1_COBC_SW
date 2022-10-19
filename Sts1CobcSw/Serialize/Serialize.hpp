@@ -41,19 +41,23 @@ constexpr auto operator"" _B(unsigned long long number)  // NOLINT(google-runtim
 }
 
 
+template<typename T>
+constexpr auto SerializeTo(Byte * destination, T data) -> Byte *;
+
+
 template<TriviallySerializable T>
-constexpr auto SerializeTo(std::byte * destination, T t)
+constexpr auto SerializeTo(Byte * destination, T data) -> Byte *
 {
-    std::memcpy(destination, &t, serialSize<T>);
+    std::memcpy(destination, &data, serialSize<T>);
     return destination + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
 
-template<TriviallySerializable T>
-constexpr auto Serialize(T t)
+template<typename T>
+constexpr auto Serialize(T data)
 {
     auto buffer = SerialBuffer<T>{};
-    SerializeTo(buffer.data(), t);
+    SerializeTo(buffer.data(), data);
     return buffer;
 }
 }
