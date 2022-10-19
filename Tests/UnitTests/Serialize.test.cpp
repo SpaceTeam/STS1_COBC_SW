@@ -19,7 +19,7 @@ TEST_CASE("TriviallySerializable")
     };
     struct SingleInt32
     {
-        int32_t i;
+        std::int32_t i;
     };
 
     // POD types are TriviallySerializable
@@ -48,16 +48,16 @@ TEST_CASE("TriviallySerializable")
 TEST_CASE("Serialize TriviallySerializable types")
 {
     auto b = std::byte{0xAA};
-    uint16_t u16 = 3;
-    int32_t i32 = -2;
+    std::uint16_t u16 = 3;
+    std::int32_t i32 = -2;
 
     auto bBuffer = Serialize(b);
     auto u16Buffer = Serialize(u16);
     auto i32Buffer = Serialize(i32);
 
     REQUIRE(std::is_same<decltype(bBuffer), std::array<std::byte, sizeof(std::byte)>>::value);
-    REQUIRE(std::is_same<decltype(u16Buffer), std::array<std::byte, sizeof(uint16_t)>>::value);
-    REQUIRE(std::is_same<decltype(i32Buffer), std::array<std::byte, sizeof(int32_t)>>::value);
+    REQUIRE(std::is_same<decltype(u16Buffer), std::array<std::byte, sizeof(std::uint16_t)>>::value);
+    REQUIRE(std::is_same<decltype(i32Buffer), std::array<std::byte, sizeof(std::int32_t)>>::value);
 
     auto bIsCorrectlySerialized = bBuffer[0] == std::byte{0xAA};
     auto u16IsCorrectlySerialized =
