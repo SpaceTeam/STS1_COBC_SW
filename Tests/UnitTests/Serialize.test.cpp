@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Serialize/Serialize.hpp>
 
 #include <catch2/catch_test_macros.hpp>
+#include <type_safe/types.hpp>
 
 #include <array>
 #include <cstddef>
@@ -34,14 +35,18 @@ TEST_CASE("TriviallySerializable")
     REQUIRE(TriviallySerializable<unsigned long>);
     REQUIRE(TriviallySerializable<float>);
     REQUIRE(TriviallySerializable<double>);
-    // Pointers and arrays are not
+    // So are type_safe integer and bool types
+    REQUIRE(TriviallySerializable<type_safe::int8_t>);
+    REQUIRE(TriviallySerializable<type_safe::uint16_t>);
+    REQUIRE(TriviallySerializable<type_safe::size_t>);
+    REQUIRE(TriviallySerializable<type_safe::bool_t>);
+    // Pointers and arrays are not TriviallySerializable
     REQUIRE(not TriviallySerializable<char *>);
     REQUIRE(not TriviallySerializable<int[]>);  // NOLINT
     REQUIRE(not TriviallySerializable<std::array<double, 3>>);
     // User-defined types aren't either
     REQUIRE(not TriviallySerializable<EmptyStruct>);
     REQUIRE(not TriviallySerializable<SingleInt32>);
-    // TODO: Check type_safe::uint16_t et al.
 }
 
 

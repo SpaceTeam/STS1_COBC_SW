@@ -1,13 +1,20 @@
+#include <type_safe/boolean.hpp>
+
 #include <array>
 #include <concepts>
+#include <cstddef>
 #include <cstring>
 #include <type_traits>
 
 
 namespace sts1cobcsw::serialize
 {
+// TODO: Tell clang-format to make this less ugly somehow
+// The T::integer_type is for the type_safe fixed-width integers
 template<typename T>
-concept TriviallySerializable = std::is_arithmetic<T>::value or std::is_enum<T>::value;
+concept TriviallySerializable = std::is_arithmetic_v<T> or std::is_enum_v<T> or std::
+    is_arithmetic_v<typename T::integer_type> or std::is_enum_v<
+        typename T::integer_type> or std::is_same_v<T, type_safe::boolean>;
 
 
 constexpr auto SerialSize(TriviallySerializable auto data)
