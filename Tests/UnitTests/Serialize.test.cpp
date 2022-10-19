@@ -97,10 +97,15 @@ struct S
 
 namespace sts1cobcsw::serialize
 {
+// 1. Add a specialization of the variable template serialSize<> which computes the buffer size
+//    necessary to hold a serialized S.
 template<>
-constexpr std::size_t serialSize<S> = serialSize<decltype(S::i16)> + serialSize<decltype(S::u32)>;
+constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::i16), decltype(S::u32)>;
 
 
+// 2. Add a specialization for the function template SerializeTo<>() which defines how S is
+//    serialized to the given memory destination. The returned pointer must point to the next free
+//    byte in memory.
 template<>
 constexpr auto SerializeTo<S>(Byte * destination, S data) -> Byte *
 {

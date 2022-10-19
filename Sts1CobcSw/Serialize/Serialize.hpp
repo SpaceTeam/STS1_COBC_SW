@@ -8,6 +8,7 @@
 #include <type_traits>
 
 
+// TODO: Enforce endianess with std::endian::native, std::endian::little, std::byteswap, etc.
 namespace sts1cobcsw::serialize
 {
 // The T::integer_type is for the type_safe fixed-width integers. The parenthesis are for nicer
@@ -24,6 +25,10 @@ inline constexpr std::size_t serialSize = 0U;
 
 template<TriviallySerializable T>
 inline constexpr std::size_t serialSize<T> = sizeof(T);
+
+// Helper variable template to sum up the serial sizes of an arbitrary list of types
+template<typename... Ts>
+constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
 
 // Allegedly std::byte is quite heavyweight. This type alias allows us to easily replace std::byte
