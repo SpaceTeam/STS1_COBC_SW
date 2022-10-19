@@ -85,13 +85,13 @@ IncludeCategories:
   - Regex: '^<[a-z_]+>'
     Priority: 6
   # ETL
-  - Regex: '^<etl/[a-z_]+\.h>'
+  - Regex: '^<etl\/[a-z_]+\.h>'
     Priority: 5
   # Rodos: <rodos.h> or <rodos_no_using_namespace.h>
   - Regex: '^<rodos[a-z_]*.h>'
     Priority: 4
   # Sts1CobcSw header files <Sts1CobcSw/*.hpp> without underscores
-  - Regex: '^<Sts1CobcSw/[A-Za-z0-9]+\.hpp>'
+  - Regex: '^<Sts1CobcSw(\/[A-Za-z0-9]+)+\.hpp>'
     Priority: 1
   # C headers from external libraries: <**/*.h>
   - Regex: '^<([A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.h>'

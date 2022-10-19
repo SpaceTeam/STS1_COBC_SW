@@ -1,8 +1,6 @@
 #include <Sts1CobcSw/Dummy.hpp>
 
-#include <Sts1CobcSw/Util/Util.hpp>
-
-#include <rodos.h>
+#include <rodos_no_using_namespace.h>
 
 #include <span>
 #include <string_view>
@@ -19,18 +17,15 @@ extern HAL_UART uart_stdout;  // NOLINT
 
 namespace sts1cobcsw
 {
-class HelloDummy : public StaticThread<>
+class HelloDummy : public RODOS::StaticThread<>
 {
     void run() override
     {
         auto const dummy = Dummy();
 
-        using std::operator""sv;
-
-        TIME_LOOP(0, 1000 * MILLISECONDS)
+        TIME_LOOP(0, 500 * RODOS::MILLISECONDS)
         {
-            // RODOS::PRINTF("Hello %s!\n", dummy.name.data());
-            util::WriteTo(&RODOS::uart_stdout, "Hello from uart2\n");
+            RODOS::PRINTF("Hello %s!\n", dummy.name.data());
         }
     }
 };
