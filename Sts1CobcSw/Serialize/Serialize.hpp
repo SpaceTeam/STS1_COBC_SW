@@ -8,7 +8,7 @@
 #include <type_traits>
 
 
-// TODO: Enforce endianess with std::endian::native, std::endian::little, std::byteswap, etc.
+// TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
 namespace sts1cobcsw::serialize
 {
 // The T::integer_type is for the type_safe fixed-width integers. The parenthesis are for nicer
@@ -34,6 +34,7 @@ constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 // Allegedly std::byte is quite heavyweight. This type alias allows us to easily replace std::byte
 // with, e.g., std::uint8_t to check that.
 using Byte = std::byte;
+
 // SerialBuffer is only defined for types that specialize serialSize<>
 // TODO: Tell clang-format to break after the requires clause/before using
 template<typename T>
