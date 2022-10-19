@@ -1,4 +1,4 @@
-#include <type_safe/boolean.hpp>
+#include <type_safe/types.hpp>
 
 #include <array>
 #include <concepts>
@@ -17,24 +17,27 @@ concept TriviallySerializable = std::is_arithmetic_v<T> or std::is_enum_v<T> or 
         typename T::integer_type> or std::is_same_v<T, type_safe::boolean>;
 
 
-constexpr auto SerialSize(TriviallySerializable auto data)
-{
-    return sizeof(data);
-}
+template<typename T>
+inline constexpr std::size_t serialSize = 0U;
+
+template<TriviallySerializable T>
+inline constexpr std::size_t serialSize<T> = sizeof(T);
+
 
 
 template<std::size_t size>
 using ByteArray = std::array<std::byte, size>;
 
-template<typename T>
-using SerialBuffer = ByteArray<SerialSize(T())>;
+// SerialBuffer is only defined for types that specialize serialSize<>
+template<typename T> requires (serialSize<T> != 0U)
+using SerialBuffer = ByteArray<serialSize<T>>;
 
 
 template<TriviallySerializable T>
 constexpr auto SerializeTo(std::byte * destination, T t)
 {
-    std::memcpy(destination, &t, SerialSize(t));
-    return destination + SerialSize(t);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    std::memcpy(destination, &t, serialSize<T>);
+    return destination + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
 

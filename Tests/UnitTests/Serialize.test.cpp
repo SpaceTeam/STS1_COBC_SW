@@ -8,6 +8,8 @@
 #include <cstdint>
 
 
+namespace ts = type_safe;
+
 using sts1cobcsw::serialize::Serialize;
 
 
@@ -36,10 +38,10 @@ TEST_CASE("TriviallySerializable")
     REQUIRE(TriviallySerializable<float>);
     REQUIRE(TriviallySerializable<double>);
     // So are type_safe integer and bool types
-    REQUIRE(TriviallySerializable<type_safe::int8_t>);
-    REQUIRE(TriviallySerializable<type_safe::uint16_t>);
-    REQUIRE(TriviallySerializable<type_safe::size_t>);
-    REQUIRE(TriviallySerializable<type_safe::bool_t>);
+    REQUIRE(TriviallySerializable<ts::int8_t>);
+    REQUIRE(TriviallySerializable<ts::uint16_t>);
+    REQUIRE(TriviallySerializable<ts::size_t>);
+    REQUIRE(TriviallySerializable<ts::bool_t>);
     // Pointers and arrays are not TriviallySerializable
     REQUIRE(not TriviallySerializable<char *>);
     REQUIRE(not TriviallySerializable<int[]>);  // NOLINT
@@ -52,25 +54,30 @@ TEST_CASE("TriviallySerializable")
 
 TEST_CASE("Serialize TriviallySerializable types")
 {
-    auto b = std::byte{0xAA};
-    std::uint16_t u16 = 3;
-    std::int32_t i32 = -2;
+    using ts::operator""_i8;
+    using ts::operator""_u16;
 
-    auto bBuffer = Serialize(b);
-    auto u16Buffer = Serialize(u16);
-    auto i32Buffer = Serialize(i32);
+    auto byteBuffer = Serialize(std::byte{0xAA});
+    auto int8Buffer = Serialize(-4_i8);
+    auto uint16Buffer = Serialize(11_u16);
+    auto int32Buffer = Serialize(std::int32_t{-2});
+    [[maybe_unused]] auto boolBuffer = Serialize(/*t=*/true);
 
-    REQUIRE(std::is_same<decltype(bBuffer), std::array<std::byte, sizeof(std::byte)>>::value);
-    REQUIRE(std::is_same<decltype(u16Buffer), std::array<std::byte, sizeof(std::uint16_t)>>::value);
-    REQUIRE(std::is_same<decltype(i32Buffer), std::array<std::byte, sizeof(std::int32_t)>>::value);
+    REQUIRE(std::is_same_v<decltype(byteBuffer), std::array<std::byte, sizeof(std::byte)>>);
+    REQUIRE(std::is_same_v<decltype(int8Buffer), std::array<std::byte, sizeof(ts::int8_t)>>);
+    REQUIRE(std::is_same_v<decltype(uint16Buffer), std::array<std::byte, sizeof(ts::uint16_t)>>);
+    REQUIRE(std::is_same_v<decltype(int32Buffer), std::array<std::byte, sizeof(std::int32_t)>>);
+    REQUIRE(std::is_same_v<decltype(boolBuffer), std::array<std::byte, sizeof(bool)>>);
 
-    auto bIsCorrectlySerialized = bBuffer[0] == std::byte{0xAA};
-    auto u16IsCorrectlySerialized =
-        (u16Buffer[0] == std::byte{0x03} and u16Buffer[1] == std::byte{0x00});
-    auto i32IsCorrectlySerialized =
-        (i32Buffer[0] == std::byte{0xFE} and i32Buffer[1] == std::byte{0xFF}
-         and i32Buffer[2] == std::byte{0xFF} and i32Buffer[3] == std::byte{0xFF});
-    REQUIRE(bIsCorrectlySerialized);
-    REQUIRE(u16IsCorrectlySerialized);
-    REQUIRE(i32IsCorrectlySerialized);
+    auto byteIsCorrectlySerialized = byteBuffer[0] == std::byte{0xAA};
+    auto int8IsCorrectlySerialized = int8Buffer[0] == std::byte{0xFC};
+    auto uint16IsCorrectlySerialized =
+        (uint16Buffer[0] == std::byte{0x0B} and uint16Buffer[1] == std::byte{0x00});
+    auto int32IsCorrectlySerialized =
+        (int32Buffer[0] == std::byte{0xFE} and int32Buffer[1] == std::byte{0xFF}
+         and int32Buffer[2] == std::byte{0xFF} and int32Buffer[3] == std::byte{0xFF});
+    REQUIRE(byteIsCorrectlySerialized);
+    REQUIRE(int8IsCorrectlySerialized);
+    REQUIRE(uint16IsCorrectlySerialized);
+    REQUIRE(int32IsCorrectlySerialized);
 }
