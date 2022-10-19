@@ -4,17 +4,19 @@
 #include <concepts>
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <type_traits>
 
 
 namespace sts1cobcsw::serialize
 {
-// TODO: Tell clang-format to make this less ugly somehow
-// The T::integer_type is for the type_safe fixed-width integers
+// The T::integer_type is for the type_safe fixed-width integers. The parenthesis are for nicer
+// formatting.
 template<typename T>
-concept TriviallySerializable = std::is_arithmetic_v<T> or std::is_enum_v<T> or std::
-    is_arithmetic_v<typename T::integer_type> or std::is_enum_v<
-        typename T::integer_type> or std::is_same_v<T, type_safe::boolean>;
+concept TriviallySerializable =
+    (std::is_arithmetic_v<T> or std::is_enum_v<T>)
+    or (std::is_arithmetic_v<typename T::integer_type> or std::is_enum_v<typename T::integer_type>)
+    or std::is_same_v<T, type_safe::boolean>;
 
 
 template<typename T>
@@ -24,13 +26,19 @@ template<TriviallySerializable T>
 inline constexpr std::size_t serialSize<T> = sizeof(T);
 
 
-
-template<std::size_t size>
-using ByteArray = std::array<std::byte, size>;
-
+// Allegedly std::byte is quite heavyweight. This type alias allows us to easily replace std::byte
+// with, e.g., std::uint8_t to check that.
+using Byte = std::byte;
 // SerialBuffer is only defined for types that specialize serialSize<>
-template<typename T> requires (serialSize<T> != 0U)
-using SerialBuffer = ByteArray<serialSize<T>>;
+// TODO: Tell clang-format to break after the requires clause/before using
+template<typename T>
+requires(serialSize<T> != 0U) using SerialBuffer = std::array<Byte, serialSize<T>>;
+
+
+constexpr auto operator"" _B(unsigned long long number)  // NOLINT(google-runtime-int)
+{
+    return Byte(number);
+}
 
 
 template<TriviallySerializable T>
