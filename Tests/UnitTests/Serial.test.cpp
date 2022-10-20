@@ -90,8 +90,8 @@ TEST_CASE("Serialize TriviallySerializable types")
 // The following shows everything that is necessary to serialize a user-defined type
 struct S
 {
-    ts::uint16_t i16 = 0_u16;
-    ts::int32_t u32 = 0_i32;
+    ts::uint16_t u16 = 0_u16;
+    ts::int32_t i32 = 0_i32;
 };
 
 
@@ -100,7 +100,7 @@ namespace sts1cobcsw::serial
 // 1. Add a specialization of the variable template serialSize<> which computes the buffer size
 //    necessary to hold a serialized S.
 template<>
-constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::i16), decltype(S::u32)>;
+constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::u16), decltype(S::i32)>;
 
 
 // 2. Add a specialization for the function template SerializeTo<>() which defines how S is
@@ -109,8 +109,8 @@ constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::i16), decltype
 template<>
 constexpr auto SerializeTo<S>(Byte * destination, S const & data) -> Byte *
 {
-    destination = SerializeTo(destination, data.i16);
-    destination = SerializeTo(destination, data.u32);
+    destination = SerializeTo(destination, data.u16);
+    destination = SerializeTo(destination, data.i32);
     return destination;
 }
 }
@@ -118,7 +118,7 @@ constexpr auto SerializeTo<S>(Byte * destination, S const & data) -> Byte *
 
 TEST_CASE("Serialize user-defined types")
 {
-    auto sBuffer = Serialize(S{0xABCD_u16, 0x12345678_i32});
+    auto sBuffer = Serialize(S{.u16=0xABCD_u16, .i32=0x12345678_i32});
 
     REQUIRE(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
