@@ -17,6 +17,7 @@ include(cmake/custom-commands.cmake)
 # ---- Find dependencies ----
 
 find_package_and_notify(etl)
+find_package_and_notify(type_safe)
 find_rodos()
 
 # ---- Declare targets ----
