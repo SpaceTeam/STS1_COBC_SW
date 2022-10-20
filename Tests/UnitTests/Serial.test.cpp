@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Serialize/Serialize.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <type_safe/types.hpp>
@@ -14,16 +14,16 @@ using ts::operator""_i8;
 using ts::operator""_u16;
 using ts::operator""_i32;
 
-using sts1cobcsw::serialize::Byte;
-using sts1cobcsw::serialize::operator""_B;
-using sts1cobcsw::serialize::Serialize;
-using sts1cobcsw::serialize::SerializeTo;
-using sts1cobcsw::serialize::serialSize;
+using sts1cobcsw::serial::Byte;
+using sts1cobcsw::serial::operator""_B;
+using sts1cobcsw::serial::Serialize;
+using sts1cobcsw::serial::SerializeTo;
+using sts1cobcsw::serial::serialSize;
 
 
 TEST_CASE("TriviallySerializable")
 {
-    using sts1cobcsw::serialize::TriviallySerializable;
+    using sts1cobcsw::serial::TriviallySerializable;
 
     struct EmptyStruct
     {
@@ -95,7 +95,7 @@ struct S
 };
 
 
-namespace sts1cobcsw::serialize
+namespace sts1cobcsw::serial
 {
 // 1. Add a specialization of the variable template serialSize<> which computes the buffer size
 //    necessary to hold a serialized S.

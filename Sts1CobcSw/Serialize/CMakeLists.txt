@@ -1,1 +1,0 @@
-target_link_libraries(Sts1CobcSw_Serialize PUBLIC type_safe)

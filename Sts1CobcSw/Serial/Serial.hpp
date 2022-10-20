@@ -9,7 +9,7 @@
 
 
 // TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
-namespace sts1cobcsw::serialize
+namespace sts1cobcsw::serial
 {
 // The T::integer_type is for the type_safe fixed-width integers. The parenthesis are for nicer
 // formatting.
