@@ -1,10 +1,12 @@
+#include <Sts1CobcSw/Utility/TypeSafe.hpp>
+
 #include <type_safe/boolean.hpp>
 
 #include <array>
 #include <concepts>
 #include <cstddef>
 #include <cstring>
-#include <limits>
+#include <span>
 #include <type_traits>
 
 
@@ -28,7 +30,7 @@ template<TriviallySerializable T>
 inline constexpr std::size_t serialSize<T> = sizeof(T);
 
 template<typename... Ts>
-constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
+inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
 
 // Allegedly std::byte is quite heavyweight. This type alias allows us to easily replace std::byte
@@ -40,19 +42,14 @@ template<typename T>
 using SerialBuffer = std::array<Byte, serialSize<T>>;
 
 
-constexpr auto operator"" _B(unsigned long long number)  // NOLINT(google-runtime-int)
+inline constexpr auto operator"" _B(unsigned long long number)  // NOLINT(google-runtime-int)
 {
     return Byte(number);
 }
 
 
-// Must be specialized for user-defined types to be serializable
-template<typename T>
-constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *;
-
-
 template<TriviallySerializable T>
-constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *
+inline constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *
 {
     std::memcpy(destination, &data, serialSize<T>);
     return destination + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -65,5 +62,43 @@ constexpr auto Serialize(T const & data)
     auto buffer = SerialBuffer<T>{};
     SerializeTo(buffer.data(), data);
     return buffer;
+}
+
+
+template<TriviallySerializable T>
+inline constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *
+{
+    // The cast to void * suppresses the -Wclass-memaccess warning
+    // https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wclass-memaccess
+    std::memcpy(static_cast<void *>(data), source, serialSize<T>);
+    return source + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+}
+
+
+template<std::default_initializable T>
+constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
+{
+    auto t = T{};
+    DeserializeFrom(source.data(), &t);
+    return t;
+}
+
+
+template<utility::TypeSafeInteger T>
+constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
+{
+    auto t = utility::TypeSafeZero<T>();
+    DeserializeFrom(source.data(), &t);
+    return t;
+}
+
+
+template<typename T>
+    requires std::is_same_v<T, type_safe::boolean>
+constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
+{
+    auto t = T{false};  // NOLINT(bugprone-argument-comment)
+    DeserializeFrom(source.data(), &t);
+    return t;
 }
 }

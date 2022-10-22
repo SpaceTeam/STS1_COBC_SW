@@ -16,9 +16,8 @@ using ts::operator""_i32;
 
 using sts1cobcsw::serial::Byte;
 using sts1cobcsw::serial::operator""_B;
+using sts1cobcsw::serial::Deserialize;
 using sts1cobcsw::serial::Serialize;
-using sts1cobcsw::serial::SerializeTo;
-using sts1cobcsw::serial::serialSize;
 
 
 TEST_CASE("TriviallySerializable")
@@ -63,7 +62,7 @@ TEST_CASE("TriviallySerializable")
 
 TEST_CASE("Serialize TriviallySerializable types")
 {
-    auto byteBuffer = Serialize(std::byte{0xAA});
+    auto byteBuffer = Serialize(0xAA_B);
     auto int8Buffer = Serialize(-4_i8);
     auto uint16Buffer = Serialize(11_u16);
     auto int32Buffer = Serialize(std::int32_t{-2});
@@ -75,19 +74,55 @@ TEST_CASE("Serialize TriviallySerializable types")
     REQUIRE(std::is_same_v<decltype(int32Buffer), std::array<Byte, sizeof(std::int32_t)>>);
     REQUIRE(std::is_same_v<decltype(boolBuffer), std::array<Byte, sizeof(bool)>>);
 
-    auto byteIsCorrectlySerialized = byteBuffer[0] == 0xAA_B;
-    auto int8IsCorrectlySerialized = int8Buffer[0] == 0xFC_B;
-    auto uint16IsCorrectlySerialized = (uint16Buffer[0] == 0x0B_B and uint16Buffer[1] == 0x00_B);
-    auto int32IsCorrectlySerialized = (int32Buffer[0] == 0xFE_B and int32Buffer[1] == 0xFF_B
-                                       and int32Buffer[2] == 0xFF_B and int32Buffer[3] == 0xFF_B);
-    REQUIRE(byteIsCorrectlySerialized);
-    REQUIRE(int8IsCorrectlySerialized);
-    REQUIRE(uint16IsCorrectlySerialized);
-    REQUIRE(int32IsCorrectlySerialized);
+    // REQUIRE magic can't handle std::byte, so we cast
+    REQUIRE(std::uint8_t(byteBuffer[0]) == 0xAA);
+    REQUIRE(std::uint8_t(int8Buffer[0]) == 0xFC);
+    REQUIRE(std::uint8_t(uint16Buffer[0]) == 0x0B);
+    REQUIRE(std::uint8_t(uint16Buffer[1]) == 0x00);
+    REQUIRE(std::uint8_t(int32Buffer[0]) == 0xFE);
+    REQUIRE(std::uint8_t(int32Buffer[1]) == 0xFF);
+    REQUIRE(std::uint8_t(int32Buffer[2]) == 0xFF);
+    REQUIRE(std::uint8_t(int32Buffer[3]) == 0xFF);
 }
 
 
-// The following shows everything that is necessary to serialize a user-defined type
+TEST_CASE("Deserialize TriviallySerializable types")
+{
+    auto buffer = std::array{0x01_B, 0x02_B, 0x03_B, 0x04_B};
+
+    auto int32 = Deserialize<ts::int32_t>(buffer);
+    auto uint16 = Deserialize<std::uint16_t>(std::span<Byte, 2>(buffer.begin(), 2));
+    auto int8 = Deserialize<ts::int8_t>(std::span<Byte, 1>(buffer.begin() + 2, 1));
+
+    REQUIRE(int32.get() == (4U << 24U) + (3U << 16U) + (2U << 8U) + 1U);
+    REQUIRE(uint16 == (2U << 8U) + 1);
+    REQUIRE(int8.get() == 3);
+}
+
+
+TEST_CASE("Deserialize is the inverse of Serialize")
+{
+    auto cBuffer = Serialize('x');
+    auto int8Buffer = Serialize(std::int8_t{-56});
+    auto uint16Buffer = Serialize(std::uint16_t{3333});
+    auto int32Buffer = Serialize(-123456_i32);
+    auto booleanBuffer = Serialize(ts::bool_t{true});  // NOLINT(bugprone-argument-comment)
+
+    auto character = Deserialize<char>(std::span(cBuffer));
+    auto int8 = Deserialize<std::int8_t>(std::span(int8Buffer));
+    auto uint16 = Deserialize<std::uint16_t>(std::span(uint16Buffer));
+    auto int32 = Deserialize<ts::int32_t>(std::span(int32Buffer));
+    auto boolean = Deserialize<ts::bool_t>(std::span(booleanBuffer));
+
+    REQUIRE(character == 'x');
+    REQUIRE(int8 == -56);
+    REQUIRE(uint16 == 3333);
+    REQUIRE(int32.get() == -123456);
+    REQUIRE(boolean == true);
+}
+
+
+// The following shows everything that is necessary to (de-)serialize a user-defined type
 struct S
 {
     ts::uint16_t u16 = 0_u16;
@@ -101,29 +136,49 @@ namespace sts1cobcsw::serial
 //    necessary to hold a serialized S.
 template<>
 constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::u16), decltype(S::i32)>;
+// You could also write
+// template<>
+// constexpr std::size_t serialSize<S> = totalSerialSize<ts::uint16_t, ts::int32_t>;
+}
 
 
-// 2. Add a specialization for the function template SerializeTo<>() which defines how S is
-//    serialized to the given memory destination. The returned pointer must point to the next free
-//    byte in memory.
-template<>
-constexpr auto SerializeTo<S>(Byte * destination, S const & data) -> Byte *
+// 2. Overload SerializeTo() to define how S is serialized to the given memory destination. The
+//    returned pointer must point to the next free byte in memory.
+auto SerializeTo(Byte * destination, S const & data) -> Byte *
 {
-    destination = SerializeTo(destination, data.u16);
-    destination = SerializeTo(destination, data.i32);
+    destination = sts1cobcsw::serial::SerializeTo(destination, data.u16);
+    destination = sts1cobcsw::serial::SerializeTo(destination, data.i32);
     return destination;
 }
+
+
+auto DeserializeFrom(Byte * source, S * data) -> Byte *
+{
+    source = sts1cobcsw::serial::DeserializeFrom(source, &(data->u16));
+    source = sts1cobcsw::serial::DeserializeFrom(source, &(data->i32));
+    return source;
 }
 
 
-TEST_CASE("Serialize user-defined types")
+TEST_CASE("(De-)Serialize user-defined types")
 {
-    auto sBuffer = Serialize(S{.u16=0xABCD_u16, .i32=0x12345678_i32});
-
+    auto sBuffer = Serialize(S{.u16 = 0xABCD_u16, .i32 = 0x12345678_i32});
     REQUIRE(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
-    auto structIsCorrectlySerialized =
-        (sBuffer[0] == 0xCD_B and sBuffer[1] == 0xAB_B and sBuffer[2] == 0x78_B
-         and sBuffer[3] == 0x56_B and sBuffer[4] == 0x34_B and sBuffer[5] == 0x12_B);
-    REQUIRE(structIsCorrectlySerialized);
+    // REQUIRE magic can't handle std::byte, so we cast
+    REQUIRE(std::uint8_t(sBuffer[0]) == 0xCD);
+    REQUIRE(std::uint8_t(sBuffer[1]) == 0xAB);
+    REQUIRE(std::uint8_t(sBuffer[2]) == 0x78);
+    REQUIRE(std::uint8_t(sBuffer[3]) == 0x56);
+    REQUIRE(std::uint8_t(sBuffer[4]) == 0x34);
+    REQUIRE(std::uint8_t(sBuffer[5]) == 0x12);
+
+    auto s = Deserialize<S>(sBuffer);
+    REQUIRE(s.u16.get() == 0xABCD);
+    REQUIRE(s.i32.get() == 0x12345678);
+
+    auto a = std::array<Byte, 6>{};
+    auto s2 = Deserialize<S>(a);
+    REQUIRE(s2.u16.get() == 0);
+    REQUIRE(s2.i32.get() == 0);
 }
