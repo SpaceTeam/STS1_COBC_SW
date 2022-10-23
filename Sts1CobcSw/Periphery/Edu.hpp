@@ -5,7 +5,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <span>
-#include <tuple>
+
 
 namespace sts1cobcsw::periphery
 {
