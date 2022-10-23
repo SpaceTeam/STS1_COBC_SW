@@ -15,11 +15,14 @@ using sts1cobcsw::serial::Byte;
 
 Edu::Edu()
 {
-    // EDU PDD agrees with the default baudrate (115200 bit/s)
-    mEduUart_.init();
+    constexpr auto baudRate = 115'200;
+    mEduUart_.init(baudRate);
 }
 
 
+//! @brief Flush the EDU UART read buffer.
+//! This can be used to clear all buffer data after an error to request
+//! a resend.
 void Edu::FlushUartBuffer()
 {
     // std::array<uint8_t, garbageBufSize> garbageBuf = {0};
@@ -38,6 +41,12 @@ void Edu::FlushUartBuffer()
 }
 
 
+//! @brief Receive nBytes bytes over the EDU UART in a single round.
+//!
+//! @param dest The destination container
+//! @param nBytes The amount of bytes to receive
+//!
+//! @returns A relevant EDU error code
 auto Edu::UartReceive(std::span<uint8_t> dest, std::size_t nBytes) -> EduErrorCode
 {
     //     if(nBytes > maxDataLen)
@@ -74,6 +83,9 @@ auto Edu::UartReceive(std::span<uint8_t> dest, std::size_t nBytes) -> EduErrorCo
 }
 
 
+//! @brief Send a CEP command to the EDU.
+//!
+//! @param cmd The command
 void Edu::SendCommand(uint8_t cmd)
 {
     // std::array<uint8_t, 1> cmdArr{cmd};
@@ -82,6 +94,9 @@ void Edu::SendCommand(uint8_t cmd)
 }
 
 
+//! @brief Send a data packet over UART to the EDU.
+//!
+//! @param data The data to be sent
 auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
     // size_t nBytes = data.size();
@@ -136,6 +151,25 @@ auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 }
 
 
+//! @brief Issues a command to execute a student program on the EDU.
+//!
+//! Execute Program (COBC <-> EDU):
+//! -> [DATA]
+//! -> [Command Header]
+//! -> [Program ID]
+//! -> [Queue ID]
+//! -> [Timeout]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//!
+//! The first N/ACK confirms a valid data packet,
+//! the second N/ACK confirms that the program has been started.
+//!
+//! @param programId The student program ID
+//! @param queueId The student program queue ID
+//! @param timeout The available execution time for the student program
+//!
+//! @returns A relevant EduErrorCode
 auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout) -> EduErrorCode
 {
     // ExecuteProgramArguments arguments{
@@ -144,18 +178,18 @@ auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout)
 
     // std::array<Byte, sts1cobcsw::serial::serialSize<ExecuteProgramArguments>> data = {};
 
-    // // ts::uint8_t header = executeProgram;
-    // // auto args = std::array<ts::uint16_t, 3>{programId, queueId, timeout};
-    // // std::array<ts::uint8_t, args.size() * 2> argsts::uint8 = {};
-    // // utility::Arrayts::uint16Tots::uint8(args, argsts::uint8);
+    // // uint8_t header = executeProgram;
+    // // auto args = std::array<uint16_t, 3>{programId, queueId, timeout};
+    // // std::array<uint8_t, args.size() * 2> argsuint8 = {};
+    // // utility::Arrayuint16Touint8(args, argsuint8);
 
-    // // std::array<ts::uint8_t, argsts::uint8.size() + 1> dataBuf = {};
+    // // std::array<uint8_t, argsuint8.size() + 1> dataBuf = {};
 
     // // Create a data packet with the header and the arguments
     // // dataBuf[0] = header;
     // // for(size_t i = 1; i < dataBuf.size(); i++)
     // //{
-    // //    dataBuf[i] = argsts::uint8[i - 1];
+    // //    dataBuf[i] = argsuint8[i - 1];
     // //}
 
     // // Check if data command was successful
@@ -196,252 +230,302 @@ auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout)
     return EduErrorCode::success;
 }
 
-/*
-// TODO(Daniel): refactor, too complex
+
+//! @brief Issues a command to get the student program status.
+//!
+//! Possible statuses:
+//! No event: [1 byte: 0x00]
+//! Program finished: [1 byte: 0x01][2 bytes: Program ID][2 bytes: Queue ID][1 byte: Exit Code]
+//! Results ready: [1 byte: 0x02][2 bytes: Program ID][2 bytes: Queue ID]
+//!
+//! Get Status (COBC <-> EDU):
+//! -> [DATA]
+//! -> [Command Header]
+//! <- [N/ACK]
+//! <- [DATA]
+//! <- [Status]
+//! -> [N/ACK]
+//!
+//! @returns A status containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error
+//!          Code). Values in square brackets are only valid if the relevant Status Type is
+//!          returned.
+// TODO: (Daniel) refactor, too complex
+// TODO: error handling?
 auto Edu::GetStatus() -> EduStatus
 {
-    // Values to be returned
-    ts::uint8_t statusType = invalidStatus;
-    ts::uint16_t programId = 0;
-    ts::uint16_t queueId = 0;
-    ts::uint8_t exitCode = 0;
+    // // Values to be returned
+    // uint8_t statusType = invalidStatus;
+    // uint16_t programId = 0;
+    // uint16_t queueId = 0;
+    // uint8_t exitCode = 0;
 
-    std::array<ts::uint8_t, 1> sendHeader = {getStatus};
+    // std::array<uint8_t, 1> sendHeader = {getStatus};
 
-    // Send the Get Status command
-    EduErrorCode sendDataError = SendData(sendHeader);
-    if(sendDataError != EduErrorCode::success)
-    {
-        return {EduStatusType::invalid, programId, queueId, exitCode, sendDataError};
-    }
+    // // Send the Get Status command
+    // EduErrorCode sendDataError = SendData(sendHeader);
+    // if(sendDataError != EduErrorCode::success)
+    // {
+    //     return {EduStatusType::invalid, programId, queueId, exitCode, sendDataError};
+    // }
 
-    // Start error while loop
-    bool succesfulRecv = false;
-    size_t errorCnt = 0;
-    EduStatusType statusTypeRet;
-    while(!succesfulRecv)
-    {
-        // Receive the header (data command and length)
-        std::array<ts::uint8_t, cmdBytes + lenBytes> recvHeader = {};
-        auto headerError = UartReceive(recvHeader, cmdBytes + lenBytes);
-        if(headerError != EduErrorCode::success)
-        {
-            // Only retry on timeout errors (-> invalid format after all)
-            FlushUartBuffer();
-            if(errorCnt++ < maxNackRetries and headerError == EduErrorCode::errorTimeout)
-            {
-                SendCommand(cmdNack);
-                continue;
-            }
-            return {EduStatusType::invalid, programId, queueId, exitCode, headerError};
-        }
-        if(recvHeader[0] != cmdData)
-        {
-            // Invalid header, flush, send NACK, and retry
-            FlushUartBuffer();
-            if(errorCnt++ < maxNackRetries)
-            {
-                SendCommand(cmdNack);
-                continue;
-            }
-            return {EduStatusType::invalid,
-                    programId,
-                    queueId,
-                    exitCode,
-                    EduErrorCode::errorInvalidResult};
-        }
+    // // Start error while loop
+    // bool succesfulRecv = false;
+    // size_t errorCnt = 0;
+    // EduStatusType statusTypeRet;
+    // while(!succesfulRecv)
+    // {
+    //     // Receive the header (data command and length)
+    //     std::array<uint8_t, cmdBytes + lenBytes> recvHeader = {};
+    //     auto headerError = UartReceive(recvHeader, cmdBytes + lenBytes);
+    //     if(headerError != EduErrorCode::success)
+    //     {
+    //         // Only retry on timeout errors (-> invalid format after all)
+    //         FlushUartBuffer();
+    //         if(errorCnt++ < maxNackRetries and headerError == EduErrorCode::errorTimeout)
+    //         {
+    //             SendCommand(cmdNack);
+    //             continue;
+    //         }
+    //         return {EduStatusType::invalid, programId, queueId, exitCode, headerError};
+    //     }
+    //     if(recvHeader[0] != cmdData)
+    //     {
+    //         // Invalid header, flush, send NACK, and retry
+    //         FlushUartBuffer();
+    //         if(errorCnt++ < maxNackRetries)
+    //         {
+    //             SendCommand(cmdNack);
+    //             continue;
+    //         }
+    //         return {EduStatusType::invalid,
+    //                 programId,
+    //                 queueId,
+    //                 exitCode,
+    //                 EduErrorCode::errorInvalidResult};
+    //     }
 
-        // Create 2 byte length from single received bytes
-        auto const len = utility::BytesTots::uint16(recvHeader[1], recvHeader[2]);
-        if(len > maxDataLen)
-        {
-            // Invalid length, flush, send NACK, and retry
-            FlushUartBuffer();
-            if(errorCnt++ < maxNackRetries)
-            {
-                SendCommand(cmdNack);
-                continue;
-            }
-            return {EduStatusType::invalid,
-                    programId,
-                    queueId,
-                    exitCode,
-                    EduErrorCode::errorRecvDataTooLong};
-        }
+    //     // Create 2 byte length from single received bytes
+    //     auto const len = utility::BytesTouint16(recvHeader[1], recvHeader[2]);
+    //     if(len > maxDataLen)
+    //     {
+    //         // Invalid length, flush, send NACK, and retry
+    //         FlushUartBuffer();
+    //         if(errorCnt++ < maxNackRetries)
+    //         {
+    //             SendCommand(cmdNack);
+    //             continue;
+    //         }
+    //         return {EduStatusType::invalid,
+    //                 programId,
+    //                 queueId,
+    //                 exitCode,
+    //                 EduErrorCode::errorRecvDataTooLong};
+    //     }
 
-        // Receive actual status data
-        // For data, reserve the max. possible status bytes
-        std::array<ts::uint8_t, maxStatusBytes> recvDataBuf = {};
-        auto recvDataError = UartReceive(recvDataBuf, len);
-        if(recvDataError != EduErrorCode::success)
-        {
-            // Only retry on timeout errors (-> invalid format after all)
-            FlushUartBuffer();
-            if(errorCnt++ < maxNackRetries and recvDataError == EduErrorCode::errorTimeout)
-            {
-                SendCommand(cmdNack);
-                continue;
-            }
-            return {EduStatusType::invalid, programId, queueId, exitCode, recvDataError};
-        }
+    //     // Receive actual status data
+    //     // For data, reserve the max. possible status bytes
+    //     std::array<uint8_t, maxStatusBytes> recvDataBuf = {};
+    //     auto recvDataError = UartReceive(recvDataBuf, len);
+    //     if(recvDataError != EduErrorCode::success)
+    //     {
+    //         // Only retry on timeout errors (-> invalid format after all)
+    //         FlushUartBuffer();
+    //         if(errorCnt++ < maxNackRetries and recvDataError == EduErrorCode::errorTimeout)
+    //         {
+    //             SendCommand(cmdNack);
+    //             continue;
+    //         }
+    //         return {EduStatusType::invalid, programId, queueId, exitCode, recvDataError};
+    //     }
 
-        // Receive checksum
-        std::array<ts::uint8_t, 4> crc32Buf = {};
-        auto crc32Error = UartReceive(crc32Buf, crc32Buf.size());
-        if(crc32Error != EduErrorCode::success)
-        {
-            // Only retry on timeout errors (-> invalid format after all)
-            FlushUartBuffer();
-            if(errorCnt++ < maxNackRetries and crc32Error == EduErrorCode::errorTimeout)
-            {
-                SendCommand(cmdNack);
-                continue;
-            }
-            return {EduStatusType::invalid, programId, queueId, exitCode, crc32Error};
-        }
+    //     // Receive checksum
+    //     std::array<uint8_t, 4> crc32Buf = {};
+    //     auto crc32Error = UartReceive(crc32Buf, crc32Buf.size());
+    //     if(crc32Error != EduErrorCode::success)
+    //     {
+    //         // Only retry on timeout errors (-> invalid format after all)
+    //         FlushUartBuffer();
+    //         if(errorCnt++ < maxNackRetries and crc32Error == EduErrorCode::errorTimeout)
+    //         {
+    //             SendCommand(cmdNack);
+    //             continue;
+    //         }
+    //         return {EduStatusType::invalid, programId, queueId, exitCode, crc32Error};
+    //     }
 
-        // Assemble checksum
-        auto crc32Recv = utility::BytesTots::uint32(crc32Buf[0], crc32Buf[1], crc32Buf[2],
-crc32Buf[3]); auto crc32Calc = utility::Crc32(recvDataBuf);
+    //     // Assemble checksum
+    //     auto crc32Recv =
+    //         utility::BytesTouint32(crc32Buf[0], crc32Buf[1], crc32Buf[2], crc32Buf[3]);
+    //     auto crc32Calc = utility::Crc32(recvDataBuf);
 
-        // Check checksum against own calculation
-        if(crc32Recv != crc32Calc)
-        {
-            // Checksums don't match, flush, send NACK, and retry
-            FlushUartBuffer();
-            if(errorCnt++ < maxNackRetries)
-            {
-                SendCommand(cmdNack);
-                continue;
-            }
-            return {
-                EduStatusType::invalid, programId, queueId, exitCode, EduErrorCode::errorChecksum};
-        }
+    //     // Check checksum against own calculation
+    //     if(crc32Recv != crc32Calc)
+    //     {
+    //         // Checksums don't match, flush, send NACK, and retry
+    //         FlushUartBuffer();
+    //         if(errorCnt++ < maxNackRetries)
+    //         {
+    //             SendCommand(cmdNack);
+    //             continue;
+    //         }
+    //         return {
+    //             EduStatusType::invalid, programId, queueId, exitCode, EduErrorCode::errorChecksum};
+    //     }
 
-        // If checksum is good, get proper values from the data byte array
-        statusType = recvDataBuf[0];
+    //     // If checksum is good, get proper values from the data byte array
+    //     statusType = recvDataBuf[0];
 
-        // TODO: (Patrick) disable hicpp-signed-bitwise? According to the links below the
-        // implementation is bad. This would eliminate some weird instances of static_cast
-        // when using bit operations.
-        //
-https://stackoverflow.com/questions/50399090/use-of-a-signed-integer-operand-with-a-binary-bitwise-operator-when-using-un
-        // https://bugs.llvm.org/show_bug.cgi?id=36961#c9
-        switch(statusType)
-        {
-            case noEventCode:
-                statusTypeRet = EduStatusType::noEvent;
-                succesfulRecv = true;
-                break;
+    //     // TODO: (Patrick) disable hicpp-signed-bitwise? According to the links below the
+    //     // implementation is bad. This would eliminate some weird instances of static_cast
+    //     // when using bit operations.
+    //     //
+    // https
+    //     :  // stackoverflow.com/questions/50399090/use-of-a-signed-integer-operand-with-a-binary-bitwise-operator-when-using-un
+    //     // https://bugs.llvm.org/show_bug.cgi?id=36961#c9
+    //     switch(statusType)
+    //     {
+    //         case noEventCode:
+    //             statusTypeRet = EduStatusType::noEvent;
+    //             succesfulRecv = true;
+    //             break;
 
-            case programFinishedCode:
-                programId = utility::BytesTots::uint16(recvDataBuf[1], recvDataBuf[2]);
-                queueId = utility::BytesTots::uint16(recvDataBuf[3], recvDataBuf[4]);
-                exitCode = *(recvDataBuf.end() - 1);
-                statusTypeRet = EduStatusType::programFinished;
-                succesfulRecv = true;
-                break;
+    //         case programFinishedCode:
+    //             programId = utility::BytesTouint16(recvDataBuf[1], recvDataBuf[2]);
+    //             queueId = utility::BytesTouint16(recvDataBuf[3], recvDataBuf[4]);
+    //             exitCode = *(recvDataBuf.end() - 1);
+    //             statusTypeRet = EduStatusType::programFinished;
+    //             succesfulRecv = true;
+    //             break;
 
-            case resultsReadyCode:
-                programId = utility::BytesTots::uint16(recvDataBuf[1], recvDataBuf[2]);
-                queueId = utility::BytesTots::uint16(recvDataBuf[3], recvDataBuf[4]);
-                statusTypeRet = EduStatusType::resultsReady;
-                succesfulRecv = true;
-                break;
+    //         case resultsReadyCode:
+    //             programId = utility::BytesTouint16(recvDataBuf[1], recvDataBuf[2]);
+    //             queueId = utility::BytesTouint16(recvDataBuf[3], recvDataBuf[4]);
+    //             statusTypeRet = EduStatusType::resultsReady;
+    //             succesfulRecv = true;
+    //             break;
 
-            default:
-                // Invalid status type, flush, send NACK, and retry
-                FlushUartBuffer();
-                if(errorCnt++ < maxNackRetries)
-                {
-                    SendCommand(cmdNack);
-                    continue;
-                }
-                return {EduStatusType::invalid,
-                        programId,
-                        queueId,
-                        exitCode,
-                        EduErrorCode::errorInvalidResult};
-                break;
-        }
-    }
-    SendCommand(cmdAck);
-    return {statusTypeRet, programId, queueId, exitCode, EduErrorCode::success};
+    //         default:
+    //             // Invalid status type, flush, send NACK, and retry
+    //             FlushUartBuffer();
+    //             if(errorCnt++ < maxNackRetries)
+    //             {
+    //                 SendCommand(cmdNack);
+    //                 continue;
+    //             }
+    //             return {EduStatusType::invalid,
+    //                     programId,
+    //                     queueId,
+    //                     exitCode,
+    //                     EduErrorCode::errorInvalidResult};
+    //             break;
+    //     }
+    // }
+    // SendCommand(cmdAck);
+    // return {statusTypeRet, programId, queueId, exitCode, EduErrorCode::success};
+    
+    return EduStatus{};
 }
 
 
-auto Edu::UpdateTime(ts::uint32_t timestamp) -> EduErrorCode
+//! @brief Issues a command to update the EDU time.
+//!
+//! Update Time:
+//! -> [DATA]
+//! -> [Command Header]
+//! -> [Timestamp]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//!
+//! The first N/ACK confirms a valid data packet,
+//! the second N/ACK confirms the time update.
+//!
+//! @param timestamp A unix timestamp
+//!
+//! @returns A relevant error code
+auto Edu::UpdateTime(uint32_t timestamp) -> EduErrorCode
 {
-    std::array<ts::uint32_t, 1> tsts::uint32 = {timestamp};
-    std::array<ts::uint8_t, 4> tsts::uint8 = {};
-    utility::Arrayts::uint32Tots::uint8(tsts::uint32, tsts::uint8);
+    // std::array<uint32_t, 1> uint32 = {timestamp};
+    // std::array<uint8_t, 4> uint8 = {};
+    // utility::Arrayuint32Touint8(uint32, uint8);
 
-    EduErrorCode errorCode;
-    for(size_t errorCnt = 0; errorCnt < maxNackRetries; errorCnt++)
-    {
-        {
-            // Send data and check for success, otherwise flush the UART and retry
-            errorCode = SendData(tsts::uint8);
-            if(errorCode == EduErrorCode::success)
-            {
-                break;
-            }
-            FlushUartBuffer();
-        }
-    }
+    // EduErrorCode errorCode;
+    // for(size_t errorCnt = 0; errorCnt < maxNackRetries; errorCnt++)
+    // {
+    //     {
+    //         // Send data and check for success, otherwise flush the UART and retry
+    //         errorCode = SendData(uint8);
+    //         if(errorCode == EduErrorCode::success)
+    //         {
+    //             break;
+    //         }
+    //         FlushUartBuffer();
+    //     }
+    // }
 
-    // If the error code does not show success, return the error
-    if(errorCode != EduErrorCode::success)
-    {
-        return errorCode;
-    }
+    // // If the error code does not show success, return the error
+    // if(errorCode != EduErrorCode::success)
+    // {
+    //     return errorCode;
+    // }
 
-    // On success, wait for second N/ACK
-    // TODO(Daniel): change to UartReceive()
-    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    ts::uint8_t nackBuf = 0;
-    auto retVal = mEduUart_.read(&nackBuf, 1);
+    // // On success, wait for second N/ACK
+    // // TODO(Daniel): change to UartReceive()
+    // mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    // uint8_t nackBuf = 0;
+    // auto retVal = mEduUart_.read(&nackBuf, 1);
 
-    if(retVal == 0)
-    {
-        return EduErrorCode::errorTimeout;
-    }
-    if(nackBuf == cmdNack)
-    {
-        return EduErrorCode::errorNack;
-    }
-    if(nackBuf != cmdAck)
-    {
-        return EduErrorCode::errorInvalidResult;
-    }
+    // if(retVal == 0)
+    // {
+    //     return EduErrorCode::errorTimeout;
+    // }
+    // if(nackBuf == cmdNack)
+    // {
+    //     return EduErrorCode::errorNack;
+    // }
+    // if(nackBuf != cmdAck)
+    // {
+    //     return EduErrorCode::errorInvalidResult;
+    // }
 
     return EduErrorCode::success;
 }
 
 
+//! @brief Issues a command to stop the currently running EDU program.
+//! If there is no active program, the EDU will return ACK anyway.
+//!
+//! Stop Program:
+//! -> [DATA]
+//! -> [Command Header]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//! @returns A relevant error code
 auto Edu::StopProgram() -> EduErrorCode
 {
     return EduErrorCode::success;
-    std::array<ts::uint8_t, 3> dataBuf = {stopProgram};
-    auto errorCode = SendData(dataBuf);
+    // std::array<uint8_t, 3> dataBuf = {stopProgram};
+    // auto errorCode = SendData(dataBuf);
 
-    if(errorCode != EduErrorCode::success)
-    {
-        return errorCode;
-    }
+    // if(errorCode != EduErrorCode::success)
+    // {
+    //     return errorCode;
+    // }
 
-    // Receive second N/ACK to see if program is successfully stopped
-    std::array<ts::uint8_t, 1> recvBuf = {};
-    return UartReceive(recvBuf, 1);
+    // // Receive second N/ACK to see if program is successfully stopped
+    // std::array<uint8_t, 1> recvBuf = {};
+    // return UartReceive(recvBuf, 1);
 }
 
 
-auto Edu::ReturnResult(std::array<ts::uint8_t, maxDataLen> & dest) -> ResultInfo
+// mock up flash
+// simple results -> 1 round should work with dma to ram
+// no tuples
+auto Edu::ReturnResult(std::array<uint8_t, maxDataLen> & dest) -> ResultInfo
 {
     // If this is the initial call, send the header
     if(!mResultPending_)
     {
-        std::array<ts::uint8_t, 1> header = {returnResult};
+        std::array<uint8_t, 1> header = {returnResult};
         auto headerErrorCode = SendData(header);
         if(headerErrorCode != EduErrorCode::success)
         {
@@ -459,7 +543,7 @@ auto Edu::ReturnResult(std::array<ts::uint8_t, maxDataLen> & dest) -> ResultInfo
     while(!succesfulRecv)
     {
         // Receive the header (data command and length)
-        std::array<ts::uint8_t, cmdBytes + lenBytes> recvHeader = {};
+        std::array<uint8_t, cmdBytes + lenBytes> recvHeader = {};
         auto headerError = UartReceive(recvHeader, cmdBytes + lenBytes);
         if(headerError != EduErrorCode::success)
         {
@@ -489,7 +573,7 @@ auto Edu::ReturnResult(std::array<ts::uint8_t, maxDataLen> & dest) -> ResultInfo
         }
 
         // Create 2 byte length from single received bytes
-        auto const len = utility::BytesTots::uint16(recvHeader[1], recvHeader[2]);
+        auto const len = utility::BytesTouint16(recvHeader[1], recvHeader[2]);
         if(len > maxDataLen)
         {
             // Invalid length, flush, send NACK, and retry
@@ -504,7 +588,7 @@ auto Edu::ReturnResult(std::array<ts::uint8_t, maxDataLen> & dest) -> ResultInfo
 
         // Receive actual status data
         // For data, reserve the max. possible bytes
-        std::array<ts::uint8_t, maxDataLen> recvDataBuf = {};
+        std::array<uint8_t, maxDataLen> recvDataBuf = {};
         auto recvDataError = UartReceive(recvDataBuf, len);
         if(recvDataError != EduErrorCode::success)
         {
@@ -519,7 +603,7 @@ auto Edu::ReturnResult(std::array<ts::uint8_t, maxDataLen> & dest) -> ResultInfo
         }
 
         // Receive checksum
-        std::array<ts::uint8_t, 4> crc32Buf = {};
+        std::array<uint8_t, 4> crc32Buf = {};
         auto crc32Error = UartReceive(crc32Buf, crc32Buf.size());
         if(crc32Error != EduErrorCode::success)
         {
@@ -534,8 +618,9 @@ auto Edu::ReturnResult(std::array<ts::uint8_t, maxDataLen> & dest) -> ResultInfo
         }
 
         // Assemble checksum
-        auto crc32Recv = utility::BytesTots::uint32(crc32Buf[0], crc32Buf[1], crc32Buf[2],
-crc32Buf[3]); auto crc32Calc = utility::Crc32(recvDataBuf);
+        auto crc32Recv =
+            utility::BytesTouint32(crc32Buf[0], crc32Buf[1], crc32Buf[2], crc32Buf[3]);
+        auto crc32Calc = utility::Crc32(recvDataBuf);
 
         // Check checksum against own calculation
         if(crc32Recv != crc32Calc)
@@ -554,5 +639,13 @@ crc32Buf[3]); auto crc32Calc = utility::Crc32(recvDataBuf);
         return {EduErrorCode::success, len};
 
     }  // End while
-}*/
+}
+
+
+// TODO: Implement this
+auto Edu::StoreArchive() -> int32_t
+{
+    return 0;
+}
+
 }
