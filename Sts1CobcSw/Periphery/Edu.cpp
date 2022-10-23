@@ -10,8 +10,6 @@
 
 namespace sts1cobcsw::periphery
 {
-
-
 using sts1cobcsw::serial::Byte;
 
 
@@ -24,173 +22,178 @@ Edu::Edu()
 
 void Edu::FlushUartBuffer()
 {
-    std::array<uint8_t, garbageBufSize> garbageBuf = {0};
-    bool dataRecvd = true;
+    // std::array<uint8_t, garbageBufSize> garbageBuf = {0};
+    // bool dataRecvd = true;
 
-    // Keep reading until no data is coming for flushTimeout (10 ms)
-    while(dataRecvd)
-    {
-        mEduUart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
-        auto readBytes = mEduUart_.read(garbageBuf.data(), garbageBufSize);
-        if(readBytes == 0)
-        {
-            dataRecvd = false;
-        }
-    }
+    // // Keep reading until no data is coming for flushTimeout (10 ms)
+    // while(dataRecvd)
+    // {
+    //     mEduUart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
+    //     auto readBytes = mEduUart_.read(garbageBuf.data(), garbageBufSize);
+    //     if(readBytes == 0)
+    //     {
+    //         dataRecvd = false;
+    //     }
+    // }
 }
 
 
 auto Edu::UartReceive(std::span<uint8_t> dest, std::size_t nBytes) -> EduErrorCode
 {
-    if(nBytes > maxDataLen)
-    {
-        return EduErrorCode::errorRecvDataTooLong;
-    }
-    if(dest.size() < nBytes)
-    {
-        return EduErrorCode::errorBufferTooSmall;
-    }
+    //     if(nBytes > maxDataLen)
+    //     {
+    //         return EduErrorCode::errorRecvDataTooLong;
+    //     }
+    //     if(dest.size() < nBytes)
+    //     {
+    //         return EduErrorCode::errorBufferTooSmall;
+    //     }
 
-    uint16_t readBytesTotal = 0;
+    //     uint16_t readBytesTotal = 0;
 
-    while(readBytesTotal < nBytes)
-    {
-        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto it = dest.begin() + uint16_t(readBytesTotal);
-        auto readBytes = mEduUart_.read(&(*it), nBytes - readBytesTotal);
-        if(readBytes == 0)
-        {
-            return EduErrorCode::errorTimeout;
-        }
+    //     while(readBytesTotal < nBytes)
+    //     {
+    //         mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    //         auto it = dest.begin() + uint16_t(readBytesTotal);
+    //         auto readBytes = mEduUart_.read(&(*it), nBytes - readBytesTotal);
+    //         if(readBytes == 0)
+    //         {
+    //             return EduErrorCode::errorTimeout;
+    //         }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-        // It's probably impossible to avoid a warning here at some point.
-        // Since readBytes <= readBytesTotal <= nBytes <= maxDataLen = 32768,
-        // as well as readByters + readBytesTotal <= maxDataLen = 32768,
-        // it's safe to disable this warning (no loss, no change of sign or anything possible).
-        readBytesTotal += readBytes;
-#pragma GCC diagnostic pop
-    }
+    // #pragma GCC diagnostic push
+    // #pragma GCC diagnostic ignored "-Wconversion"
+    //         // It's probably impossible to avoid a warning here at some point.
+    //         // Since readBytes <= readBytesTotal <= nBytes <= maxDataLen = 32768,
+    //         // as well as readByters + readBytesTotal <= maxDataLen = 32768,
+    //         // it's safe to disable this warning (no loss, no change of sign or anything
+    //         possible). readBytesTotal += readBytes;
+    // #pragma GCC diagnostic pop
+    //     }
     return EduErrorCode::success;
 }
 
 
 void Edu::SendCommand(uint8_t cmd)
 {
-    std::array<uint8_t, 1> cmdArr{cmd};
-    // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
-    hal::WriteTo(&mEduUart_, std::span<uint8_t>(cmdArr));
+    // std::array<uint8_t, 1> cmdArr{cmd};
+    // // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
+    // hal::WriteTo(&mEduUart_, std::span<uint8_t>(cmdArr));
 }
 
 
 auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
-    size_t nBytes = data.size();
-    if(nBytes >= maxDataLen)
-    {
-        return EduErrorCode::errorSendDataTooLong;
-    }
+    // size_t nBytes = data.size();
+    // if(nBytes >= maxDataLen)
+    // {
+    //     return EduErrorCode::errorSendDataTooLong;
+    // }
 
-    // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLen
-    std::array<uint16_t, 1> len{static_cast<uint16_t>(nBytes)};
-    std::array<uint32_t, 1> crc{utility::Crc32(data)};
+    // // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLen
+    // std::array<uint16_t, 1> len{static_cast<uint16_t>(nBytes)};
+    // std::array<uint32_t, 1> crc{utility::Crc32(data)};
 
-    size_t nackCnt = 0;
-    while(nackCnt++ < maxNackRetries)
-    {
-        SendCommand(cmdData);
-        hal::WriteTo(&mEduUart_, std::span<uint16_t>(len));
-        hal::WriteTo(&mEduUart_, data);
-        hal::WriteTo(&mEduUart_, std::span<uint32_t>(crc));
+    // size_t nackCnt = 0;
+    // while(nackCnt++ < maxNackRetries)
+    // {
+    //     SendCommand(cmdData);
+    //     hal::WriteTo(&mEduUart_, std::span<uint16_t>(len));
+    //     hal::WriteTo(&mEduUart_, data);
+    //     hal::WriteTo(&mEduUart_, std::span<uint32_t>(crc));
 
-        // Data is always answered by N/ACK
-        uint8_t recvAck = 0U;
-        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        mEduUart_.read(&recvAck, 1);
+    //     // Data is always answered by N/ACK
+    //     uint8_t recvAck = 0U;
+    //     mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    //     mEduUart_.read(&recvAck, 1);
 
-        switch(recvAck)
-        {
-            case cmdAck:
-                return EduErrorCode::success;
-                break;
+    //     switch(recvAck)
+    //     {
+    //         case cmdAck:
+    //             return EduErrorCode::success;
+    //             break;
 
-            case cmdNack:
-                // If NACK was received, retry
-                if(nackCnt < maxNackRetries)
-                {
-                    continue;
-                }
-                break;
+    //         case cmdNack:
+    //             // If NACK was received, retry
+    //             if(nackCnt < maxNackRetries)
+    //             {
+    //                 continue;
+    //             }
+    //             break;
 
-            case 0:
-                return EduErrorCode::errorDataTimeout;
-                break;
+    //         case 0:
+    //             return EduErrorCode::errorDataTimeout;
+    //             break;
 
-            default:
-                return EduErrorCode::errorDataInvalidResult;
-                break;
-        }
-    }
-    return EduErrorCode::errorNackRetries;
+    //         default:
+    //             return EduErrorCode::errorDataInvalidResult;
+    //             break;
+    //     }
+    // }
+    // return EduErrorCode::errorNackRetries;
+
+    return EduErrorCode::success;
 }
 
 
 auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout) -> EduErrorCode
 {
-    ExecuteProgramArguments arguments{
-        .header = executeProgram, .programId = programId, .queueId = queueId, .timeout = timeout};
+    // ExecuteProgramArguments arguments{
+    //     .header = executeProgram, .programId = programId, .queueId = queueId, .timeout =
+    //     timeout};
 
-    std::array<Byte, sts1cobcsw::serial::serialSize<ExecuteProgramArguments>> data = {};
+    // std::array<Byte, sts1cobcsw::serial::serialSize<ExecuteProgramArguments>> data = {};
 
-    // ts::uint8_t header = executeProgram;
-    // auto args = std::array<ts::uint16_t, 3>{programId, queueId, timeout};
-    // std::array<ts::uint8_t, args.size() * 2> argsts::uint8 = {};
-    // utility::Arrayts::uint16Tots::uint8(args, argsts::uint8);
+    // // ts::uint8_t header = executeProgram;
+    // // auto args = std::array<ts::uint16_t, 3>{programId, queueId, timeout};
+    // // std::array<ts::uint8_t, args.size() * 2> argsts::uint8 = {};
+    // // utility::Arrayts::uint16Tots::uint8(args, argsts::uint8);
 
-    // std::array<ts::uint8_t, argsts::uint8.size() + 1> dataBuf = {};
+    // // std::array<ts::uint8_t, argsts::uint8.size() + 1> dataBuf = {};
 
-    // Create a data packet with the header and the arguments
-    // dataBuf[0] = header;
-    // for(size_t i = 1; i < dataBuf.size(); i++)
-    //{
-    //    dataBuf[i] = argsts::uint8[i - 1];
-    //}
+    // // Create a data packet with the header and the arguments
+    // // dataBuf[0] = header;
+    // // for(size_t i = 1; i < dataBuf.size(); i++)
+    // //{
+    // //    dataBuf[i] = argsts::uint8[i - 1];
+    // //}
 
-    // Check if data command was successful
-    EduErrorCode dataError = SendData(data);
-    if(dataError != EduErrorCode::success)
-    {
-        return dataError;
-    }
+    // // Check if data command was successful
+    // EduErrorCode dataError = SendData(data);
+    // if(dataError != EduErrorCode::success)
+    // {
+    //     return dataError;
+    // }
 
-    // Receive N/ACK
-    uint8_t recvAck = 0;
+    // // Receive N/ACK
+    // uint8_t recvAck = 0;
 
-    // eduTimeout != timeout argument for data!
-    // timeout specifies the time the student program has to execute
-    // eduTimeout is the max. allowed time to reveice N/ACK from EDU
-    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    mEduUart_.read(&recvAck, 1);
+    // // eduTimeout != timeout argument for data!
+    // // timeout specifies the time the student program has to execute
+    // // eduTimeout is the max. allowed time to reveice N/ACK from EDU
+    // mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    // mEduUart_.read(&recvAck, 1);
 
-    switch(recvAck)
-    {
-        case cmdAck:
-            return EduErrorCode::success;
-            break;
+    // switch(recvAck)
+    // {
+    //     case cmdAck:
+    //         return EduErrorCode::success;
+    //         break;
 
-        case cmdNack:
-            return EduErrorCode::errorNack;
-            break;
+    //     case cmdNack:
+    //         return EduErrorCode::errorNack;
+    //         break;
 
-        case 0:
-            return EduErrorCode::errorTimeout;
-            break;
+    //     case 0:
+    //         return EduErrorCode::errorTimeout;
+    //         break;
 
-        default:
-            return EduErrorCode::errorInvalidResult;
-            break;
-    }
+    //     default:
+    //         return EduErrorCode::errorInvalidResult;
+    //         break;
+    // }
+
+    return EduErrorCode::success;
 }
 
 /*
