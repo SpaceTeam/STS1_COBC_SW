@@ -35,7 +35,5 @@ class Edu
     // hal::eduUartRxPin);
     RODOS::HAL_UART mEduUart_ =
         RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
-    bool mIsInitialized_ = false;
-    bool mResultPending_ = false;
 };
 }
