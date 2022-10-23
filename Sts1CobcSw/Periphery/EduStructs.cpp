@@ -28,6 +28,7 @@ auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *
 
 auto SerializeTo(Byte * destination, ExecuteProgramArguments const & data) -> Byte *
 {
+    destination = SerializeTo(destination, data.header);
     destination = SerializeTo(destination, data.programId);
     destination = SerializeTo(destination, data.queueId);
     destination = SerializeTo(destination, data.timeout);

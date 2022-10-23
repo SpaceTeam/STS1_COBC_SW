@@ -1,3 +1,3 @@
-target_sources(Sts1CobcSw_Periphery PRIVATE Edu.cpp)
+target_sources(Sts1CobcSw_Periphery PRIVATE Edu.cpp EduStructs.cpp)
 target_link_libraries(Sts1CobcSw_Periphery PUBLIC rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Serial)
 target_link_libraries(Sts1CobcSw_Periphery PRIVATE Sts1CobcSw_Utility)

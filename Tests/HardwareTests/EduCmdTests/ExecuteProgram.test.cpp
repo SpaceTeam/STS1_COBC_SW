@@ -11,9 +11,9 @@ namespace sts1cobcsw
 {
 
 auto eduUart = periphery::Edu();
-uint16_t programId = 0xFFFF;
+uint16_t programId = 0x1234;
 uint16_t queueId = 0x0000;
-uint16_t timeout = 0xFFFF;
+uint16_t timeout = 0xABCD;
 
 class ExecuteProgramTest : public RODOS::StaticThread<>
 {
