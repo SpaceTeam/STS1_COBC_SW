@@ -20,7 +20,7 @@ using ts::operator""_i64;
 using ts::operator""_u64;
 
 using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::operator""_B;
+using sts1cobcsw::serial::operator""_b;
 using sts1cobcsw::serial::Deserialize;
 using sts1cobcsw::serial::Serialize;
 
@@ -107,7 +107,7 @@ TEST_CASE("Serialize TriviallySerializable types")
 
 TEST_CASE("Deserialize TriviallySerializable types")
 {
-    auto buffer = std::array{0x01_B, 0x02_B, 0x03_B, 0x04_B};
+    auto buffer = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
     auto int32 = Deserialize<std::int32_t>(buffer);
     auto uint16 = Deserialize<std::uint16_t>(std::span(buffer).first<sizeof(std::uint16_t)>());
     auto int8 = Deserialize<std::int8_t>(std::span(buffer).subspan<2, sizeof(std::int8_t)>());
