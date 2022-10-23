@@ -28,7 +28,7 @@ inline constexpr auto resultsReadyCode = 0x02;
 // Other transmission values
 
 // Max. length for a single round data field
-inline constexpr auto maxDataLen = 32768;
+inline constexpr auto maxDataLength = 32768;
 
 // TODO: check real timeout!
 // Max. time for the EDU to respond to a request

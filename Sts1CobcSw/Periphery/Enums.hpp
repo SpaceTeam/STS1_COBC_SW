@@ -14,7 +14,7 @@ enum class EduErrorCode
     // Separate errors for the SendData function
     // to differentiate where the error occured
     errorSendDataTooLong,
-    errorRecvDataTooLong,
+    errorReceiveDataTooLong,
     errorNackRetries,
     errorDataTimeout,
     errorDataInvalidResult,

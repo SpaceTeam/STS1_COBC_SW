@@ -9,8 +9,6 @@ namespace sts1cobcsw
 namespace periphery
 {
 using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::DeserializeFrom;
-using sts1cobcsw::serial::SerializeTo;
 
 
 struct DataHeader

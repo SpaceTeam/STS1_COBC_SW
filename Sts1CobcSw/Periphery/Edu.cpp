@@ -11,9 +11,6 @@
 
 namespace sts1cobcsw::periphery
 {
-using sts1cobcsw::serial::Byte;
-
-
 Edu::Edu()
 {
     constexpr auto baudRate = 115'200;
@@ -22,8 +19,8 @@ Edu::Edu()
 
 
 //! @brief Flush the EDU UART read buffer.
-//! This can be used to clear all buffer data after an error to request
-//! a resend.
+//!
+//! This can be used to clear all buffer data after an error to request a resend.
 void Edu::FlushUartBuffer()
 {
     // std::array<uint8_t, garbageBufSize> garbageBuf = {0};
@@ -48,38 +45,26 @@ void Edu::FlushUartBuffer()
 //! @param nBytes The amount of bytes to receive
 //!
 //! @returns A relevant EDU error code
-auto Edu::UartReceive(std::span<uint8_t> dest, std::size_t nBytes) -> EduErrorCode
+auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
 {
-    //     if(nBytes > maxDataLen)
-    //     {
-    //         return EduErrorCode::errorRecvDataTooLong;
-    //     }
-    //     if(dest.size() < nBytes)
-    //     {
-    //         return EduErrorCode::errorBufferTooSmall;
-    //     }
+    if(size(destination) > maxDataLength)
+    {
+        return EduErrorCode::errorReceiveDataTooLong;
+    }
 
-    //     uint16_t readBytesTotal = 0;
-
-    //     while(readBytesTotal < nBytes)
-    //     {
-    //         mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    //         auto it = dest.begin() + uint16_t(readBytesTotal);
-    //         auto readBytes = mEduUart_.read(&(*it), nBytes - readBytesTotal);
-    //         if(readBytes == 0)
-    //         {
-    //             return EduErrorCode::errorTimeout;
-    //         }
-
-    // #pragma GCC diagnostic push
-    // #pragma GCC diagnostic ignored "-Wconversion"
-    //         // It's probably impossible to avoid a warning here at some point.
-    //         // Since readBytes <= readBytesTotal <= nBytes <= maxDataLen = 32768,
-    //         // as well as readByters + readBytesTotal <= maxDataLen = 32768,
-    //         // it's safe to disable this warning (no loss, no change of sign or anything
-    //         possible). readBytesTotal += readBytes;
-    // #pragma GCC diagnostic pop
-    //     }
+    std::size_t totalReceivedBytes = 0U;
+    const auto destinationSize = size(destination);
+    while(totalReceivedBytes < destinationSize)
+    {
+        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        auto nReceivedBytes = mEduUart_.read(data(destination) + totalReceivedBytes,
+                                             destinationSize - totalReceivedBytes);
+        if(nReceivedBytes == 0)
+        {
+            return EduErrorCode::errorTimeout;
+        }
+        totalReceivedBytes += nReceivedBytes;
+    }
     return EduErrorCode::success;
 }
 
@@ -507,7 +492,7 @@ auto Edu::StopProgram() -> EduErrorCode
 // mock up flash
 // simple results -> 1 round should work with dma to ram
 // no tuples
-auto Edu::ReturnResult(std::array<uint8_t, maxDataLen> & dest) -> ResultInfo
+auto Edu::ReturnResult(std::array<uint8_t, maxDataLength> & dest) -> ResultInfo
 {
     return {EduErrorCode::success, 0};
     // If this is the initial call, send the header
