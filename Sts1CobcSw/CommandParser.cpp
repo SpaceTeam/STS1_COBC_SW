@@ -1,10 +1,11 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
 #include <Sts1CobcSw/CommandParser.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/Topics.hpp>
-
 #include <Sts1CobcSw/Hal/Communication.hpp>
+#include <Sts1CobcSw/Topics.hpp>
+#include <Sts1CobcSw/Util/Time.hpp>
 #include <Sts1CobcSw/Util/Util.hpp>
+
 #include <type_safe/index.hpp>
 #include <type_safe/narrow_cast.hpp>
 #include <type_safe/types.hpp>
@@ -18,6 +19,7 @@
 #include <etl/string.h>
 #include <etl/string_view.h>
 
+#include <cinttypes>
 #include <cstring>
 #include <span>
 #include <tuple>
@@ -40,42 +42,8 @@ namespace sts1cobcsw
 namespace ts = type_safe;
 using ts::operator""_usize;
 
-// Number of nanoseconds between 1st January 1970 and 1st January 2000
-constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 
-//! @brief Print utc system time in human readable format
-void PrintTime()
-{
-    int32_t year = 0;
-    int32_t month = 0;
-    int32_t day = 0;
-    int32_t hour = 0;
-    int32_t min = 0;
-    double sec = 0;
-
-    auto sysUTC = RODOS::sysTime.getUTC();
-    RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
-    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %ld/%ld/%ld %ld:%ld:%f\n",
-                  day,    // NOLINT
-                  month,  // NOLINT
-                  year,   // NOLINT
-                  hour,   // NOLINT
-                  min,    // NOLINT
-                  sec);
-}
-
-//! @brief Given a time in seconds since January 1st 1970, return a time in nanoseconds since
-//! January 1st 2000.
-auto UnixToRodosTime(int32_t const unixTime)
-{
-    auto rodosTime = static_cast<int64_t>(unixTime);
-    rodosTime = rodosTime * RODOS::SECONDS;
-    rodosTime = rodosTime - rodosUnixOffset;
-    return rodosTime;
-}
-
-
-enum class CommandType
+enum CommandType
 {
     turnEduOn = '1',
     turnEduOff = '2',
@@ -88,11 +56,11 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     auto targetIsCobc = true;
     ts::size_t position = 1_usize;
     int32_t utc = 0;
-    CommandType commandId;
+    char commandId = 0;
 
     util::CopyFrom(command, &position, &utc);
-    RODOS::sysTime.setUTC(UnixToRodosTime(utc));
-    PrintTime();
+    RODOS::sysTime.setUTC(util::UnixToRodosTime(utc));
+    util::PrintTime();
 
     util::CopyFrom(command, &position, &commandId);
     RODOS::PRINTF("command ID is character : %c\n", commandId);
@@ -118,27 +86,35 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
             }
             case CommandType::buildQueue:
             {
-                int16_t length = 0;
+                RODOS::PRINTF("Entering build queue command parsing\n");
+                uint16_t length = 0;
                 util::CopyFrom(command, &position, &length);
+                RODOS::PRINTF("Length of data is : %d\n", length);
 
                 if(length % queueEntrySize != 0)
                 {
-                    break;
+                    return;
                 }
 
                 auto const nbQueueEntries = length / queueEntrySize;
-                RODOS::PRINTF("Number of queue entries : %d", nbQueueEntries);
+                RODOS::PRINTF("Number of queue entries : %d\n", nbQueueEntries);
+
+                EmptyEduProgramQueue();
 
                 for(auto i = 0; i < nbQueueEntries; ++i)
                 {
                     uint16_t progId = 0;
                     util::CopyFrom(command, &position, &progId);
                     uint16_t queueId = 0;
+                    RODOS::PRINTF("Prog ID      : %ld\n", progId);  // NOLINT
                     util::CopyFrom(command, &position, &queueId);
+                    RODOS::PRINTF("Queue ID     : %ld\n", queueId);  // NOLINT
                     uint32_t startTime = 0;
                     util::CopyFrom(command, &position, &startTime);
+                    RODOS::PRINTF("Start Time   : %ld\n", startTime);  // NOLINT
                     uint16_t timeout = 0;
                     util::CopyFrom(command, &position, &timeout);
+                    RODOS::PRINTF("Timeout      : %ld\n", timeout);  // NOLINT
 
                     auto queueEntry = QueueEntry{.programId = progId,
                                                  .queueId = queueId,
@@ -147,6 +123,7 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
                     AddQueueEntry(queueEntry);
                 }
                 ResetQueueIndex();
+                BuildQueue();
 
                 return;
             }
@@ -176,7 +153,7 @@ class CommandParserThread : public RODOS::StaticThread<>
             auto nReadCharacters = ts::size_t(RODOS::uart_stdout.read(&readCharacter, 1));
             if(nReadCharacters != 0U)
             {
-                RODOS::PRINTF("Read a character : %c\n", readCharacter);
+                // RODOS::PRINTF("Read a character : %c\n", readCharacter);
                 if(readCharacter == startCharacter)
                 {
                     startWasDetected = true;

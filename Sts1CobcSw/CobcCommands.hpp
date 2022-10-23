@@ -9,7 +9,7 @@ namespace sts1cobcsw
 {
 using type_safe::operator""_usize;
 
-constexpr auto commandSize = 6_usize;
+constexpr auto commandSize = 30_usize;
 
 void TurnEduOn();
 void TurnEduOff();

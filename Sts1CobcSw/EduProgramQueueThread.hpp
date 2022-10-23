@@ -48,6 +48,7 @@ struct StatusHistoryEntry
 };
 
 
+void EmptyEduProgramQueue();
 void AddQueueEntry(const QueueEntry & eduEntry);
 
 void ResetQueueIndex();

@@ -16,6 +16,7 @@ void TurnEduOn()
     PRINTF("*Turn on EDU*\n");
     // The enable pin uses inverted logic: 0 = enable
     eduEnabledGpio.setPins(0U);
+    // eduEnabledGpio.reset();
 }
 
 
@@ -24,6 +25,8 @@ void TurnEduOff()
     PRINTF("*Turn off EDU*\n");
     // The enable pin uses inverted logic: 1 = disable
     eduEnabledGpio.setPins(1U);
+    // TODO:
+    // eduEnabledGpio.set();
 }
 
 void UpdateUtcOffset()
@@ -31,12 +34,11 @@ void UpdateUtcOffset()
     PRINTF("Update UTC offset");
 }
 
+
 static TimeEvent te01;
 
 void BuildQueue()
 {
-    PRINTF("Build a program queue");
-
     // TODO: The actual parsing is done in command parser, call this function at the end or move
     // this time event handle there
     // When the queue is parsed, we can resume the EduProgramQueueThread
