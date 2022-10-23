@@ -4,45 +4,38 @@
 
 #include <rodos_no_using_namespace.h>
 
-// TODO: why is this here ?
-//#include <stm32f4xx_rtc.h>
-
-using RODOS::PRINTF;
 
 namespace sts1cobcsw
 {
 void TurnEduOn()
 {
-    PRINTF("*Turn on EDU*\n");
-    // The enable pin uses inverted logic: 0 = enable
-    eduEnabledGpio.setPins(0U);
-    // eduEnabledGpio.reset();
+    RODOS::PRINTF("*Turn on EDU*\n");
+    // The enable pin use inverted logic: 0 = enable
+    eduEnabledGpio.Reset();
 }
 
 
 void TurnEduOff()
 {
-    PRINTF("*Turn off EDU*\n");
+    RODOS::PRINTF("*Turn off EDU*\n");
     // The enable pin uses inverted logic: 1 = disable
-    eduEnabledGpio.setPins(1U);
-    // TODO:
-    // eduEnabledGpio.set();
+    eduEnabledGpio.Set();
 }
 
 void UpdateUtcOffset()
 {
-    PRINTF("Update UTC offset");
+    RODOS::PRINTF("Update UTC offset");
 }
 
 
-static TimeEvent te01;
+static TimeEvent eduProgramQueueThreadTimeEvent;
 
 void BuildQueue()
 {
     // TODO: The actual parsing is done in command parser, call this function at the end or move
     // this time event handle there
     // When the queue is parsed, we can resume the EduProgramQueueThread
-    te01.handle();
+    eduProgramQueueThreadTimeEvent.handle();
 }
 
 

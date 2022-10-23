@@ -27,14 +27,8 @@
 
 namespace RODOS
 {
-#if defined(LINUX_SYSTEM)
-// TODO: remove this
-// NOLINTNEXTLINE(readability-identifier-naming)
-HAL_UART uart_stdout(RODOS::UART_IDX2);
-#elif defined(GENERIC_SYSTEM)
-// NOLINTNEXTLINE(readability-identifier-naming)
+// NOLINTNEXTLINE
 extern HAL_UART uart_stdout;
-#endif
 }
 
 namespace sts1cobcsw
@@ -138,7 +132,7 @@ class CommandParserThread : public RODOS::StaticThread<>
 {
     void init() override
     {
-        eduEnabledGpio.init(/*isOutput=*/true, 1, 0);
+        eduEnabledGpio.Direction(hal::PinDirection::out);
     }
 
     void run() override
