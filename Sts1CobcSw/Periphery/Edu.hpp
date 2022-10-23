@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
+#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -9,21 +10,10 @@
 
 namespace sts1cobcsw::periphery
 {
-struct EduStatus
-{
-    EduStatusType statusType;
-    uint16_t programId;
-    uint16_t queueId;
-    uint8_t exitCode;
-    EduErrorCode errorCode;
-};
+namespace ts = type_safe;
 
 
-struct ResultInfo
-{
-    EduErrorCode errorCode;
-    size_t resultSize;
-};
+using sts1cobcsw::serial::Byte;
 
 
 class Edu
@@ -35,23 +25,19 @@ class Edu
     bool mIsInitialized_ = false;
     bool mResultPending_ = false;
 
-    //!
+
     //! @brief Receive nBytes bytes over the EDU UART in a single round.
     //!
     //! @param dest The destination container
     //! @param nBytes The amount of bytes to receive
     //!
     //! @returns A relevant EDU error code
-    //!
-    auto UartReceive(std::span<uint8_t> dest, size_t nBytes) -> EduErrorCode;
+    auto UartReceive(std::span<uint8_t> dest, std::size_t nBytes) -> EduErrorCode;
 
-    auto UartReveiceMulti(std::span<uint8_t> dest) -> EduErrorCode;
 
-    //!
     //! @brief Flush the EDU UART read buffer.
     //! This can be used to clear all buffer data after an error to request
     //! a resend.
-    //!
     void FlushUartBuffer();
 
   public:
@@ -62,7 +48,7 @@ class Edu
      *
      * @param data The data to be sent
      */
-    auto SendData(std::span<uint8_t> data) -> EduErrorCode;
+    auto SendData(std::span<Byte> data) -> EduErrorCode;
 
     /**
      * @brief Send a CEP command to the EDU.
@@ -110,12 +96,11 @@ class Edu
      * <- [Status]
      * -> [N/ACK]
      *
-     * @returns A tuple containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error Code).
-     * Values in square brackets are only valid if the relevant Status Type is returned.
+     * @returns A status containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error
+     * Code). Values in square brackets are only valid if the relevant Status Type is returned.
      */
-    // TODO: return custom type
     // TODO: error handling?
-    auto GetStatus() -> EduStatus;
+    // auto GetStatus() -> EduStatus;
 
     /**
      * @brief Issues a command to update the EDU time.
@@ -134,7 +119,7 @@ class Edu
      *
      * @returns A relevant error code
      */
-    auto UpdateTime(uint32_t timestamp) -> EduErrorCode;
+    // auto UpdateTime(uint32_t timestamp) -> EduErrorCode;
 
     //!
     //! @brief Issues a command to stop the currently running EDU program.
@@ -147,12 +132,12 @@ class Edu
     //! <- [N/ACK]
     //! @returns A relevant error code
     //!
-    auto StopProgram() -> EduErrorCode;
+    // auto StopProgram() -> EduErrorCode;
 
     // mock up flash
     // simple results -> 1 round should work with dma to ram
     // no tuples
-    auto ReturnResult(std::array<uint8_t, maxDataLen> & dest) -> ResultInfo;
+    // auto ReturnResult(std::array<uint8_t, maxDataLen> & dest) -> ResultInfo;
 
     // TODO
     // auto StoreArchive() -> int32_t;

@@ -6,25 +6,24 @@
 namespace sts1cobcsw::periphery
 {
 // CEP basic commands (see EDU PDD)
-inline constexpr auto cmdAck = 0xd7;    //! Acknowledging a data packet
-inline constexpr auto cmdNack = 0x27;   //! Not Acknowledging a (invalid) data packet
-inline constexpr auto cmdEof = 0x59;    //! Transmission of multiple packets is complete
-inline constexpr auto cmdStop = 0xb4;   //! Transmission of multiple packets should be stopped
-inline constexpr auto cmdData = 0x8b;   //! Data packet format is used (not a command packet!)
+inline constexpr auto cmdAck = 0xd7;   //! Acknowledging a data packet
+inline constexpr auto cmdNack = 0x27;  //! Not Acknowledging a (invalid) data packet
+inline constexpr auto cmdEof = 0x59;   //! Transmission of multiple packets is complete
+inline constexpr auto cmdStop = 0xb4;  //! Transmission of multiple packets should be stopped
+inline constexpr auto cmdData = 0x8b;  //! Data packet format is used (not a command packet!)
 
 // CEP high-level command headers (see EDU PDD)
-inline constexpr auto storeArchive = 0x01;      //! Transfer student programs from COBC to EDU
-inline constexpr auto executeProgram = 0x02;    //! Execute student program
-inline constexpr auto stopProgram = 0x03;       //! Stop student program
-inline constexpr auto getStatus = 0x04;         //! Get the student program status
-inline constexpr auto returnResult = 0x05;      //! Request student program result
-inline constexpr auto updateTime = 0x06;        //! Update EDU system time
+inline constexpr auto storeArchive = 0x01;    //! Transfer student programs from COBC to EDU
+inline constexpr auto executeProgram = 0x02;  //! Execute student program
+inline constexpr auto stopProgram = 0x03;     //! Stop student program
+inline constexpr auto getStatus = 0x04;       //! Get the student program status
+inline constexpr auto returnResult = 0x05;    //! Request student program result
+inline constexpr auto updateTime = 0x06;      //! Update EDU system time
 
 // GetStatus result types
-inline constexpr auto noEvent = 0x00;
-inline constexpr auto programFinished = 0x01;
-inline constexpr auto resultsReady = 0x02;
-inline constexpr auto invalidStatus = 0xFF;
+inline constexpr auto noEventCode = 0x00;
+inline constexpr auto programFinishedCode = 0x01;
+inline constexpr auto resultsReadyCode = 0x02;
 
 // Other transmission values
 

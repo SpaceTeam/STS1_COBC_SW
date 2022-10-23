@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Sts1CobcSw/Util/UtilityNames.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <array>
 #include <cstdint>
@@ -8,6 +8,8 @@
 
 namespace sts1cobcsw::utility
 {
+
+
 //! @brief Implementation of the CRC32/MPEG-2 algorithm.
 
 //! https://en.wikipedia.org/wiki/Cyclic_redundancy_check           -> What is CRC
@@ -18,5 +20,5 @@ namespace sts1cobcsw::utility
 //!
 //! @param data The data over which the checksum is calculated
 //! @returns The 32 bit checksum
-auto Crc32(std::span<uint8_t> data) -> uint32_t;
+auto Crc32(std::span<sts1cobcsw::serial::Byte> data) -> uint32_t;
 }

@@ -12,6 +12,7 @@
 
 #pragma once
 
+
 #include <Sts1CobcSw/Utility/TypeSafe.hpp>
 
 #include <type_safe/boolean.hpp>
