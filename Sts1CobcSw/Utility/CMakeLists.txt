@@ -1,0 +1,1 @@
+target_link_libraries(Sts1CobcSw_Utility INTERFACE type_safe)
