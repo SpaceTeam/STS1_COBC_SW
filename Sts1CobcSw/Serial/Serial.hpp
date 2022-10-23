@@ -42,6 +42,36 @@ template<typename T>
 using SerialBuffer = std::array<Byte, serialSize<T>>;
 
 
+// Function declarations
+// ---------------------
+
+constexpr auto operator"" _B(unsigned long long number);  // NOLINT(google-runtime-int)
+
+// Must be overloaded for user-defined types to be serializable
+template<TriviallySerializable T>
+constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *;
+
+// Must be overloaded for user-defined types to be deserializable
+template<TriviallySerializable T>
+constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *;
+
+template<typename T>
+constexpr auto Serialize(T const & data);
+
+template<std::default_initializable T>
+constexpr auto Deserialize(std::span<Byte, serialSize<T>> source);
+
+template<utility::TypeSafeInteger T>
+constexpr auto Deserialize(std::span<Byte, serialSize<T>> source);
+
+template<typename T>
+    requires std::is_same_v<T, type_safe::boolean>
+constexpr auto Deserialize(std::span<Byte, serialSize<T>> source);
+
+
+// Function template definitions
+// -----------------------------
+
 inline constexpr auto operator"" _B(unsigned long long number)  // NOLINT(google-runtime-int)
 {
     return Byte(number);
@@ -56,15 +86,6 @@ inline constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *
 }
 
 
-template<typename T>
-constexpr auto Serialize(T const & data)
-{
-    auto buffer = SerialBuffer<T>{};
-    SerializeTo(buffer.data(), data);
-    return buffer;
-}
-
-
 template<TriviallySerializable T>
 inline constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *
 {
@@ -72,6 +93,15 @@ inline constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *
     // https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wclass-memaccess
     std::memcpy(static_cast<void *>(data), source, serialSize<T>);
     return source + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+}
+
+
+template<typename T>
+constexpr auto Serialize(T const & data)
+{
+    auto buffer = SerialBuffer<T>{};
+    SerializeTo(buffer.data(), data);
+    return buffer;
 }
 
 

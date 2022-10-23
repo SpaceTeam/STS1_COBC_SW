@@ -108,10 +108,9 @@ TEST_CASE("Serialize TriviallySerializable types")
 TEST_CASE("Deserialize TriviallySerializable types")
 {
     auto buffer = std::array{0x01_B, 0x02_B, 0x03_B, 0x04_B};
-
     auto int32 = Deserialize<std::int32_t>(buffer);
-    auto uint16 = Deserialize<std::uint16_t>(std::span<Byte, 2>(buffer.begin(), 2));
-    auto int8 = Deserialize<std::int8_t>(std::span<Byte, 1>(buffer.begin() + 2, 1));
+    auto uint16 = Deserialize<std::uint16_t>(std::span(buffer).first<sizeof(std::uint16_t)>());
+    auto int8 = Deserialize<std::int8_t>(std::span(buffer).subspan<2, sizeof(std::int8_t)>());
 
     REQUIRE(int32 == (4U << 24U) + (3U << 16U) + (2U << 8U) + 1U);
     REQUIRE(uint16 == (2U << 8U) + 1);
