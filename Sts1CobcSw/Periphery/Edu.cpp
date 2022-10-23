@@ -10,7 +10,6 @@
 
 namespace sts1cobcsw::periphery
 {
-namespace ts = type_safe;
 
 
 using sts1cobcsw::serial::Byte;
