@@ -18,6 +18,7 @@
 #include <etl/map.h>
 #include <etl/string.h>
 #include <etl/string_view.h>
+#include <etl/vector.h>
 
 #include <cinttypes>
 #include <cstring>
@@ -37,13 +38,41 @@ namespace ts = type_safe;
 using ts::operator""_usize;
 
 
-enum CommandType
+constexpr auto queueEntrySize = 10;
+
+enum CommandType : char
 {
     turnEduOn = '1',
     turnEduOff = '2',
-    updateUtcOffset = '3',
     buildQueue = '4'
 };
+
+auto ParseQueueEntries(const etl::string<commandSize.get()> & command)
+{
+    auto const nQueueEntries = command.size() / queueEntrySize;
+    eduProgramQueue.resize(nQueueEntries);
+
+    ts::size_t position = 0U;
+
+    for(auto & entry : eduProgramQueue)
+    {
+        int16_t progId = 0;
+        util::CopyFrom(command, &position, &progId);
+        RODOS::PRINTF("Prog ID      : %ld\n", progId);  // NOLINT
+        int16_t queueId = 0;
+        util::CopyFrom(command, &position, &queueId);
+        RODOS::PRINTF("Queue ID     : %ld\n", queueId);  // NOLINT
+        int32_t startTime = 0;
+        util::CopyFrom(command, &position, &startTime);
+        RODOS::PRINTF("Start Time   : %ld\n", startTime);  // NOLINT
+        int16_t timeout = 0;
+        util::CopyFrom(command, &position, &timeout);
+        RODOS::PRINTF("Timeout      : %ld\n", timeout);  // NOLINT
+
+        entry = QueueEntry{
+            .programId = progId, .queueId = queueId, .startTime = startTime, .timeout = timeout};
+    }
+}
 
 auto DispatchCommand(const etl::string<commandSize.get()> & command)
 {
@@ -51,6 +80,7 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     ts::size_t position = 1_usize;
     int32_t utc = 0;
     char commandId = 0;
+    int16_t length = 0;
 
     util::CopyFrom(command, &position, &utc);
     RODOS::sysTime.setUTC(util::UnixToRodosTime(utc));
@@ -58,6 +88,9 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
 
     util::CopyFrom(command, &position, &commandId);
     RODOS::PRINTF("command ID is character : %c\n", commandId);
+
+    util::CopyFrom(command, &position, &length);
+    RODOS::PRINTF("Length of data is : %d\n", length);
 
     if(targetIsCobc)
     {
@@ -73,49 +106,19 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
                 TurnEduOff();
                 return;
             }
-            case CommandType::updateUtcOffset:
-            {
-                UpdateUtcOffset();
-                return;
-            }
             case CommandType::buildQueue:
             {
                 RODOS::PRINTF("Entering build queue command parsing\n");
-                uint16_t length = 0;
-                util::CopyFrom(command, &position, &length);
-                RODOS::PRINTF("Length of data is : %d\n", length);
-
-                if(length % queueEntrySize != 0)
-                {
-                    return;
-                }
 
                 auto const nbQueueEntries = length / queueEntrySize;
                 RODOS::PRINTF("Number of queue entries : %d\n", nbQueueEntries);
 
+                // Erase all previous entries on program queue
                 EmptyEduProgramQueue();
 
-                for(auto i = 0; i < nbQueueEntries; ++i)
-                {
-                    uint16_t progId = 0;
-                    util::CopyFrom(command, &position, &progId);
-                    uint16_t queueId = 0;
-                    RODOS::PRINTF("Prog ID      : %ld\n", progId);  // NOLINT
-                    util::CopyFrom(command, &position, &queueId);
-                    RODOS::PRINTF("Queue ID     : %ld\n", queueId);  // NOLINT
-                    uint32_t startTime = 0;
-                    util::CopyFrom(command, &position, &startTime);
-                    RODOS::PRINTF("Start Time   : %ld\n", startTime);  // NOLINT
-                    uint16_t timeout = 0;
-                    util::CopyFrom(command, &position, &timeout);
-                    RODOS::PRINTF("Timeout      : %ld\n", timeout);  // NOLINT
+                ParseQueueEntries(command.substr(position.get(), length));
 
-                    auto queueEntry = QueueEntry{.programId = progId,
-                                                 .queueId = queueId,
-                                                 .startTime = startTime,
-                                                 .timeout = timeout};
-                    AddQueueEntry(queueEntry);
-                }
+                // Reset queue index and resume EduProgramQueueThread
                 ResetQueueIndex();
                 BuildQueue();
 

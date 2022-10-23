@@ -1,17 +1,16 @@
 #pragma once
 
 #include <rodos_no_using_namespace.h>
+#include <ringbuffer.h>
 
 #include <etl/string.h>
+#include <etl/vector.h>
 
 #include <tuple>
 
 
 namespace sts1cobcsw
 {
-constexpr auto eduProgramQueueSize = 20;
-constexpr auto statusHistorySize = 20;
-
 class TimeEvent : public RODOS::TimeEvent
 {
   public:
@@ -30,27 +29,32 @@ enum class EduProgramStatus
     resultFileDeleted = 8,
 };
 
+
+// TODO: Type safety
 struct QueueEntry
 {
-    uint16_t programId;
-    uint16_t queueId;
-    uint32_t startTime;
-    uint16_t timeout;
+    int16_t programId;
+    int16_t queueId;
+    int32_t startTime;
+    int16_t timeout;
 };
 
-constexpr auto queueEntrySize = 10;
+inline constexpr auto eduProgramQueueSize = 20;
+extern etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue;
+
 
 struct StatusHistoryEntry
 {
-    uint16_t programId;
-    uint16_t queueId;
-    uint8_t status;
+    int16_t programId;
+    int16_t queueId;
+    int8_t status;
 };
 
+inline constexpr auto statusHistorySize = 20;
+extern RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
 
 void EmptyEduProgramQueue();
 void AddQueueEntry(const QueueEntry & eduEntry);
-
 void ResetQueueIndex();
 
 }

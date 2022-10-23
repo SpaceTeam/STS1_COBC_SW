@@ -32,9 +32,6 @@ static TimeEvent eduProgramQueueThreadTimeEvent;
 
 void BuildQueue()
 {
-    // TODO: The actual parsing is done in command parser, call this function at the end or move
-    // this time event handle there
-    // When the queue is parsed, we can resume the EduProgramQueueThread
     eduProgramQueueThreadTimeEvent.handle();
 }
 
