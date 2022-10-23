@@ -1,3 +1,5 @@
+#pragma once
+
 #include <type_safe/types.hpp>
 
 #include <type_traits>

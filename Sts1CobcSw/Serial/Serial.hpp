@@ -10,6 +10,8 @@
 // An example for (de-)serializing a simple user-defined type can be found in the unit test
 // Serial.test.cpp.
 
+#pragma once
+
 #include <Sts1CobcSw/Utility/TypeSafe.hpp>
 
 #include <type_safe/boolean.hpp>
