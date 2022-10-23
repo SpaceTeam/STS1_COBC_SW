@@ -34,6 +34,13 @@ struct ExecuteProgramData
 };
 
 
+struct UpdateTimeData
+{
+    uint8_t commandType;
+    int32_t timestamp;
+};
+
+
 struct EduStatus
 {
     periphery::EduStatusType statusType;
@@ -60,6 +67,7 @@ struct ResultInfo
 
 
 auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
+auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
 }
 
 
@@ -70,13 +78,11 @@ inline constexpr std::size_t serialSize<periphery::ResultsReadyStatus> =
     totalSerialSize<decltype(periphery::ResultsReadyStatus::programId),
                     decltype(periphery::ResultsReadyStatus::queueId)>;
 
-
 template<>
 inline constexpr std::size_t serialSize<periphery::ProgramFinishedStatus> =
     totalSerialSize<decltype(periphery::ProgramFinishedStatus::programId),
                     decltype(periphery::ProgramFinishedStatus::queueId),
                     decltype(periphery::ProgramFinishedStatus::exitCode)>;
-
 
 template<>
 inline constexpr std::size_t serialSize<periphery::ExecuteProgramData> =
@@ -84,5 +90,10 @@ inline constexpr std::size_t serialSize<periphery::ExecuteProgramData> =
                     decltype(periphery::ExecuteProgramData::programId),
                     decltype(periphery::ExecuteProgramData::queueId),
                     decltype(periphery::ExecuteProgramData::timeout)>;
+
+template<>
+inline constexpr std::size_t serialSize<periphery::UpdateTimeData> =
+    totalSerialSize<decltype(periphery::ExecuteProgramData::commandType),
+                    decltype(periphery::UpdateTimeData::timestamp)>;
 }
 }

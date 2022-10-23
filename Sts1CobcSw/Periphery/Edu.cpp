@@ -44,7 +44,7 @@ void Edu::FlushUartBuffer()
 //! @param dest The destination container
 //!
 //! @returns A relevant EDU error code
-auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
+[[nodiscard]] auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
 {
     if(size(destination) > maxDataLength)
     {
@@ -82,7 +82,7 @@ void Edu::SendCommand(uint8_t cmd)
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
-auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
+[[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
     size_t nBytes = data.size();
     if(nBytes >= maxDataLength)
@@ -414,50 +414,36 @@ auto Edu::GetStatus() -> EduStatus
 //! @param timestamp A unix timestamp
 //!
 //! @returns A relevant error code
-auto Edu::UpdateTime(uint32_t timestamp) -> EduErrorCode
+auto Edu::UpdateTime(int32_t timestamp) -> EduErrorCode
 {
-    // std::array<uint32_t, 1> uint32 = {timestamp};
-    // std::array<uint8_t, 4> uint8 = {};
-    // utility::Arrayuint32Touint8(uint32, uint8);
+    auto updateTimeData =
+        serial::Serialize(UpdateTimeData{.commandType = updateTime, .timestamp = timestamp});
 
-    // EduErrorCode errorCode;
-    // for(size_t errorCnt = 0; errorCnt < maxNackRetries; errorCnt++)
-    // {
-    //     {
-    //         // Send data and check for success, otherwise flush the UART and retry
-    //         errorCode = SendData(uint8);
-    //         if(errorCode == EduErrorCode::success)
-    //         {
-    //             break;
-    //         }
-    //         FlushUartBuffer();
-    //     }
-    // }
+    auto errorCode = SendData(updateTimeData);
 
-    // // If the error code does not show success, return the error
-    // if(errorCode != EduErrorCode::success)
-    // {
-    //     return errorCode;
-    // }
+    if(errorCode != EduErrorCode::success)
+    {
+        return errorCode;
+    }
 
-    // // On success, wait for second N/ACK
-    // // TODO(Daniel): change to UartReceive()
-    // mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    // uint8_t nackBuf = 0;
-    // auto retVal = mEduUart_.read(&nackBuf, 1);
+    // On success, wait for second N/ACK
+    // TODO(Daniel): change to UartReceive()
+    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uint8_t recievedByte = 0;
+    auto nReadBytes = mEduUart_.read(&recievedByte, 1);
 
-    // if(retVal == 0)
-    // {
-    //     return EduErrorCode::errorTimeout;
-    // }
-    // if(nackBuf == cmdNack)
-    // {
-    //     return EduErrorCode::errorNack;
-    // }
-    // if(nackBuf != cmdAck)
-    // {
-    //     return EduErrorCode::errorInvalidResult;
-    // }
+    if(nReadBytes == 0)
+    {
+        return EduErrorCode::errorTimeout;
+    }
+    if(recievedByte == cmdNack)
+    {
+        return EduErrorCode::errorNack;
+    }
+    if(recievedByte != cmdAck)
+    {
+        return EduErrorCode::errorInvalidResult;
+    }
 
     return EduErrorCode::success;
 }

@@ -1,11 +1,11 @@
-add_program(UpdateTime UpdateTime.test.cpp)
-target_link_libraries(Sts1CobcSwTests_UpdateTime PUBLIC rodos::rodos type_safe Sts1CobcSw_Periphery)
-
 add_program(ExecuteProgram ExecuteProgram.test.cpp)
 target_link_libraries(Sts1CobcSwTests_ExecuteProgram PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility)
 
 add_program(GetStatus GetStatus.test.cpp)
 target_link_libraries(Sts1CobcSwTests_GetStatus PUBLIC rodos::rodos type_safe Sts1CobcSw_Periphery)
+
+add_program(UpdateTime UpdateTime.test.cpp)
+target_link_libraries(Sts1CobcSwTests_UpdateTime PUBLIC rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility)
 
 get_property(
     edu_cmd_targets

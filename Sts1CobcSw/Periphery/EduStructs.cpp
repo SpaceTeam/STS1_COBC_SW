@@ -34,4 +34,12 @@ auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *
     destination = SerializeTo(destination, data.timeout);
     return destination;
 }
+
+
+auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *
+{
+    destination = SerializeTo(destination, data.commandType);
+    destination = SerializeTo(destination, data.timestamp);
+    return destination;
+}
 }
