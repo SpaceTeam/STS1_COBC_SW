@@ -3,14 +3,14 @@
 
 #include <stm32f4xx_crc.h>
 
-#include <rodos.h>
+#include <rodos_no_using_namespace.h>
 
 #include <cstdint>
 
 namespace sts1cobcsw
 {
 
-auto eduUart = periphery::EduUartInterface();
+auto eduUart = periphery::Edu();
 uint16_t programId = 0xFFFF;
 uint16_t queueId = 0x0000;
 uint16_t timeout = 0xFFFF;
@@ -24,9 +24,9 @@ class ExecuteProgramTest : public RODOS::StaticThread<>
     void run() override
     {
         // TODO(Daniel): check CRC32 byte order
-        PRINTF("START\n");
+        RODOS::PRINTF("START\n");
         eduUart.ExecuteProgram(programId, queueId, timeout);
-        PRINTF("DONE\n");
+        RODOS::PRINTF("DONE\n");
     }
 };
 
