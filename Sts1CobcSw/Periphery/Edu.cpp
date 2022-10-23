@@ -9,14 +9,14 @@
 namespace sts1cobcsw::periphery
 {
 
-EduUartInterface::EduUartInterface()
+Edu::Edu()
 {
     // EDU PDD agrees with the default baudrate (115200 bit/s)
     mEduUart_.init();
 }
 
 
-void EduUartInterface::FlushUartBuffer()
+void Edu::FlushUartBuffer()
 {
     std::array<uint8_t, garbageBufSize> garbageBuf = {0};
     bool dataRecvd = true;
@@ -24,7 +24,7 @@ void EduUartInterface::FlushUartBuffer()
     // Keep reading until no data is coming for flushTimeout (10 ms)
     while(dataRecvd)
     {
-        mEduUart_.suspendUntilDataReady(NOW() + flushTimeout);
+        mEduUart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
         auto readBytes = mEduUart_.read(garbageBuf.data(), garbageBufSize);
         if(readBytes == 0)
         {
@@ -34,7 +34,7 @@ void EduUartInterface::FlushUartBuffer()
 }
 
 
-auto EduUartInterface::UartReceive(std::span<uint8_t> dest, size_t nBytes) -> EduErrorCode
+auto Edu::UartReceive(std::span<uint8_t> dest, size_t nBytes) -> EduErrorCode
 {
     if(nBytes > maxDataLen)
     {
@@ -49,7 +49,7 @@ auto EduUartInterface::UartReceive(std::span<uint8_t> dest, size_t nBytes) -> Ed
 
     while(readBytesTotal < nBytes)
     {
-        mEduUart_.suspendUntilDataReady(NOW() + eduTimeout);
+        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
         auto it = dest.begin() + readBytesTotal;
         auto readBytes = mEduUart_.read(&(*it), nBytes - readBytesTotal);
         if(readBytes == 0)
@@ -69,14 +69,14 @@ auto EduUartInterface::UartReceive(std::span<uint8_t> dest, size_t nBytes) -> Ed
     return EduErrorCode::success;
 }
 
-void EduUartInterface::SendCommand(uint8_t cmd)
+void Edu::SendCommand(uint8_t cmd)
 {
     std::array<uint8_t, 1> cmdArr{cmd};
     // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
     hal::WriteTo(&mEduUart_, std::span<uint8_t>(cmdArr));
 }
 
-auto EduUartInterface::SendData(std::span<uint8_t> data) -> EduErrorCode
+auto Edu::SendData(std::span<uint8_t> data) -> EduErrorCode
 {
     size_t nBytes = data.size();
     if(nBytes >= maxDataLen)
@@ -98,7 +98,7 @@ auto EduUartInterface::SendData(std::span<uint8_t> data) -> EduErrorCode
 
         // Data is always answered by N/ACK
         uint8_t recvAck = 0;
-        mEduUart_.suspendUntilDataReady(NOW() + eduTimeout);
+        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
         mEduUart_.read(&recvAck, 1);
 
         switch(recvAck)
@@ -127,8 +127,7 @@ auto EduUartInterface::SendData(std::span<uint8_t> data) -> EduErrorCode
     return EduErrorCode::errorNackRetries;
 }
 
-auto EduUartInterface::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout)
-    -> EduErrorCode
+auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout) -> EduErrorCode
 {
     uint8_t header = executeProgram;
     auto args = std::array<uint16_t, 3>{programId, queueId, timeout};
@@ -157,7 +156,7 @@ auto EduUartInterface::ExecuteProgram(uint16_t programId, uint16_t queueId, uint
     // eduTimeout != timeout argument for data!
     // timeout specifies the time the student program has to execute
     // eduTimeout is the max. allowed time to reveice N/ACK from EDU
-    mEduUart_.suspendUntilDataReady(NOW() + eduTimeout);
+    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
     mEduUart_.read(&recvAck, 1);
 
     switch(recvAck)
@@ -181,8 +180,7 @@ auto EduUartInterface::ExecuteProgram(uint16_t programId, uint16_t queueId, uint
 }
 
 // TODO(Daniel): refactor, too complex
-auto EduUartInterface::GetStatus()
-    -> std::tuple<EduStatusType, uint16_t, uint16_t, uint8_t, EduErrorCode>
+auto Edu::GetStatus() -> EduStatus
 {
     // Values to be returned
     uint8_t statusType = invalidStatus;
@@ -352,7 +350,7 @@ auto EduUartInterface::GetStatus()
     return {statusTypeRet, programId, queueId, exitCode, EduErrorCode::success};
 }
 
-auto EduUartInterface::UpdateTime(uint32_t timestamp) -> EduErrorCode
+auto Edu::UpdateTime(uint32_t timestamp) -> EduErrorCode
 {
     std::array<uint32_t, 1> tsUint32 = {timestamp};
     std::array<uint8_t, 4> tsUint8 = {};
@@ -380,7 +378,7 @@ auto EduUartInterface::UpdateTime(uint32_t timestamp) -> EduErrorCode
 
     // On success, wait for second N/ACK
     // TODO(Daniel): change to UartReceive()
-    mEduUart_.suspendUntilDataReady(NOW() + eduTimeout);
+    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
     uint8_t nackBuf = 0;
     auto retVal = mEduUart_.read(&nackBuf, 1);
 
@@ -400,7 +398,7 @@ auto EduUartInterface::UpdateTime(uint32_t timestamp) -> EduErrorCode
     return EduErrorCode::success;
 }
 
-auto EduUartInterface::StopProgram() -> EduErrorCode
+auto Edu::StopProgram() -> EduErrorCode
 {
     return EduErrorCode::success;
     std::array<uint8_t, 3> dataBuf = {stopProgram};
@@ -416,8 +414,7 @@ auto EduUartInterface::StopProgram() -> EduErrorCode
     return UartReceive(recvBuf, 1);
 }
 
-auto EduUartInterface::ReturnResult(std::array<uint8_t, maxDataLen> & dest)
-    -> std::tuple<EduErrorCode, size_t>
+auto Edu::ReturnResult(std::array<uint8_t, maxDataLen> & dest) -> ResultInfo
 {
     // If this is the initial call, send the header
     if(!mResultPending_)

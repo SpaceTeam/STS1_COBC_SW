@@ -2,48 +2,60 @@
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 
-#include <rodos.h>
+#include <rodos_no_using_namespace.h>
 
 #include <span>
 #include <tuple>
 
 namespace sts1cobcsw::periphery
 {
+struct EduStatus
+{
+    EduStatusType statusType;
+    uint16_t programId;
+    uint16_t queueId;
+    uint8_t exitCode;
+    EduErrorCode errorCode;
+};
 
-// TODO: Just Edu
-class EduUartInterface
+
+struct ResultInfo
+{
+    EduErrorCode errorCode;
+    size_t resultSize;
+};
+
+
+class Edu
 {
     // RODOS::HAL_UART mEduUart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,
     // hal::eduUartRxPin);
-    RODOS::HAL_UART mEduUart_ = HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+    RODOS::HAL_UART mEduUart_ =
+        RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
     bool mIsInitialized_ = false;
     bool mResultPending_ = false;
 
-    /**
-     * @brief Receive nBytes bytes over the EDU UART in a single round.
-     *
-     * @param dest The destination container
-     * @param nBytes The amount of bytes to receive
-     *
-     * @returns A relevant EDU error code
-     */
+    //!
+    //! @brief Receive nBytes bytes over the EDU UART in a single round.
+    //!
+    //! @param dest The destination container
+    //! @param nBytes The amount of bytes to receive
+    //!
+    //! @returns A relevant EDU error code
+    //!
     auto UartReceive(std::span<uint8_t> dest, size_t nBytes) -> EduErrorCode;
 
     auto UartReveiceMulti(std::span<uint8_t> dest) -> EduErrorCode;
 
-    /**
-     * @brief Flush the EDU UART read buffer.
-     *
-     * This can be used to clear all buffer data after an error to request
-     * a resend.
-     */
+    //!
+    //! @brief Flush the EDU UART read buffer.
+    //! This can be used to clear all buffer data after an error to request
+    //! a resend.
+    //!
     void FlushUartBuffer();
 
   public:
-    /**
-     * @brief Default constructor, also initializes the EDU UART.
-     */
-    EduUartInterface();
+    Edu();
 
     /**
      * @brief Send a data packet over UART to the EDU.
@@ -103,7 +115,7 @@ class EduUartInterface
      */
     // TODO: return custom type
     // TODO: error handling?
-    auto GetStatus() -> std::tuple<EduStatusType, uint16_t, uint16_t, uint8_t, EduErrorCode>;
+    auto GetStatus() -> EduStatus;
 
     /**
      * @brief Issues a command to update the EDU time.
@@ -124,23 +136,23 @@ class EduUartInterface
      */
     auto UpdateTime(uint32_t timestamp) -> EduErrorCode;
 
-    /**
-     * @brief Issues a command to stop the currently running EDU program.
-     * If there is no active program, the EDU will return ACK anyway.
-     *
-     * Stop Program:
-     * -> [DATA]
-     * -> [Command Header]
-     * <- [N/ACK]
-     * <- [N/ACK]
-     * @returns A relevant error code
-     */
+    //!
+    //! @brief Issues a command to stop the currently running EDU program.
+    //! If there is no active program, the EDU will return ACK anyway.
+    //!
+    //! Stop Program:
+    //! -> [DATA]
+    //! -> [Command Header]
+    //! <- [N/ACK]
+    //! <- [N/ACK]
+    //! @returns A relevant error code
+    //!
     auto StopProgram() -> EduErrorCode;
 
     // mock up flash
     // simple results -> 1 round should work with dma to ram
     // no tuples
-    auto ReturnResult(std::array<uint8_t, maxDataLen> & dest) -> std::tuple<EduErrorCode, size_t>;
+    auto ReturnResult(std::array<uint8_t, maxDataLen> & dest) -> ResultInfo;
 
     // TODO
     // auto StoreArchive() -> int32_t;
