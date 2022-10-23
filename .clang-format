@@ -106,7 +106,9 @@ IndentCaseLabels: true
 IndentExternBlock: NoIndent
 IndentGotoLabels: true
 IndentPPDirectives: BeforeHash
-IndentRequires:  false
+# Indent requires because RequiresClausePosition is not yet available (clang 15) and without it it
+# looks even worse
+IndentRequires:  true
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 InsertTrailingCommas: Wrapped
@@ -163,6 +165,7 @@ RawStringFormats:
     CanonicalDelimiter: ''
     BasedOnStyle: google
 ReflowComments: true
+# RequiresClausePosition: WithPreceding # requires clang-format 15
 SortIncludes: true
 SortJavaStaticImport: Before
 SortUsingDeclarations: true

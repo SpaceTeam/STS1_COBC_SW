@@ -1,6 +1,14 @@
 add_program(Dummy Dummy.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
 
+add_program(PersistentState PersistentState.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_PersistentState PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
+)
+
+add_program(Serial Serial.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
+
 get_property(
     all_unit_test_targets
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

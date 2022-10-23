@@ -1,0 +1,1 @@
+target_link_libraries(Sts1CobcSw_Serial INTERFACE type_safe Sts1CobcSw_Utility)
