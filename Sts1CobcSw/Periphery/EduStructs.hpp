@@ -25,9 +25,9 @@ struct ResultsReadyStatus
 };
 
 
-struct ExecuteProgramArguments
+struct ExecuteProgramData
 {
-    uint8_t header;
+    uint8_t commandType;
     uint16_t programId;
     uint16_t queueId;
     uint16_t timeout;
@@ -59,7 +59,7 @@ struct ResultInfo
 };
 
 
-auto SerializeTo(Byte * destination, ExecuteProgramArguments const & data) -> Byte *;
+auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
 }
 
 
@@ -79,10 +79,10 @@ inline constexpr std::size_t serialSize<periphery::ProgramFinishedStatus> =
 
 
 template<>
-inline constexpr std::size_t serialSize<periphery::ExecuteProgramArguments> =
-    totalSerialSize<decltype(periphery::ExecuteProgramArguments::header),
-                    decltype(periphery::ExecuteProgramArguments::programId),
-                    decltype(periphery::ExecuteProgramArguments::queueId),
-                    decltype(periphery::ExecuteProgramArguments::timeout)>;
+inline constexpr std::size_t serialSize<periphery::ExecuteProgramData> =
+    totalSerialSize<decltype(periphery::ExecuteProgramData::commandType),
+                    decltype(periphery::ExecuteProgramData::programId),
+                    decltype(periphery::ExecuteProgramData::queueId),
+                    decltype(periphery::ExecuteProgramData::timeout)>;
 }
 }

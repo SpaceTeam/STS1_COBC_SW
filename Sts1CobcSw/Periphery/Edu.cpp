@@ -42,7 +42,6 @@ void Edu::FlushUartBuffer()
 //! @brief Receive nBytes bytes over the EDU UART in a single round.
 //!
 //! @param dest The destination container
-//! @param nBytes The amount of bytes to receive
 //!
 //! @returns A relevant EDU error code
 auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
@@ -86,12 +85,12 @@ void Edu::SendCommand(uint8_t cmd)
 auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
     size_t nBytes = data.size();
-    if(nBytes >= maxDataLen)
+    if(nBytes >= maxDataLength)
     {
         return EduErrorCode::errorSendDataTooLong;
     }
 
-    // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLen
+    // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLength
     std::array<uint16_t, 1> len{static_cast<uint16_t>(nBytes)};
     std::array<uint32_t, 1> crc{utility::Crc32(data)};
 
@@ -156,14 +155,15 @@ auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 //! @returns A relevant EduErrorCode
 auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout) -> EduErrorCode
 {
-    ExecuteProgramArguments arguments{
-        .header = executeProgram, .programId = programId, .queueId = queueId, .timeout = timeout};
+    ExecuteProgramData executeProgramData{.commandType = executeProgram,
+                                          .programId = programId,
+                                          .queueId = queueId,
+                                          .timeout = timeout};
 
-    std::array<Byte, sts1cobcsw::serial::serialSize<ExecuteProgramArguments>> data = {};
-    SerializeTo(data.data(), arguments);
+    auto serializedData = sts1cobcsw::serial::Serialize(executeProgramData);
 
     // Check if data command was successful
-    EduErrorCode dataError = SendData(data);
+    auto dataError = SendData(serializedData);
     if(dataError != EduErrorCode::success)
     {
         return dataError;
@@ -591,8 +591,8 @@ auto Edu::ReturnResult(std::array<uint8_t, maxDataLength> & dest) -> ResultInfo
     //     }
 
     //     // Assemble checksum
-    //     auto crc32Recv = utility::BytesTouint32(crc32Buf[0], crc32Buf[1], crc32Buf[2], crc32Buf[3]);
-    //     auto crc32Calc = utility::Crc32(recvDataBuf);
+    //     auto crc32Recv = utility::BytesTouint32(crc32Buf[0], crc32Buf[1], crc32Buf[2],
+    //     crc32Buf[3]); auto crc32Calc = utility::Crc32(recvDataBuf);
 
     //     // Check checksum against own calculation
     //     if(crc32Recv != crc32Calc)
