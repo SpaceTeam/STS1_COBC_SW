@@ -59,7 +59,7 @@ using SerialBuffer = std::array<Byte, serialSize<T>>;
 // Function declarations
 // ---------------------
 
-constexpr auto operator"" _B(unsigned long long number);  // NOLINT(google-runtime-int)
+constexpr auto operator"" _b(unsigned long long number) -> Byte;  // NOLINT(google-runtime-int)
 
 // Must be overloaded for user-defined types to be serializable
 template<TriviallySerializable T>
@@ -86,7 +86,8 @@ constexpr auto Deserialize(std::span<Byte, serialSize<T>> source);
 // Function template definitions
 // -----------------------------
 
-inline constexpr auto operator"" _B(unsigned long long number)  // NOLINT(google-runtime-int)
+inline constexpr auto operator"" _b(unsigned long long number)  // NOLINT(google-runtime-int)
+    -> Byte
 {
     return Byte(number);
 }
