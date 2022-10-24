@@ -9,27 +9,27 @@ enum class EduErrorCode
 {
     success,
     successEof,
-    errorBufferTooSmall,
-    errorUartNotInitialized,
-    errorTimeout,
-    errorNack,
-    errorInvalidResult,
+    invalidResult,
+    bufferTooSmall,
+    uartNotInitialized,
+    timeout,
+    nack,
     // Separate errors for the SendData function
     // to differentiate where the error occured
-    errorSendDataTooLong,
-    errorReceiveDataTooLong,
-    errorNackRetries,
-    errorDataTimeout,  // TODO: Why is errorTimeout not enough?
-    errorDataInvalidResult,
-    errorChecksum
+    invalidDataResult,
+    sendDataTooLong,
+    receiveDataTooLong,
+    tooManyNacks,
+    dataTimeout,
+    wrongChecksum
 };
 
 enum class EduStatusType
 {
+    invalid,
     noEvent,
     programFinished,
     resultsReady,
-    invalid
 };
 
 }

@@ -51,13 +51,6 @@ struct EduStatus
 };
 
 
-struct ResultInfo
-{
-    periphery::EduErrorCode errorCode;
-    size_t resultSize;
-};
-
-
 struct ResultsReadyStatus
 {
     uint16_t programId;
@@ -73,10 +66,10 @@ struct ProgramFinishedStatus
 };
 
 
-struct DataHeader
+struct ResultInfo
 {
-    uint8_t command;
-    uint16_t length;
+    periphery::EduErrorCode errorCode;
+    size_t resultSize;
 };
 
 

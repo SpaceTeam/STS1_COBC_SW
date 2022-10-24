@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -33,12 +32,14 @@ private:
     // TODO: Rework -> Send(EduBasicCommand command) -> void;
     auto SendCommand(Byte commandId) -> void;
     [[nodiscard]] auto SendData(std::span<Byte> data) -> EduErrorCode;
+    // TODO: Make this read and return a Type instead of having to provide a destination. Use
+    // Deserialize internally.
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
 
-    // RODOS::HAL_UART mEduUart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,
+    // RODOS::HAL_UART uart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,
     // hal::eduUartRxPin);
-    RODOS::HAL_UART mEduUart_ =
+    RODOS::HAL_UART uart_ =
         RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 };
 }

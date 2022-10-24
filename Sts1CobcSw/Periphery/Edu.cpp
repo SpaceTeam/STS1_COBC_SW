@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
+#include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 
@@ -36,19 +37,19 @@ constexpr auto garbageBufferSize = 128;
 
 // GetStatus Constants
 // Max. amount of bytes for result of "Get Status" EDU command
-constexpr auto maxStatusBytes = 6;
+constexpr auto maxNStatusBytes = 6;
 // Amount of bytes for the length field of a data command
-constexpr size_t lenBytes = 2;
+constexpr size_t nLengthBytes = 2;
 // Amount of bytes for a basic command or a high level command header
-constexpr size_t cmdBytes = 1;
+constexpr size_t nCommandBytes = 1;
 // Max. amount of send retries after receiving NACK
-constexpr auto maxNackRetries = 10;
+constexpr auto maxNNackRetries = 10;
 
 
 Edu::Edu()
 {
     constexpr auto baudRate = 115'200;
-    mEduUart_.init(baudRate);
+    uart_.init(baudRate);
 }
 
 
@@ -92,12 +93,12 @@ Edu::Edu()
     // timeout specifies the time the student program has to execute
     // eduTimeout is the max. allowed time to reveice N/ACK from EDU
     auto answer = 0x00_b;
-    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-    auto nReadBytes = mEduUart_.read(&answer, 1);
+    auto nReadBytes = uart_.read(&answer, 1);
     if(nReadBytes == 0)
     {
-        return EduErrorCode::errorTimeout;
+        return EduErrorCode::timeout;
     }
     switch(answer)
     {
@@ -107,11 +108,11 @@ Edu::Edu()
         }
         case cmdNack:
         {
-            return EduErrorCode::errorNack;
+            return EduErrorCode::nack;
         }
         default:
         {
-            return EduErrorCode::errorInvalidResult;
+            return EduErrorCode::invalidResult;
         }
     }
 }
@@ -496,12 +497,12 @@ Edu::Edu()
     // TODO: Refactor this common pattern into a function
     // TODO: Implement read functions that return a type and internally use Deserialize<T>()
     auto answer = 0x00_b;
-    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-    auto nReadBytes = mEduUart_.read(&answer, 1);
+    auto nReadBytes = uart_.read(&answer, 1);
     if(nReadBytes == 0)
     {
-        return EduErrorCode::errorTimeout;
+        return EduErrorCode::timeout;
     }
     switch(answer)
     {
@@ -511,11 +512,11 @@ Edu::Edu()
         }
         case cmdNack:
         {
-            return EduErrorCode::errorNack;
+            return EduErrorCode::nack;
         }
         default:
         {
-            return EduErrorCode::errorInvalidResult;
+            return EduErrorCode::invalidResult;
         }
     }
 }
@@ -528,7 +529,7 @@ void Edu::SendCommand(Byte commandId)
 {
     auto data = std::array{commandId};
     // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
-    hal::WriteTo(&mEduUart_, std::span(data));
+    hal::WriteTo(&uart_, std::span(data));
 }
 
 
@@ -540,7 +541,7 @@ void Edu::SendCommand(Byte commandId)
     size_t nBytes = data.size();
     if(nBytes >= maxDataLength)
     {
-        return EduErrorCode::errorSendDataTooLong;
+        return EduErrorCode::sendDataTooLong;
     }
 
     // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLength
@@ -548,22 +549,22 @@ void Edu::SendCommand(Byte commandId)
     std::array<uint32_t, 1> crc{utility::Crc32(data)};
 
     int nackCount = 0;
-    while(nackCount < maxNackRetries)
+    while(nackCount < maxNNackRetries)
     {
         SendCommand(cmdData);
-        hal::WriteTo(&mEduUart_, std::span<uint16_t>(len));
-        hal::WriteTo(&mEduUart_, data);
-        hal::WriteTo(&mEduUart_, std::span<uint32_t>(crc));
+        hal::WriteTo(&uart_, std::span<uint16_t>(len));
+        hal::WriteTo(&uart_, data);
+        hal::WriteTo(&uart_, std::span<uint32_t>(crc));
 
         // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
         auto answer = 0x00_b;
-        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-        auto nReadBytes = mEduUart_.read(&answer, 1);
+        auto nReadBytes = uart_.read(&answer, 1);
         if(nReadBytes == 0)
         {
-            return EduErrorCode::errorTimeout;
+            return EduErrorCode::timeout;
         }
         switch(answer)
         {
@@ -578,11 +579,11 @@ void Edu::SendCommand(Byte commandId)
             }
             default:
             {
-                return EduErrorCode::errorInvalidResult;
+                return EduErrorCode::invalidResult;
             }
         }
     }
-    return EduErrorCode::errorNackRetries;
+    return EduErrorCode::tooManyNacks;
 }
 
 
@@ -595,19 +596,19 @@ void Edu::SendCommand(Byte commandId)
 {
     if(size(destination) > maxDataLength)
     {
-        return EduErrorCode::errorReceiveDataTooLong;
+        return EduErrorCode::receiveDataTooLong;
     }
 
     std::size_t totalReceivedBytes = 0U;
     const auto destinationSize = size(destination);
     while(totalReceivedBytes < destinationSize)
     {
-        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto nReceivedBytes = mEduUart_.read(data(destination) + totalReceivedBytes,
-                                             destinationSize - totalReceivedBytes);
+        uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        auto nReceivedBytes = uart_.read(data(destination) + totalReceivedBytes,
+                                         destinationSize - totalReceivedBytes);
         if(nReceivedBytes == 0)
         {
-            return EduErrorCode::errorTimeout;
+            return EduErrorCode::timeout;
         }
         totalReceivedBytes += nReceivedBytes;
     }
