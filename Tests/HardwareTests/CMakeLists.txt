@@ -10,7 +10,7 @@ add_program(Uart Uart.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal)
 
 add_program(Crc32 Crc32.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Crc32 PUBLIC rodos::rodos type_safe Sts1CobcSw_Util)
+target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos)
 
 get_property(
     all_hw_test_targets

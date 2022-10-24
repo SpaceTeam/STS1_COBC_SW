@@ -41,28 +41,18 @@ class UartTest : public RODOS::StaticThread<>
     {
         while(true)
         {
-            constexpr auto readBufferSize = 64;
+            constexpr auto bufferSize = 64;
 
             // Check EDU UART
-            auto eduReadBuffer = std::array<std::byte, readBufferSize>{};
-            auto nReadBytes = hal::ReadFrom(&eduUart, std::span(eduReadBuffer));
-            if(nReadBytes > 0)
-            {
-                auto trimmedMessage = std::span(begin(eduReadBuffer), nReadBytes);
-                // Reflect to EDU and also print to UCI UART
-                hal::WriteTo(&eduUart, trimmedMessage);
-                hal::WriteTo(&uciUart, trimmedMessage);
-            }
+            auto eduBuffer = std::array<std::byte, bufferSize>{};
+            hal::ReadFrom(&eduUart, std::span(eduBuffer));
+            hal::WriteTo(&eduUart, std::span(eduBuffer));
+            hal::WriteTo(&uciUart, std::span(eduBuffer));
 
             // Check UCI UART
-            auto uciReadBuffer = std::array<std::byte, readBufferSize>{};
-            nReadBytes = hal::ReadFrom(&uciUart, std::span(uciReadBuffer));
-            if(nReadBytes > 0)
-            {
-                auto trimmedUciMessage = std::span(begin(uciReadBuffer), nReadBytes);
-                // Reflect to UCI UART
-                hal::WriteTo(&uciUart, trimmedUciMessage);
-            }
+            auto uciBuffer = std::array<std::byte, bufferSize>{};
+            hal::ReadFrom(&uciUart, std::span(uciBuffer));
+            hal::WriteTo(&uciUart, std::span(uciBuffer));
         }
     }
 };
