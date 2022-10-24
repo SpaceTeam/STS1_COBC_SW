@@ -9,18 +9,14 @@
 
 namespace sts1cobcsw
 {
-
 auto eduUart = periphery::Edu();
 uint16_t programId = 0x1234;
 uint16_t queueId = 0x0000;
 uint16_t timeout = 0xABCD;
 
+
 class ExecuteProgramTest : public RODOS::StaticThread<>
 {
-    void init() override
-    {
-    }
-
     void run() override
     {
         // TODO(Daniel): check CRC32 byte order

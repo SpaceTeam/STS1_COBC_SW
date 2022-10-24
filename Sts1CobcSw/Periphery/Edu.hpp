@@ -16,7 +16,7 @@ using sts1cobcsw::serial::Byte;
 
 class Edu
 {
-  public:
+public:
     Edu();
 
     [[nodiscard]] auto UpdateTime(int32_t timestamp) -> EduErrorCode;
@@ -27,7 +27,7 @@ class Edu
     [[nodiscard]] auto ReturnResult(std::array<uint8_t, maxDataLength> & destination) -> ResultInfo;
     [[nodiscard]] auto StoreArchive() -> int32_t;
 
-  private:
+private:
     auto SendCommand(uint8_t cmd) -> void;
     [[nodiscard]] auto SendData(std::span<Byte> data) -> EduErrorCode;
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;

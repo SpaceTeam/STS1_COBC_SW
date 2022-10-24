@@ -8,8 +8,6 @@
 
 namespace sts1cobcsw::utility
 {
-
-
 //! @brief Implementation of the CRC32/MPEG-2 algorithm.
 
 //! https://en.wikipedia.org/wiki/Cyclic_redundancy_check           -> What is CRC
