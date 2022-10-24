@@ -18,119 +18,53 @@ Edu::Edu()
 }
 
 
-//! @brief Flush the EDU UART read buffer.
+//! @brief Issues a command to update the EDU time.
 //!
-//! This can be used to clear all buffer data after an error to request a resend.
-auto Edu::FlushUartBuffer() -> void
+//! Update Time:
+//! -> [DATA]
+//! -> [Command Header]
+//! -> [Timestamp]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//!
+//! The first N/ACK confirms a valid data packet,
+//! the second N/ACK confirms the time update.
+//!
+//! @param timestamp A unix timestamp
+//!
+//! @returns A relevant error code
+[[nodiscard]] auto Edu::UpdateTime(int32_t timestamp) -> EduErrorCode
 {
-    // std::array<uint8_t, garbageBufSize> garbageBuf = {0};
-    // bool dataRecvd = true;
+    auto updateTimeData =
+        serial::Serialize(UpdateTimeData{.commandType = updateTime, .timestamp = timestamp});
 
-    // // Keep reading until no data is coming for flushTimeout (10 ms)
-    // while(dataRecvd)
-    // {
-    //     mEduUart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
-    //     auto readBytes = mEduUart_.read(garbageBuf.data(), garbageBufSize);
-    //     if(readBytes == 0)
-    //     {
-    //         dataRecvd = false;
-    //     }
-    // }
-}
+    auto errorCode = SendData(updateTimeData);
 
-
-//! @brief Receive nBytes bytes over the EDU UART in a single round.
-//!
-//! @param dest The destination container
-//!
-//! @returns A relevant EDU error code
-[[nodiscard]] auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
-{
-    if(size(destination) > maxDataLength)
+    if(errorCode != EduErrorCode::success)
     {
-        return EduErrorCode::errorReceiveDataTooLong;
+        return errorCode;
     }
 
-    std::size_t totalReceivedBytes = 0U;
-    const auto destinationSize = size(destination);
-    while(totalReceivedBytes < destinationSize)
+    // On success, wait for second N/ACK
+    // TODO(Daniel): change to UartReceive()
+    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uint8_t recievedByte = 0;
+    auto nReadBytes = mEduUart_.read(&recievedByte, 1);
+
+    if(nReadBytes == 0)
     {
-        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto nReceivedBytes = mEduUart_.read(data(destination) + totalReceivedBytes,
-                                             destinationSize - totalReceivedBytes);
-        if(nReceivedBytes == 0)
-        {
-            return EduErrorCode::errorTimeout;
-        }
-        totalReceivedBytes += nReceivedBytes;
+        return EduErrorCode::errorTimeout;
     }
+    if(recievedByte == cmdNack)
+    {
+        return EduErrorCode::errorNack;
+    }
+    if(recievedByte != cmdAck)
+    {
+        return EduErrorCode::errorInvalidResult;
+    }
+
     return EduErrorCode::success;
-}
-
-
-//! @brief Send a CEP command to the EDU.
-//!
-//! @param cmd The command
-void Edu::SendCommand(uint8_t cmd)
-{
-    std::array<uint8_t, 1> cmdArr{cmd};
-    // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
-    hal::WriteTo(&mEduUart_, std::span<uint8_t>(cmdArr));
-}
-
-
-//! @brief Send a data packet over UART to the EDU.
-//!
-//! @param data The data to be sent
-[[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
-{
-    size_t nBytes = data.size();
-    if(nBytes >= maxDataLength)
-    {
-        return EduErrorCode::errorSendDataTooLong;
-    }
-
-    // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLength
-    std::array<uint16_t, 1> len{static_cast<uint16_t>(nBytes)};
-    std::array<uint32_t, 1> crc{utility::Crc32(data)};
-
-    size_t nackCnt = 0;
-    while(nackCnt++ < maxNackRetries)
-    {
-        SendCommand(cmdData);
-        hal::WriteTo(&mEduUart_, std::span<uint16_t>(len));
-        hal::WriteTo(&mEduUart_, data);
-        hal::WriteTo(&mEduUart_, std::span<uint32_t>(crc));
-
-        // Data is always answered by N/ACK
-        uint8_t recvAck = 0U;
-        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        mEduUart_.read(&recvAck, 1);
-
-        switch(recvAck)
-        {
-            case cmdAck:
-                return EduErrorCode::success;
-                break;
-
-            case cmdNack:
-                // If NACK was received, retry
-                if(nackCnt < maxNackRetries)
-                {
-                    continue;
-                }
-                break;
-
-            case 0:
-                return EduErrorCode::errorDataTimeout;
-                break;
-
-            default:
-                return EduErrorCode::errorDataInvalidResult;
-                break;
-        }
-    }
-    return EduErrorCode::errorNackRetries;
 }
 
 
@@ -199,6 +133,32 @@ void Edu::SendCommand(uint8_t cmd)
     }
 
     return EduErrorCode::success;
+}
+
+
+//! @brief Issues a command to stop the currently running EDU program.
+//! If there is no active program, the EDU will return ACK anyway.
+//!
+//! Stop Program:
+//! -> [DATA]
+//! -> [Command Header]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//! @returns A relevant error code
+[[nodiscard]] auto Edu::StopProgram() -> EduErrorCode
+{
+    return EduErrorCode::success;
+    // std::array<uint8_t, 3> dataBuf = {stopProgram};
+    // auto errorCode = SendData(dataBuf);
+
+    // if(errorCode != EduErrorCode::success)
+    // {
+    //     return errorCode;
+    // }
+
+    // // Receive second N/ACK to see if program is successfully stopped
+    // std::array<uint8_t, 1> recvBuf = {};
+    // return UartReceive(recvBuf, 1);
 }
 
 
@@ -400,82 +360,6 @@ void Edu::SendCommand(uint8_t cmd)
 }
 
 
-//! @brief Issues a command to update the EDU time.
-//!
-//! Update Time:
-//! -> [DATA]
-//! -> [Command Header]
-//! -> [Timestamp]
-//! <- [N/ACK]
-//! <- [N/ACK]
-//!
-//! The first N/ACK confirms a valid data packet,
-//! the second N/ACK confirms the time update.
-//!
-//! @param timestamp A unix timestamp
-//!
-//! @returns A relevant error code
-[[nodiscard]] auto Edu::UpdateTime(int32_t timestamp) -> EduErrorCode
-{
-    auto updateTimeData =
-        serial::Serialize(UpdateTimeData{.commandType = updateTime, .timestamp = timestamp});
-
-    auto errorCode = SendData(updateTimeData);
-
-    if(errorCode != EduErrorCode::success)
-    {
-        return errorCode;
-    }
-
-    // On success, wait for second N/ACK
-    // TODO(Daniel): change to UartReceive()
-    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    uint8_t recievedByte = 0;
-    auto nReadBytes = mEduUart_.read(&recievedByte, 1);
-
-    if(nReadBytes == 0)
-    {
-        return EduErrorCode::errorTimeout;
-    }
-    if(recievedByte == cmdNack)
-    {
-        return EduErrorCode::errorNack;
-    }
-    if(recievedByte != cmdAck)
-    {
-        return EduErrorCode::errorInvalidResult;
-    }
-
-    return EduErrorCode::success;
-}
-
-
-//! @brief Issues a command to stop the currently running EDU program.
-//! If there is no active program, the EDU will return ACK anyway.
-//!
-//! Stop Program:
-//! -> [DATA]
-//! -> [Command Header]
-//! <- [N/ACK]
-//! <- [N/ACK]
-//! @returns A relevant error code
-[[nodiscard]] auto Edu::StopProgram() -> EduErrorCode
-{
-    return EduErrorCode::success;
-    // std::array<uint8_t, 3> dataBuf = {stopProgram};
-    // auto errorCode = SendData(dataBuf);
-
-    // if(errorCode != EduErrorCode::success)
-    // {
-    //     return errorCode;
-    // }
-
-    // // Receive second N/ACK to see if program is successfully stopped
-    // std::array<uint8_t, 1> recvBuf = {};
-    // return UartReceive(recvBuf, 1);
-}
-
-
 // mock up flash
 // simple results -> 1 round should work with dma to ram
 // no tuples
@@ -607,4 +491,119 @@ void Edu::SendCommand(uint8_t cmd)
     return 0;
 }
 
+
+//! @brief Send a CEP command to the EDU.
+//!
+//! @param cmd The command
+void Edu::SendCommand(uint8_t cmd)
+{
+    std::array<uint8_t, 1> cmdArr{cmd};
+    // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
+    hal::WriteTo(&mEduUart_, std::span<uint8_t>(cmdArr));
+}
+
+
+//! @brief Send a data packet over UART to the EDU.
+//!
+//! @param data The data to be sent
+[[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
+{
+    size_t nBytes = data.size();
+    if(nBytes >= maxDataLength)
+    {
+        return EduErrorCode::errorSendDataTooLong;
+    }
+
+    // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLength
+    std::array<uint16_t, 1> len{static_cast<uint16_t>(nBytes)};
+    std::array<uint32_t, 1> crc{utility::Crc32(data)};
+
+    size_t nackCnt = 0;
+    while(nackCnt++ < maxNackRetries)
+    {
+        SendCommand(cmdData);
+        hal::WriteTo(&mEduUart_, std::span<uint16_t>(len));
+        hal::WriteTo(&mEduUart_, data);
+        hal::WriteTo(&mEduUart_, std::span<uint32_t>(crc));
+
+        // Data is always answered by N/ACK
+        uint8_t recvAck = 0U;
+        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        mEduUart_.read(&recvAck, 1);
+
+        switch(recvAck)
+        {
+            case cmdAck:
+                return EduErrorCode::success;
+                break;
+
+            case cmdNack:
+                // If NACK was received, retry
+                if(nackCnt < maxNackRetries)
+                {
+                    continue;
+                }
+                break;
+
+            case 0:
+                return EduErrorCode::errorDataTimeout;
+                break;
+
+            default:
+                return EduErrorCode::errorDataInvalidResult;
+                break;
+        }
+    }
+    return EduErrorCode::errorNackRetries;
+}
+
+
+//! @brief Receive nBytes bytes over the EDU UART in a single round.
+//!
+//! @param dest The destination container
+//!
+//! @returns A relevant EDU error code
+[[nodiscard]] auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
+{
+    if(size(destination) > maxDataLength)
+    {
+        return EduErrorCode::errorReceiveDataTooLong;
+    }
+
+    std::size_t totalReceivedBytes = 0U;
+    const auto destinationSize = size(destination);
+    while(totalReceivedBytes < destinationSize)
+    {
+        mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        auto nReceivedBytes = mEduUart_.read(data(destination) + totalReceivedBytes,
+                                             destinationSize - totalReceivedBytes);
+        if(nReceivedBytes == 0)
+        {
+            return EduErrorCode::errorTimeout;
+        }
+        totalReceivedBytes += nReceivedBytes;
+    }
+    return EduErrorCode::success;
+}
+
+
+//! @brief Flush the EDU UART read buffer.
+//!
+//! This can be used to clear all buffer data after an error to request a resend.
+auto Edu::FlushUartBuffer() -> void
+{
+    // std::array<uint8_t, garbageBufSize> garbageBuf = {0};
+    // bool dataRecvd = true;
+
+    // // Keep reading until no data is coming for flushTimeout (10 ms)
+    // while(dataRecvd)
+    // {
+    //     mEduUart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
+    //     auto readBytes = mEduUart_.read(garbageBuf.data(), garbageBufSize);
+    //     if(readBytes == 0)
+    //     {
+    //         dataRecvd = false;
+    //     }
+    // }
+}
 }
