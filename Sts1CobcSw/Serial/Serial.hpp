@@ -71,17 +71,17 @@ template<TriviallySerializable T>
 constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *;
 
 template<typename T>
-constexpr auto Serialize(T const & data);
+[[nodiscard]] constexpr auto Serialize(T const & data) -> SerialBuffer<T>;
 
 template<std::default_initializable T>
-constexpr auto Deserialize(std::span<Byte, serialSize<T>> source);
+[[nodiscard]] constexpr auto Deserialize(std::span<Byte, serialSize<T>> source) -> T;
 
 template<utility::TypeSafeInteger T>
-constexpr auto Deserialize(std::span<Byte, serialSize<T>> source);
+[[nodiscard]] constexpr auto Deserialize(std::span<Byte, serialSize<T>> source) -> T;
 
 template<typename T>
     requires std::is_same_v<T, type_safe::boolean>
-constexpr auto Deserialize(std::span<Byte, serialSize<T>> source);
+[[nodiscard]] constexpr auto Deserialize(std::span<Byte, serialSize<T>> source) -> T;
 
 
 // Function template definitions
@@ -113,7 +113,7 @@ inline constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *
 
 
 template<typename T>
-constexpr auto Serialize(T const & data)
+[[nodiscard]] constexpr auto Serialize(T const & data) -> SerialBuffer<T>
 {
     auto buffer = SerialBuffer<T>{};
     SerializeTo(buffer.data(), data);
@@ -122,7 +122,7 @@ constexpr auto Serialize(T const & data)
 
 
 template<std::default_initializable T>
-constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
+[[nodiscard]] constexpr auto Deserialize(std::span<Byte, serialSize<T>> source) -> T
 {
     auto t = T{};
     DeserializeFrom(source.data(), &t);
@@ -131,7 +131,7 @@ constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
 
 
 template<utility::TypeSafeInteger T>
-constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
+[[nodiscard]] constexpr auto Deserialize(std::span<Byte, serialSize<T>> source) -> T
 {
     auto t = utility::TypeSafeZero<T>();
     DeserializeFrom(source.data(), &t);
@@ -141,7 +141,7 @@ constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
 
 template<typename T>
     requires std::is_same_v<T, type_safe::boolean>
-constexpr auto Deserialize(std::span<Byte, serialSize<T>> source)
+[[nodiscard]] constexpr auto Deserialize(std::span<Byte, serialSize<T>> source) -> T
 {
     auto t = T{false};  // NOLINT(bugprone-argument-comment)
     DeserializeFrom(source.data(), &t);

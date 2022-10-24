@@ -9,19 +9,19 @@ using sts1cobcsw::serial::DeserializeFrom;
 using sts1cobcsw::serial::SerializeTo;
 
 
-auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *
-{
-    source = DeserializeFrom(source, &(data->programId));
-    source = DeserializeFrom(source, &(data->queueId));
-    return source;
-}
-
-
 auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *
 {
     source = DeserializeFrom(source, &(data->programId));
     source = DeserializeFrom(source, &(data->queueId));
     source = DeserializeFrom(source, &(data->exitCode));
+    return source;
+}
+
+
+auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *
+{
+    source = DeserializeFrom(source, &(data->programId));
+    source = DeserializeFrom(source, &(data->queueId));
     return source;
 }
 

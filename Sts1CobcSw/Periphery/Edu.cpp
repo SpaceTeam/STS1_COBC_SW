@@ -21,7 +21,7 @@ Edu::Edu()
 //! @brief Flush the EDU UART read buffer.
 //!
 //! This can be used to clear all buffer data after an error to request a resend.
-void Edu::FlushUartBuffer()
+auto Edu::FlushUartBuffer() -> void
 {
     // std::array<uint8_t, garbageBufSize> garbageBuf = {0};
     // bool dataRecvd = true;
@@ -153,7 +153,8 @@ void Edu::SendCommand(uint8_t cmd)
 //! @param timeout The available execution time for the student program
 //!
 //! @returns A relevant EduErrorCode
-auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout) -> EduErrorCode
+[[nodiscard]] auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout)
+    -> EduErrorCode
 {
     ExecuteProgramData executeProgramData{.commandType = executeProgram,
                                           .programId = programId,
@@ -221,7 +222,7 @@ auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout)
 //!          returned.
 // TODO: (Daniel) refactor, too complex
 // TODO: error handling?
-auto Edu::GetStatus() -> EduStatus
+[[nodiscard]] auto Edu::GetStatus() -> EduStatus
 {
     // // Values to be returned
     // uint8_t statusType = invalidStatus;
@@ -414,7 +415,7 @@ auto Edu::GetStatus() -> EduStatus
 //! @param timestamp A unix timestamp
 //!
 //! @returns A relevant error code
-auto Edu::UpdateTime(int32_t timestamp) -> EduErrorCode
+[[nodiscard]] auto Edu::UpdateTime(int32_t timestamp) -> EduErrorCode
 {
     auto updateTimeData =
         serial::Serialize(UpdateTimeData{.commandType = updateTime, .timestamp = timestamp});
@@ -458,7 +459,7 @@ auto Edu::UpdateTime(int32_t timestamp) -> EduErrorCode
 //! <- [N/ACK]
 //! <- [N/ACK]
 //! @returns A relevant error code
-auto Edu::StopProgram() -> EduErrorCode
+[[nodiscard]] auto Edu::StopProgram() -> EduErrorCode
 {
     return EduErrorCode::success;
     // std::array<uint8_t, 3> dataBuf = {stopProgram};
@@ -478,7 +479,7 @@ auto Edu::StopProgram() -> EduErrorCode
 // mock up flash
 // simple results -> 1 round should work with dma to ram
 // no tuples
-auto Edu::ReturnResult(std::array<uint8_t, maxDataLength> & dest) -> ResultInfo
+[[nodiscard]] auto Edu::ReturnResult(std::array<uint8_t, maxDataLength> & dest) -> ResultInfo
 {
     return {EduErrorCode::success, 0};
     // If this is the initial call, send the header
@@ -601,7 +602,7 @@ auto Edu::ReturnResult(std::array<uint8_t, maxDataLength> & dest) -> ResultInfo
 
 
 // TODO: Implement this
-auto Edu::StoreArchive() -> int32_t
+[[nodiscard]] auto Edu::StoreArchive() -> int32_t
 {
     return 0;
 }

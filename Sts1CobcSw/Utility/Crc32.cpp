@@ -7,7 +7,7 @@ namespace sts1cobcsw::utility
 using sts1cobcsw::serial::Byte;
 
 
-auto Crc32(std::span<Byte> data) -> uint32_t
+[[nodiscard]] auto Crc32(std::span<Byte> data) -> uint32_t
 {
     uint32_t crc32 = crc32Init;
     size_t nBytes = data.size();

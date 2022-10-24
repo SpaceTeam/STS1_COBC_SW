@@ -66,6 +66,8 @@ struct ResultInfo
 };
 
 
+auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *;
+auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *;
 auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
 auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
 }
@@ -74,15 +76,15 @@ auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
 namespace serial
 {
 template<>
-inline constexpr std::size_t serialSize<periphery::ResultsReadyStatus> =
-    totalSerialSize<decltype(periphery::ResultsReadyStatus::programId),
-                    decltype(periphery::ResultsReadyStatus::queueId)>;
-
-template<>
 inline constexpr std::size_t serialSize<periphery::ProgramFinishedStatus> =
     totalSerialSize<decltype(periphery::ProgramFinishedStatus::programId),
                     decltype(periphery::ProgramFinishedStatus::queueId),
                     decltype(periphery::ProgramFinishedStatus::exitCode)>;
+
+template<>
+inline constexpr std::size_t serialSize<periphery::ResultsReadyStatus> =
+    totalSerialSize<decltype(periphery::ResultsReadyStatus::programId),
+                    decltype(periphery::ResultsReadyStatus::queueId)>;
 
 template<>
 inline constexpr std::size_t serialSize<periphery::ExecuteProgramData> =
@@ -93,7 +95,7 @@ inline constexpr std::size_t serialSize<periphery::ExecuteProgramData> =
 
 template<>
 inline constexpr std::size_t serialSize<periphery::UpdateTimeData> =
-    totalSerialSize<decltype(periphery::ExecuteProgramData::commandType),
+    totalSerialSize<decltype(periphery::UpdateTimeData::commandType),
                     decltype(periphery::UpdateTimeData::timestamp)>;
 }
 }
