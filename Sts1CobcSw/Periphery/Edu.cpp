@@ -1,17 +1,22 @@
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 
 
 namespace sts1cobcsw::periphery
 {
+using sts1cobcsw::serial::operator""_b;
+using sts1cobcsw::serial::Byte;
+
+
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
-constexpr auto cmdAck = 0xd7;   //! Acknowledging a data packet
-constexpr auto cmdNack = 0x27;  //! Not Acknowledging a (invalid) data packet
-constexpr auto cmdEof = 0x59;   //! Transmission of multiple packets is complete
-constexpr auto cmdStop = 0xb4;  //! Transmission of multiple packets should be stopped
-constexpr auto cmdData = 0x8b;  //! Data packet format is used (not a command packet!)
+constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet
+constexpr auto cmdNack = 0x27_b;  //! Not Acknowledging a (invalid) data packet
+constexpr auto cmdEof = 0x59_b;   //! Transmission of multiple packets is complete
+constexpr auto cmdStop = 0xb4_b;  //! Transmission of multiple packets should be stopped
+constexpr auto cmdData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
 // GetStatus result types
 constexpr auto noEventCode = 0x00;
@@ -83,35 +88,32 @@ Edu::Edu()
         return errorCode;
     }
 
-    // Receive N/ACK
-    uint8_t recvAck = 0;
-
     // eduTimeout != timeout argument for data!
     // timeout specifies the time the student program has to execute
     // eduTimeout is the max. allowed time to reveice N/ACK from EDU
+    auto answer = 0x00_b;
     mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    mEduUart_.read(&recvAck, 1);
 
-    switch(recvAck)
+    auto nReadBytes = mEduUart_.read(&answer, 1);
+    if(nReadBytes == 0)
+    {
+        return EduErrorCode::errorTimeout;
+    }
+    switch(answer)
     {
         case cmdAck:
+        {
             return EduErrorCode::success;
-            break;
-
+        }
         case cmdNack:
+        {
             return EduErrorCode::errorNack;
-            break;
-
-        case 0:
-            return EduErrorCode::errorTimeout;
-            break;
-
+        }
         default:
+        {
             return EduErrorCode::errorInvalidResult;
-            break;
+        }
     }
-
-    return EduErrorCode::success;
 }
 
 
@@ -490,36 +492,43 @@ Edu::Edu()
     }
 
     // On success, wait for second N/ACK
-    // TODO(Daniel): change to UartReceive()
+    // TODO: (Daniel) Change to UartReceive()
+    // TODO: Refactor this common pattern into a function
+    // TODO: Implement read functions that return a type and internally use Deserialize<T>()
+    auto answer = 0x00_b;
     mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    uint8_t recievedByte = 0;
-    auto nReadBytes = mEduUart_.read(&recievedByte, 1);
 
+    auto nReadBytes = mEduUart_.read(&answer, 1);
     if(nReadBytes == 0)
     {
         return EduErrorCode::errorTimeout;
     }
-    if(recievedByte == cmdNack)
+    switch(answer)
     {
-        return EduErrorCode::errorNack;
+        case cmdAck:
+        {
+            return EduErrorCode::success;
+        }
+        case cmdNack:
+        {
+            return EduErrorCode::errorNack;
+        }
+        default:
+        {
+            return EduErrorCode::errorInvalidResult;
+        }
     }
-    if(recievedByte != cmdAck)
-    {
-        return EduErrorCode::errorInvalidResult;
-    }
-
-    return EduErrorCode::success;
 }
 
 
 //! @brief Send a CEP command to the EDU.
 //!
 //! @param cmd The command
-void Edu::SendCommand(uint8_t cmd)
+void Edu::SendCommand(Byte commandId)
 {
-    std::array<uint8_t, 1> cmdArr{cmd};
+    auto data = std::array{commandId};
     // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
-    hal::WriteTo(&mEduUart_, std::span<uint8_t>(cmdArr));
+    hal::WriteTo(&mEduUart_, std::span(data));
 }
 
 
@@ -538,40 +547,39 @@ void Edu::SendCommand(uint8_t cmd)
     std::array<uint16_t, 1> len{static_cast<uint16_t>(nBytes)};
     std::array<uint32_t, 1> crc{utility::Crc32(data)};
 
-    size_t nackCnt = 0;
-    while(nackCnt++ < maxNackRetries)
+    int nackCount = 0;
+    while(nackCount < maxNackRetries)
     {
         SendCommand(cmdData);
         hal::WriteTo(&mEduUart_, std::span<uint16_t>(len));
         hal::WriteTo(&mEduUart_, data);
         hal::WriteTo(&mEduUart_, std::span<uint32_t>(crc));
 
+        // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
-        uint8_t recvAck = 0U;
+        auto answer = 0x00_b;
         mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        mEduUart_.read(&recvAck, 1);
 
-        switch(recvAck)
+        auto nReadBytes = mEduUart_.read(&answer, 1);
+        if(nReadBytes == 0)
+        {
+            return EduErrorCode::errorTimeout;
+        }
+        switch(answer)
         {
             case cmdAck:
+            {
                 return EduErrorCode::success;
-                break;
-
+            }
             case cmdNack:
-                // If NACK was received, retry
-                if(nackCnt < maxNackRetries)
-                {
-                    continue;
-                }
-                break;
-
-            case 0:
-                return EduErrorCode::errorDataTimeout;
-                break;
-
+            {
+                nackCount++;
+                continue;
+            }
             default:
-                return EduErrorCode::errorDataInvalidResult;
-                break;
+            {
+                return EduErrorCode::errorInvalidResult;
+            }
         }
     }
     return EduErrorCode::errorNackRetries;

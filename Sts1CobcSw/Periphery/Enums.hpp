@@ -4,6 +4,7 @@
 // TODO: Rename this file to EduEnums.hpp or merge it with EduStructs to EduTypes.
 namespace sts1cobcsw::periphery
 {
+// TODO: Remove error prefix in enum values, the type already has "error" in it
 enum class EduErrorCode
 {
     success,
@@ -18,7 +19,7 @@ enum class EduErrorCode
     errorSendDataTooLong,
     errorReceiveDataTooLong,
     errorNackRetries,
-    errorDataTimeout,
+    errorDataTimeout,  // TODO: Why is errorTimeout not enough?
     errorDataInvalidResult,
     errorChecksum
 };

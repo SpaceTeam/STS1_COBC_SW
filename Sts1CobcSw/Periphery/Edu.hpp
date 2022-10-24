@@ -31,7 +31,7 @@ public:
 
 private:
     // TODO: Rework -> Send(EduBasicCommand command) -> void;
-    auto SendCommand(uint8_t cmd) -> void;
+    auto SendCommand(Byte commandId) -> void;
     [[nodiscard]] auto SendData(std::span<Byte> data) -> EduErrorCode;
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
