@@ -5,6 +5,41 @@
 
 namespace sts1cobcsw::periphery
 {
+// TODO: Turn this into Bytes, maybe even an enum class : Byte
+// CEP basic commands (see EDU PDD)
+constexpr auto cmdAck = 0xd7;   //! Acknowledging a data packet
+constexpr auto cmdNack = 0x27;  //! Not Acknowledging a (invalid) data packet
+constexpr auto cmdEof = 0x59;   //! Transmission of multiple packets is complete
+constexpr auto cmdStop = 0xb4;  //! Transmission of multiple packets should be stopped
+constexpr auto cmdData = 0x8b;  //! Data packet format is used (not a command packet!)
+
+// GetStatus result types
+constexpr auto noEventCode = 0x00;
+constexpr auto programFinishedCode = 0x01;
+constexpr auto resultsReadyCode = 0x02;
+
+// Max. length for a single round data field
+constexpr auto maxDataLength = 32768;
+
+// TODO: Check real timeouts
+// Max. time for the EDU to respond to a request
+constexpr auto eduTimeout = 5 * RODOS::SECONDS;
+// Timeout used when flushing the UART receive buffer
+constexpr auto flushTimeout = 1 * RODOS::MILLISECONDS;
+// UART flush garbage buffer size
+constexpr auto garbageBufferSize = 128;
+
+// GetStatus Constants
+// Max. amount of bytes for result of "Get Status" EDU command
+constexpr auto maxStatusBytes = 6;
+// Amount of bytes for the length field of a data command
+constexpr size_t lenBytes = 2;
+// Amount of bytes for a basic command or a high level command header
+constexpr size_t cmdBytes = 1;
+// Max. amount of send retries after receiving NACK
+constexpr auto maxNackRetries = 10;
+
+
 Edu::Edu()
 {
     constexpr auto baudRate = 115'200;
