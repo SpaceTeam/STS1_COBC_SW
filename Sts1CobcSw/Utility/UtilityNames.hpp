@@ -3,6 +3,9 @@
 #include <array>
 #include <cstdint>
 
+
+// TODO: Why is this not in Crc32.hpp or even Crc32.cpp for the file-local globals? Or at least
+// called Crc32Names.hpp
 namespace sts1cobcsw::utility
 {
 // Byte masks for uint32_t
@@ -21,6 +24,7 @@ inline constexpr auto twoBytesWidth = 16U;
 inline constexpr auto threeBytesWidth = 24U;
 inline constexpr auto fourBytesWidth = 32U;
 
+// TODO: crc32Poly -> crc32Polynomial, crc32Init -> initialCrc32Value
 // CRC32 constants
 inline constexpr auto crc32Poly = 0x04C11DB7U; /*! Generator polynomial for CRC32 checksums */
 inline constexpr auto crc32Init = 0xFFFFFFFFU; /*! Initial CRC32 value */

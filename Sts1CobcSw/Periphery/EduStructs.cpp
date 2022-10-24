@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
 
 
 namespace sts1cobcsw::periphery

@@ -2,10 +2,12 @@
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <array>
+#include <cstdint>
 #include <span>
 
 

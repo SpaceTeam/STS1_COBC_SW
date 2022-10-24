@@ -1,12 +1,6 @@
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
-#include <Sts1CobcSw/Periphery/EduNames.hpp>
-#include <Sts1CobcSw/Periphery/EduStructs.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
-#include <Sts1CobcSw/Utility/UtilityNames.hpp>
-
-#include <array>
 
 
 namespace sts1cobcsw::periphery

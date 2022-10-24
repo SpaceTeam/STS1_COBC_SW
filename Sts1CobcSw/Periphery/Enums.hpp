@@ -1,5 +1,7 @@
 #pragma once
 
+
+// TODO: Rename this file to EduEnums.hpp or merge it with EduStructs to EduTypes.
 namespace sts1cobcsw::periphery
 {
 enum class EduErrorCode

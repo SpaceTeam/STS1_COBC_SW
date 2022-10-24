@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <catch2/catch_test_macros.hpp>

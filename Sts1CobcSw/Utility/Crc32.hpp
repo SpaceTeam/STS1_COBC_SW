@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 
-#include <array>
 #include <cstdint>
 #include <span>
 

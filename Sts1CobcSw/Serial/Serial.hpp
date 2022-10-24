@@ -13,6 +13,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/TypeSafe.hpp>
 
 #include <type_safe/boolean.hpp>
@@ -48,10 +49,6 @@ template<typename... Ts>
 inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
 
-// Allegedly std::byte is quite heavyweight. This type alias allows us to easily replace std::byte
-// with, e.g., std::uint8_t to check that.
-using Byte = std::byte;
-
 template<typename T>
     requires(serialSize<T> != 0U)
 using SerialBuffer = std::array<Byte, serialSize<T>>;
@@ -59,8 +56,6 @@ using SerialBuffer = std::array<Byte, serialSize<T>>;
 
 // Function declarations
 // ---------------------
-
-constexpr auto operator"" _b(unsigned long long number) -> Byte;  // NOLINT(google-runtime-int)
 
 // Must be overloaded for user-defined types to be serializable
 template<TriviallySerializable T>
@@ -86,13 +81,6 @@ template<typename T>
 
 // Function template definitions
 // -----------------------------
-
-inline constexpr auto operator"" _b(unsigned long long number)  // NOLINT(google-runtime-int)
-    -> Byte
-{
-    return Byte(number);
-}
-
 
 template<TriviallySerializable T>
 inline constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <Sts1CobcSw/Periphery/Enums.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+
+#include <cstdint>
 
 
 namespace sts1cobcsw

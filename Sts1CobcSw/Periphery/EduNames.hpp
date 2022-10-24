@@ -3,8 +3,10 @@
 #include <rodos_no_using_namespace.h>
 
 
+// TODO: This could be in Edu.cpp cause AFAICS users don't need to know about this
 namespace sts1cobcsw::periphery
 {
+// TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
 inline constexpr auto cmdAck = 0xd7;   //! Acknowledging a data packet
 inline constexpr auto cmdNack = 0x27;  //! Not Acknowledging a (invalid) data packet
@@ -30,6 +32,7 @@ inline constexpr auto resultsReadyCode = 0x02;
 // Max. length for a single round data field
 inline constexpr auto maxDataLength = 32768;
 
+// TODO: Check if all of those constants are actually used somewhere
 // TODO: check real timeout!
 // Max. time for the EDU to respond to a request
 inline constexpr auto eduTimeout = 5 * RODOS::SECONDS;
@@ -38,6 +41,7 @@ inline constexpr auto flushTimeout = 1 * RODOS::MILLISECONDS;
 // UART flush garbage buffer size
 inline constexpr auto garbageBufSize = 128;
 
+// TODO: Check if all of those constants are actually used somewhere
 // GetStatus Constants
 // Max. amount of bytes for result of "get status" EDU command
 inline constexpr auto maxStatusBytes = 6;
