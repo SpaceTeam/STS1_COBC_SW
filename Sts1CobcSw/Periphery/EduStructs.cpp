@@ -25,9 +25,17 @@ auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *
 }
 
 
+auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *
+{
+    destination = SerializeTo(destination, StoreArchiveData::id);
+    destination = SerializeTo(destination, data.programId);
+    return destination;
+}
+
+
 auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *
 {
-    destination = SerializeTo(destination, data.commandType);
+    destination = SerializeTo(destination, ExecuteProgramData::id);
     destination = SerializeTo(destination, data.programId);
     destination = SerializeTo(destination, data.queueId);
     destination = SerializeTo(destination, data.timeout);
@@ -37,7 +45,7 @@ auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *
 
 auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *
 {
-    destination = SerializeTo(destination, data.commandType);
+    destination = SerializeTo(destination, UpdateTimeData::id);
     destination = SerializeTo(destination, data.timestamp);
     return destination;
 }

@@ -12,53 +12,10 @@ Edu::Edu()
 }
 
 
-//! @brief Issues a command to update the EDU time.
-//!
-//! Update Time:
-//! -> [DATA]
-//! -> [Command Header]
-//! -> [Timestamp]
-//! <- [N/ACK]
-//! <- [N/ACK]
-//!
-//! The first N/ACK confirms a valid data packet,
-//! the second N/ACK confirms the time update.
-//!
-//! @param timestamp A unix timestamp
-//!
-//! @returns A relevant error code
-[[nodiscard]] auto Edu::UpdateTime(int32_t timestamp) -> EduErrorCode
+// TODO: Implement this
+[[nodiscard]] auto Edu::StoreArchive(StoreArchiveData const & data) -> int32_t
 {
-    auto updateTimeData =
-        serial::Serialize(UpdateTimeData{.commandType = updateTime, .timestamp = timestamp});
-
-    auto errorCode = SendData(updateTimeData);
-
-    if(errorCode != EduErrorCode::success)
-    {
-        return errorCode;
-    }
-
-    // On success, wait for second N/ACK
-    // TODO(Daniel): change to UartReceive()
-    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    uint8_t recievedByte = 0;
-    auto nReadBytes = mEduUart_.read(&recievedByte, 1);
-
-    if(nReadBytes == 0)
-    {
-        return EduErrorCode::errorTimeout;
-    }
-    if(recievedByte == cmdNack)
-    {
-        return EduErrorCode::errorNack;
-    }
-    if(recievedByte != cmdAck)
-    {
-        return EduErrorCode::errorInvalidResult;
-    }
-
-    return EduErrorCode::success;
+    return 0;
 }
 
 
@@ -81,21 +38,14 @@ Edu::Edu()
 //! @param timeout The available execution time for the student program
 //!
 //! @returns A relevant EduErrorCode
-[[nodiscard]] auto Edu::ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout)
-    -> EduErrorCode
+[[nodiscard]] auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 {
-    ExecuteProgramData executeProgramData{.commandType = executeProgram,
-                                          .programId = programId,
-                                          .queueId = queueId,
-                                          .timeout = timeout};
-
-    auto serializedData = sts1cobcsw::serial::Serialize(executeProgramData);
-
     // Check if data command was successful
-    auto dataError = SendData(serializedData);
-    if(dataError != EduErrorCode::success)
+    auto serialData = serial::Serialize(data);
+    auto errorCode = SendData(serialData);
+    if(errorCode != EduErrorCode::success)
     {
-        return dataError;
+        return errorCode;
     }
 
     // Receive N/ACK
@@ -354,10 +304,11 @@ Edu::Edu()
 }
 
 
-// mock up flash
-// simple results -> 1 round should work with dma to ram
-// no tuples
-[[nodiscard]] auto Edu::ReturnResult(std::array<uint8_t, maxDataLength> & dest) -> ResultInfo
+// This function writes the result to the COBC file system (flash). Maybe it doesn't do that
+// directly and instead writes to a non-primary RAM bank as an intermediate step.
+//
+// Simple results -> 1 round should work with DMA to RAM
+[[nodiscard]] auto Edu::ReturnResult() -> ResultInfo
 {
     return {EduErrorCode::success, 0};
     // If this is the initial call, send the header
@@ -479,10 +430,50 @@ Edu::Edu()
 }
 
 
-// TODO: Implement this
-[[nodiscard]] auto Edu::StoreArchive() -> int32_t
+//! @brief Issues a command to update the EDU time.
+//!
+//! Update Time:
+//! -> [DATA]
+//! -> [Command Header]
+//! -> [Timestamp]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//!
+//! The first N/ACK confirms a valid data packet,
+//! the second N/ACK confirms the time update.
+//!
+//! @param timestamp A unix timestamp
+//!
+//! @returns A relevant error code
+[[nodiscard]] auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
 {
-    return 0;
+    auto serialData = serial::Serialize(data);
+    auto errorCode = SendData(serialData);
+    if(errorCode != EduErrorCode::success)
+    {
+        return errorCode;
+    }
+
+    // On success, wait for second N/ACK
+    // TODO(Daniel): change to UartReceive()
+    mEduUart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uint8_t recievedByte = 0;
+    auto nReadBytes = mEduUart_.read(&recievedByte, 1);
+
+    if(nReadBytes == 0)
+    {
+        return EduErrorCode::errorTimeout;
+    }
+    if(recievedByte == cmdNack)
+    {
+        return EduErrorCode::errorNack;
+    }
+    if(recievedByte != cmdAck)
+    {
+        return EduErrorCode::errorInvalidResult;
+    }
+
+    return EduErrorCode::success;
 }
 
 

@@ -21,15 +21,16 @@ class Edu
 public:
     Edu();
 
-    [[nodiscard]] auto UpdateTime(int32_t timestamp) -> EduErrorCode;
-    [[nodiscard]] auto ExecuteProgram(uint16_t programId, uint16_t queueId, uint16_t timeout)
-        -> EduErrorCode;
+    [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> int32_t;
+    [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
     [[nodiscard]] auto StopProgram() -> EduErrorCode;
+    // TODD: Find better name (or maybe even mechanism) for GetStatus
     [[nodiscard]] auto GetStatus() -> EduStatus;
-    [[nodiscard]] auto ReturnResult(std::array<uint8_t, maxDataLength> & destination) -> ResultInfo;
-    [[nodiscard]] auto StoreArchive() -> int32_t;
+    [[nodiscard]] auto ReturnResult() -> ResultInfo;
+    [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> EduErrorCode;
 
 private:
+    // TODO: Rework -> Send(EduBasicCommand command) -> void;
     auto SendCommand(uint8_t cmd) -> void;
     [[nodiscard]] auto SendData(std::span<Byte> data) -> EduErrorCode;
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;

@@ -1,8 +1,11 @@
 #pragma once
 
+#include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+
+#include <type_safe/types.hpp>
 
 #include <cstdint>
 
@@ -11,13 +14,47 @@ namespace sts1cobcsw
 {
 namespace periphery
 {
+namespace ts = type_safe;
 using sts1cobcsw::serial::Byte;
 
 
-struct DataHeader
+struct StoreArchiveData
 {
-    uint8_t command;
-    uint16_t length;
+    static constexpr auto id = storeArchiveId;
+    ts::uint16_t programId;
+};
+
+
+struct ExecuteProgramData
+{
+    static constexpr auto id = executeProgramId;
+    ts::uint16_t programId;
+    ts::uint16_t queueId;
+    ts::int16_t timeout;
+};
+
+
+struct UpdateTimeData
+{
+    static constexpr auto id = updateTimeId;
+    ts::int32_t timestamp;
+};
+
+
+struct EduStatus
+{
+    EduStatusType statusType;
+    uint16_t programId;
+    uint16_t queueId;
+    uint8_t exitCode;
+    EduErrorCode errorCode;
+};
+
+
+struct ResultInfo
+{
+    periphery::EduErrorCode errorCode;
+    size_t resultSize;
 };
 
 
@@ -25,32 +62,6 @@ struct ResultsReadyStatus
 {
     uint16_t programId;
     uint16_t queueId;
-};
-
-
-struct ExecuteProgramData
-{
-    uint8_t commandType;
-    uint16_t programId;
-    uint16_t queueId;
-    uint16_t timeout;
-};
-
-
-struct UpdateTimeData
-{
-    uint8_t commandType;
-    int32_t timestamp;
-};
-
-
-struct EduStatus
-{
-    periphery::EduStatusType statusType;
-    uint16_t programId;
-    uint16_t queueId;
-    uint8_t exitCode;
-    periphery::EduErrorCode errorCode;
 };
 
 
@@ -62,15 +73,16 @@ struct ProgramFinishedStatus
 };
 
 
-struct ResultInfo
+struct DataHeader
 {
-    periphery::EduErrorCode errorCode;
-    size_t resultSize;
+    uint8_t command;
+    uint16_t length;
 };
 
 
 auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *;
 auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *;
+auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *;
 auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
 auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
 }
@@ -90,15 +102,20 @@ inline constexpr std::size_t serialSize<periphery::ResultsReadyStatus> =
                     decltype(periphery::ResultsReadyStatus::queueId)>;
 
 template<>
+inline constexpr std::size_t serialSize<periphery::StoreArchiveData> =
+    totalSerialSize<decltype(periphery::StoreArchiveData::id),
+                    decltype(periphery::StoreArchiveData::programId)>;
+
+template<>
 inline constexpr std::size_t serialSize<periphery::ExecuteProgramData> =
-    totalSerialSize<decltype(periphery::ExecuteProgramData::commandType),
+    totalSerialSize<decltype(periphery::ExecuteProgramData::id),
                     decltype(periphery::ExecuteProgramData::programId),
                     decltype(periphery::ExecuteProgramData::queueId),
                     decltype(periphery::ExecuteProgramData::timeout)>;
 
 template<>
 inline constexpr std::size_t serialSize<periphery::UpdateTimeData> =
-    totalSerialSize<decltype(periphery::UpdateTimeData::commandType),
+    totalSerialSize<decltype(periphery::UpdateTimeData::id),
                     decltype(periphery::UpdateTimeData::timestamp)>;
 }
 }
