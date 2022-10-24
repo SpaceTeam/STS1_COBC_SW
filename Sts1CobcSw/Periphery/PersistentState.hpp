@@ -31,7 +31,7 @@ PersistentState<T>::PersistentState(T const & t) : value_{t}
 
 
 template<typename T>
-auto PersistentState<T>::Get() const -> T
+[[nodiscard]] auto PersistentState<T>::Get() const -> T
 {
     return value_;
 }
