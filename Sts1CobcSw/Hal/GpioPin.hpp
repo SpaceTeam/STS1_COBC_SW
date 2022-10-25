@@ -22,7 +22,7 @@ enum class PinState
 
 class GpioPin
 {
-  public:
+public:
     // Implicit conversion from GPIO_PIN is very convenient (see Gpio.test.cpp)
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     GpioPin(RODOS::GPIO_PIN pinIndex);
@@ -30,9 +30,9 @@ class GpioPin
     auto Direction(PinDirection pinDirection) -> void;
     auto Set() -> void;
     auto Reset() -> void;
-    auto Read() const -> PinState;
+    [[nodiscard]] auto Read() const -> PinState;
 
-  private:
+private:
     mutable RODOS::HAL_GPIO pin_;
 };
 

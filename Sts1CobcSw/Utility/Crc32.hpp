@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Sts1CobcSw/Utility/UtilityNames.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 
-#include <array>
 #include <cstdint>
 #include <span>
 
@@ -18,5 +17,5 @@ namespace sts1cobcsw::utility
 //!
 //! @param data The data over which the checksum is calculated
 //! @returns The 32 bit checksum
-auto Crc32(std::span<uint8_t> data) -> uint32_t;
+[[nodiscard]] auto Crc32(std::span<sts1cobcsw::serial::Byte> data) -> std::uint32_t;
 }

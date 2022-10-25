@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
+#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -16,6 +17,8 @@
 
 namespace sts1cobcsw
 {
+using sts1cobcsw::serial::Byte;
+
 using RODOS::AT;
 using RODOS::MILLISECONDS;
 using RODOS::NOW;
@@ -48,32 +51,7 @@ void EmptyEduProgramQueue()
 }
 
 
-// TODO: remove useless wrappers
-auto ProgramId(etl::vector<QueueEntry, eduProgramQueueSize> const & queue, uint32_t index)
-{
-    return queue[index].programId;
-}
-
-
-auto QueueId(etl::vector<QueueEntry, eduProgramQueueSize> const & queue, uint32_t index)
-{
-    return queue[index].queueId;
-}
-
-
-auto StartTime(etl::vector<QueueEntry, eduProgramQueueSize> const & queue, uint32_t index)
-{
-    return queue[index].startTime;
-}
-
-
-auto Timeout(etl::vector<QueueEntry, eduProgramQueueSize> const & queue, uint32_t index)
-{
-    return queue[index].timeout;
-}
-
-
-auto eduUartInterface = periphery::EduUartInterface();
+auto edu = periphery::Edu();
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
 
 
@@ -87,6 +65,8 @@ class EduQueueThread : public RODOS::StaticThread<>
 
         auto queueEntry2 = QueueEntry{
             .programId = 2, .queueId = 1, .startTime = 1672531230, .timeout = 20};  // NOLINT
+
+        AddQueueEntry(queueEntry1);
         AddQueueEntry(queueEntry2);
     }
 
@@ -109,42 +89,64 @@ class EduQueueThread : public RODOS::StaticThread<>
             }
 
 
-            
-            auto rawStartTime = StartTime(eduProgramQueue, queueIndex);
-            rawStartTime = rawStartTime - util::rodosUnixOffsetSeconds;
-            auto sysUtcSeconds = RODOS::sysTime.getUTC() / RODOS::SECONDS;
-            auto const startDelay = std::max((rawStartTime - sysUtcSeconds) * RODOS::SECONDS, 0 * RODOS::SECONDS);
-            RODOS::PRINTF("Our next program will start in  : %" PRIi64 " nanoseconds\n",
-                          startDelay);
+            auto startTime = eduProgramQueue[queueIndex].startTime - util::rodosUnixOffsetSeconds;
+            auto currentUtcTime = RODOS::sysTime.getUTC() / RODOS::SECONDS;
+            auto const startDelay = std::max((startTime - currentUtcTime) * SECONDS, 0 * SECONDS);
 
+            RODOS::PRINTF("Next program will start in  : %" PRIi64 " nanoseconds\n", startDelay);
 
             // Suspend until delay time - 2 seconds
             RODOS::PRINTF("Suspending for %" PRIi64 " nanoseconds\n",
                           startDelay - eduCommunicationDelay);
-            // wit 20 years here
             AT(NOW() + startDelay - eduCommunicationDelay);
-            
-            RODOS::PRINTF("Resuming here");
+
+            RODOS::PRINTF("Resuming here after first start delay");
 
             // Send UTC to EDU
 
-            // delay again
-            // Start Process
-            auto const programId = ProgramId(eduProgramQueue, queueIndex);
-            auto const queueId = QueueId(eduProgramQueue, queueIndex);
-            auto const timeout = Timeout(eduProgramQueue, queueIndex);
 
-            auto eduAnswer = eduUartInterface.ExecuteProgram(programId, queueId, timeout);
+            // delay again
+            // What is expected exactly, this :
+            AT(NOW() + startDelay - eduCommunicationDelay);
+            // This will wait for 20 years if not recomputed
+
+            // or this ( make more sense) :
+
+            // First we recompute startdelay
+            //rawStartTime = eduProgramQueue[queueIndex].startTime - util::rodosUnixOffsetSeconds;
+            //sysUtcSeconds = RODOS::sysTime.getUTC() / RODOS::SECONDS;
+            //auto const startDelay2 =
+            //    std::max((rawStartTime - sysUtcSeconds) * RODOS::SECONDS, 0 * RODOS::SECONDS);
+            // Then we wait
+            //AT(NOW() + startDelay2);
+
+
+            // Example : we enter the while loop with a program starting in 10 s
+            // Sleep for 8 seconds
+            // resume
+            // Communicate with edu for sending time for a communicationdelay of delta seconds
+            // recompute startdelay (wich is equal to max(10-8-delta, 0))
+            // sleep for startdelay
+
+            auto queueId = eduProgramQueue[queueIndex].queueId;
+            auto programId = eduProgramQueue[queueIndex].programId;
+            auto timeout = eduProgramQueue[queueIndex].timeout;
+
+            auto executeProgramData = periphery::ExecuteProgramData{
+                .programId = programId, .queueId = queueId, .timeout = timeout};
+            // Start Process
+            auto eduAnswer = edu.ExecuteProgram(executeProgramData);
 
             // Suspend Self for execution time
             auto const executionTime = timeout + eduCommunicationDelay;
             AT(NOW() + executionTime);
 
+            // TODO: Switch statement
             // Create Status&History entry
             if(eduAnswer == periphery::EduErrorCode::success)
             {
                 RODOS::PRINTF("Edu returned a success error code\n");
-                int8_t status = 1;
+                uint8_t status = 1;
                 auto statusHistoryEntry = StatusHistoryEntry{
                     .programId = programId, .queueId = queueId, .status = status};
                 statusHistory.put(statusHistoryEntry);

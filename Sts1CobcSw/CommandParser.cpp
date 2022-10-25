@@ -47,6 +47,8 @@ enum CommandType : char
     buildQueue = '4'
 };
 
+
+// TODO: Use Deserialize instead of CopyFrom
 auto ParseQueueEntries(const etl::string<commandSize.get()> & command)
 {
     auto const nQueueEntries = command.size() / queueEntrySize;
@@ -56,17 +58,17 @@ auto ParseQueueEntries(const etl::string<commandSize.get()> & command)
 
     for(auto & entry : eduProgramQueue)
     {
-        int16_t progId = 0;
-        util::CopyFrom(command, &position, &progId);
+        uint16_t progId = 0;
+        CopyFrom(command, &position, &progId);
         RODOS::PRINTF("Prog ID      : %ld\n", progId);  // NOLINT
-        int16_t queueId = 0;
-        util::CopyFrom(command, &position, &queueId);
+        uint16_t queueId = 0;
+        CopyFrom(command, &position, &queueId);
         RODOS::PRINTF("Queue ID     : %ld\n", queueId);  // NOLINT
         int32_t startTime = 0;
-        util::CopyFrom(command, &position, &startTime);
+        CopyFrom(command, &position, &startTime);
         RODOS::PRINTF("Start Time   : %ld\n", startTime);  // NOLINT
         int16_t timeout = 0;
-        util::CopyFrom(command, &position, &timeout);
+        CopyFrom(command, &position, &timeout);
         RODOS::PRINTF("Timeout      : %ld\n", timeout);  // NOLINT
 
         entry = QueueEntry{
@@ -82,14 +84,14 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     char commandId = 0;
     int16_t length = 0;
 
-    util::CopyFrom(command, &position, &utc);
+    CopyFrom(command, &position, &utc);
     RODOS::sysTime.setUTC(util::UnixToRodosTime(utc));
     util::PrintTime();
 
-    util::CopyFrom(command, &position, &commandId);
+    CopyFrom(command, &position, &commandId);
     RODOS::PRINTF("command ID is character : %c\n", commandId);
 
-    util::CopyFrom(command, &position, &length);
+    CopyFrom(command, &position, &length);
     RODOS::PRINTF("Length of data is : %d\n", length);
 
     if(targetIsCobc)

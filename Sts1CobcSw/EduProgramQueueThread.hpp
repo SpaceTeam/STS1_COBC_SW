@@ -1,5 +1,6 @@
 #pragma once
 
+// NOLINTNEXTLINE
 #include <rodos_no_using_namespace.h>
 #include <ringbuffer.h>
 
@@ -13,7 +14,7 @@ namespace sts1cobcsw
 {
 class TimeEvent : public RODOS::TimeEvent
 {
-  public:
+public:
     void handle() override;
 };
 
@@ -33,8 +34,8 @@ enum class EduProgramStatus
 // TODO: Type safety
 struct QueueEntry
 {
-    int16_t programId;
-    int16_t queueId;
+    uint16_t programId;
+    uint16_t queueId;
     int32_t startTime;
     int16_t timeout;
 };
@@ -45,9 +46,9 @@ extern etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue;
 
 struct StatusHistoryEntry
 {
-    int16_t programId;
-    int16_t queueId;
-    int8_t status;
+    uint16_t programId;
+    uint16_t queueId;
+    uint8_t status;
 };
 
 inline constexpr auto statusHistorySize = 20;

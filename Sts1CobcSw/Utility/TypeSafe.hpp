@@ -36,60 +36,60 @@ concept TypeSafeInteger = IsTypeSafeInteger<T>::value;
 
 
 template<typename T>
-auto TypeSafeZero() -> T;
+[[nodiscard]] auto TypeSafeZero() -> T;
 
 
 template<>
-inline auto TypeSafeZero<ts::int8_t>() -> ts::int8_t
+[[nodiscard]] inline auto TypeSafeZero<ts::int8_t>() -> ts::int8_t
 {
     return 0_i8;
 }
 
 
 template<>
-inline auto TypeSafeZero<ts::uint8_t>() -> ts::uint8_t
+[[nodiscard]] inline auto TypeSafeZero<ts::uint8_t>() -> ts::uint8_t
 {
     return 0_u8;
 }
 
 
 template<>
-inline auto TypeSafeZero<ts::int16_t>() -> ts::int16_t
+[[nodiscard]] inline auto TypeSafeZero<ts::int16_t>() -> ts::int16_t
 {
     return 0_i16;
 }
 
 
 template<>
-inline auto TypeSafeZero<ts::uint16_t>() -> ts::uint16_t
+[[nodiscard]] inline auto TypeSafeZero<ts::uint16_t>() -> ts::uint16_t
 {
     return 0_u16;
 }
 
 
 template<>
-inline auto TypeSafeZero<ts::int32_t>() -> ts::int32_t
+[[nodiscard]] inline auto TypeSafeZero<ts::int32_t>() -> ts::int32_t
 {
     return 0_i32;
 }
 
 
 template<>
-inline auto TypeSafeZero<ts::uint32_t>() -> ts::uint32_t
+[[nodiscard]] inline auto TypeSafeZero<ts::uint32_t>() -> ts::uint32_t
 {
     return 0_u32;
 }
 
 
 template<>
-inline auto TypeSafeZero<ts::int64_t>() -> ts::int64_t
+[[nodiscard]] inline auto TypeSafeZero<ts::int64_t>() -> ts::int64_t
 {
     return 0_i64;
 }
 
 
 template<>
-inline auto TypeSafeZero<ts::uint64_t>() -> ts::uint64_t
+[[nodiscard]] inline auto TypeSafeZero<ts::uint64_t>() -> ts::uint64_t
 {
     return 0_u64;
 }
