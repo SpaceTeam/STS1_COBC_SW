@@ -39,9 +39,9 @@ constexpr auto garbageBufferSize = 128;
 // Max. amount of bytes for result of "Get Status" EDU command
 constexpr auto maxNStatusBytes = 6;
 // Amount of bytes for the length field of a data command
-constexpr size_t nLengthBytes = 2;
+constexpr std::size_t nLengthBytes = 2;
 // Amount of bytes for a basic command or a high level command header
-constexpr size_t nCommandBytes = 1;
+constexpr std::size_t nCommandBytes = 1;
 // Max. amount of send retries after receiving NACK
 constexpr auto maxNNackRetries = 10;
 
@@ -55,7 +55,7 @@ auto Edu::Initialize() -> void
 
 
 // TODO: Implement this
-[[nodiscard]] auto Edu::StoreArchive(StoreArchiveData const & data) -> int32_t
+[[nodiscard]] auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 {
     return 0;
 }
@@ -131,7 +131,7 @@ auto Edu::Initialize() -> void
 [[nodiscard]] auto Edu::StopProgram() -> EduErrorCode
 {
     return EduErrorCode::success;
-    // std::array<uint8_t, 3> dataBuf = {stopProgram};
+    // std::array<std::uint8_t, 3> dataBuf = {stopProgram};
     // auto errorCode = SendData(dataBuf);
 
     // if(errorCode != EduErrorCode::success)
@@ -140,7 +140,7 @@ auto Edu::Initialize() -> void
     // }
 
     // // Receive second N/ACK to see if program is successfully stopped
-    // std::array<uint8_t, 1> recvBuf = {};
+    // std::array<std::uint8_t, 1> recvBuf = {};
     // return UartReceive(recvBuf, 1);
 }
 
@@ -168,12 +168,12 @@ auto Edu::Initialize() -> void
 [[nodiscard]] auto Edu::GetStatus() -> EduStatus
 {
     // // Values to be returned
-    // uint8_t statusType = invalidStatus;
-    // uint16_t programId = 0;
-    // uint16_t queueId = 0;
-    // uint8_t exitCode = 0;
+    // std::uint8_t statusType = invalidStatus;
+    // std::uint16_t programId = 0;
+    // std::uint16_t queueId = 0;
+    // std::uint8_t exitCode = 0;
 
-    // std::array<uint8_t, 1> sendHeader = {getStatus};
+    // std::array<std::uint8_t, 1> sendHeader = {getStatus};
 
     // // Send the Get Status command
     // EduErrorCode sendDataError = SendData(sendHeader);
@@ -184,12 +184,12 @@ auto Edu::Initialize() -> void
 
     // // Start error while loop
     // bool succesfulRecv = false;
-    // size_t errorCnt = 0;
+    // std::size_t errorCnt = 0;
     // EduStatusType statusTypeRet;
     // while(!succesfulRecv)
     // {
     //     // Receive the header (data command and length)
-    //     std::array<uint8_t, cmdBytes + lenBytes> recvHeader = {};
+    //     std::array<std::uint8_t, cmdBytes + lenBytes> recvHeader = {};
     //     auto headerError = UartReceive(recvHeader, cmdBytes + lenBytes);
     //     if(headerError != EduErrorCode::success)
     //     {
@@ -238,7 +238,7 @@ auto Edu::Initialize() -> void
 
     //     // Receive actual status data
     //     // For data, reserve the max. possible status bytes
-    //     std::array<uint8_t, maxStatusBytes> recvDataBuf = {};
+    //     std::array<std::uint8_t, maxStatusBytes> recvDataBuf = {};
     //     auto recvDataError = UartReceive(recvDataBuf, len);
     //     if(recvDataError != EduErrorCode::success)
     //     {
@@ -253,7 +253,7 @@ auto Edu::Initialize() -> void
     //     }
 
     //     // Receive checksum
-    //     std::array<uint8_t, 4> crc32Buf = {};
+    //     std::array<std::uint8_t, 4> crc32Buf = {};
     //     auto crc32Error = UartReceive(crc32Buf, crc32Buf.size());
     //     if(crc32Error != EduErrorCode::success)
     //     {
@@ -353,7 +353,7 @@ auto Edu::Initialize() -> void
     // If this is the initial call, send the header
     // if(!mResultPending_)
     // {
-    //     std::array<uint8_t, 1> header = {returnResult};
+    //     std::array<std::uint8_t, 1> header = {returnResult};
     //     auto headerErrorCode = SendData(header);
     //     if(headerErrorCode != EduErrorCode::success)
     //     {
@@ -365,13 +365,13 @@ auto Edu::Initialize() -> void
     // // can't guarantee that it will use up all the memory
 
     // // Start error while loop
-    // size_t errorCnt = 0;
+    // std::size_t errorCnt = 0;
     // EduStatusType statusTypeRet;
     // bool succesfulRecv = false;
     // while(!succesfulRecv)
     // {
     //     // Receive the header (data command and length)
-    //     std::array<uint8_t, cmdBytes + lenBytes> recvHeader = {};
+    //     std::array<std::uint8_t, cmdBytes + lenBytes> recvHeader = {};
     //     auto headerError = UartReceive(recvHeader, cmdBytes + lenBytes);
     //     if(headerError != EduErrorCode::success)
     //     {
@@ -416,7 +416,7 @@ auto Edu::Initialize() -> void
 
     //     // Receive actual status data
     //     // For data, reserve the max. possible bytes
-    //     std::array<uint8_t, maxDataLen> recvDataBuf = {};
+    //     std::array<std::uint8_t, maxDataLen> recvDataBuf = {};
     //     auto recvDataError = UartReceive(recvDataBuf, len);
     //     if(recvDataError != EduErrorCode::success)
     //     {
@@ -431,7 +431,7 @@ auto Edu::Initialize() -> void
     //     }
 
     //     // Receive checksum
-    //     std::array<uint8_t, 4> crc32Buf = {};
+    //     std::array<std::uint8_t, 4> crc32Buf = {};
     //     auto crc32Error = UartReceive(crc32Buf, crc32Buf.size());
     //     if(crc32Error != EduErrorCode::success)
     //     {
@@ -539,23 +539,23 @@ void Edu::SendCommand(Byte commandId)
 //! @param data The data to be sent
 [[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
-    size_t nBytes = data.size();
+    std::size_t nBytes = data.size();
     if(nBytes >= maxDataLength)
     {
         return EduErrorCode::sendDataTooLong;
     }
 
     // Casting size_t to uint16_t is safe since nBytes is checked against maxDataLength
-    std::array<uint16_t, 1> len{static_cast<uint16_t>(nBytes)};
-    std::array<uint32_t, 1> crc{utility::Crc32(data)};
+    std::array<std::uint16_t, 1> len{static_cast<std::uint16_t>(nBytes)};
+    std::array<std::uint32_t, 1> crc{utility::Crc32(data)};
 
     int nackCount = 0;
     while(nackCount < maxNNackRetries)
     {
         SendCommand(cmdData);
-        hal::WriteTo(&uart_, std::span<uint16_t>(len));
+        hal::WriteTo(&uart_, std::span<std::uint16_t>(len));
         hal::WriteTo(&uart_, data);
-        hal::WriteTo(&uart_, std::span<uint32_t>(crc));
+        hal::WriteTo(&uart_, std::span<std::uint32_t>(crc));
 
         // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
@@ -622,7 +622,7 @@ void Edu::SendCommand(Byte commandId)
 //! This can be used to clear all buffer data after an error to request a resend.
 auto Edu::FlushUartBuffer() -> void
 {
-    // std::array<uint8_t, garbageBufSize> garbageBuf = {0};
+    // std::array<std::uint8_t, garbageBufSize> garbageBuf = {0};
     // bool dataRecvd = true;
 
     // // Keep reading until no data is coming for flushTimeout (10 ms)

@@ -20,7 +20,7 @@ class Edu
 public:
     auto Initialize() -> void;
 
-    [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> int32_t;
+    [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> std::int32_t;
     [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
     [[nodiscard]] auto StopProgram() -> EduErrorCode;
     // TODD: Find better name (or maybe even mechanism) for GetStatus

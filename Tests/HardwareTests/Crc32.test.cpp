@@ -17,8 +17,8 @@
 
 namespace sts1cobcsw
 {
-std::array<uint8_t, 4> swData = {0xAA, 0x00, 0xFF, 0x00};
-uint32_t hwData = 0xAA00FF00;
+std::array<std::uint8_t, 4> swData = {0xAA, 0x00, 0xFF, 0x00};
+std::uint32_t hwData = 0xAA00FF00;
 
 class Crc32Test : public RODOS::StaticThread<>
 {

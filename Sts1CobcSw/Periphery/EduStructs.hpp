@@ -44,32 +44,32 @@ struct UpdateTimeData
 struct EduStatus
 {
     EduStatusType statusType;
-    uint16_t programId;
-    uint16_t queueId;
-    uint8_t exitCode;
+    std::uint16_t programId;
+    std::uint16_t queueId;
+    std::uint8_t exitCode;
     EduErrorCode errorCode;
 };
 
 
 struct ResultsReadyStatus
 {
-    uint16_t programId;
-    uint16_t queueId;
+    std::uint16_t programId;
+    std::uint16_t queueId;
 };
 
 
 struct ProgramFinishedStatus
 {
-    uint16_t programId;
-    uint16_t queueId;
-    uint8_t exitCode;
+    std::uint16_t programId;
+    std::uint16_t queueId;
+    std::uint8_t exitCode;
 };
 
 
 struct ResultInfo
 {
     periphery::EduErrorCode errorCode;
-    size_t resultSize;
+    std::size_t resultSize;
 };
 
 
