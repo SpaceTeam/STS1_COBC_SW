@@ -18,7 +18,7 @@ using sts1cobcsw::serial::Byte;
 class Edu
 {
 public:
-    Edu();
+    auto Initialize() -> void;
 
     [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> int32_t;
     [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
@@ -33,7 +33,7 @@ private:
     auto SendCommand(Byte commandId) -> void;
     [[nodiscard]] auto SendData(std::span<Byte> data) -> EduErrorCode;
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
-    // Deserialize internally.
+    // Deserialize<>() internally.
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
 

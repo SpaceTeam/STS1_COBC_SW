@@ -46,7 +46,8 @@ constexpr size_t nCommandBytes = 1;
 constexpr auto maxNNackRetries = 10;
 
 
-Edu::Edu()
+//! @brief  Must be called in an init() function of a thread.
+auto Edu::Initialize() -> void
 {
     constexpr auto baudRate = 115'200;
     uart_.init(baudRate);
