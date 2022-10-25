@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <rodos_no_using_namespace.h>
 
-namespace sts1cobcsw::util
+namespace sts1cobcsw::utility
 {
 //! @brief Print utc system time in human readable format
 void PrintTime()

@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
 #include <Sts1CobcSw/CommandParser.hpp>
-#include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/EduProgramQueue.hpp>
 
 #include <rodos_no_using_namespace.h>
 

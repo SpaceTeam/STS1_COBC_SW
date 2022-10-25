@@ -1,10 +1,10 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
 #include <Sts1CobcSw/CommandParser.hpp>
-#include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Topics.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <type_safe/index.hpp>
 #include <type_safe/narrow_cast.hpp>
@@ -85,8 +85,8 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
     int16_t length = 0;
 
     CopyFrom(command, &position, &utc);
-    RODOS::sysTime.setUTC(util::UnixToRodosTime(utc));
-    util::PrintTime();
+    RODOS::sysTime.setUTC(utility::UnixToRodosTime(utc));
+    utility::PrintTime();
 
     CopyFrom(command, &position, &commandId);
     RODOS::PRINTF("command ID is character : %c\n", commandId);

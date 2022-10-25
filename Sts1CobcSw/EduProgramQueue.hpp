@@ -10,13 +10,15 @@
 #include <tuple>
 
 
-namespace sts1cobcsw
-{
+namespace sts1cobcsw {
+
+
 class TimeEvent : public RODOS::TimeEvent
 {
 public:
     void handle() override;
 };
+
 
 enum class EduProgramStatus
 {
@@ -40,9 +42,9 @@ struct QueueEntry
     int16_t timeout;
 };
 
+
 inline constexpr auto eduProgramQueueSize = 20;
 extern etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue;
-
 
 struct StatusHistoryEntry
 {
@@ -54,8 +56,11 @@ struct StatusHistoryEntry
 inline constexpr auto statusHistorySize = 20;
 extern RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
 
+extern uint16_t queueIndex; 
+
 void EmptyEduProgramQueue();
 void AddQueueEntry(const QueueEntry & eduEntry);
 void ResetQueueIndex();
+
 
 }
