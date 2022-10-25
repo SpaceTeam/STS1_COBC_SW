@@ -3,8 +3,8 @@
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Topics.hpp>
-#include <Sts1CobcSw/Util/Time.hpp>
-#include <Sts1CobcSw/Util/Util.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/Crc32.hpp>
 
 #include <type_safe/index.hpp>
 #include <type_safe/narrow_cast.hpp>

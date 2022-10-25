@@ -1,7 +1,7 @@
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
-#include <Sts1CobcSw/Util/Time.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <ringbuffer.h>
 
@@ -125,9 +125,10 @@ class EduQueueThread : public RODOS::StaticThread<>
             AT(NOW() + startDelay - eduCommunicationDelay);
             
             RODOS::PRINTF("Resuming here");
-            // Send UTC to EDU
-            eduUartInterface.
 
+            // Send UTC to EDU
+
+            // delay again
             // Start Process
             auto const programId = ProgramId(eduProgramQueue, queueIndex);
             auto const queueId = QueueId(eduProgramQueue, queueIndex);

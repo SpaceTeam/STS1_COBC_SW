@@ -1,3 +1,5 @@
+add_subdirectory(EduCmdTests)
+
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PRIVATE rodos::rodos type_safe Sts1CobcSw_Hal)
 
@@ -6,6 +8,9 @@ target_link_libraries(Sts1CobcSwTests_Spi PRIVATE etl::etl rodos::rodos type_saf
 
 add_program(Uart Uart.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal)
+
+add_program(Crc32 Crc32.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Crc32 PUBLIC rodos::rodos type_safe Sts1CobcSw_Util)
 
 get_property(
     all_hw_test_targets

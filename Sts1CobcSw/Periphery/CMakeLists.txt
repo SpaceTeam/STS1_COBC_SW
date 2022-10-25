@@ -5,4 +5,4 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 	target_sources(Sts1CobcSw_Periphery PRIVATE EduMock.cpp)
 endif()
 
-target_link_libraries(Sts1CobcSw_Periphery PRIVATE rodos::rodos etl::etl Sts1CobcSw_Hal)
+target_link_libraries(Sts1CobcSw_Periphery PUBLIC rodos::rodos etl::etl Sts1CobcSw_Hal Sts1CobcSw_Utility Sts1CobcSw_Serial)

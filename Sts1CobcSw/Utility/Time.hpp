@@ -19,6 +19,4 @@ void PrintTime();
     rodosTime = rodosTime - util::rodosUnixOffset;
     return rodosTime;
 }
-
-
 }

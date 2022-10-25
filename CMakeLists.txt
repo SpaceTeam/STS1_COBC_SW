@@ -24,14 +24,9 @@ find_rodos()
 
 add_library(Sts1CobcSw_Dummy OBJECT)
 add_library(Sts1CobcSw_Hal INTERFACE)
-<<<<<<< HEAD
-add_library(Sts1CobcSw_Util OBJECT)
 add_library(Sts1CobcSw_Periphery OBJECT)
-=======
-add_library(Sts1CobcSw_Periphery INTERFACE)
 add_library(Sts1CobcSw_Serial INTERFACE)
-add_library(Sts1CobcSw_Utility INTERFACE)
->>>>>>> origin/master
+add_library(Sts1CobcSw_Utility OBJECT)
 add_program(HelloDummy)
 add_program(EduProgramQueueThread)
 add_program(WIP)

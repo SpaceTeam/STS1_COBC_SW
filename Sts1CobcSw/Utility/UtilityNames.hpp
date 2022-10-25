@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-namespace sts1cobcsw::util
+namespace sts1cobcsw::utility
 {
 // Byte masks for uint32_t
 inline constexpr auto uint32FirstByteMask = 0xFF000000U;

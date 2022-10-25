@@ -1,8 +1,8 @@
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
-#include <Sts1CobcSw/Util/Util.hpp>
-#include <Sts1CobcSw/Util/UtilNames.hpp>
+#include <Sts1CobcSw/Utility/Crc32.hpp>
+#include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 #include <array>
 #include <iostream>
