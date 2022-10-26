@@ -24,7 +24,7 @@ find_rodos()
 
 add_library(Sts1CobcSw_Dummy OBJECT)
 add_library(Sts1CobcSw_Hal INTERFACE)
-add_library(Sts1CobcSw_Periphery INTERFACE)
+add_library(Sts1CobcSw_Periphery OBJECT)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility INTERFACE)
 add_program(HelloDummy)
