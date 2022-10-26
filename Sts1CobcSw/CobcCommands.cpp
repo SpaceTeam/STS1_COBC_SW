@@ -1,31 +1,33 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
-
-#include <Sts1CobcSw/CommandParser.hpp>
-
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 
 #include <rodos_no_using_namespace.h>
 
-// TODO why is this here ?
-//#include <stm32f4xx_rtc.h>
-
-using RODOS::PRINTF;
 
 namespace sts1cobcsw
 {
+auto eduEnabledGpio = hal::GpioPin(hal::eduEnabledPin);
+
+
 void TurnEduOn()
 {
-    PRINTF("*Turn on EDU*\n");
+    RODOS::PRINTF("*Turn on EDU*\n");
     // The enable pin uses inverted logic: 0 = enable
-    // Set EduShouldBePowered auf True
-    hal::SetPin(eduEnableGpio, false);
+    eduEnabledGpio.Reset();
+    // Set EduShouldBePowered to True, persistentstate is initialized in EduPowerManagementThread.cpp
+    periphery::persistentstate::EduShouldBePowered(true);
+
 }
 
 
 void TurnEduOff()
 {
-    PRINTF("*Turn off EDU*\n");
+    RODOS::PRINTF("*Turn off EDU*\n");
     // The enable pin uses inverted logic: 1 = disable
-    // Set EduShouldBePowered auf False
-    hal::SetPin(eduEnableGpio, true);
+    eduEnabledGpio.Set();
+    // Set EduShouldBePowered to False, persistentstate is initialized in EduPowerManagementThread.cpp
+    periphery::persistentstate::EduShouldBePowered(false);
 }
 }

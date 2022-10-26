@@ -9,5 +9,5 @@ target_link_libraries(Sts1CobcSw_Dummy PUBLIC etl::etl)
 target_sources(Sts1CobcSw_HelloDummy PRIVATE HelloDummy.cpp)
 target_link_libraries(Sts1CobcSw_HelloDummy PRIVATE Sts1CobcSw_Dummy rodos::rodos)
 
-target_sources(Sts1CobcSw_EduPowerManagement PRIVATE EduPowerManagementThread.cpp CobcCommands.cpp)
-target_link_libraries(Sts1CobcSw_EduPowerManagement PUBLIC rodos::rodos etl::etl)
+target_sources(Sts1CobcSw_EduPowerManagement PRIVATE EduPowerManagementThread.cpp CobcCommands.cpp EduHeartBeatThread.cpp)
+target_link_libraries(Sts1CobcSw_EduPowerManagement PUBLIC rodos::rodos etl::etl Sts1CobcSw_Utility Sts1CobcSw_Periphery)
