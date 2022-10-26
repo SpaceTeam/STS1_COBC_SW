@@ -3,7 +3,7 @@ target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1C
 
 add_program(PersistentState PersistentState.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_PersistentState PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
+    Sts1CobcSwTests_PersistentState PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
 )
 
 add_program(Serial Serial.test.cpp)

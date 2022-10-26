@@ -1,45 +1,34 @@
 #pragma once
 
 
-namespace sts1cobcsw::periphery
+#include <type_safe/types.hpp>
+
+#include <cstdint>
+
+
+// This is just a dummy implementation that does not store anything in a persistent memory.
+namespace sts1cobcsw::periphery::persistentstate
 {
-// This is just a dummy implementation now that does not store anything in a persistent memory.
-template<typename T>
-class PersistentState
-{
-public:
-    PersistentState() = delete;
-    explicit PersistentState(T const & t);
-    ~PersistentState() = default;
-    PersistentState(PersistentState const &) = delete;
-    auto operator=(PersistentState const &) -> PersistentState & = delete;
-    PersistentState(PersistentState &&) = delete;
-    auto operator=(PersistentState &&) -> PersistentState & = delete;
+// Must be called once in a thread's init() function
+auto Initialize() -> void;
 
-    [[nodiscard]] auto Get() const -> T;
-    auto Set(T const & t) -> void;
+// Getters
+[[nodiscard]] auto NotOkCounter() -> type_safe::int8_t;
+[[nodiscard]] auto ActiveFirmwareImage() -> type_safe::int8_t;
+[[nodiscard]] auto BackupFirmwareImage() -> type_safe::int8_t;
 
-private:
-    T value_;
-};
+[[nodiscard]] auto AntennasShouldBeDeployed() -> type_safe::bool_t;
+[[nodiscard]] auto TxIsOn() -> type_safe::bool_t;
+[[nodiscard]] auto EduShouldBePowered() -> type_safe::bool_t;
+[[nodiscard]] auto UtcOffset() -> type_safe::int32_t;
 
+// Setters
+auto NotOkCounter(type_safe::int8_t) -> void;
+auto ActiveFirmwareImage(type_safe::int8_t) -> void;
+auto BackupFirmwareImage(type_safe::int8_t) -> void;
 
-template<typename T>
-PersistentState<T>::PersistentState(T const & t) : value_{t}
-{
-}
-
-
-template<typename T>
-[[nodiscard]] auto PersistentState<T>::Get() const -> T
-{
-    return value_;
-}
-
-
-template<typename T>
-auto PersistentState<T>::Set(T const & t) -> void
-{
-    value_ = t;
-}
+auto AntennasShouldBeDeployed(type_safe::bool_t) -> void;
+auto TxIsOn(type_safe::bool_t) -> void;
+auto EduShouldBePowered(type_safe::bool_t) -> void;
+auto UtcOffset(type_safe::int32_t) -> void;
 }

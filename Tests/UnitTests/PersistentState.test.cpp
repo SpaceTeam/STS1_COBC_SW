@@ -1,27 +1,49 @@
+// Only the current dummy implementation can be a unit test. The real implementation will be a
+// hardware test.
+
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 
 #include <catch2/catch_test_macros.hpp>
+#include <type_safe/types.hpp>
 
 #include <type_traits>
 
 
-using sts1cobcsw::periphery::PersistentState;
+namespace ps = sts1cobcsw::periphery::persistentstate;
 
 
-TEST_CASE("PersistentState is non-default constructible, non-copyable and non-moveable")
+TEST_CASE("Persistent state getters and setters")
 {
-    REQUIRE(not std::is_default_constructible_v<PersistentState<char>>);
-    REQUIRE(not std::is_copy_constructible_v<PersistentState<short>>);
-    REQUIRE(not std::is_copy_assignable_v<PersistentState<int>>);
-    REQUIRE(not std::is_move_constructible_v<PersistentState<float>>);
-    REQUIRE(not std::is_move_assignable_v<PersistentState<double>>);
-}
+    using type_safe::operator""_i8;
+    using type_safe::operator""_i32;
 
+    ps::Initialize();
 
-TEST_CASE("Get() and Set()")
-{
-    PersistentState<int> persistentInt(13);
-    REQUIRE(persistentInt.Get() == 13);
-    persistentInt.Set(-273);
-    REQUIRE(persistentInt.Get() == -273);
+    // .get() and == true/false are only used because the Catch2 magic can't handle type_safe
+    // numbers
+
+    ps::NotOkCounter(13_i8);
+    REQUIRE(ps::NotOkCounter().get() == 13);
+
+    ps::ActiveFirmwareImage(5_i8);
+    REQUIRE(ps::ActiveFirmwareImage().get() == 5);
+
+    ps::BackupFirmwareImage(9_i8);
+    REQUIRE(ps::BackupFirmwareImage().get() == 9);
+
+    ps::AntennasShouldBeDeployed(false);
+    REQUIRE(ps::AntennasShouldBeDeployed() == false);
+
+    ps::TxIsOn(false);
+    REQUIRE(ps::TxIsOn() == false);
+    ps::TxIsOn(true);
+    REQUIRE(ps::TxIsOn() == true);
+
+    ps::EduShouldBePowered(true);
+    REQUIRE(ps::EduShouldBePowered() == true);
+    ps::EduShouldBePowered(false);
+    REQUIRE(ps::EduShouldBePowered() == false);
+
+    ps::UtcOffset(13579);
+    REQUIRE(ps::UtcOffset().get() == 13579);
 }
