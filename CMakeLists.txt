@@ -17,11 +17,16 @@ include(cmake/custom-commands.cmake)
 # ---- Find dependencies ----
 
 find_package_and_notify(etl)
+find_package_and_notify(type_safe)
 find_rodos()
 
 # ---- Declare targets ----
 
 add_library(Sts1CobcSw_Dummy OBJECT)
+add_library(Sts1CobcSw_Hal INTERFACE)
+add_library(Sts1CobcSw_Periphery OBJECT)
+add_library(Sts1CobcSw_Serial INTERFACE)
+add_library(Sts1CobcSw_Utility INTERFACE)
 add_program(HelloDummy)
 add_program(EduPowerManagement)
 
