@@ -1,0 +1,2 @@
+target_sources(Sts1CobcSw_Periphery PRIVATE PersistentState.cpp)
+target_link_libraries(Sts1CobcSw_Periphery PUBLIC type_safe)
