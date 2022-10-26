@@ -92,7 +92,7 @@ inline constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *
 }
 
 
-// TODO: Add template parameter for endianess (Flash needs big endian)
+// TODO: Add template parameter for endianness (Flash needs big endian)
 template<TriviallySerializable T>
 inline constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *
 {
