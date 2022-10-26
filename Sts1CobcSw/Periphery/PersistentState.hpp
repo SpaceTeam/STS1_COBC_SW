@@ -7,7 +7,7 @@ namespace sts1cobcsw::periphery
 template<typename T>
 class PersistentState
 {
-  public:
+public:
     PersistentState() = delete;
     explicit PersistentState(T const & t);
     ~PersistentState() = default;
@@ -19,7 +19,7 @@ class PersistentState
     [[nodiscard]] auto Get() const -> T;
     auto Set(T const & t) -> void;
 
-  private:
+private:
     T value_;
 };
 
