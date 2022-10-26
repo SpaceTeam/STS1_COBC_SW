@@ -28,11 +28,13 @@ inline constexpr auto flashSpiIndex = RODOS::SPI_IDX1;
 inline constexpr auto flashSpiSckPin = pa5;
 inline constexpr auto flashSpiMisoPin = pa6;
 inline constexpr auto flashSpiMosiPin = pa7;
+inline constexpr auto flashCsPin = pb9;
 
 inline constexpr auto framSpiIndex = RODOS::SPI_IDX2;
 inline constexpr auto framSpiSckPin = pc7;
 inline constexpr auto framSpiMisoPin = pc2;
 inline constexpr auto framSpiMosiPin = pc3;
+inline constexpr auto framCsPin = pb9;  // == flashCsPin, this is not a mistake
 
 inline constexpr auto cobcSpiIndex = RODOS::SPI_IDX3;
 inline constexpr auto cobcSpiSckPin = pc10;

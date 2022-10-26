@@ -1,4 +1,5 @@
 add_subdirectory(Hal)
+add_subdirectory(Periphery)
 add_subdirectory(Serial)
 add_subdirectory(Utility)
 
