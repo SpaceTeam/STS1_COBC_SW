@@ -33,7 +33,7 @@ enum class EduProgramStatus
 };
 
 
-// TODO: Type safety
+// TODO: Use std
 struct QueueEntry
 {
     uint16_t programId;

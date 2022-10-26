@@ -12,7 +12,7 @@ void AddQueueEntry(const QueueEntry & eduEntry)
 void ResetQueueIndex()
 {
     queueIndex = 0U;
-    RODOS::PRINTF("Current size of edu program queue is : %d\n", eduProgramQueue.size());
+    RODOS::PRINTF("QueueIndex resetted. Current size of edu program queue is : %d\n", eduProgramQueue.size());
 }
 
 
