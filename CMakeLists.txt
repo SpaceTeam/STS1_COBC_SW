@@ -24,10 +24,6 @@ find_rodos()
 
 add_library(Sts1CobcSw_Dummy OBJECT)
 add_library(Sts1CobcSw_Hal INTERFACE)
-<<<<<<< HEAD
-=======
-add_library(Sts1CobcSw_Periphery OBJECT)
->>>>>>> origin/master
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility OBJECT)
 add_library(Sts1CobcSw_Periphery OBJECT)

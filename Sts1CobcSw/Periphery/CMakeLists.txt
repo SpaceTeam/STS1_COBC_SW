@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 	target_sources(Sts1CobcSw_Periphery PRIVATE Edu.cpp EduStructs.cpp PersistentState.cpp)
 endif()
