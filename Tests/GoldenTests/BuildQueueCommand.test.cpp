@@ -78,7 +78,7 @@ class BuildQueueCommandTest : public RODOS::StaticThread<>
         uint32_t utc = 0;
         util::CopyFrom(std::span(beacon), &position, &utc);
         auto utcStamp = static_cast<int64_t>(utc) * RODOS::SECONDS;
-        RODOS::PRINTF("Our timesamp is : %lld\n", utcStamp);
+        RODOS::PRINTF("Our timestamp is : %lld\n", utcStamp);
 
         // Set UTC :
         RODOS::sysTime.setUTC(utcStamp - rodosUnixOffset);
