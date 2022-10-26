@@ -57,10 +57,12 @@ using SerialBuffer = std::array<Byte, serialSize<T>>;
 // Function declarations
 // ---------------------
 
+// TODO: Rename data -> t or variable
 // Must be overloaded for user-defined types to be serializable
 template<TriviallySerializable T>
 constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *;
 
+// TODO: Make DeserializeFrom const correct (Byte const * source, -> Byte const *)
 // Must be overloaded for user-defined types to be deserializable
 template<TriviallySerializable T>
 constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *;
@@ -90,6 +92,7 @@ inline constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *
 }
 
 
+// TODO: Add template parameter for endianess (Flash needs big endian)
 template<TriviallySerializable T>
 inline constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *
 {

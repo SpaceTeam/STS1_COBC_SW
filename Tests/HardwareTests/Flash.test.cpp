@@ -45,6 +45,13 @@ class FlashTest : public RODOS::StaticThread<stackSize>
         PRINTF("Initialize(): %i == 0\n", static_cast<int>(errorCode));
         Check(errorCode == 0);
         PRINTF("\n");
+
+        auto jedecId = periphery::flash::ReadJedecId();
+        PRINTF("Manufacturer ID: 0x%02x == 0xEF\n",
+               static_cast<unsigned int>(jedecId.manufacturerId));
+        Check(jedecId.manufacturerId == 0xEF);
+        PRINTF("Device ID: 0x%04x == 0x4021\n", static_cast<unsigned int>(jedecId.deviceId));
+        Check(jedecId.deviceId == 0x4021);
     }
 };
 
