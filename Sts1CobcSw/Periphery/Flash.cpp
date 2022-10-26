@@ -7,13 +7,22 @@
 
 namespace sts1cobcsw::periphery::flash
 {
-auto csGpioPin = hal::flashCsPin;
+// Private globals
+constexpr auto dummyByte = 0x00_b;
+
+auto csGpioPin = hal::GpioPin(hal::flashCsPin);
+auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
 auto spi = RODOS::HAL_SPI(
     hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
 
 
-auto Initialize() -> std::int32_t
+[[nodiscard]] auto Initialize() -> std::int32_t
 {
+    csGpioPin.Direction(hal::PinDirection::out);
+    writeProtectionGpioPin.Direction(hal::PinDirection::out);
+    csGpioPin.Set();
+    writeProtectionGpioPin.Set();
+
     constexpr auto baudrate = 1'000'000;
     return spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
 }

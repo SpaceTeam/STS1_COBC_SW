@@ -29,6 +29,7 @@ inline constexpr auto flashSpiSckPin = pa5;
 inline constexpr auto flashSpiMisoPin = pa6;
 inline constexpr auto flashSpiMosiPin = pa7;
 inline constexpr auto flashCsPin = pb9;
+inline constexpr auto flashWriteProtectionPin = pc4;
 
 inline constexpr auto framSpiIndex = RODOS::SPI_IDX2;
 inline constexpr auto framSpiSckPin = pc7;
