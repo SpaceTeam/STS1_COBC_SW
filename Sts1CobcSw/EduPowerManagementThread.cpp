@@ -2,6 +2,7 @@
 //! @brief  Manages the power of the EDU module
 
 #include <Sts1CobcSw/CobcCommands.hpp>
+#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
@@ -64,20 +65,20 @@ class EduPowerManagementThread : public RODOS::StaticThread<>
                 // TODO: also perform a check about archives on cobc
                 if(not(eduHasUpdate or startDelay < startDelayLimit))
                 {
-                    TurnEduOff();
+                    edu.TurnOff();
                 }
             }
             else
             {
                 if(startDelay < eduBootTime + eduBootTimeMargin)
                 {
-                    TurnEduOn();
+                    edu.TurnOn();
                 }
             }
         }
         else
         {
-            TurnEduOff();
+            edu.TurnOff();
         }
 
         RODOS::AT(RODOS::NOW() + 2 * RODOS::SECONDS);

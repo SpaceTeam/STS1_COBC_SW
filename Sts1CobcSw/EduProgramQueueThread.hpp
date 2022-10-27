@@ -6,6 +6,7 @@
 
 namespace sts1cobcsw
 {
+// TODO: Maybe this should be in EduPowerManagement thread
 extern periphery::Edu edu;
 
 
