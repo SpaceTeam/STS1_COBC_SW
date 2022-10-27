@@ -30,7 +30,7 @@ public:
     auto Direction(PinDirection pinDirection) -> void;
     auto Set() -> void;
     auto Reset() -> void;
-    auto Read() const -> PinState;
+    [[nodiscard]] auto Read() const -> PinState;
 
 private:
     mutable RODOS::HAL_GPIO pin_;

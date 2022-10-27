@@ -1,7 +1,10 @@
 #include <rodos_no_using_namespace.h>
 
+#include <cstdint>
 
-uint32_t printfMask = 0;
+
+std::uint32_t printfMask = 0;
+
 
 namespace sts1cobcsw
 {
