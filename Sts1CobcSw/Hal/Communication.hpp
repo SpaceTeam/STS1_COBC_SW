@@ -48,7 +48,12 @@ template<std::size_t size>
 [[nodiscard]] inline auto ReadFrom(auto * communicationInterface,
                                    std::span<std::byte, size> readBuffer)
 {
-    return communicationInterface->read(readBuffer.data(), readBuffer.size());
+    std::size_t nReadBytes = 0U;
+    while(nReadBytes < size)
+    {
+        nReadBytes +=
+            communicationInterface->read(data(readBuffer) + nReadBytes, size - nReadBytes);
+    }
 }
 
 
