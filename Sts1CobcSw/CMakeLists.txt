@@ -16,7 +16,7 @@ target_link_libraries(
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(
         Sts1CobcSw_CobcSw PRIVATE EduProgramQueue.cpp EduProgramQueueThread.cpp CobcCommands.cpp
-                                  CommandParserThread.cpp
+                                  CommandParserThread.cpp Topics.cpp
     )
     target_link_libraries(
         Sts1CobcSw_CobcSw PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal Sts1CobcSw_Utility
