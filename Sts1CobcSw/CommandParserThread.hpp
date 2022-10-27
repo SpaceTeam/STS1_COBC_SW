@@ -20,12 +20,6 @@ namespace ts = type_safe;
 // this shouldn't be inline in any case.
 inline auto eduEnabledGpio = hal::GpioPin(hal::eduEnabledPin);
 
-// extern RODOS::HAL_UART eduUart;
-
-// FIXME: No! This must not be necessary here. High-level code only calls the public Edu API. Also,
-// this shouldn't be inline in any case.
-inline auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
-
 
 //! @brief Copy a value from a buffer to a variable.
 //!

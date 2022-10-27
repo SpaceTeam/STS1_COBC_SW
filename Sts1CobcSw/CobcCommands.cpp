@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
-#include <Sts1CobcSw/CommandParser.hpp>
+#include <Sts1CobcSw/CommandParserThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 
 #include <rodos_no_using_namespace.h>
