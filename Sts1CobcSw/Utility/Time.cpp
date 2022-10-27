@@ -1,5 +1,5 @@
-#include <cstdint>
-#include <rodos_no_using_namespace.h>
+#include <Sts1CobcSw/Utility/Time.hpp>
+
 
 namespace sts1cobcsw::utility
 {

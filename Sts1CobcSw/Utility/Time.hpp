@@ -1,5 +1,8 @@
 #include <rodos_no_using_namespace.h>
 
+#include <cstdint>
+
+
 namespace sts1cobcsw::utility
 {
 //! Number of nanoseconds between 1st January 1970 and 1st January 2000
