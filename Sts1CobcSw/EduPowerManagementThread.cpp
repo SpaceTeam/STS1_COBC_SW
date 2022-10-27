@@ -1,7 +1,6 @@
 //! @file
 //! @brief  Manages the power of the EDU module
 
-#include <Sts1CobcSw/CobcCommands.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>

@@ -14,13 +14,8 @@ target_link_libraries(Sts1CobcSw_HelloDummy PRIVATE Sts1CobcSw_Dummy rodos::rodo
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(
         Sts1CobcSw_CobcSw
-        PRIVATE CobcCommands.cpp
-                CommandParserThread.cpp
-                EduHeartBeatThread.cpp
-                EduPowerManagementThread.cpp
-                EduProgramQueue.cpp
-                EduProgramQueueThread.cpp
-                Topics.cpp
+        PRIVATE CommandParserThread.cpp EduHeartBeatThread.cpp EduPowerManagementThread.cpp
+                EduProgramQueue.cpp EduProgramQueueThread.cpp Topics.cpp
     )
     target_link_libraries(
         Sts1CobcSw_CobcSw PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal Sts1CobcSw_Utility
