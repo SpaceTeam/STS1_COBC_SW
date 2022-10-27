@@ -30,7 +30,7 @@ add_program(HelloDummy)
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_Hal INTERFACE)
     add_library(Sts1CobcSw_Periphery OBJECT)
-    add_program(Sts1CobcSw)
+    add_program(CobcSw)
 endif()
 
 # All targets must only add the top level project directory as PUBLIC include directory

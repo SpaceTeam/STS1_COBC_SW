@@ -1,11 +1,14 @@
+# TODO: Implement something like add_test_program() which adds the suffix "Test" to the output name
 add_program(Dummy Dummy.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
 
 # TODO: Fix the problem with two main()s, one from Rodos one from Catch, somehow
-# add_program(PersistentState PersistentState.test.cpp)
-# target_link_libraries(
-#     Sts1CobcSwTests_PersistentState PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-# )
+if(FALSE)
+    add_program(PersistentState PersistentState.test.cpp)
+    target_link_libraries(
+        Sts1CobcSwTests_PersistentState PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
+    )
+endif()
 
 add_program(Serial Serial.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
