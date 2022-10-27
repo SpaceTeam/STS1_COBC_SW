@@ -8,16 +8,24 @@
 namespace sts1cobcsw::periphery
 {
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+[[nodiscard]] auto Edu::ExecuteProgram([[maybe_unused]] ExecuteProgramData const & data)
+    -> EduErrorCode
 {
-    RODOS::PRINTF("Call to FlushUartBuffer()\n");
+    RODOS::PRINTF("Call to ExecuteProgram()\n");
+    return EduErrorCode::success;
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> EduErrorCode
+[[nodiscard]] auto Edu::GetStatus() -> EduStatus
 {
-    RODOS::PRINTF("Call to UartReceive()\n");
-    return EduErrorCode::success;
+    RODOS::PRINTF("Call to GetStatus()\n");
+
+    return {.statusType = EduStatusType::invalid,
+            .programId = 0,
+            .queueId = 0,
+            .exitCode = 0,
+            .errorCode = EduErrorCode::success};
 }
 
 
@@ -37,19 +45,15 @@ auto Edu::SendCommand([[maybe_unused]] Byte commandId) -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::ExecuteProgram([[maybe_unused]] ExecuteProgramData const & data) -> EduErrorCode
+[[nodiscard]] auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> EduErrorCode
 {
-    RODOS::PRINTF("Call to ExecuteProgram()\n");
+    RODOS::PRINTF("Call to UartReceive()\n");
     return EduErrorCode::success;
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+void Edu::FlushUartBuffer()
 {
-    RODOS::PRINTF("Call to GetStatus()\n");
-
-    uint16_t programId = 0;
-    uint16_t queueId = 0;
-    uint8_t exitCode = 0;
-    return {EduStatusType::invalid, programId, queueId, exitCode, EduErrorCode::success};
+    RODOS::PRINTF("Call to FlushUartBuffer()\n");
 }
 }
