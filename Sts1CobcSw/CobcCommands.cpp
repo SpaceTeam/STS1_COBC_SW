@@ -12,7 +12,7 @@ void TurnEduOn()
 {
     RODOS::PRINTF("*Turn on EDU*\n");
     // The enable pin use inverted logic: 0 = enable
-    eduEnabledGpio.Reset();
+    eduEnabledGpioPin.Reset();
 }
 
 
@@ -20,7 +20,7 @@ void TurnEduOff()
 {
     RODOS::PRINTF("*Turn off EDU*\n");
     // The enable pin uses inverted logic: 1 = disable
-    eduEnabledGpio.Set();
+    eduEnabledGpioPin.Set();
 }
 
 void UpdateUtcOffset()

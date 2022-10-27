@@ -45,9 +45,4 @@ extern etl::vector<EduQueueEntry, eduProgramQueueSize> eduProgramQueue;
 // TODO: Maybe move that to its own file? Together with the definition of StatusHistoryEntry of
 // course.
 extern RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
-
-
-void EmptyEduProgramQueue();
-void AddQueueEntry(EduQueueEntry const & eduEntry);
-void ResetQueueIndex();
 }

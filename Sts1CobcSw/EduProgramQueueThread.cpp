@@ -36,13 +36,14 @@ class EduQueueThread : public RODOS::StaticThread<>
     {
         auto queueEntry1 = EduQueueEntry{
             .programId = 5, .queueId = 1, .startTime = 1672531215, .timeout = 10};  // NOLINT
-        AddQueueEntry(queueEntry1);
+        eduProgramQueue.push_back(queueEntry1);
 
         auto queueEntry2 = EduQueueEntry{
             .programId = 6, .queueId = 1, .startTime = 1672531230, .timeout = 20};  // NOLINT
 
-        AddQueueEntry(queueEntry1);
-        AddQueueEntry(queueEntry2);
+        // TODO: Why add the first entry again?
+        eduProgramQueue.push_back(queueEntry1);
+        eduProgramQueue.push_back(queueEntry2);
     }
 
     void run() override

@@ -16,6 +16,7 @@ namespace ts = type_safe;
 using ts::operator""_usize;
 
 
+// TODO: Use the same function from Utility/Time.hpp
 //! @brief Print UTC system time in human readable format
 void PrintTime()
 {
@@ -107,10 +108,10 @@ class BuildQueueCommandTest : public RODOS::StaticThread<>
             }
             case '4':
             {
-                // Program ID 	: 2 bytes, according to EDU PDD 6.1.1
-                // Queue ID 	: 2 bytes, according to EDU PDD 6.1.2
-                // Start Time 	: 4 bytes, EPOCH time
-                // Timeout 		: 2 bytes, according to EDU PDD 6.1.2
+                // Program ID   : 2 bytes, according to EDU PDD 6.1.1
+                // Queue ID     : 2 bytes, according to EDU PDD 6.1.2
+                // Start Time   : 4 bytes, EPOCH time
+                // Timeout      : 2 bytes, according to EDU PDD 6.1.2
                 constexpr auto queueEntrySize = 10;
                 int16_t qlength = 0;
                 util::CopyFrom(std::span(beacon), &position, &qlength);
