@@ -5,6 +5,7 @@
 #include <rodos_no_using_namespace.h>
 
 
+// TODO: This file should not exist. Move everything to the proper location.
 namespace sts1cobcsw
 {
 void TurnEduOn()
@@ -26,14 +27,4 @@ void UpdateUtcOffset()
 {
     RODOS::PRINTF("Update UTC offset");
 }
-
-
-static TimeEvent eduProgramQueueThreadTimeEvent;
-
-void BuildQueue()
-{
-    eduProgramQueueThreadTimeEvent.handle();
-}
-
-
 }

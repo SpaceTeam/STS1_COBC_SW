@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
 #include <Sts1CobcSw/CommandParser.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
+#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Topics.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
@@ -15,15 +16,8 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <etl/map.h>
-#include <etl/string.h>
-#include <etl/string_view.h>
-#include <etl/vector.h>
-
-#include <cinttypes>
-#include <cstring>
+#include <cstdint>
 #include <span>
-#include <tuple>
 
 
 namespace RODOS
@@ -122,7 +116,7 @@ auto DispatchCommand(const etl::string<commandSize.get()> & command)
 
                 // Reset queue index and resume EduProgramQueueThread
                 ResetQueueIndex();
-                BuildQueue();
+                ResumeEduQueueThread();
 
                 return;
             }

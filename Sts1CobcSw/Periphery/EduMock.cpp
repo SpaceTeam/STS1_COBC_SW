@@ -30,6 +30,14 @@ namespace sts1cobcsw::periphery
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+[[nodiscard]] auto Edu::UpdateTime([[maybe_unused]] UpdateTimeData const & data) -> EduErrorCode
+{
+    RODOS::PRINTF("Call to UpdateTime()\n");
+    return EduErrorCode::success;
+}
+
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Edu::SendCommand([[maybe_unused]] Byte commandId) -> void
 {
     RODOS::PRINTF("Call to SendCommand()\n");

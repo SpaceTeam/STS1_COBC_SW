@@ -1,8 +1,8 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Hal/PinNames.hpp>
 
 #include <type_safe/types.hpp>
 

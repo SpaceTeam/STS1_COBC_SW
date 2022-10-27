@@ -5,6 +5,8 @@
 
 uint32_t printfMask = 0;
 
+
+// TODO: Fix all the errors and turn it into a useful test
 namespace sts1cobcsw
 {
 class HelloDummy : public StaticThread<>

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Sts1CobcSw/Serial/Byte.hpp>
 
-#include <rodos_no_using_namespace.h>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 
 
 // TODO: This could be in Edu.cpp cause AFAICS users don't need to know about this

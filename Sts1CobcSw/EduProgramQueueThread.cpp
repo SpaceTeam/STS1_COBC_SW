@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/EduProgramQueue.hpp>
+#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
@@ -12,25 +13,15 @@
 
 #include <algorithm>
 #include <cinttypes>
-#include <iostream>
 
 
 namespace sts1cobcsw
 {
-namespace ts = type_safe;
 using sts1cobcsw::serial::Byte;
 
 using RODOS::AT;
-using RODOS::MILLISECONDS;
 using RODOS::NOW;
 using RODOS::SECONDS;
-
-
-uint16_t queueIndex = 0;
-etl::vector<QueueEntry, eduProgramQueueSize> eduProgramQueue =
-    etl::vector<QueueEntry, eduProgramQueueSize>();
-RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory =
-    RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize>();
 
 
 auto edu = periphery::Edu();
@@ -41,11 +32,11 @@ class EduQueueThread : public RODOS::StaticThread<>
 {
     void init() override
     {
-        auto queueEntry1 = QueueEntry{
+        auto queueEntry1 = EduQueueEntry{
             .programId = 5, .queueId = 1, .startTime = 1672531215, .timeout = 10};  // NOLINT
         AddQueueEntry(queueEntry1);
 
-        auto queueEntry2 = QueueEntry{
+        auto queueEntry2 = EduQueueEntry{
             .programId = 6, .queueId = 1, .startTime = 1672531230, .timeout = 20};  // NOLINT
 
         AddQueueEntry(queueEntry1);
@@ -144,13 +135,23 @@ class EduQueueThread : public RODOS::StaticThread<>
             queueIndex++;
         }
     }
-};
+} eduQueueThread;
 
-auto eduQueueThread = EduQueueThread();
 
-void TimeEvent::handle()
+// TODO: Think about whether this is the right way to declare, design, use, etc. this
+class ResumeEduQueueThreadEvent : public RODOS::TimeEvent
 {
-    eduQueueThread.resume();
-    RODOS::PRINTF("EduQueueThread resumed from me\n");
+public:
+    auto handle() -> void override
+    {
+        eduQueueThread.resume();
+        RODOS::PRINTF("EduQueueThread resumed from me\n");
+    }
+} resumeEduQueueThreadEvent;
+
+
+auto ResumeEduQueueThread() -> void
+{
+    resumeEduQueueThreadEvent.handle();
 }
 }
