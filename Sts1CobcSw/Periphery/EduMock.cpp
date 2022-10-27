@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
+// TODO: This file is not used at all right now. Think about the mocking later.
 namespace sts1cobcsw::periphery
 {
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
