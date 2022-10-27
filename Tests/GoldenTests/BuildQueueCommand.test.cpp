@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
-
 #include <Sts1CobcSw/Util/Util.hpp>
+
 #include <type_safe/types.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -16,7 +16,7 @@ namespace ts = type_safe;
 using ts::operator""_usize;
 
 
-//! @brief Print utc system time in human readable format
+//! @brief Print UTC system time in human readable format
 void PrintTime()
 {
     int32_t year = 0;
@@ -37,6 +37,8 @@ void PrintTime()
                   sec);
 }
 
+
+// TODO: Fix all the errors and turn it into a useful test
 class BuildQueueCommandTest : public RODOS::StaticThread<>
 {
     void run() override
@@ -47,11 +49,11 @@ class BuildQueueCommandTest : public RODOS::StaticThread<>
         // 1st January 2023, utc Epoch.
         constexpr int32_t date = 1'672'531'200;
         constexpr int8_t type = 0x34;
-        int16_t length = 30; //NOLINT
-        int16_t progId = 12; //NOLINT
-        int16_t queueId = 23; //NOLINT
-        int32_t startTime = 1'672'531'260; //NOLINT
-        int16_t maxTime = 10; //NOLINT
+        int16_t length = 30;                // NOLINT
+        int16_t progId = 12;                // NOLINT
+        int16_t queueId = 23;               // NOLINT
+        int32_t startTime = 1'672'531'260;  // NOLINT
+        int16_t maxTime = 10;               // NOLINT
 
 
         constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;

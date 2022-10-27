@@ -34,6 +34,7 @@ using ts::operator""_usize;
 
 constexpr auto queueEntrySize = 10;
 
+
 enum CommandType : char
 {
     turnEduOn = '1',
@@ -54,30 +55,33 @@ auto ParseQueueEntries(const etl::string<commandSize.get()> & command)
     {
         uint16_t progId = 0;
         CopyFrom(command, &position, &progId);
-        RODOS::PRINTF("Prog ID      : %ld\n", progId);  // NOLINT
+        RODOS::PRINTF("Prog ID      : %d\n", static_cast<int>(progId));
         uint16_t queueId = 0;
         CopyFrom(command, &position, &queueId);
-        RODOS::PRINTF("Queue ID     : %ld\n", queueId);  // NOLINT
+        RODOS::PRINTF("Queue ID     : %d\n", static_cast<int>(queueId));
         int32_t startTime = 0;
         CopyFrom(command, &position, &startTime);
-        RODOS::PRINTF("Start Time   : %ld\n", startTime);  // NOLINT
+        RODOS::PRINTF("Start Time   : %d\n", static_cast<int>(startTime));
         int16_t timeout = 0;
         CopyFrom(command, &position, &timeout);
-        RODOS::PRINTF("Timeout      : %ld\n", timeout);  // NOLINT
+        RODOS::PRINTF("Timeout      : %d\n", static_cast<int>(timeout));
 
-        entry = QueueEntry{
+        entry = EduQueueEntry{
             .programId = progId, .queueId = queueId, .startTime = startTime, .timeout = timeout};
     }
 }
+
 
 auto DispatchCommand(const etl::string<commandSize.get()> & command)
 {
     auto targetIsCobc = true;
     ts::size_t position = 1_usize;
     int32_t utc = 0;
+    // TODO: Make commandId of type CommandType
     char commandId = 0;
     int16_t length = 0;
 
+    // TODO: Use serial library instead
     CopyFrom(command, &position, &utc);
     RODOS::sysTime.setUTC(utility::UnixToRodosTime(utc));
     utility::PrintTime();
@@ -131,8 +135,10 @@ class CommandParserThread : public RODOS::StaticThread<>
 {
     void init() override
     {
+        // FIXME: This belongs to Edu and not here
         eduEnabledGpio.Direction(hal::PinDirection::out);
     }
+
 
     void run() override
     {
@@ -168,6 +174,8 @@ class CommandParserThread : public RODOS::StaticThread<>
     }
 } commandParserThread;
 
+
+// TODO: User serial::Byte instead of std::byte
 template<std::size_t size>
 auto ComputeChecksum(std::span<std::byte, size> data)
 {

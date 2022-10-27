@@ -3,7 +3,7 @@
 
 namespace sts1cobcsw::utility
 {
-//! @brief Print utc system time in human readable format
+//! @brief Print UTC system time in human readable format
 void PrintTime()
 {
     int32_t year = 0;
@@ -16,11 +16,11 @@ void PrintTime()
     auto sysUTC = RODOS::sysTime.getUTC();
     RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
     RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %ld/%ld/%ld %ld:%ld:%f\n",
-                  day,    // NOLINT
-                  month,  // NOLINT
-                  year,   // NOLINT
-                  hour,   // NOLINT
-                  min,    // NOLINT
+                  static_cast<long>(day),    // NOLINT
+                  static_cast<long>(month),  // NOLINT
+                  static_cast<long>(year),   // NOLINT
+                  static_cast<long>(hour),   // NOLINT
+                  static_cast<long>(min),    // NOLINT
                   sec);
 }
 }

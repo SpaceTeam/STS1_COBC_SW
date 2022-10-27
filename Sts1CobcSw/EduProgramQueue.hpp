@@ -1,7 +1,7 @@
 #pragma once
 
 // clang-format off
-#include <rodos_no_using_namespace.h>
+#include <cstdint>
 // TODO: Change install rules of rodos such that this must be included as
 // rodos/support-libs/ringbuffer.h or something.
 //
@@ -12,8 +12,6 @@
 
 #include <etl/string.h>
 #include <etl/vector.h>
-
-#include <cstdint>
 
 
 namespace sts1cobcsw
