@@ -66,7 +66,7 @@ class EduQueueThread : public RODOS::StaticThread<>
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
             auto nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffsetDelay;
+                eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
             auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto const startDelay =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
@@ -89,7 +89,7 @@ class EduQueueThread : public RODOS::StaticThread<>
             [[maybe_unused]] auto errorCode = edu.UpdateTime(updateTimeData);
 
             nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffsetDelay;
+                eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
             currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto const startDelay2 =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);

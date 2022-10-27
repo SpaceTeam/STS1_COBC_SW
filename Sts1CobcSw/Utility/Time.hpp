@@ -10,31 +10,24 @@
 
 namespace sts1cobcsw::utility
 {
-//! Number of nanoseconds between 1st January 1970 and 1st January 2000
-constexpr auto rodosUnixOffsetNanoseconds = 946'684'800 * RODOS::SECONDS;
-//! Number of seconds between 1st January 1970 and 1st January 2000
-constexpr auto rodosUnixOffsetDelay = 946'684'800;
-
-//! @brief Print utc system time in human readable format
-void PrintTime();
+//! Number of nanoseconds between 01.01.1970 and 01.01.2000
+constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 
 
-//! @brief Given a time in seconds since January 1st 1970, return a time in nanoseconds since
-//! January 1st 2000.
-[[nodiscard]] inline auto UnixToRodosTime(std::int32_t const unixTime)
+//! @brief Print UTC system time in human readable format.
+auto PrintTime() -> void;
+
+
+//! @brief Given a time in seconds since 01.01.1970, return a time in nanoseconds since 01.01.2000.
+[[nodiscard]] inline auto UnixToRodosTime(std::int32_t const unixTimeSeconds)
 {
-    auto rodosTime = static_cast<std::int64_t>(unixTime);
-    rodosTime = rodosTime * RODOS::SECONDS;
-    rodosTime = rodosTime - rodosUnixOffsetNanoseconds;
-    return rodosTime;
+    return static_cast<std::int64_t>(unixTimeSeconds) * RODOS::SECONDS - rodosUnixOffset;
 }
 
 
 [[nodiscard]] inline auto GetUnixUtc()
 {
-    auto systemUTC = RODOS::sysTime.getUTC();
-    systemUTC += rodosUnixOffsetNanoseconds;
-    auto unixUtc = systemUTC / RODOS::SECONDS;
+    auto unixUtc = (RODOS::sysTime.getUTC() + rodosUnixOffset) / RODOS::SECONDS;
     return static_cast<std::int32_t>(unixUtc);
 }
 }
