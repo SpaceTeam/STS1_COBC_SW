@@ -23,12 +23,12 @@ auto Initialize() -> void;
 [[nodiscard]] auto UtcOffset() -> type_safe::int32_t;
 
 // Setters
-auto NotOkCounter(type_safe::int8_t) -> void;
-auto ActiveFirmwareImage(type_safe::int8_t) -> void;
-auto BackupFirmwareImage(type_safe::int8_t) -> void;
+auto NotOkCounter(type_safe::int8_t value) -> void;
+auto ActiveFirmwareImage(type_safe::int8_t value) -> void;
+auto BackupFirmwareImage(type_safe::int8_t value) -> void;
 
-auto AntennasShouldBeDeployed(type_safe::bool_t) -> void;
-auto TxIsOn(type_safe::bool_t) -> void;
-auto EduShouldBePowered(type_safe::bool_t) -> void;
-auto UtcOffset(type_safe::int32_t) -> void;
+auto AntennasShouldBeDeployed(type_safe::bool_t value) -> void;
+auto TxIsOn(type_safe::bool_t value) -> void;
+auto EduShouldBePowered(type_safe::bool_t value) -> void;
+auto UtcOffset(type_safe::int32_t value) -> void;
 }

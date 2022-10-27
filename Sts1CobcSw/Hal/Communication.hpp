@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include <Sts1CobcSw/Serial/Byte.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <etl/string.h>
@@ -9,8 +12,13 @@
 #include <string_view>
 
 
+// TODO: Add declarations at the top to see all provided functionality at once
+// TODO: Introduce convention write <-> message, read <-> answer
 namespace sts1cobcsw::hal
 {
+using serial::Byte;
+
+
 template<typename T, std::size_t size>
 inline auto WriteTo(auto * communicationInterface, std::span<T, size> data)
 {
@@ -60,5 +68,16 @@ template<std::size_t size>
     answer->trim_to_terminator();
 
     return nReceivedBytes;
+}
+
+
+// TODO: Try const correctness for span again
+template<std::size_t nBytes>
+auto WriteToReadFrom(auto * communicationInterface, std::span<Byte, nBytes> data)
+    -> std::array<Byte, nBytes>
+{
+    auto readData = std::array<Byte, nBytes>{};
+    communicationInterface->writeRead(std::data(data), nBytes, std::data(readData), nBytes);
+    return readData;
 }
 }

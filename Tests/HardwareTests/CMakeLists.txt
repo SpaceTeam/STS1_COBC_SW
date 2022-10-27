@@ -1,5 +1,11 @@
 add_subdirectory(EduCommandTests)
 
+add_program(Crc32 Crc32.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos)
+
+add_program(Flash Flash.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Flash PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PRIVATE rodos::rodos type_safe Sts1CobcSw_Hal)
 
@@ -8,9 +14,6 @@ target_link_libraries(Sts1CobcSwTests_Spi PRIVATE etl::etl rodos::rodos type_saf
 
 add_program(Uart Uart.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal)
-
-add_program(Crc32 Crc32.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos)
 
 get_property(
     top_level_hw_test_targets
