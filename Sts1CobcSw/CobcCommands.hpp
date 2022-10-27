@@ -6,7 +6,5 @@
 // Utility/Time.hpp maybe.
 namespace sts1cobcsw
 {
-void TurnEduOn();
-void TurnEduOff();
 void UpdateUtcOffset();
 }

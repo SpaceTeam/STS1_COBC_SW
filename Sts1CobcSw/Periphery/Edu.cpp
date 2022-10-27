@@ -49,8 +49,27 @@ constexpr auto maxNNackRetries = 10;
 //! @brief  Must be called in an init() function of a thread.
 auto Edu::Initialize() -> void
 {
+    eduEnabledGpioPin_.Direction(hal::PinDirection::out);
+    // TODO: I think we should actually read from persistent state to determine whether the EDU
+    // should be powered or not. We do have a separate EDU power management thread which though.
+    TurnOff();
+
     constexpr auto baudRate = 115'200;
     uart_.init(baudRate);
+}
+
+
+auto Edu::TurnOn() -> void
+{
+    // Edu enabled pin uses inverted logic
+    eduEnabledGpioPin_.Reset();
+}
+
+
+auto Edu::TurnOff() -> void
+{
+    // Edu enabled pin uses inverted logic
+    eduEnabledGpioPin_.Set();
 }
 
 

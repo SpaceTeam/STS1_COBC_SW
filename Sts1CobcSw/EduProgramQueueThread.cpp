@@ -1,6 +1,5 @@
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
@@ -17,15 +16,16 @@
 
 namespace sts1cobcsw
 {
-using sts1cobcsw::serial::Byte;
+using serial::Byte;
 
 using RODOS::AT;
 using RODOS::NOW;
 using RODOS::SECONDS;
 
 
-auto edu = periphery::Edu();
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
+
+periphery::Edu edu = periphery::Edu();
 
 
 // TODO: File and class name should match. More generally, consistently call it EduProgramQueue or
@@ -34,6 +34,8 @@ class EduQueueThread : public RODOS::StaticThread<>
 {
     void init() override
     {
+        edu.Initialize();
+
         auto queueEntry1 = EduQueueEntry{
             .programId = 5, .queueId = 1, .startTime = 1672531215, .timeout = 10};  // NOLINT
         eduProgramQueue.push_back(queueEntry1);
@@ -89,8 +91,7 @@ class EduQueueThread : public RODOS::StaticThread<>
             // TODO: Do something with error code
             [[maybe_unused]] auto errorCode = edu.UpdateTime(updateTimeData);
 
-            nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
+            nextProgramStartTime = eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
             currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto const startDelay2 =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);

@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
@@ -15,10 +16,13 @@ namespace sts1cobcsw::periphery
 using sts1cobcsw::serial::Byte;
 
 
+// TODO: Think about const-correctness and whether to make uart_ mutable or not
 class Edu
 {
 public:
     auto Initialize() -> void;
+    auto TurnOn() -> void;
+    auto TurnOff() -> void;
 
     [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> std::int32_t;
     [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
@@ -37,6 +41,7 @@ private:
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
 
+    hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
     // RODOS::HAL_UART uart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,
     // hal::eduUartRxPin);
     RODOS::HAL_UART uart_ =

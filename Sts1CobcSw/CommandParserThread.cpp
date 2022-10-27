@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/CobcCommands.hpp>
-#include <Sts1CobcSw/CommandParserThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
@@ -60,8 +59,6 @@ class CommandParserThread : public RODOS::StaticThread<>
 {
     void init() override
     {
-        // FIXME: This belongs to Edu and not here
-        eduEnabledGpioPin.Direction(hal::PinDirection::out);
     }
 
 
@@ -128,12 +125,12 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
         {
             case CommandId::turnEduOn:
             {
-                TurnEduOn();
+                edu.TurnOn();
                 return;
             }
             case CommandId::turnEduOff:
             {
-                TurnEduOff();
+                edu.TurnOff();
                 return;
             }
             case CommandId::buildQueue:
