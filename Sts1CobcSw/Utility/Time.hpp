@@ -1,3 +1,8 @@
+#pragma once
+
+
+// TODO: Just including timemodel.h might be better here because then Utility should be able to be
+// combined with Catch2 without defining two main()s.
 #include <rodos_no_using_namespace.h>
 
 #include <cstdint>
