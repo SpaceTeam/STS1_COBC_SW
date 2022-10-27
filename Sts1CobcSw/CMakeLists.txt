@@ -12,13 +12,12 @@ target_link_libraries(
 )
 
 target_sources(
-    Sts1CobcSw_EduProgramQueueThread PRIVATE EduProgramQueueThread.cpp EduProgramQueue.cpp
-                                             CobcCommands.cpp
+    Sts1CobcSw_Sts1CobcSw PRIVATE EduProgramQueueThread.cpp EduProgramQueue.cpp CobcCommands.cpp
 )
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    target_sources(Sts1CobcSw_EduProgramQueueThread PRIVATE CommandParser.cpp)
+    target_sources(Sts1CobcSw_Sts1CobcSw PRIVATE CommandParserThread.cpp)
 endif()
 target_link_libraries(
-    Sts1CobcSw_EduProgramQueueThread PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal
-                                             Sts1CobcSw_Utility Sts1CobcSw_Periphery
+    Sts1CobcSw_Sts1CobcSw PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal Sts1CobcSw_Utility
+                                  Sts1CobcSw_Periphery
 )
