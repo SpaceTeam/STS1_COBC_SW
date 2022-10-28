@@ -19,6 +19,8 @@ namespace sts1cobcsw
 namespace ts = type_safe;
 
 
+// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
+constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
@@ -29,7 +31,7 @@ auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 auto eduHasUpdateGpioPin = hal::GpioPin(hal::eduUpdatePin);
 
 
-class EduPowerManagementThread : public RODOS::StaticThread<>
+class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
 {
     void init() override
     {

@@ -41,6 +41,8 @@ enum CommandId : char
 };
 
 
+// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
+constexpr auto stackSize = 4'000U;
 constexpr std::size_t commandSize = 30;
 constexpr std::size_t queueEntrySize =
     sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
@@ -54,7 +56,7 @@ auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
 auto DispatchCommand(etl::string<commandSize> const & command) -> void;
 
 
-class CommandParserThread : public RODOS::StaticThread<>
+class CommandParserThread : public RODOS::StaticThread<stackSize>
 {
     void init() override
     {
