@@ -11,13 +11,15 @@ namespace sts1cobcsw
 {
 using RODOS::MILLISECONDS;
 
-auto ledGpio = hal::GpioPin(hal::ledPin);
-auto eduHeartBeatGpio = hal::GpioPin(hal::eduHeartbeatPin);
+
+auto ledGpioPin = hal::GpioPin(hal::ledPin);
+auto eduHeartBeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
 
 class EduHeartbeatThread : public RODOS::StaticThread<>
 {
 public:
+    // TODO: Add this to all the other threads as well
     EduHeartbeatThread() : StaticThread("EduHeartbeat")
     {
     }
@@ -25,8 +27,9 @@ public:
 private:
     void init() override
     {
-        eduHeartBeatGpio.Direction(hal::PinDirection::in);
-        ledGpio.Direction(hal::PinDirection::out);
+        eduHeartBeatGpioPin.Direction(hal::PinDirection::in);
+        ledGpioPin.Direction(hal::PinDirection::out);
+        ledGpioPin.Reset();
     }
 
 
@@ -36,22 +39,22 @@ private:
         using ts::operator""_i;
         using ts::operator""_isize;
 
+        constexpr auto heartbeatFrequency = 10_isize;                     // Hz
+        constexpr auto samplingFrequency = 5_isize * heartbeatFrequency;  // Hz
+        constexpr auto samplingPeriode = 1'000_isize * MILLISECONDS / samplingFrequency;
+
         auto samplingCount = 0_i;
         ts::bool_t heartbeatIsConstant = true;
-        ts::bool_t oldHeartbeat = eduHeartBeatGpio.Read() == hal::PinState::set;
-        constexpr auto heartbeatFrequency = 10_isize;                                     // Hz
-        constexpr auto samplingFrequency = 5_isize * heartbeatFrequency;                  // Hz
-        constexpr auto samplingPeriode = 1'000_isize / samplingFrequency * MILLISECONDS;  // ms
-
+        auto oldHeartbeat = eduHeartBeatGpioPin.Read();
         TIME_LOOP(0, samplingPeriode.get())
         {
-            ts::bool_t heartbeat = eduHeartBeatGpio.Read() == hal::PinState::set;
+            auto heartbeat = eduHeartBeatGpioPin.Read();
             ++samplingCount;
 
             if(heartbeatIsConstant and (heartbeat != oldHeartbeat))
             {
                 heartbeatIsConstant = false;
-                ledGpio.Set();
+                ledGpioPin.Set();
                 eduIsAliveTopic.publish(true);
             }
 
@@ -62,16 +65,14 @@ private:
             {
                 if(heartbeatIsConstant)
                 {
-                    ledGpio.Reset();
+                    ledGpioPin.Reset();
                     eduIsAliveTopic.publish(false);
                 }
                 heartbeatIsConstant = true;
-                samplingCount = 0;
+                samplingCount = 0_i;
             }
         }
     }
-};
-
-
-auto const eduHeartbeatThread = EduHeartbeatThread();
+} eduHeartbeatThread;
+// TODO: Get back to the inline thread variable definition (like above) for all threads
 }
