@@ -23,5 +23,6 @@ struct JedecId
 [[nodiscard]] auto Initialize() -> std::int32_t;
 [[nodiscard]] auto ReadJedecId() -> JedecId;
 [[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte;
+
 // TODO: Block read, write, program, and sync functions
 }

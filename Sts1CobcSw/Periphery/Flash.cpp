@@ -42,6 +42,7 @@ constexpr auto readJedecId = SimpleInstruction{.id = 0x9F_b, .answerLength = 3};
 constexpr auto readStatusRegister1 = SimpleInstruction{.id = 0x05_b, .answerLength = 1};
 constexpr auto readStatusRegister2 = SimpleInstruction{.id = 0x35_b, .answerLength = 1};
 constexpr auto readStatusRegister3 = SimpleInstruction{.id = 0x15_b, .answerLength = 1};
+constexpr auto enter4ByteAdressMode = SimpleInstruction{.id = 0xB7_b, .answerLength = 0};
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
@@ -50,6 +51,8 @@ auto spi = RODOS::HAL_SPI(
 
 
 // --- Private function declarations ---
+
+auto Enter4ByteAdressMode() -> void;
 
 template<std::size_t nBytes>
 [[nodiscard]] auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>;
@@ -76,6 +79,8 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 
     constexpr auto baudrate = 1'000'000;
     return spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+
+    periphery::flash::Enter4ByteAdressMode();
 }
 
 
@@ -90,39 +95,36 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 
 [[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte
 {
-    switch(registerNo)
+    auto statusRegister = 0xFF_b;  // NOLINT
+
+    csGpioPin.Reset();
+    if(registerNo == 1)
     {
-        case 1:
-        {
-            csGpioPin.Reset();
-            auto statusRegister = SendInstruction<readStatusRegister1>()[0];
-            csGpioPin.Set();
-            return statusRegister;
-        }
-        case 2:
-        {
-            csGpioPin.Reset();
-            auto statusRegister = SendInstruction<readStatusRegister2>()[0];
-            csGpioPin.Set();
-            return statusRegister;
-        }
-        case 3:
-        {
-            csGpioPin.Reset();
-            auto statusRegister = SendInstruction<readStatusRegister3>()[0];
-            csGpioPin.Set();
-            return statusRegister;
-        }
-        default:
-        {
-            // TODO: Proper error handling
-            return 0xFF_b;  // NOLINT
-        }
+        statusRegister = SendInstruction<readStatusRegister1>()[0];
     }
+    else if(registerNo == 2)
+    {
+        statusRegister = SendInstruction<readStatusRegister2>()[0];
+    }
+    else if(registerNo == 3)
+    {
+        statusRegister = SendInstruction<readStatusRegister3>()[0];
+    }
+    csGpioPin.Set();
+
+    return statusRegister;
 }
 
 
 // --- Private function definitions ---
+
+auto Enter4ByteAdressMode() -> void
+{
+    csGpioPin.Reset();
+    SendInstruction<enter4ByteAdressMode>();
+    csGpioPin.Set();
+}
+
 
 template<std::size_t nBytes>
 [[nodiscard]] inline auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>

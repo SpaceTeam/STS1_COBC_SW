@@ -65,8 +65,8 @@ class FlashTest : public RODOS::StaticThread<stackSize>
         Check(statusRegister == 0x02_b);
 
         statusRegister = periphery::flash::ReadStatusRegister(3);
-        PRINTF("Status Register 3: 0x%02x == 0x40\n", static_cast<unsigned int>(statusRegister));
-        Check(statusRegister == 0x40_b);
+        PRINTF("Status Register 3: 0x%02x == 0x41\n", static_cast<unsigned int>(statusRegister));
+        Check(statusRegister == 0x41_b);
     }
 };
 
