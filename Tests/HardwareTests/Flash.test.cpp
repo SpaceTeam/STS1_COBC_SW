@@ -26,6 +26,12 @@ auto Print(periphery::flash::Page const & page) -> void;
 
 class FlashTest : public RODOS::StaticThread<stackSize>
 {
+public:
+    FlashTest() : StaticThread("FlashTest")
+    {
+    }
+
+private:
     void init() override
     {
         errorCode = periphery::flash::Initialize();
@@ -60,7 +66,7 @@ class FlashTest : public RODOS::StaticThread<stackSize>
         PRINTF("Status Register 3: 0x%02x == 0x41\n", static_cast<unsigned int>(statusRegister));
         Check(statusRegister == 0x41_b);
 
-        std::uint32_t pageAddress = 0x00'00'08'00;
+        std::uint32_t pageAddress = 0x00'00'0B'00;
 
         PRINTF("\n");
         auto page = periphery::flash::ReadPage(pageAddress);
