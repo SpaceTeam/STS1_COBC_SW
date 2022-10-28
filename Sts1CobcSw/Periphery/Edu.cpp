@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
+#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 
@@ -61,6 +62,9 @@ auto Edu::Initialize() -> void
 
 auto Edu::TurnOn() -> void
 {
+    // Set EduShouldBePowered to True, persistentstate is initialized in
+    // EduPowerManagementThread.cpp
+    periphery::persistentstate::EduShouldBePowered(true);
     // Edu enabled pin uses inverted logic
     eduEnabledGpioPin_.Reset();
 }
@@ -68,6 +72,9 @@ auto Edu::TurnOn() -> void
 
 auto Edu::TurnOff() -> void
 {
+    // Set EduShouldBePowered to False, persistentstate is initialized in
+    // EduPowerManagementThread.cpp
+    periphery::persistentstate::EduShouldBePowered(false);
     // Edu enabled pin uses inverted logic
     eduEnabledGpioPin_.Set();
 }

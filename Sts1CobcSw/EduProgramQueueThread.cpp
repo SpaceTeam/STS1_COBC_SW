@@ -23,6 +23,8 @@ using RODOS::NOW;
 using RODOS::SECONDS;
 
 
+// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
+constexpr auto stackSize = 4'000U;
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
 
 periphery::Edu edu = periphery::Edu();
@@ -30,8 +32,14 @@ periphery::Edu edu = periphery::Edu();
 
 // TODO: File and class name should match. More generally, consistently call it EduProgramQueue or
 // just EduQueue everywhere.
-class EduQueueThread : public RODOS::StaticThread<>
+class EduQueueThread : public RODOS::StaticThread<stackSize>
 {
+public:
+    EduQueueThread() : StaticThread("EduQueueThread")
+    {
+    }
+
+private:
     void init() override
     {
         edu.Initialize();
