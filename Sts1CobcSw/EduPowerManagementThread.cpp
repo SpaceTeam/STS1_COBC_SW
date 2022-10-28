@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
-#include <Sts1CobcSw/Topics.hpp>
+#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <type_safe/types.hpp>
 
@@ -26,10 +26,6 @@ auto eduEnableGpio = hal::GpioPin(hal::eduEnabledPin);
 constexpr auto eduBootTime = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
-
-auto eduIsAliveBuffer = RODOS::CommBuffer<bool>();
-auto eduIsAliveSubscriber =
-    RODOS::Subscriber(eduIsAliveTopic, eduIsAliveBuffer, "eduIsAliveSubscriber");
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<>
