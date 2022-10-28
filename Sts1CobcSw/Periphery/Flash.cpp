@@ -8,7 +8,6 @@
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
-#include <span>
 #include <string_view>
 
 
@@ -42,8 +41,11 @@ constexpr auto readJedecId = SimpleInstruction{.id = 0x9F_b, .answerLength = 3};
 constexpr auto readStatusRegister1 = SimpleInstruction{.id = 0x05_b, .answerLength = 1};
 constexpr auto readStatusRegister2 = SimpleInstruction{.id = 0x35_b, .answerLength = 1};
 constexpr auto readStatusRegister3 = SimpleInstruction{.id = 0x15_b, .answerLength = 1};
+constexpr auto writeEnable = SimpleInstruction{.id = 0x06_b, .answerLength = 0};
+constexpr auto writeDisable = SimpleInstruction{.id = 0x04_b, .answerLength = 0};
 constexpr auto enter4ByteAdressMode = SimpleInstruction{.id = 0xB7_b, .answerLength = 0};
 constexpr auto readData4ByteAddress = 0x13_b;
+constexpr auto pageProgram4ByteAddress = 0x12_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
@@ -54,6 +56,11 @@ auto spi = RODOS::HAL_SPI(
 // --- Private function declarations ---
 
 auto Enter4ByteAdressMode() -> void;
+auto WriteEnable() -> void;
+auto WriteDisable() -> void;
+
+template<std::size_t nBytes>
+auto Write(std::span<Byte, nBytes> data) -> void;
 
 template<std::size_t nBytes>
 [[nodiscard]] auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>;
@@ -124,6 +131,7 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 {
     auto addressBytes = serial::Serialize(address);
     auto message = std::array<Byte, 1 + size(addressBytes)>{readData4ByteAddress};
+    // Copy address bytes to message in reverse (big endian) order
     std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
 
     csGpioPin.Reset();
@@ -134,6 +142,38 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 }
 
 
+// TODO: Maybe check BUSY flag before writing or something
+auto WritePage(std::uint32_t address, PageSpan data) -> void
+{
+    auto addressBytes = serial::Serialize(address);
+    auto message = std::array<Byte, 1 + size(addressBytes)>{pageProgram4ByteAddress};
+    // Copy address bytes to message in reverse (big endian) order
+    std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
+
+    WriteEnable();
+
+    csGpioPin.Reset();
+    Write(std::span(message));
+    Write(data);
+    csGpioPin.Set();
+
+    WriteDisable();
+}
+
+
+auto WaitTillWriteHasFinished() -> void
+{
+    constexpr auto busyMask = 0x01_b;
+
+    auto isBusy = true;
+    do
+    {
+        isBusy = (ReadStatusRegister(1) & busyMask) == busyMask;
+        RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
+    } while(isBusy);
+}
+
+
 // --- Private function definitions ---
 
 auto Enter4ByteAdressMode() -> void
@@ -141,6 +181,29 @@ auto Enter4ByteAdressMode() -> void
     csGpioPin.Reset();
     SendInstruction<enter4ByteAdressMode>();
     csGpioPin.Set();
+}
+
+
+auto WriteEnable() -> void
+{
+    csGpioPin.Reset();
+    SendInstruction<writeEnable>();
+    csGpioPin.Set();
+}
+
+
+auto WriteDisable() -> void
+{
+    csGpioPin.Reset();
+    SendInstruction<writeDisable>();
+    csGpioPin.Set();
+}
+
+
+template<std::size_t nBytes>
+inline auto Write(std::span<Byte, nBytes> data) -> void
+{
+    hal::WriteToReadFrom(&spi, data);
 }
 
 

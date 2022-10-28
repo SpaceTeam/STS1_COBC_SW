@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstdint>
+#include <span>
 
 
 namespace sts1cobcsw::periphery::flash
@@ -13,6 +14,7 @@ using serial::Byte;
 
 constexpr std::size_t pageSize = 256;
 using Page = std::array<Byte, pageSize>;
+using PageSpan = std::span<Byte, pageSize>;
 
 
 // TODO: Make it deserializable
@@ -30,4 +32,7 @@ struct JedecId
 
 // TODO: Block read, write, program, and sync functions
 [[nodiscard]] auto ReadPage(std::uint32_t address) -> Page;
+auto WritePage(std::uint32_t address, PageSpan data) -> void;
+// TODO: I feel like there is an even better name for this function
+auto WaitTillWriteHasFinished() -> void;
 }

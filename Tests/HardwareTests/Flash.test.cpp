@@ -3,6 +3,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <string_view>
 
@@ -59,9 +60,26 @@ class FlashTest : public RODOS::StaticThread<stackSize>
         PRINTF("Status Register 3: 0x%02x == 0x41\n", static_cast<unsigned int>(statusRegister));
         Check(statusRegister == 0x41_b);
 
+        std::uint32_t pageAddress = 0x00'00'08'00;
+
         PRINTF("\n");
-        std::uint32_t pageAddress = 0;
         auto page = periphery::flash::ReadPage(pageAddress);
+        PRINTF("Page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
+        Print(page);
+
+        PRINTF("\n");
+        std::fill(begin(page), end(page), 0x00_b);
+        PRINTF("Writing page to address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
+        Print(page);
+        periphery::flash::WritePage(pageAddress, page);
+
+        auto begin = RODOS::NOW();
+        periphery::flash::WaitTillWriteHasFinished();
+        auto end = RODOS::NOW();
+        PRINTF("Writing page took %d ms\n", static_cast<int>((end - begin) / RODOS::MILLISECONDS));
+
+        PRINTF("\n");
+        page = periphery::flash::ReadPage(pageAddress);
         PRINTF("Page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
         Print(page);
     }
