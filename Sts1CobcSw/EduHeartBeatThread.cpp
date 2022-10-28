@@ -1,11 +1,10 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Topics.hpp>
 
 #include <type_safe/types.hpp>
 
 #include <rodos_no_using_namespace.h>
-
-#include <Sts1CobcSw/Topics.hpp>
 
 
 namespace sts1cobcsw
@@ -26,9 +25,8 @@ public:
 private:
     void init() override
     {
-		eduHeartBeatGpio.Direction(hal::PinDirection::in);
-		ledGpio.Direction(hal::PinDirection::out);
-
+        eduHeartBeatGpio.Direction(hal::PinDirection::in);
+        ledGpio.Direction(hal::PinDirection::out);
     }
 
 
@@ -47,13 +45,13 @@ private:
 
         TIME_LOOP(0, samplingPeriode.get())
         {
-			ts::bool_t heartbeat = eduHeartBeatGpio.Read() == hal::PinState::set;
+            ts::bool_t heartbeat = eduHeartBeatGpio.Read() == hal::PinState::set;
             ++samplingCount;
 
             if(heartbeatIsConstant and (heartbeat != oldHeartbeat))
             {
                 heartbeatIsConstant = false;
-				ledGpio.Set();
+                ledGpio.Set();
                 eduIsAliveTopic.publish(true);
             }
 
@@ -64,7 +62,7 @@ private:
             {
                 if(heartbeatIsConstant)
                 {
-					ledGpio.Reset();
+                    ledGpio.Reset();
                     eduIsAliveTopic.publish(false);
                 }
                 heartbeatIsConstant = true;
