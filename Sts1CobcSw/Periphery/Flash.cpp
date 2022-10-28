@@ -180,10 +180,15 @@ inline auto SendInstruction() -> void
 }
 
 
+// TODO: Replace this super ugyl hack with a proper big endian deserialization
 auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *
 {
     source = serial::DeserializeFrom<std::uint8_t>(source, &(jedecId->manufacturerId));
-    source = serial::DeserializeFrom<std::uint16_t>(source, &(jedecId->deviceId));
+    std::uint16_t deviceId = 0;
+    source = serial::DeserializeFrom<std::uint16_t>(source, &(deviceId));
+    auto deviceIdBytes = serial::Serialize(deviceId);
+    std::reverse(begin(deviceIdBytes), end(deviceIdBytes));
+    jedecId->deviceId = serial::Deserialize<std::uint16_t>(std::span(deviceIdBytes));
     return source;
 }
 }
