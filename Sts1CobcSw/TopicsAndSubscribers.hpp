@@ -10,4 +10,6 @@ namespace sts1cobcsw
 // fiasco
 extern RODOS::Topic<bool> eduIsAliveTopic;
 extern RODOS::CommBuffer<bool> eduIsAliveBuffer;
+extern RODOS::Topic<int64_t> nextProgramStartDelayTopic;
+extern RODOS::CommBuffer<int64_t> nextProgramStartDelayBuffer;
 }

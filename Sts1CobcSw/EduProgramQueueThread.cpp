@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
+#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <ringbuffer.h>
@@ -77,10 +78,12 @@ private:
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
             auto nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
+                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
+
             auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-            auto const startDelay =
+            auto startDelay =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+            nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in      : %" PRIi64 " seconds\n",
                           queueIndex,
@@ -99,10 +102,12 @@ private:
             // TODO: Do something with error code
             [[maybe_unused]] auto errorCode = edu.UpdateTime(updateTimeData);
 
-            nextProgramStartTime = eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
+            nextProgramStartTime =
+                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
             currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-            auto const startDelay2 =
+            auto startDelay2 =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+            nextProgramStartDelayTopic.publish(startDelay2 / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in      : %" PRIi64 " seconds\n",
                           queueIndex,
