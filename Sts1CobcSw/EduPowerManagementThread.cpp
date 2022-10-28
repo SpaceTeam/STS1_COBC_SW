@@ -19,22 +19,22 @@ namespace sts1cobcsw
 namespace ts = type_safe;
 
 
-auto epsBatteryGoodGpio = hal::GpioPin(hal::epsBatteryGoodPin);
-auto eduHasUpdateGpio = hal::GpioPin(hal::eduUpdatePin);
-auto eduEnableGpio = hal::GpioPin(hal::eduEnabledPin);
-
+// TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
+
+auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
+// TODO: Move to Edu.hpp/cpp
+auto eduHasUpdateGpioPin = hal::GpioPin(hal::eduUpdatePin);
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<>
 {
     void init() override
     {
-        epsBatteryGoodGpio.Direction(hal::PinDirection::in);
-        eduHasUpdateGpio.Direction(hal::PinDirection::in);
-        eduEnableGpio.Direction(hal::PinDirection::out);
+        epsBatteryGoodGpioPin.Direction(hal::PinDirection::in);
+        eduHasUpdateGpioPin.Direction(hal::PinDirection::in);
 
         periphery::persistentstate::Initialize();
     }
@@ -45,8 +45,8 @@ class EduPowerManagementThread : public RODOS::StaticThread<>
         // TODO : Get this value from edu queue (this will also impact startDelay Computation).
         auto const startTime = RODOS::NOW() + 20 * RODOS::SECONDS;
 
-        ts::bool_t epsBatteryIsGood = epsBatteryGoodGpio.Read() == hal::PinState::set;
-        ts::bool_t eduHasUpdate = eduHasUpdateGpio.Read() == hal::PinState::set;
+        ts::bool_t epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
+        ts::bool_t eduHasUpdate = eduHasUpdateGpioPin.Read() == hal::PinState::set;
 
         auto eduIsAlive = false;
         eduIsAliveBuffer.get(eduIsAlive);
@@ -65,7 +65,7 @@ class EduPowerManagementThread : public RODOS::StaticThread<>
             }
             else
             {
-                if(startDelay < eduBootTime + eduBootTimeMargin)
+                if(startDelay < (eduBootTime + eduBootTimeMargin))
                 {
                     edu.TurnOn();
                 }
@@ -76,8 +76,8 @@ class EduPowerManagementThread : public RODOS::StaticThread<>
             edu.TurnOff();
         }
 
+        // TODO: Give the 2 seconds a name
         RODOS::AT(RODOS::NOW() + 2 * RODOS::SECONDS);
     }
-};
-auto const eduPowerManagementThread = EduPowerManagementThread();
+} eduPowerManagementThread;
 }
