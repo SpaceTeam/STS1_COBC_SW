@@ -56,16 +56,17 @@ class FlashTest : public RODOS::StaticThread<stackSize>
         Check(jedecId.deviceId == 0x4021);
 
         PRINTF("\n");
-        auto statusRegisters = periphery::flash::ReadStatusRegisters();
-        PRINTF("Status Register 1: 0x%02x == 0x00\n",
-               static_cast<unsigned int>(statusRegisters.one));
-        Check(statusRegisters.one == 0x00_b);
-        PRINTF("Status Register 2: 0x%02x == 0x02\n",
-               static_cast<unsigned int>(statusRegisters.two));
-        Check(statusRegisters.two == 0x02_b);
-        PRINTF("Status Register 3: 0x%02x == 0x40\n",
-               static_cast<unsigned int>(statusRegisters.three));
-        Check(statusRegisters.three == 0x40_b);
+        auto statusRegister = periphery::flash::ReadStatusRegister(1);
+        PRINTF("Status Register 1: 0x%02x == 0x00\n", static_cast<unsigned int>(statusRegister));
+        Check(statusRegister == 0x00_b);
+
+        statusRegister = periphery::flash::ReadStatusRegister(2);
+        PRINTF("Status Register 2: 0x%02x == 0x02\n", static_cast<unsigned int>(statusRegister));
+        Check(statusRegister == 0x02_b);
+
+        statusRegister = periphery::flash::ReadStatusRegister(3);
+        PRINTF("Status Register 3: 0x%02x == 0x40\n", static_cast<unsigned int>(statusRegister));
+        Check(statusRegister == 0x40_b);
     }
 };
 

@@ -25,7 +25,10 @@ inline constexpr std::size_t serialSize<periphery::flash::JedecId> =
 
 namespace periphery::flash
 {
-struct Instruction
+using serial::operator""_b;
+
+
+struct SimpleInstruction
 {
     Byte id = 0x00_b;
     std::size_t answerLength = 0;
@@ -35,10 +38,10 @@ struct Instruction
 // --- Private globals ---
 
 // Instructions according to section 7.2 in W25Q01JV datasheet
-constexpr auto readJedecId = Instruction{.id = 0x9F_b, .answerLength = 3};
-constexpr auto readStatusRegister1 = Instruction{.id = 0x05_b, .answerLength = 1};
-constexpr auto readStatusRegister2 = Instruction{.id = 0x35_b, .answerLength = 1};
-constexpr auto readStatusRegister3 = Instruction{.id = 0x15_b, .answerLength = 1};
+constexpr auto readJedecId = SimpleInstruction{.id = 0x9F_b, .answerLength = 3};
+constexpr auto readStatusRegister1 = SimpleInstruction{.id = 0x05_b, .answerLength = 1};
+constexpr auto readStatusRegister2 = SimpleInstruction{.id = 0x35_b, .answerLength = 1};
+constexpr auto readStatusRegister3 = SimpleInstruction{.id = 0x15_b, .answerLength = 1};
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
@@ -51,13 +54,13 @@ auto spi = RODOS::HAL_SPI(
 template<std::size_t nBytes>
 [[nodiscard]] auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>;
 
-template<Instruction const & instruction>
+template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
-[[nodiscard]] inline auto SendInstruction() -> std::array<Byte, instruction.answerLength>;
+[[nodiscard]] auto SendInstruction() -> std::array<Byte, instruction.answerLength>;
 
-template<Instruction const & instruction>
+template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
-inline auto SendInstruction() -> void;
+auto SendInstruction() -> void;
 
 auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 
@@ -85,21 +88,37 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 }
 
 
-[[nodiscard]] auto ReadStatusRegisters() -> StatusRegisters
+[[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte
 {
-    auto statusRegisters = StatusRegisters();
-
-    csGpioPin.Reset();
-    statusRegisters.one = SendInstruction<readStatusRegister1>()[0];
-    csGpioPin.Set();
-    csGpioPin.Reset();
-    statusRegisters.two = SendInstruction<readStatusRegister2>()[0];
-    csGpioPin.Set();
-    csGpioPin.Reset();
-    statusRegisters.three = SendInstruction<readStatusRegister3>()[0];
-    csGpioPin.Set();
-
-    return statusRegisters;
+    switch(registerNo)
+    {
+        case 1:
+        {
+            csGpioPin.Reset();
+            auto statusRegister = SendInstruction<readStatusRegister1>()[0];
+            csGpioPin.Set();
+            return statusRegister;
+        }
+        case 2:
+        {
+            csGpioPin.Reset();
+            auto statusRegister = SendInstruction<readStatusRegister2>()[0];
+            csGpioPin.Set();
+            return statusRegister;
+        }
+        case 3:
+        {
+            csGpioPin.Reset();
+            auto statusRegister = SendInstruction<readStatusRegister3>()[0];
+            csGpioPin.Set();
+            return statusRegister;
+        }
+        default:
+        {
+            // TODO: Proper error handling
+            return 0xFF_b;  // NOLINT
+        }
+    }
 }
 
 
@@ -112,9 +131,9 @@ template<std::size_t nBytes>
 }
 
 
-template<Instruction const & instruction>
+template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
-[[nodiscard]] inline auto SendInstruction() -> std::array<Byte, instruction.answerLength>
+[[nodiscard]] auto SendInstruction() -> std::array<Byte, instruction.answerLength>
 {
     auto message1 = std::array{instruction.id};
     hal::WriteToReadFrom(&spi, std::span(message1));
@@ -123,7 +142,7 @@ template<Instruction const & instruction>
 }
 
 
-template<Instruction const & instruction>
+template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
 inline auto SendInstruction() -> void
 {
