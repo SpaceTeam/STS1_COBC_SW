@@ -7,7 +7,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <array>
+#include <algorithm>
 #include <span>
 #include <string_view>
 
@@ -43,6 +43,7 @@ constexpr auto readStatusRegister1 = SimpleInstruction{.id = 0x05_b, .answerLeng
 constexpr auto readStatusRegister2 = SimpleInstruction{.id = 0x35_b, .answerLength = 1};
 constexpr auto readStatusRegister3 = SimpleInstruction{.id = 0x15_b, .answerLength = 1};
 constexpr auto enter4ByteAdressMode = SimpleInstruction{.id = 0xB7_b, .answerLength = 0};
+constexpr auto readData4ByteAddress = 0x13_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
@@ -56,6 +57,9 @@ auto Enter4ByteAdressMode() -> void;
 
 template<std::size_t nBytes>
 [[nodiscard]] auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>;
+
+template<std::size_t nReadBytes, std::size_t nWriteBytes>
+[[nodiscard]] auto WriteRead(std::span<Byte, nWriteBytes> message) -> std::array<Byte, nReadBytes>;
 
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
@@ -116,6 +120,20 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 }
 
 
+[[nodiscard]] auto ReadPage(std::uint32_t address) -> Page
+{
+    auto addressBytes = serial::Serialize(address);
+    auto message = std::array<Byte, 1 + size(addressBytes)>{readData4ByteAddress};
+    std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
+
+    csGpioPin.Reset();
+    auto page = WriteRead<pageSize>(std::span(message));
+    csGpioPin.Set();
+
+    return page;
+}
+
+
 // --- Private function definitions ---
 
 auto Enter4ByteAdressMode() -> void
@@ -130,6 +148,15 @@ template<std::size_t nBytes>
 [[nodiscard]] inline auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>
 {
     return hal::WriteToReadFrom(&spi, data);
+}
+
+
+template<std::size_t nReadBytes, std::size_t nWriteBytes>
+[[nodiscard]] auto WriteRead(std::span<Byte, nWriteBytes> message) -> std::array<Byte, nReadBytes>
+{
+    hal::WriteToReadFrom(&spi, message);
+    auto dummyBytes = std::array<Byte, nReadBytes>{};
+    return hal::WriteToReadFrom(&spi, std::span(dummyBytes));
 }
 
 

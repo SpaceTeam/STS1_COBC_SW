@@ -13,23 +13,14 @@ using RODOS::PRINTF;
 using serial::operator""_b;
 
 
-auto Check(bool condition,
-           std::string_view failMessage = " -> Failed\n",
-           std::string_view successMessage = " -> Passed\n")
-{
-    if(condition)
-    {
-        PRINTF("%s", data(successMessage));
-    }
-    else
-    {
-        PRINTF("%s", data(failMessage));
-    }
-}
-
-
 constexpr std::size_t stackSize = 5'000;
 std::int32_t errorCode = 0;
+
+
+auto Check(bool condition,
+           std::string_view failMessage = " -> Failed\n",
+           std::string_view successMessage = " -> Passed\n") -> void;
+auto Print(periphery::flash::Page const & page) -> void;
 
 
 class FlashTest : public RODOS::StaticThread<stackSize>
@@ -67,9 +58,42 @@ class FlashTest : public RODOS::StaticThread<stackSize>
         statusRegister = periphery::flash::ReadStatusRegister(3);
         PRINTF("Status Register 3: 0x%02x == 0x41\n", static_cast<unsigned int>(statusRegister));
         Check(statusRegister == 0x41_b);
+
+        PRINTF("\n");
+        std::uint32_t pageAddress = 0;
+        auto page = periphery::flash::ReadPage(pageAddress);
+        PRINTF("Page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
+        Print(page);
     }
-};
+} flashTest;
 
 
-const auto flashTest = FlashTest();
+auto Print(periphery::flash::Page const & page) -> void
+{
+    constexpr auto nRows = 16;
+    auto iRow = 0;
+    for(auto x : page)
+    {
+        PRINTF(" 0x%02x", static_cast<unsigned int>(x));
+        iRow++;
+        if(iRow == nRows)
+        {
+            PRINTF("\n");
+            iRow = 0;
+        }
+    }
+}
+
+
+auto Check(bool condition, std::string_view failMessage, std::string_view successMessage) -> void
+{
+    if(condition)
+    {
+        PRINTF("%s", data(successMessage));
+    }
+    else
+    {
+        PRINTF("%s", data(failMessage));
+    }
+}
 }
