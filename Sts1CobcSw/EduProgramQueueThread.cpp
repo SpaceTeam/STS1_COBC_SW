@@ -34,6 +34,12 @@ periphery::Edu edu = periphery::Edu();
 // just EduQueue everywhere.
 class EduQueueThread : public RODOS::StaticThread<stackSize>
 {
+public:
+    EduQueueThread() : StaticThread("EduQueueThread")
+    {
+    }
+
+private:
     void init() override
     {
         edu.Initialize();

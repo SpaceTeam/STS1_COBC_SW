@@ -33,6 +33,12 @@ auto eduHasUpdateGpioPin = hal::GpioPin(hal::eduUpdatePin);
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
 {
+public:
+    EduPowerManagementThread() : StaticThread("EduPowerManagementThread")
+    {
+    }
+
+private:
     void init() override
     {
         epsBatteryGoodGpioPin.Direction(hal::PinDirection::in);

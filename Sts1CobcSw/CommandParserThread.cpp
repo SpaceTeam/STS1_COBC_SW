@@ -58,6 +58,12 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void;
 
 class CommandParserThread : public RODOS::StaticThread<stackSize>
 {
+public:
+    CommandParserThread() : StaticThread("CommandParserThread")
+    {
+    }
+
+private:
     void init() override
     {
     }

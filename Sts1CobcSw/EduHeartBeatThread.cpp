@@ -23,7 +23,7 @@ class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
     // TODO: Add this to all the other threads as well
-    EduHeartbeatThread() : StaticThread("EduHeartbeat")
+    EduHeartbeatThread() : StaticThread("EduHeartbeatThread")
     {
     }
 
