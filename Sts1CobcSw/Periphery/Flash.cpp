@@ -44,8 +44,10 @@ constexpr auto readStatusRegister3 = SimpleInstruction{.id = 0x15_b, .answerLeng
 constexpr auto writeEnable = SimpleInstruction{.id = 0x06_b, .answerLength = 0};
 constexpr auto writeDisable = SimpleInstruction{.id = 0x04_b, .answerLength = 0};
 constexpr auto enter4ByteAdressMode = SimpleInstruction{.id = 0xB7_b, .answerLength = 0};
+
 constexpr auto readData4ByteAddress = 0x13_b;
 constexpr auto pageProgram4ByteAddress = 0x12_b;
+constexpr auto sectorErase4ByteAddress = 0x21_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
@@ -161,16 +163,36 @@ auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 }
 
 
+auto EraseSector(std::uint32_t address) -> void
+{
+    // Round address down to the nearest sector address
+    address = (address / sectorSize) * sectorSize;
+    auto addressBytes = serial::Serialize(address);
+    auto message = std::array<Byte, 1 + size(addressBytes)>{sectorErase4ByteAddress};
+    // Copy address bytes to message in reverse (big endian) order
+    std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
+
+    WriteEnable();
+
+    csGpioPin.Reset();
+    Write(std::span(message));
+    csGpioPin.Set();
+
+    WriteDisable();
+}
+
+
 auto WaitWhileBusy() -> void
 {
-    constexpr auto busyMask = 0x01_b;
+    constexpr auto pollingCycleTime = 1 * RODOS::MILLISECONDS;
+    constexpr auto busyBitMask = 0x01_b;
 
-    auto isBusy = true;
-    do
+    auto isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
+    while(isBusy)
     {
-        isBusy = (ReadStatusRegister(1) & busyMask) == busyMask;
-        RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
-    } while(isBusy);
+        RODOS::AT(RODOS::NOW() + pollingCycleTime);
+        isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
+    }
 }
 
 

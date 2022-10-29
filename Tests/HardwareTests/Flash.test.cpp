@@ -89,6 +89,23 @@ private:
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
         page = periphery::flash::ReadPage(pageAddress);
         Print(page);
+
+        PRINTF("\n");
+        // constexpr auto sectorAddress = 0x00'00'00'00;
+        PRINTF("Erasing sector containing address 0x%08x:\n",
+               static_cast<unsigned int>(pageAddress));
+        periphery::flash::EraseSector(pageAddress);
+
+        begin = RODOS::NOW();
+        periphery::flash::WaitWhileBusy();
+        end = RODOS::NOW();
+        PRINTF("Erasing sector took %d ms\n",
+               static_cast<int>((end - begin) / RODOS::MILLISECONDS));
+
+        PRINTF("\n");
+        PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
+        page = periphery::flash::ReadPage(pageAddress);
+        Print(page);
     }
 } flashTest;
 

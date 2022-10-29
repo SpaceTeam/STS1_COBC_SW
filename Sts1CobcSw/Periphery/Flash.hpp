@@ -10,14 +10,17 @@
 
 namespace sts1cobcsw::periphery::flash
 {
-using serial::Byte;
+[[maybe_unused]] constexpr std::size_t pageSize = 256;              // bytes
+[[maybe_unused]] constexpr std::size_t sectorSize = 4 * 1024;       // bytes
+[[maybe_unused]] constexpr std::size_t smallBlockSize = 32 * 1024;  // bytes
+[[maybe_unused]] constexpr std::size_t largeBlockSize = 64 * 1024;  // bytes
 
-constexpr std::size_t pageSize = 256;
+
+using serial::Byte;
 using Page = std::array<Byte, pageSize>;
 using PageSpan = std::span<Byte, pageSize>;
 
 
-// TODO: Make it deserializable
 struct JedecId
 {
     std::uint8_t manufacturerId = 0U;
@@ -32,6 +35,6 @@ struct JedecId
 
 [[nodiscard]] auto ReadPage(std::uint32_t address) -> Page;
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
-// TODO: I feel like there is an even better name for this function
+auto EraseSector(std::uint32_t address) -> void;
 auto WaitWhileBusy() -> void;
 }
