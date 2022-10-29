@@ -2,6 +2,8 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <littlefs/lfs.h>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>
@@ -57,6 +59,35 @@ const lfs_config lfsConfig{.read = &Read,
 
 
 // --- Public function definitions
+
+auto Mount() -> void
+{
+    PRINTF("Mounting...\n");
+    int errorCode = lfs_mount(&lfs, &lfsConfig);
+    PRINTF("Returned error code = %d\n\n", errorCode);
+
+    // reformat if we can't mount the filesystem
+    // this should only happen on the first boot
+    if(errorCode != 0)
+    {
+        PRINTF("Formatting...\n");
+        errorCode = lfs_format(&lfs, &lfsConfig);
+        PRINTF("Returned error code = %d\n\n", errorCode);
+
+        PRINTF("Mounting...\n");
+        errorCode = lfs_mount(&lfs, &lfsConfig);
+        PRINTF("Returned error code = %d\n\n", errorCode);
+    }
+}
+
+
+// TODO: This begs for a destructor
+auto Unmount() -> void
+{
+    PRINTF("Mounting...\n");
+    auto errorCode = lfs_unmount(&lfs);
+    PRINTF("Returned error code = %d\n\n", errorCode);
+}
 
 
 // --- Private function definitions
