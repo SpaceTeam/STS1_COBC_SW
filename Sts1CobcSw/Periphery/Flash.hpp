@@ -29,6 +29,7 @@ struct JedecId
 
 
 // TODO: Proper error handling/return type
+// Must be called once in a thread's init() function
 [[nodiscard]] auto Initialize() -> std::int32_t;
 [[nodiscard]] auto ReadJedecId() -> JedecId;
 [[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte;

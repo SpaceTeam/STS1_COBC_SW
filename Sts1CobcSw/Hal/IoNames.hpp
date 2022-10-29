@@ -46,4 +46,5 @@ inline constexpr auto rfSpiIndex = RODOS::SPI_IDX4;
 inline constexpr auto rfSpiSckPin = pb13;
 inline constexpr auto rfSpiMisoPin = pa11;
 inline constexpr auto rfSpiMosiPin = pa1;
+inline constexpr auto rfCsPin = pa0;    // FIXME: Look up the right pin!
 }
