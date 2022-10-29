@@ -143,7 +143,7 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 
 
 // TODO: Maybe check BUSY flag before writing or something
-auto WritePage(std::uint32_t address, PageSpan data) -> void
+auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
     auto addressBytes = serial::Serialize(address);
     auto message = std::array<Byte, 1 + size(addressBytes)>{pageProgram4ByteAddress};
@@ -161,7 +161,7 @@ auto WritePage(std::uint32_t address, PageSpan data) -> void
 }
 
 
-auto WaitTillWriteHasFinished() -> void
+auto WaitWhileBusy() -> void
 {
     constexpr auto busyMask = 0x01_b;
 

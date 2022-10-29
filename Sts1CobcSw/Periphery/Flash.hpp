@@ -30,9 +30,8 @@ struct JedecId
 [[nodiscard]] auto ReadJedecId() -> JedecId;
 [[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte;
 
-// TODO: Block read, write, program, and sync functions
 [[nodiscard]] auto ReadPage(std::uint32_t address) -> Page;
-auto WritePage(std::uint32_t address, PageSpan data) -> void;
+auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
 // TODO: I feel like there is an even better name for this function
-auto WaitTillWriteHasFinished() -> void;
+auto WaitWhileBusy() -> void;
 }
