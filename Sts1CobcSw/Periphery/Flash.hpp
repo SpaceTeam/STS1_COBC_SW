@@ -10,10 +10,14 @@
 
 namespace sts1cobcsw::periphery::flash
 {
-[[maybe_unused]] constexpr std::size_t pageSize = 256;              // bytes
-[[maybe_unused]] constexpr std::size_t sectorSize = 4 * 1024;       // bytes
-[[maybe_unused]] constexpr std::size_t smallBlockSize = 32 * 1024;  // bytes
-[[maybe_unused]] constexpr std::size_t largeBlockSize = 64 * 1024;  // bytes
+[[maybe_unused]] constexpr std::size_t pageSize = 256;                 // bytes
+[[maybe_unused]] constexpr std::size_t sectorSize = 4 * 1024;          // bytes
+[[maybe_unused]] constexpr std::size_t smallBlockSize = 32 * 1024;     // bytes
+[[maybe_unused]] constexpr std::size_t largeBlockSize = 64 * 1024;     // bytes
+[[maybe_unused]] constexpr std::size_t flashSize = 128 * 1024 * 1024;  // bytes
+[[maybe_unused]] constexpr std::size_t nSectors = flashSize / sectorSize;
+[[maybe_unused]] constexpr std::size_t nSmallBlocks = flashSize / smallBlockSize;
+[[maybe_unused]] constexpr std::size_t nLargeBlocks = flashSize / largeBlockSize;
 
 
 using serial::Byte;

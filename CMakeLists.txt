@@ -18,6 +18,7 @@ include(cmake/custom-commands.cmake)
 
 find_package_and_notify(etl)
 find_package_and_notify(type_safe)
+find_package_and_notify(littlefs)
 find_rodos()
 
 # ---- Declare targets ----
@@ -28,6 +29,7 @@ add_library(Sts1CobcSw_Utility OBJECT)
 add_program(HelloDummy)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    add_library(Sts1CobcSw_FileSystem OBJECT)
     add_library(Sts1CobcSw_Hal INTERFACE)
     add_library(Sts1CobcSw_Periphery OBJECT)
     add_program(CobcSw)

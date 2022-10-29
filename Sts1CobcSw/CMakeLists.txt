@@ -1,4 +1,5 @@
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    add_subdirectory(FileSystem)
     add_subdirectory(Hal)
     add_subdirectory(Periphery)
 endif()
