@@ -41,10 +41,12 @@ private:
 
         int number = 0;
         lfs_file_read(&fs::lfs, &fs::lfsFile, &number, sizeof(number));
-        PRINTF("\nNumber = %d == 123\n", number);
+        PRINTF("\n");
+        PRINTF("Number = %d == 123\n", number);
 
         lfs_file_read(&fs::lfs, &fs::lfsFile, &number, sizeof(number));
-        PRINTF("\nNumber = %d == 12345\n", number);
+        PRINTF("\n");
+        PRINTF("Number = %d == 12345\n", number);
 
         // number = 12345;
         // lfs_file_write(&fs::lfs, &fs::lfsFile, &number, sizeof(number));
