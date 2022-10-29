@@ -18,8 +18,10 @@ include(cmake/custom-commands.cmake)
 
 find_package_and_notify(etl)
 find_package_and_notify(type_safe)
-find_package_and_notify(littlefs)
 find_rodos()
+if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    find_package_and_notify(littlefs)
+endif()
 
 # ---- Declare targets ----
 
