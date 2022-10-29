@@ -91,9 +91,11 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
     writeProtectionGpioPin.Set();
 
     constexpr auto baudrate = 1'000'000;
-    return spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+    auto errorCode = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
 
     periphery::flash::Enter4ByteAdressMode();
+
+    return errorCode;
 }
 
 

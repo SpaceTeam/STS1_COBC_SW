@@ -1,4 +1,3 @@
 target_sources(Sts1CobcSw_FileSystem PRIVATE FileSystem.cpp)
-target_link_libraries(
-    Sts1CobcSw_FileSystem PRIVATE littlefs::littlefs Sts1CobcSw_Periphery Sts1CobcSw_Serial
-)
+target_link_libraries(Sts1CobcSw_FileSystem PUBLIC littlefs::littlefs)
+target_link_libraries(Sts1CobcSw_FileSystem PRIVATE Sts1CobcSw_Periphery Sts1CobcSw_Serial)
