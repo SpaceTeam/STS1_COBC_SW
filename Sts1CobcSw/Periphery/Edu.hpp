@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -43,8 +44,12 @@ private:
     auto FlushUartBuffer() -> void;
     [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> EduErrorCode;
     [[nodiscard]] auto GetStatusCommunication() -> EduStatus;
+    [[nodiscard]] auto ReturnResultCommunication(std::span<Byte, maxDataLength> dataBuffer)
+        -> ResultInfo;
+    [[nodiscard]] auto ReturnResultRetry(std::span<Byte, maxDataLength> dataBuffer) -> ResultInfo;
+    void MockWriteToFile(std::span<Byte> data);
 
-    hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
+        hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
     // RODOS::HAL_UART uart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,
     // hal::eduUartRxPin);
     RODOS::HAL_UART uart_ =

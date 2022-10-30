@@ -25,7 +25,8 @@ enum class EduErrorCode
     wrongChecksum,
     invalidStatusType,
     invalidLength,
-    invalidCommand
+    invalidCommand,
+    noResultAvailable
 };
 
 enum class EduStatusType

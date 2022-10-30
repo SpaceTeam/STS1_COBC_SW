@@ -13,6 +13,11 @@ target_link_libraries(
     Sts1CobcSwTests_UpdateTime PUBLIC rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility
 )
 
+add_program(ReturnResult ReturnResult.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_ReturnResult PUBLIC rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility
+)
+
 get_property(
     edu_command_test_targets
     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}

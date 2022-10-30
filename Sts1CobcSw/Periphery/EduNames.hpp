@@ -18,4 +18,7 @@ inline constexpr auto stopProgramId = 0x03_b;     //! Stop student program
 inline constexpr auto getStatusId = 0x04_b;       //! Get the student program status
 inline constexpr auto returnResultId = 0x05_b;    //! Request student program result
 inline constexpr auto updateTimeId = 0x06_b;      //! Update EDU system time
+
+// Max. length for a single round data field
+inline constexpr auto maxDataLength = 32768;
 }

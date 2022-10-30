@@ -84,8 +84,8 @@ struct ProgramFinishedStatus
 
 struct ResultInfo
 {
-    periphery::EduErrorCode errorCode;
-    std::size_t resultSize;
+    periphery::EduErrorCode errorCode = EduErrorCode::noErrorCodeSet;
+    std::size_t resultSize = 0U;
 };
 
 

@@ -40,9 +40,6 @@ constexpr auto nNoEventBytes = 1;
 constexpr auto nProgramFinishedBytes = 6;
 constexpr auto nResultsReadyBytes = 5;
 
-// Max. length for a single round data field
-constexpr auto maxDataLength = 32768;
-
 // TODO: Check real timeouts
 // Max. time for the EDU to respond to a request
 constexpr auto eduTimeout = 5 * RODOS::SECONDS;
@@ -362,129 +359,136 @@ auto Edu::TurnOff() -> void
 }
 
 
+void Edu::MockWriteToFile(std::span<Byte> data)
+{
+    RODOS::PRINTF("\nWrite to file...\n");
+    hal::WriteTo(&uart_, data);
+    RODOS::PRINTF("\n");
+}
+
+
+[[nodiscard]] auto Edu::ReturnResult() -> ResultInfo
+{
+    // DEBUG
+    RODOS::PRINTF("\nStart return result\n");
+    // END DEBUG
+    ts::bool_t resultEof = false;
+    std::size_t totalResultSize = 0U;
+    std::size_t packets = 0U;
+    ResultInfo resultInfo;
+    while(not resultEof and packets < 5)
+    {
+        // DEBUG
+        RODOS::PRINTF("\nPacket %lu\n", packets);
+        // END DEBUG
+        std::array<Byte, maxDataLength> dataBuffer = {};
+        resultInfo = ReturnResultRetry(dataBuffer);
+        if(resultInfo.errorCode != EduErrorCode::success)
+        {
+            return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
+        }
+        MockWriteToFile(
+            std::span<Byte>(dataBuffer.begin(), dataBuffer.begin() + resultInfo.resultSize));
+        totalResultSize += resultInfo.resultSize;
+        packets++;
+    }
+    return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
+}
+
+
+//! @brief This function handles the retry logic for a single transmission round and is called by
+//! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
+//!
+//! @returns An error code and the number of received bytes in ResultInfo
+[[nodiscard]] auto Edu::ReturnResultRetry(std::span<Byte, maxDataLength> dataBuffer) -> ResultInfo
+{
+    // Send command
+    auto serialCommand = serial::Serialize(returnResultId);
+    auto commandError = SendData(serialCommand);
+    if(commandError != EduErrorCode::success)
+    {
+        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
+    }
+
+    ResultInfo resultInfo;
+    std::size_t errorCount = 0U;
+    do
+    {
+        resultInfo = ReturnResultCommunication(dataBuffer);
+        if(resultInfo.errorCode == EduErrorCode::success
+           or resultInfo.errorCode == EduErrorCode::successEof)
+        {
+            SendCommand(cmdAck);
+            return resultInfo;
+        }
+        FlushUartBuffer();
+        SendCommand(cmdNack);
+    } while(errorCount++ < maxNNackRetries);
+    return resultInfo;
+}
+
+
 // This function writes the result to the COBC file system (flash). Maybe it doesn't do that
 // directly and instead writes to a non-primary RAM bank as an intermediate step.
 //
 // Simple results -> 1 round should work with DMA to RAM
-[[nodiscard]] auto Edu::ReturnResult() -> ResultInfo
+[[nodiscard]] auto Edu::ReturnResultCommunication(std::span<Byte, maxDataLength> dataBuffer)
+    -> ResultInfo
 {
-    return {EduErrorCode::success, 0};
-    // If this is the initial call, send the header
-    // if(!mResultPending_)
-    // {
-    //     std::array<std::uint8_t, 1> header = {returnResult};
-    //     auto headerErrorCode = SendData(header);
-    //     if(headerErrorCode != EduErrorCode::success)
-    //     {
-    //         return {headerErrorCode, 0};
-    //     }
-    // }
+    // Receive command
+    // If no result is available, the command will be NACK,
+    // otherwise DATA
+    Byte command = 0_b;
+    auto commandError = UartReceive(&command);
+    if(commandError != EduErrorCode::success)
+    {
+        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
+    }
+    if(command == cmdNack)
+    {
+        // TODO: necessary to differentiate errors or just return success with resultSize 0?
+        return ResultInfo{.errorCode = EduErrorCode::noResultAvailable, .resultSize = 0U};
+    }
+    if(command == cmdEof)
+    {
+        return ResultInfo{.errorCode = EduErrorCode::successEof, .resultSize = 0U};
+    }
+    if(command != cmdData)
+    {
+        return ResultInfo{.errorCode = EduErrorCode::invalidCommand, .resultSize = 0U};
+    }
 
-    // // Afterwards, only process a single data packet at a time, since we
-    // // can't guarantee that it will use up all the memory
+    serial::SerialBuffer<ts::uint16_t> dataLengthBuffer = {};
+    auto lengthError = UartReceive(dataLengthBuffer);
+    if(lengthError != EduErrorCode::success)
+    {
+        return ResultInfo{.errorCode = lengthError, .resultSize = 0U};
+    }
 
-    // // Start error while loop
-    // std::size_t errorCnt = 0;
-    // EduStatusType statusTypeRet;
-    // bool succesfulRecv = false;
-    // while(!succesfulRecv)
-    // {
-    //     // Receive the header (data command and length)
-    //     std::array<std::uint8_t, cmdBytes + lenBytes> recvHeader = {};
-    //     auto headerError = UartReceive(recvHeader, cmdBytes + lenBytes);
-    //     if(headerError != EduErrorCode::success)
-    //     {
-    //         // Only retry on timeout errors (-> invalid format after all)
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries and headerError == EduErrorCode::errorTimeout)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {headerError, 0};
-    //     }
-    //     if(recvHeader[0] == cmdEof)
-    //     {
-    //         return {EduErrorCode::successEof, 0};
-    //     }
-    //     if(recvHeader[0] != cmdData)
-    //     {
-    //         // Invalid header, flush, send NACK, and retry
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduErrorCode::errorInvalidResult, 0};
-    //     }
+    auto actualDataLength = serial::Deserialize<ts::uint16_t>(dataLengthBuffer);
+    if(actualDataLength == 0U or actualDataLength > maxDataLength)
+    {
+        return ResultInfo{.errorCode = EduErrorCode::invalidLength, .resultSize = 0U};
+    }
 
-    //     // Create 2 byte length from single received bytes
-    //     auto const len = utility::BytesTouint16(recvHeader[1], recvHeader[2]);
-    //     if(len > maxDataLen)
-    //     {
-    //         // Invalid length, flush, send NACK, and retry
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduErrorCode::errorRecvDataTooLong, 0};
-    //     }
+    // Get the actual data
+    auto dataError = UartReceive(
+        std::span<Byte>(dataBuffer.begin(), dataBuffer.begin() + actualDataLength.get()));
 
-    //     // Receive actual status data
-    //     // For data, reserve the max. possible bytes
-    //     std::array<std::uint8_t, maxDataLen> recvDataBuf = {};
-    //     auto recvDataError = UartReceive(recvDataBuf, len);
-    //     if(recvDataError != EduErrorCode::success)
-    //     {
-    //         // Only retry on timeout errors (-> invalid format after all)
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries and recvDataError == EduErrorCode::errorTimeout)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {recvDataError, 0};
-    //     }
+    if(dataError != EduErrorCode::success)
+    {
+        return ResultInfo{.errorCode = dataError, .resultSize = 0U};
+    }
 
-    //     // Receive checksum
-    //     std::array<std::uint8_t, 4> crc32Buf = {};
-    //     auto crc32Error = UartReceive(crc32Buf, crc32Buf.size());
-    //     if(crc32Error != EduErrorCode::success)
-    //     {
-    //         // Only retry on timeout errors (-> invalid format after all)
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries and crc32Error == EduErrorCode::errorTimeout)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {crc32Error, 0};
-    //     }
+    auto crc32Error = CheckCrc32(
+        std::span<Byte>(dataBuffer.begin(), dataBuffer.begin() + actualDataLength.get()));
 
-    //     // Assemble checksum
-    //     auto crc32Recv = utility::BytesTouint32(crc32Buf[0], crc32Buf[1], crc32Buf[2],
-    //     crc32Buf[3]); auto crc32Calc = utility::Crc32(recvDataBuf);
+    if(crc32Error != EduErrorCode::success)
+    {
+        return ResultInfo{.errorCode = crc32Error, .resultSize = 0U};
+    }
 
-    //     // Check checksum against own calculation
-    //     if(crc32Recv != crc32Calc)
-    //     {
-    //         // Checksums don't match, flush, send NACK, and retry
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduErrorCode::errorChecksum, 0};
-    //     }
-
-    //     // Everything worked, so return success and the number of received bytes
-    //     return {EduErrorCode::success, len};
-
-    // }  // End while
+    return {EduErrorCode::success, actualDataLength.get()};
 }
 
 
@@ -612,6 +616,7 @@ void Edu::SendCommand(Byte commandId)
 //! @param destination The destination container
 //!
 //! @returns A relevant EDU error code
+// TODO: Use hal::ReadFrom()
 [[nodiscard]] auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
 {
     if(size(destination) > maxDataLength)
@@ -641,6 +646,7 @@ void Edu::SendCommand(Byte commandId)
 //! @param destination The destination byte
 //!
 //! @returns A relevant EDU error code
+// TODO: Use hal::ReadFrom()
 [[nodiscard]] auto Edu::UartReceive(Byte * destination) -> EduErrorCode
 {
     uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
