@@ -99,9 +99,7 @@ private:
             utility::PrintTime();
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
-            // TODO: Do something with error code
             auto errorCode = edu.UpdateTime(updateTimeData);
-
             if(errorCode != periphery::EduErrorCode::success)
             {
                 ResumeEduErrorCommunicationThread();
@@ -136,9 +134,8 @@ private:
             auto executeProgramData = periphery::ExecuteProgramData{
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
-            auto eduAnswer = edu.ExecuteProgram(executeProgramData);
-
-            if(eduAnswer != periphery::EduErrorCode::success)
+            errorCode = edu.ExecuteProgram(executeProgramData);
+            if(errorCode != periphery::EduErrorCode::success)
             {
                 ResumeEduErrorCommunicationThread();
             }
