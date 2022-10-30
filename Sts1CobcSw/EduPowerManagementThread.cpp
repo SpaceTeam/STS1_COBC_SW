@@ -29,6 +29,7 @@ constexpr auto eduBootTime = 20 * RODOS::SECONDS;
 constexpr auto eduPowerManagementThreadDelay = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
+constexpr auto threadPriority = 500;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 // TODO: Move to Edu.hpp/cpp
@@ -37,7 +38,7 @@ auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduPowerManagementThread() : StaticThread("EduPowerManagementThread")
+    EduPowerManagementThread() : StaticThread("EduPowerManagementThread", threadPriority)
     {
     }
 
