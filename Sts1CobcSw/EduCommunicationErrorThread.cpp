@@ -1,12 +1,14 @@
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
-#include <rodos-no-using-namespace.h>
+#include <rodos_no_using_namespace.h>
+
 
 namespace sts1cobcsw
 {
 constexpr auto stackSize = 4'000U;
 std::int32_t eduCommunicationErrorCounter = 0;
+
 
 class EduCommunicationErrorThread : public RODOS::StaticThread<stackSize>
 {
