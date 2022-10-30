@@ -58,6 +58,8 @@ private:
 
         fs::CloseFile();
 
+        fs::Ls("/");
+
         fs::Unmount();
     }
 } fileSystemTest;

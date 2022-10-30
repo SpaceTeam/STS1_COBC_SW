@@ -116,6 +116,57 @@ auto FileSize() -> int
 }
 
 
+//! @brief  List information (type, size, name) about the files under the given path.
+auto Ls(char const * path) -> int
+{
+    auto directory = lfs_dir_t{};
+    int errorCode = lfs_dir_open(&lfs, &directory, path);
+    if(errorCode != 0)
+    {
+        return errorCode;
+    }
+
+    auto info = lfs_info{};
+    while(true)
+    {
+        int result = lfs_dir_read(&lfs, &directory, &info);
+        if(result < 0)
+        {
+            // An error occured
+            return result;
+        }
+        if(result == 0)
+        {
+            // We are at the end of the directory
+            break;
+        }
+
+        switch(info.type)
+        {
+            case LFS_TYPE_REG:
+            {
+                PRINTF("reg ");
+                break;
+            }
+            case LFS_TYPE_DIR:
+            {
+                PRINTF("dir ");
+                break;
+            }
+            default:
+            {
+                PRINTF("?   ");
+                break;
+            }
+        }
+
+        PRINTF(" %8d B  %s\n", static_cast<int>(info.size), &(info.name[0]));
+    }
+
+    return lfs_dir_close(&lfs, &directory);
+}
+
+
 // --- Private function definitions
 
 auto Read(lfs_config const * config,

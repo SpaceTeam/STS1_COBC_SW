@@ -16,17 +16,17 @@ auto Format() -> int;
 auto Mount() -> int;
 auto Unmount() -> int;
 
+// File stuff
 auto OpenFile(char const * path, int flags) -> int;
 auto CloseFile() -> int;
 auto FileSize() -> int;
-
 template<typename T>
 auto ReadFromFile(T * t) -> int;
-
 template<typename T>
 auto WriteToFile(T const & t) -> int;
 
-// TODO: Implement ls
+// Higher level stuff
+auto Ls(char const * path) -> int;
 
 
 // --- Function template definitions ---
