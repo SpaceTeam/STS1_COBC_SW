@@ -7,7 +7,6 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
-#include <Sts1CobcSw/Utility.hpp>
 
 #include <type_safe/narrow_cast.hpp>
 #include <type_safe/types.hpp>
