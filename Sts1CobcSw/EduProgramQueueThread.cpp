@@ -28,6 +28,7 @@ using RODOS::SECONDS;
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4'000U;
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
+constexpr auto threadPriority = 300;
 
 periphery::Edu edu = periphery::Edu();
 
@@ -37,7 +38,7 @@ periphery::Edu edu = periphery::Edu();
 class EduQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduQueueThread() : StaticThread("EduQueueThread")
+    EduQueueThread() : StaticThread("EduQueueThread", threadPriority)
     {
     }
 
@@ -47,11 +48,11 @@ private:
         edu.Initialize();
 
         auto queueEntry1 = EduQueueEntry{
-            .programId = 5, .queueId = 1, .startTime = 1672531215, .timeout = 10};  // NOLINT
+            .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
         eduProgramQueue.push_back(queueEntry1);
 
         auto queueEntry2 = EduQueueEntry{
-            .programId = 6, .queueId = 1, .startTime = 1672531230, .timeout = 20};  // NOLINT
+            .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
 
         // TODO: Why add the first entry again?
         eduProgramQueue.push_back(queueEntry1);

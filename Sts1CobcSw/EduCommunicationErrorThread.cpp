@@ -8,6 +8,7 @@
 namespace sts1cobcsw
 {
 constexpr auto stackSize = 2'000U;
+constexpr auto threadPriority = 400;
 std::int32_t eduCommunicationErrorCounter = 0;
 
 
@@ -16,7 +17,7 @@ std::int32_t eduCommunicationErrorCounter = 0;
 class EduCommunicationErrorThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduCommunicationErrorThread() : StaticThread("EduCommunicationErrorThread")
+    EduCommunicationErrorThread() : StaticThread("EduCommunicationThread", threadPriority)
     {
     }
 

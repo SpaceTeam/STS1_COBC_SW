@@ -21,18 +21,19 @@ hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 // enum class : uint8_t {
 //
 //}
-enum ProgramStatus : uint8_t {
+enum ProgramStatus : uint8_t
+{
     programRunning = 1,
     programCouldNotBeStarted = 2,
     programExecutionFailed = 3,
-    programExecutionSucceeded = 4, 
+    programExecutionSucceeded = 4,
     resultFileTransfered = 5,
     resultFileSentToRf = 6,
     ackFromGround = 7,
     resultFileDeleted = 8
-
 };
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
+constexpr auto threadPriority = 100;
 
 auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
 {
@@ -48,7 +49,7 @@ auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -
 class EduListenerThread : public StaticThread<>
 {
 public:
-    EduListenerThread() : StaticThread("EduListenerThread")
+    EduListenerThread() : StaticThread("EduListenerThread", threadPriority)
     {
     }
 
