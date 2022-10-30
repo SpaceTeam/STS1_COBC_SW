@@ -5,7 +5,7 @@
 //!     - Connect the UCI UART to a computer to use with HTERM, Putty, etc.
 //!     - Either make sure the EDU is functional and connected, or
 //!     - Set the EDU UART to be the UCI UART (in Edu.cpp) and send the responses manually via HTERM
-//!     - A succesful example for each status type is provided below, if you want to test error
+//!     - A successful example for each status type is provided below, if you want to test error
 //!     handling,
 //!       just get some value, like the length, intentionally wrong and check the error code.
 //!
