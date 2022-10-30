@@ -3,6 +3,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <cstdint>
+
 
 namespace sts1cobcsw
 {
@@ -10,6 +12,6 @@ namespace sts1cobcsw
 // fiasco
 extern RODOS::Topic<bool> eduIsAliveTopic;
 extern RODOS::CommBuffer<bool> eduIsAliveBuffer;
-extern RODOS::Topic<int64_t> nextProgramStartDelayTopic;
-extern RODOS::CommBuffer<int64_t> nextProgramStartDelayBuffer;
+extern RODOS::Topic<std::int64_t> nextProgramStartDelayTopic;
+extern RODOS::CommBuffer<std::int64_t> nextProgramStartDelayBuffer;
 }

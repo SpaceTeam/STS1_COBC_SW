@@ -79,7 +79,6 @@ private:
             // seconds (n of seconds since 1st January 2000).
             auto nextProgramStartTime =
                 eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
-
             auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto startDelay =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
@@ -102,6 +101,7 @@ private:
             // TODO: Do something with error code
             [[maybe_unused]] auto errorCode = edu.UpdateTime(updateTimeData);
 
+            // TODO: Get rid of the code duplication here
             nextProgramStartTime =
                 eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
             currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;

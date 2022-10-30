@@ -9,8 +9,8 @@ RODOS::Topic<bool> eduIsAliveTopic(-1, "eduIsAliveTopic");
 RODOS::CommBuffer<bool> eduIsAliveBuffer{};
 RODOS::Subscriber eduIsAliveSubscriber(eduIsAliveTopic, eduIsAliveBuffer, "eduIsAliveSubscriber");
 
-RODOS::Topic<int64_t> nextProgramStartDelayTopic(-1, "nextProgramStartDelayTopic");
-RODOS::CommBuffer<int64_t> nextProgramStartDelayBuffer{};
+RODOS::Topic<std::int64_t> nextProgramStartDelayTopic(-1, "nextProgramStartDelayTopic");
+RODOS::CommBuffer<std::int64_t> nextProgramStartDelayBuffer{};
 RODOS::Subscriber nextProgramStartDelaySubscriber(nextProgramStartDelayTopic,
                                                   nextProgramStartDelayBuffer,
                                                   "nextProgramStartDelaySubscriber");

@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cinttypes>
 
+
 namespace sts1cobcsw
 {
 namespace ts = type_safe;
@@ -23,7 +24,7 @@ namespace ts = type_safe;
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
-constexpr auto eduBootTime = 2 * RODOS::SECONDS;
+constexpr auto eduBootTime = 20 * RODOS::SECONDS;
 constexpr auto eduPowerManagementThreadDelay = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
@@ -54,7 +55,7 @@ private:
     {
         while(true)
         {
-            int64_t startDelay = 0;
+            std::int64_t startDelay = 0;
             nextProgramStartDelayBuffer.get(startDelay);
             RODOS::PRINTF("[EduPowerManagement] Next Program will start in : %" PRIi64 " seconds\n",
                           startDelay);
@@ -88,6 +89,7 @@ private:
                 edu.TurnOff();
             }
 
+            // TODO: Use a TIME_LOOP() instead
             // TODO: Give the 2 seconds a name
             RODOS::AT(RODOS::NOW() + eduPowerManagementThreadDelay);
         }
