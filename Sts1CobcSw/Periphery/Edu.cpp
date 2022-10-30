@@ -369,9 +369,22 @@ auto Edu::TurnOff() -> void
 
 void Edu::MockWriteToFile(std::span<Byte> data)
 {
+    // DEBUG
     RODOS::PRINTF("\nWrite to file...\n");
-    hal::WriteTo(&uart_, data);
+    constexpr auto nRows = 40;
+    auto iRows = 0;
+    for(auto x : data)
+    {
+        RODOS::PRINTF(" %c", static_cast<char>(x));
+        iRows++;
+        if(iRows == nRows)
+        {
+            RODOS::PRINTF("\n");
+            iRows = 0;
+        }
+    }
     RODOS::PRINTF("\n");
+    // END DEBUG
 }
 
 
@@ -390,12 +403,17 @@ void Edu::MockWriteToFile(std::span<Byte> data)
         RODOS::PRINTF("\nPacket %lu\n", packets);
         // END DEBUG
         resultInfo = ReturnResultRetry();
+        // DEBUG
+        RODOS::PRINTF("ResultInfo{errorCode = %d, resultSize = %d}",
+                      static_cast<int>(resultInfo.errorCode),
+                      static_cast<int>(resultInfo.resultSize.get()));
+        // END DEBUG
         if(resultInfo.errorCode != EduErrorCode::success)
         {
             return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
         }
-        MockWriteToFile(
-            std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + resultInfo.resultSize.get()));
+        MockWriteToFile(std::span<Byte>(cepDataBuffer.begin(),
+                                        cepDataBuffer.begin() + resultInfo.resultSize.get()));
         totalResultSize += resultInfo.resultSize;
         packets++;
     }

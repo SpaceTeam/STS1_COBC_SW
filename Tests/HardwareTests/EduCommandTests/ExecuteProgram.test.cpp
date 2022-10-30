@@ -24,9 +24,9 @@ class ExecuteProgramTest : public RODOS::StaticThread<>
 
     void run() override
     {
-        constexpr std::uint16_t programId = 0xABCD;
-        constexpr std::uint16_t queueId = 0xEDFE;
-        constexpr std::int16_t timeout = 0x0123;
+        constexpr std::uint16_t programId = 0;
+        constexpr std::uint16_t queueId = 1;
+        constexpr std::int16_t timeout = 5;
 
         RODOS::PRINTF("\nSending command 'Execute Program' with\n");
         RODOS::PRINTF("- program ID = %04x\n", programId);

@@ -37,7 +37,8 @@ class ReturnResultTest : public RODOS::StaticThread<>
         auto resultInfo = edu.ReturnResult();
 
         RODOS::PRINTF("\nReturned error code: %d", static_cast<int>(resultInfo.errorCode));
-        RODOS::PRINTF("\nReturned total result size: %lu", static_cast<std::size_t>(resultInfo.resultSize));
+        RODOS::PRINTF("\nReturned total result size: %lu",
+                      static_cast<unsigned long>(resultInfo.resultSize.get()));
     }
 };
 

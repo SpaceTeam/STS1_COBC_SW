@@ -44,15 +44,14 @@ private:
     auto FlushUartBuffer() -> void;
     [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> EduErrorCode;
     [[nodiscard]] auto GetStatusCommunication() -> EduStatus;
-    [[nodiscard]] auto ReturnResultCommunication()
-        -> ResultInfo;
+    [[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
     [[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
     void MockWriteToFile(std::span<Byte> data);
 
-        hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
-    // RODOS::HAL_UART uart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,
-    // hal::eduUartRxPin);
+    hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
     RODOS::HAL_UART uart_ =
-        RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+        RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
+    // RODOS::HAL_UART uart_ =
+    //     RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 };
 }
