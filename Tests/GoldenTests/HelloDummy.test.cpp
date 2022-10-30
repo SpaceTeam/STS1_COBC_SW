@@ -1,21 +1,24 @@
 #include <Sts1CobcSw/Dummy.hpp>
 
-#include <rodos.h>
+#include <rodos_no_using_namespace.h>
+
+#include <cstdint>
 
 
-uint32_t printfMask = 0;
+std::uint32_t printfMask = 0;
+
 
 namespace sts1cobcsw
 {
-class HelloDummy : public StaticThread<>
+class HelloDummy : public RODOS::StaticThread<>
 {
     void run() override
     {
         printfMask = 1;
         auto const dummy = Dummy();
 
-        PRINTF("Hello, %s!\n", dummy.name.data());
-        hwResetAndReboot();
+        RODOS::PRINTF("Hello, %s!\n", dummy.name.data());
+        RODOS::hwResetAndReboot();
     }
 };
 

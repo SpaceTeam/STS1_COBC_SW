@@ -23,8 +23,16 @@ find_rodos()
 # ---- Declare targets ----
 
 add_library(Sts1CobcSw_Dummy OBJECT)
+add_library(Sts1CobcSw_Serial INTERFACE)
+add_library(Sts1CobcSw_Utility OBJECT)
 add_program(HelloDummy)
 add_program(EduListener)
+
+if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    add_library(Sts1CobcSw_Hal INTERFACE)
+    add_library(Sts1CobcSw_Periphery OBJECT)
+    add_program(CobcSw)
+endif()
 
 # All targets must only add the top level project directory as PUBLIC include directory
 all_targets_include_directories("$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
