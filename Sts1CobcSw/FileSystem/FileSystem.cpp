@@ -12,7 +12,6 @@
 namespace sts1cobcsw::fs
 {
 using periphery::flash::pageSize;
-using RODOS::PRINTF;
 using serial::Byte;
 
 
@@ -71,29 +70,20 @@ auto Initialize() -> void
 
 auto Format() -> int
 {
-    PRINTF("Formatting...\n");
-    auto errorCode = lfs_format(&lfs, &lfsConfig);
-    PRINTF("Returned error code = %d\n\n", errorCode);
-    return errorCode;
+    return lfs_format(&lfs, &lfsConfig);
 }
 
 
 auto Mount() -> int
 {
-    PRINTF("Mounting...\n");
-    int errorCode = lfs_mount(&lfs, &lfsConfig);
-    PRINTF("Returned error code = %d\n\n", errorCode);
-    return errorCode;
+    return lfs_mount(&lfs, &lfsConfig);
 }
 
 
 // TODO: This begs for a destructor
 auto Unmount() -> int
 {
-    PRINTF("Unmounting...\n");
-    auto errorCode = lfs_unmount(&lfs);
-    PRINTF("Returned error code = %d\n\n", errorCode);
-    return errorCode;
+    return lfs_unmount(&lfs);
 }
 
 
@@ -119,6 +109,10 @@ auto FileSize() -> int
 //! @brief  List information (type, size, name) about the files under the given path.
 auto Ls(char const * path) -> int
 {
+    using RODOS::PRINTF;
+
+    PRINTF("$ ls %s\n", path);
+
     auto directory = lfs_dir_t{};
     int errorCode = lfs_dir_open(&lfs, &directory, path);
     if(errorCode != 0)
@@ -132,7 +126,7 @@ auto Ls(char const * path) -> int
         int result = lfs_dir_read(&lfs, &directory, &info);
         if(result < 0)
         {
-            // An error occured
+            // An error occurred
             return result;
         }
         if(result == 0)
@@ -145,17 +139,17 @@ auto Ls(char const * path) -> int
         {
             case LFS_TYPE_REG:
             {
-                PRINTF("reg ");
+                PRINTF("  reg ");
                 break;
             }
             case LFS_TYPE_DIR:
             {
-                PRINTF("dir ");
+                PRINTF("  dir ");
                 break;
             }
             default:
             {
-                PRINTF("?   ");
+                PRINTF("  ?   ");
                 break;
             }
         }
@@ -175,11 +169,6 @@ auto Read(lfs_config const * config,
           void * buffer,
           lfs_size_t size) -> int
 {
-    PRINTF("Read(blockNo=%d, offset=%d, size=%d)\n",
-           static_cast<int>(blockNo),
-           static_cast<int>(offset),
-           static_cast<int>(size));
-
     // The following only works if read_size == pageSize
     auto startAddress = blockNo * config->block_size + offset;
     for(auto i = 0U; i < size; i += config->read_size)
@@ -199,11 +188,6 @@ auto Program(lfs_config const * config,
              void const * buffer,
              lfs_size_t size) -> int
 {
-    PRINTF("Program(blockNo=%d, offset=%d, size=%d)\n",
-           static_cast<int>(blockNo),
-           static_cast<int>(offset),
-           static_cast<int>(size));
-
     // The following only works if prog_size == pageSize
     auto startAddress = blockNo * config->block_size + offset;
     for(auto i = 0U; i < size; i += config->prog_size)
@@ -221,7 +205,6 @@ auto Program(lfs_config const * config,
 
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 {
-    PRINTF("Erase(blockNo=%d)\n", static_cast<int>(blockNo));
     periphery::flash::EraseSector(blockNo * config->block_size);
     periphery::flash::WaitWhileBusy();
     return 0;
@@ -230,7 +213,6 @@ auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 
 auto Sync([[maybe_unused]] lfs_config const * config) -> int
 {
-    PRINTF("Sync()\n");
     periphery::flash::WaitWhileBusy();
     return 0;
 }

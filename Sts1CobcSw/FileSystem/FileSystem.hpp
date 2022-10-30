@@ -27,6 +27,8 @@ auto WriteToFile(T const & t) -> int;
 
 // Higher level stuff
 auto Ls(char const * path) -> int;
+// TODO: Implement cat
+// TODO: Implement simple hexdump
 
 
 // --- Function template definitions ---
