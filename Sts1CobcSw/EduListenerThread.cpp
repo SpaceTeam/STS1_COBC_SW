@@ -21,9 +21,17 @@ hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 // enum class : uint8_t {
 //
 //}
-constexpr auto resultFileTransferedStatus = 5;
-constexpr auto programExecutionFailedStatus = 3;
-constexpr auto programExecutionSuccessfulStatus = 4;
+enum ProgramStatus : uint8_t {
+    programRunning = 1,
+    programCouldNotBeStarted = 2,
+    programExecutionFailed = 3,
+    programExecutionSucceeded = 4, 
+    resultFileTransfered = 5,
+    resultFileSentToRf = 6,
+    ackFromGround = 7,
+    resultFileDeleted = 8
+
+};
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
 
 auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
@@ -81,11 +89,11 @@ private:
 
                         if(status.exitCode == 0)
                         {
-                            statusHistoryEntry.status = programExecutionSuccessfulStatus;
+                            statusHistoryEntry.status = ProgramStatus::programExecutionSucceeded;
                         }
                         else
                         {
-                            statusHistoryEntry.status = programExecutionFailedStatus;
+                            statusHistoryEntry.status = ProgramStatus::programExecutionFailed;
                         }
                         ResumeEduQueueThread();
 
@@ -108,7 +116,7 @@ private:
 
                         auto statusHistoryEntry =
                             FindStatusAndHistoryEntry(status.programId, status.programId);
-                        statusHistoryEntry.status = resultFileTransferedStatus;
+                        statusHistoryEntry.status = ProgramStatus::resultFileTransfered;
 
                         break;
                     }

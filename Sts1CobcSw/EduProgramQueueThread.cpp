@@ -135,32 +135,27 @@ private:
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
             errorCode = edu.ExecuteProgram(executeProgramData);
+
             if(errorCode != periphery::EduErrorCode::success)
             {
                 ResumeEduErrorCommunicationThread();
             }
-
-
-            // Suspend Self for execution time
-            auto const executionTime = timeout + eduCommunicationDelay;
-            RODOS::PRINTF("Suspending for execution time\n");
-            AT(NOW() + executionTime);
-            RODOS::PRINTF("Resuming from execution time\n");
-            utility::PrintTime();
-
-            // TODO: Switch statement
-            // Create Status&History entry
-            if(eduAnswer == periphery::EduErrorCode::success)
+            else
             {
-                RODOS::PRINTF("Edu returned a success error code\n");
-                uint8_t status = 1;
-                auto statusHistoryEntry = StatusHistoryEntry{
-                    .programId = programId, .queueId = queueId, .status = status};
+                auto statusHistoryEntry =
+                    StatusHistoryEntry{.programId = programId, .queueId = queueId, .status = 1};
                 statusHistory.put(statusHistoryEntry);
-            }
 
-            // Set current Queue ID to next
-            queueIndex++;
+                // Suspend Self for execution time
+                auto const executionTime = timeout + eduCommunicationDelay;
+                RODOS::PRINTF("Suspending for execution time\n");
+                AT(NOW() + executionTime);
+                RODOS::PRINTF("Resuming from execution time\n");
+                utility::PrintTime();
+
+                // Set current Queue ID to next
+                queueIndex++;
+            }
         }
     }
 } eduQueueThread;
