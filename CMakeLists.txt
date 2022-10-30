@@ -26,7 +26,6 @@ add_library(Sts1CobcSw_Dummy OBJECT)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility OBJECT)
 add_program(HelloDummy)
-add_program(EduListener)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_Hal INTERFACE)

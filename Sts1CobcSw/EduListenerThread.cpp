@@ -1,8 +1,14 @@
-#include <Sts1CobcSw/Utility.hpp>
-
-#include <Sts1CobcSw/Hal/Gpio.hpp>
+#include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/EduListenerThread.hpp>
+#include <Sts1CobcSw/EduProgramQueue.hpp>
+#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
+#include <Sts1CobcSw/Periphery/Edu.hpp>
+#include <Sts1CobcSw/Periphery/EduNames.hpp>
+#include <Sts1CobcSw/Periphery/EduStructs.hpp>
+#include <Sts1CobcSw/Utility.hpp>
+
 #include <type_safe/narrow_cast.hpp>
 #include <type_safe/types.hpp>
 
@@ -11,54 +17,111 @@
 
 namespace sts1cobcsw
 {
-namespace ts = type_safe;
-using ts::operator""_usize;
+hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
+// TODO:: enum
+// enum class : uint8_t {
+//
+//}
+constexpr auto resultFileTransferedStatus = 5;
+constexpr auto programExecutionFailedStatus = 3;
+constexpr auto programExecutionSuccessfulStatus = 4;
+constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
 
-// TODO : Remove this when hal is merged
-constexpr auto pb1 = RODOS::GPIO_017;
-constexpr auto eduUpdatePin = pb1;
-auto eduUpdateGpio = HAL_GPIO(eduUpdatePin);
+auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
+{
+    auto statusHistoryEntry = StatusHistoryEntry{};
+    do
+    {
+        statusHistory.get(statusHistoryEntry);
+    } while(statusHistoryEntry.queueId != queueId and statusHistoryEntry.programId != programId);
+
+    return statusHistoryEntry;
+}
 
 class EduListenerThread : public StaticThread<>
 {
+public:
+    EduListenerThread() : StaticThread("EduListenerThread")
+    {
+    }
+
+private:
     void init() override
     {
-        // TODO uncomment next line and remove the following when hal is merged
-        // hal::InitPin(eduUpdateGpio, hal::PinType::input, hal::PinVal::one);
-        eduUpdateGpio.init(/*isOutput=*/false, 1U, 0U);
+        eduUpdateGpioPin.Direction(hal::PinDirection::in);
     }
+
 
     void run() override
     {
-        auto const eduHasUpdate = eduUpdateGpio.readPins() != 0;
-
-        if(eduHasUpdate)
+        TIME_LOOP(0, timeLoopPeriod)
         {
-            // Communicate with EDU
+            auto eduHasUpdate = (eduUpdateGpioPin.Read() == hal::PinState::set);
 
-            // TODO this will be implemented by Daniel, will look something like
-            // auto status = periphery::edu::GetStatus();
+            if(eduHasUpdate)
+            {
+                // Communicate with EDU
 
-            // Possible outputs are : 
-            //      - No event
-            //      - Program Finished : Program-ID, Queue-ID and exit code are provided
-            //      - Results Ready : Program-ID, Queue-ID are provided
-            
-            auto programHasFinished = true;
-            auto event = true;
-            if(programHasFinished) {
-                // Update newest Status_and_History
-                // Resume EDU Queue thread
-            } else if(event) {
+                auto status = edu.GetStatus();
 
-                // What need get result file
-                // This is done with the get result command
+                if(status.errorCode != periphery::EduErrorCode::success)
+                {
+                    ResumeEduErrorCommunicationThread();
+                }
 
-                // Interpret the result file and update the resulting SaHEntry from 2 or 3 to 4.
+                switch(status.statusType)
+                {
+                    case periphery::EduStatusType::programFinished:
+                    {
+                        // Program has finished
+                        // Find the correspongind queueEntry and update it, then resume edu queue
+                        // thread
+
+                        auto statusHistoryEntry =
+                            FindStatusAndHistoryEntry(status.programId, status.queueId);
+
+                        if(status.exitCode == 0)
+                        {
+                            statusHistoryEntry.status = programExecutionSuccessfulStatus;
+                        }
+                        else
+                        {
+                            statusHistoryEntry.status = programExecutionFailedStatus;
+                        }
+                        ResumeEduQueueThread();
+
+                        break;
+                    }
+
+                    case periphery::EduStatusType::resultsReady:
+                    {
+                        // Edu wants to send result file
+                        // Send return result to Edu, Communicate, and interpret the results to
+                        // update the S&H Entry from 3 or 4 to 5.
+                        auto resultsInfo = edu.ReturnResult();
+
+                        auto errorCode = resultsInfo.errorCode;
+
+                        if(errorCode != periphery::EduErrorCode::success)
+                        {
+                            ResumeEduErrorCommunicationThread();
+                        }
+
+                        auto statusHistoryEntry =
+                            FindStatusAndHistoryEntry(status.programId, status.programId);
+                        statusHistoryEntry.status = resultFileTransferedStatus;
+
+                        break;
+                    }
+
+                    case periphery::EduStatusType::invalid:
+                    case periphery::EduStatusType::noEvent:
+                    {
+                        break;
+                    }
+                }
             }
         }
-
-        AT(NOW() + 1 * SECONDS);
     }
 };
 

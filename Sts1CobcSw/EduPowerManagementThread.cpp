@@ -1,6 +1,7 @@
 //! @file
 //! @brief  Manages the power of the EDU module
 
+#include <Sts1CobcSw/EduListenerThread.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -31,7 +32,6 @@ constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 // TODO: Move to Edu.hpp/cpp
-auto eduHasUpdateGpioPin = hal::GpioPin(hal::eduUpdatePin);
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
@@ -45,7 +45,6 @@ private:
     void init() override
     {
         epsBatteryGoodGpioPin.Direction(hal::PinDirection::in);
-        eduHasUpdateGpioPin.Direction(hal::PinDirection::in);
 
         periphery::persistentstate::Initialize();
     }
@@ -61,7 +60,7 @@ private:
                           startDelay);
 
             ts::bool_t epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
-            ts::bool_t eduHasUpdate = eduHasUpdateGpioPin.Read() == hal::PinState::set;
+            ts::bool_t eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
 
             auto eduIsAlive = false;
             eduIsAliveBuffer.get(eduIsAlive);
