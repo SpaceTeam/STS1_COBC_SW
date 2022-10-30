@@ -41,6 +41,8 @@ auto lookaheadBuffer = std::array<serial::Byte, pageSize>{};
 // TODO: Check if they need to be global
 lfs_t lfs{};
 lfs_file_t lfsFile{};
+// TODO: Maybe add a conifg header to set things like NAME_MAX or whatever. That could safe a bit of
+// RAM.
 const lfs_config lfsConfig{.read = &Read,
                            .prog = &Program,
                            .erase = &Erase,
@@ -50,7 +52,7 @@ const lfs_config lfsConfig{.read = &Read,
                            .prog_size = pageSize,
                            .block_size = periphery::flash::sectorSize,
                            .block_count = periphery::flash::nSectors,
-                           .block_cycles = 500,
+                           .block_cycles = 200,
                            .cache_size = pageSize,
                            .lookahead_size = pageSize,
 
@@ -66,33 +68,51 @@ auto Initialize() -> void
     [[maybe_unused]] auto errorCode = periphery::flash::Initialize();
 }
 
-auto Mount() -> void
+
+auto Format() -> int
+{
+    PRINTF("Formatting...\n");
+    auto errorCode = lfs_format(&lfs, &lfsConfig);
+    PRINTF("Returned error code = %d\n\n", errorCode);
+    return errorCode;
+}
+
+
+auto Mount() -> int
 {
     PRINTF("Mounting...\n");
     int errorCode = lfs_mount(&lfs, &lfsConfig);
     PRINTF("Returned error code = %d\n\n", errorCode);
-
-    // reformat if we can't mount the filesystem
-    // this should only happen on the first boot
-    if(errorCode != 0)
-    {
-        PRINTF("Formatting...\n");
-        errorCode = lfs_format(&lfs, &lfsConfig);
-        PRINTF("Returned error code = %d\n\n", errorCode);
-
-        PRINTF("Mounting...\n");
-        errorCode = lfs_mount(&lfs, &lfsConfig);
-        PRINTF("Returned error code = %d\n\n", errorCode);
-    }
+    return errorCode;
 }
 
 
 // TODO: This begs for a destructor
-auto Unmount() -> void
+auto Unmount() -> int
 {
     PRINTF("Unmounting...\n");
     auto errorCode = lfs_unmount(&lfs);
     PRINTF("Returned error code = %d\n\n", errorCode);
+    return errorCode;
+}
+
+
+auto OpenFile(char const * path, int flags) -> int
+{
+    return lfs_file_open(&lfs, &lfsFile, path, flags);
+}
+
+
+auto CloseFile() -> int
+{
+    return lfs_file_close(&lfs, &lfsFile);
+}
+
+
+// Return the size of the currently open file
+auto FileSize() -> int
+{
+    return lfs_file_size(&lfs, &lfsFile);
 }
 
 

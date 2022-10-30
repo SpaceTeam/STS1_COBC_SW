@@ -34,24 +34,29 @@ private:
     {
         fs::Mount();
 
-        lfs_file_open(&fs::lfs, &fs::lfsFile, "MyFile", LFS_O_RDWR | LFS_O_CREAT);
+        fs::OpenFile("MyFile", LFS_O_RDWR | LFS_O_CREAT);
 
-        auto fileSize = lfs_file_size(&fs::lfs, &fs::lfsFile);
-        PRINTF("\nFile size = %d == 8\n", static_cast<int>(fileSize));
+        auto fileSize = fs::FileSize();
+        PRINTF("\nFile size = %d == 12\n", fileSize);
 
         int number = 0;
-        lfs_file_read(&fs::lfs, &fs::lfsFile, &number, sizeof(number));
+        fs::ReadFromFile(&number);
         PRINTF("\n");
         PRINTF("Number = %d == 123\n", number);
 
-        lfs_file_read(&fs::lfs, &fs::lfsFile, &number, sizeof(number));
+        fs::ReadFromFile(&number);
         PRINTF("\n");
         PRINTF("Number = %d == 12345\n", number);
 
-        // number = 12345;
+        fs::ReadFromFile(&number);
+        PRINTF("\n");
+        PRINTF("Number = %d == 1234567\n", number);
+
+        // number = 1234567;
+        // fs::WriteToFile(number);
         // lfs_file_write(&fs::lfs, &fs::lfsFile, &number, sizeof(number));
 
-        lfs_file_close(&fs::lfs, &fs::lfsFile);
+        fs::CloseFile();
 
         fs::Unmount();
     }
