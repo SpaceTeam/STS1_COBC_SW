@@ -39,7 +39,10 @@ private:
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
     // Deserialize<>() internally.
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
+    [[nodiscard]] auto UartReceive(Byte * destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
+    [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> EduErrorCode;
+    [[nodiscard]] auto GetStatusCommunication() -> EduStatus;
 
     hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
     // RODOS::HAL_UART uart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,

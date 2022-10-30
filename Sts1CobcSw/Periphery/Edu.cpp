@@ -4,12 +4,22 @@
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
+#include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
 namespace sts1cobcsw::periphery
 {
 using sts1cobcsw::serial::operator""_b;
 using sts1cobcsw::serial::Byte;
+
+using ts::operator""_i8;
+using ts::operator""_u8;
+using ts::operator""_i16;
+using ts::operator""_u16;
+using ts::operator""_i32;
+using ts::operator""_u32;
+using ts::operator""_i64;
+using ts::operator""_u64;
 
 
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
@@ -21,9 +31,14 @@ constexpr auto cmdStop = 0xb4_b;  //! Transmission of multiple packets should be
 constexpr auto cmdData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
 // GetStatus result types
-constexpr auto noEventCode = 0x00;
-constexpr auto programFinishedCode = 0x01;
-constexpr auto resultsReadyCode = 0x02;
+constexpr auto noEventCode = 0x00_b;
+constexpr auto programFinishedCode = 0x01_b;
+constexpr auto resultsReadyCode = 0x02_b;
+
+// Status types byte counts
+constexpr auto nNoEventBytes = 1;
+constexpr auto nProgramFinishedBytes = 6;
+constexpr auto nResultsReadyBytes = 5;
 
 // Max. length for a single round data field
 constexpr auto maxDataLength = 32768;
@@ -189,183 +204,161 @@ auto Edu::TurnOff() -> void
 //! @returns A status containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error
 //!          Code). Values in square brackets are only valid if the relevant Status Type is
 //!          returned.
-// TODO: (Daniel) refactor, too complex
-// TODO: error handling?
 [[nodiscard]] auto Edu::GetStatus() -> EduStatus
 {
-    // // Values to be returned
-    // std::uint8_t statusType = invalidStatus;
-    // std::uint16_t programId = 0;
-    // std::uint16_t queueId = 0;
-    // std::uint8_t exitCode = 0;
+    auto serialData = serial::Serialize(getStatusId);
+    auto sendDataError = SendData(serialData);
+    if(sendDataError != EduErrorCode::success)
+    {
+        return EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
+    }
 
-    // std::array<std::uint8_t, 1> sendHeader = {getStatus};
+    EduStatus status;
+    std::size_t errorCount = 0;
+    do
+    {
+        status = GetStatusCommunication();
+        if(status.errorCode == EduErrorCode::success)
+        {
+            SendCommand(cmdAck);
+            return status;
+        }
+        FlushUartBuffer();
+        SendCommand(cmdNack);
+    } while(errorCount++ < maxNNackRetries);
 
-    // // Send the Get Status command
-    // EduErrorCode sendDataError = SendData(sendHeader);
-    // if(sendDataError != EduErrorCode::success)
-    // {
-    //     return {EduStatusType::invalid, programId, queueId, exitCode, sendDataError};
-    // }
+    return status;
+}
 
-    // // Start error while loop
-    // bool succesfulRecv = false;
-    // std::size_t errorCnt = 0;
-    // EduStatusType statusTypeRet;
-    // while(!succesfulRecv)
-    // {
-    //     // Receive the header (data command and length)
-    //     std::array<std::uint8_t, cmdBytes + lenBytes> recvHeader = {};
-    //     auto headerError = UartReceive(recvHeader, cmdBytes + lenBytes);
-    //     if(headerError != EduErrorCode::success)
-    //     {
-    //         // Only retry on timeout errors (-> invalid format after all)
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries and headerError == EduErrorCode::errorTimeout)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduStatusType::invalid, programId, queueId, exitCode, headerError};
-    //     }
-    //     if(recvHeader[0] != cmdData)
-    //     {
-    //         // Invalid header, flush, send NACK, and retry
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduStatusType::invalid,
-    //                 programId,
-    //                 queueId,
-    //                 exitCode,
-    //                 EduErrorCode::errorInvalidResult};
-    //     }
 
-    //     // Create 2 byte length from single received bytes
-    //     auto const len = utility::BytesTouint16(recvHeader[1], recvHeader[2]);
-    //     if(len > maxDataLen)
-    //     {
-    //         // Invalid length, flush, send NACK, and retry
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduStatusType::invalid,
-    //                 programId,
-    //                 queueId,
-    //                 exitCode,
-    //                 EduErrorCode::errorRecvDataTooLong};
-    //     }
+//! @brief Communication function for GetStatus() to separate a single try from
+//! retry logic.
+//! @returns The received EDU status
+[[nodiscard]] auto Edu::GetStatusCommunication() -> EduStatus
+{
+    // Get header data
+    serial::SerialBuffer<HeaderData> headerBuffer = {};
+    auto headerReceiveError = UartReceive(headerBuffer);
+    auto headerData = serial::Deserialize<HeaderData>(headerBuffer);
 
-    //     // Receive actual status data
-    //     // For data, reserve the max. possible status bytes
-    //     std::array<std::uint8_t, maxStatusBytes> recvDataBuf = {};
-    //     auto recvDataError = UartReceive(recvDataBuf, len);
-    //     if(recvDataError != EduErrorCode::success)
-    //     {
-    //         // Only retry on timeout errors (-> invalid format after all)
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries and recvDataError == EduErrorCode::errorTimeout)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduStatusType::invalid, programId, queueId, exitCode, recvDataError};
-    //     }
+    if(headerReceiveError != EduErrorCode::success)
+    {
+        return EduStatus{.statusType = EduStatusType::invalid, .errorCode = headerReceiveError};
+    }
 
-    //     // Receive checksum
-    //     std::array<std::uint8_t, 4> crc32Buf = {};
-    //     auto crc32Error = UartReceive(crc32Buf, crc32Buf.size());
-    //     if(crc32Error != EduErrorCode::success)
-    //     {
-    //         // Only retry on timeout errors (-> invalid format after all)
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries and crc32Error == EduErrorCode::errorTimeout)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {EduStatusType::invalid, programId, queueId, exitCode, crc32Error};
-    //     }
+    if(headerData.command != cmdData)
+    {
+        return EduStatus{.statusType = EduStatusType::invalid,
+                         .errorCode = EduErrorCode::invalidCommand};
+    }
 
-    //     // Assemble checksum
-    //     auto crc32Recv =
-    //         utility::BytesTouint32(crc32Buf[0], crc32Buf[1], crc32Buf[2], crc32Buf[3]);
-    //     auto crc32Calc = utility::Crc32(recvDataBuf);
+    if(headerData.length == 0_u16)
+    {
+        return EduStatus{.statusType = EduStatusType::invalid,
+                         .errorCode = EduErrorCode::invalidLength};
+    }
 
-    //     // Check checksum against own calculation
-    //     if(crc32Recv != crc32Calc)
-    //     {
-    //         // Checksums don't match, flush, send NACK, and retry
-    //         FlushUartBuffer();
-    //         if(errorCnt++ < maxNackRetries)
-    //         {
-    //             SendCommand(cmdNack);
-    //             continue;
-    //         }
-    //         return {
-    //             EduStatusType::invalid, programId, queueId, exitCode,
-    //             EduErrorCode::errorChecksum};
-    //     }
+    // Get the status type code
+    auto statusType = 0_b;
+    auto statusErrorCode = UartReceive(&statusType);
 
-    //     // If checksum is good, get proper values from the data byte array
-    //     statusType = recvDataBuf[0];
+    if(statusErrorCode != EduErrorCode::success)
+    {
+        return EduStatus{.statusType = EduStatusType::invalid, .errorCode = statusErrorCode};
+    }
 
-    //     // TODO: (Patrick) disable hicpp-signed-bitwise? According to the links below the
-    //     // implementation is bad. This would eliminate some weird instances of static_cast
-    //     // when using bit operations.
-    //     //
-    // https
-    //     :  //
-    //     stackoverflow.com/questions/50399090/use-of-a-signed-integer-operand-with-a-binary-bitwise-operator-when-using-un
-    //     // https://bugs.llvm.org/show_bug.cgi?id=36961#c9
-    //     switch(statusType)
-    //     {
-    //         case noEventCode:
-    //             statusTypeRet = EduStatusType::noEvent;
-    //             succesfulRecv = true;
-    //             break;
+    if(statusType == noEventCode)
+    {
+        if(headerData.length != 1)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid,
+                             .errorCode = EduErrorCode::invalidLength};
+        }
 
-    //         case programFinishedCode:
-    //             programId = utility::BytesTouint16(recvDataBuf[1], recvDataBuf[2]);
-    //             queueId = utility::BytesTouint16(recvDataBuf[3], recvDataBuf[4]);
-    //             exitCode = *(recvDataBuf.end() - 1);
-    //             statusTypeRet = EduStatusType::programFinished;
-    //             succesfulRecv = true;
-    //             break;
+        std::array<Byte, 1> statusTypeArray = {statusType};
+        auto crc32Error = CheckCrc32(std::span<Byte>(statusTypeArray));
+        if(crc32Error != EduErrorCode::success)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid, .errorCode = crc32Error};
+        }
 
-    //         case resultsReadyCode:
-    //             programId = utility::BytesTouint16(recvDataBuf[1], recvDataBuf[2]);
-    //             queueId = utility::BytesTouint16(recvDataBuf[3], recvDataBuf[4]);
-    //             statusTypeRet = EduStatusType::resultsReady;
-    //             succesfulRecv = true;
-    //             break;
+        return EduStatus{.statusType = EduStatusType::noEvent,
+                         .programId = 0,
+                         .queueId = 0,
+                         .exitCode = 0,
+                         .errorCode = EduErrorCode::success};
+    }
 
-    //         default:
-    //             // Invalid status type, flush, send NACK, and retry
-    //             FlushUartBuffer();
-    //             if(errorCnt++ < maxNackRetries)
-    //             {
-    //                 SendCommand(cmdNack);
-    //                 continue;
-    //             }
-    //             return {EduStatusType::invalid,
-    //                     programId,
-    //                     queueId,
-    //                     exitCode,
-    //                     EduErrorCode::errorInvalidResult};
-    //             break;
-    //     }
-    // }
-    // SendCommand(cmdAck);
-    // return {statusTypeRet, programId, queueId, exitCode, EduErrorCode::success};
+    if(statusType == programFinishedCode)
+    {
+        if(headerData.length != nProgramFinishedBytes)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid,
+                             .errorCode = EduErrorCode::invalidLength};
+        }
 
-    return EduStatus{};
+        serial::SerialBuffer<ProgramFinishedStatus> dataBuffer = {};
+        auto programFinishedError = UartReceive(dataBuffer);
+
+        if(programFinishedError != EduErrorCode::success)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid,
+                             .errorCode = programFinishedError};
+        }
+
+        // Create another Buffer which includes the status type that was received beforehand because
+        // it is needed to calculate the CRC32 checksum
+        std::array<Byte, dataBuffer.size() + 1> fullDataBuffer = {};
+        fullDataBuffer[0] = statusType;
+        std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
+        auto crc32Error = CheckCrc32(fullDataBuffer);
+        if(crc32Error != EduErrorCode::success)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid, .errorCode = crc32Error};
+        }
+
+        auto programFinishedData = serial::Deserialize<ProgramFinishedStatus>(dataBuffer);
+        return EduStatus{.statusType = EduStatusType::programFinished,
+                         .programId = programFinishedData.programId,
+                         .queueId = programFinishedData.queueId,
+                         .exitCode = programFinishedData.exitCode,
+                         .errorCode = EduErrorCode::success};
+    }
+
+    if(statusType == resultsReadyCode)
+    {
+        if(headerData.length != nResultsReadyBytes)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid,
+                             .errorCode = EduErrorCode::invalidLength};
+        }
+
+        serial::SerialBuffer<ResultsReadyStatus> dataBuffer = {};
+        auto resultsReadyError = UartReceive(dataBuffer);
+        if(resultsReadyError != EduErrorCode::success)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid, .errorCode = resultsReadyError};
+        }
+
+        // Create another Buffer which includes the status type that was received beforehand because
+        // it is needed to calculate the CRC32 checksum
+        std::array<Byte, dataBuffer.size() + 1> fullDataBuffer = {};
+        fullDataBuffer[0] = statusType;
+        std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
+        auto crc32Error = CheckCrc32(fullDataBuffer);
+        if(crc32Error != EduErrorCode::success)
+        {
+            return EduStatus{.statusType = EduStatusType::invalid, .errorCode = crc32Error};
+        }
+        auto resultsReadyData = serial::Deserialize<ResultsReadyStatus>(dataBuffer);
+        return EduStatus{.statusType = EduStatusType::resultsReady,
+                         .programId = resultsReadyData.programId,
+                         .queueId = resultsReadyData.queueId,
+                         .errorCode = EduErrorCode::success};
+    }
+
+    return EduStatus{.statusType = EduStatusType::invalid,
+                     .errorCode = EduErrorCode::invalidStatusType};
 }
 
 
@@ -616,7 +609,7 @@ void Edu::SendCommand(Byte commandId)
 
 //! @brief Receive nBytes bytes over the EDU UART in a single round.
 //!
-//! @param dest The destination container
+//! @param destination The destination container
 //!
 //! @returns A relevant EDU error code
 [[nodiscard]] auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
@@ -643,23 +636,57 @@ void Edu::SendCommand(Byte commandId)
 }
 
 
+//! @brief Receive a single byte over the EDU UART.
+//!
+//! @param destination The destination byte
+//!
+//! @returns A relevant EDU error code
+[[nodiscard]] auto Edu::UartReceive(Byte * destination) -> EduErrorCode
+{
+    uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    auto nReceivedBytes = uart_.read(destination, 1);
+    if(nReceivedBytes == 0)
+    {
+        return EduErrorCode::timeout;
+    }
+    return EduErrorCode::success;
+}
+
+
 //! @brief Flush the EDU UART read buffer.
 //!
 //! This can be used to clear all buffer data after an error to request a resend.
 auto Edu::FlushUartBuffer() -> void
 {
-    // std::array<std::uint8_t, garbageBufSize> garbageBuf = {0};
-    // bool dataRecvd = true;
+    std::array<Byte, garbageBufferSize> garbageBuffer = {};
+    ts::bool_t dataReceived = true;
 
-    // // Keep reading until no data is coming for flushTimeout (10 ms)
-    // while(dataRecvd)
-    // {
-    //     mEduUart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
-    //     auto readBytes = mEduUart_.read(garbageBuf.data(), garbageBufSize);
-    //     if(readBytes == 0)
-    //     {
-    //         dataRecvd = false;
-    //     }
-    // }
+    // Keep reading until no data is coming for flushTimeout (10 ms)
+    while(dataReceived)
+    {
+        uart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
+        auto nReceivedBytes = uart_.read(garbageBuffer.data(), garbageBufferSize);
+        if(nReceivedBytes == 0)
+        {
+            dataReceived = false;
+        }
+    }
+}
+
+
+auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
+{
+    uint32_t crc32Calculated = utility::Crc32(data);
+    serial::SerialBuffer<ts::uint32_t> crc32Buffer = {};
+    auto receiveError = UartReceive(crc32Buffer);
+    if(receiveError != EduErrorCode::success)
+    {
+        return receiveError;
+    }
+    if(crc32Calculated != serial::Deserialize<ts::uint32_t>(crc32Buffer))
+    {
+        return EduErrorCode::wrongChecksum;
+    }
+    return EduErrorCode::success;
 }
 }

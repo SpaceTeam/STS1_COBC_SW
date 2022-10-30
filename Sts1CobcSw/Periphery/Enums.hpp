@@ -7,6 +7,7 @@ namespace sts1cobcsw::periphery
 // TODO: Remove error prefix in enum values, the type already has "error" in it
 enum class EduErrorCode
 {
+    noErrorCodeSet,
     success,
     successEof,
     invalidResult,
@@ -21,15 +22,18 @@ enum class EduErrorCode
     receiveDataTooLong,
     tooManyNacks,
     dataTimeout,
-    wrongChecksum
+    wrongChecksum,
+    invalidStatusType,
+    invalidLength,
+    invalidCommand
 };
 
 enum class EduStatusType
 {
-    invalid,
     noEvent,
     programFinished,
     resultsReady,
+    invalid,
 };
 
 }

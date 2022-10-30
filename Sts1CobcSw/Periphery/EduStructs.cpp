@@ -8,6 +8,14 @@ using sts1cobcsw::serial::DeserializeFrom;
 using sts1cobcsw::serial::SerializeTo;
 
 
+auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *
+{
+    source = DeserializeFrom(source, &(data->command));
+    source = DeserializeFrom(source, &(data->length));
+    return source;
+}
+
+
 auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *
 {
     source = DeserializeFrom(source, &(data->programId));
