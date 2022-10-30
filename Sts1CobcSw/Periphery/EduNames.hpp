@@ -21,4 +21,5 @@ inline constexpr auto updateTimeId = 0x06_b;      //! Update EDU system time
 
 // Max. length for a single round data field
 inline constexpr auto maxDataLength = 32768;
+inline constexpr auto maxResultLength = 512;
 }

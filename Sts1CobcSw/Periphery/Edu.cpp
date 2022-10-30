@@ -20,6 +20,7 @@ using ts::operator""_i32;
 using ts::operator""_u32;
 using ts::operator""_i64;
 using ts::operator""_u64;
+using ts::operator""_usize;
 
 
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
@@ -55,8 +56,15 @@ constexpr auto maxNStatusBytes = 6;
 constexpr std::size_t nLengthBytes = 2;
 // Amount of bytes for a basic command or a high level command header
 constexpr std::size_t nCommandBytes = 1;
+
+// TODO: choose proper values
 // Max. amount of send retries after receiving NACK
 constexpr auto maxNNackRetries = 10;
+// Max. number of data packets for a single command
+constexpr auto maxNPackets = 50_usize;
+
+// Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
+auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 
 //! @brief  Must be called in an init() function of a thread.
@@ -373,22 +381,21 @@ void Edu::MockWriteToFile(std::span<Byte> data)
     RODOS::PRINTF("\nStart return result\n");
     // END DEBUG
     ts::bool_t resultEof = false;
-    std::size_t totalResultSize = 0U;
-    std::size_t packets = 0U;
+    ts::size_t totalResultSize = 0_usize;
+    ts::size_t packets = 0_usize;
     ResultInfo resultInfo;
-    while(not resultEof and packets < 5)
+    while(not resultEof and packets < maxNPackets)
     {
         // DEBUG
         RODOS::PRINTF("\nPacket %lu\n", packets);
         // END DEBUG
-        std::array<Byte, maxDataLength> dataBuffer = {};
-        resultInfo = ReturnResultRetry(dataBuffer);
+        resultInfo = ReturnResultRetry();
         if(resultInfo.errorCode != EduErrorCode::success)
         {
             return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
         }
         MockWriteToFile(
-            std::span<Byte>(dataBuffer.begin(), dataBuffer.begin() + resultInfo.resultSize));
+            std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + resultInfo.resultSize.get()));
         totalResultSize += resultInfo.resultSize;
         packets++;
     }
@@ -400,7 +407,7 @@ void Edu::MockWriteToFile(std::span<Byte> data)
 //! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
 //!
 //! @returns An error code and the number of received bytes in ResultInfo
-[[nodiscard]] auto Edu::ReturnResultRetry(std::span<Byte, maxDataLength> dataBuffer) -> ResultInfo
+[[nodiscard]] auto Edu::ReturnResultRetry() -> ResultInfo
 {
     // Send command
     auto serialCommand = serial::Serialize(returnResultId);
@@ -410,11 +417,15 @@ void Edu::MockWriteToFile(std::span<Byte> data)
         return ResultInfo{.errorCode = commandError, .resultSize = 0U};
     }
 
+    // DEBUG
+    RODOS::PRINTF("\nStart receiving result\n");
+    // END DEBUG
+
     ResultInfo resultInfo;
     std::size_t errorCount = 0U;
     do
     {
-        resultInfo = ReturnResultCommunication(dataBuffer);
+        resultInfo = ReturnResultCommunication();
         if(resultInfo.errorCode == EduErrorCode::success
            or resultInfo.errorCode == EduErrorCode::successEof)
         {
@@ -432,8 +443,7 @@ void Edu::MockWriteToFile(std::span<Byte> data)
 // directly and instead writes to a non-primary RAM bank as an intermediate step.
 //
 // Simple results -> 1 round should work with DMA to RAM
-[[nodiscard]] auto Edu::ReturnResultCommunication(std::span<Byte, maxDataLength> dataBuffer)
-    -> ResultInfo
+[[nodiscard]] auto Edu::ReturnResultCommunication() -> ResultInfo
 {
     // Receive command
     // If no result is available, the command will be NACK,
@@ -455,8 +465,15 @@ void Edu::MockWriteToFile(std::span<Byte> data)
     }
     if(command != cmdData)
     {
+        // DEBUG
+        RODOS::PRINTF("\nNot DATA command\n");
+        // END DEBUG
         return ResultInfo{.errorCode = EduErrorCode::invalidCommand, .resultSize = 0U};
     }
+
+    // DEBUG
+    RODOS::PRINTF("\nGet Length\n");
+    // END DEBUG
 
     serial::SerialBuffer<ts::uint16_t> dataLengthBuffer = {};
     auto lengthError = UartReceive(dataLengthBuffer);
@@ -471,22 +488,34 @@ void Edu::MockWriteToFile(std::span<Byte> data)
         return ResultInfo{.errorCode = EduErrorCode::invalidLength, .resultSize = 0U};
     }
 
+    // DEBUG
+    RODOS::PRINTF("\nGet Data\n");
+    // END DEBUG
+
     // Get the actual data
     auto dataError = UartReceive(
-        std::span<Byte>(dataBuffer.begin(), dataBuffer.begin() + actualDataLength.get()));
+        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength.get()));
 
     if(dataError != EduErrorCode::success)
     {
         return ResultInfo{.errorCode = dataError, .resultSize = 0U};
     }
 
+    // DEBUG
+    RODOS::PRINTF("\nCheck CRC\n");
+    // END DEBUG
+
     auto crc32Error = CheckCrc32(
-        std::span<Byte>(dataBuffer.begin(), dataBuffer.begin() + actualDataLength.get()));
+        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength.get()));
 
     if(crc32Error != EduErrorCode::success)
     {
         return ResultInfo{.errorCode = crc32Error, .resultSize = 0U};
     }
+
+    // DEBUG
+    RODOS::PRINTF("\nSuccess\n");
+    // END DEBUG
 
     return {EduErrorCode::success, actualDataLength.get()};
 }
@@ -683,6 +712,17 @@ auto Edu::FlushUartBuffer() -> void
 auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
 {
     uint32_t crc32Calculated = utility::Crc32(data);
+
+    // DEBUG
+    RODOS::PRINTF("\nCRC Data:");
+    hal::WriteTo(&uart_, data);
+    RODOS::PRINTF("\nCalculated CRC:");
+    auto crcSerial = serial::Serialize(crc32Calculated);
+    hal::WriteTo(&uart_, std::span<Byte>(crcSerial));
+    RODOS::PRINTF("\n");
+    // END DEBUG
+
+
     serial::SerialBuffer<ts::uint32_t> crc32Buffer = {};
     auto receiveError = UartReceive(crc32Buffer);
     if(receiveError != EduErrorCode::success)

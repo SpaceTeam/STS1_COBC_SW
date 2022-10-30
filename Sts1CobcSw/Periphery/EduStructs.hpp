@@ -25,6 +25,7 @@ using ts::operator""_i32;
 using ts::operator""_u32;
 using ts::operator""_i64;
 using ts::operator""_u64;
+using ts::operator""_usize;
 
 
 struct HeaderData
@@ -85,7 +86,7 @@ struct ProgramFinishedStatus
 struct ResultInfo
 {
     periphery::EduErrorCode errorCode = EduErrorCode::noErrorCodeSet;
-    std::size_t resultSize = 0U;
+    ts::size_t resultSize = 0_usize;
 };
 
 

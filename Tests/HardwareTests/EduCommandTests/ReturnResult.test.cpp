@@ -4,9 +4,9 @@
 //! Preparation:
 //!
 //! Example:
-//! D78B0A0011FFCCBB55EE99AA7722A7656CF5
-//! 8B050011223344558B58B4C3
-//! 59
+//! D78B0A0011FFCCBB55EE99AA7722911DCFA7
+//! 8B05001122334455A59CFA94
+//! 59 (= EOF)
 
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
@@ -36,8 +36,8 @@ class ReturnResultTest : public RODOS::StaticThread<>
 
         auto resultInfo = edu.ReturnResult();
 
-        //RODOS::PRINTF("\nReturned error code: %d", static_cast<int>(resultInfo.errorCode));
-        //RODOS::PRINTF("\nReturned total result size: %d", static_cast<int>(resultInfo.resultSize));
+        RODOS::PRINTF("\nReturned error code: %d", static_cast<int>(resultInfo.errorCode));
+        RODOS::PRINTF("\nReturned total result size: %lu", static_cast<std::size_t>(resultInfo.resultSize));
     }
 };
 
