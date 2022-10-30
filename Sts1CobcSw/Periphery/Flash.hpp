@@ -31,7 +31,7 @@ struct JedecId
 // TODO: Proper error handling/return type
 [[nodiscard]] auto Initialize() -> std::int32_t;
 [[nodiscard]] auto ReadJedecId() -> JedecId;
-[[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte;
+[[nodiscard]] auto ReadStatusRegister(std::int8_t registerNo) -> Byte;
 
 [[nodiscard]] auto ReadPage(std::uint32_t address) -> Page;
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
