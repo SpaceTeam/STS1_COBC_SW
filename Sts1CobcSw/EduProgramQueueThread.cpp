@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
@@ -99,7 +100,12 @@ private:
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
             // TODO: Do something with error code
-            [[maybe_unused]] auto errorCode = edu.UpdateTime(updateTimeData);
+            auto errorCode = edu.UpdateTime(updateTimeData);
+
+            if(errorCode != periphery::EduErrorCode::success)
+            {
+                ResumeEduErrorCommunicationThread();
+            }
 
             // TODO: Get rid of the code duplication here
             nextProgramStartTime =
@@ -131,6 +137,12 @@ private:
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
             auto eduAnswer = edu.ExecuteProgram(executeProgramData);
+
+            if(eduAnswer != periphery::EduErrorCode::success)
+            {
+                ResumeEduErrorCommunicationThread();
+            }
+
 
             // Suspend Self for execution time
             auto const executionTime = timeout + eduCommunicationDelay;
