@@ -32,7 +32,7 @@ auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -
     do
     {
         statusHistory.get(statusHistoryEntry);
-    } while(statusHistoryEntry.queueId != queueId and statusHistoryEntry.programId != programId);
+    } while(statusHistoryEntry.queueId != queueId or statusHistoryEntry.programId != programId);
 
     return statusHistoryEntry;
 }
