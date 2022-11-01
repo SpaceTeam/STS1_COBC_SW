@@ -23,7 +23,6 @@ auto eduHeartBeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    // TODO: Add this to all the other threads as well
     EduHeartbeatThread() : StaticThread("EduHeartbeatThread", threadPriority)
     {
     }
@@ -78,5 +77,4 @@ private:
         }
     }
 } eduHeartbeatThread;
-// TODO: Get back to the inline thread variable definition (like above) for all threads
 }

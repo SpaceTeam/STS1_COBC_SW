@@ -26,13 +26,12 @@ namespace ts = type_safe;
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 20 * RODOS::SECONDS;
-constexpr auto eduPowerManagementThreadDelay = 2 * RODOS::SECONDS;
+constexpr auto eduPowerManagementThreadPeriod = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
 constexpr auto threadPriority = 500;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
-// TODO: Move to Edu.hpp/cpp
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
@@ -46,14 +45,13 @@ private:
     void init() override
     {
         epsBatteryGoodGpioPin.Direction(hal::PinDirection::in);
-
         periphery::persistentstate::Initialize();
     }
 
 
     void run() override
     {
-        while(true)
+        TIME_LOOP(0, eduPowerManagementThreadPeriod)
         {
             std::int64_t startDelay = 0;
             nextProgramStartDelayBuffer.get(startDelay);
@@ -88,10 +86,6 @@ private:
             {
                 edu.TurnOff();
             }
-
-            // TODO: Use a TIME_LOOP() instead
-            // TODO: Give the 2 seconds a name
-            RODOS::AT(RODOS::NOW() + eduPowerManagementThreadDelay);
         }
     }
 } eduPowerManagementThread;

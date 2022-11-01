@@ -18,7 +18,18 @@
 
 namespace sts1cobcsw
 {
+namespace ts = type_safe;
 using serial::Byte;
+
+using ts::operator""_i8;
+using ts::operator""_u8;
+using ts::operator""_i16;
+using ts::operator""_u16;
+using ts::operator""_i32;
+using ts::operator""_u32;
+using ts::operator""_i64;
+using ts::operator""_u64;
+
 
 using RODOS::AT;
 using RODOS::NOW;
@@ -33,12 +44,10 @@ constexpr auto threadPriority = 300;
 periphery::Edu edu = periphery::Edu();
 
 
-// TODO: File and class name should match. More generally, consistently call it EduProgramQueue or
-// just EduQueue everywhere.
-class EduQueueThread : public RODOS::StaticThread<stackSize>
+class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduQueueThread() : StaticThread("EduQueueThread", threadPriority)
+    EduProgramQueueThread() : StaticThread("EduQueueThread", threadPriority)
     {
     }
 
@@ -47,14 +56,18 @@ private:
     {
         edu.Initialize();
 
-        auto queueEntry1 = EduQueueEntry{
-            .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
-        eduProgramQueue.push_back(queueEntry1);
+        // auto queueEntry1 = EduQueueEntry{.programId = 0_u16,
+        //                                  .queueId = 1_u16,
+        //                                  .startTime = 946'684'807_i32,
+        //                                  .timeout = 10_i16};  // NOLINT
+        auto queueEntry1 = EduQueueEntry(0_u16, 1_u16, 946'684'807_i32, 10_i16);
 
-        auto queueEntry2 = EduQueueEntry{
-            .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
+        // auto queueEntry2 = EduQueueEntry{.programId = 0_u16,
+        //                                  .queueId = 2_u16,
+        //                                  .startTime = 946'684'820_i32,
+        //                                  .timeout = 20_i16};  // NOLINT
+        auto queueEntry2 = EduQueueEntry(0_u16, 2_u16, 946'684'820_i32, 10_i16);
 
-        // TODO: Why add the first entry again?
         eduProgramQueue.push_back(queueEntry1);
         eduProgramQueue.push_back(queueEntry2);
     }
@@ -62,7 +75,7 @@ private:
     void run() override
     {
         RODOS::PRINTF("Entering EduQueueThread\n");
-        utility::PrintTime();
+        utility::PrintFormattedSystemUtc();
         while(true)
         {
             if(eduProgramQueue.empty())
@@ -79,8 +92,8 @@ private:
 
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
-            auto nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
+            auto nextProgramStartTime = eduProgramQueue[queueIndex].startTime.get()
+                                      - (utility::rodosUnixOffset / RODOS::SECONDS);
             auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto startDelay =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
@@ -97,7 +110,7 @@ private:
             // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             RODOS::PRINTF("Resuming here after first wait.\n");
-            utility::PrintTime();
+            utility::PrintFormattedSystemUtc();
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
             auto errorCode = edu.UpdateTime(updateTimeData);
@@ -107,8 +120,8 @@ private:
             }
 
             // TODO: Get rid of the code duplication here
-            nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
+            nextProgramStartTime = eduProgramQueue[queueIndex].startTime.get()
+                                 - (utility::rodosUnixOffset / RODOS::SECONDS);
             currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto startDelay2 =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
@@ -126,7 +139,7 @@ private:
             auto end = RODOS::NOW() - begin;
             RODOS::PRINTF("Done suspending, suspended for                :%lld\n",
                           end / RODOS::SECONDS);  // NOLINT
-            utility::PrintTime();
+            utility::PrintFormattedSystemUtc();
 
             auto queueId = eduProgramQueue[queueIndex].queueId;
             auto programId = eduProgramQueue[queueIndex].programId;
@@ -144,15 +157,15 @@ private:
             else
             {
                 auto statusHistoryEntry =
-                    StatusHistoryEntry{.programId = programId, .queueId = queueId, .status = 1};
+                    StatusHistoryEntry(programId, queueId, ProgramStatus::programRunning);
                 statusHistory.put(statusHistoryEntry);
 
                 // Suspend Self for execution time
-                auto const executionTime = timeout + eduCommunicationDelay;
+                auto const executionTime = timeout.get() + eduCommunicationDelay;
                 RODOS::PRINTF("Suspending for execution time\n");
                 AT(NOW() + executionTime);
                 RODOS::PRINTF("Resuming from execution time\n");
-                utility::PrintTime();
+                utility::PrintFormattedSystemUtc();
 
                 // Set current Queue ID to next
                 queueIndex++;

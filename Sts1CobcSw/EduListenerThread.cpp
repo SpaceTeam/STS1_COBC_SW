@@ -17,21 +17,8 @@
 namespace sts1cobcsw
 {
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
-// TODO:: enum
-// enum class : uint8_t {
-//
-//}
-enum ProgramStatus : uint8_t
-{
-    programRunning = 1,
-    programCouldNotBeStarted = 2,
-    programExecutionFailed = 3,
-    programExecutionSucceeded = 4,
-    resultFileTransfered = 5,
-    resultFileSentToRf = 6,
-    ackFromGround = 7,
-    resultFileDeleted = 8
-};
+namespace ts = type_safe;
+
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
 constexpr auto threadPriority = 100;
 
@@ -118,6 +105,7 @@ private:
                         auto statusHistoryEntry =
                             FindStatusAndHistoryEntry(status.programId, status.programId);
                         statusHistoryEntry.status = ProgramStatus::resultFileTransfered;
+
 
                         break;
                     }

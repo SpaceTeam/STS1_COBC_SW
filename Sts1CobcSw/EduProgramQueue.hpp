@@ -9,6 +9,7 @@
 #include <ringbuffer.h>
 // clang-format on
 
+#include <type_safe/types.hpp>
 
 #include <etl/string.h>
 #include <etl/vector.h>
@@ -16,24 +17,77 @@
 
 namespace sts1cobcsw
 {
-// TODO: Use type_safe::, This way you cannot construct uninitialized QueueEntries
+namespace ts = type_safe;
+using ts::operator""_u8;
+using ts::operator""_i16;
+using ts::operator""_u16;
+using ts::operator""_i32;
+
+
+struct RawEduQueueEntry
+{
+    ts::uint16_t programId = 0_u16;
+    ts::uint16_t queueId = 0_u16;
+    ts::int32_t startTime = 0_i32;
+    ts::int16_t timeout = 0_i16;
+};
+
 struct EduQueueEntry
 {
-    uint16_t programId;
-    uint16_t queueId;
-    int32_t startTime;
-    int16_t timeout;
+    ts::uint16_t programId;
+    ts::uint16_t queueId;
+    ts::int32_t startTime;
+    ts::int16_t timeout;
+
+    explicit EduQueueEntry(ts::uint16_t programId_ = 0_u16,  // NOLINT
+                           ts::uint16_t queueId_ = 0_u16,    // NOLINT
+                           ts::int32_t startTime_ = 0_i32,   // NOLINT
+                           ts::int16_t timeout_ = 0_i16)     // NOLINT
+        : programId(programId_),
+          queueId(queueId_),
+          startTime(startTime_),
+          timeout(timeout_)  // NOLINT
+    {
+    }
+
+    explicit EduQueueEntry(RawEduQueueEntry r)
+        : EduQueueEntry(r.programId, r.queueId, r.startTime, r.timeout)
+    {
+    }
+};
+
+enum class ProgramStatus : uint8_t
+{
+    programRunning,
+    programCouldNotBeStarted,
+    programExecutionFailed,
+    programExecutionSucceeded,
+    resultFileTransfered,
+    resultFileSentToRf,
+    ackFromGround,
+    resultFileDeleted
 };
 
 
-// TODO: Again, type_safe::
 struct StatusHistoryEntry
 {
-    uint16_t programId;
-    uint16_t queueId;
-    uint8_t status;
-};
+    ts::uint16_t programId;
+    ts::uint16_t queueId;
+    ProgramStatus status{};
 
+    // TODO: would'nt it be better to create an 'unitialized' status ?
+    StatusHistoryEntry() : programId(0_u16), queueId(0_u16), status{ProgramStatus::programRunning}
+    {
+    }
+
+
+    StatusHistoryEntry(ts::uint16_t programIdArg,
+                       ts::uint16_t queueIdArg,
+                       ProgramStatus statusArg)                            // NOLINT
+        : programId(programIdArg), queueId(queueIdArg), status(statusArg)  // NOLINT
+    {
+    }
+};
 
 inline constexpr auto eduProgramQueueSize = 20;
 // TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?

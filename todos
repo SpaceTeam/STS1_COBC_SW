@@ -1,0 +1,15 @@
+Sts1CobcSw/CommandParserThread.cpp:44:// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
+Sts1CobcSw/CommandParserThread.cpp:53:// TODO: Use serial library instead
+Sts1CobcSw/CommandParserThread.cpp:115:    // TODO: Why is this here? It has nothing to do with command dispatching
+Sts1CobcSw/CommandParserThread.cpp:146:                // TODO: This should be a function Build/BuildNew/Update/OverwriteEduQueue() or
+Sts1CobcSw/CommandParserThread.cpp:177:// TODO: Use Deserialize instead of CopyFrom
+Sts1CobcSw/CommandParserThread.cpp:215:// TODO: Remove this function. Use the serial library instead.
+Sts1CobcSw/EduCommunicationErrorThread.cpp:53:// TODO: Think about whether this is the right way to declare, design, use, etc. this
+Sts1CobcSw/EduHeartBeatThread.cpp:15:// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
+Sts1CobcSw/EduListenerThread.cpp:20:// TODO:: enum
+Sts1CobcSw/EduPowerManagementThread.cpp:25:// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
+Sts1CobcSw/EduPowerManagementThread.cpp:27:// TODO: Come up with the "right" numbers
+Sts1CobcSw/EduPowerManagementThread.cpp:71:                    // TODO: also perform a check about archives on cobc
+Sts1CobcSw/EduProgramQueueThread.cpp:28:// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
+Sts1CobcSw/EduProgramQueueThread.cpp:106:            // TODO: Get rid of the code duplication here
+Sts1CobcSw/EduProgramQueueThread.cpp:162:// TODO: Think about whether this is the right way to declare, design, use, etc. this
