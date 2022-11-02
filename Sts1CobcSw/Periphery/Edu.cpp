@@ -384,6 +384,19 @@ void Edu::MockWriteToFile(std::span<Byte> data)
     // DEBUG
     RODOS::PRINTF("\nStart return result\n");
     // END DEBUG
+
+    // Send command
+    auto serialCommand = serial::Serialize(returnResultId);
+    auto commandError = SendData(serialCommand);
+    if(commandError != EduErrorCode::success)
+    {
+        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
+    }
+
+    // DEBUG
+    RODOS::PRINTF("\nStart receiving result\n");
+    // END DEBUG
+
     ts::size_t totalResultSize = 0_usize;
     ts::size_t packets = 0_usize;
     ResultInfo resultInfo;
@@ -391,11 +404,11 @@ void Edu::MockWriteToFile(std::span<Byte> data)
     while(packets < maxNPackets)
     {
         // DEBUG
-        RODOS::PRINTF("\nPacket %lu\n", packets);
+        RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets.get()));
         // END DEBUG
         resultInfo = ReturnResultRetry();
         // DEBUG
-        RODOS::PRINTF("ResultInfo{errorCode = %d, resultSize = %d}",
+        RODOS::PRINTF("ResultInfo{errorCode = %d, resultSize = %d}\n",
                       static_cast<int>(resultInfo.errorCode),
                       static_cast<int>(resultInfo.resultSize.get()));
         // END DEBUG
@@ -418,18 +431,6 @@ void Edu::MockWriteToFile(std::span<Byte> data)
 //! @returns An error code and the number of received bytes in ResultInfo
 [[nodiscard]] auto Edu::ReturnResultRetry() -> ResultInfo
 {
-    // Send command
-    auto serialCommand = serial::Serialize(returnResultId);
-    auto commandError = SendData(serialCommand);
-    if(commandError != EduErrorCode::success)
-    {
-        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
-    }
-
-    // DEBUG
-    RODOS::PRINTF("\nStart receiving result\n");
-    // END DEBUG
-
     ResultInfo resultInfo;
     std::size_t errorCount = 0U;
     do
