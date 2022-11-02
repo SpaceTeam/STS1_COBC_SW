@@ -204,7 +204,6 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
                 // Erase all previous entries in the EDU program queue
                 eduProgramQueue.clear();
 
-                // TODO: use size of GsCommandHeader + 1
                 ParseAndAddQueueEntries(command.substr(
                     gsCommandHeaderSize, static_cast<std::size_t>(gsCommandHeader.length)));
 

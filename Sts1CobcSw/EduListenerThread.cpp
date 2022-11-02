@@ -17,10 +17,10 @@
 namespace sts1cobcsw
 {
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
-namespace ts = type_safe;
 
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
 constexpr auto threadPriority = 100;
+
 
 auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
 {
@@ -32,6 +32,7 @@ auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -
 
     return statusHistoryEntry;
 }
+
 
 class EduListenerThread : public StaticThread<>
 {
@@ -94,7 +95,6 @@ private:
                         // Send return result to Edu, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
                         auto resultsInfo = edu.ReturnResult();
-
                         auto errorCode = resultsInfo.errorCode;
 
                         if(errorCode != periphery::EduErrorCode::success)

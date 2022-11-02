@@ -21,14 +21,9 @@ namespace sts1cobcsw
 namespace ts = type_safe;
 using serial::Byte;
 
-using ts::operator""_i8;
-using ts::operator""_u8;
 using ts::operator""_i16;
 using ts::operator""_u16;
 using ts::operator""_i32;
-using ts::operator""_u32;
-using ts::operator""_i64;
-using ts::operator""_u64;
 
 
 using RODOS::AT;
@@ -56,16 +51,7 @@ private:
     {
         edu.Initialize();
 
-        // auto queueEntry1 = EduQueueEntry{.programId = 0_u16,
-        //                                  .queueId = 1_u16,
-        //                                  .startTime = 946'684'807_i32,
-        //                                  .timeout = 10_i16};  // NOLINT
         auto queueEntry1 = EduQueueEntry(0_u16, 1_u16, 946'684'807_i32, 10_i16);
-
-        // auto queueEntry2 = EduQueueEntry{.programId = 0_u16,
-        //                                  .queueId = 2_u16,
-        //                                  .startTime = 946'684'820_i32,
-        //                                  .timeout = 20_i16};  // NOLINT
         auto queueEntry2 = EduQueueEntry(0_u16, 2_u16, 946'684'820_i32, 10_i16);
 
         eduProgramQueue.push_back(queueEntry1);

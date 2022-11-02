@@ -24,14 +24,6 @@ using ts::operator""_u16;
 using ts::operator""_i32;
 
 
-struct RawEduQueueEntry
-{
-    ts::uint16_t programId = 0_u16;
-    ts::uint16_t queueId = 0_u16;
-    ts::int32_t startTime = 0_i32;
-    ts::int16_t timeout = 0_i16;
-};
-
 struct EduQueueEntry
 {
     ts::uint16_t programId;
@@ -47,11 +39,6 @@ struct EduQueueEntry
           queueId(queueId_),
           startTime(startTime_),
           timeout(timeout_)  // NOLINT
-    {
-    }
-
-    explicit EduQueueEntry(RawEduQueueEntry r)
-        : EduQueueEntry(r.programId, r.queueId, r.startTime, r.timeout)
     {
     }
 };
