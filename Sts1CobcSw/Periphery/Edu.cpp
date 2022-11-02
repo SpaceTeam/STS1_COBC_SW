@@ -67,6 +67,9 @@ constexpr auto maxNPackets = 50_usize;
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 
+auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
+
+
 //! @brief  Must be called in an init() function of a thread.
 auto Edu::Initialize() -> void
 {
@@ -242,7 +245,7 @@ auto Edu::TurnOff() -> void
 [[nodiscard]] auto Edu::GetStatusCommunication() -> EduStatus
 {
     // Get header data
-    serial::SerialBuffer<HeaderData> headerBuffer = {};
+    auto headerBuffer = serial::SerialBuffer<HeaderData>{};
     auto headerReceiveError = UartReceive(headerBuffer);
     auto headerData = serial::Deserialize<HeaderData>(headerBuffer);
 
@@ -371,19 +374,7 @@ void Edu::MockWriteToFile(std::span<Byte> data)
 {
     // DEBUG
     RODOS::PRINTF("\nWrite to file...\n");
-    constexpr auto nRows = 40;
-    auto iRows = 0;
-    for(auto x : data)
-    {
-        RODOS::PRINTF(" %c", static_cast<char>(x));
-        iRows++;
-        if(iRows == nRows)
-        {
-            RODOS::PRINTF("\n");
-            iRows = 0;
-        }
-    }
-    RODOS::PRINTF("\n");
+    Print(std::span(data));
     // END DEBUG
 }
 
@@ -393,11 +384,11 @@ void Edu::MockWriteToFile(std::span<Byte> data)
     // DEBUG
     RODOS::PRINTF("\nStart return result\n");
     // END DEBUG
-    ts::bool_t resultEof = false;
     ts::size_t totalResultSize = 0_usize;
     ts::size_t packets = 0_usize;
     ResultInfo resultInfo;
-    while(not resultEof and packets < maxNPackets)
+    // TODO: Turn into for loop
+    while(packets < maxNPackets)
     {
         // DEBUG
         RODOS::PRINTF("\nPacket %lu\n", packets);
@@ -410,7 +401,7 @@ void Edu::MockWriteToFile(std::span<Byte> data)
         // END DEBUG
         if(resultInfo.errorCode != EduErrorCode::success)
         {
-            return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
+            break;
         }
         MockWriteToFile(std::span<Byte>(cepDataBuffer.begin(),
                                         cepDataBuffer.begin() + resultInfo.resultSize.get()));
@@ -732,11 +723,11 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
     uint32_t crc32Calculated = utility::Crc32(data);
 
     // DEBUG
-    RODOS::PRINTF("\nCRC Data:");
-    hal::WriteTo(&uart_, data);
-    RODOS::PRINTF("\nCalculated CRC:");
+    RODOS::PRINTF("\nCRC Data:\n");
+    Print(data);
+    RODOS::PRINTF("\nCalculated CRC:\n");
     auto crcSerial = serial::Serialize(crc32Calculated);
-    hal::WriteTo(&uart_, std::span<Byte>(crcSerial));
+    Print(std::span(crcSerial));
     RODOS::PRINTF("\n");
     // END DEBUG
 
@@ -752,5 +743,22 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
         return EduErrorCode::wrongChecksum;
     }
     return EduErrorCode::success;
+}
+
+
+auto Print(std::span<Byte> data, int nRows) -> void
+{
+    auto iRows = 0;
+    for(auto x : data)
+    {
+        RODOS::PRINTF("%c", static_cast<char>(x));
+        iRows++;
+        if(iRows == nRows)
+        {
+            RODOS::PRINTF("\n");
+            iRows = 0;
+        }
+    }
+    RODOS::PRINTF("\n");
 }
 }
