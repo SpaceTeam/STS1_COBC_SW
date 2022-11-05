@@ -26,21 +26,10 @@ using ts::operator""_i32;
 
 struct EduQueueEntry
 {
-    ts::uint16_t programId;
-    ts::uint16_t queueId;
-    ts::int32_t startTime;
-    ts::int16_t timeout;
-
-    explicit EduQueueEntry(ts::uint16_t programId_ = 0_u16,  // NOLINT
-                           ts::uint16_t queueId_ = 0_u16,    // NOLINT
-                           ts::int32_t startTime_ = 0_i32,   // NOLINT
-                           ts::int16_t timeout_ = 0_i16)     // NOLINT
-        : programId(programId_),
-          queueId(queueId_),
-          startTime(startTime_),
-          timeout(timeout_)  // NOLINT
-    {
-    }
+    ts::uint16_t programId = 0_u16;
+    ts::uint16_t queueId = 0_u16;
+    ts::int32_t startTime = 0_i32;
+    ts::int16_t timeout = 0_i16;
 };
 
 enum class ProgramStatus : uint8_t
@@ -58,22 +47,9 @@ enum class ProgramStatus : uint8_t
 
 struct StatusHistoryEntry
 {
-    ts::uint16_t programId;
-    ts::uint16_t queueId;
-    ProgramStatus status{};
-
-    // TODO: would'nt it be better to create an 'unitialized' status ?
-    StatusHistoryEntry() : programId(0_u16), queueId(0_u16), status{ProgramStatus::programRunning}
-    {
-    }
-
-
-    StatusHistoryEntry(ts::uint16_t programIdArg,
-                       ts::uint16_t queueIdArg,
-                       ProgramStatus statusArg)                            // NOLINT
-        : programId(programIdArg), queueId(queueIdArg), status(statusArg)  // NOLINT
-    {
-    }
+    ts::uint16_t programId = 0_u16;
+    ts::uint16_t queueId = 0_u16;
+    ProgramStatus status = ProgramStatus::programRunning;
 };
 
 inline constexpr auto eduProgramQueueSize = 20;

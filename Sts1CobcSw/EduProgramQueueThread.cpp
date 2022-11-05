@@ -51,8 +51,8 @@ private:
     {
         edu.Initialize();
 
-        auto queueEntry1 = EduQueueEntry(0_u16, 1_u16, 946'684'807_i32, 10_i16);
-        auto queueEntry2 = EduQueueEntry(0_u16, 2_u16, 946'684'820_i32, 10_i16);
+        auto queueEntry1 = EduQueueEntry{0_u16, 1_u16, 946'684'807_i32, 10_i16};
+        auto queueEntry2 = EduQueueEntry{0_u16, 2_u16, 946'684'820_i32, 10_i16};
 
         eduProgramQueue.push_back(queueEntry1);
         eduProgramQueue.push_back(queueEntry2);
@@ -143,7 +143,9 @@ private:
             else
             {
                 auto statusHistoryEntry =
-                    StatusHistoryEntry(programId, queueId, ProgramStatus::programRunning);
+                    StatusHistoryEntry{.programId = programId,
+                                       .queueId = queueId,
+                                       .status = ProgramStatus::programRunning};
                 statusHistory.put(statusHistoryEntry);
 
                 // Suspend Self for execution time
