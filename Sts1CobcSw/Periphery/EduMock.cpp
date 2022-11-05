@@ -5,9 +5,24 @@
 #include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
+namespace sts1cobcsw {
+// TODO: Move this in the proper file
+auto ResumeEduErrorCommunicationThread() -> void {
+    RODOS::PRINTF("Call to EduErrorCommunicationTHread");
+}
+
+}
+
 // TODO: This file is not used at all right now. Think about the mocking later.
 namespace sts1cobcsw::periphery
 {
+
+auto Edu::Initialize() -> void
+{
+    RODOS::PRINTF("Call to Initialize()\n");
+}
+
+
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 [[nodiscard]] auto Edu::ExecuteProgram([[maybe_unused]] ExecuteProgramData const & data)
     -> EduErrorCode

@@ -20,5 +20,11 @@ if(FALSE)
     )
 endif()
 
+
+set(thread_tests "")
+set(Source "${CMAKE_SOURCE_DIR}/Sts1CobcSw")
+add_thread_golden_test(NAME EduProgramQueueThread FILES "${Source}/EduProgramQueueThread.cpp" "${Source}/TopicsAndSubscribers.cpp" "${Source}/EduProgramQueue.cpp" LIB rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility)
+
+message("Thread Tests : ${thread_tests}")
 # Create a single target for all golden tests
-add_custom_target(AllGoldenTests DEPENDS ${output_files})
+add_custom_target(AllGoldenTests DEPENDS ${output_files} ${thread_tests} )

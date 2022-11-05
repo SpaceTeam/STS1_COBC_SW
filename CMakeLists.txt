@@ -25,11 +25,11 @@ find_rodos()
 add_library(Sts1CobcSw_Dummy OBJECT)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility OBJECT)
+add_library(Sts1CobcSw_Periphery OBJECT)
 add_program(HelloDummy)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_Hal INTERFACE)
-    add_library(Sts1CobcSw_Periphery OBJECT)
     add_program(CobcSw)
 endif()
 
