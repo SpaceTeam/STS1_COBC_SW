@@ -373,8 +373,7 @@ auto Edu::TurnOff() -> void
 void Edu::MockWriteToFile(std::span<Byte> data)
 {
     // DEBUG
-    RODOS::PRINTF("\nWrite to file...\n");
-    Print(std::span(data));
+    RODOS::PRINTF("\nWriting to file...\n");
     // END DEBUG
 }
 
@@ -721,25 +720,30 @@ auto Edu::FlushUartBuffer() -> void
 
 auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
 {
-    uint32_t crc32Calculated = utility::Crc32(data);
+    uint32_t computedCrc32 = utility::Crc32(data);
 
     // DEBUG
-    RODOS::PRINTF("\nCRC Data:\n");
-    Print(data);
-    RODOS::PRINTF("\nCalculated CRC:\n");
-    auto crcSerial = serial::Serialize(crc32Calculated);
-    Print(std::span(crcSerial));
+    RODOS::PRINTF("\nComputed CRC: ");
+    auto crcSerial = serial::Serialize(computedCrc32);
+    Print(crcSerial);
     RODOS::PRINTF("\n");
     // END DEBUG
 
 
-    serial::SerialBuffer<ts::uint32_t> crc32Buffer = {};
+    auto crc32Buffer = serial::SerialBuffer<ts::uint32_t>{};
     auto receiveError = UartReceive(crc32Buffer);
+
+    // DEBUG
+    RODOS::PRINTF("Received CRC: ");
+    Print(crc32Buffer);
+    RODOS::PRINTF("\n");
+    // END DEBUG
+
     if(receiveError != EduErrorCode::success)
     {
         return receiveError;
     }
-    if(crc32Calculated != serial::Deserialize<ts::uint32_t>(crc32Buffer))
+    if(computedCrc32 != serial::Deserialize<ts::uint32_t>(crc32Buffer))
     {
         return EduErrorCode::wrongChecksum;
     }
