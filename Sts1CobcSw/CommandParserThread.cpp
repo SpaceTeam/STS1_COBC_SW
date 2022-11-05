@@ -36,6 +36,8 @@ using sts1cobcsw::serial::Byte;
 using sts1cobcsw::serial::DeserializeFrom;
 
 
+// TODO: This should all be in a separate file. ComandParserThread.cpp should only contain the
+// thread.
 enum CommandId : char
 {
     turnEduOn = '1',
@@ -50,7 +52,6 @@ struct GsCommandHeader
     std::int8_t commandId;
     std::int16_t length;
 };
-constexpr auto gsCommandHeaderSize = sizeof(GsCommandHeader);
 
 
 namespace serial
@@ -81,6 +82,7 @@ auto DeserializeFrom(Byte * source, GsCommandHeader * data) -> Byte *
 }
 
 
+// TODO: Put this where EduQueueEntry is defined
 auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
 {
     source = DeserializeFrom(source, &(data->queueId));
@@ -94,6 +96,7 @@ auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
 constexpr auto stackSize = 4'000U;
 constexpr std::size_t commandSize = 30;
 constexpr auto threadPriority = 100;
+// TODO: Use serialSize<EduQueueEntry> instead
 constexpr std::size_t queueEntrySize =
     sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
     + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
@@ -120,13 +123,16 @@ private:
     {
         constexpr auto startCharacter = '$';
 
+        // TODO: The command is not a string. Turn this into an array of bytes, or if different
+        // commands have different size, use an etl::vector<Byte>
         auto command = etl::string<commandSize>();
         ts::bool_t startWasDetected = false;
 
         while(true)
         {
             char readCharacter = 0;
-            // This needs to be abstracted away because "IRL" we receive commands via the RF module
+            // TODO: This needs to be abstracted away because "IRL" we receive commands via the RF
+            // module
             ts::size_t nReadCharacters =
                 RODOS::uart_stdout.read(&readCharacter, sizeof(readCharacter));
             if(nReadCharacters != 0U)
@@ -204,8 +210,10 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
                 // Erase all previous entries in the EDU program queue
                 eduProgramQueue.clear();
 
+                // FIXME: I think this is the wrong size because serialSize<T> != sizeof(T) in this
+                // case.
                 ParseAndAddQueueEntries(command.substr(
-                    gsCommandHeaderSize, static_cast<std::size_t>(gsCommandHeader.length)));
+                    sizeof(GsCommandHeader), static_cast<std::size_t>(gsCommandHeader.length)));
 
                 // Reset queue index
                 queueIndex = 0U;
@@ -231,6 +239,7 @@ auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void
     auto const nQueueEntries = command.size() / queueEntrySize;
     eduProgramQueue.resize(nQueueEntries);
 
+    // TODO: Use SerialBuffer<EduQueueEntry> instead
     auto buffer = std::array<std::byte, serial::serialSize<EduQueueEntry>>();
 
     // TODO: Test all of this
