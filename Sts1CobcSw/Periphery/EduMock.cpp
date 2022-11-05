@@ -5,9 +5,11 @@
 #include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
-namespace sts1cobcsw {
+namespace sts1cobcsw
+{
 // TODO: Move this in the proper file
-auto ResumeEduErrorCommunicationThread() -> void {
+auto ResumeEduErrorCommunicationThread() -> void
+{
     RODOS::PRINTF("Call to EduErrorCommunicationTHread");
 }
 
@@ -16,7 +18,6 @@ auto ResumeEduErrorCommunicationThread() -> void {
 // TODO: This file is not used at all right now. Think about the mocking later.
 namespace sts1cobcsw::periphery
 {
-
 auto Edu::Initialize() -> void
 {
     RODOS::PRINTF("Call to Initialize()\n");
