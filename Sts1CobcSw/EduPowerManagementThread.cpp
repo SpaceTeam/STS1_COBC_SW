@@ -7,7 +7,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
-#include <Sts1CobcSw/ThreadsPriorities.hpp>
+#include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <type_safe/types.hpp>

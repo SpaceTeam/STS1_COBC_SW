@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/ThreadsPriorities.hpp>
+#include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -53,7 +53,7 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void;
 class CommandParserThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    CommandParserThread() : StaticThread("CommandParserThread", commandParsetThreadPriority)
+    CommandParserThread() : StaticThread("CommandParserThread", commandParserThreadPriority)
     {
     }
 
