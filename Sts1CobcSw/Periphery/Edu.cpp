@@ -64,7 +64,8 @@ auto Edu::Initialize() -> void
     // should be powered or not. We do have a separate EDU power management thread which though.
     TurnOff();
 
-    constexpr auto baudRate = 115'200;
+    // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
+    constexpr auto baudRate = 921'600;
     uart_.init(baudRate);
 }
 
