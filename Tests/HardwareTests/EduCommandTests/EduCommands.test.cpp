@@ -40,6 +40,9 @@ private:
 
     void run() override
     {
+        // Permanently turn on EDU for this test
+        edu.TurnOn();
+
         PRINTF("\n");
         PRINTF("EDU commands test\n");
 
