@@ -17,14 +17,7 @@ namespace periphery
 namespace ts = type_safe;
 using sts1cobcsw::serial::Byte;
 using sts1cobcsw::serial::operator""_b;
-using ts::operator""_i8;
-using ts::operator""_u8;
-using ts::operator""_i16;
 using ts::operator""_u16;
-using ts::operator""_i32;
-using ts::operator""_u32;
-using ts::operator""_i64;
-using ts::operator""_u64;
 using ts::operator""_usize;
 
 

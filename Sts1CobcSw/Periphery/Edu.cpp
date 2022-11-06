@@ -12,14 +12,7 @@ namespace sts1cobcsw::periphery
 using sts1cobcsw::serial::operator""_b;
 using sts1cobcsw::serial::Byte;
 
-using ts::operator""_i8;
-using ts::operator""_u8;
-using ts::operator""_i16;
 using ts::operator""_u16;
-using ts::operator""_i32;
-using ts::operator""_u32;
-using ts::operator""_i64;
-using ts::operator""_u64;
 using ts::operator""_usize;
 
 
@@ -49,20 +42,14 @@ constexpr auto flushTimeout = 1 * RODOS::MILLISECONDS;
 // UART flush garbage buffer size
 constexpr auto garbageBufferSize = 128;
 
-// GetStatus Constants
-// Max. amount of bytes for result of "Get Status" EDU command
-constexpr auto maxNStatusBytes = 6;
-// Amount of bytes for the length field of a data command
-constexpr std::size_t nLengthBytes = 2;
-// Amount of bytes for a basic command or a high level command header
-constexpr std::size_t nCommandBytes = 1;
-
 // TODO: choose proper values
 // Max. amount of send retries after receiving NACK
 constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
 constexpr auto maxNPackets = 50_usize;
 
+// Max. length of a single data packet
+constexpr auto maxDataLength = 32768;
 // Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
@@ -277,7 +264,7 @@ auto Edu::TurnOff() -> void
 
     if(statusType == noEventCode)
     {
-        if(headerData.length != 1)
+        if(headerData.length != nNoEventBytes)
         {
             return EduStatus{.statusType = EduStatusType::invalid,
                              .errorCode = EduErrorCode::invalidLength};
@@ -370,14 +357,6 @@ auto Edu::TurnOff() -> void
 }
 
 
-void Edu::MockWriteToFile(std::span<Byte> data)
-{
-    // DEBUG
-    RODOS::PRINTF("\nWriting to file...\n");
-    // END DEBUG
-}
-
-
 [[nodiscard]] auto Edu::ReturnResult() -> ResultInfo
 {
     // DEBUG
@@ -415,8 +394,9 @@ void Edu::MockWriteToFile(std::span<Byte> data)
         {
             break;
         }
-        MockWriteToFile(std::span<Byte>(cepDataBuffer.begin(),
-                                        cepDataBuffer.begin() + resultInfo.resultSize.get()));
+        RODOS::PRINTF("\nWriting to file...\n");
+        // TODO: Actually write to a file
+
         totalResultSize += resultInfo.resultSize;
         packets++;
     }
@@ -705,7 +685,7 @@ auto Edu::FlushUartBuffer() -> void
     std::array<Byte, garbageBufferSize> garbageBuffer = {};
     ts::bool_t dataReceived = true;
 
-    // Keep reading until no data is coming for flushTimeout (10 ms)
+    // Keep reading until no data is coming for flushTimeout
     while(dataReceived)
     {
         uart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
