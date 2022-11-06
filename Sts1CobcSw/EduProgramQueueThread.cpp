@@ -61,9 +61,9 @@ private:
 
     void run() override
     {
+        utility::PrintTime();
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
         RODOS::PRINTF("Entering EduQueueThread\n");
-        utility::PrintTime();
         while(true)
         {
             RODOS::PRINTF("\n");
@@ -100,7 +100,6 @@ private:
             // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             RODOS::PRINTF("Resuming here after first wait.\n");
-            utility::PrintTime();
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
             auto errorCode = edu.UpdateTime(updateTimeData);
@@ -129,7 +128,6 @@ private:
             auto end = RODOS::NOW() - begin;
             RODOS::PRINTF("Done suspending, suspended for         : %lld s\n",
                           end / RODOS::SECONDS);  // NOLINT
-            utility::PrintTime();
 
             auto queueId = eduProgramQueue[queueIndex].queueId;
             auto programId = eduProgramQueue[queueIndex].programId;
@@ -155,7 +153,6 @@ private:
                 RODOS::PRINTF("Suspending for execution time\n");
                 AT(NOW() + executionTime);
                 RODOS::PRINTF("Resuming from execution time\n");
-                utility::PrintTime();
 
                 // Set current Queue ID to next
                 queueIndex++;
