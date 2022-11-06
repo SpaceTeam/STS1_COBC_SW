@@ -20,6 +20,10 @@ using sts1cobcsw::serial::Byte;
 
 
 // TODO: Think about const-correctness and whether to make uart_ mutable or not
+//
+// TODO: There is no reason for this to be a class (there is no class invariant), so this being a
+// class just unnecessarily exposes the private members and functions to the user which makes
+// mocking harder.
 class Edu
 {
 public:
@@ -27,6 +31,7 @@ public:
     auto TurnOn() -> void;
     auto TurnOff() -> void;
 
+    // TODO: Why does this return a std::int32_t?
     [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> std::int32_t;
     [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
     [[nodiscard]] auto StopProgram() -> EduErrorCode;

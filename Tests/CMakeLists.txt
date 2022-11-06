@@ -19,7 +19,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
 
     add_dependencies(AllTests AllUnitTests AllGoldenTests)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL Generic)
+elseif(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_subdirectory(HardwareTests EXCLUDE_FROM_ALL)
     add_dependencies(AllTests AllHardwareTests)
 endif()

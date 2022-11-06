@@ -61,10 +61,13 @@ private:
 
     void run() override
     {
+        // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
         RODOS::PRINTF("Entering EduQueueThread\n");
         utility::PrintTime();
         while(true)
         {
+            RODOS::PRINTF("\n");
+
             if(eduProgramQueue.empty())
             {
                 RODOS::PRINTF(
@@ -86,12 +89,12 @@ private:
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
             nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
 
-            RODOS::PRINTF("Program at queue index %d will start in      : %" PRIi64 " seconds\n",
+            RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
                           queueIndex,
                           startDelay / RODOS::SECONDS);
 
             // Suspend until delay time - 2 seconds
-            RODOS::PRINTF("Suspending for the first time for            : %" PRIi64 " seconds\n",
+            RODOS::PRINTF("Suspending for the first time for      : %" PRIi64 " s\n",
                           (startDelay - eduCommunicationDelay) / SECONDS);
             AT(NOW() + startDelay - eduCommunicationDelay);
             // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
@@ -114,17 +117,17 @@ private:
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
             nextProgramStartDelayTopic.publish(startDelay2 / RODOS::SECONDS);
 
-            RODOS::PRINTF("Program at queue index %d will start in      : %" PRIi64 " seconds\n",
+            RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
                           queueIndex,
                           startDelay2 / RODOS::SECONDS);
 
             // Suspend for delay a second time
-            RODOS::PRINTF("Suspending for the second time for            : %" PRIi64 " seconds\n",
+            RODOS::PRINTF("Suspending for the second time for     : %" PRIi64 " s\n",
                           startDelay2 / SECONDS);
             auto const begin = RODOS::NOW();
             RODOS::AT(NOW() + startDelay2);
             auto end = RODOS::NOW() - begin;
-            RODOS::PRINTF("Done suspending, suspended for                :%lld\n",
+            RODOS::PRINTF("Done suspending, suspended for         : %lld s\n",
                           end / RODOS::SECONDS);  // NOLINT
             utility::PrintTime();
 
