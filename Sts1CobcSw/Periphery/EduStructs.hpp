@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
-#include <Sts1CobcSw/Periphery/Enums.hpp>
+#include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
