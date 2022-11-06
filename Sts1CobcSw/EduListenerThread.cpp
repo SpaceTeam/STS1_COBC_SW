@@ -119,7 +119,5 @@ private:
             }
         }
     }
-};
-
-auto const eduListenerThread = EduListenerThread();
+} eduListenerThread;
 }

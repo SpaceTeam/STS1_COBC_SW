@@ -32,6 +32,8 @@ struct EduQueueEntry
     ts::int16_t timeout = 0_i16;
 };
 
+
+// TODO: Move the status and history related stuff to its own StatusAndHistory.hpp
 enum class ProgramStatus : uint8_t
 {
     programRunning,
