@@ -292,7 +292,7 @@ auto Edu::TurnOff() -> void
                              .errorCode = EduErrorCode::invalidLength};
         }
 
-        serial::SerialBuffer<ProgramFinishedStatus> dataBuffer = {};
+        auto dataBuffer = serial::SerialBuffer<ProgramFinishedStatus>{};
         auto programFinishedError = UartReceive(dataBuffer);
 
         if(programFinishedError != EduErrorCode::success)
@@ -303,7 +303,7 @@ auto Edu::TurnOff() -> void
 
         // Create another Buffer which includes the status type that was received beforehand because
         // it is needed to calculate the CRC32 checksum
-        std::array<Byte, dataBuffer.size() + 1> fullDataBuffer = {};
+        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
         auto crc32Error = CheckCrc32(fullDataBuffer);
@@ -328,7 +328,7 @@ auto Edu::TurnOff() -> void
                              .errorCode = EduErrorCode::invalidLength};
         }
 
-        serial::SerialBuffer<ResultsReadyStatus> dataBuffer = {};
+        auto dataBuffer = serial::SerialBuffer<ResultsReadyStatus>{};
         auto resultsReadyError = UartReceive(dataBuffer);
         if(resultsReadyError != EduErrorCode::success)
         {
@@ -337,7 +337,7 @@ auto Edu::TurnOff() -> void
 
         // Create another Buffer which includes the status type that was received beforehand because
         // it is needed to calculate the CRC32 checksum
-        std::array<Byte, dataBuffer.size() + 1> fullDataBuffer = {};
+        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
         auto crc32Error = CheckCrc32(fullDataBuffer);
@@ -464,7 +464,7 @@ auto Edu::TurnOff() -> void
     RODOS::PRINTF("\nGet Length\n");
     // END DEBUG
 
-    serial::SerialBuffer<ts::uint16_t> dataLengthBuffer = {};
+    auto dataLengthBuffer = serial::SerialBuffer<ts::uint16_t>{};
     auto lengthError = UartReceive(dataLengthBuffer);
     if(lengthError != EduErrorCode::success)
     {
@@ -682,7 +682,7 @@ void Edu::SendCommand(Byte commandId)
 //! This can be used to clear all buffer data after an error to request a resend.
 auto Edu::FlushUartBuffer() -> void
 {
-    std::array<Byte, garbageBufferSize> garbageBuffer = {};
+    auto garbageBuffer = std::array<Byte, garbageBufferSize>{};
     ts::bool_t dataReceived = true;
 
     // Keep reading until no data is coming for flushTimeout
