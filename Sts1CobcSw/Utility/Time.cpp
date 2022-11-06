@@ -15,7 +15,7 @@ void PrintTime()
 
     auto sysUTC = RODOS::sysTime.getUTC();
     RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
-    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %ld/%ld/%ld %ld:%ld:%f\n",
+    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %02ld/%02ld/%ld %02ld:%02ld:%02.1f\n",
                   static_cast<long>(day),    // NOLINT
                   static_cast<long>(month),  // NOLINT
                   static_cast<long>(year),   // NOLINT
