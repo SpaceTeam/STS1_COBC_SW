@@ -14,6 +14,7 @@ using RODOS::MILLISECONDS;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
+constexpr auto threadPriority = 100;
 
 auto ledGpioPin = hal::GpioPin(hal::ledPin);
 auto eduHeartBeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
@@ -23,7 +24,7 @@ class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
     // TODO: Add this to all the other threads as well
-    EduHeartbeatThread() : StaticThread("EduHeartbeatThread")
+    EduHeartbeatThread() : StaticThread("EduHeartbeatThread", threadPriority)
     {
     }
 

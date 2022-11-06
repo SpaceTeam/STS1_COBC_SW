@@ -1,7 +1,9 @@
+#include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
+#include <Sts1CobcSw/Periphery/EduStructs.hpp>
+#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <ringbuffer.h>
@@ -26,6 +28,7 @@ using RODOS::SECONDS;
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4'000U;
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
+constexpr auto threadPriority = 300;
 
 periphery::Edu edu = periphery::Edu();
 
@@ -35,7 +38,7 @@ periphery::Edu edu = periphery::Edu();
 class EduQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduQueueThread() : StaticThread("EduQueueThread")
+    EduQueueThread() : StaticThread("EduQueueThread", threadPriority)
     {
     }
 
@@ -45,11 +48,11 @@ private:
         edu.Initialize();
 
         auto queueEntry1 = EduQueueEntry{
-            .programId = 5, .queueId = 1, .startTime = 1672531215, .timeout = 10};  // NOLINT
+            .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
         eduProgramQueue.push_back(queueEntry1);
 
         auto queueEntry2 = EduQueueEntry{
-            .programId = 6, .queueId = 1, .startTime = 1672531230, .timeout = 20};  // NOLINT
+            .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
 
         // TODO: Why add the first entry again?
         eduProgramQueue.push_back(queueEntry1);
@@ -77,10 +80,11 @@ private:
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
             auto nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
+                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
             auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-            auto const startDelay =
+            auto startDelay =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+            nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in      : %" PRIi64 " seconds\n",
                           queueIndex,
@@ -96,13 +100,19 @@ private:
             utility::PrintTime();
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
-            // TODO: Do something with error code
-            [[maybe_unused]] auto errorCode = edu.UpdateTime(updateTimeData);
+            auto errorCode = edu.UpdateTime(updateTimeData);
+            if(errorCode != periphery::EduErrorCode::success)
+            {
+                ResumeEduErrorCommunicationThread();
+            }
 
-            nextProgramStartTime = eduProgramQueue[queueIndex].startTime - utility::rodosUnixOffset;
+            // TODO: Get rid of the code duplication here
+            nextProgramStartTime =
+                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
             currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-            auto const startDelay2 =
+            auto startDelay2 =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+            nextProgramStartDelayTopic.publish(startDelay2 / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in      : %" PRIi64 " seconds\n",
                           queueIndex,
@@ -125,28 +135,28 @@ private:
             auto executeProgramData = periphery::ExecuteProgramData{
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
-            auto eduAnswer = edu.ExecuteProgram(executeProgramData);
+            errorCode = edu.ExecuteProgram(executeProgramData);
 
-            // Suspend Self for execution time
-            auto const executionTime = timeout + eduCommunicationDelay;
-            RODOS::PRINTF("Suspending for execution time\n");
-            AT(NOW() + executionTime);
-            RODOS::PRINTF("Resuming from execution time\n");
-            utility::PrintTime();
-
-            // TODO: Switch statement
-            // Create Status&History entry
-            if(eduAnswer == periphery::EduErrorCode::success)
+            if(errorCode != periphery::EduErrorCode::success)
             {
-                RODOS::PRINTF("Edu returned a success error code\n");
-                uint8_t status = 1;
-                auto statusHistoryEntry = StatusHistoryEntry{
-                    .programId = programId, .queueId = queueId, .status = status};
-                statusHistory.put(statusHistoryEntry);
+                ResumeEduErrorCommunicationThread();
             }
+            else
+            {
+                auto statusHistoryEntry =
+                    StatusHistoryEntry{.programId = programId, .queueId = queueId, .status = 1};
+                statusHistory.put(statusHistoryEntry);
 
-            // Set current Queue ID to next
-            queueIndex++;
+                // Suspend Self for execution time
+                auto const executionTime = timeout + eduCommunicationDelay;
+                RODOS::PRINTF("Suspending for execution time\n");
+                AT(NOW() + executionTime);
+                RODOS::PRINTF("Resuming from execution time\n");
+                utility::PrintTime();
+
+                // Set current Queue ID to next
+                queueIndex++;
+            }
         }
     }
 } eduQueueThread;

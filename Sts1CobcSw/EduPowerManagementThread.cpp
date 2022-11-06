@@ -1,6 +1,7 @@
 //! @file
 //! @brief  Manages the power of the EDU module
 
+#include <Sts1CobcSw/EduListenerThread.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -13,6 +14,8 @@
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
+#include <cinttypes>
+
 
 namespace sts1cobcsw
 {
@@ -22,19 +25,20 @@ namespace ts = type_safe;
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
-constexpr auto eduBootTime = 2 * RODOS::SECONDS;
+constexpr auto eduBootTime = 20 * RODOS::SECONDS;
+constexpr auto eduPowerManagementThreadDelay = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
+constexpr auto threadPriority = 500;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 // TODO: Move to Edu.hpp/cpp
-auto eduHasUpdateGpioPin = hal::GpioPin(hal::eduUpdatePin);
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduPowerManagementThread() : StaticThread("EduPowerManagementThread")
+    EduPowerManagementThread() : StaticThread("EduPowerManagementThread", threadPriority)
     {
     }
 
@@ -42,7 +46,6 @@ private:
     void init() override
     {
         epsBatteryGoodGpioPin.Direction(hal::PinDirection::in);
-        eduHasUpdateGpioPin.Direction(hal::PinDirection::in);
 
         periphery::persistentstate::Initialize();
     }
@@ -50,42 +53,46 @@ private:
 
     void run() override
     {
-        // TODO : Get this value from edu queue (this will also impact startDelay Computation).
-        auto const startTime = RODOS::NOW() + 20 * RODOS::SECONDS;
-
-        ts::bool_t epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
-        ts::bool_t eduHasUpdate = eduHasUpdateGpioPin.Read() == hal::PinState::set;
-
-        auto eduIsAlive = false;
-        eduIsAliveBuffer.get(eduIsAlive);
-
-        auto startDelay = std::max(startTime - RODOS::NOW(), 0 * RODOS::SECONDS);
-
-        if(epsBatteryIsGood)
+        while(true)
         {
-            if(eduIsAlive)
+            std::int64_t startDelay = 0;
+            nextProgramStartDelayBuffer.get(startDelay);
+            RODOS::PRINTF("[EduPowerManagement] Next Program will start in : %" PRIi64 " seconds\n",
+                          startDelay);
+
+            ts::bool_t epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
+            ts::bool_t eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
+
+            auto eduIsAlive = false;
+            eduIsAliveBuffer.get(eduIsAlive);
+
+            if(epsBatteryIsGood)
             {
-                // TODO: also perform a check about archives on cobc
-                if(not(eduHasUpdate or startDelay < startDelayLimit))
+                if(eduIsAlive)
                 {
-                    edu.TurnOff();
+                    // TODO: also perform a check about archives on cobc
+                    if(not(eduHasUpdate or startDelay < startDelayLimit))
+                    {
+                        edu.TurnOff();
+                    }
+                }
+                else
+                {
+                    if(startDelay < (eduBootTime + eduBootTimeMargin))
+                    {
+                        edu.TurnOn();
+                    }
                 }
             }
             else
             {
-                if(startDelay < (eduBootTime + eduBootTimeMargin))
-                {
-                    edu.TurnOn();
-                }
+                edu.TurnOff();
             }
-        }
-        else
-        {
-            edu.TurnOff();
-        }
 
-        // TODO: Give the 2 seconds a name
-        RODOS::AT(RODOS::NOW() + 2 * RODOS::SECONDS);
+            // TODO: Use a TIME_LOOP() instead
+            // TODO: Give the 2 seconds a name
+            RODOS::AT(RODOS::NOW() + eduPowerManagementThreadDelay);
+        }
     }
 } eduPowerManagementThread;
 }
