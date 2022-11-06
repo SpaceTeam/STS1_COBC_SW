@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
+#include <Sts1CobcSw/ThreadsPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <type_safe/types.hpp>
@@ -29,8 +30,6 @@ constexpr auto eduBootTime = 35 * RODOS::SECONDS;
 constexpr auto eduPowerManagementThreadPeriod = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
-// TODO: Put all the thread priorities in a single file. I feel this is more convenient.
-constexpr auto threadPriority = 500;
 
 // TODO: There should be an Eps.hpp/.cpp for this
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
@@ -39,7 +38,8 @@ auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduPowerManagementThread() : StaticThread("EduPowerManagementThread", threadPriority)
+    EduPowerManagementThread()
+        : StaticThread("EduPowerManagementThread", eduPowerManagementThreadPriority)
     {
     }
 

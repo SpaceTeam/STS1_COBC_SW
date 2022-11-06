@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/ThreadsPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <type_safe/types.hpp>
@@ -14,7 +15,6 @@ using RODOS::MILLISECONDS;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
-constexpr auto threadPriority = 100;
 
 auto ledGpioPin = hal::GpioPin(hal::ledPin);
 auto eduHeartBeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
@@ -23,7 +23,7 @@ auto eduHeartBeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduHeartbeatThread() : StaticThread("EduHeartbeatThread", threadPriority)
+    EduHeartbeatThread() : StaticThread("EduHeartbeatThread", eduHeartbeatThreadPriority)
     {
     }
 

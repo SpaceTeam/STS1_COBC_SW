@@ -9,6 +9,9 @@
 #include <ringbuffer.h>
 // clang-format on
 
+#include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
+
 #include <type_safe/types.hpp>
 
 #include <etl/string.h>
@@ -23,6 +26,9 @@ using ts::operator""_i16;
 using ts::operator""_u16;
 using ts::operator""_i32;
 
+using serial::Byte;
+using serial::DeserializeFrom;
+
 
 struct EduQueueEntry
 {
@@ -31,6 +37,25 @@ struct EduQueueEntry
     ts::int32_t startTime = 0_i32;
     ts::int16_t timeout = 0_i16;
 };
+
+namespace serial
+{
+template<>
+inline constexpr std::size_t serialSize<EduQueueEntry> =
+    totalSerialSize<decltype(EduQueueEntry::programId),
+                    decltype(EduQueueEntry::queueId),
+                    decltype(EduQueueEntry::startTime),
+                    decltype(EduQueueEntry::timeout)>;
+}
+
+inline auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
+{
+    source = DeserializeFrom(source, &(data->queueId));
+    source = DeserializeFrom(source, &(data->programId));
+    source = DeserializeFrom(source, &(data->startTime));
+    source = DeserializeFrom(source, &(data->startTime));
+    return source;
+}
 
 
 // TODO: Move the status and history related stuff to its own StatusAndHistory.hpp

@@ -1,8 +1,10 @@
+#include <Sts1CobcSw/CommandParser.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/ThreadsPriorities.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -33,69 +35,11 @@ namespace sts1cobcsw
 namespace ts = type_safe;
 
 using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::DeserializeFrom;
-
-
-// TODO: This should all be in a separate file. ComandParserThread.cpp should only contain the
-// thread.
-enum CommandId : char
-{
-    turnEduOn = '1',
-    turnEduOff = '2',
-    buildQueue = '4',
-};
-
-struct GsCommandHeader
-{
-    char startCharacter;
-    std::int32_t utc;
-    std::int8_t commandId;
-    std::int16_t length;
-};
-
-
-namespace serial
-{
-template<>
-inline constexpr std::size_t serialSize<GsCommandHeader> =
-    totalSerialSize<decltype(GsCommandHeader::startCharacter),
-                    decltype(GsCommandHeader::utc),
-                    decltype(GsCommandHeader::commandId),
-                    decltype(GsCommandHeader::length)>;
-
-template<>
-inline constexpr std::size_t serialSize<EduQueueEntry> =
-    totalSerialSize<decltype(EduQueueEntry::programId),
-                    decltype(EduQueueEntry::queueId),
-                    decltype(EduQueueEntry::startTime),
-                    decltype(EduQueueEntry::timeout)>;
-}
-
-
-auto DeserializeFrom(Byte * source, GsCommandHeader * data) -> Byte *
-{
-    source = DeserializeFrom(source, &(data->startCharacter));
-    source = DeserializeFrom(source, &(data->utc));
-    source = DeserializeFrom(source, &(data->commandId));
-    source = DeserializeFrom(source, &(data->length));
-    return source;
-}
-
-
-// TODO: Put this where EduQueueEntry is defined
-auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
-{
-    source = DeserializeFrom(source, &(data->queueId));
-    source = DeserializeFrom(source, &(data->programId));
-    source = DeserializeFrom(source, &(data->startTime));
-    source = DeserializeFrom(source, &(data->startTime));
-    return source;
-}
+using sts1cobcsw::serial::SerialBuffer;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4'000U;
 constexpr std::size_t commandSize = 30;
-constexpr auto threadPriority = 100;
 // TODO: Use serialSize<EduQueueEntry> instead
 constexpr std::size_t queueEntrySize =
     sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
@@ -109,7 +53,7 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void;
 class CommandParserThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    CommandParserThread() : StaticThread("CommandParserThread", threadPriority)
+    CommandParserThread() : StaticThread("CommandParserThread", commandParsetThreadPriority)
     {
     }
 
@@ -233,16 +177,14 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
 }
 
 
-// TODO: Use Deserialize instead of CopyFrom
+// TODO: Test all of this
 auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void
 {
     auto const nQueueEntries = command.size() / queueEntrySize;
     eduProgramQueue.resize(nQueueEntries);
 
-    // TODO: Use SerialBuffer<EduQueueEntry> instead
-    auto buffer = std::array<std::byte, serial::serialSize<EduQueueEntry>>();
+    auto buffer = SerialBuffer<EduQueueEntry>{};
 
-    // TODO: Test all of this
     std::size_t index = 0;
     for(auto & entry : eduProgramQueue)
     {

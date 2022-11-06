@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/Enums.hpp>
+#include <Sts1CobcSw/ThreadsPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -34,7 +35,6 @@ using RODOS::SECONDS;
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4'000U;
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
-constexpr auto threadPriority = 300;
 
 periphery::Edu edu = periphery::Edu();
 
@@ -42,7 +42,7 @@ periphery::Edu edu = periphery::Edu();
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduProgramQueueThread() : StaticThread("EduQueueThread", threadPriority)
+    EduProgramQueueThread() : StaticThread("EduQueueThread", eduProgramQueueThreadPriority)
     {
     }
 

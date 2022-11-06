@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
+#include <Sts1CobcSw/ThreadsPriorities.hpp>
 
 #include <type_safe/narrow_cast.hpp>
 #include <type_safe/types.hpp>
@@ -19,7 +20,6 @@ namespace sts1cobcsw
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
-constexpr auto threadPriority = 100;
 
 
 auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
@@ -37,7 +37,7 @@ auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -
 class EduListenerThread : public StaticThread<>
 {
 public:
-    EduListenerThread() : StaticThread("EduListenerThread", threadPriority)
+    EduListenerThread() : StaticThread("EduListenerThread", eduListenerThreadPriority)
     {
     }
 
