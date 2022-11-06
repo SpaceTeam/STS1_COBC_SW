@@ -3,8 +3,9 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Periphery/EduEnums.hpp>
+#include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
-#include <Sts1CobcSw/Periphery/Enums.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -42,12 +43,18 @@ private:
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
     // Deserialize<>() internally.
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
+    [[nodiscard]] auto UartReceive(Byte * destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
+    [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> EduErrorCode;
+    [[nodiscard]] auto GetStatusCommunication() -> EduStatus;
+    [[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
+    [[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
+    void MockWriteToFile(std::span<Byte> data);
 
     hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
-    // RODOS::HAL_UART uart_ = HAL_UART(hal::eduUartIndex, hal::eduUartTxPin,
-    // hal::eduUartRxPin);
     RODOS::HAL_UART uart_ =
-        RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+        RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
+    // RODOS::HAL_UART uart_ =
+    //     RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 };
 }
