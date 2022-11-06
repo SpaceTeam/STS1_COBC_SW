@@ -1,3 +1,9 @@
+add_program(EduCommands EduCommands.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_EduCommands PUBLIC rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
+                                       Sts1CobcSw_Periphery Sts1CobcSw_Hal
+)
+
 add_program(ExecuteProgram ExecuteProgram.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_ExecuteProgram PUBLIC rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility
