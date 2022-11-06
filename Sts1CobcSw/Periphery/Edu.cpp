@@ -36,7 +36,7 @@ constexpr auto nResultsReadyBytes = 5;
 
 // TODO: Check real timeouts
 // Max. time for the EDU to respond to a request
-constexpr auto eduTimeout = 5 * RODOS::SECONDS;
+constexpr auto eduTimeout = 1 * RODOS::SECONDS;
 // Timeout used when flushing the UART receive buffer
 constexpr auto flushTimeout = 1 * RODOS::MILLISECONDS;
 // UART flush garbage buffer size
@@ -46,8 +46,7 @@ constexpr auto garbageBufferSize = 128;
 // Max. amount of send retries after receiving NACK
 constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
-constexpr auto maxNPackets = 50_usize;
-
+constexpr auto maxNPackets = 100_usize;
 // Max. length of a single data packet
 constexpr auto maxDataLength = 32768;
 // Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
