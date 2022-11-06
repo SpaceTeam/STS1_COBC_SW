@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
-#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
+#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 
 #include <stm32f4xx_crc.h>
 

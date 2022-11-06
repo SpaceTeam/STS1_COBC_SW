@@ -9,8 +9,8 @@
 //! 59 (= EOF)
 
 #include <Sts1CobcSw/Periphery/Edu.hpp>
-#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
+#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 
 #include <rodos_no_using_namespace.h>
 

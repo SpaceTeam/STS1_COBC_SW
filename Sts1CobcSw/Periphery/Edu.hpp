@@ -3,9 +3,9 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
-#include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>

@@ -28,8 +28,8 @@
 //! length (2 bytes), and there is a 4 byte checksum after the data part.
 
 #include <Sts1CobcSw/Periphery/Edu.hpp>
-#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
+#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 
 #include <rodos_no_using_namespace.h>
 
