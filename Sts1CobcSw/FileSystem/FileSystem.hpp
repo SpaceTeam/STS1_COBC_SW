@@ -25,7 +25,11 @@ auto ReadFromFile(T * t) -> int;
 template<typename T>
 auto WriteToFile(T const & t) -> int;
 
-// Higher level stuff
+// Directory stuff
+auto CreateDirectory(char const * path) -> int;
+
+// Other stuff
+auto Remove(char const * path) -> int;
 auto Ls(char const * path) -> int;
 // TODO: Implement cat
 // TODO: Implement simple hexdump

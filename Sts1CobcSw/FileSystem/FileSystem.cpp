@@ -74,6 +74,7 @@ auto Format() -> int
 }
 
 
+// Must be called before using the file system
 auto Mount() -> int
 {
     return lfs_mount(&lfs, &lfsConfig);
@@ -81,6 +82,7 @@ auto Mount() -> int
 
 
 // TODO: This begs for a destructor
+// Must be called to release all the resources of the file system
 auto Unmount() -> int
 {
     return lfs_unmount(&lfs);
@@ -99,10 +101,23 @@ auto CloseFile() -> int
 }
 
 
-// Return the size of the currently open file
+//! @brief  Return the size of the currently open file.
 auto FileSize() -> int
 {
     return lfs_file_size(&lfs, &lfsFile);
+}
+
+
+auto CreateDirectory(char const * path) -> int
+{
+    return lfs_mkdir(&lfs, path);
+}
+
+
+//! @brief  Remove a file or an empty directory.
+auto Remove(char const * path) -> int
+{
+    return lfs_remove(&lfs, path);
 }
 
 

@@ -32,30 +32,50 @@ private:
 
     void run() override
     {
+        PRINTF("\n");
+        PRINTF("File system test\n");
+
         fs::Mount();
 
         PRINTF("\n");
-        auto const * fileName = "MyFile";
-        PRINTF("Opening file %s\n", fileName);
-        fs::OpenFile(fileName, LFS_O_RDWR | LFS_O_CREAT);
+        fs::Ls("/");
 
-        auto fileSize = fs::FileSize();
-        PRINTF("File size = %d == 12\n", fileSize);
+        auto const * directoryPath = "MyFolder";
+        PRINTF("\n");
+        PRINTF("Creating directory '%s' ...\n", directoryPath);
+        fs::CreateDirectory(directoryPath);
+        fs::Ls("/");
 
-        int number = 0;
-        fs::ReadFromFile(&number);
-        PRINTF("Number = %d == 123\n", number);
-        fs::ReadFromFile(&number);
-        PRINTF("Number = %d == 12345\n", number);
-        fs::ReadFromFile(&number);
-        PRINTF("Number = %d == 1234567\n", number);
+        auto const * filePath = "MyFolder/MyFile";
+        PRINTF("\n");
+        PRINTF("Creating file '%s' ...\n", filePath);
+        fs::OpenFile(filePath, LFS_O_WRONLY | LFS_O_CREAT);
 
-        // number = 1234567;
-        // fs::WriteToFile(number);
-
+        PRINTF("Writing to file ...\n");
+        int number = 123;
+        fs::WriteToFile(number);
+        number = 456;
+        fs::WriteToFile(number);
         fs::CloseFile();
 
+        PRINTF("Reading from file ...\n");
+        fs::OpenFile(filePath, LFS_O_RDONLY);
+        fs::ReadFromFile(&number);
+        PRINTF("  number = %d == 123\n", number);
+        fs::ReadFromFile(&number);
+        PRINTF("  number = %d == 456\n", number);
+        fs::CloseFile();
+
+        fs::Ls(directoryPath);
+
         PRINTF("\n");
+        PRINTF("Deleting file '%s' ...\n", filePath);
+        fs::Remove(filePath);
+        fs::Ls(directoryPath);
+
+        PRINTF("\n");
+        PRINTF("Deleting directory '%s' ...\n", directoryPath);
+        fs::Remove(directoryPath);
         fs::Ls("/");
 
         fs::Unmount();
