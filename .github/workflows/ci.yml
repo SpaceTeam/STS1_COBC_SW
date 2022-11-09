@@ -54,7 +54,7 @@ jobs:
       run: cmake --preset=ci-coverage
 
     - name: Build all tests
-      run: cmake --build build/coverage -t AllTests -j 2
+      run: cmake --build build/coverage -t AllCiTests -j 2
 
     - name: Test
       working-directory: build/coverage
@@ -81,7 +81,7 @@ jobs:
       run: cmake --preset=ci-sanitize
 
     - name: Build all tests
-      run: cmake --build build/sanitize -t AllTests -j 2
+      run: cmake --build build/sanitize -t AllCiTests -j 2
 
     - name: Test
       working-directory: build/sanitize
@@ -136,7 +136,7 @@ jobs:
       run: cmake --preset=ci-linux-x86
 
     - name: Build all tests
-      run: cmake --build build/linux-x86 -t AllTests -j 2
+      run: cmake --build build/linux-x86 -t AllCiTests -j 2
 
     - name: Test
       working-directory: build/linux-x86/Tests
