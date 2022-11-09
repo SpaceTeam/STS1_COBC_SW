@@ -15,8 +15,8 @@ using utility::PrintTime;
 // TODO: Move this in the proper file
 auto ResumeEduErrorCommunicationThread() -> void
 {
+    PRINTF("\nCall to ResumeEduErrorCommunicationThread()\n");
     PrintTime();
-    PRINTF("Call to ResumeEduErrorCommunicationThread()\n");
 }
 
 

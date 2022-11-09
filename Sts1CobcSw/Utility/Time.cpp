@@ -15,12 +15,13 @@ void PrintTime()
 
     auto sysUTC = RODOS::sysTime.getUTC();
     RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
-    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %02ld/%02ld/%ld %02ld:%02ld:%02.1f\n",
-                  static_cast<long>(day),    // NOLINT
-                  static_cast<long>(month),  // NOLINT
-                  static_cast<long>(year),   // NOLINT
-                  static_cast<long>(hour),   // NOLINT
-                  static_cast<long>(min),    // NOLINT
-                  sec);
+    // Print only seconds by casting it to long
+    RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %02ld/%02ld/%ld %02ld:%02ld:%02ld\n",
+                  static_cast<long>(day),
+                  static_cast<long>(month),
+                  static_cast<long>(year),
+                  static_cast<long>(hour),
+                  static_cast<long>(min),
+                  static_cast<long>(sec));
 }
 }

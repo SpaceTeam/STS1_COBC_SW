@@ -49,7 +49,6 @@ private:
 
         auto queueEntry1 = EduQueueEntry{
             .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
-        eduProgramQueue.push_back(queueEntry1);
 
         auto queueEntry2 = EduQueueEntry{
             .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
@@ -57,10 +56,14 @@ private:
         // TODO: Why add the first entry again?
         eduProgramQueue.push_back(queueEntry1);
         eduProgramQueue.push_back(queueEntry2);
+
+        RODOS::PRINTF("Size of EduProgramQueue : %d\n", eduProgramQueue.size());
+
     }
 
     void run() override
     {
+
         utility::PrintTime();
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
         RODOS::PRINTF("Entering EduQueueThread\n");
@@ -95,7 +98,7 @@ private:
 
             // Suspend until delay time - 2 seconds
             RODOS::PRINTF("Suspending for the first time for      : %" PRIi64 " s\n",
-                          (startDelay - eduCommunicationDelay) / SECONDS);
+                          (startDelay - eduCommunicationDelay) / RODOS::SECONDS);
             AT(NOW() + startDelay - eduCommunicationDelay);
             // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
