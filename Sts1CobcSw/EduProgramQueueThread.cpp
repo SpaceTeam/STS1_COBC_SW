@@ -58,12 +58,10 @@ private:
         eduProgramQueue.push_back(queueEntry2);
 
         RODOS::PRINTF("Size of EduProgramQueue : %d\n", eduProgramQueue.size());
-
     }
 
     void run() override
     {
-
         utility::PrintTime();
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
         RODOS::PRINTF("Entering EduQueueThread\n");
