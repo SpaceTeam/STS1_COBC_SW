@@ -35,7 +35,12 @@ private:
         PRINTF("\n");
         PRINTF("File system test\n");
 
-        fs::Mount();
+
+        auto errorCode = fs::Mount();
+        if(errorCode < 0)
+        {
+            fs::Format();
+        }
 
         PRINTF("\n");
         fs::Ls("/");
