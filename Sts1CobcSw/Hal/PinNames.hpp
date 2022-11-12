@@ -44,6 +44,7 @@ inline constexpr auto pc4 = RODOS::GPIO_036;
 inline constexpr auto pc5 = RODOS::GPIO_037;
 inline constexpr auto pc6 = RODOS::GPIO_038;
 inline constexpr auto pc7 = RODOS::GPIO_039;
+inline constexpr auto pc8 = RODOS::GPIO_040;
 inline constexpr auto pc9 = RODOS::GPIO_041;
 inline constexpr auto pc10 = RODOS::GPIO_042;
 inline constexpr auto pc11 = RODOS::GPIO_043;
