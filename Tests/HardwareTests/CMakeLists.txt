@@ -11,6 +11,9 @@ target_link_libraries(
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PRIVATE rodos::rodos type_safe Sts1CobcSw_Hal)
 
+add_program(Rf Rf.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+
 add_program(Spi Spi.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Spi PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal)
 
