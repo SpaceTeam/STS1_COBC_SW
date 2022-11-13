@@ -32,21 +32,28 @@ private:
         while(true)
         {
             RODOS::AT(RODOS::END_OF_TIME);
+            // RODOS::PRINTF("EduCommunicationThread resumed in main loop\n");
 
             eduCommunicationErrorCounter++;
 
+            RODOS::PRINTF("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU
             edu.TurnOff();
             // TODO: Name the 2 seconds
             RODOS::AT(RODOS::NOW() + 2 * RODOS::SECONDS);
             edu.TurnOn();
 
+            //
+            [[maybe_unused]] auto status = edu.GetStatus();
+
             // Busy wait
+            RODOS::PRINTF("[EduCommunicationErrorThread] Entering busy wait\n");
             auto eduIsAlive = false;
             while(not eduIsAlive)
             {
-                eduIsAliveBuffer.get(eduIsAlive);
+                eduIsAliveBufferForCommunicationError.get(eduIsAlive);
             }
+            RODOS::PRINTF("[EduCommunicationErrorThread] Leaving busy wait\n");
         }
     }
 } eduCommunicationErrorThread;
@@ -59,7 +66,7 @@ public:
     auto handle() -> void override
     {
         eduCommunicationErrorThread.resume();
-        RODOS::PRINTF("EduCommunicationThread resumed\n");
+        RODOS::PRINTF("[EduCommunicationErrorThread] EduCommunicationThread resumed\n");
     }
 } resumeEduErrorCommunicationThread;
 

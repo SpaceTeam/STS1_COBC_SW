@@ -26,7 +26,7 @@ using RODOS::SECONDS;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 4'000U;
+constexpr auto stackSize = 8'000U;
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
 constexpr auto threadPriority = 300;
 
@@ -47,15 +47,15 @@ private:
     {
         edu.Initialize();
 
-        auto queueEntry1 = EduQueueEntry{
-            .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
+        // auto queueEntry1 = EduQueueEntry{
+        //    .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
 
-        auto queueEntry2 = EduQueueEntry{
-            .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
+        // auto queueEntry2 = EduQueueEntry{
+        //    .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
 
         // TODO: Why add the first entry again?
-        eduProgramQueue.push_back(queueEntry1);
-        eduProgramQueue.push_back(queueEntry2);
+        // eduProgramQueue.push_back(queueEntry1);
+        // eduProgramQueue.push_back(queueEntry2);
 
         RODOS::PRINTF("Size of EduProgramQueue : %d\n", eduProgramQueue.size());
     }
@@ -67,8 +67,6 @@ private:
         RODOS::PRINTF("Entering EduQueueThread\n");
         while(true)
         {
-            RODOS::PRINTF("\n");
-
             if(eduProgramQueue.empty())
             {
                 RODOS::PRINTF(
@@ -106,6 +104,9 @@ private:
             auto errorCode = edu.UpdateTime(updateTimeData);
             if(errorCode != periphery::EduErrorCode::success)
             {
+                RODOS::PRINTF("UpdateTime error code : %d\n", errorCode);
+                RODOS::PRINTF(
+                    "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
                 ResumeEduErrorCommunicationThread();
             }
 
@@ -124,23 +125,28 @@ private:
             // Suspend for delay a second time
             RODOS::PRINTF("Suspending for the second time for     : %" PRIi64 " s\n",
                           startDelay2 / SECONDS);
-            auto const begin = RODOS::NOW();
             RODOS::AT(NOW() + startDelay2);
-            auto end = RODOS::NOW() - begin;
-            RODOS::PRINTF("Done suspending, suspended for         : %lld s\n",
-                          end / RODOS::SECONDS);  // NOLINT
+            // RODOS::AT(RODOS::NOW() + 2*RODOS::SECONDS);
+
+            // Never reached
+            RODOS::PRINTF("Done suspending for the second time\n");
 
             auto queueId = eduProgramQueue[queueIndex].queueId;
             auto programId = eduProgramQueue[queueIndex].programId;
             auto timeout = eduProgramQueue[queueIndex].timeout;
 
+            RODOS::PRINTF("Executing program %d\n", programId);
             auto executeProgramData = periphery::ExecuteProgramData{
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
             errorCode = edu.ExecuteProgram(executeProgramData);
+            // errorCode = periphery::EduErrorCode::success;
 
             if(errorCode != periphery::EduErrorCode::success)
             {
+                RODOS::PRINTF(
+                    "[EduProgramQueueThread] Communication error after call to "
+                    "ExecuteProgram().\n");
                 ResumeEduErrorCommunicationThread();
             }
             else

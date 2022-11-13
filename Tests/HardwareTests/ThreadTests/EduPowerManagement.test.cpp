@@ -19,8 +19,9 @@ periphery::Edu edu{};
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
+constexpr auto stackSize = 2'000U;
 
-class EduPowerManagementTest : public RODOS::StaticThread<>
+class EduPowerManagementTest : public RODOS::StaticThread<stackSize>
 {
 public:
     EduPowerManagementTest() : StaticThread("EduPowerManagementTest")
@@ -42,6 +43,8 @@ private:
         PRINTF("EDU power management test\n");
 
         std::int64_t startDelay = 0;
+
+        /*
         while(true)
         {
             nextProgramStartDelayBuffer.get(startDelay);
@@ -75,6 +78,8 @@ private:
                 }
             }
         }
+
+        */
     }
 } eduPowerManagementTest;
 }
