@@ -4,6 +4,12 @@ add_subdirectory(ThreadTests)
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos)
 
+add_program(FileSystem FileSystem.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_FileSystem PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
+                                       Sts1CobcSw_Periphery
+)
+
 add_program(Flash Flash.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Flash PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial

@@ -1,6 +1,7 @@
 # TODO: Is this not redondant with the top level cmake that does not build libarrie depending on
 # target system
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    add_subdirectory(FileSystem)
     add_subdirectory(Hal)
 endif()
 add_subdirectory(Periphery)

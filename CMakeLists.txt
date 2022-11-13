@@ -19,6 +19,9 @@ include(cmake/custom-commands.cmake)
 find_package_and_notify(etl)
 find_package_and_notify(type_safe)
 find_rodos()
+if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    find_package_and_notify(littlefs)
+endif()
 
 # ---- Declare targets ----
 
@@ -30,6 +33,7 @@ add_program(HelloDummy)
 #add_program(Heartbeat)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    add_library(Sts1CobcSw_FileSystem OBJECT)
     add_library(Sts1CobcSw_Hal INTERFACE)
     add_program(CobcSw)
 endif()
