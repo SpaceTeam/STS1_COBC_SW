@@ -130,7 +130,7 @@ private:
 
             ++samplingCount;
 
-            // If hearbeat wass constant bu is not anymore
+            // If heartbeat was constant but is not anymore
             if(heartbeatIsConstant and (heartbeat != oldHeartbeat))
             {
                 heartbeatIsConstant = false;
