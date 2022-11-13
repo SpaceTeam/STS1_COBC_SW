@@ -43,7 +43,8 @@ auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -
     do
     {
         statusHistory.get(statusHistoryEntry);
-        //RODOS::PRINTF("%d,%d vs %d,%d\n", statusHistoryEntry.programId, statusHistoryEntry.queueId, programId, queueId);
+        // RODOS::PRINTF("%d,%d vs %d,%d\n", statusHistoryEntry.programId,
+        // statusHistoryEntry.queueId, programId, queueId);
     } while(statusHistoryEntry.queueId != queueId or statusHistoryEntry.programId != programId);
 
     return statusHistoryEntry;
@@ -154,7 +155,7 @@ private:
                             //    "[EduListenerThread] Call to ReturnResults() resulted in "
                             //    "success.\n");
                         }
-                        //break;
+                        // break;
 
                         auto statusHistoryEntry =
                             FindStatusAndHistoryEntry(status.programId, status.queueId);
