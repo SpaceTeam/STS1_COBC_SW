@@ -25,10 +25,11 @@ namespace ts = type_safe;
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
-constexpr auto eduBootTime = 20 * RODOS::SECONDS;
+constexpr auto eduBootTime = 20 * RODOS::SECONDS;  // Measured ~19 s
 constexpr auto eduPowerManagementThreadDelay = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
+// TODO: Set this to 500
 constexpr auto threadPriority = 500;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
@@ -53,18 +54,20 @@ private:
 
     void run() override
     {
-        while(true)
+        // RODOS::PRINTF("[EduPowerManagementThread] Start of Run()\n");
+
+        TIME_LOOP(0, eduPowerManagementThreadDelay)
         {
+            // RODOS::PRINTF("[EduPowerManagementThread] Start of Loop\n");
             std::int64_t startDelay = 0;
             nextProgramStartDelayBuffer.get(startDelay);
-            RODOS::PRINTF("[EduPowerManagement] Next Program will start in : %" PRIi64 " seconds\n",
-                          startDelay);
 
             ts::bool_t epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
             ts::bool_t eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
 
             auto eduIsAlive = false;
-            eduIsAliveBuffer.get(eduIsAlive);
+            eduIsAliveBufferForPowerManagement.get(eduIsAlive);
+
 
             if(epsBatteryIsGood)
             {
@@ -73,6 +76,7 @@ private:
                     // TODO: also perform a check about archives on cobc
                     if(not(eduHasUpdate or startDelay < startDelayLimit))
                     {
+                        RODOS::PRINTF("Turning Edu off\n");
                         edu.TurnOff();
                     }
                 }
@@ -80,6 +84,7 @@ private:
                 {
                     if(startDelay < (eduBootTime + eduBootTimeMargin))
                     {
+                        RODOS::PRINTF("Turning Edu on\n");
                         edu.TurnOn();
                     }
                 }
@@ -88,10 +93,6 @@ private:
             {
                 edu.TurnOff();
             }
-
-            // TODO: Use a TIME_LOOP() instead
-            // TODO: Give the 2 seconds a name
-            RODOS::AT(RODOS::NOW() + eduPowerManagementThreadDelay);
         }
     }
 } eduPowerManagementThread;

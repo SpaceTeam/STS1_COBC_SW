@@ -118,6 +118,10 @@ auto Edu::TurnOff() -> void
 //! @returns A relevant EduErrorCode
 [[nodiscard]] auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 {
+    RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
+                  data.programId,
+                  data.queueId,
+                  data.timeout);
     // Check if data command was successful
     auto serialData = serial::Serialize(data);
     auto errorCode = SendData(serialData);
@@ -201,10 +205,14 @@ auto Edu::TurnOff() -> void
 //!          returned.
 [[nodiscard]] auto Edu::GetStatus() -> EduStatus
 {
+    RODOS::PRINTF("GetStatus()\n");
     auto serialData = serial::Serialize(getStatusId);
     auto sendDataError = SendData(serialData);
     if(sendDataError != EduErrorCode::success)
     {
+        RODOS::PRINTF("  Returned .statusType = %d, .errorCode = %d\n",
+                      EduStatusType::invalid,
+                      sendDataError);
         return EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
     }
 
@@ -216,12 +224,20 @@ auto Edu::TurnOff() -> void
         if(status.errorCode == EduErrorCode::success)
         {
             SendCommand(cmdAck);
-            return status;
+            break;
         }
         FlushUartBuffer();
         SendCommand(cmdNack);
     } while(errorCount++ < maxNNackRetries);
 
+    RODOS::PRINTF(
+        "  .statusType = %d\n  .errorCode = %d\n  .programId = %d\n  .queueId = %d\n  exitCode = "
+        "%d\n",
+        status.statusType,
+        status.errorCode,
+        status.programId,
+        status.queueId,
+        status.exitCode);
     return status;
 }
 
@@ -292,7 +308,7 @@ auto Edu::TurnOff() -> void
                              .errorCode = EduErrorCode::invalidLength};
         }
 
-        serial::SerialBuffer<ProgramFinishedStatus> dataBuffer = {};
+        auto dataBuffer = serial::SerialBuffer<ProgramFinishedStatus>{};
         auto programFinishedError = UartReceive(dataBuffer);
 
         if(programFinishedError != EduErrorCode::success)
@@ -303,7 +319,7 @@ auto Edu::TurnOff() -> void
 
         // Create another Buffer which includes the status type that was received beforehand because
         // it is needed to calculate the CRC32 checksum
-        std::array<Byte, dataBuffer.size() + 1> fullDataBuffer = {};
+        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
         auto crc32Error = CheckCrc32(fullDataBuffer);
@@ -328,7 +344,7 @@ auto Edu::TurnOff() -> void
                              .errorCode = EduErrorCode::invalidLength};
         }
 
-        serial::SerialBuffer<ResultsReadyStatus> dataBuffer = {};
+        auto dataBuffer = serial::SerialBuffer<ResultsReadyStatus>{};
         auto resultsReadyError = UartReceive(dataBuffer);
         if(resultsReadyError != EduErrorCode::success)
         {
@@ -337,7 +353,7 @@ auto Edu::TurnOff() -> void
 
         // Create another Buffer which includes the status type that was received beforehand because
         // it is needed to calculate the CRC32 checksum
-        std::array<Byte, dataBuffer.size() + 1> fullDataBuffer = {};
+        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
         auto crc32Error = CheckCrc32(fullDataBuffer);
@@ -360,7 +376,7 @@ auto Edu::TurnOff() -> void
 [[nodiscard]] auto Edu::ReturnResult() -> ResultInfo
 {
     // DEBUG
-    RODOS::PRINTF("\nStart return result\n");
+    RODOS::PRINTF("ReturnResult()\n");
     // END DEBUG
 
     // Send command
@@ -372,7 +388,7 @@ auto Edu::TurnOff() -> void
     }
 
     // DEBUG
-    RODOS::PRINTF("\nStart receiving result\n");
+    // RODOS::PRINTF("\nStart receiving result\n");
     // END DEBUG
 
     ts::size_t totalResultSize = 0_usize;
@@ -382,7 +398,7 @@ auto Edu::TurnOff() -> void
     while(packets < maxNPackets)
     {
         // DEBUG
-        RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets.get()));
+        // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets.get()));
         // END DEBUG
         resultInfo = ReturnResultRetry();
         // DEBUG
@@ -394,7 +410,7 @@ auto Edu::TurnOff() -> void
         {
             break;
         }
-        RODOS::PRINTF("\nWriting to file...\n");
+        // RODOS::PRINTF("\nWriting to file...\n");
         // TODO: Actually write to a file
 
         totalResultSize += resultInfo.resultSize;
@@ -461,10 +477,10 @@ auto Edu::TurnOff() -> void
     }
 
     // DEBUG
-    RODOS::PRINTF("\nGet Length\n");
+    // RODOS::PRINTF("\nGet Length\n");
     // END DEBUG
 
-    serial::SerialBuffer<ts::uint16_t> dataLengthBuffer = {};
+    auto dataLengthBuffer = serial::SerialBuffer<ts::uint16_t>{};
     auto lengthError = UartReceive(dataLengthBuffer);
     if(lengthError != EduErrorCode::success)
     {
@@ -478,7 +494,7 @@ auto Edu::TurnOff() -> void
     }
 
     // DEBUG
-    RODOS::PRINTF("\nGet Data\n");
+    // RODOS::PRINTF("\nGet Data\n");
     // END DEBUG
 
     // Get the actual data
@@ -491,7 +507,7 @@ auto Edu::TurnOff() -> void
     }
 
     // DEBUG
-    RODOS::PRINTF("\nCheck CRC\n");
+    // RODOS::PRINTF("\nCheck CRC\n");
     // END DEBUG
 
     auto crc32Error = CheckCrc32(
@@ -527,6 +543,7 @@ auto Edu::TurnOff() -> void
 //! @returns A relevant error code
 [[nodiscard]] auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
 {
+    RODOS::PRINTF("UpdateTime()\n");
     auto serialData = serial::Serialize(data);
     auto errorCode = SendData(serialData);
     if(errorCode != EduErrorCode::success)
@@ -600,7 +617,7 @@ void Edu::SendCommand(Byte commandId)
 
         // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
-        auto answer = 0x00_b;
+        auto answer = 0xAA_b;
         uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
         auto nReadBytes = uart_.read(&answer, 1);
@@ -608,6 +625,7 @@ void Edu::SendCommand(Byte commandId)
         {
             return EduErrorCode::timeout;
         }
+        // RODOS::PRINTF("[Edu] answer in sendData is now : %c\n", static_cast<char>(answer));
         switch(answer)
         {
             case cmdAck:
@@ -682,7 +700,7 @@ void Edu::SendCommand(Byte commandId)
 //! This can be used to clear all buffer data after an error to request a resend.
 auto Edu::FlushUartBuffer() -> void
 {
-    std::array<Byte, garbageBufferSize> garbageBuffer = {};
+    auto garbageBuffer = std::array<Byte, garbageBufferSize>{};
     ts::bool_t dataReceived = true;
 
     // Keep reading until no data is coming for flushTimeout
@@ -703,10 +721,10 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
     uint32_t computedCrc32 = utility::Crc32(data);
 
     // DEBUG
-    RODOS::PRINTF("\nComputed CRC: ");
-    auto crcSerial = serial::Serialize(computedCrc32);
-    Print(crcSerial);
-    RODOS::PRINTF("\n");
+    // RODOS::PRINTF("\nComputed CRC: ");
+    // auto crcSerial = serial::Serialize(computedCrc32);
+    // Print(crcSerial);
+    // RODOS::PRINTF("\n");
     // END DEBUG
 
 
@@ -714,9 +732,9 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
     auto receiveError = UartReceive(crc32Buffer);
 
     // DEBUG
-    RODOS::PRINTF("Received CRC: ");
-    Print(crc32Buffer);
-    RODOS::PRINTF("\n");
+    // RODOS::PRINTF("Received CRC: ");
+    // Print(crc32Buffer);
+    // RODOS::PRINTF("\n");
     // END DEBUG
 
     if(receiveError != EduErrorCode::success)

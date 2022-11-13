@@ -13,12 +13,13 @@
 
 #include <rodos.h>
 
+#include "Sts1CobcSw/TopicsAndSubscribers.hpp"
+
 
 namespace sts1cobcsw
 {
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 // TODO:: enum
-// enum class : uint8_t {
 //
 //}
 enum ProgramStatus : uint8_t
@@ -37,14 +38,18 @@ constexpr auto threadPriority = 100;
 
 auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
 {
+    auto counter = 0;
     auto statusHistoryEntry = StatusHistoryEntry{};
     do
     {
         statusHistory.get(statusHistoryEntry);
+        // RODOS::PRINTF("%d,%d vs %d,%d\n", statusHistoryEntry.programId,
+        // statusHistoryEntry.queueId, programId, queueId);
     } while(statusHistoryEntry.queueId != queueId or statusHistoryEntry.programId != programId);
 
     return statusHistoryEntry;
 }
+
 
 class EduListenerThread : public StaticThread<>
 {
@@ -64,18 +69,39 @@ private:
     {
         TIME_LOOP(0, timeLoopPeriod)
         {
+            // RODOS::PRINTF("[EduListenerThread] Start of TimeLoop Iteration\n");
             auto eduHasUpdate = (eduUpdateGpioPin.Read() == hal::PinState::set);
 
-            if(eduHasUpdate)
+            auto eduIsAlive = false;
+            eduIsAliveBufferForListener.get(eduIsAlive);
+            // RODOS::PRINTF("[EduListenerThread] Read eduHasUpdate pin\n");
+
+            // TODO: Check if edu is alive
+            if(eduIsAlive and eduHasUpdate)
             {
+                // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
                 // Communicate with EDU
 
                 auto status = edu.GetStatus();
+                // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
+                // status.errorCode);
 
-                if(status.errorCode != periphery::EduErrorCode::success)
+                if(status.errorCode != periphery::EduErrorCode::success
+                   and status.errorCode != periphery::EduErrorCode::successEof)
                 {
+                    // RODOS::PRINTF("[EduListenerThread] GetStatus() error code : %d.\n",
+                    // status.errorCode);
+                    // RODOS::PRINTF(
+                    //   "[EduListenerThread] Edu communication error after call to
+                    //   GetStatus().\n");
                     ResumeEduErrorCommunicationThread();
                 }
+                else
+                {
+                    // RODOS::PRINTF("[EduListenerThread] Call to GetStatus() resulted in
+                    // success.\n");
+                }
+
 
                 switch(status.statusType)
                 {
@@ -110,13 +136,29 @@ private:
 
                         auto errorCode = resultsInfo.errorCode;
 
-                        if(errorCode != periphery::EduErrorCode::success)
+                        if(errorCode != periphery::EduErrorCode::success
+                           and errorCode != periphery::EduErrorCode::successEof)
                         {
+                            /*
+                            RODOS::PRINTF(
+                                "[EduListenerThread] Error Code From ReturnResult() : %d.\n",
+                                errorCode);
+                            RODOS::PRINTF(
+                                "[EduListenerThread] Communication error after call to "
+                                "ReturnResult().\n");
+                                */
                             ResumeEduErrorCommunicationThread();
                         }
+                        else
+                        {
+                            // RODOS::PRINTF(
+                            //    "[EduListenerThread] Call to ReturnResults() resulted in "
+                            //    "success.\n");
+                        }
+                        // break;
 
                         auto statusHistoryEntry =
-                            FindStatusAndHistoryEntry(status.programId, status.programId);
+                            FindStatusAndHistoryEntry(status.programId, status.queueId);
                         statusHistoryEntry.status = ProgramStatus::resultFileTransfered;
 
                         break;
@@ -129,6 +171,7 @@ private:
                     }
                 }
             }
+            // RODOS::PRINTF("[EduListenerThread] Edu Has no uppdate\n");
         }
     }
 };
