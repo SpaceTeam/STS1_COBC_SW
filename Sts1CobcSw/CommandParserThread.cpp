@@ -78,7 +78,6 @@ private:
         ts::bool_t startWasDetected = false;
         while(true)
         {
-            RODOS::PRINTF("[CommandParserThread] Entering while loop iteration\n");
             char readCharacter = 0;
             // This needs to be abstracted away because "IRL" we receive commands via the RF module
             ts::size_t nReadCharacters =

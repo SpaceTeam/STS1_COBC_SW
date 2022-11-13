@@ -18,7 +18,7 @@ target_link_libraries(Sts1CobcSw_HelloDummy PRIVATE Sts1CobcSw_Dummy rodos::rodo
 
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-#    if(FALSE)
+    #if(FALSE)
     target_sources(
         Sts1CobcSw_CobcSw
         PRIVATE CommandParserThread.cpp

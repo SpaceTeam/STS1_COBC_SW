@@ -11,7 +11,15 @@
 namespace sts1cobcsw
 {
 using RODOS::MILLISECONDS;
-
+namespace ts = type_safe;
+using ts::operator""_i8;
+using ts::operator""_u8;
+using ts::operator""_i16;
+using ts::operator""_u16;
+using ts::operator""_i32;
+using ts::operator""_u32;
+using ts::operator""_i64;
+using ts::operator""_u64;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
@@ -22,7 +30,7 @@ auto ledGpioPin = hal::GpioPin(hal::ledPin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartBeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
-// periphery::Edu edu = periphery::Edu();
+//periphery::Edu edu = periphery::Edu();
 
 auto constexpr edgeCounterThreshold = 4;
 
@@ -160,7 +168,7 @@ private:
 } eduHeartbeatThread;
 // TODO: Get back to the inline thread variable definition (like above) for all threads
 /*
-constexpr auto dummyThreadPriority = 500;
+constexpr auto dummyThreadPriority = 100;
 class DummyThread : public RODOS::StaticThread<>
 {
 public:
@@ -170,15 +178,31 @@ public:
     }
 
 private:
-
-    void init() {
+    void init()
+    {
+        edu.Initialize();
     }
 
-    void run() {
-        TIME_LOOP(0, 1 * RODOS::SECONDS) {
+    void run()
+    {
+        edu.TurnOn();
+        RODOS::AT(RODOS::NOW() + 25 * RODOS::SECONDS);
 
-            RODOS::PRINTF("Hello From DummyThread Timeloo\n");
-        }
+        RODOS::PRINTF("Hello From DummyThread Timeloop\n");
+        auto programId = 0_u16;
+        auto queueId = 5_u16;
+        auto timeout = 10_i16;
+
+        auto executeProgramData = periphery::ExecuteProgramData{
+            .programId = programId, .queueId = queueId, .timeout = timeout};
+        edu.ExecuteProgram(executeProgramData);
+
+        RODOS::AT(RODOS::NOW() + 11 * RODOS::SECONDS);
+
+        [[maybe_unused]] auto status = edu.GetStatus();
+        status = edu.GetStatus();
+
+        edu.ReturnResult();
     }
 
 } dummyThread;
