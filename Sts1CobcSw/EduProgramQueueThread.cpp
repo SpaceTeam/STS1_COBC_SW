@@ -80,25 +80,19 @@ private:
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
             nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
 
-            RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
+            RODOS::PRINTF("Program at queue index %d will start in %" PRIi64 " s\n",
                           queueIndex,
                           startDelay / SECONDS);
 
-            // Suspend until delay time - 2 seconds
-            RODOS::PRINTF("Suspending for the first time for      : %" PRIi64 " s\n",
-                          (startDelay - eduCommunicationDelay) / RODOS::SECONDS);
             AT(NOW() + startDelay - eduCommunicationDelay);
-            // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
-
-            RODOS::PRINTF("Resuming here after first wait.\n");
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
             auto errorCode = edu.UpdateTime(updateTimeData);
             if(errorCode != periphery::EduErrorCode::success)
             {
-                RODOS::PRINTF("UpdateTime error code : %d\n", errorCode);
                 RODOS::PRINTF(
-                    "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
+                    "[EduProgramQueueThread] Communication error after call to UpdateTime()\n");
+                RODOS::PRINTF("  Returned error code = %d\n", errorCode);
                 ResumeEduErrorCommunicationThread();
             }
 
@@ -114,45 +108,29 @@ private:
                           queueIndex,
                           startDelay2 / RODOS::SECONDS);
 
-            // Suspend for delay a second time
-            RODOS::PRINTF("Suspending for the second time for     : %" PRIi64 " s\n",
-                          startDelay2 / SECONDS);
             RODOS::AT(NOW() + startDelay2);
-            // RODOS::AT(RODOS::NOW() + 2*RODOS::SECONDS);
-
-            // Never reached
-            RODOS::PRINTF("Done suspending for the second time\n");
 
             auto queueId = eduProgramQueue[queueIndex].queueId;
             auto programId = eduProgramQueue[queueIndex].programId;
             auto timeout = eduProgramQueue[queueIndex].timeout;
 
-            RODOS::PRINTF("Executing program %d\n", programId);
-            auto executeProgramData = periphery::ExecuteProgramData{
-                .programId = programId, .queueId = queueId, .timeout = timeout};
-            // Start Process
-            errorCode = edu.ExecuteProgram(executeProgramData);
-            // errorCode = periphery::EduErrorCode::success;
-
+            errorCode = edu.ExecuteProgram(
+                {.programId = programId, .queueId = queueId, .timeout = timeout});
             if(errorCode != periphery::EduErrorCode::success)
             {
+                // TODO: Think about what is right to do here. As it is right now queueIndex is
+                // never updated so we retry executing the same EDU program forever.
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to "
-                    "ExecuteProgram().\n");
+                    "ExecuteProgram()\n");
+                RODOS::PRINTF("  Returned error code = %d\n", errorCode);
                 ResumeEduErrorCommunicationThread();
             }
             else
             {
                 statusHistory.put({.programId = programId, .queueId = queueId, .status = 1});
 
-                // Suspend Self for execution time
-                auto const executionTime = timeout + eduCommunicationDelay;
-                RODOS::PRINTF("Suspending for execution time\n");
-                AT(NOW() + executionTime);
-                RODOS::PRINTF("Resuming from execution time\n");
-
-                // Set current Queue ID to next
-                // queueIndex++;
+                AT(NOW() + timeout + eduCommunicationDelay);
 
                 // Loop EDU program queue
                 UpdateEduProgramQueueEntry(&eduProgramQueue[queueIndex]);
