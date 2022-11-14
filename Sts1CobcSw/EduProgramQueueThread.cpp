@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/LoopedEduProgramQueue.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
@@ -46,16 +47,7 @@ private:
     void init() override
     {
         edu.Initialize();
-
-        auto queueEntry1 = EduQueueEntry{
-            .programId = 0, .queueId = 5, .startTime = 946'684'830, .timeout = 3};  // NOLINT
-
-        // auto queueEntry2 = EduQueueEntry{
-        //    .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
-
-        // TODO: Why add the first entry again?
-        eduProgramQueue.push_back(queueEntry1);
-        // eduProgramQueue.push_back(queueEntry2);
+        InitializeEduProgramQueue();
 
         RODOS::PRINTF("Size of EduProgramQueue : %d\n", eduProgramQueue.size());
     }
@@ -90,7 +82,7 @@ private:
 
             RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
                           queueIndex,
-                          startDelay / RODOS::SECONDS);
+                          startDelay / SECONDS);
 
             // Suspend until delay time - 2 seconds
             RODOS::PRINTF("Suspending for the first time for      : %" PRIi64 " s\n",
@@ -151,9 +143,7 @@ private:
             }
             else
             {
-                auto statusHistoryEntry =
-                    StatusHistoryEntry{.programId = programId, .queueId = queueId, .status = 1};
-                statusHistory.put(statusHistoryEntry);
+                statusHistory.put({.programId = programId, .queueId = queueId, .status = 1});
 
                 // Suspend Self for execution time
                 auto const executionTime = timeout + eduCommunicationDelay;
@@ -164,10 +154,9 @@ private:
                 // Set current Queue ID to next
                 // queueIndex++;
 
-                // Infinite EDU program execution
-                queueIndex = 0;
-                eduProgramQueue[queueIndex].startTime = static_cast<std::int32_t>(
-                    (RODOS::sysTime.getUTC() + utility::rodosUnixOffset) / SECONDS + 8);
+                // Loop EDU program queue
+                UpdateEduProgramQueueEntry(&eduProgramQueue[queueIndex]);
+                UpdateQueueIndex();
             }
         }
     }

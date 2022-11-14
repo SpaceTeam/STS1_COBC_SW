@@ -35,14 +35,13 @@ struct StatusHistoryEntry
 };
 
 
-inline constexpr auto eduProgramQueueSize = 20;
-// TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?
-inline constexpr auto statusHistorySize = 20;
-
-// TODO: Why is this defined in EduProgramQueueThread.cpp and not EduProgramQueue.cpp?
+inline constexpr auto eduProgramQueueCapacity = 20;
+extern etl::vector<EduQueueEntry, eduProgramQueueCapacity> eduProgramQueue;
 extern uint16_t queueIndex;
-extern etl::vector<EduQueueEntry, eduProgramQueueSize> eduProgramQueue;
+
+// TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?
+inline constexpr auto statusHistoryCapacity = 20;
 // TODO: Maybe move that to its own file? Together with the definition of StatusHistoryEntry of
 // course.
-extern RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
+extern RODOS::RingBuffer<StatusHistoryEntry, statusHistoryCapacity> statusHistory;
 }
