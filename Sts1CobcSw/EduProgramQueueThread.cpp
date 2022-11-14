@@ -47,14 +47,14 @@ private:
     {
         edu.Initialize();
 
-        // auto queueEntry1 = EduQueueEntry{
-        //    .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
+        auto queueEntry1 = EduQueueEntry{
+            .programId = 0, .queueId = 5, .startTime = 946'684'830, .timeout = 3};  // NOLINT
 
         // auto queueEntry2 = EduQueueEntry{
         //    .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
 
         // TODO: Why add the first entry again?
-        // eduProgramQueue.push_back(queueEntry1);
+        eduProgramQueue.push_back(queueEntry1);
         // eduProgramQueue.push_back(queueEntry2);
 
         RODOS::PRINTF("Size of EduProgramQueue : %d\n", eduProgramQueue.size());
@@ -162,7 +162,12 @@ private:
                 RODOS::PRINTF("Resuming from execution time\n");
 
                 // Set current Queue ID to next
-                queueIndex++;
+                // queueIndex++;
+
+                // Infinite EDU program execution
+                queueIndex = 0;
+                eduProgramQueue[queueIndex].startTime = static_cast<std::int32_t>(
+                    (RODOS::sysTime.getUTC() + utility::rodosUnixOffset) / SECONDS + 8);
             }
         }
     }

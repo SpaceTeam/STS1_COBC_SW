@@ -519,7 +519,7 @@ auto Edu::TurnOff() -> void
     }
 
     // DEBUG
-    RODOS::PRINTF("\nSuccess\n");
+    // RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
     return {EduErrorCode::success, actualDataLength.get()};
