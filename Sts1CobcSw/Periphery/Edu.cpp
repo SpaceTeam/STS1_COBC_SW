@@ -404,7 +404,7 @@ auto Edu::TurnOff() -> void
         // DEBUG
         RODOS::PRINTF("  .errorCode = %d, .resultSize = %d\n",
                       static_cast<int>(resultInfo.errorCode),
-                      static_cast<int>(totalResultSize.get()));
+                      static_cast<int>(resultInfo.resultSize.get()));
         // END DEBUG
         if(resultInfo.errorCode != EduErrorCode::success)
         {
@@ -417,7 +417,7 @@ auto Edu::TurnOff() -> void
         packets++;
     }
     // DEBUG
-    RODOS::PRINTF("  Total:\n");
+    RODOS::PRINTF(" Total\n");
     RODOS::PRINTF("  .errorCode = %d, .resultSize = %d\n",
                   static_cast<int>(resultInfo.errorCode),
                   static_cast<int>(totalResultSize.get()));
