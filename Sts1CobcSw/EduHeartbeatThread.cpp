@@ -110,7 +110,6 @@ private:
         auto oldHeartbeat = eduHeartBeatGpioPin.Read();
         auto edgeCounter = 0_i;
 
-        RODOS::PRINTF("Sampling period : %lld\n", samplingPeriode.get() / RODOS::MILLISECONDS);
         auto toggle = true;
         TIME_LOOP(0, samplingPeriode.get())
         {
