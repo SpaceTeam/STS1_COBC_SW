@@ -63,59 +63,44 @@ private:
                 case 'u':
                 {
                     auto timestamp = utility::GetUnixUtc();
-                    PRINTF("Sending UpdateTime(timestamp = %d)\n", static_cast<int>(timestamp));
+                    PRINTF("UpdateTime(timestamp = %d)\n", static_cast<int>(timestamp));
                     auto errorCode = edu.UpdateTime({.timestamp = timestamp});
-                    PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
+                    PRINTF("  error code: %d\n", static_cast<int>(errorCode));
                     break;
                 }
                 case 'e':
                 {
-                    auto userInput = std::array<char, 1>{};
+                    auto userInput = std::array<char, 3>{};
 
-                    PRINTF("Please enter a program ID (1 character)\n");
+                    PRINTF("Please enter a program ID (3 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
                     std::uint16_t programId = 0;
                     std::from_chars(begin(userInput), end(userInput), programId);
 
-                    PRINTF("Please enter a queue ID (1 character)\n");
+                    PRINTF("Please enter a queue ID (3 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
                     std::uint16_t queueId = 0;
                     std::from_chars(begin(userInput), end(userInput), queueId);
 
-                    PRINTF("Please enter a timeout (1 character)\n");
+                    PRINTF("Please enter a timeout (3 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
                     std::int16_t timeout = 0;
                     std::from_chars(begin(userInput), end(userInput), timeout);
 
                     PRINTF("\n");
-                    PRINTF("Sending ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
-                           static_cast<int>(programId),
-                           static_cast<int>(queueId),
-                           static_cast<int>(timeout));
                     auto errorCode = edu.ExecuteProgram(
                         {.programId = programId, .queueId = queueId, .timeout = timeout});
-                    PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
+                    PRINTF("  error code = %d\n", static_cast<int>(errorCode));
                     break;
                 }
                 case 'g':
                 {
-                    PRINTF("Sending GetStatus()\n");
-                    auto status = edu.GetStatus();
-                    PRINTF("Returned status:\n");
-                    PRINTF("  type       = %d\n", static_cast<int>(status.statusType));
-                    PRINTF("  program ID = %d\n", static_cast<int>(status.programId));
-                    PRINTF("  queue ID   = %d\n", static_cast<int>(status.queueId));
-                    PRINTF("  exit code  = %d\n", static_cast<int>(status.exitCode));
-                    PRINTF("  error code = %d\n", static_cast<int>(status.errorCode));
+                    [[maybe_unused]] auto status = edu.GetStatus();
                     break;
                 }
                 case 'r':
                 {
-                    PRINTF("Sending ReturnResult()\n");
-                    auto resultInfo = edu.ReturnResult();
-                    PRINTF("Returned result info:\n");
-                    PRINTF("  error code  = %d\n", static_cast<int>(resultInfo.errorCode));
-                    PRINTF("  result size = %d\n", static_cast<int>(resultInfo.resultSize.get()));
+                    [[maybe_unused]] auto resultInfo = edu.ReturnResult();
                     break;
                 }
                 default:

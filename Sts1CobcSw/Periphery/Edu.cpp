@@ -212,10 +212,10 @@ auto Edu::TurnOff() -> void
     {
         auto status = EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
         RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
-        RODOS::PRINTF("  .programId = %d\n", static_cast<int>(status.programId));
-        RODOS::PRINTF("  .queueId = %d\n", static_cast<int>(status.queueId));
-        RODOS::PRINTF("  .exitCode = %d\n", static_cast<int>(status.exitCode));
-        RODOS::PRINTF("  .errorCode = %d\n", static_cast<int>(status.errorCode));
+        RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
+        RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
+        RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
+        RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
         return status;
     }
 
@@ -234,10 +234,10 @@ auto Edu::TurnOff() -> void
     } while(errorCount++ < maxNNackRetries);
 
     RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
-    RODOS::PRINTF("  .programId = %d\n", static_cast<int>(status.programId));
-    RODOS::PRINTF("  .queueId = %d\n", static_cast<int>(status.queueId));
-    RODOS::PRINTF("  .exitCode = %d\n", static_cast<int>(status.exitCode));
-    RODOS::PRINTF("  .errorCode = %d\n", static_cast<int>(status.errorCode));
+    RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
+    RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
+    RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
+    RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
     return status;
 }
 
@@ -404,7 +404,7 @@ auto Edu::TurnOff() -> void
         // DEBUG
         RODOS::PRINTF("  .errorCode = %d, .resultSize = %d\n",
                       static_cast<int>(resultInfo.errorCode),
-                      static_cast<int>(resultInfo.resultSize.get()));
+                      static_cast<int>(totalResultSize.get()));
         // END DEBUG
         if(resultInfo.errorCode != EduErrorCode::success)
         {
@@ -549,7 +549,7 @@ auto Edu::TurnOff() -> void
 //! @returns A relevant error code
 [[nodiscard]] auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
 {
-    RODOS::PRINTF("UpdateTime()\n");
+    RODOS::PRINTF("UpdateTime(timestamp = %d)\n", static_cast<int>(data.timestamp.get()));
     auto serialData = serial::Serialize(data);
     auto errorCode = SendData(serialData);
     if(errorCode != EduErrorCode::success)
