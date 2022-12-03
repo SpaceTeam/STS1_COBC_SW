@@ -1,6 +1,10 @@
+#include <Sts1CobcSw/CommandParser.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -29,30 +33,19 @@ extern HAL_UART uart_stdout;
 namespace sts1cobcsw
 {
 namespace ts = type_safe;
-using ts::operator""_i16;
-using ts::operator""_usize;
 
-
-enum CommandId : char
-{
-    turnEduOn = '1',
-    turnEduOff = '2',
-    buildQueue = '4',
-};
-
+using sts1cobcsw::serial::Byte;
+using sts1cobcsw::serial::SerialBuffer;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4'000U;
 constexpr std::size_t commandSize = 30;
-constexpr auto threadPriority = 100;
+// TODO: Use serialSize<EduQueueEntry> instead
 constexpr std::size_t queueEntrySize =
     sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
     + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
 
 
-// TODO: Use serial library instead
-template<std::size_t size>
-auto CopyFrom(etl::string<size> const & buffer, ts::size_t * position, auto * value) -> void;
 auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
 auto DispatchCommand(etl::string<commandSize> const & command) -> void;
 
@@ -60,7 +53,7 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void;
 class CommandParserThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    CommandParserThread() : StaticThread("CommandParserThread", threadPriority)
+    CommandParserThread() : StaticThread("CommandParserThread", commandParserThreadPriority)
     {
     }
 
@@ -74,12 +67,16 @@ private:
     {
         constexpr auto startCharacter = '$';
 
+        // TODO: The command is not a string. Turn this into an array of bytes, or if different
+        // commands have different size, use an etl::vector<Byte>
         auto command = etl::string<commandSize>();
         ts::bool_t startWasDetected = false;
+
         while(true)
         {
             char readCharacter = 0;
-            // This needs to be abstracted away because "IRL" we receive commands via the RF module
+            // TODO: This needs to be abstracted away because "IRL" we receive commands via the RF
+            // module
             ts::size_t nReadCharacters =
                 RODOS::uart_stdout.read(&readCharacter, sizeof(readCharacter));
             if(nReadCharacters != 0U)
@@ -110,26 +107,29 @@ private:
 
 auto DispatchCommand(etl::string<commandSize> const & command) -> void
 {
-    ts::size_t position = 1_usize;
+    auto buffer = std::array<std::byte, serial::serialSize<GsCommandHeader>>();
+    std::transform(
+        std::begin(command), std::end(command), std::begin(buffer), [](char c) { return Byte(c); });
+
+    // Debug print
+    for(auto & b : buffer)
+    {
+        RODOS::PRINTF("%d", std::to_integer<uint8_t>(b));
+    }
+
+    auto gsCommandHeader = serial::Deserialize<GsCommandHeader>(buffer);
 
     // TODO: Why is this here? It has nothing to do with command dispatching
-    std::int32_t utc = 0;
-    CopyFrom(command, &position, &utc);
-    RODOS::sysTime.setUTC(utility::UnixToRodosTime(utc));
-    utility::PrintTime();
+    RODOS::sysTime.setUTC(utility::UnixToRodosTime(gsCommandHeader.utc));
 
-    char commandId = 0;
-    CopyFrom(command, &position, &commandId);
-    RODOS::PRINTF("Command ID character : %c\n", commandId);
-
-    auto length = 0_i16;
-    CopyFrom(command, &position, &length);
-    RODOS::PRINTF("Length of data : %d\n", length.get());
+    utility::PrintFormattedSystemUtc();
+    RODOS::PRINTF("Command ID character : %c\n", gsCommandHeader.commandId);
+    RODOS::PRINTF("Length of data : %d\n", gsCommandHeader.length);
 
     auto targetIsCobc = true;
     if(targetIsCobc)
     {
-        switch(commandId)
+        switch(gsCommandHeader.commandId)
         {
             case CommandId::turnEduOn:
             {
@@ -147,14 +147,17 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
                 // something like that
                 RODOS::PRINTF("Entering build queue command parsing\n");
 
-                auto const nbQueueEntries = length.get() / static_cast<int>(queueEntrySize);
+                auto const nbQueueEntries =
+                    gsCommandHeader.length / static_cast<int>(queueEntrySize);
                 RODOS::PRINTF("Number of queue entries : %d\n", nbQueueEntries);
 
                 // Erase all previous entries in the EDU program queue
                 eduProgramQueue.clear();
 
-                ParseAndAddQueueEntries(
-                    command.substr(position.get(), static_cast<std::size_t>(length.get())));
+                // FIXME: I think this is the wrong size because serialSize<T> != sizeof(T) in this
+                // case.
+                ParseAndAddQueueEntries(command.substr(
+                    sizeof(GsCommandHeader), static_cast<std::size_t>(gsCommandHeader.length)));
 
                 // Reset queue index
                 queueIndex = 0U;
@@ -174,50 +177,31 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
 }
 
 
-// TODO: Use Deserialize instead of CopyFrom
+// TODO: Test all of this
 auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void
 {
     auto const nQueueEntries = command.size() / queueEntrySize;
     eduProgramQueue.resize(nQueueEntries);
 
-    ts::size_t position = 0U;
+    auto buffer = SerialBuffer<EduQueueEntry>{};
 
+    std::size_t index = 0;
     for(auto & entry : eduProgramQueue)
     {
-        std::uint16_t programId = 0;
-        CopyFrom(command, &position, &programId);
-        RODOS::PRINTF("Prog ID      : %d\n", static_cast<int>(programId));
-        std::uint16_t queueId = 0;
-        CopyFrom(command, &position, &queueId);
-        RODOS::PRINTF("Queue ID     : %d\n", static_cast<int>(queueId));
-        std::int32_t startTime = 0;
-        CopyFrom(command, &position, &startTime);
-        RODOS::PRINTF("Start Time   : %d\n", static_cast<int>(startTime));
-        std::int16_t timeout = 0;
-        CopyFrom(command, &position, &timeout);
-        RODOS::PRINTF("Timeout      : %d\n", static_cast<int>(timeout));
+        auto commandQueueEntrySubstring = command.substr(index * queueEntrySize, queueEntrySize);
+        std::transform(std::begin(commandQueueEntrySubstring),
+                       std::end(commandQueueEntrySubstring),
+                       std::begin(buffer),
+                       [](char c) { return Byte(c); });
+        entry = serial::Deserialize<EduQueueEntry>(buffer);
 
-        entry = EduQueueEntry{
-            .programId = programId, .queueId = queueId, .startTime = startTime, .timeout = timeout};
+        RODOS::PRINTF("Prog ID      : %d\n", static_cast<int>(entry.programId.get()));
+        RODOS::PRINTF("Queue ID     : %d\n", static_cast<int>(entry.queueId.get()));
+        RODOS::PRINTF("Start Time   : %d\n", static_cast<int>(entry.startTime.get()));
+        RODOS::PRINTF("Timeout      : %d\n", static_cast<int>(entry.timeout.get()));
+
+        // Should never be superior or equal to nQueueEntries
+        index++;
     }
-}
-
-
-//! @brief Copy a value from a buffer to a variable.
-//!
-//! During the process, the position parameter is updated, so that one can chain multiple calls to
-//! CopyFrom(). The size of the variable that must be copied from the buffer is the size of the
-//! value parameter.
-//!
-//! @param buffer The buffer our data is copied from.
-//! @param position The position in the buffer our data is copied from.
-//! @param value The variable that will hold our copied value.
-// TODO: Remove this function. Use the serial library instead.
-template<std::size_t size>
-auto CopyFrom(etl::string<size> const & buffer, ts::size_t * const position, auto * value) -> void
-{
-    auto newPosition = *position + sizeof(*value);
-    std::memcpy(value, &buffer[(*position).get()], sizeof(*value));
-    *position = newPosition;
 }
 }

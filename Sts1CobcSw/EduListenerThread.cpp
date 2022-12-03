@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
+#include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <type_safe/narrow_cast.hpp>
 #include <type_safe/types.hpp>
@@ -19,22 +20,9 @@
 namespace sts1cobcsw
 {
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
-// TODO:: enum
-//
-//}
-enum ProgramStatus : uint8_t
-{
-    programRunning = 1,
-    programCouldNotBeStarted = 2,
-    programExecutionFailed = 3,
-    programExecutionSucceeded = 4,
-    resultFileTransfered = 5,
-    resultFileSentToRf = 6,
-    ackFromGround = 7,
-    resultFileDeleted = 8
-};
+
+
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
-constexpr auto threadPriority = 100;
 
 auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
 {
@@ -54,7 +42,7 @@ auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -
 class EduListenerThread : public StaticThread<>
 {
 public:
-    EduListenerThread() : StaticThread("EduListenerThread", threadPriority)
+    EduListenerThread() : StaticThread("EduListenerThread", eduListenerThreadPriority)
     {
     }
 
@@ -133,7 +121,6 @@ private:
                         // Send return result to Edu, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
                         auto resultsInfo = edu.ReturnResult();
-
                         auto errorCode = resultsInfo.errorCode;
 
                         if(errorCode != periphery::EduErrorCode::success
@@ -161,6 +148,7 @@ private:
                             FindStatusAndHistoryEntry(status.programId, status.queueId);
                         statusHistoryEntry.status = ProgramStatus::resultFileTransfered;
 
+
                         break;
                     }
 
@@ -174,7 +162,5 @@ private:
             // RODOS::PRINTF("[EduListenerThread] Edu Has no uppdate\n");
         }
     }
-};
-
-auto const eduListenerThread = EduListenerThread();
+} eduListenerThread;
 }

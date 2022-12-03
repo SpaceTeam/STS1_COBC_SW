@@ -14,8 +14,9 @@ namespace sts1cobcsw::utility
 constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 
 
+// Todo: Change name
 //! @brief Print UTC system time in human readable format.
-auto PrintTime() -> void;
+auto PrintFormattedSystemUtc() -> void;
 
 
 //! @brief Given a time in seconds since 01.01.1970, return a time in nanoseconds since 01.01.2000.
