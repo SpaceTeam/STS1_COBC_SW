@@ -35,10 +35,10 @@ periphery::Edu edu = periphery::Edu();
 
 // TODO: File and class name should match. More generally, consistently call it EduProgramQueue or
 // just EduQueue everywhere.
-class EduQueueThread : public RODOS::StaticThread<stackSize>
+class EduQueue : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduQueueThread() : StaticThread("EduQueueThread", threadPriority)
+    EduQueue() : StaticThread("EduQueue", threadPriority)
     {
     }
 
@@ -57,23 +57,23 @@ private:
         // eduProgramQueue.push_back(queueEntry1);
         // eduProgramQueue.push_back(queueEntry2);
 
-        RODOS::PRINTF("Size of EduProgramQueue : %d\n", eduProgramQueue.size());
+        RODOS::PRINTF("Size of EduProgramQueue : %d\n", eduQueue.size());
     }
 
     void run() override
     {
         utility::PrintTime();
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
-        RODOS::PRINTF("Entering EduQueueThread\n");
+        RODOS::PRINTF("Entering EduQueue\n");
         while(true)
         {
-            if(eduProgramQueue.empty())
+            if(eduQueue.empty())
             {
                 RODOS::PRINTF(
                     "Edu Program Queue is empty, thread set to sleep until end of time\n");
                 AT(RODOS::END_OF_TIME);
             }
-            else if(queueIndex >= eduProgramQueue.size())
+            else if(queueIndex >= eduQueue.size())
             {
                 RODOS::PRINTF("End of queue is reached, thread set to sleep until end of time\n");
                 AT(RODOS::END_OF_TIME);
@@ -82,7 +82,7 @@ private:
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
             auto nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
+                eduQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
             auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto startDelay =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
@@ -112,7 +112,7 @@ private:
 
             // TODO: Get rid of the code duplication here
             nextProgramStartTime =
-                eduProgramQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
+                eduQueue[queueIndex].startTime - (utility::rodosUnixOffset / RODOS::SECONDS);
             currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
             auto startDelay2 =
                 std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
@@ -131,9 +131,9 @@ private:
             // Never reached
             RODOS::PRINTF("Done suspending for the second time\n");
 
-            auto queueId = eduProgramQueue[queueIndex].queueId;
-            auto programId = eduProgramQueue[queueIndex].programId;
-            auto timeout = eduProgramQueue[queueIndex].timeout;
+            auto queueId = eduQueue[queueIndex].queueId;
+            auto programId = eduQueue[queueIndex].programId;
+            auto timeout = eduQueue[queueIndex].timeout;
 
             RODOS::PRINTF("Executing program %d\n", programId);
             auto executeProgramData = periphery::ExecuteProgramData{
