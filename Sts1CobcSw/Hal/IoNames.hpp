@@ -43,10 +43,10 @@ inline constexpr auto cobcSpiSckPin = pc10;
 inline constexpr auto cobcSpiMisoPin = pc11;
 inline constexpr auto cobcSpiMosiPin = pc12;
 
-inline constexpr auto rfSpiIndex = RODOS::SPI_IDX4;
-inline constexpr auto rfSpiSckPin = pb13;
-inline constexpr auto rfSpiMisoPin = pa11;
-inline constexpr auto rfSpiMosiPin = pa1;
+inline constexpr auto rfSpiIndex = RODOS::SPI_IDX3;
+inline constexpr auto rfSpiSckPin = pc10;
+inline constexpr auto rfSpiMisoPin = pc11;
+inline constexpr auto rfSpiMosiPin = pc12;
 inline constexpr auto rfCsPin = pa8;
 inline constexpr auto rfNirqPin = pb6;
 inline constexpr auto rfSdnPin = pb14;
