@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
+#include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <type_safe/types.hpp>
@@ -65,7 +66,7 @@ class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
     // TODO: Add this to all the other threads as well
-    EduHeartbeatThread() : StaticThread("EduHeartbeatThread", threadPriority)
+    EduHeartbeatThread() : StaticThread("EduHeartbeatThread", eduHeartbeatThreadPriority)
     {
     }
 

@@ -30,8 +30,6 @@ constexpr auto eduBootTime = 20 * RODOS::SECONDS;  // Measured ~19 s
 constexpr auto eduPowerManagementThreadPeriod = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
-// TODO: Set this to 500
-constexpr auto threadPriority = 500;
 
 // TODO: There should be an Eps.hpp/.cpp for this
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
