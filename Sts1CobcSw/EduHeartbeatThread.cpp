@@ -12,44 +12,34 @@
 namespace sts1cobcsw
 {
 using RODOS::MILLISECONDS;
-namespace ts = type_safe;
-using ts::operator""_i8;
-using ts::operator""_u8;
-using ts::operator""_i16;
-using ts::operator""_u16;
-using ts::operator""_i32;
-using ts::operator""_u32;
-using ts::operator""_i64;
-using ts::operator""_u64;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
-// Must be the highest of all, otherwise educommunicationerror will never resume from busy wait.
-constexpr auto threadPriority = 600;
 
 auto ledGpioPin = hal::GpioPin(hal::ledPin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
-auto eduHeartBeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
+auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
 // periphery::Edu edu = periphery::Edu();
 
 auto constexpr edgeCounterThreshold = 4;
 
+
 auto EduIsAlive()
 {
     auto begin = RODOS::NOW();
 
-    auto refHeartbeat = eduHeartBeatGpioPin.Read();
-    auto heartbeat = eduHeartBeatGpioPin.Read();
+    auto refHeartbeat = eduHeartbeatGpioPin.Read();
+    auto heartbeat = eduHeartbeatGpioPin.Read();
     auto edgeCounter = 0;
     for(int i = 0; i < 1'000'000; ++i)
     {
-        heartbeat = eduHeartBeatGpioPin.Read();
+        heartbeat = eduHeartbeatGpioPin.Read();
         if(heartbeat != refHeartbeat)
         {
             edgeCounter++;
             refHeartbeat = heartbeat;
-            if(edgeCounter >= 4)
+            if(edgeCounter >= edgeCounterThreshold)
             {
                 return true;
             }
@@ -62,6 +52,7 @@ auto EduIsAlive()
     return false;
 }
 
+
 class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
@@ -73,7 +64,7 @@ public:
 private:
     void init() override
     {
-        eduHeartBeatGpioPin.Direction(hal::PinDirection::in);
+        eduHeartbeatGpioPin.Direction(hal::PinDirection::in);
         ledGpioPin.Direction(hal::PinDirection::out);
         epsChargingGpioPin.Direction(hal::PinDirection::out);
         ledGpioPin.Reset();
@@ -96,7 +87,6 @@ private:
         //
         //        }
 
-
         // RODOS::AT(RODOS::END_OF_TIME);
         namespace ts = type_safe;
         using ts::operator""_i;
@@ -104,18 +94,18 @@ private:
 
         constexpr auto heartbeatFrequency = 10_isize;                     // Hz
         constexpr auto samplingFrequency = 5_isize * heartbeatFrequency;  // Hz
-        constexpr auto samplingPeriode = 1'000_isize * MILLISECONDS / samplingFrequency;
+        constexpr auto samplingPeriod = 1'000_isize * MILLISECONDS / samplingFrequency;
 
         auto samplingCount = 0_i;
         ts::bool_t heartbeatIsConstant = true;
-        auto oldHeartbeat = eduHeartBeatGpioPin.Read();
+        auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0_i;
 
-        RODOS::PRINTF("Sampling period : %lld\n", samplingPeriode.get() / RODOS::MILLISECONDS);
+        RODOS::PRINTF("Sampling period : %lld\n", samplingPeriod.get() / RODOS::MILLISECONDS);
         auto toggle = true;
-        TIME_LOOP(0, samplingPeriode.get())
+        TIME_LOOP(0, samplingPeriod.get())
         {
-            // Read current heartbneat value
+            // Read current heartbeat value
 
             if(toggle)
             {
@@ -127,7 +117,7 @@ private:
             }
             toggle = not toggle;
 
-            auto heartbeat = eduHeartBeatGpioPin.Read();
+            auto heartbeat = eduHeartbeatGpioPin.Read();
 
             ++samplingCount;
 
@@ -139,8 +129,7 @@ private:
                 edgeCounter++;
             }
 
-
-            if(edgeCounter == 4)
+            if(edgeCounter == edgeCounterThreshold)
             {
                 // RODOS::PRINTF("Edu is alive published to true\n");
                 eduIsAliveTopic.publish(true);
