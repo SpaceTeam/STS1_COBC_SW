@@ -50,10 +50,10 @@ inline constexpr std::size_t serialSize<EduQueueEntry> =
 
 inline auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
 {
-    source = DeserializeFrom(source, &(data->queueId));
     source = DeserializeFrom(source, &(data->programId));
+    source = DeserializeFrom(source, &(data->queueId));
     source = DeserializeFrom(source, &(data->startTime));
-    source = DeserializeFrom(source, &(data->startTime));
+    source = DeserializeFrom(source, &(data->timeout));
     return source;
 }
 
