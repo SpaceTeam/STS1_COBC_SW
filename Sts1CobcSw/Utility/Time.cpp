@@ -4,7 +4,7 @@
 namespace sts1cobcsw::utility
 {
 //! @brief Print UTC system time in human readable format
-void PrintTime()
+void PrintFormattedSystemUtc()
 {
     int32_t year = 0;
     int32_t month = 0;

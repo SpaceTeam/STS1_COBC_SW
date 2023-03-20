@@ -6,19 +6,6 @@ set(output_files "")
 # Add golden tests
 add_golden_test(FILE "HelloWorld.test.cpp" LIB rodos::rodos)
 add_golden_test(FILE "HelloDummy.test.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
-# TODO: Fix the two tests below
-if(FALSE)
-    add_golden_test(FILE "EduQueue.test.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
-    add_golden_test(
-        FILE
-        "BuildQueueCommand.test.cpp"
-        LIB
-        etl::etl
-        rodos::rodos
-        Sts1CobcSw_Dummy
-        Sts1CobcSw_Util
-    )
-endif()
 
 # Initialize "global" variable used by add_thread_golden_test()
 set(thread_output_files "")
