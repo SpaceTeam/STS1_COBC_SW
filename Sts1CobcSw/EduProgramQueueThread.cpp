@@ -84,11 +84,7 @@ private:
 
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
-            auto nextProgramStartTime = eduProgramQueue[queueIndex].startTime.get()
-                                      - (utility::rodosUnixOffset / RODOS::SECONDS);
-            auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-            auto startDelay =
-                std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+            auto startDelay = CalculateStartDelay();
             nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
@@ -114,12 +110,7 @@ private:
                 ResumeEduErrorCommunicationThread();
             }
 
-            // TODO: Get rid of the code duplication here
-            nextProgramStartTime = eduProgramQueue[queueIndex].startTime.get()
-                                 - (utility::rodosUnixOffset / RODOS::SECONDS);
-            currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-            auto startDelay2 =
-                std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+            auto startDelay2 = CalculateStartDelay();
             nextProgramStartDelayTopic.publish(startDelay2 / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
@@ -173,6 +164,18 @@ private:
         }
     }
 } eduQueueThread;
+
+
+//! Calculate the delay in nanoseconds before the start of program at current queue index
+[[nodiscard]] inline auto CalculateStartDelay() -> int64_t
+{
+    auto nextProgramStartTime =
+        eduProgramQueue[queueIndex].startTime.get() - (utility::rodosUnixOffset / SECONDS);
+    auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
+    int64_t startDelay = std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+
+    return startDelay;
+}
 
 
 // TODO: Think about whether this is the right way to declare, design, use, etc. this
