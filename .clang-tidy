@@ -167,6 +167,8 @@ CheckOptions:
     value: 'CamelCase'
   - key: 'readability-identifier-naming.TypeTemplateParameterCase'
     value: 'CamelCase'
+  - key: 'readability-identifier-naming.TypeTemplateParameterIgnoredRegexp'
+    value: 'expr-type'
   - key: 'readability-identifier-naming.UnionCase'
     value: 'CamelCase'
   - key: 'readability-identifier-naming.ValueTemplateParameterCase'

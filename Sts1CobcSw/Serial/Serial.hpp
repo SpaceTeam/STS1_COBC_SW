@@ -100,6 +100,15 @@ inline constexpr auto DeserializeFrom(Byte * source, T * data) -> Byte *
     return source + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
+template<TriviallySerializable T>
+inline constexpr auto DeserializeFromConst(Byte const * source, T * data) -> Byte const *
+{
+    // The cast to void * suppresses the -Wclass-memaccess warning
+    // https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wclass-memaccess
+    std::memcpy(static_cast<void *>(data), static_cast<void const *>(source), serialSize<T>);
+    return source + serialSize<T>;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+}
+
 
 template<typename T>
 [[nodiscard]] constexpr auto Serialize(T const & data) -> SerialBuffer<T>
@@ -115,6 +124,14 @@ template<std::default_initializable T>
 {
     auto t = T{};
     DeserializeFrom(source.data(), &t);
+    return t;
+}
+
+template<std::default_initializable T>
+[[nodiscard]] constexpr auto DeserializeConst(std::span<const Byte, serialSize<T>> source) -> T
+{
+    auto t = T{};
+    DeserializeFromConst(source.data(), &t);
     return t;
 }
 

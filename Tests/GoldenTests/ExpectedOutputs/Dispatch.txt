@@ -1,0 +1,27 @@
+-----------------------------------------------------
+Default internal MAIN
+--------------- Application running ------------
+Hello World!
+commandSize : 30
+dataSize : 22
+headerSize2 : 8
+Command Size = 30
+Header start character : a
+Header comamndID       : 52
+Header utc             : 1704067200
+Header length          : 20
+DateUTC(DD/MM/YYYY HH:MIN:SS) : 01/01/2024 00:00:00
+Done for retrieving header
+Handling command
+Entering build queue command parsing
+Printing and parsing
+Prog ID      : 1
+Queue ID     : 16
+Start Time   : 1048577
+Timeout      : 1
+Prog ID      : 2
+Queue ID     : 32
+Start Time   : 2097154
+Timeout      : 2
+Queue index reset. Current size of EDU program queue is 2.
+hw_resetAndReboot() -> exit

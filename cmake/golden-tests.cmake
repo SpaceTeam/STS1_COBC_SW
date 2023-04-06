@@ -59,7 +59,7 @@ macro(add_thread_golden_test)
     )
 
     add_test(NAME ${test_filename}_Test
-             COMMAND diff "${test_filename}.output.trimmed"
+            COMMAND diff "${test_filename}.output.trimmed"
                      "${CMAKE_CURRENT_SOURCE_DIR}/ExpectedOutputs/${test_filename}.txt"
     )
 

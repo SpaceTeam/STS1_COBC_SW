@@ -18,6 +18,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <etl/string.h>
+#include <etl/vector.h>
 
 #include <cstdint>
 #include <cstring>
@@ -39,15 +40,22 @@ using sts1cobcsw::serial::SerialBuffer;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4'000U;
-constexpr std::size_t commandSize = 30;
+// constexpr std::size_t commandSize = 30;
 // TODO: Use serialSize<EduQueueEntry> instead
-constexpr std::size_t queueEntrySize =
-    sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
-    + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
+// constexpr std::size_t queueEntrySize =
+//    sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
+//    + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
+
+// Not sure about this
+using Command = etl::vector<Byte, commandSize>;
+
+auto ParseAndAddQueueEntries(etl::vector<Byte, commandSize> const & command) -> void;
+auto DispatchComamnd(Command const & command) -> void;
 
 
-auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
-auto DispatchCommand(etl::string<commandSize> const & command) -> void;
+auto ParseAndAddQueueEntries(etl::vector<Byte, commandSize> const & queueEntries) -> void
+{
+}
 
 
 class CommandParserThread : public RODOS::StaticThread<stackSize>
@@ -65,11 +73,11 @@ private:
 
     void run() override
     {
-        constexpr auto startCharacter = '$';
+        constexpr serial::Byte startCharacter{'$'};
 
         // TODO: The command is not a string. Turn this into an array of bytes, or if different
         // commands have different size, use an etl::vector<Byte>
-        auto command = etl::string<commandSize>();
+        auto command = Command();
         ts::bool_t startWasDetected = false;
 
         while(true)
@@ -82,18 +90,19 @@ private:
             if(nReadCharacters != 0U)
             {
                 // RODOS::PRINTF("Read a character : %c\n", readCharacter);
-                if(readCharacter == startCharacter)
+                if(static_cast<Byte>(readCharacter) == startCharacter)
                 {
                     startWasDetected = true;
                     command.clear();
-                    command += startCharacter;
+                    command.push_back(startCharacter);
                 }
                 else if(startWasDetected)
                 {
-                    command += readCharacter;
-                    // Every command has the same size
+                    command.push_back(static_cast<Byte>(readCharacter));
+                    // Every command has the same size for now
                     if(command.full())
                     {
+                        // TODO: rename this to smthg like "handle command"
                         DispatchCommand(command);
                         startWasDetected = false;
                     }
@@ -105,26 +114,16 @@ private:
 } commandParserThread;
 
 
-auto DispatchCommand(etl::string<commandSize> const & command) -> void
+/*
+auto DispatchCommand(Command const & command) -> void
 {
+    // Do nothing
     auto buffer = std::array<std::byte, serial::serialSize<GsCommandHeader>>();
-    std::transform(
-        std::begin(command), std::end(command), std::begin(buffer), [](char c) { return Byte(c); });
-
-    // Debug print
-    for(auto & b : buffer)
-    {
-        RODOS::PRINTF("%d", std::to_integer<uint8_t>(b));
-    }
-
+    std::copy(std::begin(command), std::end(command), std::begin(buffer));
     auto gsCommandHeader = serial::Deserialize<GsCommandHeader>(buffer);
 
-    // TODO: Why is this here? It has nothing to do with command dispatching
     RODOS::sysTime.setUTC(utility::UnixToRodosTime(gsCommandHeader.utc));
-
     utility::PrintFormattedSystemUtc();
-    RODOS::PRINTF("Command ID character : %c\n", gsCommandHeader.commandId);
-    RODOS::PRINTF("Length of data : %d\n", gsCommandHeader.length);
 
     auto targetIsCobc = true;
     if(targetIsCobc)
@@ -146,6 +145,7 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
                 // TODO: This should be a function Build/BuildNew/Update/OverwriteEduQueue() or
                 // something like that
                 RODOS::PRINTF("Entering build queue command parsing\n");
+                return;
 
                 auto const nbQueueEntries =
                     gsCommandHeader.length / static_cast<int>(queueEntrySize);
@@ -156,8 +156,11 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
 
                 // FIXME: I think this is the wrong size because serialSize<T> != sizeof(T) in this
                 // case.
-                ParseAndAddQueueEntries(command.substr(
-                    sizeof(GsCommandHeader), static_cast<std::size_t>(gsCommandHeader.length)));
+                auto const queueEntries = std::span(command).subspan(sizeof(GsCommandHeader),
+                                                            static_cast<std::size_t>(gsCommandHeader.length));
+                ParseAndAddQueueEntries(queueEntries);
+                //ParseAndAddQueueEntries(command.substr(
+                 //   sizeof(GsCommandHeader), static_cast<std::size_t>(gsCommandHeader.length)));
 
                 // Reset queue index
                 queueIndex = 0U;
@@ -174,10 +177,14 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
             }
         }
     }
-}
 
+
+}*/
+
+// constexpr auto headerSize = serial::SerialSize<GsCommandHeader>;
 
 // TODO: Test all of this
+/*
 auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void
 {
     auto const nQueueEntries = command.size() / queueEntrySize;
@@ -203,5 +210,5 @@ auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void
         // Should never be superior or equal to nQueueEntries
         index++;
     }
-}
+}*/
 }
