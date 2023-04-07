@@ -39,7 +39,6 @@ auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 
 constexpr inline std::uint16_t partInfo = 0x4463;
-constexpr inline std::uint32_t xoFrequency = 30'000'000;
 
 
 // --- Private function declarations ---
@@ -49,15 +48,18 @@ constexpr inline std::uint32_t xoFrequency = 30'000'000;
                                 std::uint8_t * responseData,
                                 std::size_t responseLength) -> void;
 
-template<std::size_t nBytes>
-auto SendCommand(std::span<Byte, nBytes> commandBuffer) -> void;
+auto SendCommand(std::span<Byte> commandBuffer) -> void;
+
 template<std::size_t nBytes>
 auto GetCommandResponse() -> std::array<Byte, nBytes>;
+
 auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
+
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
-auto PowerUp(std::uint8_t bootOptions, std::uint8_t xtalOptions, std::uint32_t xoFrequency) -> void;
-auto PollCts() -> void;
+auto PowerUp(Byte bootOptions, Byte xtalOptions, std::uint32_t xoFrequency) -> void;
+
+auto WaitOnCts() -> void;
 
 
 // --- Public function definitions ---
@@ -103,14 +105,15 @@ auto Initialize() -> void
     auto sendBuffer = std::array<std::uint8_t, 32>{};
 
     // Power Up
-    sendBuffer[0] = 0x02;  // CMD POWER_UP
-    sendBuffer[1] = 0x01;  // No Patch, Func is 1
-    sendBuffer[2] = 0x00;  // No TXCO
-    sendBuffer[3] = 0x01;  // XO_FREQ = 0x01C9C380 = 30MHz (stolen from NiceRF demo code)
-    sendBuffer[4] = 0xC9;  // XO_FREQ
-    sendBuffer[5] = 0xC3;  // XO_FREQ
-    sendBuffer[6] = 0x80;  // XO_FREQ
-    SendCommand(data(sendBuffer), 7, nullptr, 0);
+    // sendBuffer[0] = 0x02;  // CMD POWER_UP
+    // sendBuffer[1] = 0x01;  // No Patch, Func is 1
+    // sendBuffer[2] = 0x00;  // No TXCO
+    // sendBuffer[3] = 0x01;  // XO_FREQ = 0x01C9C380 = 30MHz (stolen from NiceRF demo code)
+    // sendBuffer[4] = 0xC9;  // XO_FREQ
+    // sendBuffer[5] = 0xC3;  // XO_FREQ
+    // sendBuffer[6] = 0x80;  // XO_FREQ
+    // SendCommand(data(sendBuffer), 7, nullptr, 0);
+    PowerUp(noPatch, noTxco, 30'000'000);
 
     // GPIO Pin Cfg
     sendBuffer[0] = 0x13;
@@ -662,10 +665,9 @@ auto Morse() -> void
 
 
 // --- Private function definitions ---
-template<std::size_t nBytes>
-auto SendCommand(std::span<Byte, nBytes> commandBuffer) -> void
+auto SendCommand(std::span<Byte> commandBuffer) -> void
 {
-    PollCts();
+    WaitOnCts();
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
     hal::WriteTo(&spi, commandBuffer);
@@ -754,20 +756,23 @@ auto ReadFifo(std::uint8_t * data, std::size_t length) -> void
     csGpioPin.Set();
 }
 
-auto PowerUp(std::uint8_t bootOptions, std::uint8_t xtalOptions, std::uint32_t xoFrequency) -> void
+
+auto PowerUp(Byte bootOptions, Byte xtalOptions, std::uint32_t xoFrequency) -> void
 {
-    auto powerUpBuffer = std::array<Byte, 6>{static_cast<Byte>(bootOptions),
-                                             static_cast<Byte>(xtalOptions),
+    auto powerUpBuffer = std::to_array<Byte>({cmdPowerUp,
+                                             bootOptions,
+                                             xtalOptions,
                                              static_cast<Byte>(xoFrequency >> 24),
                                              static_cast<Byte>(xoFrequency >> 16),
                                              static_cast<Byte>(xoFrequency >> 8),
-                                             static_cast<Byte>(xoFrequency)};
+                                             static_cast<Byte>(xoFrequency)});
 
-    // TODO: Implement as soon as new SendCommand is done
+    SendCommand(powerUpBuffer);
 }
 
 
-auto PollCts() -> void
+//! @brief Polls the CTS byte until 0xFF is received (i.e. Si4463 is ready for command).
+auto WaitOnCts() -> void
 {
     // TODO: Could also be polled via GPIO? (see datasheet)
     auto req = std::to_array<Byte>({cmdReadyCmdBuff, 0x00_b});

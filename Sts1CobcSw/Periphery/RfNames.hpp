@@ -14,4 +14,8 @@ inline constexpr auto cmdReadyCmdBuff = 0x44_b;
 
 // Response to READY_CMD_BUFF if ready for command
 inline constexpr auto readyCtsByte = 0xFF_b;
+
+// PowerUp constants
+inline constexpr auto noPatch = 0x01_b;
+inline constexpr auto noTxco = 0x00_b;
 }
