@@ -39,6 +39,7 @@ auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 
 constexpr inline std::uint16_t partInfo = 0x4463;
+constexpr inline std::uint32_t powerUpXoFrequency = 30'000'000; // 30 MHz
 
 
 // --- Private function declarations ---
@@ -58,6 +59,11 @@ auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
 auto PowerUp(Byte bootOptions, Byte xtalOptions, std::uint32_t xoFrequency) -> void;
+
+template<std::size_t nProperties>
+auto SetProperty(Byte propertyGroup,
+                 Byte startProperty,
+                 std::span<Byte, nProperties> propertyValues) -> void;
 
 auto WaitOnCts() -> void;
 
@@ -113,7 +119,7 @@ auto Initialize() -> void
     // sendBuffer[5] = 0xC3;  // XO_FREQ
     // sendBuffer[6] = 0x80;  // XO_FREQ
     // SendCommand(data(sendBuffer), 7, nullptr, 0);
-    PowerUp(noPatch, noTxco, 30'000'000);
+    PowerUp(noPatch, noTxco, powerUpXoFrequency);
 
     // GPIO Pin Cfg
     sendBuffer[0] = 0x13;
@@ -675,6 +681,7 @@ auto SendCommand(std::span<Byte> commandBuffer) -> void
     csGpioPin.Set();
 }
 
+
 [[deprecated]] auto SendCommand(std::uint8_t * data,
                                 std::size_t length,
                                 std::uint8_t * responseData,
@@ -760,12 +767,12 @@ auto ReadFifo(std::uint8_t * data, std::size_t length) -> void
 auto PowerUp(Byte bootOptions, Byte xtalOptions, std::uint32_t xoFrequency) -> void
 {
     auto powerUpBuffer = std::to_array<Byte>({cmdPowerUp,
-                                             bootOptions,
-                                             xtalOptions,
-                                             static_cast<Byte>(xoFrequency >> 24),
-                                             static_cast<Byte>(xoFrequency >> 16),
-                                             static_cast<Byte>(xoFrequency >> 8),
-                                             static_cast<Byte>(xoFrequency)});
+                                              bootOptions,
+                                              xtalOptions,
+                                              static_cast<Byte>(xoFrequency >> 24),
+                                              static_cast<Byte>(xoFrequency >> 16),
+                                              static_cast<Byte>(xoFrequency >> 8),
+                                              static_cast<Byte>(xoFrequency)});
 
     SendCommand(powerUpBuffer);
 }
@@ -797,5 +804,28 @@ auto WaitOnCts() -> void
         }
     } while(true);
     csGpioPin.Set();
+}
+
+
+template<std::size_t nProperties>
+auto SetProperty(Byte propertyGroup,
+                 Byte startProperty,
+                 std::span<Byte, nProperties> propertyValues) -> void
+{
+    auto setPropertyBuffer = std::array<Byte, setPropertyHeaderSize + nProperties>{};
+ 
+    setPropertyBuffer[0] = cmdSetProperty;
+    setPropertyBuffer[1] = propertyGroup;
+    setPropertyBuffer[2] = static_cast<Byte>(nProperties);
+    setPropertyBuffer[3] = startProperty;
+
+    auto bufferIndex = setPropertyHeaderSize;
+    for(auto && propertyValue : propertyValues)
+    {
+        setPropertyBuffer[bufferIndex] = propertyValue;
+        bufferIndex++;
+    }
+
+    SendCommand(setPropertyBuffer);
 }
 }
