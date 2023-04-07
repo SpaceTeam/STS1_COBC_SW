@@ -1,29 +1,20 @@
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
-#include <Sts1CobcSw/Periphery/RfNames.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
-
-#include <type_safe/types.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
 #include <climits>
 #include <cstdint>
-#include <span>
 
 
 namespace sts1cobcsw::periphery::rf
 {
-namespace ts = type_safe;
-using sts1cobcsw::serial::operator""_b;
 using RODOS::AT;
 using RODOS::MICROSECONDS;
 using RODOS::MILLISECONDS;
 using RODOS::NOW;
-using sts1cobcsw::serial::Byte;
 
 
 // --- Globals ---
@@ -39,25 +30,16 @@ auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 
 constexpr inline std::uint16_t partInfo = 0x4463;
-constexpr inline std::uint32_t xoFrequency = 30'000'000;
 
 
 // --- Private function declarations ---
 
-[[deprecated]] auto SendCommand(std::uint8_t * data,
-                                std::size_t length,
-                                std::uint8_t * responseData,
-                                std::size_t responseLength) -> void;
-
-template<std::size_t nBytes>
-auto SendCommand(std::span<Byte, nBytes> commandBuffer) -> void;
-template<std::size_t nBytes>
-auto GetCommandResponse() -> std::array<Byte, nBytes>;
+auto SendCommand(std::uint8_t * data,
+                 std::size_t length,
+                 std::uint8_t * responseData,
+                 std::size_t responseLength) -> void;
 auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
-
-auto PowerUp(std::uint8_t bootOptions, std::uint8_t xtalOptions, std::uint32_t xoFrequency) -> void;
-auto PollCts() -> void;
 
 
 // --- Public function definitions ---
@@ -662,21 +644,11 @@ auto Morse() -> void
 
 
 // --- Private function definitions ---
-template<std::size_t nBytes>
-auto SendCommand(std::span<Byte, nBytes> commandBuffer) -> void
-{
-    PollCts();
-    csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
-    hal::WriteTo(&spi, commandBuffer);
-    AT(NOW() + 2 * MICROSECONDS);
-    csGpioPin.Set();
-}
 
-[[deprecated]] auto SendCommand(std::uint8_t * data,
-                                std::size_t length,
-                                std::uint8_t * responseData,
-                                std::size_t responseLength) -> void
+auto SendCommand(std::uint8_t * data,
+                 std::size_t length,
+                 std::uint8_t * responseData,
+                 std::size_t responseLength) -> void
 {
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
@@ -751,46 +723,6 @@ auto ReadFifo(std::uint8_t * data, std::size_t length) -> void
     // SpiMaster4::transferBlocking(nullptr, data, length);
     spi.writeRead(nullptr, 0, data, length);
     AT(NOW() + 2 * MICROSECONDS);
-    csGpioPin.Set();
-}
-
-auto PowerUp(std::uint8_t bootOptions, std::uint8_t xtalOptions, std::uint32_t xoFrequency) -> void
-{
-    auto powerUpBuffer = std::array<Byte, 6>{static_cast<Byte>(bootOptions),
-                                             static_cast<Byte>(xtalOptions),
-                                             static_cast<Byte>(xoFrequency >> 24),
-                                             static_cast<Byte>(xoFrequency >> 16),
-                                             static_cast<Byte>(xoFrequency >> 8),
-                                             static_cast<Byte>(xoFrequency)};
-
-    // TODO: Implement as soon as new SendCommand is done
-}
-
-
-auto PollCts() -> void
-{
-    // TODO: Could also be polled via GPIO? (see datasheet)
-    auto req = std::to_array<Byte>({cmdReadyCmdBuff, 0x00_b});
-    do
-    {
-        AT(NOW() + 20 * MICROSECONDS);
-        csGpioPin.Reset();
-        AT(NOW() + 20 * MICROSECONDS);
-        // TODO: Replace with RODOS SPI HAL functions
-        // SpiMaster4::transferBlocking(req, cts, 2);
-
-        // TODO: Why WriteRead? Why not just write then read instead?
-        auto cts = hal::WriteToReadFrom(&spi, std::span<Byte, std::size(req)>(req));
-        if(cts[1] != readyCtsByte)
-        {
-            AT(NOW() + 2 * MICROSECONDS);
-            csGpioPin.Set();
-        }
-        else
-        {
-            break;
-        }
-    } while(true);
     csGpioPin.Set();
 }
 }
