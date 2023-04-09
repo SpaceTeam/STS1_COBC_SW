@@ -17,7 +17,6 @@
 
 namespace sts1cobcsw::periphery::rf
 {
-namespace ts = type_safe;
 using sts1cobcsw::serial::operator""_b;
 using RODOS::AT;
 using RODOS::MICROSECONDS;
@@ -39,7 +38,7 @@ auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 
 constexpr inline std::uint16_t partInfo = 0x4463;
-constexpr inline std::uint32_t powerUpXoFrequency = 30'000'000; // 30 MHz
+constexpr inline std::uint32_t powerUpXoFrequency = 30'000'000;  // 30 MHz
 
 
 // --- Private function declarations ---
@@ -58,14 +57,20 @@ auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
 
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
-auto PowerUp(Byte bootOptions, Byte xtalOptions, std::uint32_t xoFrequency) -> void;
+auto PowerUp(PowerUpBootOptions bootOptions,
+             PowerUpXtalOptions xtalOptions,
+             std::uint32_t xoFrequency) -> void;
 
 template<std::size_t nProperties>
-auto SetProperty(Byte propertyGroup,
+    requires(nProperties >= 1 and nProperties <= maxNProperties)
+auto SetProperty(PropertyGroup propertyGroup,
                  Byte startProperty,
                  std::span<Byte, nProperties> propertyValues) -> void;
 
 auto WaitOnCts() -> void;
+
+auto ConfigureGpio(
+    Byte gpio0, Byte gpio1, Byte gpio2, Byte gpio3, Byte nirq, Byte sdo, Byte genConfig) -> void;
 
 
 // --- Public function definitions ---
@@ -119,7 +124,7 @@ auto Initialize() -> void
     // sendBuffer[5] = 0xC3;  // XO_FREQ
     // sendBuffer[6] = 0x80;  // XO_FREQ
     // SendCommand(data(sendBuffer), 7, nullptr, 0);
-    PowerUp(noPatch, noTxco, powerUpXoFrequency);
+    PowerUp(PowerUpBootOptions::noPatch, PowerUpXtalOptions::xtal, powerUpXoFrequency);
 
     // GPIO Pin Cfg
     sendBuffer[0] = 0x13;
@@ -670,6 +675,15 @@ auto Morse() -> void
 }
 
 
+auto ClearInterrupts() -> void
+{
+    auto clearInterruptsBuffer = std::to_array<Byte>({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b});
+    SendCommand(clearInterruptsBuffer);
+    auto responseBuffer = std::array<Byte, getIntStatusResponseLength>{};
+    hal::ReadFrom(&spi, std::span<Byte>(responseBuffer));
+}
+
+
 // --- Private function definitions ---
 auto SendCommand(std::span<Byte> commandBuffer) -> void
 {
@@ -749,6 +763,7 @@ auto WriteFifo(std::uint8_t * data, std::size_t length) -> void
     } while(cts[1] != 0xFF);
 }
 
+
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void
 {
     csGpioPin.Reset();
@@ -764,14 +779,16 @@ auto ReadFifo(std::uint8_t * data, std::size_t length) -> void
 }
 
 
-auto PowerUp(Byte bootOptions, Byte xtalOptions, std::uint32_t xoFrequency) -> void
+auto PowerUp(PowerUpBootOptions bootOptions,
+             PowerUpXtalOptions xtalOptions,
+             std::uint32_t xoFrequency) -> void
 {
     auto powerUpBuffer = std::to_array<Byte>({cmdPowerUp,
-                                              bootOptions,
-                                              xtalOptions,
-                                              static_cast<Byte>(xoFrequency >> 24),
-                                              static_cast<Byte>(xoFrequency >> 16),
-                                              static_cast<Byte>(xoFrequency >> 8),
+                                              static_cast<Byte>(bootOptions),
+                                              static_cast<Byte>(xtalOptions),
+                                              static_cast<Byte>(xoFrequency >> (CHAR_BIT * 3)),
+                                              static_cast<Byte>(xoFrequency >> (CHAR_BIT * 2)),
+                                              static_cast<Byte>(xoFrequency >> (CHAR_BIT)),
                                               static_cast<Byte>(xoFrequency)});
 
     SendCommand(powerUpBuffer);
@@ -808,14 +825,15 @@ auto WaitOnCts() -> void
 
 
 template<std::size_t nProperties>
-auto SetProperty(Byte propertyGroup,
+    requires(nProperties >= 1 and nProperties <= maxNProperties)
+auto SetProperty(PropertyGroup propertyGroup,
                  Byte startProperty,
                  std::span<Byte, nProperties> propertyValues) -> void
 {
     auto setPropertyBuffer = std::array<Byte, setPropertyHeaderSize + nProperties>{};
- 
+
     setPropertyBuffer[0] = cmdSetProperty;
-    setPropertyBuffer[1] = propertyGroup;
+    setPropertyBuffer[1] = static_cast<Byte>(propertyGroup);
     setPropertyBuffer[2] = static_cast<Byte>(nProperties);
     setPropertyBuffer[3] = startProperty;
 

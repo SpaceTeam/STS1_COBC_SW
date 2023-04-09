@@ -10,6 +10,5 @@ auto PartInfoIsCorrect() -> bool;
 
 auto Morse() -> void;
 
-// TODO: implement
-// auto SetProperty() -> void;
+auto ClearInterrupts() -> void;
 }

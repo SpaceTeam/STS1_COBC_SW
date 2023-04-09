@@ -13,30 +13,50 @@ inline constexpr auto cmdNop = 0x00_b;
 inline constexpr auto cmdPartInfo = 0x01_b;
 inline constexpr auto cmdFuncInfo = 0x10_b;
 inline constexpr auto cmdSetProperty = 0x11_b;
+inline constexpr auto cmdGetIntStatus = 0x20_b;
 inline constexpr auto cmdReadyCmdBuff = 0x44_b;
+
+// GetIntStatus constants
+inline constexpr auto getIntStatusResponseLength = 8;
 
 // Response to READY_CMD_BUFF if ready for command
 inline constexpr auto readyCtsByte = 0xFF_b;
 
-// PowerUp constants
-inline constexpr auto noPatch = 0x01_b;
-inline constexpr auto noTxco = 0x00_b;
-
 // Property groups
-inline constexpr auto groupGlobal = 0x00_b;       // Global
-inline constexpr auto groupIntCtl = 0x01_b;       // Interrupt control
-inline constexpr auto groupFrrCtl = 0x02_b;       // Fast response register control
-inline constexpr auto groupPreamble = 0x10_b;     // Preamble
-inline constexpr auto groupSync = 0x11_b;         // Sync word
-inline constexpr auto groupPkt = 0x12_b;          // Packet
-inline constexpr auto groupModem = 0x20_b;        //
-inline constexpr auto groupModemChflt = 0x21_b;   //
-inline constexpr auto groupPa = 0x22_b;           //
-inline constexpr auto groupSynth = 0x23_b;        //
-inline constexpr auto groupMatch = 0x30_b;        //
-inline constexpr auto groupFreqControl = 0x40_b;  //
-inline constexpr auto groupRxHop = 0x50_b;        //
-inline constexpr auto groupPti = 0xF0_b;          //
+enum class PropertyGroup : std::uint8_t
+{
+    groupGlobal = 0x00,       // Global
+    groupIntCtl = 0x01,       // Interrupt control
+    groupFrrCtl = 0x02,       // Fast response register control
+    groupPreamble = 0x10,     // Preamble
+    groupSync = 0x11,         // Sync word
+    groupPkt = 0x12,          // Packet
+    groupModem = 0x20,        //
+    groupModemChflt = 0x21,   //
+    groupPa = 0x22,           //
+    groupSynth = 0x23,        //
+    groupMatch = 0x30,        //
+    groupFreqControl = 0x40,  //
+    groupRxHop = 0x50,        //
+    groupPti = 0xF0           //
+};
 
-inline constexpr auto setPropertyHeaderSize = 4;  // SetProperty starts with Cmd ID, Group, # of properties, Start property 
+// SetProperty command constants
+// SetProperty starts with Cmd ID, Group, # of properties, Start property
+inline constexpr auto setPropertyHeaderSize = 4;
+inline constexpr auto maxNProperties = 12;
+
+// PowerUp command constants
+enum class PowerUpBootOptions : std::uint8_t
+{
+    noPatch = 0x01,
+    patch = 0x81
+};
+enum class PowerUpXtalOptions : std::uint8_t
+{
+    xtal = 0x00,  // Reference signal is derived from the internal crystal oscillator
+    txco = 0x01   // Reference signal is derived from an external TCXO
+};
+// inline constexpr auto noPatch = 0x01_b;
+// inline constexpr auto noTxco = 0x00_b;
 }
