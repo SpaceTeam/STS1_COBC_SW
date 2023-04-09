@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <Tests/HardwareTests/Utility.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
@@ -18,9 +20,6 @@ constexpr std::size_t stackSize = 5'000;
 std::int32_t errorCode = 0;
 
 
-auto Check(bool condition,
-           std::string_view failMessage = " -> Failed\n",
-           std::string_view successMessage = " -> Passed\n") -> void;
 auto Print(periphery::flash::Page const & page) -> void;
 
 
@@ -123,19 +122,6 @@ auto Print(periphery::flash::Page const & page) -> void
             PRINTF("\n");
             iRow = 0;
         }
-    }
-}
-
-
-auto Check(bool condition, std::string_view failMessage, std::string_view successMessage) -> void
-{
-    if(condition)
-    {
-        PRINTF("%s", data(successMessage));
-    }
-    else
-    {
-        PRINTF("%s", data(failMessage));
     }
 }
 }
