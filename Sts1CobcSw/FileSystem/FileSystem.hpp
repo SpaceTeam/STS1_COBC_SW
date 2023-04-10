@@ -35,8 +35,6 @@ auto Ls(char const * path) -> int;
 // TODO: Implement simple hexdump
 
 
-// --- Function template definitions ---
-
 template<typename T>
 inline auto ReadFromFile(T * t) -> int
 {
