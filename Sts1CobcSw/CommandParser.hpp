@@ -64,6 +64,8 @@ inline auto DeserializeFromConst(const Byte * source, GsCommandHeader * data) ->
     return source;
 }
 
+// TODO: remove commented code
+/*
 inline auto DeserializeFromConst(const Byte * source, EduQueueEntry * data) -> const Byte *
 {
     source = serial::DeserializeFromConst(source, &(data->programId));
@@ -71,5 +73,5 @@ inline auto DeserializeFromConst(const Byte * source, EduQueueEntry * data) -> c
     source = serial::DeserializeFromConst(source, &(data->startTime));
     source = serial::DeserializeFromConst(source, &(data->timeout));
     return source;
-}
+}*/
 }

@@ -57,6 +57,15 @@ inline auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
     return source;
 }
 
+inline auto DeserializeFromConst(Byte const * source, EduQueueEntry * data) -> Byte const *
+{
+    source = serial::DeserializeFromConst(source, &(data->programId));
+    source = serial::DeserializeFromConst(source, &(data->queueId));
+    source = serial::DeserializeFromConst(source, &(data->startTime));
+    source = serial::DeserializeFromConst(source, &(data->timeout));
+    return source;
+}
+
 
 // TODO: Move the status and history related stuff to its own StatusAndHistory.hpp
 enum class ProgramStatus : uint8_t

@@ -90,14 +90,14 @@ auto ParseAndAddQueueEntries(std::span<const Byte> & queueEntries) -> void
     auto const nQueueEntries = queueEntries.size() / queueEntrySize;
     eduProgramQueue.resize(nQueueEntries);
 
-    auto buffer = SerialBuffer<EduQueueEntry>();
-
     std::size_t index = 0;
     for(auto & entry : eduProgramQueue)
     {
-        auto queueEntrySpan = queueEntries.subspan(index * queueEntrySize, queueEntrySize);
-        std::copy_n(queueEntrySpan.begin(), queueEntrySize, std::begin(buffer));
-        entry = serial::Deserialize<EduQueueEntry>(buffer);
+        // TODO: is this the way serial library is intended to be used (lack of SerialBuffer)
+        auto offset = index * serial::serialSize<EduQueueEntry>;
+        auto entryBuffer = std::span<const Byte, serial::serialSize<EduQueueEntry>>(
+            queueEntries.data() + offset, serialSize<EduQueueEntry>);
+        entry = serial::DeserializeConst<EduQueueEntry>(entryBuffer);
 
         RODOS::PRINTF("Prog ID      : %d\n", static_cast<int>(entry.programId.get()));
         RODOS::PRINTF("Queue ID     : %d\n", static_cast<int>(entry.queueId.get()));

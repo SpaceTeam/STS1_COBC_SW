@@ -144,6 +144,13 @@ template<utility::TypeSafeInteger T>
     return t;
 }
 
+template<utility::TypeSafeInteger T>
+[[nodiscard]] constexpr auto DeserializeConst(std::span<const Byte, serialSize<T>> source) -> T
+{
+    auto t = utility::TypeSafeZero<T>();
+    DeserializeFromConst(source.data(), &t);
+    return t;
+}
 
 template<typename T>
     requires std::is_same_v<T, type_safe::boolean>
