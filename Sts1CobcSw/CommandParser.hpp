@@ -31,9 +31,9 @@ struct GsCommandHeader
     std::int16_t length;
 };
 
-// TODO: Remove hardcoded values
 // [startCharacter + UTC + commandId + length] + [data]
 constexpr std::size_t commandSize = 30;
+// TODO: Remove hardcoded value
 constexpr std::size_t dataSize = 22;
 constexpr std::size_t queueEntrySize =
     sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)

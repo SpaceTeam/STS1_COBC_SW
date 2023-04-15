@@ -8,19 +8,21 @@
 #include <type_safe/types.hpp>
 
 using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::Deserialize;
 using sts1cobcsw::serial::SerialBuffer;
 using sts1cobcsw::serial::serialSize;
 
 
 namespace sts1cobcsw
 {
+//! @brief Dispatch a GS command.
+//!
+//! @param command A vector of bytes containing the command.
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
 {
     auto commandHeader = std::span<const Byte, serial::serialSize<GsCommandHeader>>(
         command.data(), serialSize<GsCommandHeader>);
     auto commandData =
-        std::span<const Byte>{command.data() + serialSize<GsCommandHeader>, dataSize};
+        std::span<const Byte>(command.data() + serialSize<GsCommandHeader>, dataSize);
 
     auto gsCommandHeader = serial::DeserializeConst<GsCommandHeader>(commandHeader);
 
@@ -66,6 +68,7 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
     }
 }
 
+//! @brief Build the Edu program queue based on the given command data.
 auto BuildEduQueue(std::span<const Byte> commandData) -> void
 {
     RODOS::PRINTF("Entering build queue command parsing\n");
@@ -82,7 +85,10 @@ auto BuildEduQueue(std::span<const Byte> commandData) -> void
     ResumeEduQueueThread();
 }
 
-
+//! @brief Parse and add queue entries from a given span of bytes
+//!
+//! This function takes a span of bytes containing serialized EDU queue entries, deserializes them,
+//! and adds them to the global EDU program queue.
 auto ParseAndAddQueueEntries(std::span<const Byte> & queueEntries) -> void
 {
     RODOS::PRINTF("Printing and parsing\n");

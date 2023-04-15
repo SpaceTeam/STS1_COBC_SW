@@ -24,4 +24,7 @@ Queue ID     : 32
 Start Time   : 2097154
 Timeout      : 2
 Queue index reset. Current size of EDU program queue is 2.
+
+Call to ResumeEduQueueThread()
+DateUTC(DD/MM/YYYY HH:MIN:SS) : 01/01/2024 00:00:00
 hw_resetAndReboot() -> exit

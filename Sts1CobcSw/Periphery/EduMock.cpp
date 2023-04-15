@@ -19,6 +19,11 @@ auto ResumeEduErrorCommunicationThread() -> void
     PrintFormattedSystemUtc();
 }
 
+auto ResumeEduQueueThread() -> void
+{
+    PRINTF("\nCall to ResumeEduQueueThread()\n");
+    PrintFormattedSystemUtc();
+}
 
 // TODO: This file is not used at all right now. Think about the mocking later.
 namespace periphery
