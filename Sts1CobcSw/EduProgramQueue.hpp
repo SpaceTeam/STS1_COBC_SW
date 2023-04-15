@@ -2,11 +2,8 @@
 
 // clang-format off
 #include <cstdint>
-// TODO: Change install rules of rodos such that this must be included as
-// rodos/support-libs/ringbuffer.h or something.
-//
 // ringbuffer.h does not include <cstdint> even though it requires it
-#include <ringbuffer.h>
+#include <rodos/support/support-libs/ringbuffer.h>
 // clang-format on
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
