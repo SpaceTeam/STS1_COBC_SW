@@ -4,10 +4,9 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <rodos_no_using_namespace.h>
-
-#include <span>
 
 
 namespace sts1cobcsw::periphery::fram
@@ -16,7 +15,8 @@ using serial::operator""_b;
 
 
 // Instructions according to section 4.1 in CY15B108QN-40SXI datasheet
-constexpr auto readDeviceID = 0x9F_b;
+constexpr auto readDeviceId = 0x9F_b;
+constexpr auto read = 0x03_b;
 
 auto csGpioPin = hal::GpioPin(hal::framCsPin);
 auto spi =
@@ -36,11 +36,27 @@ auto Initialize() -> std::int32_t
 auto ReadDeviceId() -> DeviceId
 {
     csGpioPin.Reset();
-    auto message = std::array{readDeviceID};
-    hal::WriteToReadFrom(&spi, std::span(message));
-    auto dummyBytes = DeviceId{};
-    auto deviceId =  hal::WriteToReadFrom(&spi, std::span(dummyBytes));
+    spi.write(&readDeviceId, sizeof(readDeviceId));
+    auto deviceId = DeviceId{};
+    spi.read(deviceId.data(), deviceId.size());
     csGpioPin.Set();
     return deviceId;
+}
+
+
+namespace details
+{
+auto Read(std::uint32_t address, std::span<Byte> data) -> void
+{
+    auto addressBytes = serial::Serialize(address);
+    // FRAM expects 3-byte address in big endian
+    auto message = std::array{addressBytes[2], addressBytes[1], addressBytes[0]};
+
+    csGpioPin.Reset();
+    spi.write(&read, sizeof(read));
+    spi.write(message.data(), message.size());
+    spi.read(data.data(), data.size());
+    csGpioPin.Set();
+}
 }
 }
