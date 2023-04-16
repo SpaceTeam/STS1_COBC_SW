@@ -46,4 +46,9 @@ inline constexpr auto rfSpiIndex = RODOS::SPI_IDX4;
 inline constexpr auto rfSpiSckPin = pb13;
 inline constexpr auto rfSpiMisoPin = pa11;
 inline constexpr auto rfSpiMosiPin = pa1;
+inline constexpr auto rfCsPin = pa8;
+inline constexpr auto rfNirqPin = pb6;
+inline constexpr auto rfSdnPin = pb14;
+inline constexpr auto rfGpio0Pin = pc6;
+inline constexpr auto rfGpio1Pin = pc8;
 }
