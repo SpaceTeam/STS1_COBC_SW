@@ -17,8 +17,10 @@ using DeviceId = std::array<Byte, 9>;
 
 [[nodiscard]] auto Initialize() -> std::int32_t;
 [[nodiscard]] auto ReadDeviceId() -> DeviceId;
+// TODO: Create a named type for address
 template<std::size_t nBytes>
 [[nodiscard]] auto Read(std::uint32_t address) -> std::array<Byte, nBytes>;
+auto Write(std::uint32_t address, std::span<Byte const> data) -> void;
 
 
 // This namespace contains implementation details not meant for the user

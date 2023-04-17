@@ -15,17 +15,28 @@ namespace sts1cobcsw::periphery::fram
 using serial::operator""_b;
 
 
-// Commands according to section 4.1 in CY15B108QN-40SXI datasheet
-namespace command
+// --- Private globals ---
+
+// Command opcodes according to section 4.1 in CY15B108QN-40SXI datasheet
+namespace opcode
 {
-constexpr auto readDeviceId = 0x9F_b;
+constexpr auto writeData = 0x02_b;
 constexpr auto readData = 0x03_b;
+constexpr auto setWriteEnableLatch = 0x06_b;
+constexpr auto readDeviceId = 0x9F_b;
 }
 
 auto csGpioPin = hal::GpioPin(hal::framCsPin);
 auto spi =
     RODOS::HAL_SPI(hal::framSpiIndex, hal::framSpiSckPin, hal::framSpiMisoPin, hal::framSpiMosiPin);
 
+
+// --- Private function declarations ---
+
+auto SetWriteEnableLatch() -> void;
+
+
+// --- Public function definitions
 
 auto Initialize() -> std::int32_t
 {
@@ -40,11 +51,26 @@ auto Initialize() -> std::int32_t
 auto ReadDeviceId() -> DeviceId
 {
     csGpioPin.Reset();
-    spi.write(&command::readDeviceId, sizeof(command::readDeviceId));
+    spi.write(&opcode::readDeviceId, sizeof(opcode::readDeviceId));
     auto deviceId = DeviceId{};
     spi.read(deviceId.data(), deviceId.size());
     csGpioPin.Set();
     return deviceId;
+}
+
+
+auto Write(std::uint32_t address, std::span<Byte const> data) -> void
+{
+    auto addressBytes = serial::Serialize(address);
+    // FRAM expects 3-byte address in big endian
+    auto commandMessage =
+        std::array{opcode::writeData, addressBytes[2], addressBytes[1], addressBytes[0]};
+
+    SetWriteEnableLatch();
+    csGpioPin.Reset();
+    spi.write(commandMessage.data(), commandMessage.size());
+    spi.write(data.data(), data.size());
+    csGpioPin.Set();
 }
 
 
@@ -54,13 +80,23 @@ auto Read(std::uint32_t address, std::span<Byte> data) -> void
 {
     auto addressBytes = serial::Serialize(address);
     // FRAM expects 3-byte address in big endian
-    auto message = std::array{addressBytes[2], addressBytes[1], addressBytes[0]};
+    auto commandMessage =
+        std::array{opcode::readData, addressBytes[2], addressBytes[1], addressBytes[0]};
 
     csGpioPin.Reset();
-    spi.write(&command::readData, sizeof(command::readData));
-    spi.write(message.data(), message.size());
+    spi.write(commandMessage.data(), commandMessage.size());
     spi.read(data.data(), data.size());
     csGpioPin.Set();
 }
+}
+
+
+// --- Private function definitions ---
+
+auto SetWriteEnableLatch() -> void
+{
+    csGpioPin.Reset();
+    spi.write(&opcode::setWriteEnableLatch, sizeof(opcode::setWriteEnableLatch));
+    csGpioPin.Set();
 }
 }

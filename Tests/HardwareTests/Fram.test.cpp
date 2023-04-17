@@ -3,6 +3,7 @@
 
 #include <Tests/HardwareTests/Utility.hpp>
 
+#include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
 
 #include <cstdint>
@@ -57,13 +58,31 @@ private:
         Check(deviceId[0] == 0x03_b);
 
         PRINTF("\n");
-        for(uint32_t address = 0x00'00'00'00; address < 0x00'00'00'10; address++)
-        {
-            auto data = periphery::fram::Read<1>(address);
-            PRINTF("Reading byte from address 0x%08x: 0x%02x\n",
-                   static_cast<unsigned int>(address),
-                   static_cast<unsigned int>(data[0]));
-        }
+        RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
+        constexpr uint32_t nAdressBits = 20U;
+        uint32_t address = RODOS::uint32Rand() % (1U << nAdressBits);
+        constexpr auto number1 = 0b10101100_b;
+        constexpr auto number2 = ~number1;
+
+        periphery::fram::Write(address, {&number1, sizeof(number1)});
+        PRINTF("Writing to   address 0x%08x: 0x%02x\n",
+               static_cast<unsigned int>(address),
+               static_cast<unsigned char>(number1));
+        auto data = periphery::fram::Read<1>(address);
+        PRINTF("Reading from address 0x%08x: 0x%02x\n",
+               static_cast<unsigned int>(address),
+               static_cast<unsigned int>(data[0]));
+        Check(data[0] == number1);
+
+        periphery::fram::Write(address, {&number2, sizeof(number2)});
+        PRINTF("Writing to   address 0x%08x: 0x%02x\n",
+               static_cast<unsigned int>(address),
+               static_cast<unsigned char>(number2));
+        data = periphery::fram::Read<1>(address);
+        PRINTF("Reading from address 0x%08x: 0x%02x\n",
+               static_cast<unsigned int>(address),
+               static_cast<unsigned int>(data[0]));
+        Check(data[0] == number2);
     }
 } framTest;
 
