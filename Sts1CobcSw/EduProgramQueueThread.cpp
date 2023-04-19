@@ -7,8 +7,7 @@
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <ringbuffer.h>
-
+#include <rodos/support/support-libs/ringbuffer.h>
 #include <rodos_no_using_namespace.h>
 
 #include <etl/vector.h>
