@@ -11,6 +11,19 @@ target_link_libraries(
                                                Sts1CobcSw_Hal Sts1CobcSw_Utility
 )
 
+add_program(CommunicationErrorBusyWaiting)
+target_sources(
+    Sts1CobcSwTests_CommunicationErrorBusyWaiting 
+    PRIVATE 
+    CommunicationErrorBusyWaiting.test.cpp 
+    ${source_directory}/EduCommunicationErrorThread.cpp ${source_directory}/EduCommunicationErrorThread.hpp
+    ${source_directory}/EduHeartbeatThread.cpp
+    ${source_directory}/TopicsAndSubscribers.cpp
+    ${source_directory}/EduProgramQueueThread.cpp ${source_directory}/EduProgramQueueThread.hpp
+    ${source_directory}/EduProgramQueue.cpp ${source_directory}/EduProgramQueue.hpp
+    )
+target_link_libraries(Sts1CobcSwTests_CommunicationErrorBusyWaiting PRIVATE rodos::rodos type_safe Sts1CobcSw_Utility Sts1CobcSw_Periphery)
+
 get_property(
     thread_test_targets
     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
