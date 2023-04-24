@@ -58,7 +58,7 @@ auto ReadDeviceId() -> DeviceId
 }
 
 
-auto Read(Address address, void * data, std::size_t size) -> void
+auto ReadFrom(Address address, void * data, std::size_t size) -> void
 {
     auto addressBytes = serial::Serialize(address);
     // FRAM expects 3-byte address in big endian
@@ -72,7 +72,7 @@ auto Read(Address address, void * data, std::size_t size) -> void
 }
 
 
-auto Write(Address address, void const * data, std::size_t size) -> void
+auto WriteTo(Address address, void const * data, std::size_t size) -> void
 {
     auto addressBytes = serial::Serialize(address);
     // FRAM expects 3-byte address in big endian

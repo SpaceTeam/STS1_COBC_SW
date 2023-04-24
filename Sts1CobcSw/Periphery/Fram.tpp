@@ -10,14 +10,14 @@ template<typename T>
 auto Read(Address address) -> T
 {
     auto t = T{};
-    Read(address, &t, sizeof(T));
+    ReadFrom(address, &t, sizeof(T));
     return t;
 }
 
 
 template<typename T>
-auto Write(Address address, T const & t) -> void
+auto WriteTo(Address address, T const & t) -> void
 {
-    Write(address, &t, sizeof(T));
+    WriteTo(address, &t, sizeof(T));
 }
 }

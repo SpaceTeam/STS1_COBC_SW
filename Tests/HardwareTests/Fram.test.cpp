@@ -64,7 +64,7 @@ private:
         constexpr auto number1 = 0b1010'1100_b;
         constexpr auto number2 = ~number1;
 
-        periphery::fram::Write(address, number1);
+        periphery::fram::WriteTo(address, number1);
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number1));
@@ -74,7 +74,7 @@ private:
                static_cast<unsigned char>(data));
         Check(data == number1);
 
-        periphery::fram::Write(address, number2);
+        periphery::fram::WriteTo(address, number2);
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number2));
@@ -83,8 +83,6 @@ private:
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(data));
         Check(data == number2);
-
-        // TODO: What happens when readin from an address >= 1 << 20?
     }
 } framTest;
 

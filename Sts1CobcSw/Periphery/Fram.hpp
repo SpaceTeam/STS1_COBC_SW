@@ -20,13 +20,13 @@ using Address = std::uint32_t;
 [[nodiscard]] auto ReadDeviceId() -> DeviceId;
 
 // TODO: Rename to ReadFrom() and WriteTo()
-auto Read(Address address, void * data, std::size_t size) -> void;
-auto Write(Address address, void const * data, std::size_t size) -> void;
+auto ReadFrom(Address address, void * data, std::size_t size) -> void;
+auto WriteTo(Address address, void const * data, std::size_t size) -> void;
 
 template<typename T>
 [[nodiscard]] auto Read(Address address) -> T;
 template<typename T>
-auto Write(Address address, T const & t) -> void;
+auto WriteTo(Address address, T const & t) -> void;
 }
 
 
