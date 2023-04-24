@@ -10,33 +10,37 @@
 
 namespace sts1cobcsw::periphery::fram
 {
-using serial::Byte;
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-using DeviceId = std::array<Byte, 9>;
+using DeviceId = std::array<serial::Byte, 9>;
+// TODO: Use a strong typedef or create class that ensures, that the address is only 20 bits long
+using Address = std::uint32_t;
 
 
 [[nodiscard]] auto Initialize() -> std::int32_t;
 [[nodiscard]] auto ReadDeviceId() -> DeviceId;
-// TODO: Create a named type for address
-template<std::size_t nBytes>
-[[nodiscard]] auto Read(std::uint32_t address) -> std::array<Byte, nBytes>;
-auto Write(std::uint32_t address, std::span<Byte const> data) -> void;
+
+// TODO: Rename to ReadFrom() and WriteTo()
+auto Read(Address address, void * data, std::size_t size) -> void;
+auto Write(Address address, void const * data, std::size_t size) -> void;
+
+template<typename T>
+[[nodiscard]] auto Read(Address address) -> T;
+template<typename T>
+auto Write(Address address, T const & t) -> void;
 
 
-// This namespace contains implementation details not meant for the user
-namespace details
+template<typename T>
+auto Read(Address address) -> T
 {
-auto Read(std::uint32_t address, std::span<Byte> data) -> void;
+    auto t = T{};
+    Read(address, &t, sizeof(T));
+    return t;
 }
 
 
-// TODO: Maybe I don't want such a function at this abstraction level. Maybe details::Read() is
-// fine and a "type safe" read function should only be implemented for the persistent state.
-template<std::size_t nBytes>
-inline auto Read(std::uint32_t address) -> std::array<Byte, nBytes>
+template<typename T>
+auto Write(Address address, T const & t) -> void
 {
-    auto data = std::array<Byte, nBytes>{};
-    details::Read(address, data);
-    return data;
+    Write(address, &t, sizeof(T));
 }
 }

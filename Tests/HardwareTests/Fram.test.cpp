@@ -60,29 +60,31 @@ private:
         PRINTF("\n");
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr uint32_t nAdressBits = 20U;
-        uint32_t address = RODOS::uint32Rand() % (1U << nAdressBits);
-        constexpr auto number1 = 0b10101100_b;
+        auto address = periphery::fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
+        constexpr auto number1 = 0b1010'1100_b;
         constexpr auto number2 = ~number1;
 
-        periphery::fram::Write(address, {&number1, sizeof(number1)});
+        periphery::fram::Write(address, number1);
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number1));
-        auto data = periphery::fram::Read<1>(address);
+        auto data = periphery::fram::Read<decltype(number1)>(address);
         PRINTF("Reading from address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
-               static_cast<unsigned int>(data[0]));
-        Check(data[0] == number1);
+               static_cast<unsigned char>(data));
+        Check(data == number1);
 
-        periphery::fram::Write(address, {&number2, sizeof(number2)});
+        periphery::fram::Write(address, number2);
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number2));
-        data = periphery::fram::Read<1>(address);
+        data = periphery::fram::Read<decltype(number2)>(address);
         PRINTF("Reading from address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
-               static_cast<unsigned int>(data[0]));
-        Check(data[0] == number2);
+               static_cast<unsigned char>(data));
+        Check(data == number2);
+
+        // TODO: What happens when readin from an address >= 1 << 20?
     }
 } framTest;
 

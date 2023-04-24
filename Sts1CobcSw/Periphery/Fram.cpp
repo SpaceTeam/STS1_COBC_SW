@@ -4,7 +4,6 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -59,7 +58,21 @@ auto ReadDeviceId() -> DeviceId
 }
 
 
-auto Write(std::uint32_t address, std::span<Byte const> data) -> void
+auto Read(Address address, void * data, std::size_t size) -> void
+{
+    auto addressBytes = serial::Serialize(address);
+    // FRAM expects 3-byte address in big endian
+    auto commandMessage =
+        std::array{opcode::readData, addressBytes[2], addressBytes[1], addressBytes[0]};
+
+    csGpioPin.Reset();
+    spi.write(commandMessage.data(), commandMessage.size());
+    spi.read(data, size);
+    csGpioPin.Set();
+}
+
+
+auto Write(Address address, void const * data, std::size_t size) -> void
 {
     auto addressBytes = serial::Serialize(address);
     // FRAM expects 3-byte address in big endian
@@ -69,25 +82,8 @@ auto Write(std::uint32_t address, std::span<Byte const> data) -> void
     SetWriteEnableLatch();
     csGpioPin.Reset();
     spi.write(commandMessage.data(), commandMessage.size());
-    spi.write(data.data(), data.size());
+    spi.write(data, size);
     csGpioPin.Set();
-}
-
-
-namespace details
-{
-auto Read(std::uint32_t address, std::span<Byte> data) -> void
-{
-    auto addressBytes = serial::Serialize(address);
-    // FRAM expects 3-byte address in big endian
-    auto commandMessage =
-        std::array{opcode::readData, addressBytes[2], addressBytes[1], addressBytes[0]};
-
-    csGpioPin.Reset();
-    spi.write(commandMessage.data(), commandMessage.size());
-    spi.read(data.data(), data.size());
-    csGpioPin.Set();
-}
 }
 
 
