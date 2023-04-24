@@ -27,20 +27,7 @@ template<typename T>
 [[nodiscard]] auto Read(Address address) -> T;
 template<typename T>
 auto Write(Address address, T const & t) -> void;
-
-
-template<typename T>
-auto Read(Address address) -> T
-{
-    auto t = T{};
-    Read(address, &t, sizeof(T));
-    return t;
 }
 
 
-template<typename T>
-auto Write(Address address, T const & t) -> void
-{
-    Write(address, &t, sizeof(T));
-}
-}
+#include <Sts1CobcSw/Periphery/Fram.tpp>
