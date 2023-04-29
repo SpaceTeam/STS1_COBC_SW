@@ -26,10 +26,12 @@ using ts::operator""_i16;
 using ts::operator""_u16;
 using ts::operator""_i32;
 
-
 using RODOS::AT;
 using RODOS::NOW;
 using RODOS::SECONDS;
+
+
+[[nodiscard]] auto ComputeStartDelay() -> std::int64_t;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
@@ -84,7 +86,7 @@ private:
 
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
-            auto startDelay = CalculateStartDelay();
+            auto startDelay = ComputeStartDelay();
             nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
@@ -110,7 +112,7 @@ private:
                 ResumeEduErrorCommunicationThread();
             }
 
-            auto startDelay2 = CalculateStartDelay();
+            auto startDelay2 = ComputeStartDelay();
             nextProgramStartDelayTopic.publish(startDelay2 / RODOS::SECONDS);
 
             RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
@@ -166,13 +168,14 @@ private:
 } eduQueueThread;
 
 
-//! Calculate the delay in nanoseconds before the start of program at current queue index
-[[nodiscard]] inline auto CalculateStartDelay() -> int64_t
+//! Compute the delay in nanoseconds before the start of program at current queue index
+[[nodiscard]] auto ComputeStartDelay() -> std::int64_t
 {
     auto nextProgramStartTime =
         eduProgramQueue[queueIndex].startTime.get() - (utility::rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-    int64_t startDelay = std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
+    std::int64_t startDelay =
+        std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
 
     return startDelay;
 }

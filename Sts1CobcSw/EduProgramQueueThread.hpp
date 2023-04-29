@@ -11,5 +11,4 @@ extern periphery::Edu edu;
 
 
 auto ResumeEduQueueThread() -> void;
-[[nodiscard]] inline auto CalculateStartDelay() -> int64_t;
 }
