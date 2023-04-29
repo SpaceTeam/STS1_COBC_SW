@@ -15,7 +15,7 @@ using periphery::flash::pageSize;
 using serial::Byte;
 
 
-// --- Private function declarations
+// --- Private function declarations ---
 
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
@@ -60,7 +60,7 @@ const lfs_config lfsConfig{.read = &Read,
                            .lookahead_buffer = data(lookaheadBuffer)};
 
 
-// --- Public function definitions
+// --- Public function definitions ---
 
 auto Initialize() -> void
 {
@@ -176,7 +176,7 @@ auto Ls(char const * path) -> int
 }
 
 
-// --- Private function definitions
+// --- Private function definitions ---
 
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
