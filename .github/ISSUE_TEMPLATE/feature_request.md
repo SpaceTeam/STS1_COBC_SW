@@ -8,13 +8,16 @@ assignees: ''
 
 ---
 
-**Description**
+### Description
+
 A clear and concise description of the feature. If there are special constraints/wishes that must/should be considered, give a reason for them.
 
-**To do [optional]**
+
+### To do [optional]
+
 - [ ] Add foo
 - [ ] Add bar
 - [ ] Implement this
 - [ ] Implement that
 
-**Don't forget to add appropriate labels!**
+### Don't forget to add appropriate labels!
