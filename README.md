@@ -1,7 +1,14 @@
 # STS1 COBC SW
 
-This project contains the software of the communication and onboard computer (COBC) of
+This project contains the software for the communication and onboard computer (COBC) of
 Space Team Satellite 1 (STS1).
+
+**Contents**
+
+- [Project layout](#project-layout)
+- [Building and hacking](#building-and-hacking)
+- [Contributing](#contributing)
+- [Licensing](#licensing)
 
 
 ## Project layout
