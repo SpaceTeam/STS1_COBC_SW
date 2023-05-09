@@ -9,4 +9,5 @@ A brief summery of the changes. You do not need to repeat the description of the
 -->
 
 <!-- Mention all issues that the PR fixes like so: -->
-Fixes #1, #2, parts of #3
+Fixes #1
+Fixes #2
