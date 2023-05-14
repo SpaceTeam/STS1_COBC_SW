@@ -1,10 +1,19 @@
 # STS1 COBC SW
 
-This project contains the software of the communication and onboard computer (COBC) of
+This project contains the software for the communication and onboard computer (COBC) of
 Space Team Satellite 1 (STS1).
+
+## Contents
+
+- [Project layout](#project-layout)
+- [Building and hacking](#building-and-hacking)
+- [Contributing](#contributing)
+- [Licensing](#licensing)
 
 
 ## Project layout
+
+<!-- TODO: Move this further down. It is not the most important info. -->
 
 The following ideas are mainly stolen from [P1204R0 – Canonical Project
 Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
@@ -127,6 +136,10 @@ quite a bit smaller because they do not have the GNU ARM Toolchain installed.
 
 
 ### Without Docker containers
+
+<!-- TODO: Remove the distinction with/without Docker. Just mention Docker and if someone
+does not like it, they must read the Dockerfiles. Not sure if toolchain files and presets
+should still be explained here or if I should move it to the wiki. -->
 
 If you don't want to use Docker containers but install and build everything locally on
 your machine here is some wisdom to help you with that. The project uses CMake, assumes
@@ -265,6 +278,8 @@ things that you would otherwise want to pass to the configure command in the ter
 
 ### Configure, build and test locally on Linux
 
+<!-- TODO: Use docker run here (with an alias). -->
+
 If you followed the above instructions, then you can configure, build and test the project
 on your local Linux machine respectively with the following commands from the project
 root:
@@ -285,6 +300,8 @@ To run the code execute
 
 ### Configure, build for and flash onto the COBC
 
+<!-- TODO: Do it. -->
+
 TBD
 
 ```sh
@@ -292,7 +309,11 @@ cmake --preset=dev-cobc
 cmake --build --preset=dev-cobc
 ```
 
+## Contributing
 
-# Licensing
+Only contributions from members of the TU Wien Space Team are accepted.
+
+
+## Licensing
 
 See the [LICENSE](LICENSE) document.

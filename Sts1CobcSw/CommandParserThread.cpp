@@ -12,9 +12,6 @@
 #include <type_safe/narrow_cast.hpp>
 #include <type_safe/types.hpp>
 
-#include <rodos-assert.h>
-#include <timemodel.h>
-
 #include <rodos_no_using_namespace.h>
 
 #include <etl/string.h>
