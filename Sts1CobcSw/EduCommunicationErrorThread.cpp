@@ -50,7 +50,7 @@ private:
             auto eduIsAlive = false;
             while(not eduIsAlive)
             {
-                RODOS::AT(0); // Force recalculation of scheduling!
+                yield();  // Force recalculation of scheduling!
                 eduIsAliveBufferForCommunicationError.get(eduIsAlive);
             }
             RODOS::PRINTF("[EduCommunicationErrorThread] Leaving busy wait\n");
