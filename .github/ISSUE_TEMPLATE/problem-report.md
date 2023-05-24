@@ -13,9 +13,10 @@ assignees: ''
 A clear and concise description of what the problem is.
 
 
-### To Reproduce [optional]
+### To reproduce [optional]
 
 Steps to reproduce the behavior:
+
 1. Build <target>
 2. Flash onto FlatSat
 3. Do something funky

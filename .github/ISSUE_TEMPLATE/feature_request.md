@@ -10,7 +10,7 @@ assignees: ''
 
 ### Description
 
-A clear and concise description of the feature. If there are special constraints/wishes that must/should be considered, give a reason for them.
+A clear and concise description of the feature. If there are special constraints/wishes that must/should be considered, mention them and give a reason.
 
 
 ### To do [optional]
