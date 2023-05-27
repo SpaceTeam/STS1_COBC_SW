@@ -43,7 +43,7 @@ periphery::Edu edu = periphery::Edu();
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduProgramQueueThread() : StaticThread("EduQueueThread", eduProgramQueueThreadPriority)
+    EduProgramQueueThread() : StaticThread("EduProgramQueueThread", eduProgramQueueThreadPriority)
     {
     }
 
@@ -67,7 +67,7 @@ private:
     void run() override
     {
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
-        RODOS::PRINTF("Entering EduQueueThread\n");
+        RODOS::PRINTF("Entering EduProgramQueueThread\n");
         utility::PrintFormattedSystemUtc();
         while(true)
         {
@@ -164,7 +164,7 @@ private:
             }
         }
     }
-} eduQueueThread;
+} eduProgramQueueThread;
 
 
 //! Compute the delay in nanoseconds before the start of program at current queue index
@@ -181,19 +181,19 @@ private:
 
 
 // TODO: Think about whether this is the right way to declare, design, use, etc. this
-class ResumeEduQueueThreadEvent : public RODOS::TimeEvent
+class ResumeEduProgramQueueThreadEvent : public RODOS::TimeEvent
 {
 public:
     auto handle() -> void override
     {
-        eduQueueThread.resume();
-        RODOS::PRINTF("EduQueueThread resumed from me\n");
+        eduProgramQueueThread.resume();
+        RODOS::PRINTF("EduProgramQueueThread resumed from me\n");
     }
-} resumeEduQueueThreadEvent;
+} resumeEduProgramQueueThreadEvent;
 
 
-auto ResumeEduQueueThread() -> void
+auto ResumeEduProgramQueueThread() -> void
 {
-    resumeEduQueueThreadEvent.handle();
+    resumeEduProgramQueueThreadEvent.handle();
 }
 }
