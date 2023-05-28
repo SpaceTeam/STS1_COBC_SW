@@ -18,6 +18,7 @@ inline constexpr auto cmdReadyCmdBuff = 0x44_b;
 
 // GetIntStatus constants
 inline constexpr auto getIntStatusResponseLength = 8;
+inline constexpr auto partInfoResponseLength = 9;
 
 // Response to READY_CMD_BUFF if ready for command
 inline constexpr auto readyCtsByte = 0xFF_b;

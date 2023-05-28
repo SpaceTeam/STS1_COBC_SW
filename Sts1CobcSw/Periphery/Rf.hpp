@@ -8,6 +8,8 @@ auto Initialize() -> void;
 
 auto PartInfoIsCorrect() -> bool;
 
+auto GetPartInfo() -> std::uint16_t;
+
 auto Morse() -> void;
 
 auto ClearInterrupts() -> void;

@@ -187,7 +187,7 @@ auto Initialize() -> void
     sendBuffer[3] = 0x00;
     sendBuffer[4] = 0x43;  // Allow 4 bit sync word errors, 4 byte sync word
     sendBuffer[5] =
-        0b01011000;  // Valid CCSDS TM sync word for Reed-Solomon or convolutional coding
+        0b01011000;        // Valid CCSDS TM sync word for Reed-Solomon or convolutional coding
     sendBuffer[6] = 0b11110011;  // Be careful: Send order is MSB-first but Little endian so the
                                  // lowest bit of the
     sendBuffer[7] =
@@ -352,7 +352,7 @@ auto Initialize() -> void
     sendBuffer[6] = 0x00;  // BCR NCO offset of 0x00A7C6/64 = 42950/64 = 671.09375
     sendBuffer[7] = 0xA7;
     sendBuffer[8] = 0xC6;
-    sendBuffer[9] = 0x00;  // BCR gain 0x054 = 84
+    sendBuffer[9] = 0x00;   // BCR gain 0x054 = 84
     sendBuffer[10] = 0x54;
     sendBuffer[11] = 0x02;  // BCR loop gear control. CRSLOW=2, CRFAST=0
     sendBuffer[12] =
@@ -405,11 +405,11 @@ auto Initialize() -> void
     sendBuffer[3] = 0x38;
     sendBuffer[4] =
         0x11;  // AGC gain settling window size = 1, AGC signal level measurement window = 1
-    sendBuffer[5] = 0xAB;  // RF peak detector decay time = 0xAB = 171
-    sendBuffer[6] = 0xAB;  // IF peak detector decay time = 0xAB = 171
-    sendBuffer[7] = 0x00;  // 4FSK Gain1 = 0, Normal second phase compensation factor
-    sendBuffer[8] = 0x02;  // 4FSK Gain0 = 2, disable 2FSK phase compensation
-    sendBuffer[9] = 0xFF;  // 4FSK slicer threshold = 0xFFFF
+    sendBuffer[5] = 0xAB;   // RF peak detector decay time = 0xAB = 171
+    sendBuffer[6] = 0xAB;   // IF peak detector decay time = 0xAB = 171
+    sendBuffer[7] = 0x00;   // 4FSK Gain1 = 0, Normal second phase compensation factor
+    sendBuffer[8] = 0x02;   // 4FSK Gain0 = 2, disable 2FSK phase compensation
+    sendBuffer[9] = 0xFF;   // 4FSK slicer threshold = 0xFFFF
     sendBuffer[10] = 0xFF;
     sendBuffer[11] = 0x00;  // 4FSK symbol map 0 (`00 `01 `11 `10)
     sendBuffer[12] = 0x2B;  // OOK decay = 11, OOK attack = 2
@@ -577,7 +577,7 @@ auto Initialize() -> void
     sendBuffer[7] = 0x66;
     // N_presc = 2, outdiv = 8, F_xo = 30MHz
     // RF_channel_Hz = (FC_inte + FC_frac/2^19)*((N_presc*F_xo)/outdiv) = 433.499994 MHz
-    sendBuffer[8] = 0x44;  // Channel step size = 0x4444
+    sendBuffer[8] = 0x44;   // Channel step size = 0x4444
     sendBuffer[9] = 0x44;
     sendBuffer[10] = 0x20;  // Window gating period (in number of crystal clock cycles) = 32
     sendBuffer[11] = 0xFE;  // Adjust target mode for VCO calibration in RX mode = 0xFE int8_t
@@ -620,6 +620,17 @@ auto PartInfoIsCorrect() -> bool
                 std::data(receiveBuffer),
                 std::size(receiveBuffer));
     return partInfo == static_cast<std::uint16_t>(receiveBuffer[1] << CHAR_BIT | receiveBuffer[2]);
+}
+
+
+auto GetPartInfo() -> std::uint16_t
+{
+    auto sendBuffer = std::to_array<Byte>({cmdPartInfo});
+    auto receiveBuffer = std::array<Byte, partInfoResponseLength>{};
+    SendCommand(std::span<Byte>(sendBuffer));
+    WaitOnCts();
+    hal::ReadFrom(&spi, std::span<Byte>(receiveBuffer));
+    return static_cast<std::uint16_t>(receiveBuffer[1] << CHAR_BIT | receiveBuffer[2]);
 }
 
 
@@ -693,6 +704,10 @@ auto SendCommand(std::span<Byte> commandBuffer) -> void
     hal::WriteTo(&spi, commandBuffer);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
+}
+
+auto GetCommandResponse()
+{
 }
 
 
