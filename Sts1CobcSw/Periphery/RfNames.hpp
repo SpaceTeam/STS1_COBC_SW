@@ -1,6 +1,8 @@
 #pragma once
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <cstdint>
+
 namespace sts1cobcsw::periphery::rf
 {
 using sts1cobcsw::serial::operator""_b;

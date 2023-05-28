@@ -50,16 +50,19 @@ constexpr inline std::uint32_t powerUpXoFrequency = 30'000'000;  // 30 MHz
 
 auto SendCommand(std::span<Byte> commandBuffer) -> void;
 
+// template<std::size_t nBytes>
+// auto GetCommandResponse() -> std::array<Byte, nBytes>;
+
 template<std::size_t nBytes>
-auto GetCommandResponse() -> std::array<Byte, nBytes>;
+auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, nBytes>;
 
 auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
 
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
-auto PowerUp(PowerUpBootOptions bootOptions,
-             PowerUpXtalOptions xtalOptions,
-             std::uint32_t xoFrequency) -> void;
+// auto PowerUp(PowerUpBootOptions bootOptions,
+//              PowerUpXtalOptions xtalOptions,
+//              std::uint32_t xoFrequency) -> void;
 
 template<std::size_t nProperties>
     requires(nProperties >= 1 and nProperties <= maxNProperties)
@@ -77,6 +80,49 @@ auto ConfigureGpio(
 
 // TODO: Get rid of all the magic numbers
 // TODO: Replace all C-style arrays with std::array
+
+auto InitializeGpioAndSpi() -> void
+{
+    csGpioPin.Direction(hal::PinDirection::out);
+    csGpioPin.Set();
+
+    nirqGpioPin.Direction(hal::PinDirection::in);
+
+    sdnGpioPin.Direction(hal::PinDirection::out);
+    sdnGpioPin.Set();
+
+    gpio0GpioPin.Direction(hal::PinDirection::out);
+    gpio0GpioPin.Reset();
+
+    watchdogResetGpioPin.Direction(hal::PinDirection::out);
+    watchdogResetGpioPin.Reset();
+    AT(NOW() + 1 * MILLISECONDS);
+    watchdogResetGpioPin.Set();
+    AT(NOW() + 1 * MILLISECONDS);
+    watchdogResetGpioPin.Reset();
+
+    constexpr auto baudrate = 10'000'000;
+    auto spiError = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+    if(spiError == -1)
+    {
+        RODOS::PRINTF("Error initializing RF SPI!\n");
+    }
+
+    // Enable Si4463 and wait for PoR to finish
+    AT(NOW() + 100 * MILLISECONDS);
+    sdnGpioPin.Reset();
+    AT(NOW() + 20 * MILLISECONDS);
+
+    hal::WriteTo(&spi, "Hello Spi");
+
+    // while(true){
+    //     AT(NOW() + 500 * MILLISECONDS);
+    //     hal::WriteTo(&spi, "test");
+    //     AT(NOW() + 500 * MILLISECONDS);
+    //     char sendBuf[32] = "123456789\0";
+    //     spi.write(sendBuf, 10);
+    // }
+}
 
 
 auto Initialize() -> void
@@ -626,10 +672,9 @@ auto PartInfoIsCorrect() -> bool
 auto GetPartInfo() -> std::uint16_t
 {
     auto sendBuffer = std::to_array<Byte>({cmdPartInfo});
-    auto receiveBuffer = std::array<Byte, partInfoResponseLength>{};
-    SendCommand(std::span<Byte>(sendBuffer));
-    WaitOnCts();
-    hal::ReadFrom(&spi, std::span<Byte>(receiveBuffer));
+    RODOS::PRINTF("Send GetPartInfo command\n");
+    auto receiveBuffer = SendCommandWithResponse<partInfoResponseLength>(
+        std::span<Byte, std::size(sendBuffer)>(sendBuffer));
     return static_cast<std::uint16_t>(receiveBuffer[1] << CHAR_BIT | receiveBuffer[2]);
 }
 
@@ -706,9 +751,29 @@ auto SendCommand(std::span<Byte> commandBuffer) -> void
     csGpioPin.Set();
 }
 
-auto GetCommandResponse()
+
+template<std::size_t nResponseBytes>
+auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, nResponseBytes>
 {
+    WaitOnCts();
+    RODOS::PRINTF("SendCommandWithResponse: CTS OK\n");
+    csGpioPin.Reset();
+    AT(NOW() + 20 * MICROSECONDS);
+    hal::WriteTo(&spi, commandBuffer);
+    AT(NOW() + 2 * MICROSECONDS);
+    auto responseBuffer = std::array<Byte, nResponseBytes>{};
+    hal::ReadFrom(&spi, std::span<Byte, nResponseBytes>(responseBuffer));
+    csGpioPin.Set();
 }
+
+
+// template<std::size_t nBytes>
+// auto GetCommandResponse() -> std::array<Byte, nBytes>
+// {
+//     auto responseBuffer = std::array<Byte, nBytes>{};
+//     hal::ReadFrom(&spi, std::span<Byte, nBytes>(responseBuffer));
+//     return responseBuffer;
+// }
 
 
 [[deprecated]] auto SendCommand(std::uint8_t * data,
@@ -814,7 +879,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
 auto WaitOnCts() -> void
 {
     // TODO: Could also be polled via GPIO? (see datasheet)
-    auto req = std::to_array<Byte>({cmdReadyCmdBuff, 0x00_b});
+    auto sendBuffer = std::to_array<Byte>({cmdReadyCmdBuff});
     do
     {
         AT(NOW() + 20 * MICROSECONDS);
@@ -824,10 +889,19 @@ auto WaitOnCts() -> void
         // SpiMaster4::transferBlocking(req, cts, 2);
 
         // TODO: Why WriteRead? Why not just write then read instead?
-        auto cts = hal::WriteToReadFrom(&spi, std::span<Byte, std::size(req)>(req));
-        if(cts[1] != readyCtsByte)
+        RODOS::PRINTF("a\n");
+        RODOS::PRINTF("CTS Write\n");
+        hal::WriteTo(&spi, std::span<Byte, std::size(sendBuffer)>(sendBuffer));
+        auto receiveBuffer = std::array<Byte, 17>{};
+        RODOS::PRINTF("CTS Read\n");
+        hal::ReadFrom(&spi, std::span<Byte, std::size(receiveBuffer)>(receiveBuffer));
+        RODOS::PRINTF("CTS Read done\n");
+        if(receiveBuffer[0] != readyCtsByte)
         {
-            AT(NOW() + 2 * MICROSECONDS);
+            // AT(NOW() + 2 * MICROSECONDS);
+            AT(NOW() + 1 * RODOS::SECONDS);
+            auto ctsAsInt = static_cast<std::uint8_t>(receiveBuffer[0]);
+            RODOS::PRINTF("CTS: %x\n", ctsAsInt);
             csGpioPin.Set();
         }
         else

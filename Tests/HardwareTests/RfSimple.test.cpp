@@ -25,14 +25,13 @@ namespace sts1cobcsw
 class RfSimpleTest : public RODOS::StaticThread<>
 {
 public:
-    RfSimpleTest() : StaticThread("RfSimpleTest")
+    RfSimpleTest() : StaticThread("RfSimpleTest", 200)
     {
     }
 
 private:
     void init() override
     {
-        
     }
 
 
@@ -45,6 +44,11 @@ private:
         periphery::rf::PowerUp(bootOptions, xtalOptions, xoFrequency);
         RODOS::PRINTF("RfSimple Test: initialized and powered up\n");
         RODOS::PRINTF("Try reading part info...\n");
+
+        // Program seems to stop/crash when waiting on CTS ready byte.
+        // SPI3 seems to work in general, as it is possible to measure some test output on the MISO
+        // line.
+
         auto receivedPartInfo = periphery::rf::GetPartInfo();
         RODOS::PRINTF("Received part info: %x\n", receivedPartInfo);
     }
