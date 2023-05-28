@@ -36,7 +36,7 @@ struct SimpleInstruction
 
 // --- Private globals ---
 
-// Instructions according to section 7.2 in W25Q01JV datasheet
+// Instructions according to section 7.3 in W25Q01JV datasheet
 constexpr auto readJedecId = SimpleInstruction{.id = 0x9F_b, .answerLength = 3};
 constexpr auto readStatusRegister1 = SimpleInstruction{.id = 0x05_b, .answerLength = 1};
 constexpr auto readStatusRegister2 = SimpleInstruction{.id = 0x35_b, .answerLength = 1};
@@ -91,9 +91,11 @@ auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
     writeProtectionGpioPin.Set();
 
     constexpr auto baudrate = 1'000'000;
-    return spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+    auto errorCode = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
 
     periphery::flash::Enter4ByteAdressMode();
+
+    return errorCode;
 }
 
 

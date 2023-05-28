@@ -54,8 +54,7 @@ template<typename T>
 using SerialBuffer = std::array<Byte, serialSize<T>>;
 
 
-// Function declarations
-// ---------------------
+// --- Function declarations ---
 
 // TODO: Rename data -> t or variable
 // Must be overloaded for user-defined types to be serializable
@@ -81,8 +80,7 @@ template<typename T>
 [[nodiscard]] constexpr auto Deserialize(std::span<Byte, serialSize<T>> source) -> T;
 
 
-// Function template definitions
-// -----------------------------
+// --- Function template definitions ---
 
 template<TriviallySerializable T>
 inline constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *

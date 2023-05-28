@@ -1,4 +1,4 @@
 {
-	"name": "STS1 COBC Full",
-	"image": "tuwienspaceteam/sts1-cobc"
+    "name": "STS1 COBC Full",
+    "image": "tuwienspaceteam/sts1-cobc:0.7.0-full"
 }
