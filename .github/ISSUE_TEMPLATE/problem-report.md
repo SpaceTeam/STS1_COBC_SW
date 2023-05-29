@@ -3,7 +3,7 @@ name: Problem report
 about: Report a problem with the project
 title: 'Short description of the problem in present tense. Example: "Busy wait loop
   affects frequency of EduHeartbeatThread"'
-labels: 'type: problem'
+labels: '1 type: problem'
 assignees: ''
 
 ---

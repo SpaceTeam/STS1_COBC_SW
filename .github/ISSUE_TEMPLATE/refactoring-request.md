@@ -3,7 +3,7 @@ name: Refactoring request
 about: Request that some code should be refactored
 title: 'Write this like the subject line for a commit message. Example: "Remove [[nodiscard]]
   from function definitions"'
-labels: 'type: refactor'
+labels: '1 type: refactor'
 assignees: ''
 
 ---
