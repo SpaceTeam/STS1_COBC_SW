@@ -170,7 +170,7 @@ Quick installation instructions for those can be found
 ### Toolchain files
 
 Toolchain files are used when cross-compiling and are specific to your target platform,
-environment and setup but not to your project. Therefore they are not supplied with this
+environment and setup but not to your project. Therefore, they are not supplied with this
 repo and should be kept at some "global" directory (I, e.g., use `~/programming/cmake/`).
 The repo of the sts1-cobc Docker image contains an appropriate [toolchain file targeting
 an
@@ -185,10 +185,10 @@ cross-compiled libraries for the target platform.
 This project makes use of [CMake
 presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) to simplify the
 process of configuring the project. As a developer, you should create a
-`CMakeUserPresets.json` file at the root of the project that looks something like the
-following:
+`CMakeUserPresets.json` file at the root of the project. If you use the Docker image, the
+file should look something like the following:
 
-```json
+~~~json
 {
   "version": 3,
   "cmakeMinimumRequired": {
@@ -216,14 +216,12 @@ following:
     {
       "name": "dev-linux-x86",
       "binaryDir": "${sourceDir}/build/linux-x86",
-      "inherits": "dev-common",
-      "toolchainFile": "/usr/local/src/rodos/cmake/port/linux-x86.cmake"
+      "inherits": "dev-common"
     },
     {
       "name": "dev-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
       "inherits": "dev-common",
-      "toolchainFile": "~/programming/STS1_COBC_Docker/full/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"
       }
@@ -234,8 +232,7 @@ following:
       "inherits": [
         "dev-mode",
         "coverage-unix"
-      ],
-      "toolchainFile": "/usr/local/src/rodos/cmake/port/linux-x86.cmake"
+      ]
     }
   ],
   "buildPresets": [
@@ -266,14 +263,14 @@ following:
     }
   ]
 }
-```
+~~~
 
-The path to the toolchain files depend on your setup. The number of jobs given in the
-build and test presets must be adapted by you as well and should ideally be set to the
-number of threads available on your CPU.
-
-In general, `CMakeUserPresets.json` is the perfect place in which you can put all sorts of
-things that you would otherwise want to pass to the configure command in the terminal.
+The number of jobs given in the build and test presets should ideally be set to the number
+of threads available on your CPU. If you do not use the Docker image, you additionally
+need to set the paths to your toolchain files. In general, `CMakeUserPresets.json` is the
+perfect place in which you can put all sorts of things that depend on your personal setup
+or preference, and that you would otherwise want to pass to the CMake command in the
+terminal.
 
 
 ### Configure, build and test locally on Linux
