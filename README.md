@@ -215,72 +215,77 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
 
 The following shows how the directory structure could actually look like.
 
-~~~
-Sts1CobcSw/
-├── .github/
-├── CMake/
-├── Docs/
-├── Sts1CobcSw/
-│   ├── Hal/
-│   │   ├── PinNames.hpp
-│   │   ├── IoNames.hpp
-│   │   ├── Usart.cpp
-│   │   ├── Usart.hpp
-│   │   ├── Spi.cpp
-│   │   ├── Spi.hpp
-│   │   ├── Communication.hpp   (maybe just this instead?)
-│   │   └── ...
-│   │
-│   ├── Periphery/
-│   │   ├── Edu.cpp
-│   │   ├── Edu.hpp
-│   │   ├── W25q01jvzeiq.cpp  (Name of the flash chip)
-│   │   ├── W25q01jvzeiq.hpp
-│   │   ├── AnotherChipName.cpp
-│   │   ├── AnotherChipName.hpp
-│   │   └── ...
-│   │
-│   ├── ShouldThisEvenBeInASubfolder/
-│   │   ├── TelemetryMemory.cpp
-│   │   ├── TelemetryMemory.hpp
-│   │   ├── CobcFileSystem.cpp
-│   │   ├── CobcFileSystem.hpp
-│   │   ├── PersistantState.cpp
-│   │   ├── PersistantState.hpp
-│   │   └── ...
-│   │
-│   ├── AntennaDeploymentThread.cpp
-│   ├── AntennaDeploymentThread.hpp
-│   ├── SensorThread.cpp
-│   ├── SensorThread.hpp
-│   ├── CommandParser.cpp
-│   ├── CommandParser.hpp
-|   └── ...
-│
-├── Tests/
-|   ├── GoldenTests/
-│   │   ├── ExpectedOutputs/
-│   │   ├── Scripts/
-│   │   ├── ICantThingOfAGoodName.test.cpp
-│   │   └── ...
-│   ├── HardwareTests/
-│   │   ├── GpioPins.test.cpp
-│   │   ├── Usart.test.cpp
-│   │   ├── W25q01jvzeiq.test.cpp
-│   │   └── ...
-│   ├── UnitTests/
-│   │   ├── CommandParser.test.cpp
-│   │   └── ...
-│   └── ...
-│
-├── .clang-format
-├── .gitignore
-├── CMakeLists.txt
-├── CMakePresets.json
-├── LICENSE
-├── README.md
-└── ...
-~~~
+<details>
+  <summary>Directory structure</summary>
+
+  ~~~
+  Sts1CobcSw/
+  ├── .github/
+  ├── CMake/
+  ├── Docs/
+  ├── Sts1CobcSw/
+  │   ├── Hal/
+  │   │   ├── PinNames.hpp
+  │   │   ├── IoNames.hpp
+  │   │   ├── Usart.cpp
+  │   │   ├── Usart.hpp
+  │   │   ├── Spi.cpp
+  │   │   ├── Spi.hpp
+  │   │   ├── Communication.hpp   (maybe just this instead?)
+  │   │   └── ...
+  │   │
+  │   ├── Periphery/
+  │   │   ├── Edu.cpp
+  │   │   ├── Edu.hpp
+  │   │   ├── W25q01jvzeiq.cpp  (Name of the flash chip)
+  │   │   ├── W25q01jvzeiq.hpp
+  │   │   ├── AnotherChipName.cpp
+  │   │   ├── AnotherChipName.hpp
+  │   │   └── ...
+  │   │
+  │   ├── ShouldThisEvenBeInASubfolder/
+  │   │   ├── TelemetryMemory.cpp
+  │   │   ├── TelemetryMemory.hpp
+  │   │   ├── CobcFileSystem.cpp
+  │   │   ├── CobcFileSystem.hpp
+  │   │   ├── PersistantState.cpp
+  │   │   ├── PersistantState.hpp
+  │   │   └── ...
+  │   │
+  │   ├── AntennaDeploymentThread.cpp
+  │   ├── AntennaDeploymentThread.hpp
+  │   ├── SensorThread.cpp
+  │   ├── SensorThread.hpp
+  │   ├── CommandParser.cpp
+  │   ├── CommandParser.hpp
+  |   └── ...
+  │
+  ├── Tests/
+  |   ├── GoldenTests/
+  │   │   ├── ExpectedOutputs/
+  │   │   ├── Scripts/
+  │   │   ├── ICantThingOfAGoodName.test.cpp
+  │   │   └── ...
+  │   ├── HardwareTests/
+  │   │   ├── GpioPins.test.cpp
+  │   │   ├── Usart.test.cpp
+  │   │   ├── W25q01jvzeiq.test.cpp
+  │   │   └── ...
+  │   ├── UnitTests/
+  │   │   ├── CommandParser.test.cpp
+  │   │   └── ...
+  │   └── ...
+  │
+  ├── .clang-format
+  ├── .gitignore
+  ├── CMakeLists.txt
+  ├── CMakePresets.json
+  ├── LICENSE
+  ├── README.md
+  └── ...
+  ~~~
+
+</details>
 
 
 ## Contributing
