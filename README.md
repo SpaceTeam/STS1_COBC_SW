@@ -5,7 +5,7 @@ Space Team Satellite 1 (STS1).
 
 ## Contents
 
-- [Building and hacking](#building-and-hacking)
+- [Building and developing](#building-and-developing)
 - [Project layout](#project-layout)
 - [Contributing](#contributing)
 - [Licensing](#licensing)
