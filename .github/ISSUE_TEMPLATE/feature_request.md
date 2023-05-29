@@ -3,7 +3,7 @@ name: Feature request
 about: Request a new feature for the project
 title: 'Write this like the subject line for a commit. Example: "Implement low-level
   FRAM code"'
-labels: 'type: feature'
+labels: '1 type: feature'
 assignees: ''
 
 ---
