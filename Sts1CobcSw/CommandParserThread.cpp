@@ -161,7 +161,7 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
                 RODOS::PRINTF("Queue index reset. Current size of EDU program queue is %d.\n",
                               static_cast<int>(eduProgramQueue.size()));
 
-                ResumeEduQueueThread();
+                ResumeEduProgramQueueThread();
                 return;
             }
             default:

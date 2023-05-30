@@ -110,7 +110,7 @@ private:
                         {
                             statusHistoryEntry.status = ProgramStatus::programExecutionFailed;
                         }
-                        ResumeEduQueueThread();
+                        ResumeEduProgramQueueThread();
 
                         break;
                     }
