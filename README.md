@@ -66,12 +66,14 @@ Docker image, the file should look something like the following:
       {
         "name": "dev-linux-x86",
         "binaryDir": "${sourceDir}/build/linux-x86",
-        "inherits": "dev-common"
+        "inherits": "dev-common",
+        "toolchainFile": "/linux-x86.cmake"
       },
       {
         "name": "dev-cobc",
         "binaryDir": "${sourceDir}/build/cobc",
         "inherits": "dev-common",
+        "toolchainFile": "/stm32f411.cmake",
         "cacheVariables": {
           "HSE_VALUE": "12000000"
         }
@@ -82,7 +84,8 @@ Docker image, the file should look something like the following:
         "inherits": [
           "dev-mode",
           "coverage-unix"
-        ]
+        ],
+        "toolchainFile": "/linux-x86.cmake"
       }
     ],
     "buildPresets": [
@@ -118,12 +121,12 @@ Docker image, the file should look something like the following:
 
 </details>
 
-The number of jobs given in the build and test presets should ideally be set to the number
-of threads available on your CPU. If you do not use the Docker image, you additionally
-need to set the paths to your toolchain files. In general, `CMakeUserPresets.json` is the
-perfect place in which you can put all sorts of things that depend on your personal setup
-or preference, and that you would otherwise want to pass to the CMake command in the
-terminal.
+The paths to the toolchain files depend on your setup. If you don't use Docker you mostly
+likely have to change them. The number of jobs given in the build and test presets must be
+adapted by you as well and should ideally be set to the number of threads available on
+your CPU. In general, `CMakeUserPresets.json` is the perfect place in which you can put
+all sorts of things that depend on your personal setup or preference, and that you would
+otherwise want to pass to the CMake command in the terminal.
 
 
 ### Configure, build and test
