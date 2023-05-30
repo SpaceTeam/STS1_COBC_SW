@@ -1,0 +1,149 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "cmake-pedantic",
+      "hidden": true,
+      "warnings": {
+        "dev": true,
+        "deprecated": true,
+        "uninitialized": true,
+        "unusedCli": true,
+        "systemVars": false
+      },
+      "errors": {
+        "dev": true,
+        "deprecated": true
+      }
+    },
+    {
+      "name": "dev-mode",
+      "hidden": true,
+      "inherits": "cmake-pedantic",
+      "cacheVariables": {
+        "Sts1CobcSw_DEVELOPER_MODE": "ON"
+      }
+    },
+    {
+      "name": "cppcheck",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr"
+      }
+    },
+    {
+      "name": "clang-tidy",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--header-filter=${sourceDir}/*"
+      }
+    },
+    {
+      "name": "cpp-std",
+      "description": "This preset makes sure the project actually builds with at least the specified standard",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_EXTENSIONS": "OFF",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON"
+      }
+    },
+    {
+      "name": "warnings-unix",
+      "description": "To prevent super long strings the warnings are broken up into multiple env variables",
+      "hidden": true,
+      "environment": {
+        "W_BASIC": "-Wall -Wextra -Wpedantic",
+        "W_CONVERSION": "-Wconversion -Wsign-conversion -Wdouble-promotion",
+        "W_CAST": "-Wcast-qual -Wold-style-cast -Wuseless-cast",
+        "W_NULL": "-Wnull-dereference -Wzero-as-null-pointer-constant -Wstrict-null-sentinel",
+        "W_EFF_CPP": "-Weffc++ -Wimplicit-fallthrough=5 -Wsuggest-override",
+        "W_COND": "-Wduplicated-branches -Wduplicated-cond",
+        "W_REST": "-Wshadow -Woverloaded-virtual -Wlogical-op -Wformat=2 -Wundef -Wno-long-long",
+        "WARNINGS": "$env{W_BASIC} $env{W_CONVERSION} $env{W_CAST} $env{W_NULL} $env{W_EFF_CPP} $env{W_COND} $env{W_REST}"
+      }
+    },
+    {
+      "name": "flags-unix",
+      "hidden": true,
+      "inherits": "warnings-unix",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "$env{WARNINGS}",
+        "CMAKE_CXX_FLAGS_DEBUG": "-Og",
+        "CMAKE_CXX_FLAGS_RELEASE": "-Os"
+      }
+    },
+    {
+      "name": "ci-unix",
+      "generator": "Unix Makefiles",
+      "hidden": true,
+      "inherits": [
+        "flags-unix",
+        "cpp-std"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "coverage-unix",
+      "binaryDir": "${sourceDir}/build/coverage",
+      "inherits": "ci-unix",
+      "hidden": true,
+      "cacheVariables": {
+        "ENABLE_COVERAGE": "ON",
+        "CMAKE_BUILD_TYPE": "Coverage",
+        "CMAKE_CXX_FLAGS_COVERAGE": "-Og -g --coverage -fkeep-inline-functions -fkeep-static-functions",
+        "CMAKE_EXE_LINKER_FLAGS_COVERAGE": "--coverage",
+        "CMAKE_SHARED_LINKER_FLAGS_COVERAGE": "--coverage"
+      }
+    },
+    {
+      "name": "ci-coverage",
+      "binaryDir": "${sourceDir}/build/coverage",
+      "toolchainFile": "/linux-x86.cmake",
+      "inherits": [
+        "coverage-unix",
+        "dev-mode"
+      ],
+      "cacheVariables": {
+        "COVERAGE_HTML_COMMAND": ""
+      }
+    },
+    {
+      "name": "ci-sanitize",
+      "binaryDir": "${sourceDir}/build/sanitize",
+      "toolchainFile": "/linux-x86.cmake",
+      "inherits": [
+        "ci-unix",
+        "dev-mode"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Sanitize",
+        "CMAKE_CXX_FLAGS_SANITIZE": "-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common"
+      }
+    },
+    {
+      "name": "ci-linux-x86",
+      "binaryDir": "${sourceDir}/build/linux-x86",
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "toolchainFile": "/linux-x86.cmake"
+    },
+    {
+      "name": "ci-cobc",
+      "binaryDir": "${sourceDir}/build/cobc",
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "toolchainFile": "/stm32f411.cmake",
+      "cacheVariables": {
+        "HSE_VALUE": "12000000",
+        "BOARD_FILE": "Cobc.hpp"
+      }
+    }
+
+  ]
+}

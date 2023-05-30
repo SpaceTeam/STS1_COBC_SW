@@ -1,0 +1,176 @@
+name: Continuous Integration
+
+# lint        : push, pull_request, release
+# coverage    : push, pull_request, release
+# sanitize    : push, pull_request, release
+# build-cobc  : push (Upload of artifacts), pull_request, release (upload binaries to release)
+# test        : push, pull_request, release
+# docs        : release
+
+on:
+  push:
+    branches:
+    - master
+
+  pull_request:
+    branches:
+    - master
+
+  release:
+    types:
+      - created
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.8"
+
+    - name: Install codespell
+      run: pip3 install codespell
+
+    - name: Lint
+      run: cmake -D FORMAT_COMMAND=clang-format-12 -P cmake/lint.cmake
+
+    - name: Spell check
+      if: always()
+      run: cmake -P cmake/spell.cmake
+
+  coverage:
+    needs: lint
+
+    runs-on: ubuntu-latest
+    container: tuwienspaceteam/sts1-cobc:latest-linux-x86
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure
+      run: cmake --preset=ci-coverage
+
+    - name: Build all tests
+      run: cmake --build build/coverage -t AllCiTests -j 2
+
+    - name: Test
+      working-directory: build/coverage
+      run: ctest --output-on-failure -E "^.*Thread_Test$" -j 2
+
+    - name: Process coverage info
+      run: cmake --build build/coverage -t coverage
+
+    - name: Submit to codecov.io
+      uses: codecov/codecov-action@v3
+      with:
+        files: build/coverage/coverage.info
+
+  sanitize:
+    needs: lint
+
+    runs-on: ubuntu-latest
+    container: tuwienspaceteam/sts1-cobc:latest-linux-x86
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure
+      run: cmake --preset=ci-sanitize
+
+    - name: Build all tests
+      run: cmake --build build/sanitize -t AllCiTests -j 2
+
+    - name: Test
+      working-directory: build/sanitize
+      env:
+        ASAN_OPTIONS: "strict_string_checks=1:\
+          detect_stack_use_after_return=1:\
+          check_initialization_order=1:\
+          strict_init_order=1:\
+          detect_leaks=1"
+        UBSAN_OPTIONS: print_stacktrace=1
+      run: ctest --output-on-failure -E "^.*Thread_Test$" -j 2
+
+  build-cobc:
+    needs: lint
+
+    runs-on: ubuntu-latest
+    container: tuwienspaceteam/sts1-cobc:latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure
+      run: cmake --preset=ci-cobc
+
+    - name: Build
+      run: cmake --build build/cobc -j 2
+
+    - name: Upload artifacts
+      if: github.event_name == 'push'
+      uses: actions/upload-artifact@v3
+      with:
+        name: CobcBinaries
+        path: ./build/cobc/*.bin
+        retention-days: 7
+
+    - name: Add assets to release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+          files: ./build/cobc/*.bin
+
+  test:
+    needs: lint
+
+    runs-on: ubuntu-latest
+    container: tuwienspaceteam/sts1-cobc:latest-linux-x86
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure linux-x86
+      run: cmake --preset=ci-linux-x86
+
+    - name: Build all tests
+      run: cmake --build build/linux-x86 -t AllCiTests -j 2
+
+    - name: Test
+      working-directory: build/linux-x86/Tests
+      run: ctest --output-on-failure -E "^.*Thread_Test$" -C Release -j 2
+
+  docs:
+    # Deploy docs only when builds and tests succeed
+    needs: [sanitize, build-cobc, test]
+
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'release'
+      && github.repository_owner == 'SpaceTeam'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: "3.8"
+
+    - name: Install m.css dependencies
+      run: pip3 install jinja2 Pygments
+
+    - name: Install Doxygen
+      run: sudo apt-get update -q
+        && sudo apt-get install doxygen -q -y
+
+    - name: Build docs
+      run: cmake -B build -D "CMAKE_PROJECT_INCLUDE=$PWD/cmake/docs.cmake"
+        && cmake --build build -t docs
+
+    - name: Deploy docs
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: build/docs/html
