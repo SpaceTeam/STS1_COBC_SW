@@ -30,7 +30,10 @@ using RODOS::NOW;
 using RODOS::SECONDS;
 
 
+// --- Function declarations ---
+
 [[nodiscard]] auto ComputeStartDelay() -> std::int64_t;
+auto ResumeEduQueueThread() -> void;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.

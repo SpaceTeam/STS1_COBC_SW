@@ -13,6 +13,10 @@ constexpr auto eduShutDownDelay = 2 * RODOS::SECONDS;
 std::int32_t eduCommunicationErrorCounter = 0;
 
 
+// --- Function declarations ---
+
+auto ResumeEduErrorCommunicationThread() -> void;
+
 class EduCommunicationErrorThread : public RODOS::StaticThread<stackSize>
 {
 public:

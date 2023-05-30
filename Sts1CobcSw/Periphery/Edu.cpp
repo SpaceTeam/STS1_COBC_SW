@@ -16,6 +16,29 @@ using ts::operator""_u16;
 using ts::operator""_usize;
 
 
+// --- Function declarations ---
+
+auto Print(std::span<Byte> data, int nRows = 30) -> void;
+auto Edu::Initialize() -> void;
+auto Edu::TurnOn() -> void;
+auto Edu::TurnOff() -> void;
+[[nodiscard]] auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t;
+[[nodiscard]] auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
+[[nodiscard]] auto Edu::StopProgram() -> EduErrorCode;
+[[nodiscard]] auto Edu::GetStatus() -> EduStatus;
+[[nodiscard]] auto Edu::GetStatusCommunication() -> EduStatus;
+[[nodiscard]] auto Edu::ReturnResult() -> ResultInfo;
+[[nodiscard]] auto Edu::ReturnResultRetry() -> ResultInfo;
+[[nodiscard]] auto Edu::ReturnResultCommunication() -> ResultInfo;
+[[nodiscard]] auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode;
+void Edu::SendCommand(Byte commandId);
+[[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode;
+[[nodiscard]] auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode;
+auto Edu::FlushUartBuffer() -> void;
+auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode;
+auto Print(std::span<Byte> data, int nRows) -> void;
+
+
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
 constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet

@@ -31,6 +31,20 @@ auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int;
 auto Sync(lfs_config const * config) -> int;
 
 
+// --- Public function declarations ---
+
+auto Initialize() -> void;
+auto Format() -> int;
+auto Mount() -> int;
+auto Unmount() -> int;
+auto OpenFile(char const * path, int flags) -> int;
+auto CloseFile() -> int;
+auto FileSize() -> int;
+auto CreateDirectory(char const * path) -> int;
+auto Remove(char const * path) -> int;
+auto Ls(char const * path) -> int;
+
+
 // --- Globals ---
 
 auto readBuffer = std::array<serial::Byte, pageSize>{};
