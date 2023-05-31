@@ -81,7 +81,7 @@ jobs:
       run: cmake --preset=ci-sanitize
 
     - name: Build all tests
-      run: cmake --build build/sanitize -t AllCiTests -j 2
+      run: cmake --build build/sanitize -t AllTests -j 2
 
     - name: Test
       working-directory: build/sanitize
@@ -92,7 +92,7 @@ jobs:
           strict_init_order=1:\
           detect_leaks=1"
         UBSAN_OPTIONS: print_stacktrace=1
-      run: ctest --output-on-failure -E "^.*Thread_Test$" -j 2
+      run: ctest --output-on-failure -j 2
 
   build-cobc:
     needs: lint
@@ -136,11 +136,11 @@ jobs:
       run: cmake --preset=ci-linux-x86
 
     - name: Build all tests
-      run: cmake --build build/linux-x86 -t AllCiTests -j 2
+      run: cmake --build build/linux-x86 -t AllTests -j 2
 
     - name: Test
       working-directory: build/linux-x86/Tests
-      run: ctest --output-on-failure -E "^.*Thread_Test$" -C Release -j 2
+      run: ctest --output-on-failure -C Release -j 2
 
   docs:
     # Deploy docs only when builds and tests succeed
