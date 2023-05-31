@@ -54,11 +54,11 @@ jobs:
       run: cmake --preset=ci-coverage
 
     - name: Build all tests
-      run: cmake --build build/coverage -t AllCiTests -j 2
+      run: cmake --build build/coverage -t AllTests -j 2
 
     - name: Test
       working-directory: build/coverage
-      run: ctest --output-on-failure -E "^.*Thread_Test$" -j 2
+      run: ctest --output-on-failure -j 2
 
     - name: Process coverage info
       run: cmake --build build/coverage -t coverage

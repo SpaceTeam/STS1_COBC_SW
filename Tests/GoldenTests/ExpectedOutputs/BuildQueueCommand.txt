@@ -1,6 +1,0 @@
-Our timestamp is : 1672531200000000000
-DateUTC(DD/MM/YYYY HH:MIN:SS) : 1/1/2023 0:0:0.000
-command ID is character : 4
-Length of data is 30
-Number of queue entries : 3
-hw_resetAndReboot() -> exit

@@ -11,4 +11,9 @@ add_golden_test(TESTFILE "HelloWorld.test.cpp"
 add_golden_test(TESTFILE "HelloDummy.test.cpp" 
 					LIB rodos::rodos Sts1CobcSw_Dummy)
 
+# Testing a 'real' thread
+add_golden_test(TESTFILE "${Sts1CobcSw}/EduProgramQueueThread.cpp" 
+				SOURCE "${Sts1CobcSw}/TopicsAndSubscribers.cpp" "${Sts1CobcSw}/EduProgramQueue.cpp" 
+				LIB rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility) 
+
 add_custom_target(AllGoldenTests DEPENDS ${output_files})

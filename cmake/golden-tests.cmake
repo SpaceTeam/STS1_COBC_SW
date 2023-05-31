@@ -10,8 +10,11 @@ macro(add_golden_test)
     set(target_name ${PROJECT_NAME}_${test_filename})
 
     # Sanity check
-    if(NOT ("${GT_TESTFILE}" MATCHES "\.test\.cpp$")) 
-        MESSAGE(FATAL_ERROR "Name of test file `${GT_TESTFILE}` do not end with .test.cpp")
+    if(NOT ("${GT_TESTFILE}" MATCHES "\.test\.cpp$"))
+        # In case we are testing one of the real threads
+        if(NOT ("${GT_TESTFILE}" MATCHES ".*Sts1CobcSw/.*Thread.cpp"))
+            message(FATAL_ERROR "Name of test file `${GT_TESTFILE}` do not end with .test.cpp")
+        endif()
     endif()
 
     # Create executable
@@ -20,27 +23,40 @@ macro(add_golden_test)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${test_filename})
     target_link_libraries(${target_name} PUBLIC ${GT_LIB})
 
-    # Create output dependency (used in Tests/GoldenTests/CMakeLists.txt)
-    add_custom_command(
-        OUTPUT "${test_filename}.output"
-        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/Scripts/TestRunner.sh"
-                $<TARGET_FILE:${target_name}>
-        DEPENDS ${target_name} Scripts/TestRunner.sh
-    )
+
+    if("${GT_TESTFILE}" MATCHES "\.test\.cpp$")
+        add_custom_command(
+            OUTPUT "${test_filename}.output"
+            COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/Scripts/TestRunner.sh"
+                    $<TARGET_FILE:${target_name}>
+            DEPENDS ${target_name} Scripts/TestRunner.sh
+        )
+        list(APPEND output_files "${test_filename}.output")
+        add_test(NAME ${test_filename}_Test
+                 COMMAND diff "${test_filename}.output"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/ExpectedOutputs/${test_filename}.txt"
+        )
+    else()
+        add_custom_command(
+            OUTPUT "${test_filename}.output"
+            COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/Scripts/ThreadTestRunner.sh"
+                    $<TARGET_FILE:${target_name}>
+            DEPENDS ${target_name} Scripts/ThreadTestRunner.sh
+        )
+        add_test(NAME ${test_filename}_Test
+                 COMMAND diff "${test_filename}.output.trimmed"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/ExpectedOutputs/${test_filename}.txt"
+        )
+    endif()
+
     list(APPEND output_files "${test_filename}.output")
 
     # Create clean target
     add_custom_target(
-        ${target_name}_Clean COMMAND ${CMAKE_COMMAND} -E remove -f "${test_filename}.output"
+		${target_name}_Clean COMMAND ${CMAKE_COMMAND} -E remove -f "${test_filename}.output*"
     )
 
-    # Create test
-    add_test(NAME ${test_filename}_Test
-             COMMAND diff "${test_filename}.output"
-                     "${CMAKE_CURRENT_SOURCE_DIR}/ExpectedOutputs/${test_filename}.txt")
-    
 endmacro()
-
 
 # Used to test real threads
 macro(add_thread_golden_test)
