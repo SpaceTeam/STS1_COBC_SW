@@ -1,7 +1,7 @@
-//#include <Sts1CobcSw/Util/Util.hpp>
+// #include <Sts1CobcSw/Util/Util.hpp>
 
-//#include <stm32f4xx_crc.h>
-//#include <stm32f4xx_rcc.h>
+// #include <stm32f4xx_crc.h>
+// #include <stm32f4xx_rcc.h>
 
 // ifdef CRC
 // store macro value

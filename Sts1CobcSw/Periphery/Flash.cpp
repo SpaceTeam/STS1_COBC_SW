@@ -92,7 +92,6 @@ auto EraseSector(std::uint32_t address) -> void;
 auto WaitWhileBusy() -> void;
 
 
-
 // ---Public function definitions ---
 
 [[nodiscard]] auto Initialize() -> std::int32_t
