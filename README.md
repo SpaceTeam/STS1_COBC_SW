@@ -16,7 +16,7 @@ Space Team Satellite 1 (STS1).
 The recommended way to develop and build this project is to use the Docker image
 [tuwienspaceteam/sts1-cobc](https://hub.docker.com/r/tuwienspaceteam/sts1-cobc) as a dev
 container. It is specifically built for that purpose, i.e., it comes with all required
-compiler, libraries and tools. This makes it easier to get started but also ensures
+compilers, libraries and tools. This makes it easier to get started but also ensures
 reliable and consistent builds. See [this
 page](https://wiki.tust.at/books/spaceteamsat1-sts1/page/setup-compilers-and-tools) on our
 internal wiki for more information.
