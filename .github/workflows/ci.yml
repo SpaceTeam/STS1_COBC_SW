@@ -23,6 +23,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    container: tuwienspaceteam/sts1-cobc:latest-linux-x86
 
     steps:
     - uses: actions/checkout@v2
@@ -35,7 +36,7 @@ jobs:
       run: pip3 install codespell
 
     - name: Lint
-      run: cmake -D FORMAT_COMMAND=clang-format-12 -P cmake/lint.cmake
+      run: cmake -D FORMAT_COMMAND=clang-format-15 -P cmake/lint.cmake
 
     - name: Spell check
       if: always()

@@ -32,10 +32,10 @@ namespace sts1cobcsw::serial
 // The T::integer_type is for the type_safe fixed-width integers. The parenthesis are for nicer
 // formatting.
 template<typename T>
-concept TriviallySerializable =
-    (std::is_arithmetic_v<T> or std::is_enum_v<T>)
-    or (std::is_arithmetic_v<typename T::integer_type> or std::is_enum_v<typename T::integer_type>)
-    or std::is_same_v<T, type_safe::boolean>;
+concept TriviallySerializable = (std::is_arithmetic_v<T> or std::is_enum_v<T>)
+                             or (std::is_arithmetic_v<typename T::integer_type>
+                                 or std::is_enum_v<typename T::integer_type>)
+                             or std::is_same_v<T, type_safe::boolean>;
 
 
 // Must be specialized for user-defined types to be serializable
