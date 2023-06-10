@@ -23,7 +23,6 @@ macro(add_golden_test)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${test_filename})
     target_link_libraries(${target_name} PUBLIC ${GT_LIB})
 
-
     if("${GT_TESTFILE}" MATCHES "\.test\.cpp$")
         add_custom_command(
             OUTPUT "${test_filename}.output"
@@ -53,9 +52,8 @@ macro(add_golden_test)
 
     # Create clean target
     add_custom_target(
-		${target_name}_Clean COMMAND ${CMAKE_COMMAND} -E remove -f "${test_filename}.output*"
+        ${target_name}_Clean COMMAND ${CMAKE_COMMAND} -E remove -f "${test_filename}.output*"
     )
-
 endmacro()
 
 # Used to test real threads
