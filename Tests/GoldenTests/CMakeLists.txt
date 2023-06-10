@@ -1,17 +1,26 @@
 include(${CMAKE_SOURCE_DIR}/cmake/golden-tests.cmake)
 
-# Initialize "global" variable used by add_golden_test()
+# Initialize "global" variables used by macros
 set(output_files "")
 
-# Add golden tests
-add_golden_test(FILE "HelloWorld.test.cpp" LIB rodos::rodos)
-add_golden_test(FILE "HelloDummy.test.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
+set(Sts1CobcSw "${CMAKE_SOURCE_DIR}/Sts1CobcSw")
 
-# Initialize "global" variable used by add_thread_golden_test()
-set(thread_output_files "")
-set(Source "${CMAKE_SOURCE_DIR}/Sts1CobcSw")
-add_thread_golden_test(FILES "${Source}/EduProgramQueueThread.cpp" "${Source}/TopicsAndSubscribers.cpp" "${Source}/EduProgramQueue.cpp" LIB rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility )
-add_custom_target(AllThreadGoldenTests DEPENDS ${thread_output_files})
+add_golden_test(
+    TESTFILE "HelloWorld.test.cpp" SOURCE "${Sts1CobcSw}/TopicsAndSubscribers.cpp" LIB rodos::rodos
+)
+add_golden_test(TESTFILE "HelloDummy.test.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
 
-# Create a single target for all golden tests
+# Testing a "real" thread
+add_golden_test(
+    TESTFILE
+    "${Sts1CobcSw}/EduProgramQueueThread.cpp"
+    SOURCE
+    "${Sts1CobcSw}/TopicsAndSubscribers.cpp"
+    "${Sts1CobcSw}/EduProgramQueue.cpp"
+    LIB
+    rodos::rodos
+    Sts1CobcSw_Periphery
+    Sts1CobcSw_Utility
+)
+
 add_custom_target(AllGoldenTests DEPENDS ${output_files})
