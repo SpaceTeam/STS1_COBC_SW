@@ -16,11 +16,12 @@ inline constexpr auto cmdPartInfo = 0x01_b;
 inline constexpr auto cmdFuncInfo = 0x10_b;
 inline constexpr auto cmdSetProperty = 0x11_b;
 inline constexpr auto cmdGetIntStatus = 0x20_b;
-inline constexpr auto cmdReadyCmdBuff = 0x44_b;
+inline constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // GetIntStatus constants
 inline constexpr auto getIntStatusResponseLength = 8;
-inline constexpr auto partInfoResponseLength = 9;
+
+inline constexpr auto partInfoResponseLength = 8;
 
 // Response to READY_CMD_BUFF if ready for command
 inline constexpr auto readyCtsByte = 0xFF_b;
@@ -60,6 +61,5 @@ enum class PowerUpXtalOptions : std::uint8_t
     xtal = 0x00,  // Reference signal is derived from the internal crystal oscillator
     txco = 0x01   // Reference signal is derived from an external TCXO
 };
-// inline constexpr auto noPatch = 0x01_b;
-// inline constexpr auto noTxco = 0x00_b;
+
 }
