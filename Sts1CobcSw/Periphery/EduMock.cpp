@@ -23,23 +23,6 @@ auto ResumeEduErrorCommunicationThread() -> void
 // TODO: This file is not used at all right now. Think about the mocking later.
 namespace periphery
 {
-
-// --- Function declarations ---
-
-auto Edu::Initialize() -> void;
-auto Edu::TurnOn() -> void;
-auto Edu::TurnOff() -> void;
-[[nodiscard]] auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t;
-[[nodiscard]] auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
-[[nodiscard]] auto Edu::StopProgram() -> EduErrorCode;
-[[nodiscard]] auto Edu::GetStatus() -> EduStatus;
-[[nodiscard]] auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode;
-auto Edu::SendCommand(Byte commandId) -> void;
-[[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode;
-[[nodiscard]] auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> EduErrorCode;
-void Edu::FlushUartBuffer();
-
-
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Edu::Initialize() -> void
 {

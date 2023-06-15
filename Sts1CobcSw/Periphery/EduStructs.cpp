@@ -8,16 +8,6 @@ using sts1cobcsw::serial::DeserializeFrom;
 using sts1cobcsw::serial::SerializeTo;
 
 
-// --- Function declarations ---
-
-auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *;
-auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *;
-auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *;
-auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *;
-auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
-auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
-
-
 auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *
 {
     source = DeserializeFrom(source, &(data->command));

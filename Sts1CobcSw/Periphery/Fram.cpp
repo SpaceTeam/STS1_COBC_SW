@@ -35,14 +35,6 @@ auto spi =
 auto SetWriteEnableLatch() -> void;
 
 
-// --- Public function declarations ---
-
-auto Initialize() -> std::int32_t;
-auto ReadDeviceId() -> DeviceId;
-auto ReadFrom(Address address, void * data, std::size_t size) -> void;
-auto WriteTo(Address address, void const * data, std::size_t size) -> void;
-
-
 // --- Public function definitions
 
 auto Initialize() -> std::int32_t

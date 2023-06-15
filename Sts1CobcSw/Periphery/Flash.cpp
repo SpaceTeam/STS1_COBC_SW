@@ -81,17 +81,6 @@ auto SendInstruction() -> void;
 auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
 
 
-// ---Public function declarations ---
-
-[[nodiscard]] auto Initialize() -> std::int32_t;
-[[nodiscard]] auto ReadJedecId() -> JedecId;
-[[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte;
-[[nodiscard]] auto ReadPage(std::uint32_t address) -> Page;
-auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
-auto EraseSector(std::uint32_t address) -> void;
-auto WaitWhileBusy() -> void;
-
-
 // ---Public function definitions ---
 
 [[nodiscard]] auto Initialize() -> std::int32_t
