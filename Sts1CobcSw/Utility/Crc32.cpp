@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Utility/Crc32.hpp>
-#include <Sts1CobcSw/Utility/UtilityNames.hpp>
 #include <array>
 #include <cstdint>
 
