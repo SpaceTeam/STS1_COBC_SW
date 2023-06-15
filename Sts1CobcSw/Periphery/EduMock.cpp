@@ -3,7 +3,6 @@
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
-#include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
 namespace sts1cobcsw

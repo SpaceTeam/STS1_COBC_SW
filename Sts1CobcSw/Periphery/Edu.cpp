@@ -4,7 +4,6 @@
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
-#include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
 namespace sts1cobcsw::periphery
