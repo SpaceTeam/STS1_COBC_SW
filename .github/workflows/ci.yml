@@ -1,11 +1,11 @@
 name: Continuous Integration
 
-# lint        : push, pull_request, release
-# coverage    : push, pull_request, release
-# sanitize    : push, pull_request, release
-# build-cobc  : push (Upload of artifacts), pull_request, release (upload binaries to release)
-# test        : push, pull_request, release
-# docs        : release
+# format-and-spell-check        : push, pull_request, release
+# coverage                      : push, pull_request, release
+# sanitize                      : push, pull_request, release
+# build-cobc                    : push (Upload of artifacts), pull_request, release (upload binaries to release)
+# test                          : push, pull_request, release
+# docs                          : release
 
 on:
   push:
@@ -21,7 +21,7 @@ on:
       - created
 
 jobs:
-  lint:
+  format-and-spell-check:
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest-linux-x86
 
@@ -35,15 +35,15 @@ jobs:
     - name: Install codespell
       run: pip3 install codespell
 
-    - name: Lint
-      run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
+    - name: Format check
+      run: cmake -D FORMAT_COMMAND=clang-format -P cmake/format.cmake
 
     - name: Spell check
       if: always()
       run: cmake -P cmake/spell.cmake
 
   coverage:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest-linux-x86
@@ -70,7 +70,7 @@ jobs:
         files: build/coverage/coverage.info
 
   sanitize:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest-linux-x86
@@ -96,7 +96,7 @@ jobs:
       run: ctest --output-on-failure -j 2
 
   build-cobc:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest
@@ -125,7 +125,7 @@ jobs:
           files: ./build/cobc/*.bin
 
   test:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest-linux-x86
