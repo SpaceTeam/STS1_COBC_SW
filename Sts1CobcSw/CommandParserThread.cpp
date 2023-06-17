@@ -43,8 +43,8 @@ constexpr std::size_t queueEntrySize =
     + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
 
 
-auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
 auto DispatchCommand(etl::string<commandSize> const & command) -> void;
+auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
 
 
 class CommandParserThread : public RODOS::StaticThread<stackSize>
