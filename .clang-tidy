@@ -66,6 +66,9 @@ CheckOptions:
     value: 'true'
   - key: 'readability-redundant-access-specifiers.CheckFirstDeclaration'
     value: 'true'
+# For variables of generic type T
+  - key: 'readability-identifier-length.IgnoredVariableNames'
+    value: '^t$'
 # These seem to be the most common identifier styles
   - key: 'readability-identifier-naming.AbstractClassCase'
     value: 'CamelCase'

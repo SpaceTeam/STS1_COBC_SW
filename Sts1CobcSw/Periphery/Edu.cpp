@@ -682,7 +682,7 @@ void Edu::SendCommand(Byte commandId)
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-[[nodiscard]] auto Edu::UartReceive(Byte * destination) -> EduErrorCode
+[[nodiscard]] auto Edu::UartReceive(void * destination) -> EduErrorCode
 {
     uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
     auto nReceivedBytes = uart_.read(destination, 1);

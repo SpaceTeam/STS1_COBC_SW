@@ -8,7 +8,7 @@ using sts1cobcsw::serial::DeserializeFrom;
 using sts1cobcsw::serial::SerializeTo;
 
 
-auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *
+auto DeserializeFrom(void const * source, HeaderData * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->command));
     source = DeserializeFrom(source, &(data->length));
@@ -16,7 +16,7 @@ auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *
 }
 
 
-auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *
+auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->programId));
     source = DeserializeFrom(source, &(data->queueId));
@@ -25,7 +25,7 @@ auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *
 }
 
 
-auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *
+auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->programId));
     source = DeserializeFrom(source, &(data->queueId));
@@ -33,7 +33,7 @@ auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *
 }
 
 
-auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *
+auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *
 {
     destination = SerializeTo(destination, StoreArchiveData::id);
     destination = SerializeTo(destination, data.programId);
@@ -41,7 +41,7 @@ auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *
 }
 
 
-auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *
+auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *
 {
     destination = SerializeTo(destination, ExecuteProgramData::id);
     destination = SerializeTo(destination, data.programId);
@@ -51,7 +51,7 @@ auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *
 }
 
 
-auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *
+auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *
 {
     destination = SerializeTo(destination, UpdateTimeData::id);
     destination = SerializeTo(destination, data.timestamp);

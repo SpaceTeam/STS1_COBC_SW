@@ -48,7 +48,7 @@ private:
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
     // Deserialize<>() internally.
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
-    [[nodiscard]] auto UartReceive(Byte * destination) -> EduErrorCode;
+    [[nodiscard]] auto UartReceive(void * destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
     [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> EduErrorCode;
     [[nodiscard]] auto GetStatusCommunication() -> EduStatus;
