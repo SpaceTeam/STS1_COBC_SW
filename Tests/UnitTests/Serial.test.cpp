@@ -9,7 +9,7 @@
 
 
 using sts1cobcsw::Byte;
-using sts1cobcsw::operator""_b;
+using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 using sts1cobcsw::Deserialize;
 using sts1cobcsw::Serialize;
 

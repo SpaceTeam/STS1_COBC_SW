@@ -22,7 +22,7 @@
 #include <span>
 #include <type_traits>
 
-
+// TODO: Add template parameter for endianness (Flash needs big endian)
 // TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
 namespace sts1cobcsw
 {
@@ -43,62 +43,63 @@ inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
 template<typename T>
     requires(serialSize<T> != 0U)
-using SerialBuffer = std::array<Byte, serialSize<T>>;
+using Buffer = std::array<Byte, serialSize<T>>;
+
+template<typename T>
+    requires(serialSize<T> != 0U)
+using BufferView = std::span<Byte const, serialSize<T>>;
 
 
 // --- Function declarations ---
 
-// TODO: Rename data -> t or variable
 // Must be overloaded for user-defined types to be serializable
 template<TriviallySerializable T>
-auto SerializeTo(void * destination, T const & data) -> void *;
+auto SerializeTo(void * destination, T const & t) -> void *;
 
-// TODO: Make DeserializeFrom const correct (Byte const * source, -> Byte const *)
 // Must be overloaded for user-defined types to be deserializable
 template<TriviallySerializable T>
-auto DeserializeFrom(void const * source, T * data) -> void const *;
+auto DeserializeFrom(void const * source, T * t) -> void const *;
 
 template<typename T>
-[[nodiscard]] auto Serialize(T const & data) -> SerialBuffer<T>;
+[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>;
 
 template<std::default_initializable T>
-[[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
+[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
 
 
 // --- Function template definitions ---
 template<TriviallySerializable T>
-inline auto SerializeTo(void * destination, T const & data) -> void *
+inline auto SerializeTo(void * destination, T const & t) -> void *
 {
-    std::memcpy(destination, &data, serialSize<T>);
+    std::memcpy(destination, &t, serialSize<T>);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return static_cast<Byte *>(destination) + serialSize<T>;
 }
 
 
-// TODO: Add template parameter for endianness (Flash needs big endian)
 template<TriviallySerializable T>
-inline auto DeserializeFrom(void const * source, T * data) -> void const *
+inline auto DeserializeFrom(void const * source, T * t) -> void const *
 {
-    std::memcpy(data, source, serialSize<T>);
+    std::memcpy(t, source, serialSize<T>);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return static_cast<Byte const *>(source) + serialSize<T>;
 }
 
 
 template<typename T>
-auto Serialize(T const & data) -> SerialBuffer<T>
+[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>
 {
-    auto buffer = SerialBuffer<T>{};
-    SerializeTo(buffer.data(), data);
+    auto buffer = Buffer<T>{};
+    SerializeTo(buffer.data(), t);
     return buffer;
 }
 
 
 template<std::default_initializable T>
-auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T
 {
     auto t = T{};
-    DeserializeFrom(source.data(), &t);
+    DeserializeFrom(bufferView.data(), &t);
     return t;
 }
 }
