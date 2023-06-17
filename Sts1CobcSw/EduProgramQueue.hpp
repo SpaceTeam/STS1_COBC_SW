@@ -58,35 +58,8 @@ inline auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
 }
 
 
-// TODO: Move the status and history related stuff to its own StatusAndHistory.hpp
-enum class ProgramStatus : uint8_t
-{
-    programRunning,
-    programCouldNotBeStarted,
-    programExecutionFailed,
-    programExecutionSucceeded,
-    resultFileTransfered,
-    resultFileSentToRf,
-    ackFromGround,
-    resultFileDeleted
-};
-
-
-struct StatusHistoryEntry
-{
-    ts::uint16_t programId = 0_u16;
-    ts::uint16_t queueId = 0_u16;
-    ProgramStatus status = ProgramStatus::programRunning;
-};
-
 inline constexpr auto eduProgramQueueSize = 20;
-// TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?
-inline constexpr auto statusHistorySize = 20;
 
-// TODO: Why is this defined in EduProgramQueueThread.cpp and not EduProgramQueue.cpp?
 extern uint16_t queueIndex;
 extern etl::vector<EduQueueEntry, eduProgramQueueSize> eduProgramQueue;
-// TODO: Maybe move that to its own file? Together with the definition of StatusHistoryEntry of
-// course.
-extern RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
 }
