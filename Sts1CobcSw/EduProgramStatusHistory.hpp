@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cstdint>
+#include <type_safe/types.hpp>
 
 #include <ringbuffer.h>
 
-#include <type_safe/types.hpp>
+#include <cstdint>
 
 namespace sts1cobcsw
 {

@@ -19,4 +19,3 @@ auto FindStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> S
     return statusHistoryEntry;
 }
 }
-
