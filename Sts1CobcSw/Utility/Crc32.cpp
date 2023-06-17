@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Utility/Crc32.hpp>
+
 #include <array>
 #include <cstdint>
 
@@ -63,5 +64,4 @@ constexpr auto crcTable = std::to_array<std::uint32_t>(
 
     return crc32;
 }
-
 }
