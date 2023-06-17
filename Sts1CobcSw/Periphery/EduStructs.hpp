@@ -81,14 +81,6 @@ struct ResultInfo
     periphery::EduErrorCode errorCode = EduErrorCode::noErrorCodeSet;
     ts::size_t resultSize = 0_usize;
 };
-
-
-auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *;
-auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *;
-auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *;
-auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *;
-auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
-auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
 }
 
 
@@ -126,5 +118,16 @@ template<>
 inline constexpr std::size_t serialSize<periphery::UpdateTimeData> =
     totalSerialSize<decltype(periphery::UpdateTimeData::id),
                     decltype(periphery::UpdateTimeData::timestamp)>;
+}
+
+
+namespace periphery
+{
+auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *;
+auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *;
+auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *;
+auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *;
+auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
+auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
 }
 }

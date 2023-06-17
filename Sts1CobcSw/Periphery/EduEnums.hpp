@@ -29,6 +29,7 @@ enum class EduErrorCode
     noResultAvailable
 };
 
+
 enum class EduStatusType
 {
     noEvent,
@@ -36,5 +37,4 @@ enum class EduStatusType
     resultsReady,
     invalid,
 };
-
 }

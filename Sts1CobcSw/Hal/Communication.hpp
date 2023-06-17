@@ -13,7 +13,6 @@
 
 
 // TODO: Add declarations at the top to see all provided functionality at once
-// TODO: Introduce convention write <-> message, read <-> answer
 namespace sts1cobcsw::hal
 {
 using serial::Byte;

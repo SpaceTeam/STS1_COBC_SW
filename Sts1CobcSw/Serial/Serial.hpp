@@ -82,6 +82,8 @@ template<typename T>
 
 // --- Function template definitions ---
 
+// TODO: constexpr functions are automatically inline so remove the superfluous inline keyword
+// TODO: actuall remove constexpr and keep inline
 template<TriviallySerializable T>
 inline constexpr auto SerializeTo(Byte * destination, T const & data) -> Byte *
 {
