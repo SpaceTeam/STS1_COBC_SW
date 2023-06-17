@@ -25,7 +25,7 @@ auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 auto constexpr edgeCounterThreshold = 4;
 
 
-auto EduIsAlive();
+auto EduIsAlive() -> bool;
 
 
 class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
@@ -133,7 +133,7 @@ private:
 } eduHeartbeatThread;
 
 
-auto EduIsAlive()
+auto EduIsAlive() -> bool
 {
     auto begin = RODOS::NOW();
 
