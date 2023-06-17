@@ -123,11 +123,11 @@ inline constexpr std::size_t serialSize<periphery::UpdateTimeData> =
 
 namespace periphery
 {
-auto DeserializeFrom(Byte * source, HeaderData * data) -> Byte *;
-auto DeserializeFrom(Byte * source, ProgramFinishedStatus * data) -> Byte *;
-auto DeserializeFrom(Byte * source, ResultsReadyStatus * data) -> Byte *;
-auto SerializeTo(Byte * destination, StoreArchiveData const & data) -> Byte *;
-auto SerializeTo(Byte * destination, ExecuteProgramData const & data) -> Byte *;
-auto SerializeTo(Byte * destination, UpdateTimeData const & data) -> Byte *;
+auto DeserializeFrom(void const * source, HeaderData * data) -> void const *;
+auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void const *;
+auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
+auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
+auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
+auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
 }
 }

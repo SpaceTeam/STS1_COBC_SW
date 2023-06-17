@@ -78,7 +78,7 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
 auto SendInstruction() -> void;
 
-auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *;
+auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
 
 
 // ---Public function definitions ---
@@ -268,7 +268,7 @@ inline auto SendInstruction() -> void
 
 
 // TODO: Replace this super ugyl hack with a proper big endian deserialization
-auto DeserializeFrom(Byte * source, JedecId * jedecId) -> Byte *
+auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *
 {
     source = serial::DeserializeFrom<std::uint8_t>(source, &(jedecId->manufacturerId));
     std::uint16_t deviceId = 0;

@@ -48,7 +48,7 @@ inline constexpr std::size_t serialSize<EduQueueEntry> =
                     decltype(EduQueueEntry::timeout)>;
 }
 
-inline auto DeserializeFrom(Byte * source, EduQueueEntry * data) -> Byte *
+inline auto DeserializeFrom(void const * source, EduQueueEntry * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->programId));
     source = DeserializeFrom(source, &(data->queueId));
