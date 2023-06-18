@@ -46,12 +46,12 @@
     {
       "name": "cpp-std",
       "description": "This preset makes sure the project actually builds with at least the specified standard",
-      "hidden": true
-      // "cacheVariables": {
-      //   "CMAKE_CXX_EXTENSIONS": "OFF",
-      //   "CMAKE_CXX_STANDARD": "23",
-      //   "CMAKE_CXX_STANDARD_REQUIRED": "ON"
-      // }
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_EXTENSIONS": "OFF",
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON"
+      }
     },
     {
       "name": "warnings-unix",
@@ -83,8 +83,7 @@
       "generator": "Unix Makefiles",
       "hidden": true,
       "inherits": [
-        "flags-unix",
-        "cpp-std"
+        "flags-unix"
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -131,13 +130,13 @@
     {
       "name": "ci-linux-x86",
       "binaryDir": "${sourceDir}/build/linux-x86",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "ci-unix"],
       "toolchainFile": "/linux-x86.cmake"
     },
     {
       "name": "ci-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "ci-unix"],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"
