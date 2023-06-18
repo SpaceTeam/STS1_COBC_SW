@@ -46,12 +46,12 @@
     {
       "name": "cpp-std",
       "description": "This preset makes sure the project actually builds with at least the specified standard",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_CXX_EXTENSIONS": "OFF",
-        "CMAKE_CXX_STANDARD": "20",
-        "CMAKE_CXX_STANDARD_REQUIRED": "ON"
-      }
+      "hidden": true
+      // "cacheVariables": {
+      //   "CMAKE_CXX_EXTENSIONS": "OFF",
+      //   "CMAKE_CXX_STANDARD": "23",
+      //   "CMAKE_CXX_STANDARD_REQUIRED": "ON"
+      // }
     },
     {
       "name": "warnings-unix",

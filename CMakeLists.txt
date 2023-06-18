@@ -23,6 +23,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     find_package_and_notify(littlefs)
 endif()
 
+# ---- Ugly hack ----
+
+# For some reason setting the C++ standard to C++23 with target_compile_features() or with
+# CMAKE_CXX_STANDARD in the presets does not work
+add_compile_options(-std=c++2b)
+
 # ---- Declare targets ----
 
 add_library(Sts1CobcSw_Dummy STATIC)

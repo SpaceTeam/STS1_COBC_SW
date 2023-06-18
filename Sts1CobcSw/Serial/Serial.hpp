@@ -16,11 +16,13 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <array>
+#include <bit>
 #include <concepts>
 #include <cstddef>
 #include <cstring>
 #include <span>
 #include <type_traits>
+
 
 // TODO: Add template parameter for endianness (Flash needs big endian)
 // TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
@@ -28,6 +30,9 @@ namespace sts1cobcsw
 {
 template<typename T>
 concept TriviallySerializable = std::is_arithmetic_v<T> or std::is_enum_v<T>;
+
+template<typename T>
+concept HasEndianness = std::is_integral_v<T> or std::is_enum_v<T>;
 
 
 // Must be specialized for user-defined types to be serializable
@@ -66,8 +71,12 @@ template<typename T>
 template<std::default_initializable T>
 [[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
 
+template<HasEndianness T>
+[[nodiscard]] constexpr auto ReverseBytes(T t) -> T;
+
 
 // --- Function template definitions ---
+
 template<TriviallySerializable T>
 inline auto SerializeTo(void * destination, T const & t) -> void *
 {
@@ -101,5 +110,19 @@ template<std::default_initializable T>
     auto t = T{};
     DeserializeFrom(bufferView.data(), &t);
     return t;
+}
+
+
+template<HasEndianness T>
+constexpr inline auto ReverseBytes(T t) -> T
+{
+    if constexpr(std::integral<T>)
+    {
+        return std::byteswap(t);
+    }
+    else if constexpr(std::is_enum_v<T>)
+    {
+        return static_cast<T>(std::byteswap(std::to_underlying(t)));
+    }
 }
 }
