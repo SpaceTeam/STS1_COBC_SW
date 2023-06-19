@@ -15,8 +15,11 @@
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+// We need std::byteswap which is C++23 but for some reason clang-tidy crashes when using C++23, so
+// we use the ETL version
+#include <etl/bit.h>
+
 #include <array>
-#include <bit>
 #include <concepts>
 #include <cstddef>
 #include <cstring>
@@ -118,11 +121,11 @@ constexpr inline auto ReverseBytes(T t) -> T
 {
     if constexpr(std::integral<T>)
     {
-        return std::byteswap(t);
+        return etl::byteswap(t);
     }
     else if constexpr(std::is_enum_v<T>)
     {
-        return static_cast<T>(std::byteswap(std::to_underlying(t)));
+        return static_cast<T>(etl::byteswap(static_cast<std::underlying_type<T>>(t)));
     }
 }
 }

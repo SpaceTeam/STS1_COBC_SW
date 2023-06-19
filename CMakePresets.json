@@ -49,7 +49,7 @@
       "hidden": true,
       "cacheVariables": {
         "CMAKE_CXX_EXTENSIONS": "OFF",
-        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_STANDARD": "20",
         "CMAKE_CXX_STANDARD_REQUIRED": "ON"
       }
     },
@@ -131,13 +131,13 @@
     {
       "name": "ci-linux-x86",
       "binaryDir": "${sourceDir}/build/linux-x86",
-      "inherits": ["dev-mode", "cppcheck", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
       "toolchainFile": "/linux-x86.cmake"
     },
     {
       "name": "ci-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
-      "inherits": ["dev-mode", "cppcheck", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"
