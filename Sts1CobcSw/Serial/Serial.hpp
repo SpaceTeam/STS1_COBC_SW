@@ -27,8 +27,8 @@
 #include <type_traits>
 
 
-// TODO: Add template parameter for endianness (Flash needs big endian)
-// TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
+// TODO: Make everything compile again, i.e., add endianness to SerializeTo() for all user-defined
+// types
 namespace sts1cobcsw
 {
 template<typename T>

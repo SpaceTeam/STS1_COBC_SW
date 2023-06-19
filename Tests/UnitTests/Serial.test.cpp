@@ -14,6 +14,8 @@ using sts1cobcsw::Deserialize;
 using sts1cobcsw::Serialize;
 
 
+// TODO: Add tests for (De)Serialize with endianness
+
 TEST_CASE("TriviallySerializable")
 {
     using sts1cobcsw::TriviallySerializable;
@@ -46,6 +48,41 @@ TEST_CASE("TriviallySerializable")
     // User-defined types aren't either
     REQUIRE(not TriviallySerializable<EmptyStruct>);
     REQUIRE(not TriviallySerializable<SingleInt32>);
+}
+
+
+TEST_CASE("HasEndianness")
+{
+    using sts1cobcsw::HasEndianness;
+
+    struct EmptyStruct
+    {
+    };
+    struct SingleInt32
+    {
+        std::int32_t i;
+    };
+
+    // POD types are HasEndianness
+    REQUIRE(HasEndianness<std::byte>);
+    REQUIRE(HasEndianness<char>);
+    REQUIRE(HasEndianness<unsigned char>);
+    REQUIRE(HasEndianness<short>);
+    REQUIRE(HasEndianness<unsigned short>);
+    REQUIRE(HasEndianness<int>);
+    REQUIRE(HasEndianness<unsigned int>);
+    REQUIRE(HasEndianness<long>);
+    REQUIRE(HasEndianness<unsigned long>);
+    REQUIRE(HasEndianness<bool>);
+    // Floats, type_safe bools, pointers, and arrays are not HasEndianness
+    REQUIRE(not HasEndianness<float>);
+    REQUIRE(not HasEndianness<double>);
+    REQUIRE(not HasEndianness<char *>);
+    REQUIRE(not HasEndianness<int[]>);  // NOLINT
+    REQUIRE(not HasEndianness<std::array<double, 3>>);
+    // User-defined types aren't either
+    REQUIRE(not HasEndianness<EmptyStruct>);
+    REQUIRE(not HasEndianness<SingleInt32>);
 }
 
 
