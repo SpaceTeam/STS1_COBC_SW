@@ -11,8 +11,8 @@ TEST_CASE("Always passes")
 
 TEST_CASE("Dummy is called 'Sts1CobcSw'")
 {
-    const auto dummy = sts1cobcsw::Dummy();
+    auto const dummy = sts1cobcsw::Dummy();
 
-    const auto nameIsCorrect = dummy.name == "Sts1CobcSw";
+    auto const nameIsCorrect = dummy.name == "Sts1CobcSw";
     REQUIRE(nameIsCorrect);
 }
