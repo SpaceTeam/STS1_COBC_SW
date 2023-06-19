@@ -83,7 +83,8 @@
       "generator": "Unix Makefiles",
       "hidden": true,
       "inherits": [
-        "flags-unix"
+        "flags-unix",
+        "cpp-std"
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
