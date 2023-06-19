@@ -148,18 +148,19 @@ constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::u16), decltype
 
 // 2. Overload SerializeTo() to define how S is serialized to the given memory destination. The
 //    returned pointer must point to the next free byte in memory.
+template<std::endian endianness>
 auto SerializeTo(void * destination, S const & data) -> void *
 {
-    destination = sts1cobcsw::SerializeTo(destination, data.u16);
-    destination = sts1cobcsw::SerializeTo(destination, data.i32);
+    destination = sts1cobcsw::SerializeTo<endianness>(destination, data.u16);
+    destination = sts1cobcsw::SerializeTo<endianness>(destination, data.i32);
     return destination;
 }
 
-
+template<std::endian endianness>
 auto DeserializeFrom(void const * source, S * data) -> void const *
 {
-    source = sts1cobcsw::DeserializeFrom(source, &(data->u16));
-    source = sts1cobcsw::DeserializeFrom(source, &(data->i32));
+    source = sts1cobcsw::DeserializeFrom<endianness>(source, &(data->u16));
+    source = sts1cobcsw::DeserializeFrom<endianness>(source, &(data->i32));
     return source;
 }
 

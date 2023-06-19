@@ -34,6 +34,7 @@ namespace sts1cobcsw
 template<typename T>
 concept TriviallySerializable = std::is_arithmetic_v<T> or std::is_enum_v<T>;
 
+// HasEndianness = TriviallySerializable - floats because is_integral_v = is_arithmetic_v - floats
 template<typename T>
 concept HasEndianness = std::is_integral_v<T> or std::is_enum_v<T>;
 
@@ -48,6 +49,8 @@ inline constexpr std::size_t serialSize<T> = sizeof(T);
 template<typename... Ts>
 inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
+inline constexpr auto defaultEndianness = std::endian::little;
+
 
 template<typename T>
     requires(serialSize<T> != 0U)
@@ -60,19 +63,25 @@ using BufferView = std::span<Byte const, serialSize<T>>;
 
 // --- Function declarations ---
 
-// Must be overloaded for user-defined types to be serializable
-template<TriviallySerializable T>
-auto SerializeTo(void * destination, T const & t) -> void *;
-
-// Must be overloaded for user-defined types to be deserializable
-template<TriviallySerializable T>
-auto DeserializeFrom(void const * source, T * t) -> void const *;
-
 template<typename T>
+[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>;
+
+template<std::endian endianness, typename T>
 [[nodiscard]] auto Serialize(T const & t) -> Buffer<T>;
 
 template<std::default_initializable T>
 [[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
+
+template<std::endian endianness, std::default_initializable T>
+[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
+
+// Must be overloaded for user-defined types to be serializable
+template<std::endian endianness, TriviallySerializable T>
+auto SerializeTo(void * destination, T const & t) -> void *;
+
+// Must be overloaded for user-defined types to be deserializable
+template<std::endian endianness, TriviallySerializable T>
+auto DeserializeFrom(void const * source, T * t) -> void const *;
 
 template<HasEndianness T>
 [[nodiscard]] constexpr auto ReverseBytes(T t) -> T;
@@ -80,39 +89,61 @@ template<HasEndianness T>
 
 // --- Function template definitions ---
 
-template<TriviallySerializable T>
+template<typename T>
+inline auto Serialize(T const & t) -> Buffer<T>
+{
+    return Serialize<defaultEndianness>(t);
+}
+
+
+template<std::endian endianness, typename T>
+inline auto Serialize(T const & t) -> Buffer<T>
+{
+    auto buffer = Buffer<T>{};
+    SerializeTo<endianness>(buffer.data(), t);
+    return buffer;
+}
+
+
+template<std::default_initializable T>
+inline auto Deserialize(BufferView<T> bufferView) -> T
+{
+    return Deserialize<defaultEndianness, T>(bufferView);
+}
+
+
+template<std::endian endianness, std::default_initializable T>
+inline auto Deserialize(BufferView<T> bufferView) -> T
+{
+    auto t = T{};
+    DeserializeFrom<endianness>(bufferView.data(), &t);
+    return t;
+}
+
+
+template<std::endian endianness, TriviallySerializable T>
 inline auto SerializeTo(void * destination, T const & t) -> void *
 {
+    if constexpr(HasEndianness<T> and endianness != std::endian::native)
+    {
+        t = ReverseBytes(t);
+    }
     std::memcpy(destination, &t, serialSize<T>);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return static_cast<Byte *>(destination) + serialSize<T>;
 }
 
 
-template<TriviallySerializable T>
+template<std::endian endianness, TriviallySerializable T>
 inline auto DeserializeFrom(void const * source, T * t) -> void const *
 {
     std::memcpy(t, source, serialSize<T>);
+    if constexpr(HasEndianness<T> and endianness != std::endian::native)
+    {
+        *t = ReverseBytes(*t);
+    }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return static_cast<Byte const *>(source) + serialSize<T>;
-}
-
-
-template<typename T>
-[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>
-{
-    auto buffer = Buffer<T>{};
-    SerializeTo(buffer.data(), t);
-    return buffer;
-}
-
-
-template<std::default_initializable T>
-[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T
-{
-    auto t = T{};
-    DeserializeFrom(bufferView.data(), &t);
-    return t;
 }
 
 
