@@ -38,8 +38,11 @@ auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 
-constexpr inline std::uint16_t partInfo = 0x4463;
-constexpr inline std::uint32_t powerUpXoFrequency = 30'000'000;  // 30 MHz
+constexpr std::uint16_t partInfo = 0x4463;
+constexpr std::uint32_t powerUpXoFrequency = 30'000'000;  // 30 MHz
+
+constexpr auto startTxCommandBuffer =
+    std::to_array({cmdStartTx, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b});
 
 
 // --- Private function declarations ---
@@ -122,45 +125,10 @@ auto Initialize() -> void
     // without the watchdog timer on the PCB it needs to be triggered at least once after boot to
     // enable the TX)
 
-    csGpioPin.Direction(hal::PinDirection::out);
-    csGpioPin.Set();
-
-    nirqGpioPin.Direction(hal::PinDirection::in);
-
-    sdnGpioPin.Direction(hal::PinDirection::out);
-    sdnGpioPin.Set();
-
-    gpio0GpioPin.Direction(hal::PinDirection::out);
-    gpio0GpioPin.Reset();
-
-    watchdogResetGpioPin.Direction(hal::PinDirection::out);
-    watchdogResetGpioPin.Reset();
-    AT(NOW() + 1 * MILLISECONDS);
-    watchdogResetGpioPin.Set();
-    AT(NOW() + 1 * MILLISECONDS);
-    watchdogResetGpioPin.Reset();
-
-    constexpr auto baudrate = 10'000'000;
-    spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
-
-    // Here comes the configuration of the RF module
-
-    // Enable Si4463 and wait for PoR to finish
-    AT(NOW() + 100 * MILLISECONDS);
-    sdnGpioPin.Reset();
-    AT(NOW() + 20 * MILLISECONDS);
+    InitializeGpioAndSpi();
 
     auto sendBuffer = std::array<std::uint8_t, 32>{};
 
-    // Power Up
-    // sendBuffer[0] = 0x02;  // CMD POWER_UP
-    // sendBuffer[1] = 0x01;  // No Patch, Func is 1
-    // sendBuffer[2] = 0x00;  // No TXCO
-    // sendBuffer[3] = 0x01;  // XO_FREQ = 0x01C9C380 = 30MHz (stolen from NiceRF demo code)
-    // sendBuffer[4] = 0xC9;  // XO_FREQ
-    // sendBuffer[5] = 0xC3;  // XO_FREQ
-    // sendBuffer[6] = 0x80;  // XO_FREQ
-    // SendCommand(data(sendBuffer), 7, nullptr, 0);
     PowerUp(PowerUpBootOptions::noPatch, PowerUpXtalOptions::xtal, powerUpXoFrequency);
 
     // GPIO Pin Cfg
@@ -333,7 +301,8 @@ auto Initialize() -> void
     sendBuffer[1] = 0x20;
     sendBuffer[2] = 0x0C;
     sendBuffer[3] = 0x00;
-    sendBuffer[4] = 0x09;  // TX data direct mode from GPIO0 pin, modulation OOK
+    // sendBuffer[4] = 0x09;  // TX data direct mode from GPIO0 pin, modulation OOK
+    sendBuffer[4] = 0x01; // TX data from TX FIFO, modulation OOK
     sendBuffer[5] = 0x00;
     sendBuffer[6] = 0x07;  // DSM default config
     sendBuffer[7] = 0x00;  // Modem data rate 20kbaud (unused in direct mode)

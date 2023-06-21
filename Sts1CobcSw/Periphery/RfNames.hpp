@@ -10,12 +10,13 @@ using sts1cobcsw::serial::operator""_b;
 // In the following, abbreviations are used to adhere to the API documentation
 
 // Si4463 Command IDs
-inline constexpr auto cmdPowerUp = 0x02_b;
 inline constexpr auto cmdNop = 0x00_b;
 inline constexpr auto cmdPartInfo = 0x01_b;
+inline constexpr auto cmdPowerUp = 0x02_b;
 inline constexpr auto cmdFuncInfo = 0x10_b;
 inline constexpr auto cmdSetProperty = 0x11_b;
 inline constexpr auto cmdGetIntStatus = 0x20_b;
+inline constexpr auto cmdStartTx = 0x31_b;
 inline constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // GetIntStatus constants
@@ -56,10 +57,10 @@ enum class PowerUpBootOptions : std::uint8_t
     noPatch = 0x01,
     patch = 0x81
 };
+
 enum class PowerUpXtalOptions : std::uint8_t
 {
     xtal = 0x00,  // Reference signal is derived from the internal crystal oscillator
     txco = 0x01   // Reference signal is derived from an external TCXO
 };
-
 }
