@@ -41,9 +41,6 @@ auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 constexpr std::uint16_t partInfo = 0x4463;
 constexpr std::uint32_t powerUpXoFrequency = 30'000'000;  // 30 MHz
 
-constexpr auto startTxCommandBuffer =
-    std::to_array({cmdStartTx, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b});
-
 
 // --- Private function declarations ---
 
@@ -57,7 +54,7 @@ auto SendCommandNoResponse(std::span<Byte> commandBuffer) -> void;
 template<std::size_t nResponseBytes>
 auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, nResponseBytes>;
 
-auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
+auto WriteFifo(std::span<Byte> data) -> void;
 
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
@@ -302,7 +299,7 @@ auto Initialize() -> void
     sendBuffer[2] = 0x0C;
     sendBuffer[3] = 0x00;
     // sendBuffer[4] = 0x09;  // TX data direct mode from GPIO0 pin, modulation OOK
-    sendBuffer[4] = 0x01; // TX data from TX FIFO, modulation OOK
+    sendBuffer[4] = 0x01;  // TX data from TX FIFO, modulation OOK
     sendBuffer[5] = 0x00;
     sendBuffer[6] = 0x07;  // DSM default config
     sendBuffer[7] = 0x00;  // Modem data rate 20kbaud (unused in direct mode)
@@ -644,8 +641,20 @@ auto GetPartInfo() -> std::uint16_t
     }
     RODOS::PRINTF("\n");
     ////////////////////////////////////
+    // NOLINTNEXTLINE(hicpp-signed-bitwise)
+    return static_cast<std::uint16_t>(static_cast<std::uint16_t>(responseBuffer[1]) << CHAR_BIT
+                                      | static_cast<std::uint16_t>(responseBuffer[2]));
+}
 
-    return static_cast<std::uint16_t>(responseBuffer[1] << CHAR_BIT | responseBuffer[2]);
+
+auto TransmitData(std::span<Byte> data) -> void
+{
+    ClearInterrupts();
+    StartTx(std::size(data));
+    AT(NOW() + 10 * MILLISECONDS);
+    WriteFifo(data);
+    ClearInterrupts();
+    EnterPowerMode(PowerMode::standby);
 }
 
 
@@ -698,6 +707,26 @@ auto Morse() -> void
 
         AT(NOW() + offTime);
     }
+}
+
+
+auto StartTx(std::uint16_t length) -> void
+{
+    auto commandBuffer = std::to_array({cmdStartTx,
+                                        0x00_b,
+                                        0x00_b,
+                                        static_cast<Byte>(length >> CHAR_BIT),
+                                        static_cast<Byte>(length),
+                                        0x00_b,
+                                        0x00_b});
+    SendCommandNoResponse(commandBuffer);
+}
+
+
+auto EnterPowerMode(PowerMode powerMode) -> void
+{
+    auto commandBuffer = std::to_array<Byte>({cmdChangeState, static_cast<Byte>(powerMode)});
+    SendCommandNoResponse(commandBuffer);
 }
 
 
@@ -783,7 +812,7 @@ auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, 
 }
 
 
-auto WriteFifo(std::uint8_t * data, std::size_t length) -> void
+auto WriteFifo(std::span<Byte> data) -> void
 {
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
@@ -792,7 +821,8 @@ auto WriteFifo(std::uint8_t * data, std::size_t length) -> void
     // SpiMaster4::transferBlocking(buf, nullptr, 1);
     spi.writeRead(std::data(buf), std::size(buf), nullptr, 0);
     // SpiMaster4::transferBlocking(data, nullptr, length);
-    spi.writeRead(data, length, nullptr, 0);
+    hal::WriteTo(&spi, data);
+    // spi.writeRead(data, length, nullptr, 0);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
 

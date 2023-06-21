@@ -17,6 +17,7 @@ inline constexpr auto cmdFuncInfo = 0x10_b;
 inline constexpr auto cmdSetProperty = 0x11_b;
 inline constexpr auto cmdGetIntStatus = 0x20_b;
 inline constexpr auto cmdStartTx = 0x31_b;
+inline constexpr auto cmdChangeState = 0x34_b;
 inline constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // GetIntStatus constants
@@ -62,5 +63,9 @@ enum class PowerUpXtalOptions : std::uint8_t
 {
     xtal = 0x00,  // Reference signal is derived from the internal crystal oscillator
     txco = 0x01   // Reference signal is derived from an external TCXO
+};
+
+enum class PowerMode : std::uint8_t{
+    standby = 0x01
 };
 }
