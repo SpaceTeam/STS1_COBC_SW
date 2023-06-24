@@ -84,8 +84,5 @@ class SpiTest : public RODOS::StaticThread<>
             i %= std::size(spis);
         }
     }
-};
-
-
-auto const spiTest = SpiTest();
+} spiTest;
 }

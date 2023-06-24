@@ -20,7 +20,5 @@ class HelloDummy : public RODOS::StaticThread<>
         RODOS::PRINTF("Hello, %s!\n", dummy.name.data());
         RODOS::hwResetAndReboot();
     }
-};
-
-auto const helloDummy = HelloDummy();
+} helloDummy;
 }

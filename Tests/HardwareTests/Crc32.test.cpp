@@ -42,8 +42,5 @@ class Crc32Test : public RODOS::StaticThread<>
         // RODOS::PRINTF("%c", (crcSw >> 8) & 0xFF);
         // RODOS::PRINTF("%c\n\n", crcSw & 0xFF);
     }
-};
-
-
-auto const crc32Test = Crc32Test();
+} crc32Test;
 }
