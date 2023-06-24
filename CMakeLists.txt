@@ -13,16 +13,7 @@ project(
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 include(cmake/custom-commands.cmake)
-
-find_program (CLANG_TIDY_CACHE_PATH NAMES "clang-tidy-cache")
-if (CLANG_TIDY_CACHE_PATH)
-	message("Found clang-tidy-cache")
-	message("clang-tidy-cache directory : $ENV{CTCACHE_DIR}")
-	set (CLANG_TIDY_PATH "${CLANG_TIDY_CACHE_PATH};clang-tidy;--header-filter=${CMAKE_SOURCE_DIR}/*" CACHE STRING "A combined command to run clang-tidy with caching wrapper")
-endif ()
-
-
-set (CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PATH}")
+include(cmake/clang-tidy-cache.cmake)
 
 # ---- Find dependencies ----
 
@@ -40,7 +31,7 @@ add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility OBJECT)
 add_library(Sts1CobcSw_Periphery OBJECT)
 add_program(HelloDummy)
-#add_program(Heartbeat)
+# add_program(Heartbeat)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_FileSystem OBJECT)
