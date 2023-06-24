@@ -26,8 +26,6 @@ auto GetPartInfo() -> std::uint16_t;
 
 auto Morse() -> void;
 
-auto SendPacket() -> void;
-
 auto StartTx(std::uint16_t length) -> void;
 
 auto EnterPowerMode(PowerMode powerMode) -> void;

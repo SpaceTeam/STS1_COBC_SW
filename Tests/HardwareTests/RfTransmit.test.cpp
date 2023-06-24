@@ -37,9 +37,12 @@ private:
         auto waitTime = 1 * RODOS::SECONDS;
         for(auto i = 0; i < nTransmissions; ++i)
         {
+            RODOS::PRINTF("Transmitting...\n");
             periphery::rf::TransmitData(std::span<Byte>(testData));
             RODOS::AT(RODOS::NOW() + waitTime);
         }
+
+        RODOS::PRINTF("Test data sent\n");
     }
 } rfTransmitTest;
 }

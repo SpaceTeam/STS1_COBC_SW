@@ -18,34 +18,25 @@ public:
 private:
     void init() override
     {
-        periphery::rf::Initialize();
+        RODOS::PRINTF("Hello RfTest\n");
     }
 
 
     void run() override
     {
-        PRINTF("\n");
-        PRINTF("RF test\n");
-        PRINTF("\n");
-
-        if(periphery::rf::PartInfoIsCorrect())
-        {
-            PRINTF("Part info is correct.\n");
-        }
-        else
-        {
-            PRINTF("Part info is not correct.\n");
-        }
+        periphery::rf::Initialize();
+        RODOS::PRINTF("Si4463 initialized\n");
 
         constexpr auto nMorses = 5;
         constexpr auto pauseDuration = 1 * RODOS::SECONDS;
-        PRINTF("\n");
         PRINTF("Morsing %d times\n", nMorses);
         for(auto i = 0; i < nMorses; ++i)
         {
+            RODOS::PRINTF("Morsing...\n");
             periphery::rf::Morse();
             RODOS::AT(RODOS::NOW() + pauseDuration);
         }
+        RODOS::PRINTF("Morsing done\n");
     }
 } rfTest;
 }
