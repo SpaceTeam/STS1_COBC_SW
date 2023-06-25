@@ -13,6 +13,7 @@ project(
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 include(cmake/custom-commands.cmake)
+include(cmake/clang-tidy-cache.cmake)
 
 # ---- Find dependencies ----
 
@@ -30,7 +31,7 @@ add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility OBJECT)
 add_library(Sts1CobcSw_Periphery OBJECT)
 add_program(HelloDummy)
-#add_program(Heartbeat)
+# add_program(Heartbeat)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_FileSystem OBJECT)

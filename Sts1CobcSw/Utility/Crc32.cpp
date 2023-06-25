@@ -52,7 +52,7 @@ constexpr auto crcTable = std::to_array<std::uint32_t>(
 [[nodiscard]] auto Crc32(std::span<sts1cobcsw::serial::Byte> data) -> uint32_t
 {
     std::uint32_t crc32 = crc32Init;
-    std::size_t nBytes = data.size();
+    const std::size_t nBytes = data.size();
 
     for(std::size_t i = 0; i < nBytes; i++)
     {
