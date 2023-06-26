@@ -102,7 +102,7 @@ inline constexpr auto DeserializeFrom(void const * source, T * data) -> void con
 
 
 template<typename T>
-[[nodiscard]] constexpr auto Serialize(T const & data) -> SerialBuffer<T>
+constexpr auto Serialize(T const & data) -> SerialBuffer<T>
 {
     auto buffer = SerialBuffer<T>{};
     SerializeTo(buffer.data(), data);
@@ -111,7 +111,7 @@ template<typename T>
 
 
 template<std::default_initializable T>
-[[nodiscard]] constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
     auto t = T{};
     DeserializeFrom(source.data(), &t);
@@ -120,7 +120,7 @@ template<std::default_initializable T>
 
 
 template<utility::TypeSafeInteger T>
-[[nodiscard]] constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
     auto t = utility::TypeSafeZero<T>();
     DeserializeFrom(source.data(), &t);
@@ -130,7 +130,7 @@ template<utility::TypeSafeInteger T>
 
 template<typename T>
     requires std::is_same_v<T, type_safe::boolean>
-[[nodiscard]] constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
     auto t = T{false};  // NOLINT(bugprone-argument-comment)
     DeserializeFrom(source.data(), &t);

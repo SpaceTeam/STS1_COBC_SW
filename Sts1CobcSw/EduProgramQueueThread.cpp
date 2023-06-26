@@ -168,7 +168,7 @@ private:
 
 
 //! Compute the delay in nanoseconds before the start of program at current queue index
-[[nodiscard]] auto ComputeStartDelay() -> std::int64_t
+auto ComputeStartDelay() -> std::int64_t
 {
     auto nextProgramStartTime =
         eduProgramQueue[queueIndex].startTime.get() - (utility::rodosUnixOffset / SECONDS);
