@@ -83,7 +83,7 @@ auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
 
 // ---Public function definitions ---
 
-[[nodiscard]] auto Initialize() -> std::int32_t
+auto Initialize() -> std::int32_t
 {
     csGpioPin.Direction(hal::PinDirection::out);
     writeProtectionGpioPin.Direction(hal::PinDirection::out);
@@ -99,7 +99,7 @@ auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
 }
 
 
-[[nodiscard]] auto ReadJedecId() -> JedecId
+auto ReadJedecId() -> JedecId
 {
     csGpioPin.Reset();
     auto answer = SendInstruction<readJedecId>();
@@ -108,7 +108,7 @@ auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
 }
 
 
-[[nodiscard]] auto ReadStatusRegister(int8_t registerNo) -> Byte
+auto ReadStatusRegister(int8_t registerNo) -> Byte
 {
     auto statusRegister = 0xFF_b;  // NOLINT
 
@@ -131,7 +131,7 @@ auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
 }
 
 
-[[nodiscard]] auto ReadPage(std::uint32_t address) -> Page
+auto ReadPage(std::uint32_t address) -> Page
 {
     auto addressBytes = serial::Serialize(address);
     auto message = std::array<Byte, 1 + size(addressBytes)>{readData4ByteAddress};
@@ -232,14 +232,14 @@ inline auto Write(std::span<Byte, nBytes> data) -> void
 
 
 template<std::size_t nBytes>
-[[nodiscard]] inline auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>
+inline auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>
 {
     return hal::WriteToReadFrom(&spi, data);
 }
 
 
 template<std::size_t nReadBytes, std::size_t nWriteBytes>
-[[nodiscard]] auto WriteRead(std::span<Byte, nWriteBytes> message) -> std::array<Byte, nReadBytes>
+auto WriteRead(std::span<Byte, nWriteBytes> message) -> std::array<Byte, nReadBytes>
 {
     hal::WriteToReadFrom(&spi, message);
     auto dummyBytes = std::array<Byte, nReadBytes>{};
@@ -249,7 +249,7 @@ template<std::size_t nReadBytes, std::size_t nWriteBytes>
 
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
-[[nodiscard]] auto SendInstruction() -> std::array<Byte, instruction.answerLength>
+auto SendInstruction() -> std::array<Byte, instruction.answerLength>
 {
     auto message1 = std::array{instruction.id};
     hal::WriteToReadFrom(&spi, std::span(message1));

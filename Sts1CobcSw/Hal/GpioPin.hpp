@@ -61,7 +61,7 @@ inline auto GpioPin::Reset() -> void
 }
 
 
-[[nodiscard]] inline auto GpioPin::Read() const -> PinState
+inline auto GpioPin::Read() const -> PinState
 {
     return pin_.readPins() == 0U ? PinState::reset : PinState::set;
 }

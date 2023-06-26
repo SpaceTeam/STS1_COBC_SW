@@ -32,43 +32,43 @@ auto Initialize() -> void
 
 
 // Getters
-[[nodiscard]] auto NotOkCounter() -> type_safe::int8_t
+auto NotOkCounter() -> type_safe::int8_t
 {
     return notOkCounter;
 }
 
 
-[[nodiscard]] auto ActiveFirmwareImage() -> type_safe::int8_t
+auto ActiveFirmwareImage() -> type_safe::int8_t
 {
     return activeFirmwareImage;
 }
 
 
-[[nodiscard]] auto BackupFirmwareImage() -> type_safe::int8_t
+auto BackupFirmwareImage() -> type_safe::int8_t
 {
     return backupFirmwareImage;
 }
 
 
-[[nodiscard]] auto AntennasShouldBeDeployed() -> type_safe::bool_t
+auto AntennasShouldBeDeployed() -> type_safe::bool_t
 {
     return antennasShouldBeDeployed;
 }
 
 
-[[nodiscard]] auto TxIsOn() -> type_safe::bool_t
+auto TxIsOn() -> type_safe::bool_t
 {
     return txIsOn;
 }
 
 
-[[nodiscard]] auto EduShouldBePowered() -> type_safe::bool_t
+auto EduShouldBePowered() -> type_safe::bool_t
 {
     return eduShouldBePowered;
 }
 
 
-[[nodiscard]] auto UtcOffset() -> type_safe::int32_t
+auto UtcOffset() -> type_safe::int32_t
 {
     return utcOffset;
 }
