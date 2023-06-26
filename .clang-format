@@ -131,6 +131,8 @@ ObjCBlockIndentWidth: 4
 ObjCBreakBeforeNestedBlockParam: true
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: true
+PPIndentWidth: -1
+PackConstructorInitializers: NextLine
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 1
 PenaltyBreakComment: 300
@@ -172,6 +174,7 @@ RawStringFormats:
     CanonicalDelimiter: ''
     BasedOnStyle: google
 ReflowComments: true
+RemoveBracesLLVM: false
 RequiresClausePosition: OwnLine
 # Unfortunately "Always" enforces a single line between blocks but I want 2
 SeparateDefinitionBlocks: Leave
