@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/EduListenerThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/EduProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
@@ -23,10 +24,6 @@ constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
 
 // Can't use auto here since GCC throws an error about conflicting declarations otherwise :(
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
-
-
-auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
-    -> StatusHistoryEntry;
 
 
 class EduListenerThread : public StaticThread<>
@@ -151,19 +148,4 @@ private:
         }
     }
 } eduListenerThread;
-
-
-auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
-{
-    auto counter = 0;
-    auto statusHistoryEntry = StatusHistoryEntry{};
-    do
-    {
-        statusHistory.get(statusHistoryEntry);
-        // RODOS::PRINTF("%d,%d vs %d,%d\n", statusHistoryEntry.programId,
-        // statusHistoryEntry.queueId, programId, queueId);
-    } while(statusHistoryEntry.queueId != queueId or statusHistoryEntry.programId != programId);
-
-    return statusHistoryEntry;
-}
 }
