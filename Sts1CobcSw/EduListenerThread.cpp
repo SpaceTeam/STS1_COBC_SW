@@ -85,16 +85,18 @@ private:
                         // Find the correspongind queueEntry and update it, then resume edu queue
                         // thread
 
-                        auto statusHistoryEntry =
-                            FindStatusAndHistoryEntry(status.programId, status.queueId);
+                        auto eduProgramStatusHistoryEntry =
+                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
 
                         if(status.exitCode == 0)
                         {
-                            statusHistoryEntry.status = ProgramStatus::programExecutionSucceeded;
+                            eduProgramStatusHistoryEntry.status =
+                                EduProgramStatus::programExecutionSucceeded;
                         }
                         else
                         {
-                            statusHistoryEntry.status = ProgramStatus::programExecutionFailed;
+                            eduProgramStatusHistoryEntry.status =
+                                EduProgramStatus::programExecutionFailed;
                         }
                         ResumeEduProgramQueueThread();
 
@@ -130,9 +132,10 @@ private:
                         }
                         // break;
 
-                        auto statusHistoryEntry =
-                            FindStatusAndHistoryEntry(status.programId, status.queueId);
-                        statusHistoryEntry.status = ProgramStatus::resultFileTransfered;
+                        auto eduProgramStatusHistoryEntry =
+                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
+                        eduProgramStatusHistoryEntry.status =
+                            EduProgramStatus::resultFileTransfered;
 
                         break;
                     }

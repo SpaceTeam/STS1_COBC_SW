@@ -6,17 +6,18 @@
 namespace sts1cobcsw
 {
 
-auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
+auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
+    -> EduProgramStatusHistoryEntry
 {
-    auto counter = 0;
-    auto statusHistoryEntry = StatusHistoryEntry{};
+    auto eduProgramStatusHistoryEntry = EduProgramStatusHistoryEntry{};
     do
     {
-        statusHistory.get(statusHistoryEntry);
-        // RODOS::PRINTF("%d,%d vs %d,%d\n", statusHistoryEntry.programId,
-        // statusHistoryEntry.queueId, programId, queueId);
-    } while(statusHistoryEntry.queueId != queueId or statusHistoryEntry.programId != programId);
+        eduProgramStatusHistory.get(eduProgramStatusHistoryEntry);
+        // RODOS::PRINTF("%d,%d vs %d,%d\n", eduProgramStatusHistoryEntry.programId,
+        // eduProgramStatusHistoryEntry.queueId, programId, queueId);
+    } while(eduProgramStatusHistoryEntry.queueId != queueId
+            or eduProgramStatusHistoryEntry.programId != programId);
 
-    return statusHistoryEntry;
+    return eduProgramStatusHistoryEntry;
 }
 }

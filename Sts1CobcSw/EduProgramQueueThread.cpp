@@ -147,11 +147,11 @@ private:
             }
             else
             {
-                auto statusHistoryEntry =
-                    StatusHistoryEntry{.programId = programId,
-                                       .queueId = queueId,
-                                       .status = ProgramStatus::programRunning};
-                statusHistory.put(statusHistoryEntry);
+                auto eduProgramStatusHistoryEntry =
+                    EduProgramStatusHistoryEntry{.programId = programId,
+                                                 .queueId = queueId,
+                                                 .status = EduProgramStatus::programRunning};
+                eduProgramStatusHistory.put(eduProgramStatusHistoryEntry);
 
                 // Suspend Self for execution time
                 auto const executionTime = timeout.get() + eduCommunicationDelay;

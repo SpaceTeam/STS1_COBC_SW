@@ -1,17 +1,17 @@
 #pragma once
 
-#include <cstdint>
+#include <type_safe/types.hpp>
 
 #include <ringbuffer.h>
 
-#include <type_safe/types.hpp>
+#include <cstdint>
 
 namespace sts1cobcsw
 {
 namespace ts = type_safe;
 using ts::operator""_u16;
 
-enum class ProgramStatus : uint8_t
+enum class EduProgramStatus : uint8_t
 {
     programRunning,
     programCouldNotBeStarted,
@@ -24,18 +24,19 @@ enum class ProgramStatus : uint8_t
 };
 
 
-struct StatusHistoryEntry
+struct EduProgramStatusHistoryEntry
 {
     ts::uint16_t programId = 0_u16;
     ts::uint16_t queueId = 0_u16;
-    ProgramStatus status = ProgramStatus::programRunning;
+    EduProgramStatus status = EduProgramStatus::programRunning;
 };
 
 // TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?
-inline constexpr auto statusHistorySize = 20;
+inline constexpr auto eduProgramStatusHistorySize = 20;
 
-RODOS::RingBuffer<StatusHistoryEntry, statusHistorySize> statusHistory;
+RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySize>
+    eduProgramStatusHistory;
 
-auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
-    -> StatusHistoryEntry;
+auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
+    -> EduProgramStatusHistoryEntry;
 }
