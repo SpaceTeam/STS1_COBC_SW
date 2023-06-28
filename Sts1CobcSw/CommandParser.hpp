@@ -1,7 +1,10 @@
+#include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <type_safe/types.hpp>
+
+#include <etl/vector.h>
 
 
 namespace sts1cobcsw
@@ -24,6 +27,16 @@ struct GsCommandHeader
     std::int8_t commandId;
     std::int16_t length;
 };
+
+
+constexpr std::size_t commandSize = 30;
+constexpr std::size_t queueEntrySize =
+    sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
+    + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
+
+auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;
+auto ParseAndAddQueueEntrie(std::span<const Byte> & queueEntries) -> void;
+auto BuildEduQueue(std::span<const Byte> commandData) -> void;
 
 
 namespace serial
