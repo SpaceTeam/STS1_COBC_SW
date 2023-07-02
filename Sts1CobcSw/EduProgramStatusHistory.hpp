@@ -33,8 +33,7 @@ struct EduProgramStatusHistoryEntry
 
 // TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?
 inline constexpr auto eduProgramStatusHistorySize = 20;
-
-RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySize>
+extern RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySize>
     eduProgramStatusHistory;
 
 auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
