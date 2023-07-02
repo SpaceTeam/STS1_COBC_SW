@@ -6,10 +6,12 @@
 
 #include <cstdint>
 
+
 namespace sts1cobcsw
 {
 namespace ts = type_safe;
 using ts::operator""_u16;
+
 
 enum class EduProgramStatus : uint8_t
 {
@@ -31,10 +33,11 @@ struct EduProgramStatusHistoryEntry
     EduProgramStatus status = EduProgramStatus::programRunning;
 };
 
-// TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?
+
 inline constexpr auto eduProgramStatusHistorySize = 20;
 extern RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySize>
     eduProgramStatusHistory;
+
 
 auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
     -> EduProgramStatusHistoryEntry;

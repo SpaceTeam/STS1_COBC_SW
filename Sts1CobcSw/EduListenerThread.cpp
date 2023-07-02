@@ -84,10 +84,8 @@ private:
                         // Program has finished
                         // Find the correspongind queueEntry and update it, then resume edu queue
                         // thread
-
                         auto eduProgramStatusHistoryEntry =
                             FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
-
                         if(status.exitCode == 0)
                         {
                             eduProgramStatusHistoryEntry.status =
@@ -99,10 +97,8 @@ private:
                                 EduProgramStatus::programExecutionFailed;
                         }
                         ResumeEduProgramQueueThread();
-
                         break;
                     }
-
                     case periphery::EduStatusType::resultsReady:
                     {
                         // Edu wants to send result file
@@ -110,7 +106,6 @@ private:
                         // update the S&H Entry from 3 or 4 to 5.
                         auto resultsInfo = edu.ReturnResult();
                         auto errorCode = resultsInfo.errorCode;
-
                         if(errorCode != periphery::EduErrorCode::success
                            and errorCode != periphery::EduErrorCode::successEof)
                         {
@@ -134,12 +129,12 @@ private:
 
                         auto eduProgramStatusHistoryEntry =
                             FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
+                        // TODO: Pretty sure that there is a .put() or something like that missing
+                        // here and the status is actually never updated in the ring buffer.
                         eduProgramStatusHistoryEntry.status =
                             EduProgramStatus::resultFileTransfered;
-
                         break;
                     }
-
                     case periphery::EduStatusType::invalid:
                     case periphery::EduStatusType::noEvent:
                     {
