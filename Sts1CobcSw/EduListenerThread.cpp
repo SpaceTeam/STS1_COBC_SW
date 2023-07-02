@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/EduListenerThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/EduProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
@@ -23,10 +24,6 @@ constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
 
 // Can't use auto here since GCC throws an error about conflicting declarations otherwise :(
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
-
-
-auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
-    -> StatusHistoryEntry;
 
 
 class EduListenerThread : public StaticThread<>
@@ -87,23 +84,21 @@ private:
                         // Program has finished
                         // Find the correspongind queueEntry and update it, then resume edu queue
                         // thread
-
-                        auto statusHistoryEntry =
-                            FindStatusAndHistoryEntry(status.programId, status.queueId);
-
+                        auto eduProgramStatusHistoryEntry =
+                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
                         if(status.exitCode == 0)
                         {
-                            statusHistoryEntry.status = ProgramStatus::programExecutionSucceeded;
+                            eduProgramStatusHistoryEntry.status =
+                                EduProgramStatus::programExecutionSucceeded;
                         }
                         else
                         {
-                            statusHistoryEntry.status = ProgramStatus::programExecutionFailed;
+                            eduProgramStatusHistoryEntry.status =
+                                EduProgramStatus::programExecutionFailed;
                         }
                         ResumeEduProgramQueueThread();
-
                         break;
                     }
-
                     case periphery::EduStatusType::resultsReady:
                     {
                         // Edu wants to send result file
@@ -111,7 +106,6 @@ private:
                         // update the S&H Entry from 3 or 4 to 5.
                         auto resultsInfo = edu.ReturnResult();
                         auto errorCode = resultsInfo.errorCode;
-
                         if(errorCode != periphery::EduErrorCode::success
                            and errorCode != periphery::EduErrorCode::successEof)
                         {
@@ -133,13 +127,14 @@ private:
                         }
                         // break;
 
-                        auto statusHistoryEntry =
-                            FindStatusAndHistoryEntry(status.programId, status.queueId);
-                        statusHistoryEntry.status = ProgramStatus::resultFileTransfered;
-
+                        auto eduProgramStatusHistoryEntry =
+                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
+                        // TODO: Pretty sure that there is a .put() or something like that missing
+                        // here and the status is actually never updated in the ring buffer.
+                        eduProgramStatusHistoryEntry.status =
+                            EduProgramStatus::resultFileTransfered;
                         break;
                     }
-
                     case periphery::EduStatusType::invalid:
                     case periphery::EduStatusType::noEvent:
                     {
@@ -151,19 +146,4 @@ private:
         }
     }
 } eduListenerThread;
-
-
-auto FindStatusAndHistoryEntry(std::uint16_t programId, std::uint16_t queueId) -> StatusHistoryEntry
-{
-    auto counter = 0;
-    auto statusHistoryEntry = StatusHistoryEntry{};
-    do
-    {
-        statusHistory.get(statusHistoryEntry);
-        // RODOS::PRINTF("%d,%d vs %d,%d\n", statusHistoryEntry.programId,
-        // statusHistoryEntry.queueId, programId, queueId);
-    } while(statusHistoryEntry.queueId != queueId or statusHistoryEntry.programId != programId);
-
-    return statusHistoryEntry;
-}
 }

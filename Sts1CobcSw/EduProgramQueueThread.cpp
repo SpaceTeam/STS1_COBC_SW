@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/EduProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
@@ -146,11 +147,10 @@ private:
             }
             else
             {
-                auto statusHistoryEntry =
-                    StatusHistoryEntry{.programId = programId,
-                                       .queueId = queueId,
-                                       .status = ProgramStatus::programRunning};
-                statusHistory.put(statusHistoryEntry);
+                eduProgramStatusHistory.put(
+                    EduProgramStatusHistoryEntry{.programId = programId,
+                                                 .queueId = queueId,
+                                                 .status = EduProgramStatus::programRunning});
 
                 // Suspend Self for execution time
                 auto const executionTime = timeout.get() + eduCommunicationDelay;
