@@ -39,7 +39,7 @@ struct ExecuteProgramData
 {
     static constexpr auto id = executeProgramId;
     ts::uint16_t programId;
-    ts::uint16_t queueId;
+    ts::uint32_t queueId;
     ts::int16_t timeout;
 };
 
