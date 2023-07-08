@@ -10,5 +10,5 @@ namespace sts1cobcsw
 extern periphery::Edu edu;
 
 
-auto ResumeEduQueueThread() -> void;
+auto ResumeEduProgramQueueThread() -> void;
 }

@@ -1,11 +1,11 @@
 name: Continuous Integration
 
-# lint        : push, pull_request, release
-# coverage    : push, pull_request, release
-# sanitize    : push, pull_request, release
-# build-cobc  : push (Upload of artifacts), pull_request, release (upload binaries to release)
-# test        : push, pull_request, release
-# docs        : release
+# format-and-spell-check        : push, pull_request, release
+# coverage                      : push, pull_request, release
+# sanitize                      : push, pull_request, release
+# build-cobc                    : push (Upload of artifacts), pull_request, release (upload binaries to release)
+# test                          : push, pull_request, release
+# docs                          : release
 
 on:
   push:
@@ -21,8 +21,9 @@ on:
       - created
 
 jobs:
-  lint:
+  format-and-spell-check:
     runs-on: ubuntu-latest
+    container: tuwienspaceteam/sts1-cobc:latest-linux-x86
 
     steps:
     - uses: actions/checkout@v2
@@ -34,15 +35,15 @@ jobs:
     - name: Install codespell
       run: pip3 install codespell
 
-    - name: Lint
-      run: cmake -D FORMAT_COMMAND=clang-format-12 -P cmake/lint.cmake
+    - name: Format check
+      run: cmake -D FORMAT_COMMAND=clang-format -P cmake/format.cmake
 
     - name: Spell check
       if: always()
       run: cmake -P cmake/spell.cmake
 
   coverage:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest-linux-x86
@@ -54,11 +55,11 @@ jobs:
       run: cmake --preset=ci-coverage
 
     - name: Build all tests
-      run: cmake --build build/coverage -t AllCiTests -j 2
+      run: cmake --build build/coverage -t AllTests -j 2
 
     - name: Test
       working-directory: build/coverage
-      run: ctest --output-on-failure -E "^.*Thread_Test$" -j 2
+      run: ctest --output-on-failure -j 2
 
     - name: Process coverage info
       run: cmake --build build/coverage -t coverage
@@ -69,7 +70,7 @@ jobs:
         files: build/coverage/coverage.info
 
   sanitize:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest-linux-x86
@@ -81,7 +82,7 @@ jobs:
       run: cmake --preset=ci-sanitize
 
     - name: Build all tests
-      run: cmake --build build/sanitize -t AllCiTests -j 2
+      run: cmake --build build/sanitize -t AllTests -j 2
 
     - name: Test
       working-directory: build/sanitize
@@ -92,10 +93,10 @@ jobs:
           strict_init_order=1:\
           detect_leaks=1"
         UBSAN_OPTIONS: print_stacktrace=1
-      run: ctest --output-on-failure -E "^.*Thread_Test$" -j 2
+      run: ctest --output-on-failure -j 2
 
   build-cobc:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest
@@ -124,7 +125,7 @@ jobs:
           files: ./build/cobc/*.bin
 
   test:
-    needs: lint
+    needs: format-and-spell-check
 
     runs-on: ubuntu-latest
     container: tuwienspaceteam/sts1-cobc:latest-linux-x86
@@ -136,11 +137,11 @@ jobs:
       run: cmake --preset=ci-linux-x86
 
     - name: Build all tests
-      run: cmake --build build/linux-x86 -t AllCiTests -j 2
+      run: cmake --build build/linux-x86 -t AllTests -j 2
 
     - name: Test
       working-directory: build/linux-x86/Tests
-      run: ctest --output-on-failure -E "^.*Thread_Test$" -C Release -j 2
+      run: ctest --output-on-failure -C Release -j 2
 
   docs:
     # Deploy docs only when builds and tests succeed

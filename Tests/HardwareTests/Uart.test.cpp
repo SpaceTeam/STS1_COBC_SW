@@ -65,8 +65,5 @@ class UartTest : public RODOS::StaticThread<>
             hal::WriteTo(&uciUart, "\n");
         }
     }
-};
-
-
-auto const uartTest = UartTest();
+} uartTest;
 }

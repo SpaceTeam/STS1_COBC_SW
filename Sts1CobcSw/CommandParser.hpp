@@ -9,6 +9,7 @@ namespace sts1cobcsw
 using serial::Byte;
 using sts1cobcsw::serial::DeserializeFrom;
 
+
 enum CommandId : char
 {
     turnEduOn = '1',
@@ -24,6 +25,7 @@ struct GsCommandHeader
     std::int16_t length;
 };
 
+
 namespace serial
 {
 template<>
@@ -34,7 +36,8 @@ inline constexpr std::size_t serialSize<GsCommandHeader> =
                     decltype(GsCommandHeader::length)>;
 }
 
-inline auto DeserializeFrom(Byte * source, GsCommandHeader * data) -> Byte *
+
+inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->startCharacter));
     source = DeserializeFrom(source, &(data->utc));
@@ -42,6 +45,4 @@ inline auto DeserializeFrom(Byte * source, GsCommandHeader * data) -> Byte *
     source = DeserializeFrom(source, &(data->length));
     return source;
 }
-
-
 }

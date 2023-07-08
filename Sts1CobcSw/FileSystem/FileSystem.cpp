@@ -17,6 +17,7 @@ using serial::Byte;
 
 // --- Private function declarations ---
 
+// Before globals because lfsConfig needs the declarations
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
           lfs_off_t offset,

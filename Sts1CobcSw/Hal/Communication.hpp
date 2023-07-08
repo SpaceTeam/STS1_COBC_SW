@@ -13,7 +13,6 @@
 
 
 // TODO: Add declarations at the top to see all provided functionality at once
-// TODO: Introduce convention write <-> message, read <-> answer
 namespace sts1cobcsw::hal
 {
 using serial::Byte;
@@ -45,8 +44,7 @@ inline auto WriteTo(auto * communicationInterface, std::string_view message)
 
 
 template<std::size_t size>
-[[nodiscard]] inline auto ReadFrom(auto * communicationInterface,
-                                   std::span<std::byte, size> readBuffer)
+inline auto ReadFrom(auto * communicationInterface, std::span<std::byte, size> readBuffer)
 {
     std::size_t nReadBytes = 0U;
     while(nReadBytes < size)
@@ -58,7 +56,7 @@ template<std::size_t size>
 
 
 template<std::size_t size>
-[[nodiscard]] inline auto ReadFrom(auto * communicationInterface, std::span<char, size> readBuffer)
+inline auto ReadFrom(auto * communicationInterface, std::span<char, size> readBuffer)
 {
     std::size_t nReadBytes = 0U;
     while(nReadBytes < size)
@@ -70,9 +68,9 @@ template<std::size_t size>
 
 
 template<std::size_t size>
-[[nodiscard]] inline auto WriteToReadFrom(auto * communicationInterface,
-                                          std::string_view message,
-                                          etl::string<size> * answer)
+inline auto WriteToReadFrom(auto * communicationInterface,
+                            std::string_view message,
+                            etl::string<size> * answer)
 {
     answer->initialize_free_space();
     auto nReceivedBytes = communicationInterface->writeRead(

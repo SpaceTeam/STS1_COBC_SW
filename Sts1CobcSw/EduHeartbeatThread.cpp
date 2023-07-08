@@ -25,32 +25,7 @@ auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 auto constexpr edgeCounterThreshold = 4;
 
 
-auto EduIsAlive()
-{
-    auto begin = RODOS::NOW();
-
-    auto refHeartbeat = eduHeartbeatGpioPin.Read();
-    auto heartbeat = eduHeartbeatGpioPin.Read();
-    auto edgeCounter = 0;
-    for(int i = 0; i < 1'000'000; ++i)
-    {
-        heartbeat = eduHeartbeatGpioPin.Read();
-        if(heartbeat != refHeartbeat)
-        {
-            edgeCounter++;
-            refHeartbeat = heartbeat;
-            if(edgeCounter >= edgeCounterThreshold)
-            {
-                return true;
-            }
-        }
-    }
-    auto executionTime = RODOS::NOW() - begin;
-    RODOS::PRINTF("Execution Time of EduIsAlive (ns) : %lld\n", executionTime);
-    RODOS::PRINTF("Execution Time of EduIsAlive (ms) : %lld\n",
-                  executionTime / RODOS::MILLISECONDS);
-    return false;
-}
+auto EduIsAlive() -> bool;
 
 
 class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
@@ -156,6 +131,34 @@ private:
         }
     }
 } eduHeartbeatThread;
+
+
+auto EduIsAlive() -> bool
+{
+    auto begin = RODOS::NOW();
+
+    auto refHeartbeat = eduHeartbeatGpioPin.Read();
+    auto heartbeat = eduHeartbeatGpioPin.Read();
+    auto edgeCounter = 0;
+    for(int i = 0; i < 1'000'000; ++i)
+    {
+        heartbeat = eduHeartbeatGpioPin.Read();
+        if(heartbeat != refHeartbeat)
+        {
+            edgeCounter++;
+            refHeartbeat = heartbeat;
+            if(edgeCounter >= edgeCounterThreshold)
+            {
+                return true;
+            }
+        }
+    }
+    auto executionTime = RODOS::NOW() - begin;
+    RODOS::PRINTF("Execution Time of EduIsAlive (ns) : %lld\n", executionTime);
+    RODOS::PRINTF("Execution Time of EduIsAlive (ms) : %lld\n",
+                  executionTime / RODOS::MILLISECONDS);
+    return false;
+}
 // TODO: Get back to the inline thread variable definition (like above) for all threads
 /*
 constexpr auto dummyThreadPriority = 100;

@@ -3,7 +3,6 @@
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
-#include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
 namespace sts1cobcsw
@@ -48,7 +47,7 @@ auto Edu::TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
+auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StoreArchive(programId = %d)\n", data.programId.get());
@@ -57,7 +56,7 @@ auto Edu::TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
+auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
@@ -69,7 +68,7 @@ auto Edu::TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::StopProgram() -> EduErrorCode
+auto Edu::StopProgram() -> EduErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StopProgram()\n");
@@ -78,7 +77,7 @@ auto Edu::TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::GetStatus() -> EduStatus
+auto Edu::GetStatus() -> EduStatus
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to GetStatus()\n");
@@ -91,7 +90,7 @@ auto Edu::TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
+auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UpdateTime(timestamp = %d)\n", data.timestamp.get());
@@ -108,7 +107,7 @@ auto Edu::SendCommand(Byte commandId) -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
+auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to SendData(size(data) = %d)\n", size(data));
@@ -117,7 +116,7 @@ auto Edu::SendCommand(Byte commandId) -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-[[nodiscard]] auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> EduErrorCode
+auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> EduErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UartReceive(size(destination) = %d)\n", size(destination));

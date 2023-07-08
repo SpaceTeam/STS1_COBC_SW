@@ -11,5 +11,5 @@ fi
 
 # Remove header / intro from output and expected output
 linecount=`wc -l < "$1"`
-pattern="-----------------------------------------------------"
-grep -h -B 0 -A $linecount -e $pattern $1.output > $1.output.trimmed || true
+pattern="--------------- Application running ------------"
+grep -h -B 0 -A $linecount -e "$pattern" $1.output > $1.output.trimmed || true

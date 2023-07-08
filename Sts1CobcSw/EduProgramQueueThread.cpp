@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/EduProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
@@ -43,7 +44,7 @@ periphery::Edu edu = periphery::Edu();
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    EduProgramQueueThread() : StaticThread("EduQueueThread", eduProgramQueueThreadPriority)
+    EduProgramQueueThread() : StaticThread("EduProgramQueueThread", eduProgramQueueThreadPriority)
     {
     }
 
@@ -67,7 +68,7 @@ private:
     void run() override
     {
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
-        RODOS::PRINTF("Entering EduQueueThread\n");
+        RODOS::PRINTF("Entering EduProgramQueueThread\n");
         utility::PrintFormattedSystemUtc();
         while(true)
         {
@@ -146,11 +147,10 @@ private:
             }
             else
             {
-                auto statusHistoryEntry =
-                    StatusHistoryEntry{.programId = programId,
-                                       .queueId = queueId,
-                                       .status = ProgramStatus::programRunning};
-                statusHistory.put(statusHistoryEntry);
+                eduProgramStatusHistory.put(
+                    EduProgramStatusHistoryEntry{.programId = programId,
+                                                 .queueId = queueId,
+                                                 .status = EduProgramStatus::programRunning});
 
                 // Suspend Self for execution time
                 auto const executionTime = timeout.get() + eduCommunicationDelay;
@@ -164,11 +164,11 @@ private:
             }
         }
     }
-} eduQueueThread;
+} eduProgramQueueThread;
 
 
 //! Compute the delay in nanoseconds before the start of program at current queue index
-[[nodiscard]] auto ComputeStartDelay() -> std::int64_t
+auto ComputeStartDelay() -> std::int64_t
 {
     auto nextProgramStartTime =
         eduProgramQueue[queueIndex].startTime.get() - (utility::rodosUnixOffset / SECONDS);
@@ -181,19 +181,19 @@ private:
 
 
 // TODO: Think about whether this is the right way to declare, design, use, etc. this
-class ResumeEduQueueThreadEvent : public RODOS::TimeEvent
+class ResumeEduProgramQueueThreadEvent : public RODOS::TimeEvent
 {
 public:
     auto handle() -> void override
     {
-        eduQueueThread.resume();
-        RODOS::PRINTF("EduQueueThread resumed from me\n");
+        eduProgramQueueThread.resume();
+        RODOS::PRINTF("EduProgramQueueThread resumed from me\n");
     }
-} resumeEduQueueThreadEvent;
+} resumeEduProgramQueueThreadEvent;
 
 
-auto ResumeEduQueueThread() -> void
+auto ResumeEduProgramQueueThread() -> void
 {
-    resumeEduQueueThreadEvent.handle();
+    resumeEduProgramQueueThreadEvent.handle();
 }
 }

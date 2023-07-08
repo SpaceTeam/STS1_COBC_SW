@@ -45,8 +45,5 @@ class GpioTest : public RODOS::StaticThread<>
             toggle = not toggle;
         }
     }
-};
-
-
-auto const gpioTest = GpioTest();
+} gpioTest;
 }

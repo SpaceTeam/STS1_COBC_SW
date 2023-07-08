@@ -1,18 +1,5 @@
------------------------------------------------------
-Default internal MAIN
 --------------- Application running ------------
+Entering EduProgramQueueThread
 DateUTC(DD/MM/YYYY HH:MIN:SS) : 01/01/2000 00:00:00
-Entering EduQueueThread
-
-Program at queue index 0 will start in : 7 s
-Suspending for the first time for      : 5 s
-Resuming here after first wait.
-DateUTC(DD/MM/YYYY HH:MIN:SS) : 01/01/2000 00:00:05
-Call to UpdateTime(timestamp = 946684805)
-Program at queue index 0 will start in : 2 s
-Suspending for the second time for     : 2 s
-Done suspending, suspended for         : 2 s
-DateUTC(DD/MM/YYYY HH:MIN:SS) : 01/01/2000 00:00:07
-Call to ExecuteProgram(programId = 0, queueId = 1, timeout = 10)
-Suspending for execution time
+Edu Program Queue is empty, thread set to sleep until end of time
 :: KILLED BY TIMEOUT

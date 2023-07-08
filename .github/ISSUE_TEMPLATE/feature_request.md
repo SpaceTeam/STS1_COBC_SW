@@ -3,14 +3,14 @@ name: Feature request
 about: Request a new feature for the project
 title: 'Write this like the subject line for a commit. Example: "Implement low-level
   FRAM code"'
-labels: 'type: feature'
+labels: '1 type: feature'
 assignees: ''
 
 ---
 
 ### Description
 
-A clear and concise description of the feature. If there are special constraints/wishes that must/should be considered, give a reason for them.
+A clear and concise description of the feature. If there are special constraints/wishes that must/should be considered, mention them and give a reason.
 
 
 ### To do [optional]

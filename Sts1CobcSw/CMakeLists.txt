@@ -14,12 +14,12 @@ target_link_libraries(Sts1CobcSw_Dummy PUBLIC etl::etl)
 target_sources(Sts1CobcSw_HelloDummy PRIVATE HelloDummy.cpp)
 target_link_libraries(Sts1CobcSw_HelloDummy PRIVATE Sts1CobcSw_Dummy rodos::rodos)
 
-#target_sources(Sts1CobcSw_Heartbeat PRIVATE EduHeartbeatThread.cpp TopicsAndSubscribers.cpp)
-#target_link_libraries(Sts1CobcSw_Heartbeat PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal Sts1CobcSw_Utility Sts1CobcSw_Periphery)
-
+# target_sources(Sts1CobcSw_Heartbeat PRIVATE EduHeartbeatThread.cpp TopicsAndSubscribers.cpp)
+# target_link_libraries(Sts1CobcSw_Heartbeat PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal
+# Sts1CobcSw_Utility Sts1CobcSw_Periphery)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    #if(FALSE)
+    # if(FALSE)
     target_sources(
         Sts1CobcSw_CobcSw
         PRIVATE CommandParserThread.cpp
@@ -27,6 +27,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 EduPowerManagementThread.cpp
                 EduProgramQueue.cpp
                 EduProgramQueueThread.cpp
+                EduProgramStatusHistory.cpp
                 TopicsAndSubscribers.cpp
                 EduCommunicationErrorThread.cpp
                 EduListenerThread.cpp

@@ -43,8 +43,8 @@ constexpr std::size_t queueEntrySize =
     + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
 
 
-auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
 auto DispatchCommand(etl::string<commandSize> const & command) -> void;
+auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
 
 
 class CommandParserThread : public RODOS::StaticThread<stackSize>
@@ -161,7 +161,7 @@ auto DispatchCommand(etl::string<commandSize> const & command) -> void
                 RODOS::PRINTF("Queue index reset. Current size of EDU program queue is %d.\n",
                               static_cast<int>(eduProgramQueue.size()));
 
-                ResumeEduQueueThread();
+                ResumeEduProgramQueueThread();
                 return;
             }
             default:

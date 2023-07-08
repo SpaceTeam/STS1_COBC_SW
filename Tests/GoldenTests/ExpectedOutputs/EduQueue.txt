@@ -1,5 +1,0 @@
-Element 0 in entry 0 is : 2
-Element 1 in entry 0 is : 1
-Element 2 in entry 0 is : 200
-Element 3 in entry 0 is : 42
-hw_resetAndReboot() -> exit

@@ -41,56 +41,56 @@ template<typename T>
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::int8_t>() -> ts::int8_t
+inline auto TypeSafeZero<ts::int8_t>() -> ts::int8_t
 {
     return 0_i8;
 }
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::uint8_t>() -> ts::uint8_t
+inline auto TypeSafeZero<ts::uint8_t>() -> ts::uint8_t
 {
     return 0_u8;
 }
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::int16_t>() -> ts::int16_t
+inline auto TypeSafeZero<ts::int16_t>() -> ts::int16_t
 {
     return 0_i16;
 }
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::uint16_t>() -> ts::uint16_t
+inline auto TypeSafeZero<ts::uint16_t>() -> ts::uint16_t
 {
     return 0_u16;
 }
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::int32_t>() -> ts::int32_t
+inline auto TypeSafeZero<ts::int32_t>() -> ts::int32_t
 {
     return 0_i32;
 }
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::uint32_t>() -> ts::uint32_t
+inline auto TypeSafeZero<ts::uint32_t>() -> ts::uint32_t
 {
     return 0_u32;
 }
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::int64_t>() -> ts::int64_t
+inline auto TypeSafeZero<ts::int64_t>() -> ts::int64_t
 {
     return 0_i64;
 }
 
 
 template<>
-[[nodiscard]] inline auto TypeSafeZero<ts::uint64_t>() -> ts::uint64_t
+inline auto TypeSafeZero<ts::uint64_t>() -> ts::uint64_t
 {
     return 0_u64;
 }

@@ -140,10 +140,8 @@
       "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
-        "HSE_VALUE": "12000000",
-        "BOARD_FILE": "Cobc.hpp"
+        "HSE_VALUE": "12000000"
       }
     }
-
   ]
 }
