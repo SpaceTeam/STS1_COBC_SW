@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Periphery/RfNames.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -24,7 +25,7 @@ private:
 
     void run() override
     {
-        periphery::rf::Initialize();
+        periphery::rf::Initialize(periphery::rf::TxType::morse);
         RODOS::PRINTF("Si4463 initialized\n");
 
         constexpr auto nMorses = 5;

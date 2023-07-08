@@ -39,6 +39,9 @@ target_link_libraries(Sts1CobcSwTests_RfSimple PRIVATE rodos::rodos Sts1CobcSw_P
 add_program(RfTransmit RfTransmit.test.cpp)
 target_link_libraries(Sts1CobcSwTests_RfTransmit PRIVATE rodos::rodos Sts1CobcSw_Periphery)
 
+add_program(RfReceive RfReceive.test.cpp)
+target_link_libraries(Sts1CobcSwTests_RfReceive PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+
 add_program(Spi Spi.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Spi PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal)
 

@@ -43,13 +43,14 @@ inline constexpr auto cobcSpiSckPin = pc10;
 inline constexpr auto cobcSpiMisoPin = pc11;
 inline constexpr auto cobcSpiMosiPin = pc12;
 
-inline constexpr auto rfSpiIndex = RODOS::SPI_IDX3;
-inline constexpr auto rfSpiSckPin = pc10;
-inline constexpr auto rfSpiMisoPin = pc11;
-inline constexpr auto rfSpiMosiPin = pc12;
+inline constexpr auto rfSpiIndex = RODOS::SPI_IDX2;
+inline constexpr auto rfSpiSckPin = pc7;
+inline constexpr auto rfSpiMisoPin = pc2;
+inline constexpr auto rfSpiMosiPin = pc3;
 inline constexpr auto rfCsPin = pa8;
 inline constexpr auto rfNirqPin = pb6;
 inline constexpr auto rfSdnPin = pb14;
 inline constexpr auto rfGpio0Pin = pc6;
 inline constexpr auto rfGpio1Pin = pc8;
+inline constexpr auto rfPaEnablePin = pc9;
 }

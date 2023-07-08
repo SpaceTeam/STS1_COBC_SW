@@ -34,6 +34,7 @@ auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
 auto gpio0GpioPin = hal::GpioPin(hal::rfGpio0Pin);
 auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
+auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
@@ -54,7 +55,7 @@ auto SendCommandNoResponse(std::span<Byte> commandBuffer) -> void;
 template<std::size_t nResponseBytes>
 auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, nResponseBytes>;
 
-auto WriteFifo(std::span<Byte> data) -> void;
+auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
 
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
@@ -116,7 +117,7 @@ auto InitializeGpioAndSpi() -> void
 }
 
 
-auto Initialize() -> void
+auto Initialize(TxType txType) -> void
 {
     // TODO: Don't forget that WDT_Clear has to be triggered regularely for the TX to work! (even
     // without the watchdog timer on the PCB it needs to be triggered at least once after boot to
@@ -294,35 +295,57 @@ auto Initialize() -> void
     SendCommand(data(sendBuffer), 13, nullptr, 0);
 
     // RF Modem Mod Type
+    SetTxType(txType);
     sendBuffer[0] = 0x11;
     sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x00;
-    sendBuffer[4] = 0x09;  // TX data direct mode from GPIO0 pin, modulation OOK
-    // sendBuffer[4] = 0x01;  // TX data from TX FIFO, modulation OOK
-    sendBuffer[5] = 0x00;
-    sendBuffer[6] = 0x07;  // DSM default config
-    sendBuffer[7] = 0x00;  // Modem data rate 20kbaud (unused in direct mode)
-    sendBuffer[8] = 0x4E;
-    sendBuffer[9] = 0x20;
-    sendBuffer[10] = 0x01;  // Modem TX NCO mode default values
-    sendBuffer[11] = 0xC9;
-    sendBuffer[12] = 0xC3;
-    sendBuffer[13] = 0x80;
-    // FSK deviation has to be at least one-fourth of the bit rate. So in this case 9600/4 = 2400Hz
-    // register value is calculated with (2^19 * outdiv * deviation_Hz)/(N_presc * F_xo) = 167.772 =
+    sendBuffer[2] = 0x07;
+    sendBuffer[3] = 0x06;  // SetTxType sets modem properties from 0x00 to 0x05
+    sendBuffer[4] = 0x01;  // Modem TX NCO mode default values
+    sendBuffer[5] = 0x27;
+    sendBuffer[6] = 0xAC;
+    sendBuffer[7] = 0x40;
+    // FSK deviation has to be at least one-fourth of the bit rate. So in this case 9600/4 =
+    // 2400Hz
+    // register value is calculated with (2^19 * outdiv * deviation_Hz)/(N_presc * F_xo) =
+    // 167.772 =
     // 168 = 0x0000A8 9k6 deviation = 671 = 0x29F
-    sendBuffer[14] = 0x00;  // Modem frequency deviation MSB
-    sendBuffer[15] = 0x02;
-    SendCommand(data(sendBuffer), 16, nullptr, 0);
+    sendBuffer[8] = 0x00;   // Modem frequency deviation MSB
+    sendBuffer[9] = 0x1E;
+    sendBuffer[10] = 0x3F;  // Modem frequency deviation LSB
+    SendCommand(data(sendBuffer), 11, nullptr, 0);
 
-    // RF Modem Freq Deviation continuation
-    sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x0C;
-    sendBuffer[4] = 0x9F;  // Modem frequency deviation LSB
-    SendCommand(data(sendBuffer), 5, nullptr, 0);
+    // RF Modem Mod Type
+    // sendBuffer[0] = 0x11;
+    // sendBuffer[1] = 0x20;
+    // sendBuffer[2] = 0x0C;
+    // sendBuffer[3] = 0x00;
+    // sendBuffer[4] = 0x09;  // TX data direct mode from GPIO0 pin, modulation OOK
+    // // sendBuffer[4] = 0x01;  // TX data from TX FIFO, modulation OOK
+    // sendBuffer[5] = 0x00;
+    // sendBuffer[6] = 0x07;  // DSM default config
+    // sendBuffer[7] = 0x00;  // Modem data rate 20kbaud (unused in direct mode)
+    // sendBuffer[8] = 0x4E;
+    // sendBuffer[9] = 0x20;
+    // sendBuffer[10] = 0x01;  // Modem TX NCO mode default values
+    // sendBuffer[11] = 0xC9;
+    // sendBuffer[12] = 0xC3;
+    // sendBuffer[13] = 0x80;
+    // // FSK deviation has to be at least one-fourth of the bit rate. So in this case 9600/4 =
+    // // 2400Hz
+    // // register value is calculated with (2^19 * outdiv * deviation_Hz)/(N_presc * F_xo) =
+    // // 167.772 =
+    // // 168 = 0x0000A8 9k6 deviation = 671 = 0x29F
+    // sendBuffer[14] = 0x00;  // Modem frequency deviation MSB
+    // sendBuffer[15] = 0x02;
+    // SendCommand(data(sendBuffer), 16, nullptr, 0);
+
+    // // RF Modem Freq Deviation continuation
+    // sendBuffer[0] = 0x11;
+    // sendBuffer[1] = 0x20;
+    // sendBuffer[2] = 0x01;
+    // sendBuffer[3] = 0x0C;
+    // sendBuffer[4] = 0x9F;  // Modem frequency deviation LSB
+    // SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // RF Modem TX Ramp Delay, Modem MDM Ctrl, Modem IF Ctrl, Modem IF Freq & Modem Decimation Cfg
     sendBuffer[0] = 0x11;
@@ -526,7 +549,8 @@ auto Initialize() -> void
     sendBuffer[4] = 0x08;  // PA switching amp mode, PA_SEL = HP_COARSE, disable power sequencing,
                            // disable external TX ramp signal
     // TODO: Tune output power to fully utilize the amplifier without clipping
-    sendBuffer[5] = 0x0C;  // Enabled PA fingers (sets output power but not linearly). See page 35
+    // TODO: 0x1A for field test!
+    sendBuffer[5] = 0x07;  // Enabled PA fingers (sets output power but not linearly). See page 35
                            // of the Si446x datasheet. We need around 6dBm to go close to the
                            // maximum of our amplifier (33dBm max output, ~20-27dBm gain on 433MHz).
     sendBuffer[6] = 0x00;  // 10µA bias current per enabled finger, complementary drive signal with
@@ -570,16 +594,33 @@ auto Initialize() -> void
     SendCommand(data(sendBuffer), 16, nullptr, 0);
 
     // Frequency Control
+    // sendBuffer[0] = 0x11;
+    // sendBuffer[1] = 0x40;
+    // sendBuffer[2] = 0x08;
+    // sendBuffer[3] = 0x00;
+    // sendBuffer[4] = 0x38;  // FC_inte = 0x38 = 56
+    // sendBuffer[5] = 0x0E;  // FC_frac = 0x0E6666 = 943718
+    // sendBuffer[6] = 0x66;
+    // sendBuffer[7] = 0x66;
+    // // N_presc = 2, outdiv = 8, F_xo = 30MHz
+    // // RF_channel_Hz = (FC_inte + FC_frac/2^19)*((N_presc*F_xo)/outdiv) = 433.499994 MHz
+    // sendBuffer[8] = 0x44;   // Channel step size = 0x4444
+    // sendBuffer[9] = 0x44;
+    // sendBuffer[10] = 0x20;  // Window gating period (in number of crystal clock cycles) = 32
+    // sendBuffer[11] = 0xFE;  // Adjust target mode for VCO calibration in RX mode = 0xFE int8_t
+    // SendCommand(data(sendBuffer), 12, nullptr, 0);
+
+    // Frequency Control
     sendBuffer[0] = 0x11;
     sendBuffer[1] = 0x40;
     sendBuffer[2] = 0x08;
     sendBuffer[3] = 0x00;
-    sendBuffer[4] = 0x38;  // FC_inte = 0x38 = 56
-    sendBuffer[5] = 0x0E;  // FC_frac = 0x0E6666 = 943718
-    sendBuffer[6] = 0x66;
-    sendBuffer[7] = 0x66;
-    // N_presc = 2, outdiv = 8, F_xo = 30MHz
-    // RF_channel_Hz = (FC_inte + FC_frac/2^19)*((N_presc*F_xo)/outdiv) = 433.499994 MHz
+    sendBuffer[4] = 0x41;  // FC_inte = 0x41
+    sendBuffer[5] = 0x0E;  // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5
+    sendBuffer[6] = 0xC4;
+    sendBuffer[7] = 0xEC;
+    // N_presc = 2, outdiv = 8, F_xo = 26MHz
+    // RF_channel_Hz = (FC_inte + FC_frac/2^19)*((N_presc*F_xo)/outdiv) = 433.5000048MHz MHz
     sendBuffer[8] = 0x44;   // Channel step size = 0x4444
     sendBuffer[9] = 0x44;
     sendBuffer[10] = 0x20;  // Window gating period (in number of crystal clock cycles) = 32
@@ -611,6 +652,38 @@ auto Initialize() -> void
     sendBuffer[3] = 0x03;
     sendBuffer[4] = 0x40;
     SendCommand(data(sendBuffer), 5, nullptr, 0);
+
+    paEnablePin.Direction(hal::PinDirection::out);
+    paEnablePin.Set();
+}
+
+
+auto SetTxType(TxType txType) -> void
+{
+    Byte modulationMode;
+    std::uint32_t dataRate;
+
+    if(txType == TxType::morse)
+    {
+        modulationMode = 0x09_b;  // Direct, OOK
+        dataRate = 20'000;        // Baud
+    }
+    else
+    {
+        RODOS::PRINTF("FSK\n");
+        modulationMode = 0x03_b;  // Packet, 2GFSK
+        dataRate = 9600;          // Baud
+    }
+
+    auto propertyValues = std::to_array({modulationMode,
+                                         0x00_b,
+                                         0x07_b,  // DSM default config
+                                         0x00_b,
+                                         0x25_b,
+                                         0x80_b});
+
+    SetProperty<std::size(propertyValues)>(
+        PropertyGroup::modem, 0x00_b, std::span<Byte, std::size(propertyValues)>(propertyValues));
 }
 
 
@@ -633,33 +706,183 @@ auto GetPartInfo() -> std::uint16_t
     auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(
         std::span<Byte, std::size(sendBuffer)>(sendBuffer));
 
-    // Debug: print whole response buffer
-    // RODOS::PRINTF("Response Buffer: ");
-    // for(auto && element : responseBuffer)
-    // {
-    //     RODOS::PRINTF("%x", element);
-    // }
-    // RODOS::PRINTF("\n");
-    ////////////////////////////////////
     // NOLINTNEXTLINE(hicpp-signed-bitwise)
     return static_cast<std::uint16_t>(static_cast<std::uint16_t>(responseBuffer[1]) << CHAR_BIT
                                       | static_cast<std::uint16_t>(responseBuffer[2]));
 }
 
 
-auto TransmitData(std::span<Byte> data) -> void
+// TODO: Change to Byte instead of uint8_t
+// TODO: Adapt ReadFifo to use spans instead of using pointer arithmetic
+// TODO: Discuss transmission of large amounts of data!
+auto ReceiveTestData() -> std::array<std::uint8_t, maxRxBytes>
 {
+    auto sendBuffer = std::array<std::uint8_t, 32>{};
+
+    ClearFifos();
+
+    // Enable RX FiFo Almost Full Interrupt
+    sendBuffer[0] = 0x11;
+    sendBuffer[1] = 0x01;
+    sendBuffer[2] = 0x01;
+    sendBuffer[3] = 0x01;
+    sendBuffer[4] = 0b00000001;
+    SendCommand(std::data(sendBuffer), 5, nullptr, 0);
+
     ClearInterrupts();
-    RODOS::PRINTF("TD: Cleared INT\n");
-    StartTx(std::size(data));
-    RODOS::PRINTF("TD: TX Mode\n");
-    AT(NOW() + 10 * MILLISECONDS);
-    WriteFifo(data);
-    RODOS::PRINTF("TD: Wrote to FIFO\n");
+
+    // Enter RX Mode
+    sendBuffer[0] = 0x32;
+    sendBuffer[1] = 0x00;  // "Channel 0"
+    sendBuffer[2] = 0x00;  // Start RX now
+    sendBuffer[3] = 0x00;  // RX Length = 0
+    sendBuffer[4] = 0x00;
+    sendBuffer[5] = 0x00;  // Remain in RX state on preamble detection timeout
+    sendBuffer[6] = 0x00;  // Do nothing on RX packet valid (we'll never enter this state)
+    sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
+    SendCommand(std::data(sendBuffer), 8, nullptr, 0);
+
+    // Wait for RX FiFo Almost Full Interrupt
+    // while(RF_NIRQ::read())
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+        // modm::delay_us(10);
+    }
+
+    RODOS::PRINTF("Got RX FiFo Almost Full Interrupt\n");
+
+    auto rxBuffer = std::array<std::uint8_t, maxRxBytes>{0};
+    ReadFifo(std::data(rxBuffer), 48);
+
+    RODOS::PRINTF("Retrieved first 48 Byte from FiFo\n");
+
     ClearInterrupts();
-    RODOS::PRINTF("TD: Cleared INT #2\n");
+
+    // Wait for RX FiFo Almost Full Interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
+
+    RODOS::PRINTF("Got RX FiFo Almost Full Interrupt\n");
+
+    ReadFifo(std::data(rxBuffer) + 48, 48);
+
     EnterPowerMode(PowerMode::standby);
-    RODOS::PRINTF("TD: Standby\n");
+    ClearInterrupts();
+
+    return rxBuffer;
+}
+
+
+auto TransmitTestData() -> void
+{
+    const char * txdata =
+        "This is a test for looooooooooong transmit that is too large to fit into one FiFo size.";
+    uint16_t len = strlen(txdata);
+    uint16_t ptr = 0;
+    uint8_t sendBuffer[40];
+
+    // Clear FiFo
+    sendBuffer[0] = 0x15;
+    sendBuffer[1] = 0x03;
+    SendCommand(sendBuffer, 2, nullptr, 0);
+
+    RODOS::PRINTF("Cleared FiFo\n");
+
+    // Set TX Data Length
+    sendBuffer[0] = 0x11;
+    sendBuffer[1] = 0x12;
+    sendBuffer[2] = 0x02;
+    sendBuffer[3] = 0x0d;
+    sendBuffer[4] = len >> 8;
+    sendBuffer[5] = (len & 0xFF);
+    SendCommand(sendBuffer, 6, nullptr, 0);
+
+    RODOS::PRINTF("Set TX data Length\n");
+
+    // Write first part to FiFo
+    WriteFifo((uint8_t *)(txdata), 60);
+    ptr += 60;
+
+    RODOS::PRINTF("Wrote FiFO\n");
+
+    // Enable TX FiFo Almost Empty Interrupt
+    sendBuffer[0] = 0x11;
+    sendBuffer[1] = 0x01;
+    sendBuffer[2] = 0x01;
+    sendBuffer[3] = 0x01;
+    sendBuffer[4] = 0b00000010;
+    SendCommand(sendBuffer, 5, nullptr, 0);
+
+    RODOS::PRINTF("Configured almost empty interrupt\n");
+
+    // Clear Interrupts
+    sendBuffer[0] = 0x20;
+    sendBuffer[1] = 0x00;
+    sendBuffer[2] = 0x00;
+    sendBuffer[3] = 0x00;
+    SendCommand(sendBuffer, 4, nullptr, 0);
+
+    RODOS::PRINTF("Cleared interrupts\n");
+
+    // Enter TX Mode
+    StartTx(0);
+    // sendBuffer[0] = 0x31;
+    // sendBuffer[1] = 0x00;
+    // sendBuffer[2] = 0x30;
+    // sendBuffer[3] = 0x00;
+    // sendBuffer[4] = 0x00;
+    // SendCommand(sendBuffer, 5, nullptr, 0);
+
+    RODOS::PRINTF("Enter TX Mode\n");
+
+    // Wait for TX FiFo Almost Empty Interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
+
+    RODOS::PRINTF("Got Interrupt\n");
+
+    // Enable Packet Sent Interrupt
+    sendBuffer[0] = 0x11;
+    sendBuffer[1] = 0x01;
+    sendBuffer[2] = 0x01;
+    sendBuffer[3] = 0x01;
+    sendBuffer[4] = 0b00100000;
+    SendCommand(sendBuffer, 5, nullptr, 0);
+
+    RODOS::PRINTF("Enable Packet Sent Interrupt\n");
+
+    // Clear Interrupts
+    ClearInterrupts();
+
+    RODOS::PRINTF("Cleared Interrupts\n");
+
+    // Send second part of data
+    WriteFifo((uint8_t *)(txdata + ptr), len - ptr);
+
+    RODOS::PRINTF("Wrote second FiFo Part\n");
+
+    auto startTime = RODOS::NOW();
+
+    // Wait for Packet Sent Interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        if(RODOS::NOW() - startTime > 1 * RODOS::SECONDS)
+        {
+            RODOS::PRINTF("TX Timeout\n");
+            break;
+        }
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
+
+    RODOS::PRINTF("Packet Sent\n");
+
+    // Enter Standby Mode
+    EnterPowerMode(PowerMode::standby);
 }
 
 
@@ -696,7 +919,7 @@ auto StartTx(std::uint16_t length) -> void
 {
     auto commandBuffer = std::to_array({cmdStartTx,
                                         0x00_b,
-                                        0x00_b,
+                                        0x30_b,
                                         // NOLINTNEXTLINE(hicpp-signed-bitwise)
                                         static_cast<Byte>(length >> CHAR_BIT),
                                         static_cast<Byte>(length),
@@ -716,7 +939,14 @@ auto EnterPowerMode(PowerMode powerMode) -> void
 auto ClearInterrupts() -> void
 {
     auto commandBuffer = std::to_array<Byte>({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b});
-    auto responseBuffer = SendCommandWithResponse<getIntStatusResponseLength>(commandBuffer);
+    SendCommandNoResponse(commandBuffer);
+}
+
+
+auto ClearFifos() -> void
+{
+    auto commandBuffer = std::to_array<Byte>({cmdFifoInfo, 0x03_b});
+    SendCommandNoResponse(commandBuffer);
 }
 
 
@@ -801,7 +1031,7 @@ auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, 
 }
 
 
-auto WriteFifo(std::span<Byte> data) -> void
+auto WriteFifo(std::uint8_t * data, std::size_t length) -> void
 {
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
@@ -810,7 +1040,7 @@ auto WriteFifo(std::span<Byte> data) -> void
     // SpiMaster4::transferBlocking(buf, nullptr, 1);
     spi.write(std::data(buf), std::size(buf));
     // SpiMaster4::transferBlocking(data, nullptr, length);
-    hal::WriteTo(&spi, data);
+    spi.write(data, length);
     // spi.writeRead(data, length, nullptr, 0);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
@@ -838,9 +1068,11 @@ auto ReadFifo(std::uint8_t * data, std::size_t length) -> void
     auto buf = std::to_array<std::uint8_t>({0x77});
     // TODO: Replace with RODOS SPI HAL functions
     // SpiMaster4::transferBlocking(buf, nullptr, 1);
-    spi.writeRead(std::data(buf), std::size(buf), nullptr, 0);
+    // spi.writeRead(std::data(buf), std::size(buf), nullptr, 0);
+    spi.write(std::data(buf), std::size(buf));
     // SpiMaster4::transferBlocking(nullptr, data, length);
-    spi.writeRead(nullptr, 0, data, length);
+    // spi.writeRead(nullptr, 0, data, length);
+    spi.read(data, length);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
 }

@@ -9,12 +9,23 @@ using sts1cobcsw::serial::operator""_b;
 
 // In the following, abbreviations are used to adhere to the API documentation
 
+enum class TxType
+{
+    morse,  // From GPIO pin
+    packet  // From FIFO
+};
+
+// TODO: How will transmitting large amounts of data work?
+inline constexpr auto maxRxBytes = 128;
+
 // Si4463 Command IDs
+// TODO: change to enum (class)?
 inline constexpr auto cmdNop = 0x00_b;
 inline constexpr auto cmdPartInfo = 0x01_b;
 inline constexpr auto cmdPowerUp = 0x02_b;
 inline constexpr auto cmdFuncInfo = 0x10_b;
 inline constexpr auto cmdSetProperty = 0x11_b;
+inline constexpr auto cmdFifoInfo = 0x15_b;
 inline constexpr auto cmdGetIntStatus = 0x20_b;
 inline constexpr auto cmdStartTx = 0x31_b;
 inline constexpr auto cmdChangeState = 0x34_b;
@@ -31,20 +42,20 @@ inline constexpr auto readyCtsByte = 0xFF_b;
 // Property groups
 enum class PropertyGroup : std::uint8_t
 {
-    groupGlobal = 0x00,       // Global
-    groupIntCtl = 0x01,       // Interrupt control
-    groupFrrCtl = 0x02,       // Fast response register control
-    groupPreamble = 0x10,     // Preamble
-    groupSync = 0x11,         // Sync word
-    groupPkt = 0x12,          // Packet
-    groupModem = 0x20,        //
-    groupModemChflt = 0x21,   //
-    groupPa = 0x22,           //
-    groupSynth = 0x23,        //
-    groupMatch = 0x30,        //
-    groupFreqControl = 0x40,  //
-    groupRxHop = 0x50,        //
-    groupPti = 0xF0           //
+    global = 0x00,       // Global
+    intCtl = 0x01,       // Interrupt control
+    frrCtl = 0x02,       // Fast response register control
+    preamble = 0x10,     // Preamble
+    sync = 0x11,         // Sync word
+    pkt = 0x12,          // Packet
+    modem = 0x20,        //
+    modemChflt = 0x21,   //
+    pa = 0x22,           //
+    synth = 0x23,        //
+    match = 0x30,        //
+    freqControl = 0x40,  //
+    rxHop = 0x50,        //
+    pti = 0xF0           //
 };
 
 // SetProperty command constants
@@ -65,7 +76,8 @@ enum class PowerUpXtalOptions : std::uint8_t
     txco = 0x01   // Reference signal is derived from an external TCXO
 };
 
-enum class PowerMode : std::uint8_t{
+enum class PowerMode : std::uint8_t
+{
     standby = 0x01
 };
 }
