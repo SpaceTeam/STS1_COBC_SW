@@ -51,6 +51,7 @@ inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void
 
 constexpr std::size_t commandSize = 30;
 constexpr std::size_t dataSize = commandSize - serial::serialSize<GsCommandHeader>;
+// TODO: Use serialSize<EduQueueEntry> instead
 constexpr std::size_t queueEntrySize =
     sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
     + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);

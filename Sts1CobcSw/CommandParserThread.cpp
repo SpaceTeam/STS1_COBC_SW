@@ -36,15 +36,6 @@ using sts1cobcsw::serial::SerialBuffer;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4'000U;
-// TODO: Use serialSize<EduQueueEntry> instead
-constexpr std::size_t queueEntrySize =
-    sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
-    + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
-
-
-auto DispatchCommand(etl::string<commandSize> const & command) -> void;
-auto ParseAndAddQueueEntries(etl::string<commandSize> const & command) -> void;
-
 
 class CommandParserThread : public RODOS::StaticThread<stackSize>
 {
