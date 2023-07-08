@@ -49,12 +49,9 @@ inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void
     return source;
 }
 
-constexpr std::size_t commandSize = 30;
-constexpr std::size_t dataSize = commandSize - serial::serialSize<GsCommandHeader>;
-// TODO: Use serialSize<EduQueueEntry> instead
-constexpr std::size_t queueEntrySize =
-    sizeof(EduQueueEntry::programId) + sizeof(EduQueueEntry::queueId)
-    + sizeof(EduQueueEntry::startTime) + sizeof(EduQueueEntry::timeout);
+
+inline constexpr std::size_t commandSize = 30;
+inline constexpr std::size_t dataSize = commandSize - serial::serialSize<GsCommandHeader>;
 
 
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;

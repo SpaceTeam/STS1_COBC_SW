@@ -90,7 +90,7 @@ auto ParseAndAddQueueEntrie(std::span<const Byte> & queueEntries) -> void
 {
     RODOS::PRINTF("Printing and parsing\n");
 
-    auto const nQueueEntries = queueEntries.size() / queueEntrySize;
+    auto const nQueueEntries = queueEntries.size() / serialSize<EduQueueEntry>;
     eduProgramQueue.resize(nQueueEntries);
 
     std::size_t index = 0;
