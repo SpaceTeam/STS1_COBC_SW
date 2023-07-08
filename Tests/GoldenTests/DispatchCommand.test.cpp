@@ -24,7 +24,6 @@ class HelloWorld : public RODOS::StaticThread<>
     void run() override
     {
         printfMask = 1;
-        RODOS::PRINTF("Hello, World!\n");
 
         // Create command
         auto command = etl::vector<serial::Byte, commandSize>();

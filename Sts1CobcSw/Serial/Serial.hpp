@@ -113,7 +113,7 @@ constexpr auto Serialize(T const & data) -> SerialBuffer<T>
 template<std::default_initializable T>
 constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
-    auto t = T{};
+    auto t = T{};  // NOLINT(readability-identifier-length)
     DeserializeFrom(source.data(), &t);
     return t;
 }
@@ -122,7 +122,7 @@ constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 template<utility::TypeSafeInteger T>
 constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
-    auto t = utility::TypeSafeZero<T>();
+    auto t = utility::TypeSafeZero<T>();  // NOLINT(readability-identifier-length)
     DeserializeFrom(source.data(), &t);
     return t;
 }

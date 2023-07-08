@@ -16,8 +16,6 @@ using sts1cobcsw::serial::Deserialize;
 using sts1cobcsw::serial::SerialBuffer;
 using sts1cobcsw::serial::serialSize;
 
-// TODO: Calculate this correctly.
-constexpr std::size_t dataSize = 22;
 
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
 {
@@ -105,10 +103,10 @@ auto ParseAndAddQueueEntrie(std::span<const Byte> & queueEntries) -> void
         // entry = serial::DeserializeConst<EduQueueEntry>(entryBuffer);
         entry = Deserialize<EduQueueEntry>(entryBuffer);
 
-        RODOS::PRINTF("Prog ID      : %d\n", static_cast<int>(entry.programId.get()));
-        RODOS::PRINTF("Queue ID     : %d\n", static_cast<int>(entry.queueId.get()));
-        RODOS::PRINTF("Start Time   : %d\n", static_cast<int>(entry.startTime.get()));
-        RODOS::PRINTF("Timeout      : %d\n", static_cast<int>(entry.timeout.get()));
+        RODOS::PRINTF("Prog ID      : %d\n", entry.programId.get());
+        RODOS::PRINTF("Queue ID     : %d\n", entry.queueId.get());
+        RODOS::PRINTF("Start Time   : %d\n", entry.startTime.get());
+        RODOS::PRINTF("Timeout      : %d\n", entry.timeout.get());
 
         // Should never be superior or equal to nQueueEntries
         index++;
