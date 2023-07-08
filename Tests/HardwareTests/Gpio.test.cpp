@@ -15,7 +15,7 @@ namespace sts1cobcsw
 // TODO: Find out which pins we can safely use here. The problem is that some pins cause a short and
 // therefore a reset of the COBC when used in this test. The LED pin has to work for this test
 // though.
-auto pinsToTest = std::to_array<hal::GpioPin>({hal::ledPin});
+auto pinsToTest = std::to_array<hal::GpioPin>({hal::led1Pin, hal::led2Pin});
 
 
 class GpioTest : public RODOS::StaticThread<>

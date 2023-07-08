@@ -40,9 +40,11 @@ namespace sts1cobcsw
 {
 auto spis = std::array{
     HAL_SPI(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin),
-    HAL_SPI(hal::cobcSpiIndex, hal::framSpiSckPin, hal::framSpiMisoPin, hal::framSpiMosiPin),
-    HAL_SPI(hal::cobcSpiIndex, hal::cobcSpiSckPin, hal::cobcSpiMisoPin, hal::cobcSpiMosiPin),
-    HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin)};
+    HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin),
+    HAL_SPI(hal::framEpsSpiIndex,
+            hal::framEpsSpiSckPin,
+            hal::framEpsSpiMisoPin,
+            hal::framEpsSpiMosiPin)};
 
 
 class SpiTest : public RODOS::StaticThread<>
@@ -63,7 +65,10 @@ class SpiTest : public RODOS::StaticThread<>
         using ts::operator""_usize;
 
         constexpr auto messages = std::array{
-            "Hello from SPI1!"sv, "Hello from SPI2!"sv, "Hello from SPI3!"sv, "Hello from SPI4!"sv};
+            "Hello from SPI1!"sv,
+            "Hello from SPI2!"sv,
+            "Hello from SPI3!"sv,
+        };
         static_assert(std::size(spis) == std::size(messages));
 
         auto i = 0_usize;
