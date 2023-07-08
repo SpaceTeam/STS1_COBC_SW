@@ -64,7 +64,7 @@ auto Edu::Initialize() -> void
     TurnOff();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    constexpr auto baudRate = 921'600;
+    constexpr auto baudRate = 115'200;
     uart_.init(baudRate);
 }
 
