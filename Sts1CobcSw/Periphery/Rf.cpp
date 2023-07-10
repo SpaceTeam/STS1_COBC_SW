@@ -40,7 +40,7 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 
 constexpr std::uint16_t partInfo = 0x4463;
-constexpr std::uint32_t powerUpXoFrequency = 30'000'000;  // 30 MHz
+constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 
 
 // --- Private function declarations ---
