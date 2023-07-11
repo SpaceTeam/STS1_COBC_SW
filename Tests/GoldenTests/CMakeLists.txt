@@ -18,6 +18,7 @@ add_golden_test(
     "${Sts1CobcSw}/TopicsAndSubscribers.cpp"
     "${Sts1CobcSw}/EduProgramQueue.cpp"
     "${Sts1CobcSw}/EduProgramStatusHistory.cpp"
+    "${Sts1CobcSw}/LoopedEduProgramQueue.cpp"
     LIB
     rodos::rodos
     Sts1CobcSw_Periphery
