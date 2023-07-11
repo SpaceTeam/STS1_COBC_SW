@@ -16,7 +16,5 @@ class HelloWorld : public RODOS::StaticThread<>
         RODOS::PRINTF("Hello, World!\n");
         RODOS::hwResetAndReboot();
     }
-};
-
-auto const helloWorld = HelloWorld();
+} helloWorld;
 }

@@ -4,7 +4,6 @@
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
-#include <Sts1CobcSw/Utility/UtilityNames.hpp>
 
 
 namespace sts1cobcsw::periphery
@@ -59,7 +58,7 @@ auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
 //! @brief  Must be called in an init() function of a thread.
 auto Edu::Initialize() -> void
 {
-    eduEnabledGpioPin_.Direction(hal::PinDirection::out);
+    eduEnableGpioPin_.Direction(hal::PinDirection::out);
     // TODO: I think we should actually read from persistent state to determine whether the EDU
     // should be powered or not. We do have a separate EDU power management thread which though.
     TurnOff();
@@ -76,7 +75,7 @@ auto Edu::TurnOn() -> void
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(true);
     // Edu enabled pin uses inverted logic
-    eduEnabledGpioPin_.Reset();
+    eduEnableGpioPin_.Reset();
 }
 
 
@@ -86,12 +85,12 @@ auto Edu::TurnOff() -> void
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(false);
     // Edu enabled pin uses inverted logic
-    eduEnabledGpioPin_.Set();
+    eduEnableGpioPin_.Set();
 }
 
 
 // TODO: Implement this
-[[nodiscard]] auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
+auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 {
     return 0;
 }
@@ -116,7 +115,7 @@ auto Edu::TurnOff() -> void
 //! @param timeout The available execution time for the student program
 //!
 //! @returns A relevant EduErrorCode
-[[nodiscard]] auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
+auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
                   static_cast<int>(data.programId.get()),
@@ -168,7 +167,7 @@ auto Edu::TurnOff() -> void
 //! <- [N/ACK]
 //! <- [N/ACK]
 //! @returns A relevant error code
-[[nodiscard]] auto Edu::StopProgram() -> EduErrorCode
+auto Edu::StopProgram() -> EduErrorCode
 {
     return EduErrorCode::success;
     // std::array<std::uint8_t, 3> dataBuf = {stopProgram};
@@ -203,7 +202,7 @@ auto Edu::TurnOff() -> void
 //! @returns A status containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error
 //!          Code). Values in square brackets are only valid if the relevant Status Type is
 //!          returned.
-[[nodiscard]] auto Edu::GetStatus() -> EduStatus
+auto Edu::GetStatus() -> EduStatus
 {
     RODOS::PRINTF("GetStatus()\n");
     auto serialData = serial::Serialize(getStatusId);
@@ -245,7 +244,7 @@ auto Edu::TurnOff() -> void
 //! @brief Communication function for GetStatus() to separate a single try from
 //! retry logic.
 //! @returns The received EDU status
-[[nodiscard]] auto Edu::GetStatusCommunication() -> EduStatus
+auto Edu::GetStatusCommunication() -> EduStatus
 {
     // Get header data
     auto headerBuffer = serial::SerialBuffer<HeaderData>{};
@@ -373,7 +372,7 @@ auto Edu::TurnOff() -> void
 }
 
 
-[[nodiscard]] auto Edu::ReturnResult() -> ResultInfo
+auto Edu::ReturnResult() -> ResultInfo
 {
     // DEBUG
     RODOS::PRINTF("ReturnResult()\n");
@@ -430,7 +429,7 @@ auto Edu::TurnOff() -> void
 //! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
 //!
 //! @returns An error code and the number of received bytes in ResultInfo
-[[nodiscard]] auto Edu::ReturnResultRetry() -> ResultInfo
+auto Edu::ReturnResultRetry() -> ResultInfo
 {
     ResultInfo resultInfo;
     std::size_t errorCount = 0U;
@@ -454,7 +453,7 @@ auto Edu::TurnOff() -> void
 // directly and instead writes to a non-primary RAM bank as an intermediate step.
 //
 // Simple results -> 1 round should work with DMA to RAM
-[[nodiscard]] auto Edu::ReturnResultCommunication() -> ResultInfo
+auto Edu::ReturnResultCommunication() -> ResultInfo
 {
     // Receive command
     // If no result is available, the command will be NACK,
@@ -547,7 +546,7 @@ auto Edu::TurnOff() -> void
 //! @param timestamp A unix timestamp
 //!
 //! @returns A relevant error code
-[[nodiscard]] auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
+auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
 {
     RODOS::PRINTF("UpdateTime(timestamp = %d)\n", static_cast<int>(data.timestamp.get()));
     auto serialData = serial::Serialize(data);
@@ -601,7 +600,7 @@ void Edu::SendCommand(Byte commandId)
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
-[[nodiscard]] auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
+auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
     std::size_t nBytes = data.size();
     if(nBytes >= maxDataLength)
@@ -659,7 +658,7 @@ void Edu::SendCommand(Byte commandId)
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-[[nodiscard]] auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
+auto Edu::UartReceive(std::span<Byte> destination) -> EduErrorCode
 {
     if(size(destination) > maxDataLength)
     {
@@ -689,7 +688,7 @@ void Edu::SendCommand(Byte commandId)
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-[[nodiscard]] auto Edu::UartReceive(Byte * destination) -> EduErrorCode
+auto Edu::UartReceive(void * destination) -> EduErrorCode
 {
     uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
     auto nReceivedBytes = uart_.read(destination, 1);

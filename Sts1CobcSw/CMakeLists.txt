@@ -29,6 +29,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 EduPowerManagementThread.cpp
                 EduProgramQueue.cpp
                 EduProgramQueueThread.cpp
+                EduProgramStatusHistory.cpp
                 LoopedEduProgramQueue.cpp
                 TopicsAndSubscribers.cpp
     )

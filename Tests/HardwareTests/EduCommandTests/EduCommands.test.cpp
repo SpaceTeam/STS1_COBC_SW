@@ -111,5 +111,5 @@ private:
             }
         }
     }
-} executeProgramTest;
+} eduCommandsTest;
 }

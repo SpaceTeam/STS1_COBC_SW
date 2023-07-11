@@ -48,7 +48,7 @@ private:
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
     // Deserialize<>() internally.
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
-    [[nodiscard]] auto UartReceive(Byte * destination) -> EduErrorCode;
+    [[nodiscard]] auto UartReceive(void * destination) -> EduErrorCode;
     auto FlushUartBuffer() -> void;
     [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> EduErrorCode;
     [[nodiscard]] auto GetStatusCommunication() -> EduStatus;
@@ -56,7 +56,7 @@ private:
     [[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
     void MockWriteToFile(std::span<Byte> data);
 
-    hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
+    hal::GpioPin eduEnableGpioPin_ = hal::GpioPin(hal::eduEnablePin);
     RODOS::HAL_UART uart_ =
         RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
     // RODOS::HAL_UART uart_ =

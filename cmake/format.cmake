@@ -9,7 +9,7 @@ endmacro()
 default(FORMAT_COMMAND clang-format)
 default(
     PATTERNS
-    Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp
+    Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp Sts1CobcSw/*.tpp
     Tests/*.cpp Tests/*.hpp
 )
 default(FIX NO)

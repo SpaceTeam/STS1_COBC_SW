@@ -14,6 +14,6 @@ using Byte = std::byte;
 inline constexpr auto operator"" _b(unsigned long long number)  // NOLINT(google-runtime-int)
     -> Byte
 {
-    return Byte(number);
+    return static_cast<Byte>(number);
 }
 }

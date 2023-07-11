@@ -1,7 +1,7 @@
-//#include <Sts1CobcSw/Util/Util.hpp>
+// #include <Sts1CobcSw/Util/Util.hpp>
 
-//#include <stm32f4xx_crc.h>
-//#include <stm32f4xx_rcc.h>
+// #include <stm32f4xx_crc.h>
+// #include <stm32f4xx_rcc.h>
 
 // ifdef CRC
 // store macro value
@@ -42,8 +42,5 @@ class Crc32Test : public RODOS::StaticThread<>
         // RODOS::PRINTF("%c", (crcSw >> 8) & 0xFF);
         // RODOS::PRINTF("%c\n\n", crcSw & 0xFF);
     }
-};
-
-
-auto const crc32Test = Crc32Test();
+} crc32Test;
 }

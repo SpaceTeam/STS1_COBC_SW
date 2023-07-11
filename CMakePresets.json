@@ -33,7 +33,7 @@
       "name": "cppcheck",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr"
+        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr;--quiet;--suppress=cppcheckError"
       }
     },
     {
@@ -140,10 +140,8 @@
       "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
-        "HSE_VALUE": "12000000",
-        "BOARD_FILE": "Cobc.hpp"
+        "HSE_VALUE": "12000000"
       }
     }
-
   ]
 }

@@ -9,6 +9,10 @@
 #include <ringbuffer.h>
 // clang-format on
 
+#include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
+
+#include <type_safe/types.hpp>
 
 #include <etl/string.h>
 #include <etl/vector.h>
@@ -16,32 +20,46 @@
 
 namespace sts1cobcsw
 {
-// TODO: Use type_safe::, This way you cannot construct uninitialized QueueEntries
+namespace ts = type_safe;
+using ts::operator""_u8;
+using ts::operator""_i16;
+using ts::operator""_u16;
+using ts::operator""_i32;
+
+using serial::Byte;
+using serial::DeserializeFrom;
+
+
 struct EduQueueEntry
 {
-    uint16_t programId;
-    uint16_t queueId;
-    int32_t startTime;
-    int16_t timeout;
+    ts::uint16_t programId = 0_u16;
+    ts::uint16_t queueId = 0_u16;
+    ts::int32_t startTime = 0_i32;
+    ts::int16_t timeout = 0_i16;
 };
 
-
-// TODO: Again, type_safe::
-struct StatusHistoryEntry
+namespace serial
 {
-    uint16_t programId;
-    uint16_t queueId;
-    uint8_t status;
-};
+template<>
+inline constexpr std::size_t serialSize<EduQueueEntry> =
+    totalSerialSize<decltype(EduQueueEntry::programId),
+                    decltype(EduQueueEntry::queueId),
+                    decltype(EduQueueEntry::startTime),
+                    decltype(EduQueueEntry::timeout)>;
+}
+
+inline auto DeserializeFrom(void const * source, EduQueueEntry * data) -> void const *
+{
+    source = DeserializeFrom(source, &(data->programId));
+    source = DeserializeFrom(source, &(data->queueId));
+    source = DeserializeFrom(source, &(data->startTime));
+    source = DeserializeFrom(source, &(data->timeout));
+    return source;
+}
 
 
-inline constexpr auto eduProgramQueueCapacity = 20;
-extern etl::vector<EduQueueEntry, eduProgramQueueCapacity> eduProgramQueue;
+inline constexpr auto eduProgramQueueSize = 20;
+
 extern uint16_t queueIndex;
-
-// TODO: Think about the name. Maybe something like program/queueStatusAndHistory is better?
-inline constexpr auto statusHistoryCapacity = 20;
-// TODO: Maybe move that to its own file? Together with the definition of StatusHistoryEntry of
-// course.
-extern RODOS::RingBuffer<StatusHistoryEntry, statusHistoryCapacity> statusHistory;
+extern etl::vector<EduQueueEntry, eduProgramQueueSize> eduProgramQueue;
 }

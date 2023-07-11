@@ -21,18 +21,19 @@ constexpr auto fotoProgramStartTimeOffset = 20;  // s
 constexpr auto fotoProgramTimeout = 5;           // s
 
 
+// Can be useful for tests
 auto InitializeEduProgramQueue() -> void
 {
-    eduProgramQueue.push_back({.programId = sensorProgramId,
-                               .queueId = initialSensorProgramQueueId,
-                               .startTime = initialProgramDelay + sensorProgramStartTimeOffset
-                                          + utility::rodosUnixOffset / RODOS::SECONDS,
-                               .timeout = sensorProgramTimeout});
-    eduProgramQueue.push_back({.programId = fotoProgramId,
-                               .queueId = initialFotoProgramQueueId,
-                               .startTime = initialProgramDelay + fotoProgramStartTimeOffset
-                                          + utility::rodosUnixOffset / RODOS::SECONDS,
-                               .timeout = fotoProgramTimeout});
+    // eduProgramQueue.push_back({.programId = sensorProgramId,
+    //                            .queueId = initialSensorProgramQueueId,
+    //                            .startTime = initialProgramDelay + sensorProgramStartTimeOffset
+    //                                       + utility::rodosUnixOffset / RODOS::SECONDS,
+    //                            .timeout = sensorProgramTimeout});
+    // eduProgramQueue.push_back({.programId = fotoProgramId,
+    //                            .queueId = initialFotoProgramQueueId,
+    //                            .startTime = initialProgramDelay + fotoProgramStartTimeOffset
+    //                                       + utility::rodosUnixOffset / RODOS::SECONDS,
+    //                            .timeout = fotoProgramTimeout});
 }
 
 

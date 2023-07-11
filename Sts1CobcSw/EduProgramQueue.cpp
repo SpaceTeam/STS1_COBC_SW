@@ -6,6 +6,5 @@
 namespace sts1cobcsw
 {
 std::uint16_t queueIndex = 0U;
-etl::vector<EduQueueEntry, eduProgramQueueCapacity> eduProgramQueue{};
-RODOS::RingBuffer<StatusHistoryEntry, statusHistoryCapacity> statusHistory{};
+etl::vector<EduQueueEntry, eduProgramQueueSize> eduProgramQueue{};
 }
