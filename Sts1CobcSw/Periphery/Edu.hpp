@@ -56,7 +56,7 @@ private:
     [[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
     void MockWriteToFile(std::span<Byte> data);
 
-    hal::GpioPin eduEnabledGpioPin_ = hal::GpioPin(hal::eduEnabledPin);
+    hal::GpioPin eduEnableGpioPin_ = hal::GpioPin(hal::eduEnablePin);
     RODOS::HAL_UART uart_ =
         RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
     // RODOS::HAL_UART uart_ =

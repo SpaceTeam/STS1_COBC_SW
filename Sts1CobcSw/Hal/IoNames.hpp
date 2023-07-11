@@ -13,7 +13,7 @@ inline constexpr auto led2Pin = pb15;
 inline constexpr auto epsBatteryGoodPin = pc15;
 inline constexpr auto epsChargingPin = pc14;
 
-inline constexpr auto eduEnabledPin = pb0;
+inline constexpr auto eduEnablePin = pb0;
 inline constexpr auto eduHeartbeatPin = pc5;
 inline constexpr auto eduUpdatePin = pb1;
 
