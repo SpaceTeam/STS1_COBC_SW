@@ -674,65 +674,65 @@ auto GetPartInfo() -> std::uint16_t
 // TODO: Change to Byte instead of uint8_t
 // TODO: Adapt ReadFifo to use spans instead of using pointer arithmetic
 // TODO: Discuss transmission of large amounts of data!
-// auto ReceiveTestData() -> std::array<std::uint8_t, maxRxBytes>
-// {
-//     auto sendBuffer = std::array<std::uint8_t, 32>{};
+auto ReceiveTestData() -> std::array<std::uint8_t, maxRxBytes>
+{
+    auto sendBuffer = std::array<std::uint8_t, 32>{};
 
-//     ClearFifos();
+    ClearFifos();
 
-//     // Enable RX FiFo Almost Full Interrupt
-//     sendBuffer[0] = 0x11;
-//     sendBuffer[1] = 0x01;
-//     sendBuffer[2] = 0x01;
-//     sendBuffer[3] = 0x01;
-//     sendBuffer[4] = 0b00000001;
-//     SendCommand(std::data(sendBuffer), 5, nullptr, 0);
+    // Enable RX FiFo Almost Full Interrupt
+    sendBuffer[0] = 0x11;
+    sendBuffer[1] = 0x01;
+    sendBuffer[2] = 0x01;
+    sendBuffer[3] = 0x01;
+    sendBuffer[4] = 0b00000001;
+    SendCommand(std::data(sendBuffer), 5, nullptr, 0);
 
-//     ClearInterrupts();
+    ClearInterrupts();
 
-//     // Enter RX Mode
-//     sendBuffer[0] = 0x32;
-//     sendBuffer[1] = 0x00;  // "Channel 0"
-//     sendBuffer[2] = 0x00;  // Start RX now
-//     sendBuffer[3] = 0x00;  // RX Length = 0
-//     sendBuffer[4] = 0x00;
-//     sendBuffer[5] = 0x00;  // Remain in RX state on preamble detection timeout
-//     sendBuffer[6] = 0x00;  // Do nothing on RX packet valid (we'll never enter this state)
-//     sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
-//     SendCommand(std::data(sendBuffer), 8, nullptr, 0);
+    // Enter RX Mode
+    sendBuffer[0] = 0x32;
+    sendBuffer[1] = 0x00;  // "Channel 0"
+    sendBuffer[2] = 0x00;  // Start RX now
+    sendBuffer[3] = 0x00;  // RX Length = 0
+    sendBuffer[4] = 0x00;
+    sendBuffer[5] = 0x00;  // Remain in RX state on preamble detection timeout
+    sendBuffer[6] = 0x00;  // Do nothing on RX packet valid (we'll never enter this state)
+    sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
+    SendCommand(std::data(sendBuffer), 8, nullptr, 0);
 
-//     // Wait for RX FiFo Almost Full Interrupt
-//     // while(RF_NIRQ::read())
-//     while(nirqGpioPin.Read() == hal::PinState::set)
-//     {
-//         RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
-//         // modm::delay_us(10);
-//     }
+    // Wait for RX FiFo Almost Full Interrupt
+    // while(RF_NIRQ::read())
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+        // modm::delay_us(10);
+    }
 
-//     RODOS::PRINTF("Got RX FiFo Almost Full Interrupt\n");
+    RODOS::PRINTF("Got RX FiFo Almost Full Interrupt\n");
 
-//     auto rxBuffer = std::array<std::uint8_t, maxRxBytes>{0};
-//     ReadFifo(std::data(rxBuffer), 48);
+    auto rxBuffer = std::array<std::uint8_t, maxRxBytes>{0};
+    ReadFifo(std::data(rxBuffer), 48);
 
-//     RODOS::PRINTF("Retrieved first 48 Byte from FiFo\n");
+    RODOS::PRINTF("Retrieved first 48 Byte from FiFo\n");
 
-//     ClearInterrupts();
+    ClearInterrupts();
 
-//     // Wait for RX FiFo Almost Full Interrupt
-//     while(nirqGpioPin.Read() == hal::PinState::set)
-//     {
-//         RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
-//     }
+    // Wait for RX FiFo Almost Full Interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
 
-//     RODOS::PRINTF("Got RX FiFo Almost Full Interrupt\n");
+    RODOS::PRINTF("Got RX FiFo Almost Full Interrupt\n");
 
-//     ReadFifo(std::data(rxBuffer) + 48, 48);
+    ReadFifo(std::data(rxBuffer) + 48, 48);
 
-//     EnterPowerMode(PowerMode::standby);
-//     ClearInterrupts();
+    EnterPowerMode(PowerMode::standby);
+    ClearInterrupts();
 
-//     return rxBuffer;
-// }
+    return rxBuffer;
+}
 
 
 auto TransmitTestData() -> void

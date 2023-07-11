@@ -33,7 +33,7 @@ auto EnterPowerMode(PowerMode powerMode) -> void;
 auto TransmitTestData() -> void;
 
 // TODO: This is a test implementation, receives 2 * 48 bytes
-// auto ReceiveTestData() -> std::array<std::uint8_t, maxRxBytes>;
+auto ReceiveTestData() -> std::array<std::uint8_t, maxRxBytes>;
 
 auto ClearInterrupts() -> void;
 
