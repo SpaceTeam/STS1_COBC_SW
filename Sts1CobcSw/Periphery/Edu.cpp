@@ -58,7 +58,7 @@ auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
 //! @brief  Must be called in an init() function of a thread.
 auto Edu::Initialize() -> void
 {
-    eduEnabledGpioPin_.Direction(hal::PinDirection::out);
+    eduEnableGpioPin_.Direction(hal::PinDirection::out);
     // TODO: I think we should actually read from persistent state to determine whether the EDU
     // should be powered or not. We do have a separate EDU power management thread which though.
     TurnOff();
@@ -75,7 +75,7 @@ auto Edu::TurnOn() -> void
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(true);
     // Edu enabled pin uses inverted logic
-    eduEnabledGpioPin_.Reset();
+    eduEnableGpioPin_.Reset();
 }
 
 
@@ -85,7 +85,7 @@ auto Edu::TurnOff() -> void
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(false);
     // Edu enabled pin uses inverted logic
-    eduEnabledGpioPin_.Set();
+    eduEnableGpioPin_.Set();
 }
 
 

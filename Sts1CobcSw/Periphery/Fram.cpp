@@ -26,8 +26,8 @@ constexpr auto readDeviceId = 0x9F_b;
 }
 
 auto csGpioPin = hal::GpioPin(hal::framCsPin);
-auto spi =
-    RODOS::HAL_SPI(hal::framSpiIndex, hal::framSpiSckPin, hal::framSpiMisoPin, hal::framSpiMosiPin);
+auto spi = RODOS::HAL_SPI(
+    hal::framEpsSpiIndex, hal::framEpsSpiSckPin, hal::framEpsSpiMisoPin, hal::framEpsSpiMosiPin);
 
 
 // --- Private function declarations ---

@@ -16,7 +16,7 @@ using RODOS::MILLISECONDS;
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 
-auto ledGpioPin = hal::GpioPin(hal::ledPin);
+auto ledGpioPin = hal::GpioPin(hal::led1Pin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 

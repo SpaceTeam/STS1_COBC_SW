@@ -7,12 +7,13 @@
 
 namespace sts1cobcsw::hal
 {
-inline constexpr auto ledPin = pa13;
+inline constexpr auto led1Pin = pb12;
+inline constexpr auto led2Pin = pb15;
 
 inline constexpr auto epsBatteryGoodPin = pc15;
 inline constexpr auto epsChargingPin = pc14;
 
-inline constexpr auto eduEnabledPin = pb0;
+inline constexpr auto eduEnablePin = pb0;
 inline constexpr auto eduHeartbeatPin = pc5;
 inline constexpr auto eduUpdatePin = pb1;
 
@@ -31,24 +32,20 @@ inline constexpr auto flashSpiMosiPin = pa7;
 inline constexpr auto flashCsPin = pb9;
 inline constexpr auto flashWriteProtectionPin = pc4;
 
-inline constexpr auto framSpiIndex = RODOS::SPI_IDX2;
-inline constexpr auto framSpiSckPin = pc7;
-inline constexpr auto framSpiMisoPin = pc2;
-inline constexpr auto framSpiMosiPin = pc3;
-inline constexpr auto framCsPin = pb9;  // == flashCsPin, this is not a mistake
+inline constexpr auto framEpsSpiIndex = RODOS::SPI_IDX3;
+inline constexpr auto framEpsSpiSckPin = pc10;
+inline constexpr auto framEpsSpiMisoPin = pc11;
+inline constexpr auto framEpsSpiMosiPin = pc12;
+inline constexpr auto framCsPin = pb13;
 
-inline constexpr auto cobcSpiIndex = RODOS::SPI_IDX3;
-inline constexpr auto cobcSpiSckPin = pc10;
-inline constexpr auto cobcSpiMisoPin = pc11;
-inline constexpr auto cobcSpiMosiPin = pc12;
-
-inline constexpr auto rfSpiIndex = RODOS::SPI_IDX4;
-inline constexpr auto rfSpiSckPin = pb13;
-inline constexpr auto rfSpiMisoPin = pa11;
-inline constexpr auto rfSpiMosiPin = pa1;
+inline constexpr auto rfSpiIndex = RODOS::SPI_IDX2;
+inline constexpr auto rfSpiSckPin = pc7;
+inline constexpr auto rfSpiMisoPin = pc2;
+inline constexpr auto rfSpiMosiPin = pc3;
 inline constexpr auto rfCsPin = pa8;
 inline constexpr auto rfNirqPin = pb6;
 inline constexpr auto rfSdnPin = pb14;
 inline constexpr auto rfGpio0Pin = pc6;
 inline constexpr auto rfGpio1Pin = pc8;
+inline constexpr auto rfPaEnablePin = pc9;
 }
