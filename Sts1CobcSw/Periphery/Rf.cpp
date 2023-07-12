@@ -41,6 +41,9 @@ auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 constexpr std::uint16_t partInfo = 0x4463;
 constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 
+constexpr auto fifoAlmostFullThreshold = 48;              // RX FIFO
+constexpr auto fifoAlmostEmptyThreshold = 48;             // TX FIFO
+
 
 // --- Private function declarations ---
 
@@ -735,6 +738,67 @@ auto GetPartInfo() -> std::uint16_t
 // }
 
 
+// TODO: Rewrite using span instead of pointer + length
+// It could also be helpful to overload this and provide a version for string_view
+auto TransmitData(std::uint8_t * data, std::size_t length) -> void
+{
+    auto dataIndex = 0;
+    ClearFifos();
+
+    // Set TX Data Length
+    // TODO: Check if we can just set the length in START_TX
+    // TODO: Maybe put setting the data length in a function
+    auto dataLengthPropertyValues =
+        // NOLINTNEXTLINE(hicpp-signed-bitwise)
+        std::to_array<Byte>({static_cast<Byte>(length >> 8), static_cast<Byte>(length)});
+    SetProperty<2>(PropertyGroup::pkt,
+                   0x0D_b,
+                   std::span<Byte, std::size(dataLengthPropertyValues)>(dataLengthPropertyValues));
+
+    auto nFillBytes = 60;  // Fill the TX FIFO with 60 bytes each "round"
+    auto almostEmptyInterruptEnabled = false;
+
+    // While the packet is longer than a single fill round, wait for the almost empty interrupt,
+    // afterwards for the packet sent interrupt
+    while(length - dataIndex > nFillBytes)
+    {
+        // Enable the almost empty interrupt in the first round
+        if(not almostEmptyInterruptEnabled)
+        {
+            // TODO: Setting interrupts could be put in a function
+            auto interruptPropertyValues = std::to_array<Byte, 1>({0b00000010_b});
+            SetProperty<1>(
+                PropertyGroup::intCtl, 0x01_b, std::span<Byte, 1>(interruptPropertyValues));
+            almostEmptyInterruptEnabled = true;
+        }
+
+        // Write nFillBytes bytes to the TX FIFO
+        WriteFifo(data + dataIndex, nFillBytes);
+        dataIndex += nFillBytes;
+        ClearInterrupts();
+        StartTx(0);
+        // Wait for TX FIFO almost empty interrupt
+        while(nirqGpioPin.Read() == hal::PinState::set)
+        {
+            RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+        }
+    }
+
+    // Now enable the packet sent interrupt
+    auto interruptPropertyValues = std::to_array<Byte, 1>({0b00100000_b});
+    SetProperty<1>(PropertyGroup::intCtl, 0x01_b, std::span<Byte, 1>(interruptPropertyValues));
+    ClearInterrupts();
+    // Write the rest of the data
+    WriteFifo(data + dataIndex, length - dataIndex);
+    // Wait for packet sent interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
+    EnterPowerMode(PowerMode::standby);
+}
+
+
 auto TransmitTestData() -> void
 {
     const char * txdata =
@@ -787,6 +851,7 @@ auto TransmitTestData() -> void
     // RODOS::PRINTF("Cleared interrupts\n");
 
     // Enter TX Mode
+    // Length is set to 0 since we currently control it via a property
     StartTx(0);
 
     // RODOS::PRINTF("Enter TX Mode\n");
@@ -976,6 +1041,7 @@ auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, 
 }
 
 
+// TODO: modernize (span instead of pointer + length, our communication abstraction, WaitOnCts())
 auto WriteFifo(std::uint8_t * data, std::size_t length) -> void
 {
     csGpioPin.Reset();
@@ -1058,6 +1124,8 @@ auto WaitOnCts() -> void
 }
 
 
+// TODO: This does not need any template stuff, just set the size of setPropertyBuffer to take 12
+// (max.) properties and use a subspan afterwards
 template<std::size_t nProperties>
     requires(nProperties >= 1 and nProperties <= maxNProperties)
 auto SetProperty(PropertyGroup propertyGroup,
