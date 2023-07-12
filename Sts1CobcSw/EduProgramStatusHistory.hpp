@@ -11,6 +11,7 @@ namespace sts1cobcsw
 {
 namespace ts = type_safe;
 using ts::operator""_u16;
+using ts::operator""_u32;
 
 
 enum class EduProgramStatus : uint8_t
@@ -29,7 +30,7 @@ enum class EduProgramStatus : uint8_t
 struct EduProgramStatusHistoryEntry
 {
     ts::uint16_t programId = 0_u16;
-    ts::uint16_t queueId = 0_u16;
+    ts::uint32_t queueId = 0_u32;
     EduProgramStatus status = EduProgramStatus::programRunning;
 };
 
@@ -39,6 +40,6 @@ extern RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySi
     eduProgramStatusHistory;
 
 
-auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
+auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint32_t queueId)
     -> EduProgramStatusHistoryEntry;
 }

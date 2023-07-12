@@ -25,6 +25,7 @@ using ts::operator""_u8;
 using ts::operator""_i16;
 using ts::operator""_u16;
 using ts::operator""_i32;
+using ts::operator""_u32;
 
 using serial::Byte;
 using serial::DeserializeFrom;
@@ -33,7 +34,7 @@ using serial::DeserializeFrom;
 struct EduQueueEntry
 {
     ts::uint16_t programId = 0_u16;
-    ts::uint16_t queueId = 0_u16;
+    ts::uint32_t queueId = 0_u32;
     ts::int32_t startTime = 0_i32;
     ts::int16_t timeout = 0_i16;
 };

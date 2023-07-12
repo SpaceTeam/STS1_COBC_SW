@@ -55,7 +55,7 @@ struct EduStatus
 {
     EduStatusType statusType = EduStatusType::invalid;
     std::uint16_t programId = 0;
-    std::uint16_t queueId = 0;
+    std::uint32_t queueId = 0;
     std::uint8_t exitCode = 0;
     EduErrorCode errorCode = EduErrorCode::noErrorCodeSet;
 };
@@ -64,14 +64,14 @@ struct EduStatus
 struct ResultsReadyStatus
 {
     std::uint16_t programId;
-    std::uint16_t queueId;
+    std::uint32_t queueId;
 };
 
 
 struct ProgramFinishedStatus
 {
     std::uint16_t programId;
-    std::uint16_t queueId;
+    std::uint32_t queueId;
     std::uint8_t exitCode;
 };
 

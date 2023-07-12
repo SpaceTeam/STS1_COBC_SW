@@ -79,7 +79,7 @@ private:
 
                     PRINTF("Please enter a queue ID (3 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
-                    std::uint16_t queueId = 0;
+                    std::uint32_t queueId = 0;
                     std::from_chars(begin(userInput), end(userInput), queueId);
 
                     PRINTF("Please enter a timeout (3 character)\n");

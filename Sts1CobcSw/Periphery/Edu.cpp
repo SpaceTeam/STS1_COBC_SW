@@ -30,8 +30,8 @@ constexpr auto resultsReadyCode = 0x02_b;
 
 // Status types byte counts
 constexpr auto nNoEventBytes = 1;
-constexpr auto nProgramFinishedBytes = 6;
-constexpr auto nResultsReadyBytes = 5;
+constexpr auto nProgramFinishedBytes = 1 + serial::serialSize<ProgramFinishedStatus>;
+constexpr auto nResultsReadyBytes = 1 + serial::serialSize<ResultsReadyStatus>;
 
 // TODO: Check real timeouts
 // Max. time for the EDU to respond to a request
