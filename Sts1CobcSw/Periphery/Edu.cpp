@@ -74,8 +74,7 @@ auto Edu::TurnOn() -> void
     // Set EduShouldBePowered to True, persistentstate is initialized in
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(true);
-    // Edu enabled pin uses inverted logic
-    eduEnableGpioPin_.Reset();
+    eduEnableGpioPin_.Set();
 }
 
 
@@ -84,8 +83,7 @@ auto Edu::TurnOff() -> void
     // Set EduShouldBePowered to False, persistentstate is initialized in
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(false);
-    // Edu enabled pin uses inverted logic
-    eduEnableGpioPin_.Set();
+    eduEnableGpioPin_.Reset();
 }
 
 
