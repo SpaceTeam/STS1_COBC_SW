@@ -36,4 +36,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSw_CobcSw PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal Sts1CobcSw_Utility
                                   Sts1CobcSw_Periphery
     )
+
+    target_sources(Sts1CobcSw_MftMorseTest PRIVATE MorseThread.cpp)
+    target_link_libraries(Sts1CobcSw_MftMorseTest PRIVATE rodos::rodos Sts1CobcSw_Periphery)
 endif()

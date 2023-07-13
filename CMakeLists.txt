@@ -37,6 +37,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_FileSystem OBJECT)
     add_library(Sts1CobcSw_Hal INTERFACE)
     add_program(CobcSw)
+
+    add_program(MftMorseTest)
 endif()
 
 # All targets must only add the top level project directory as PUBLIC include directory
