@@ -4,6 +4,8 @@
 #include <Sts1CobcSw/Periphery/RfNames.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <Tests/HardwareTests/Utility.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <span>
@@ -14,8 +16,11 @@ namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 using sts1cobcsw::serial::Byte;
+using std::literals::operator""sv;
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+
+auto callSign = "OE1XST"sv;
 std::string_view mountainFieldTestMessage = "OE1XST PORTABLE STS1 TEST";
 auto const * shortMessage = "Hello from STS1!";
 auto const * longMessage =
@@ -45,67 +50,70 @@ private:
 
     void run() override
     {
+        PRINTF("\nRF test\n\n");
+
         periphery::rf::Initialize(periphery::rf::TxType::morse);
-        PRINTF("Si4463 initialized\n");
-        PRINTF("Checking part info\n");
+        PRINTF("RF module initialized\n");
+
+        PRINTF("\n");
         auto correctPartInfo = 0x4463;
-        auto receivedPartInfo = periphery::rf::GetPartInfo();
-        if(receivedPartInfo == correctPartInfo)
-        {
-            PRINTF("Correct part info was returned\n");
-        }
-        else
-        {
-            PRINTF("Incorrect part info\n");
-        }
-        PRINTF("Entering transmission test loop\n");
+        auto partInfo = periphery::rf::GetPartInfo();
+        PRINTF("Part info: 0x%4x == 0x%4x\n", partInfo, correctPartInfo);
+        Check(partInfo == correctPartInfo);
 
         while(true)
         {
+            PRINTF("\n");
             PRINTF("What do you want to test?\n");
-            PRINTF("\tm: morsing\n");
-            PRINTF("\tt: transmiting a packet\n");
-            PRINTF("\tr: receiving\n");
-            auto readBuffer = std::array<char, 1>{0};
-            hal::ReadFrom(&uciUart, std::span<char, 1>(readBuffer));
-            auto nMorses = 5;
-            auto nTransmissions = 100;
+            PRINTF("  m: morsing\n");
+            PRINTF("  t: transmiting a packet\n");
+            PRINTF("  r: receiving\n");
+
+            auto command = std::array<char, 1>{0};
+            hal::ReadFrom(&uciUart, std::span(command));
+            PRINTF("\n");
+
             auto pauseDuration = 1 * RODOS::SECONDS;
-            switch(readBuffer[0])
+            switch(command[0])
             {
                 case 'm':
+                {
+                    auto nMorses = 5;
                     periphery::rf::SetTxType(periphery::rf::TxType::morse);
-
-                    PRINTF("Morsing %d times\n", nMorses);
+                    PRINTF("Morsing call sign 'OE1XST' %d times\n", nMorses);
                     for(auto i = 0; i < nMorses; ++i)
                     {
-                        PRINTF("Morsing...\n");
-                        periphery::rf::Morse(mountainFieldTestMessage);
+                        PRINTF("Morsing ...\n");
+                        periphery::rf::Morse(callSign);
                         RODOS::AT(RODOS::NOW() + pauseDuration);
                     }
-                    PRINTF("Morsing done\n");
                     break;
-
+                }
                 case 't':
+                {
+                    auto nTransmissions = 5;
                     periphery::rf::SetTxType(periphery::rf::TxType::packet);
-
+                    PRINTF("Transmitting call sign 'OE1XST' %d times\n", nTransmissions);
                     for(auto i = 0; i < nTransmissions; ++i)
                     {
                         RODOS::PRINTF("Transmitting...\n");
-                        periphery::rf::TransmitData((uint8_t *)(mountainFieldTestMessage.data()), mountainFieldTestMessage.length());
+                        periphery::rf::TransmitData(
+                            reinterpret_cast<std::uint8_t const *>(callSign.data()),
+                            callSign.length());
                         RODOS::AT(RODOS::NOW() + pauseDuration);
                     }
-
-                    RODOS::PRINTF("Packet done\n");
                     break;
-
+                }
                 case 'r':
+                {
                     PRINTF("Not implemented\n");
                     break;
-
+                }
                 default:
+                {
                     PRINTF("Unused character\n");
                     break;
+                }
             }
         }
     }

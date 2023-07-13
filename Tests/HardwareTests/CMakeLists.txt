@@ -31,7 +31,9 @@ add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PRIVATE rodos::rodos type_safe Sts1CobcSw_Hal)
 
 add_program(Rf Rf.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+target_link_libraries(
+    Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSwTests_Utility
+)
 
 add_program(RfSimple RfSimple.test.cpp)
 target_link_libraries(Sts1CobcSwTests_RfSimple PRIVATE rodos::rodos Sts1CobcSw_Periphery)
