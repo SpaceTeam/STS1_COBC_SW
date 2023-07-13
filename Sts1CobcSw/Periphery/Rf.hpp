@@ -29,7 +29,7 @@ auto Morse(std::string_view message) -> void;
 auto StartTx(std::uint16_t length) -> void;
 auto EnterPowerMode(PowerMode powerMode) -> void;
 auto TransmitTestData() -> void;
-auto TransmitData(std::uint8_t * data, std::size_t length) -> void;
+auto TransmitData(std::uint8_t const * data, std::size_t length) -> void;
 // TODO: This is a test implementation, receives 2 * 48 bytes
 auto ReceiveTestData() -> std::array<std::uint8_t, maxRxBytes>;
 

@@ -113,7 +113,7 @@ auto CharToMorseLetter(char c) -> std::uint8_t;
 template<std::size_t nResponseBytes>
 auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, nResponseBytes>;
 
-auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
+auto WriteFifo(std::uint8_t const * data, std::size_t length) -> void;
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
 template<std::size_t nProperties>
@@ -960,7 +960,7 @@ auto ReceiveTestData() -> std::array<std::uint8_t, maxRxBytes>
 
 // TODO: Rewrite using span instead of pointer + length
 // It could also be helpful to overload this and provide a version for string_view
-auto TransmitData(std::uint8_t * data, std::size_t length) -> void
+auto TransmitData(std::uint8_t const * data, std::size_t length) -> void
 {
     auto dataIndex = 0;
     ClearFifos();
@@ -1307,7 +1307,7 @@ auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, 
 
 
 // TODO: modernize (span instead of pointer + length, our communication abstraction, WaitOnCts())
-auto WriteFifo(std::uint8_t * data, std::size_t length) -> void
+auto WriteFifo(std::uint8_t const * data, std::size_t length) -> void
 {
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
