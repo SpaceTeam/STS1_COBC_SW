@@ -28,7 +28,7 @@ using sts1cobcsw::serial::Byte;
 
 // --- Globals ---
 
-constexpr auto maxMorseLetterLength = 5;
+constexpr auto maxMorseLetterLength = 5U;
 
 // Morse letters
 // If punctuation is left out, the max. length is 5 dots/dashes
@@ -36,42 +36,42 @@ constexpr auto maxMorseLetterLength = 5;
 // The rest for the dot/dash representation (dot ... 1, dash ...0)
 constexpr auto morseDot = 1;
 constexpr auto morseDash = 0;
-constexpr std::uint8_t morseA = (2 << maxMorseLetterLength) | 0b10;
-constexpr std::uint8_t morseB = (4 << maxMorseLetterLength) | 0b0111;
-constexpr std::uint8_t morseC = (4 << maxMorseLetterLength) | 0b0101;
-constexpr std::uint8_t morseD = (3 << maxMorseLetterLength) | 0b011;
-constexpr std::uint8_t morseE = (1 << maxMorseLetterLength) | 0b1;
-constexpr std::uint8_t morseF = (4 << maxMorseLetterLength) | 0b1101;
-constexpr std::uint8_t morseG = (3 << maxMorseLetterLength) | 0b001;
-constexpr std::uint8_t morseH = (4 << maxMorseLetterLength) | 0b1111;
-constexpr std::uint8_t morseI = (2 << maxMorseLetterLength) | 0b11;
-constexpr std::uint8_t morseJ = (4 << maxMorseLetterLength) | 0b1000;
-constexpr std::uint8_t morseK = (3 << maxMorseLetterLength) | 0b010;
-constexpr std::uint8_t morseL = (4 << maxMorseLetterLength) | 0b1011;
-constexpr std::uint8_t morseM = (2 << maxMorseLetterLength) | 0b00;
-constexpr std::uint8_t morseN = (2 << maxMorseLetterLength) | 0b01;
-constexpr std::uint8_t morseO = (3 << maxMorseLetterLength) | 0b000;
-constexpr std::uint8_t morseP = (4 << maxMorseLetterLength) | 0b1001;
-constexpr std::uint8_t morseQ = (4 << maxMorseLetterLength) | 0b0010;
-constexpr std::uint8_t morseR = (3 << maxMorseLetterLength) | 0b101;
-constexpr std::uint8_t morseS = (3 << maxMorseLetterLength) | 0b111;
-constexpr std::uint8_t morseT = (1 << maxMorseLetterLength) | 0b0;
-constexpr std::uint8_t morseU = (3 << maxMorseLetterLength) | 0b110;
-constexpr std::uint8_t morseV = (4 << maxMorseLetterLength) | 0b1110;
-constexpr std::uint8_t morseW = (3 << maxMorseLetterLength) | 0b100;
-constexpr std::uint8_t morseX = (4 << maxMorseLetterLength) | 0b0110;
-constexpr std::uint8_t morseY = (4 << maxMorseLetterLength) | 0b0100;
-constexpr std::uint8_t morseZ = (4 << maxMorseLetterLength) | 0b0011;
-constexpr std::uint8_t morse1 = (5 << maxMorseLetterLength) | 0b10000;
-constexpr std::uint8_t morse2 = (5 << maxMorseLetterLength) | 0b11000;
-constexpr std::uint8_t morse3 = (5 << maxMorseLetterLength) | 0b11100;
-constexpr std::uint8_t morse4 = (5 << maxMorseLetterLength) | 0b11110;
-constexpr std::uint8_t morse5 = (5 << maxMorseLetterLength) | 0b11111;
-constexpr std::uint8_t morse6 = (5 << maxMorseLetterLength) | 0b01111;
-constexpr std::uint8_t morse7 = (5 << maxMorseLetterLength) | 0b00111;
-constexpr std::uint8_t morse8 = (5 << maxMorseLetterLength) | 0b00011;
-constexpr std::uint8_t morse9 = (5 << maxMorseLetterLength) | 0b00001;
-constexpr std::uint8_t morse0 = (5 << maxMorseLetterLength) | 0b00000;
+constexpr std::uint8_t morseA = (2U << maxMorseLetterLength) | 0b10U;
+constexpr std::uint8_t morseB = (4U << maxMorseLetterLength) | 0b0111U;
+constexpr std::uint8_t morseC = (4U << maxMorseLetterLength) | 0b0101U;
+constexpr std::uint8_t morseD = (3U << maxMorseLetterLength) | 0b011U;
+constexpr std::uint8_t morseE = (1U << maxMorseLetterLength) | 0b1U;
+constexpr std::uint8_t morseF = (4U << maxMorseLetterLength) | 0b1101U;
+constexpr std::uint8_t morseG = (3U << maxMorseLetterLength) | 0b001U;
+constexpr std::uint8_t morseH = (4U << maxMorseLetterLength) | 0b1111U;
+constexpr std::uint8_t morseI = (2U << maxMorseLetterLength) | 0b11U;
+constexpr std::uint8_t morseJ = (4U << maxMorseLetterLength) | 0b1000U;
+constexpr std::uint8_t morseK = (3U << maxMorseLetterLength) | 0b010U;
+constexpr std::uint8_t morseL = (4U << maxMorseLetterLength) | 0b1011U;
+constexpr std::uint8_t morseM = (2U << maxMorseLetterLength) | 0b00U;
+constexpr std::uint8_t morseN = (2U << maxMorseLetterLength) | 0b01U;
+constexpr std::uint8_t morseO = (3U << maxMorseLetterLength) | 0b000U;
+constexpr std::uint8_t morseP = (4U << maxMorseLetterLength) | 0b1001U;
+constexpr std::uint8_t morseQ = (4U << maxMorseLetterLength) | 0b0010U;
+constexpr std::uint8_t morseR = (3U << maxMorseLetterLength) | 0b101U;
+constexpr std::uint8_t morseS = (3U << maxMorseLetterLength) | 0b111U;
+constexpr std::uint8_t morseT = (1U << maxMorseLetterLength) | 0b0U;
+constexpr std::uint8_t morseU = (3U << maxMorseLetterLength) | 0b110U;
+constexpr std::uint8_t morseV = (4U << maxMorseLetterLength) | 0b1110U;
+constexpr std::uint8_t morseW = (3U << maxMorseLetterLength) | 0b100U;
+constexpr std::uint8_t morseX = (4U << maxMorseLetterLength) | 0b0110U;
+constexpr std::uint8_t morseY = (4U << maxMorseLetterLength) | 0b0100U;
+constexpr std::uint8_t morseZ = (4U << maxMorseLetterLength) | 0b0011U;
+constexpr std::uint8_t morse1 = (5U << maxMorseLetterLength) | 0b10000U;
+constexpr std::uint8_t morse2 = (5U << maxMorseLetterLength) | 0b11000U;
+constexpr std::uint8_t morse3 = (5U << maxMorseLetterLength) | 0b11100U;
+constexpr std::uint8_t morse4 = (5U << maxMorseLetterLength) | 0b11110U;
+constexpr std::uint8_t morse5 = (5U << maxMorseLetterLength) | 0b11111U;
+constexpr std::uint8_t morse6 = (5U << maxMorseLetterLength) | 0b01111U;
+constexpr std::uint8_t morse7 = (5U << maxMorseLetterLength) | 0b00111U;
+constexpr std::uint8_t morse8 = (5U << maxMorseLetterLength) | 0b00011U;
+constexpr std::uint8_t morse9 = (5U << maxMorseLetterLength) | 0b00001U;
+constexpr std::uint8_t morse0 = (5U << maxMorseLetterLength) | 0b00000U;
 constexpr std::uint8_t morseSpace = 0;
 
 auto spi = RODOS::HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
@@ -106,7 +106,6 @@ constexpr auto morseWordOffTime = 7 * morseDotTime;
                                 std::size_t length,
                                 std::uint8_t * responseData,
                                 std::size_t responseLength) -> void;
-
 auto SendCommandNoResponse(std::span<Byte> commandBuffer) -> void;
 
 auto CharToMorseLetter(char c) -> std::uint8_t;
@@ -115,7 +114,6 @@ template<std::size_t nResponseBytes>
 auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, nResponseBytes>;
 
 auto WriteFifo(std::uint8_t * data, std::size_t length) -> void;
-
 auto ReadFifo(std::uint8_t * data, std::size_t length) -> void;
 
 template<std::size_t nProperties>
@@ -123,9 +121,7 @@ template<std::size_t nProperties>
 auto SetProperty(PropertyGroup propertyGroup,
                  Byte startProperty,
                  std::span<Byte, nProperties> propertyValues) -> void;
-
 auto WaitOnCts() -> void;
-
 auto ConfigureGpio(
     Byte gpio0, Byte gpio1, Byte gpio2, Byte gpio3, Byte nirq, Byte sdo, Byte genConfig) -> void;
 
