@@ -114,8 +114,8 @@ private:
 
                     [[maybe_unused]] auto resultInfo =
                         edu.ReturnResult({.programId = programId, .queueId = queueId});
-                    
-                    
+
+
                     break;
                 }
                 default:

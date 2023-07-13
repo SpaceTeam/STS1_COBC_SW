@@ -66,7 +66,8 @@ private:
             eduIsAliveBufferForPowerManagement.get(eduIsAlive);
 
 
-            if(epsBatteryIsGood)
+            // if(epsBatteryIsGood)
+            if(true)
             {
                 if(eduIsAlive)
                 {

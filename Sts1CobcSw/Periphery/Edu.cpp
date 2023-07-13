@@ -208,11 +208,12 @@ auto Edu::GetStatus() -> EduStatus
     if(sendDataError != EduErrorCode::success)
     {
         auto status = EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
-        RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
-        RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
-        RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
-        RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
-        RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
+        // RODOS::PRINTF("  SendingDataError");
+        // RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
+        // RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
+        // RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
+        // RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
+        // RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
         return status;
     }
 
@@ -419,11 +420,11 @@ auto Edu::ReturnResult(ReturnResultData const & data) -> ResultInfo
                   static_cast<int>(resultInfo.errorCode),
                   static_cast<int>(totalResultSize.get()));
     // END DEBUG
-    
+
     // TODO: This is a dummy implementation. Store the result instead.
     RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
     SendCommand(cmdAck);
-    
+
     return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
 }
 

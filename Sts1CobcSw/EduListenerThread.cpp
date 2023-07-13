@@ -104,7 +104,11 @@ private:
                         // Edu wants to send result file
                         // Send return result to Edu, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
-                        auto resultsInfo = edu.ReturnResult();
+                        RODOS::PRINTF("Call ro Return result with program id = %d, queueId = %d\n",
+                                      status.programId,
+                                      status.queueId);  // NOLINT
+                        auto resultsInfo = edu.ReturnResult(
+                            {.programId = status.programId, .queueId = status.queueId});
                         auto errorCode = resultsInfo.errorCode;
                         if(errorCode != periphery::EduErrorCode::success
                            and errorCode != periphery::EduErrorCode::successEof)

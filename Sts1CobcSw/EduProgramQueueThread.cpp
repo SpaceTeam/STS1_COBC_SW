@@ -61,6 +61,7 @@ private:
     void run() override
     {
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
+        utility::PrintSeconds();
         RODOS::PRINTF("Entering EduProgramQueueThread\n");
         utility::PrintFormattedSystemUtc();
         while(true)
@@ -82,6 +83,7 @@ private:
             auto startDelay = ComputeStartDelay();
             nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
 
+            utility::PrintSeconds();
             RODOS::PRINTF("Program at queue index %d will start in %" PRIi64 " s\n",
                           queueIndex,
                           startDelay / SECONDS);
@@ -89,8 +91,8 @@ private:
             AT(NOW() + startDelay - eduCommunicationDelay);
             // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
-            RODOS::PRINTF("Resuming here after first wait.\n");
-            utility::PrintFormattedSystemUtc();
+            // RODOS::PRINTF("Resuming here after first wait.\n");
+            // utility::PrintFormattedSystemUtc();
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
             auto errorCode = edu.UpdateTime(updateTimeData);
@@ -105,6 +107,7 @@ private:
             auto startDelay2 = ComputeStartDelay();
             nextProgramStartDelayTopic.publish(startDelay2 / RODOS::SECONDS);
 
+            utility::PrintSeconds();
             RODOS::PRINTF("Program at queue index %d will start in : %" PRIi64 " s\n",
                           queueIndex,
                           startDelay2 / RODOS::SECONDS);
@@ -112,7 +115,7 @@ private:
             RODOS::AT(NOW() + startDelay2);
 
             // Never reached
-            RODOS::PRINTF("Done suspending for the second time\n");
+            // RODOS::PRINTF("Done suspending for the second time\n");
 
             auto queueId = eduProgramQueue[queueIndex].queueId;
             auto programId = eduProgramQueue[queueIndex].programId;
@@ -139,12 +142,16 @@ private:
 
                 // Suspend Self for execution time
                 auto const executionTime = timeout.get() + eduCommunicationDelay;
+                utility::PrintSeconds();
                 RODOS::PRINTF("Suspending for execution time\n");
                 AT(NOW() + executionTime);
+                utility::PrintSeconds();
                 RODOS::PRINTF("Resuming from execution time\n");
                 utility::PrintFormattedSystemUtc();
 
                 // Loop EDU program queue
+                utility::PrintSeconds();
+                RODOS::PRINTF("\n\nUpdating queue entry for next iteration\n\n");
                 UpdateEduProgramQueueEntry(&eduProgramQueue[queueIndex]);
                 UpdateQueueIndex();
             }
@@ -173,6 +180,7 @@ public:
     auto handle() -> void override
     {
         eduProgramQueueThread.resume();
+        utility::PrintSeconds();
         RODOS::PRINTF("EduProgramQueueThread resumed from me\n");
     }
 } resumeEduProgramQueueThreadEvent;
