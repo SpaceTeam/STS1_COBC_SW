@@ -370,15 +370,15 @@ auto Edu::GetStatusCommunication() -> EduStatus
 }
 
 
-auto Edu::ReturnResult() -> ResultInfo
+auto Edu::ReturnResult(ReturnResultData const & data) -> ResultInfo
 {
     // DEBUG
     RODOS::PRINTF("ReturnResult()\n");
     // END DEBUG
 
     // Send command
-    auto serialCommand = serial::Serialize(returnResultId);
-    auto commandError = SendData(serialCommand);
+    auto serialData = serial::Serialize(data);
+    auto commandError = SendData(serialData);
     if(commandError != EduErrorCode::success)
     {
         return ResultInfo{.errorCode = commandError, .resultSize = 0U};
@@ -419,6 +419,11 @@ auto Edu::ReturnResult() -> ResultInfo
                   static_cast<int>(resultInfo.errorCode),
                   static_cast<int>(totalResultSize.get()));
     // END DEBUG
+    
+    // TODO: This is a dummy implementation. Store the result instead.
+    RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
+    SendCommand(cmdAck);
+    
     return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
 }
 

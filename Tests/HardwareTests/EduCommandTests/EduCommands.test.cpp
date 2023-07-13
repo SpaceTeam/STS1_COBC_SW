@@ -100,7 +100,22 @@ private:
                 }
                 case 'r':
                 {
-                    [[maybe_unused]] auto resultInfo = edu.ReturnResult();
+                    auto userInput = std::array<char, 3>{};
+
+                    PRINTF("Please enter a program ID (3 character)\n");
+                    hal::ReadFrom(&uciUart, std::span(userInput));
+                    std::uint16_t programId = 0;
+                    std::from_chars(begin(userInput), end(userInput), programId);
+
+                    PRINTF("Please enter a queue ID (3 character)\n");
+                    hal::ReadFrom(&uciUart, std::span(userInput));
+                    std::uint32_t queueId = 0;
+                    std::from_chars(begin(userInput), end(userInput), queueId);
+
+                    [[maybe_unused]] auto resultInfo =
+                        edu.ReturnResult({.programId = programId, .queueId = queueId});
+                    
+                    
                     break;
                 }
                 default:

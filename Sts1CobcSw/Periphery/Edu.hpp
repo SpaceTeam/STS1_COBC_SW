@@ -38,7 +38,7 @@ public:
     [[nodiscard]] auto StopProgram() -> EduErrorCode;
     // TODD: Find better name (or maybe even mechanism) for GetStatus
     [[nodiscard]] auto GetStatus() -> EduStatus;
-    [[nodiscard]] auto ReturnResult() -> ResultInfo;
+    [[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> ResultInfo;
     [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> EduErrorCode;
 
 private:

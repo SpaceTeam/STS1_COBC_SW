@@ -44,6 +44,14 @@ struct ExecuteProgramData
 };
 
 
+struct ReturnResultData
+{
+    static constexpr auto id = returnResultId;
+    std::uint16_t programId = 0U;
+    std::uint32_t queueId = 0U;
+};
+
+
 struct UpdateTimeData
 {
     static constexpr auto id = updateTimeId;
@@ -115,6 +123,12 @@ inline constexpr std::size_t serialSize<periphery::ExecuteProgramData> =
                     decltype(periphery::ExecuteProgramData::timeout)>;
 
 template<>
+inline constexpr std::size_t serialSize<periphery::ReturnResultData> =
+    totalSerialSize<decltype(periphery::ReturnResultData::id),
+                    decltype(periphery::ReturnResultData::programId),
+                    decltype(periphery::ReturnResultData::queueId)>;
+
+template<>
 inline constexpr std::size_t serialSize<periphery::UpdateTimeData> =
     totalSerialSize<decltype(periphery::UpdateTimeData::id),
                     decltype(periphery::UpdateTimeData::timestamp)>;
@@ -128,6 +142,7 @@ auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void 
 auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
 auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
 auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
+auto SerializeTo(void * destination, ReturnResultData const & data) -> void *;
 auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
 }
 }

@@ -51,6 +51,15 @@ auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *
 }
 
 
+auto SerializeTo(void * destination, ReturnResultData const & data) -> void *
+{
+    destination = SerializeTo(destination, ReturnResultData::id);
+    destination = SerializeTo(destination, data.programId);
+    destination = SerializeTo(destination, data.queueId);
+    return destination;
+}
+
+
 auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *
 {
     destination = SerializeTo(destination, UpdateTimeData::id);
