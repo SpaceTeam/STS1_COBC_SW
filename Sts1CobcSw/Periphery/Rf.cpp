@@ -13,6 +13,7 @@
 #include <climits>
 #include <cstdint>
 #include <span>
+#include <string_view>
 
 
 namespace sts1cobcsw::periphery::rf
@@ -26,6 +27,52 @@ using sts1cobcsw::serial::Byte;
 
 
 // --- Globals ---
+
+constexpr auto maxMorseLetterLength = 5;
+
+// Morse letters
+// If punctuation is left out, the max. length is 5 dots/dashes
+// Therefore we can use the first 3 bits of a uint8_t to store the length
+// The rest for the dot/dash representation (dot ... 1, dash ...0)
+constexpr auto morseDot = 1;
+constexpr auto morseDash = 0;
+constexpr std::uint8_t morseA = (2 << maxMorseLetterLength) | 0b10;
+constexpr std::uint8_t morseB = (4 << maxMorseLetterLength) | 0b0111;
+constexpr std::uint8_t morseC = (4 << maxMorseLetterLength) | 0b0101;
+constexpr std::uint8_t morseD = (3 << maxMorseLetterLength) | 0b011;
+constexpr std::uint8_t morseE = (1 << maxMorseLetterLength) | 0b1;
+constexpr std::uint8_t morseF = (4 << maxMorseLetterLength) | 0b1101;
+constexpr std::uint8_t morseG = (3 << maxMorseLetterLength) | 0b001;
+constexpr std::uint8_t morseH = (4 << maxMorseLetterLength) | 0b1111;
+constexpr std::uint8_t morseI = (2 << maxMorseLetterLength) | 0b11;
+constexpr std::uint8_t morseJ = (4 << maxMorseLetterLength) | 0b1000;
+constexpr std::uint8_t morseK = (3 << maxMorseLetterLength) | 0b010;
+constexpr std::uint8_t morseL = (4 << maxMorseLetterLength) | 0b1011;
+constexpr std::uint8_t morseM = (2 << maxMorseLetterLength) | 0b00;
+constexpr std::uint8_t morseN = (2 << maxMorseLetterLength) | 0b01;
+constexpr std::uint8_t morseO = (3 << maxMorseLetterLength) | 0b000;
+constexpr std::uint8_t morseP = (4 << maxMorseLetterLength) | 0b1001;
+constexpr std::uint8_t morseQ = (4 << maxMorseLetterLength) | 0b0010;
+constexpr std::uint8_t morseR = (3 << maxMorseLetterLength) | 0b101;
+constexpr std::uint8_t morseS = (3 << maxMorseLetterLength) | 0b111;
+constexpr std::uint8_t morseT = (1 << maxMorseLetterLength) | 0b0;
+constexpr std::uint8_t morseU = (3 << maxMorseLetterLength) | 0b110;
+constexpr std::uint8_t morseV = (4 << maxMorseLetterLength) | 0b1110;
+constexpr std::uint8_t morseW = (3 << maxMorseLetterLength) | 0b100;
+constexpr std::uint8_t morseX = (4 << maxMorseLetterLength) | 0b0110;
+constexpr std::uint8_t morseY = (4 << maxMorseLetterLength) | 0b0100;
+constexpr std::uint8_t morseZ = (4 << maxMorseLetterLength) | 0b0011;
+constexpr std::uint8_t morse1 = (5 << maxMorseLetterLength) | 0b10000;
+constexpr std::uint8_t morse2 = (5 << maxMorseLetterLength) | 0b11000;
+constexpr std::uint8_t morse3 = (5 << maxMorseLetterLength) | 0b11100;
+constexpr std::uint8_t morse4 = (5 << maxMorseLetterLength) | 0b11110;
+constexpr std::uint8_t morse5 = (5 << maxMorseLetterLength) | 0b11111;
+constexpr std::uint8_t morse6 = (5 << maxMorseLetterLength) | 0b01111;
+constexpr std::uint8_t morse7 = (5 << maxMorseLetterLength) | 0b00111;
+constexpr std::uint8_t morse8 = (5 << maxMorseLetterLength) | 0b00011;
+constexpr std::uint8_t morse9 = (5 << maxMorseLetterLength) | 0b00001;
+constexpr std::uint8_t morse0 = (5 << maxMorseLetterLength) | 0b00000;
+constexpr std::uint8_t morseSpace = 0;
 
 auto spi = RODOS::HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
@@ -44,6 +91,14 @@ constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 constexpr auto fifoAlmostFullThreshold = 48;              // RX FIFO
 constexpr auto fifoAlmostEmptyThreshold = 48;             // TX FIFO
 
+// Morse timings, derived from dot time, from
+// https://www.electronics-notes.com/articles/ham_radio/morse_code/characters-table-chart.php
+constexpr auto morseDotTime = 100 * RODOS::MILLISECONDS;
+constexpr auto morseDashTime = 3 * morseDotTime;
+constexpr auto morseBitOffTime = 1 * morseDotTime;
+constexpr auto morseLetterOffTime = 3 * morseDotTime;
+constexpr auto morseWordOffTime = 7 * morseDotTime;
+
 
 // --- Private function declarations ---
 
@@ -53,6 +108,8 @@ constexpr auto fifoAlmostEmptyThreshold = 48;             // TX FIFO
                                 std::size_t responseLength) -> void;
 
 auto SendCommandNoResponse(std::span<Byte> commandBuffer) -> void;
+
+auto CharToMorseLetter(char c) -> std::uint8_t;
 
 template<std::size_t nResponseBytes>
 auto SendCommandWithResponse(std::span<Byte> commandBuffer) -> std::array<Byte, nResponseBytes>;
@@ -621,6 +678,173 @@ auto Initialize(TxType txType) -> void
 }
 
 
+// TODO: there is etl::set, so might as well use it
+auto CharToMorseLetter(char c) -> std::uint8_t
+{
+    // If lowercase -> make uppercase
+    if(c >= 'a' and c <= 'z')
+    {
+        c -= 32;
+    }
+
+    switch(c)
+    {
+        case 'A':
+            return morseA;
+            break;
+
+        case 'B':
+            return morseB;
+            break;
+
+        case 'C':
+            return morseC;
+            break;
+
+        case 'D':
+            return morseD;
+            break;
+
+        case 'E':
+            return morseE;
+            break;
+
+        case 'F':
+            return morseF;
+            break;
+
+        case 'G':
+            return morseG;
+            break;
+
+        case 'H':
+            return morseH;
+            break;
+
+        case 'I':
+            return morseI;
+            break;
+
+        case 'J':
+            return morseJ;
+            break;
+
+        case 'K':
+            return morseK;
+            break;
+
+        case 'L':
+            return morseL;
+            break;
+
+        case 'M':
+            return morseM;
+            break;
+
+        case 'N':
+            return morseN;
+            break;
+
+        case 'O':
+            return morseO;
+            break;
+
+        case 'P':
+            return morseP;
+            break;
+
+        case 'Q':
+            return morseQ;
+            break;
+
+        case 'R':
+            return morseR;
+            break;
+
+        case 'S':
+            return morseS;
+            break;
+
+        case 'T':
+            return morseT;
+            break;
+
+        case 'U':
+            return morseU;
+            break;
+
+        case 'V':
+            return morseV;
+            break;
+
+        case 'W':
+            return morseW;
+            break;
+
+        case 'X':
+            return morseX;
+            break;
+
+        case 'Y':
+            return morseY;
+            break;
+
+        case 'Z':
+            return morseZ;
+            break;
+
+        case '1':
+            return morse1;
+            break;
+
+        case '2':
+            return morse2;
+            break;
+
+        case '3':
+            return morse3;
+            break;
+
+        case '4':
+            return morse4;
+            break;
+
+        case '5':
+            return morse5;
+            break;
+
+        case '6':
+            return morse6;
+            break;
+
+        case '7':
+            return morse7;
+            break;
+
+        case '8':
+            return morse8;
+            break;
+
+        case '9':
+            return morse9;
+            break;
+
+        case '0':
+            return morse0;
+            break;
+
+        case ' ':
+            return morseSpace;
+            break;
+
+        default:
+            RODOS::PRINTF("Invalid character\n");
+            return 0xFF;
+            break;
+    }
+}
+
+
 auto SetTxType(TxType txType) -> void
 {
     Byte modulationMode;
@@ -904,7 +1128,52 @@ auto TransmitTestData() -> void
 }
 
 
-auto Morse() -> void
+// TODO: Change TX Mode in Morse/Transmit function instead of test
+auto Morse(std::string_view message) -> void
+{
+    for(auto && c : message)
+    {
+        if(c == ' ')
+        {
+            AT(NOW() + morseWordOffTime);
+            continue;
+        }
+
+        auto morseLetter = CharToMorseLetter(c);
+        if(morseLetter == 0xFF)
+        {
+            continue;
+        }
+
+        auto letterLength = morseLetter >> maxMorseLetterLength;
+        for(auto i = letterLength; i > 0; i--)
+        {
+            auto bit = (morseLetter >> (i - 1)) & 1;
+            auto morseTime = (bit == morseDot ? morseDotTime : morseDashTime);
+
+            gpio0GpioPin.Reset();
+
+            ClearInterrupts();
+            StartTx(0);
+
+            gpio0GpioPin.Set();
+            AT(NOW() + morseTime);
+            gpio0GpioPin.Reset();
+
+            ClearInterrupts();
+            EnterPowerMode(PowerMode::standby);
+
+            if(i > 1)
+            {
+                AT(NOW() + morseBitOffTime);
+            }
+        }
+        AT(NOW() + morseLetterOffTime);
+    }
+}
+
+
+auto MorseTest() -> void
 {
     auto sendBuffer = std::array<std::uint8_t, 16>{};
     constexpr auto onTime = 500 * MILLISECONDS;

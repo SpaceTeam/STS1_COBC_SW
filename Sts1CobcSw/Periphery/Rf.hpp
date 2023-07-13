@@ -3,8 +3,10 @@
 #include <Sts1CobcSw/Periphery/RfNames.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <array>
 #include <cstdint>
 #include <span>
+#include <string_view>
 
 namespace sts1cobcsw::periphery::rf
 {
@@ -24,7 +26,9 @@ auto PartInfoIsCorrect() -> bool;
 
 auto GetPartInfo() -> std::uint16_t;
 
-auto Morse() -> void;
+auto MorseTest() -> void;
+
+auto Morse(std::string_view message) -> void;
 
 auto StartTx(std::uint16_t length) -> void;
 

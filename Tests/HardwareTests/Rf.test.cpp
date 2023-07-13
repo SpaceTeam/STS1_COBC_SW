@@ -7,7 +7,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <span>
-#include <string>
+#include <string_view>
 
 
 namespace sts1cobcsw
@@ -16,6 +16,7 @@ using RODOS::PRINTF;
 using sts1cobcsw::serial::Byte;
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+std::string_view mountainFieldTestMessage = "OE1XST PORTABLE STS1 TEST";
 auto const * shortMessage = "Hello from STS1!";
 auto const * longMessage =
     "STS1 says:\n"
@@ -79,7 +80,7 @@ private:
                     for(auto i = 0; i < nMorses; ++i)
                     {
                         PRINTF("Morsing...\n");
-                        periphery::rf::Morse();
+                        periphery::rf::Morse(mountainFieldTestMessage);
                         RODOS::AT(RODOS::NOW() + pauseDuration);
                     }
                     PRINTF("Morsing done\n");
@@ -91,7 +92,7 @@ private:
                     for(auto i = 0; i < nTransmissions; ++i)
                     {
                         RODOS::PRINTF("Transmitting...\n");
-                        periphery::rf::TransmitData((uint8_t *)(longMessage), strlen(longMessage));
+                        periphery::rf::TransmitData((uint8_t *)(mountainFieldTestMessage.data()), mountainFieldTestMessage.length());
                         RODOS::AT(RODOS::NOW() + pauseDuration);
                     }
 
