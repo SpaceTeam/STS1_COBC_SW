@@ -39,6 +39,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_program(CobcSw)
 
     add_program(MftMorseTest)
+    add_program(MftBeaconTest)
 endif()
 
 # All targets must only add the top level project directory as PUBLIC include directory

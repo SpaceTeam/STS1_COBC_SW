@@ -40,4 +40,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     target_sources(Sts1CobcSw_MftMorseTest PRIVATE MftMorseThread.cpp)
     target_link_libraries(Sts1CobcSw_MftMorseTest PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+
+    target_sources(Sts1CobcSw_MftBeaconTest PRIVATE MftBeaconThread.cpp)
+    target_link_libraries(
+        Sts1CobcSw_MftBeaconTest PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
+    )
 endif()
