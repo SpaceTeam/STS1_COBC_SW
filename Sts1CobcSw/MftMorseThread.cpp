@@ -6,12 +6,13 @@
 
 namespace sts1cobcsw
 {
-class MorseThread : public RODOS::StaticThread<>
+class MftMorseThread : public RODOS::StaticThread<>
 {
 public:
-    MorseThread() : StaticThread("MorseThread")
+    MftMorseThread() : StaticThread("MftMorseThread")
     {
     }
+
 
 private:
     void init() override
@@ -32,5 +33,5 @@ private:
             RODOS::AT(RODOS::NOW() + 2 * RODOS::SECONDS);
         }
     }
-} morseThread;
+} mftMorseThread;
 }

@@ -38,6 +38,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                                   Sts1CobcSw_Periphery
     )
 
-    target_sources(Sts1CobcSw_MftMorseTest PRIVATE MorseThread.cpp)
+    target_sources(Sts1CobcSw_MftMorseTest PRIVATE MftMorseThread.cpp)
     target_link_libraries(Sts1CobcSw_MftMorseTest PRIVATE rodos::rodos Sts1CobcSw_Periphery)
 endif()
