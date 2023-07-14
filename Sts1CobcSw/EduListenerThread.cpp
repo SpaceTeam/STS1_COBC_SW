@@ -104,7 +104,7 @@ private:
                         // Edu wants to send result file
                         // Send return result to Edu, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
-                        RODOS::PRINTF("Call ro Return result with program id = %d, queueId = %d\n",
+                        RODOS::PRINTF("Call to Return result with program id = %d, queueId = %d\n",
                                       status.programId,
                                       status.queueId);  // NOLINT
                         auto resultsInfo = edu.ReturnResult(
