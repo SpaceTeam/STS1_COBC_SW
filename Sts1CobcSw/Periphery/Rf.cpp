@@ -1005,16 +1005,37 @@ auto TransmitData(std::uint8_t const * data, std::size_t length) -> void
     }
 
     // Now enable the packet sent interrupt
-    auto interruptPropertyValues = std::to_array<Byte, 1>({0b00100000_b});
-    SetProperty<1>(PropertyGroup::intCtl, 0x01_b, std::span<Byte, 1>(interruptPropertyValues));
+    // auto interruptPropertyValues = std::to_array<Byte, 1>({0b00100000_b});
+    // SetProperty<1>(PropertyGroup::intCtl, 0x01_b, std::span<Byte, 1>(interruptPropertyValues));
+
+    // Enable Packet Sent Interrupt
+    std::uint8_t sendBuffer[10];
+    sendBuffer[0] = 0x11;
+    sendBuffer[1] = 0x01;
+    sendBuffer[2] = 0x01;
+    sendBuffer[3] = 0x01;
+    sendBuffer[4] = 0b00100000;
+    SendCommand(sendBuffer, 5, nullptr, 0);
+
     ClearInterrupts();
+
     // Write the rest of the data
     WriteFifo(data + dataIndex, length - dataIndex);
-    // Wait for packet sent interrupt
+
+    StartTx(0);
+
+    auto startTime = RODOS::NOW();
+
+    // Wait for Packet Sent Interrupt
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
+        if(RODOS::NOW() - startTime > 1 * RODOS::SECONDS)
+        {
+            break;
+        }
         RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
     }
+
     EnterPowerMode(PowerMode::standby);
 }
 

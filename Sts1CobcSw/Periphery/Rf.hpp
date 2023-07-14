@@ -8,12 +8,17 @@
 #include <span>
 #include <string_view>
 
+
 namespace sts1cobcsw::periphery::rf
 {
-
 using sts1cobcsw::serial::Byte;
+using std::literals::operator""sv;
 
-// Must be called once in a thread's init() function
+
+inline constexpr auto callSign = "OE1XST"sv;
+
+
+// FIXME: Does not work in a threads init() function. Don't know why.
 auto Initialize(TxType txType) -> void;
 auto InitializeGpioAndSpi() -> void;
 auto PowerUp(PowerUpBootOptions bootOptions,
