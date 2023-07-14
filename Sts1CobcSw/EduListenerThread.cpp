@@ -143,6 +143,25 @@ private:
                         // here and the status is actually never updated in the ring buffer.
                         eduProgramStatusHistoryEntry.status =
                             EduProgramStatus::resultFileTransfered;
+
+                        // Only for MFT
+                        RODOS::PRINTF("\n");
+                        RODOS::PRINTF("Sending call sign ...\n");
+                        periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(
+                                                        periphery::rf::portableCallSign.data()),
+                                                    periphery::rf::portableCallSign.size());
+
+                        RODOS::PRINTF("Sending 'test' ...\n");
+                        std::uint8_t testMessage[] = "test";
+                        periphery::rf::TransmitData(&testMessage[0], std::size(testMessage));
+
+                        RODOS::PRINTF("Sending result file ...\n");
+                        periphery::rf::TransmitData(
+                            reinterpret_cast<std::uint8_t const *>(periphery::cepDataBuffer.data()),
+                            resultsInfo.resultSize.get());
+                        RODOS::PRINTF("  Done\n");
+                        RODOS::PRINTF("\n");
+
                         break;
                     }
                     case periphery::EduStatusType::invalid:
