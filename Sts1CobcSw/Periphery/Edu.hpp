@@ -20,6 +20,12 @@ namespace sts1cobcsw::periphery
 using sts1cobcsw::serial::Byte;
 
 
+// Max. length of a single data packet
+inline constexpr auto maxDataLength = 32768;
+// Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
+extern std::array<Byte, maxDataLength> cepDataBuffer;
+
+
 // TODO: Think about const-correctness and whether to make uart_ mutable or not
 //
 // TODO: There is no reason for this to be a class (there is no class invariant), so this being a

@@ -46,10 +46,8 @@ constexpr auto garbageBufferSize = 128;
 constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
 constexpr auto maxNPackets = 100_usize;
-// Max. length of a single data packet
-constexpr auto maxDataLength = 32768;
 // Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
-auto cepDataBuffer = std::array<Byte, maxDataLength>{};
+std::array<Byte, maxDataLength> cepDataBuffer{};
 
 
 auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
