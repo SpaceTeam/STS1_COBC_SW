@@ -14,23 +14,24 @@
 
 namespace sts1cobcsw
 {
+using periphery::rf::portableCallSign;
 using RODOS::PRINTF;
 using sts1cobcsw::serial::Byte;
-using std::literals::operator""sv;
+
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+auto veryLongString = std::string_view(
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789 "
+    "123456789 123456789 123456789 123456789 123456789!");
 
-auto callSign = "OE1XST"sv;
-std::string_view mountainFieldTestMessage = "OE1XST PORTABLE STS1 TEST";
-auto const * shortMessage = "Hello from STS1!";
-auto const * longMessage =
-    "STS1 says:\n"
-    "Westbahnhof Mariahilfer Strasse, Umsteigen zu den Linien U3, 52 und 58, sowie zum "
-    "Flughafenbus.\n"
-    "Ja ja ja ja, U3, am Start, U3 Supermarkt, U3, am Start, U3 Supermarkt, U3 am Start, U3 "
-    "Supermarkt, U3 am Start, U3 Supermarkt.\n"
-    "Ich bin beim U3 Supermarkt, weil heut ist schon wieder Sonntag. Ich kauf ein Club Mate ein, "
-    "oder vielleicht 2, oder vielleicht auch 3, ja.\n";
 
 class RfTest : public RODOS::StaticThread<>
 {
@@ -39,10 +40,10 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
-        PRINTF("Hello RfTest\n");
         constexpr auto uartBaudRate = 115200;
         uciUart.init(uartBaudRate);
     }
@@ -78,13 +79,14 @@ private:
             {
                 case 'm':
                 {
-                    auto nMorses = 5;
+                    auto nMorses = 3;
                     periphery::rf::SetTxType(periphery::rf::TxType::morse);
-                    PRINTF("Morsing call sign 'OE1XST' %d times\n", nMorses);
+                    PRINTF("Morsing call %d times\n", nMorses);
                     for(auto i = 0; i < nMorses; ++i)
                     {
                         PRINTF("Morsing ...\n");
-                        periphery::rf::Morse(callSign);
+                        periphery::rf::Morse(periphery::rf::portableCallSign);
+                        periphery::rf::Morse(" test");
                         RODOS::AT(RODOS::NOW() + pauseDuration);
                     }
                     break;
@@ -98,8 +100,12 @@ private:
                     {
                         RODOS::PRINTF("Transmitting...\n");
                         periphery::rf::TransmitData(
-                            reinterpret_cast<std::uint8_t const *>(callSign.data()),
-                            callSign.length());
+                            reinterpret_cast<std::uint8_t const *>(portableCallSign.data()),
+                            portableCallSign.length());
+                        RODOS::AT(RODOS::NOW() + 100 * RODOS::MILLISECONDS);
+                        periphery::rf::TransmitData(
+                            reinterpret_cast<std::uint8_t const *>(veryLongString.data()),
+                            veryLongString.length());
                         RODOS::AT(RODOS::NOW() + pauseDuration);
                     }
                     break;

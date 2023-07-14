@@ -16,6 +16,7 @@ using std::literals::operator""sv;
 
 
 inline constexpr auto callSign = "OE1XST"sv;
+inline constexpr auto portableCallSign = "OE1XST portable"sv;
 
 
 // FIXME: Does not work in a threads init() function. Don't know why.
