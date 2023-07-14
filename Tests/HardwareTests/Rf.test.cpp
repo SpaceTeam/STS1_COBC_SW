@@ -67,7 +67,7 @@ private:
             PRINTF("\n");
             PRINTF("What do you want to test?\n");
             PRINTF("  m: morsing\n");
-            PRINTF("  t: transmiting a packet\n");
+            PRINTF("  t: transmitting a packet\n");
             PRINTF("  r: receiving\n");
 
             auto command = std::array<char, 1>{0};

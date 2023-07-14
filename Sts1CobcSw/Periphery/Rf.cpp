@@ -88,8 +88,8 @@ auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogResetPin);
 constexpr std::uint16_t partInfo = 0x4463;
 constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 
-constexpr auto fifoAlmostFullThreshold = 48;              // RX FIFO
-constexpr auto fifoAlmostEmptyThreshold = 48;             // TX FIFO
+constexpr auto fifoAlmostFullThreshold = 48;   // RX FIFO
+constexpr auto fifoAlmostEmptyThreshold = 48;  // TX FIFO
 
 // Morse timings, derived from dot time, from
 // https://www.electronics-notes.com/articles/ham_radio/morse_code/characters-table-chart.php
@@ -278,14 +278,14 @@ auto Initialize(TxType txType) -> void
     sendBuffer[1] = 0x12;
     sendBuffer[2] = 0x0C;
     sendBuffer[3] = 0x08;
-    sendBuffer[4] = 0x60;   // PKT_LEN: Infinite receive, big endian (MSB first)
-    sendBuffer[5] = 0x00;   // PKT_LEN_FIELD_SOURCE
-    sendBuffer[6] = 0x00;   // PKT_LEN_ADJUST
-    sendBuffer[7] = 0x30;   // PKT_TX_THRESHOLD: Trigger TX FiFo almost empty interrupt when 0x30
-                            // bytes in FiFo (size 0x40) are empty
-    sendBuffer[8] = 0x30;   // PKT_RX_THRESHOLD: Trigger RX FiFo almost full interrupt when 0x30
-                            // bytes in FiFo (size 0x40) are full
-    sendBuffer[9] = 0x00;   // PKT_FIELD_1_LENGTH
+    sendBuffer[4] = 0x60;  // PKT_LEN: Infinite receive, big endian (MSB first)
+    sendBuffer[5] = 0x00;  // PKT_LEN_FIELD_SOURCE
+    sendBuffer[6] = 0x00;  // PKT_LEN_ADJUST
+    sendBuffer[7] = 0x30;  // PKT_TX_THRESHOLD: Trigger TX FiFo almost empty interrupt when 0x30
+                           // bytes in FiFo (size 0x40) are empty
+    sendBuffer[8] = 0x30;  // PKT_RX_THRESHOLD: Trigger RX FiFo almost full interrupt when 0x30
+                           // bytes in FiFo (size 0x40) are full
+    sendBuffer[9] = 0x00;  // PKT_FIELD_1_LENGTH
     sendBuffer[10] = 0x00;
     sendBuffer[11] = 0x04;  // PKT_FIELD_1_CONFIG
     sendBuffer[12] = 0x80;  // PKT_FIELD_1_CRC_CONFIG
@@ -299,12 +299,12 @@ auto Initialize(TxType txType) -> void
     sendBuffer[1] = 0x12;
     sendBuffer[2] = 0x0C;
     sendBuffer[3] = 0x14;
-    sendBuffer[4] = 0x00;   // PKT_FIELD_2_CRC_CONFIG
-    sendBuffer[5] = 0x00;   // PKT_FIELD_3_LENGTH
+    sendBuffer[4] = 0x00;  // PKT_FIELD_2_CRC_CONFIG
+    sendBuffer[5] = 0x00;  // PKT_FIELD_3_LENGTH
     sendBuffer[6] = 0x00;
-    sendBuffer[7] = 0x00;   // PKT_FIELD_3_CONFIG
-    sendBuffer[8] = 0x00;   // PKT_FIELD_3_CRC_CONFIG
-    sendBuffer[9] = 0x00;   // PKT_FIELD_4_LENGTH
+    sendBuffer[7] = 0x00;  // PKT_FIELD_3_CONFIG
+    sendBuffer[8] = 0x00;  // PKT_FIELD_3_CRC_CONFIG
+    sendBuffer[9] = 0x00;  // PKT_FIELD_4_LENGTH
     sendBuffer[10] = 0x00;
     sendBuffer[11] = 0x00;  // PKT_FIELD_4_CONFIG
     sendBuffer[12] = 0x00;  // PKT_FIELD_4_CRC_CONFIG
@@ -318,12 +318,12 @@ auto Initialize(TxType txType) -> void
     sendBuffer[1] = 0x12;
     sendBuffer[2] = 0x0C;
     sendBuffer[3] = 0x20;
-    sendBuffer[4] = 0x00;   // PKT_FIELD_5_CRC_CONFIG
-    sendBuffer[5] = 0x00;   // PKT_RX_FIELD_1_LENGTH
+    sendBuffer[4] = 0x00;  // PKT_FIELD_5_CRC_CONFIG
+    sendBuffer[5] = 0x00;  // PKT_RX_FIELD_1_LENGTH
     sendBuffer[6] = 0x00;
-    sendBuffer[7] = 0x00;   // PKT_RX_FIELD_1_CONFIG
-    sendBuffer[8] = 0x00;   // PKT_RX_FIELD_1_CRC_CONFIG
-    sendBuffer[9] = 0x00;   // PKT_RX_FIELD_2_LENGTH
+    sendBuffer[7] = 0x00;  // PKT_RX_FIELD_1_CONFIG
+    sendBuffer[8] = 0x00;  // PKT_RX_FIELD_1_CRC_CONFIG
+    sendBuffer[9] = 0x00;  // PKT_RX_FIELD_2_LENGTH
     sendBuffer[10] = 0x00;
     sendBuffer[11] = 0x00;  // PKT_RX_FIELD_2_CONFIG
     sendBuffer[12] = 0x00;  // PKT_RX_FIELD_2_CRC_CONFIG
@@ -337,12 +337,12 @@ auto Initialize(TxType txType) -> void
     sendBuffer[1] = 0x12;
     sendBuffer[2] = 0x09;
     sendBuffer[3] = 0x2C;
-    sendBuffer[4] = 0x00;   // PKT_RX_FIELD_3_CRC_CONFIG
-    sendBuffer[5] = 0x00;   // PKT_RX_FIELD_4_LENGTH
+    sendBuffer[4] = 0x00;  // PKT_RX_FIELD_3_CRC_CONFIG
+    sendBuffer[5] = 0x00;  // PKT_RX_FIELD_4_LENGTH
     sendBuffer[6] = 0x00;
-    sendBuffer[7] = 0x00;   // PKT_RX_FIELD_4_CONFIG
-    sendBuffer[8] = 0x00;   // PKT_RX_FIELD_4_CRC_CONFIG
-    sendBuffer[9] = 0x00;   // PKT_RX_FIELD_5_LENGTH
+    sendBuffer[7] = 0x00;  // PKT_RX_FIELD_4_CONFIG
+    sendBuffer[8] = 0x00;  // PKT_RX_FIELD_4_CRC_CONFIG
+    sendBuffer[9] = 0x00;  // PKT_RX_FIELD_5_LENGTH
     sendBuffer[10] = 0x00;
     sendBuffer[11] = 0x00;  // PKT_RX_FIELD_5_CONFIG
     sendBuffer[12] = 0x00;  // PKT_RX_FIELD_5_CRC_CONFIG
@@ -375,7 +375,7 @@ auto Initialize(TxType txType) -> void
     sendBuffer[6] = 0x08;  // MODEM_IF_CONTROL: No ETSI mode, fixed IF mode,
                            // normal IF mode (nonzero IF)
     sendBuffer[7] = 0x03;  // MODEM_IF_FREQ: IF = (2^19 * outdiv * IF_Freq_Hz)/(npresc * freq_xo) =
-                           // (2^19 * 8 * xxx)/(2 * 26000000) = 0x03C000 (defaullt value)
+                           // (2^19 * 8 * xxx)/(2 * 26000000) = 0x03C000 (default value)
                            // TODO: Is it important what we chose here?
     sendBuffer[8] = 0xC0;
     sendBuffer[9] = 0x00;
@@ -402,7 +402,7 @@ auto Initialize(TxType txType) -> void
                            // 0x00A7C6/64 = 42950/64 = 671.09375
     sendBuffer[7] = 0xA7;
     sendBuffer[8] = 0xC6;
-    sendBuffer[9] = 0x00;   // MODEM_BCR_GAIN: BCR gain 0x054 = 84
+    sendBuffer[9] = 0x00;  // MODEM_BCR_GAIN: BCR gain 0x054 = 84
     sendBuffer[10] = 0x54;
     sendBuffer[11] = 0x02;  // MODEM_BCR_GEAR: BCR loop gear control. CRSLOW=2, CRFAST=0
     sendBuffer[12] = 0xC2;  // MODEM_BCR_MISC1: Stop NCO for one sample clock in BCR mid-point phase
@@ -429,7 +429,7 @@ auto Initialize(TxType txType) -> void
     sendBuffer[9] = 0xAF;
     sendBuffer[10] =
         0x80;  // MODEM_AFC_MISC: Expected freq error is less then 12*symbol rate, AFC correction of
-               // PLL will be frozen if a consecutive string of 1s or 0s that exceed the serach
+               // PLL will be frozen if a consecutive string of 1s or 0s that exceed the search
                // period is encountered, don't switch clock source for frequency estimator, don't
                // freeze AFC at preamble end, AFC correction uses freq estimation by moving average
                // or minmax detector in async demod,disable AFC value feedback to PLL, freeze AFC
@@ -456,14 +456,14 @@ auto Initialize(TxType txType) -> void
     sendBuffer[1] = 0x20;
     sendBuffer[2] = 0x09;
     sendBuffer[3] = 0x38;
-    sendBuffer[4] = 0x11;   // MODEM_AGC_WINDOW_SIZE: AGC gain settling window size = 1, AGC signal
-                            // level measurement window = 1
-    sendBuffer[5] = 0xAB;   // MODEM_AGC_RFPD_DECAY: RF peak detector decay time = 0xAB = 171
-    sendBuffer[6] = 0xAB;   // MODEM_AGC_IFPD_DECAY: IF peak detector decay time = 0xAB = 171
-    sendBuffer[7] = 0x00;   // MODEM_FSK4_GAIN1: 4FSK Gain1 = 0,
-                            // Normal second phase compensation factor
-    sendBuffer[8] = 0x02;   // MODEM_FSK4_GAIN0: 4FSK Gain0 = 2, disable 2FSK phase compensation
-    sendBuffer[9] = 0xFF;   // MODEM_FSK4_TH: 4FSK slicer threshold = 0xFFFF
+    sendBuffer[4] = 0x11;  // MODEM_AGC_WINDOW_SIZE: AGC gain settling window size = 1, AGC signal
+                           // level measurement window = 1
+    sendBuffer[5] = 0xAB;  // MODEM_AGC_RFPD_DECAY: RF peak detector decay time = 0xAB = 171
+    sendBuffer[6] = 0xAB;  // MODEM_AGC_IFPD_DECAY: IF peak detector decay time = 0xAB = 171
+    sendBuffer[7] = 0x00;  // MODEM_FSK4_GAIN1: 4FSK Gain1 = 0,
+                           // Normal second phase compensation factor
+    sendBuffer[8] = 0x02;  // MODEM_FSK4_GAIN0: 4FSK Gain0 = 2, disable 2FSK phase compensation
+    sendBuffer[9] = 0xFF;  // MODEM_FSK4_TH: 4FSK slicer threshold = 0xFFFF
     sendBuffer[10] = 0xFF;
     sendBuffer[11] = 0x00;  // MODEM_FSK4_MAP: 4FSK symbol map 0 (`00 `01 `11 `10)
     sendBuffer[12] = 0x2B;  // MODEM_OOK_PDTC: OOK decay = 11, OOK attack = 2
@@ -479,12 +479,12 @@ auto Initialize(TxType txType) -> void
         0xA4;  // MODEM_OOK_CNT1: OOK Squelch off, OOK slicer output de-glitching by bit clock, raw
                // output is synced to clock, MA_FREQUDOWN=0, AGC and OOK movign average detector
                // threshold will be frozen after preamble detection, S2P_MAP=2
-    sendBuffer[5] = 0x02;   // MODEM_OOK_MISC: OOK uses moving average detector, OOK peak detector
-                            // discharge does not affect decay rate, disable OOK squelch, always
-                            // discharge peak detector, normal moving average window
-    sendBuffer[6] = 0xD6;   // ??
-    sendBuffer[7] = 0x83;   // MODEM_RAW_CONTROL
-    sendBuffer[8] = 0x00;   // MODEM_RAW_EYE: RAW eye open detector threshold
+    sendBuffer[5] = 0x02;  // MODEM_OOK_MISC: OOK uses moving average detector, OOK peak detector
+                           // discharge does not affect decay rate, disable OOK squelch, always
+                           // discharge peak detector, normal moving average window
+    sendBuffer[6] = 0xD6;  // ??
+    sendBuffer[7] = 0x83;  // MODEM_RAW_CONTROL
+    sendBuffer[8] = 0x00;  // MODEM_RAW_EYE: RAW eye open detector threshold
     sendBuffer[9] = 0xAD;
     sendBuffer[10] = 0x01;  // MODEM_ANT_DIV_MODE: Antenna diversity mode
     sendBuffer[11] = 0x80;  // MODEM_ANT_DIV_CONTROL: Antenna diversity control
