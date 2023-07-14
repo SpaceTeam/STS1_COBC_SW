@@ -8,6 +8,7 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
+#include <Sts1CobcSw/Periphery/Rf.hpp>  // Only for MFT
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <type_safe/narrow_cast.hpp>
@@ -42,6 +43,11 @@ private:
 
     void run() override
     {
+        // Only for MFT
+        RODOS::PRINTF("Initialize RF module\n");
+        periphery::rf::Initialize(periphery::rf::TxType::packet);
+
+
         TIME_LOOP(0, timeLoopPeriod)
         {
             // RODOS::PRINTF("[EduListenerThread] Start of TimeLoop Iteration\n");
@@ -51,7 +57,7 @@ private:
             eduIsAliveBufferForListener.get(eduIsAlive);
             // RODOS::PRINTF("[EduListenerThread] Read eduHasUpdate pin\n");
 
-            // TODO: Check if edu is alive
+            // TODO: Check if EDU is alive
             if(eduIsAlive and eduHasUpdate)
             {
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
@@ -82,7 +88,7 @@ private:
                     case periphery::EduStatusType::programFinished:
                     {
                         // Program has finished
-                        // Find the correspongind queueEntry and update it, then resume edu queue
+                        // Find the correspongind queueEntry and update it, then resume EDU queue
                         // thread
                         auto eduProgramStatusHistoryEntry =
                             FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
