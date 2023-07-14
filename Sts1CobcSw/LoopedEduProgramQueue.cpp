@@ -13,47 +13,50 @@ using ts::operator""_i16;
 using ts::operator""_i32;
 // NOLINTEND(misc-unused-using-decls)
 
-constexpr auto initialProgramDelay = 25_i32;  // s;should be > eduBootTime
-constexpr auto eduProgramQueuePeriod = 45;    // s
 
-constexpr auto sensorProgramId = 1_u16;
+constexpr auto initialProgramDelay = 25_i32;  // s, should be > eduBootTime
+constexpr auto eduProgramQueuePeriod = 30;    // s
+
+constexpr auto testProgramId = 1_u16;
+constexpr auto initialTestProgramQueueId = 0U;
+constexpr auto testProgramStartTimeOffset = 0;  // s
+constexpr auto testProgramTimeout = 5_i16;      // s
+
+constexpr auto sensorProgramId = 2_u16;
 constexpr auto initialSensorProgramQueueId = 1U;
-constexpr auto sensorProgramStartTimeOffset = 0_i32;  // s
-constexpr auto sensorProgramTimeout = 6_i16;          // s
-
-constexpr auto fotoProgramId = 2_u16;
-constexpr auto initialFotoProgramQueueId = 1U;
-constexpr auto fotoProgramStartTimeOffset = 15;  // s
-constexpr auto fotoProgramTimeout = 5_i16;       // s
+constexpr auto sensorProgramStartTimeOffset = 15_i32;  // s
+constexpr auto sensorProgramTimeout = 6_i16;           // s
 
 constexpr ts::int32_t rodosUnixOffsetSeconds =
     static_cast<int32_t>(utility::rodosUnixOffset / RODOS::SECONDS);
 
+
 // Can be useful for tests
 auto InitializeEduProgramQueue() -> void
 {
+    eduProgramQueue.clear();
+
+    eduProgramQueue.push_back(
+        {.programId = testProgramId,
+         .queueId = initialTestProgramQueueId,
+         .startTime = initialProgramDelay + testProgramStartTimeOffset + rodosUnixOffsetSeconds,
+         .timeout = testProgramTimeout});
+
     eduProgramQueue.push_back(
         {.programId = sensorProgramId,
          .queueId = initialSensorProgramQueueId,
          .startTime = initialProgramDelay + sensorProgramStartTimeOffset + rodosUnixOffsetSeconds,
          .timeout = sensorProgramTimeout});
-
-    eduProgramQueue.push_back(
-        {.programId = fotoProgramId,
-         .queueId = initialFotoProgramQueueId,
-         .startTime = initialProgramDelay + fotoProgramStartTimeOffset + rodosUnixOffsetSeconds,
-         .timeout = fotoProgramTimeout});
 }
 
 
 auto UpdateEduProgramQueueEntry(EduQueueEntry * entry) -> void
 {
     entry->startTime += eduProgramQueuePeriod;
-
-    // if(entry->programId == fotoProgramId)
-    // {
-    //     entry->queueId++;
-    // }
+    if(entry->programId == sensorProgramId)
+    {
+        entry->queueId++;
+    }
 }
 
 

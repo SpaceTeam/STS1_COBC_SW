@@ -45,4 +45,21 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_link_libraries(
         Sts1CobcSw_MftBeaconTest PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
     )
+
+    target_sources(
+        Sts1CobcSw_MftEduTest
+        PRIVATE EduCommunicationErrorThread.cpp
+                EduHeartbeatThread.cpp
+                EduListenerThread.cpp
+                EduPowerManagementThread.cpp
+                EduProgramQueue.cpp
+                EduProgramQueueThread.cpp
+                EduProgramStatusHistory.cpp
+                LoopedEduProgramQueue.cpp
+                TopicsAndSubscribers.cpp
+    )
+    target_link_libraries(
+        Sts1CobcSw_MftEduTest PRIVATE etl::etl rodos::rodos type_safe Sts1CobcSw_Hal
+                                      Sts1CobcSw_Utility Sts1CobcSw_Periphery
+    )
 endif()
