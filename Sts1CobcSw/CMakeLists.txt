@@ -22,7 +22,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     # if(FALSE)
     target_sources(
         Sts1CobcSw_CobcSw
-        PRIVATE CommandParserThread.cpp
+        PRIVATE CommandParser.cpp
+                CommandParserThread.cpp
                 EduHeartbeatThread.cpp
                 EduPowerManagementThread.cpp
                 EduProgramQueue.cpp

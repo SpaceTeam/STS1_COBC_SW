@@ -11,6 +11,7 @@
 
 namespace ts = type_safe;
 
+// NOLINTBEGIN(misc-unused-using-decls)
 using ts::operator""_i8;
 using ts::operator""_u8;
 using ts::operator""_i16;
@@ -19,6 +20,7 @@ using ts::operator""_i32;
 using ts::operator""_u32;
 using ts::operator""_i64;
 using ts::operator""_u64;
+// NOLINTEND(misc-unused-using-decls)
 
 using sts1cobcsw::serial::Byte;
 using sts1cobcsw::serial::operator""_b;
@@ -195,7 +197,7 @@ TEST_CASE("(De-)Serialize user-defined types")
     REQUIRE(int(sBuffer[4]) == 0x34);
     REQUIRE(int(sBuffer[5]) == 0x12);
 
-    auto s = Deserialize<S>(sBuffer);
+    auto s = Deserialize<S>(sBuffer);  // NOLINT(readability-identifier-length)
     REQUIRE(s.u16.get() == 0xABCD);
     REQUIRE(s.i32.get() == 0x12345678);
 }

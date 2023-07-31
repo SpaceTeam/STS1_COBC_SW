@@ -1,7 +1,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
-#include <type_safe/types.hpp>
+#include <etl/vector.h>
 
 
 namespace sts1cobcsw
@@ -16,6 +16,7 @@ enum CommandId : char
     turnEduOff = '2',
     buildQueue = '4',
 };
+
 
 struct GsCommandHeader
 {
@@ -36,7 +37,15 @@ inline constexpr std::size_t serialSize<GsCommandHeader> =
                     decltype(GsCommandHeader::length)>;
 }
 
+inline constexpr std::size_t commandSize = 30;
 
+
+auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;
+auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void;
+auto BuildEduQueue(std::span<Byte const> commandData) -> void;
+
+
+// TODO: Turn into noninline function
 inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->startCharacter));
