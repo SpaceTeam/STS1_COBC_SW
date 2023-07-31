@@ -15,12 +15,20 @@ std::uint32_t printfMask = 0;
 namespace sts1cobcsw
 {
 using serial::Byte;
+using serial::operator""_b;
+
 
 periphery::Edu edu = periphery::Edu();
 
 
-class HelloWorld : public RODOS::StaticThread<>
+class DispatchCommandTest : public RODOS::StaticThread<>
 {
+public:
+    DispatchCommandTest() : StaticThread("DispatchCommandTest")
+    {
+    }
+
+private:
     void run() override
     {
         printfMask = 1;
@@ -32,59 +40,58 @@ class HelloWorld : public RODOS::StaticThread<>
         command.push_back(static_cast<Byte>('a'));
 
         // UTC
-        command.push_back(static_cast<Byte>(0x80));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x92));
-        command.push_back(static_cast<Byte>(0x65));
+        command.push_back(0x80_b);
+        command.push_back(0x00_b);
+        command.push_back(0x92_b);
+        command.push_back(0x65_b);
 
         // Command ID
-        command.push_back(static_cast<Byte>(0x34));
+        command.push_back(0x34_b);
 
         // Length
-        command.push_back(static_cast<Byte>(0x14));
-        command.push_back(static_cast<Byte>(0x00));
+        command.push_back(0x14_b);
+        command.push_back(0x00_b);
 
         // Queue entry  1
         // Program ID : 1
         // Queue ID   : 16
         // Start time : 1048577
         // Timeout    : 2
-        command.push_back(static_cast<Byte>(0x01));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x10));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x01));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x10));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x01));
-        command.push_back(static_cast<Byte>(0x00));
+        command.push_back(0x01_b);
+        command.push_back(0x00_b);
+        command.push_back(0x10_b);
+        command.push_back(0x00_b);
+        command.push_back(0x01_b);
+        command.push_back(0x00_b);
+        command.push_back(0x10_b);
+        command.push_back(0x00_b);
+        command.push_back(0x01_b);
+        command.push_back(0x00_b);
 
         // Queue entry  2
         // Program ID : 2
         // Queue ID   : 32
         // Start time : 2097154
         // Timeout    : 2
-        command.push_back(static_cast<Byte>(0x02));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x20));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x02));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x20));
-        command.push_back(static_cast<Byte>(0x00));
-        command.push_back(static_cast<Byte>(0x02));
-        command.push_back(static_cast<Byte>(0x00));
+        command.push_back(0x02_b);
+        command.push_back(0x00_b);
+        command.push_back(0x20_b);
+        command.push_back(0x00_b);
+        command.push_back(0x02_b);
+        command.push_back(0x00_b);
+        command.push_back(0x20_b);
+        command.push_back(0x00_b);
+        command.push_back(0x02_b);
+        command.push_back(0x00_b);
 
         while(not command.full())
         {
-            command.push_back(static_cast<Byte>(0x00));
+            command.push_back(0x00_b);
         }
         // RODOS::PRINTF("Command Size = %d\n", command.size());
         DispatchCommand(command);
 
-
         RODOS::hwResetAndReboot();
     }
-} helloWorld;
+} dispatchCommandTest;
 }
