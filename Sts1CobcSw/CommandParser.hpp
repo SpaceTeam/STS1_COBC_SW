@@ -1,8 +1,5 @@
-#include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-
-#include <type_safe/types.hpp>
 
 #include <etl/vector.h>
 
@@ -19,6 +16,7 @@ enum CommandId : char
     turnEduOff = '2',
     buildQueue = '4',
 };
+
 
 struct GsCommandHeader
 {
@@ -39,7 +37,15 @@ inline constexpr std::size_t serialSize<GsCommandHeader> =
                     decltype(GsCommandHeader::length)>;
 }
 
+inline constexpr std::size_t commandSize = 30;
 
+
+auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;
+auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void;
+auto BuildEduQueue(std::span<Byte const> commandData) -> void;
+
+
+// TODO: Turn into noninline function
 inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->startCharacter));
@@ -48,13 +54,4 @@ inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void
     source = DeserializeFrom(source, &(data->length));
     return source;
 }
-
-
-inline constexpr std::size_t commandSize = 30;
-inline constexpr std::size_t dataSize = commandSize - serial::serialSize<GsCommandHeader>;
-
-
-auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;
-auto ParseAndAddQueueEntrie(std::span<const Byte> & queueEntries) -> void;
-auto BuildEduQueue(std::span<const Byte> commandData) -> void;
 }
