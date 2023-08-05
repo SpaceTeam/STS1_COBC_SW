@@ -9,7 +9,7 @@ RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySize>
     eduProgramStatusHistory;
 
 
-auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
+auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint32_t queueId)
     -> EduProgramStatusHistoryEntry
 {
     auto eduProgramStatusHistoryEntry = EduProgramStatusHistoryEntry{};

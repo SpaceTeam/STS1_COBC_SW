@@ -30,8 +30,8 @@ constexpr auto resultsReadyCode = 0x02_b;
 
 // Status types byte counts
 constexpr auto nNoEventBytes = 1;
-constexpr auto nProgramFinishedBytes = 6;
-constexpr auto nResultsReadyBytes = 5;
+constexpr auto nProgramFinishedBytes = 1 + serial::serialSize<ProgramFinishedStatus>;
+constexpr auto nResultsReadyBytes = 1 + serial::serialSize<ResultsReadyStatus>;
 
 // TODO: Check real timeouts
 // Max. time for the EDU to respond to a request
@@ -46,10 +46,8 @@ constexpr auto garbageBufferSize = 128;
 constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
 constexpr auto maxNPackets = 100_usize;
-// Max. length of a single data packet
-constexpr auto maxDataLength = 32768;
 // Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
-auto cepDataBuffer = std::array<Byte, maxDataLength>{};
+std::array<Byte, maxDataLength> cepDataBuffer{};
 
 
 auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
@@ -64,7 +62,7 @@ auto Edu::Initialize() -> void
     TurnOff();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    constexpr auto baudRate = 921'600;
+    constexpr auto baudRate = 115'200;
     uart_.init(baudRate);
 }
 
@@ -116,9 +114,9 @@ auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
-                  data.programId,
-                  data.queueId,
-                  data.timeout);
+                  static_cast<int>(data.programId.get()),
+                  static_cast<int>(data.queueId.get()),
+                  static_cast<int>(data.timeout.get()));
     // Check if data command was successful
     auto serialData = serial::Serialize(data);
     auto errorCode = SendData(serialData);
@@ -207,10 +205,14 @@ auto Edu::GetStatus() -> EduStatus
     auto sendDataError = SendData(serialData);
     if(sendDataError != EduErrorCode::success)
     {
-        RODOS::PRINTF("  Returned .statusType = %d, .errorCode = %d\n",
-                      EduStatusType::invalid,
-                      sendDataError);
-        return EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
+        auto status = EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
+        // RODOS::PRINTF("  SendingDataError");
+        // RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
+        // RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
+        // RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
+        // RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
+        // RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
+        return status;
     }
 
     EduStatus status;
@@ -227,14 +229,11 @@ auto Edu::GetStatus() -> EduStatus
         SendCommand(cmdNack);
     } while(errorCount++ < maxNNackRetries);
 
-    RODOS::PRINTF(
-        "  .statusType = %d\n  .errorCode = %d\n  .programId = %d\n  .queueId = %d\n  exitCode = "
-        "%d\n",
-        status.statusType,
-        status.errorCode,
-        status.programId,
-        status.queueId,
-        status.exitCode);
+    RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
+    RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
+    RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
+    RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
+    RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
     return status;
 }
 
@@ -370,15 +369,15 @@ auto Edu::GetStatusCommunication() -> EduStatus
 }
 
 
-auto Edu::ReturnResult() -> ResultInfo
+auto Edu::ReturnResult(ReturnResultData const & data) -> ResultInfo
 {
     // DEBUG
     RODOS::PRINTF("ReturnResult()\n");
     // END DEBUG
 
     // Send command
-    auto serialCommand = serial::Serialize(returnResultId);
-    auto commandError = SendData(serialCommand);
+    auto serialData = serial::Serialize(data);
+    auto commandError = SendData(serialData);
     if(commandError != EduErrorCode::success)
     {
         return ResultInfo{.errorCode = commandError, .resultSize = 0U};
@@ -399,7 +398,7 @@ auto Edu::ReturnResult() -> ResultInfo
         // END DEBUG
         resultInfo = ReturnResultRetry();
         // DEBUG
-        RODOS::PRINTF("ResultInfo{errorCode = %d, resultSize = %d}\n",
+        RODOS::PRINTF("  .errorCode = %d, .resultSize = %d\n",
                       static_cast<int>(resultInfo.errorCode),
                       static_cast<int>(resultInfo.resultSize.get()));
         // END DEBUG
@@ -413,6 +412,17 @@ auto Edu::ReturnResult() -> ResultInfo
         totalResultSize += resultInfo.resultSize;
         packets++;
     }
+    // DEBUG
+    RODOS::PRINTF(" Total\n");
+    RODOS::PRINTF("  .errorCode = %d, .resultSize = %d\n",
+                  static_cast<int>(resultInfo.errorCode),
+                  static_cast<int>(totalResultSize.get()));
+    // END DEBUG
+
+    // TODO: This is a dummy implementation. Store the result instead.
+    RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
+    SendCommand(cmdAck);
+
     return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
 }
 
@@ -516,7 +526,7 @@ auto Edu::ReturnResultCommunication() -> ResultInfo
     }
 
     // DEBUG
-    RODOS::PRINTF("\nSuccess\n");
+    // RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
     return {EduErrorCode::success, actualDataLength.get()};
@@ -540,7 +550,7 @@ auto Edu::ReturnResultCommunication() -> ResultInfo
 //! @returns A relevant error code
 auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
 {
-    RODOS::PRINTF("UpdateTime()\n");
+    RODOS::PRINTF("UpdateTime(timestamp = %d)\n", static_cast<int>(data.timestamp.get()));
     auto serialData = serial::Serialize(data);
     auto errorCode = SendData(serialData);
     if(errorCode != EduErrorCode::success)

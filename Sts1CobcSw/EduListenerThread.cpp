@@ -8,6 +8,7 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
+#include <Sts1CobcSw/Periphery/Rf.hpp>  // Only for MFT
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <type_safe/narrow_cast.hpp>
@@ -42,6 +43,11 @@ private:
 
     void run() override
     {
+        // Only for MFT
+        RODOS::PRINTF("Initialize RF module\n");
+        periphery::rf::Initialize(periphery::rf::TxType::packet);
+
+
         TIME_LOOP(0, timeLoopPeriod)
         {
             // RODOS::PRINTF("[EduListenerThread] Start of TimeLoop Iteration\n");
@@ -51,7 +57,7 @@ private:
             eduIsAliveBufferForListener.get(eduIsAlive);
             // RODOS::PRINTF("[EduListenerThread] Read eduHasUpdate pin\n");
 
-            // TODO: Check if edu is alive
+            // TODO: Check if EDU is alive
             if(eduIsAlive and eduHasUpdate)
             {
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
@@ -82,7 +88,7 @@ private:
                     case periphery::EduStatusType::programFinished:
                     {
                         // Program has finished
-                        // Find the correspongind queueEntry and update it, then resume edu queue
+                        // Find the correspongind queueEntry and update it, then resume EDU queue
                         // thread
                         auto eduProgramStatusHistoryEntry =
                             FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
@@ -101,10 +107,14 @@ private:
                     }
                     case periphery::EduStatusType::resultsReady:
                     {
-                        // Edu wants to send result file
-                        // Send return result to Edu, Communicate, and interpret the results to
+                        // EDU wants to send result file
+                        // Send return result to EDU, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
-                        auto resultsInfo = edu.ReturnResult();
+                        RODOS::PRINTF("Call to Return result with program id = %d, queueId = %d\n",
+                                      status.programId,
+                                      status.queueId);  // NOLINT
+                        auto resultsInfo = edu.ReturnResult(
+                            {.programId = status.programId, .queueId = status.queueId});
                         auto errorCode = resultsInfo.errorCode;
                         if(errorCode != periphery::EduErrorCode::success
                            and errorCode != periphery::EduErrorCode::successEof)
@@ -133,6 +143,25 @@ private:
                         // here and the status is actually never updated in the ring buffer.
                         eduProgramStatusHistoryEntry.status =
                             EduProgramStatus::resultFileTransfered;
+
+                        // Only for MFT
+                        RODOS::PRINTF("\n");
+                        RODOS::PRINTF("Sending call sign ...\n");
+                        periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(
+                                                        periphery::rf::portableCallSign.data()),
+                                                    periphery::rf::portableCallSign.size());
+
+                        RODOS::PRINTF("Sending 'test' ...\n");
+                        std::uint8_t testMessage[] = "test";
+                        periphery::rf::TransmitData(&testMessage[0], std::size(testMessage));
+
+                        RODOS::PRINTF("Sending result file ...\n");
+                        periphery::rf::TransmitData(
+                            reinterpret_cast<std::uint8_t const *>(periphery::cepDataBuffer.data()),
+                            resultsInfo.resultSize.get());
+                        RODOS::PRINTF("  Done\n");
+                        RODOS::PRINTF("\n");
+
                         break;
                     }
                     case periphery::EduStatusType::invalid:

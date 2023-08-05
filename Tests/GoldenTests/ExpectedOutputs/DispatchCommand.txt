@@ -1,7 +1,7 @@
 Header start character : a
 Header commandID       : 52
 Header utc             : 1704067200
-Header length          : 20
+Header length          : 24
 DateUTC(DD/MM/YYYY HH:MIN:SS) : 01/01/2024 00:00:00
 Entering build queue command parsing
 Printing and parsing

@@ -10,6 +10,8 @@ namespace sts1cobcsw::hal
 inline constexpr auto led1Pin = pb12;
 inline constexpr auto led2Pin = pb15;
 
+inline constexpr auto watchdogResetPin = pa9;
+
 inline constexpr auto epsBatteryGoodPin = pc15;
 inline constexpr auto epsChargingPin = pc14;
 
