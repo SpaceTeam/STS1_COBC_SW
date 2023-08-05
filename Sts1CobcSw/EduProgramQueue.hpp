@@ -28,6 +28,7 @@ using ts::operator""_i32;
 
 using serial::Byte;
 using serial::DeserializeFrom;
+using serial::SerializeTo;
 
 
 struct EduQueueEntry
@@ -48,6 +49,13 @@ inline constexpr std::size_t serialSize<EduQueueEntry> =
                     decltype(EduQueueEntry::timeout)>;
 }
 
+
+inline constexpr auto eduProgramQueueSize = 20;
+
+extern uint16_t queueIndex;
+extern etl::vector<EduQueueEntry, eduProgramQueueSize> eduProgramQueue;
+
+
 inline auto DeserializeFrom(void const * source, EduQueueEntry * data) -> void const *
 {
     source = DeserializeFrom(source, &(data->programId));
@@ -58,8 +66,12 @@ inline auto DeserializeFrom(void const * source, EduQueueEntry * data) -> void c
 }
 
 
-inline constexpr auto eduProgramQueueSize = 20;
-
-extern uint16_t queueIndex;
-extern etl::vector<EduQueueEntry, eduProgramQueueSize> eduProgramQueue;
+inline auto SerializeTo(void * destination, EduQueueEntry const & data) -> void *
+{
+    destination = SerializeTo(destination, data.programId);
+    destination = SerializeTo(destination, data.queueId);
+    destination = SerializeTo(destination, data.startTime);
+    destination = SerializeTo(destination, data.timeout);
+    return destination;
+}
 }

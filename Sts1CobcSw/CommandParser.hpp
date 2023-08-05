@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
@@ -8,6 +9,7 @@ namespace sts1cobcsw
 {
 using serial::Byte;
 using sts1cobcsw::serial::DeserializeFrom;
+using sts1cobcsw::serial::SerializeTo;
 
 
 enum CommandId : char
@@ -37,7 +39,10 @@ inline constexpr std::size_t serialSize<GsCommandHeader> =
                     decltype(GsCommandHeader::length)>;
 }
 
-inline constexpr std::size_t commandSize = 30;
+// TODO: Choose a proper value for the commandSize. Right now this is just size required by the
+// DispatchCommand() test.
+inline constexpr std::size_t commandSize =
+    serial::serialSize<GsCommandHeader> + 2 * serial::serialSize<EduQueueEntry>;
 
 
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;
@@ -53,5 +58,16 @@ inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void
     source = DeserializeFrom(source, &(data->commandId));
     source = DeserializeFrom(source, &(data->length));
     return source;
+}
+
+
+// TODO: Turn into noninline function
+inline auto SerializeTo(void * destination, GsCommandHeader const & data) -> void *
+{
+    destination = SerializeTo(destination, data.startCharacter);
+    destination = SerializeTo(destination, data.utc);
+    destination = SerializeTo(destination, data.commandId);
+    destination = SerializeTo(destination, data.length);
+    return destination;
 }
 }
