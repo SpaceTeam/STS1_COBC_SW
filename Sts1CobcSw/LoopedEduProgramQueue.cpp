@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/EduProgramQueue.hpp>
-#include <Sts1CobcSw/LoopedEduProgramQueue.hpp>
+#include <Sts1CobcSw/HardCodedEduProgramQueue.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -50,23 +50,22 @@ auto InitializeEduProgramQueue() -> void
 }
 
 
-auto UpdateEduProgramQueueEntry(EduQueueEntry * entry) -> void
-{
-    entry->startTime += eduProgramQueuePeriod;
-    if(entry->programId == sensorProgramId)
-    {
-        entry->queueId++;
-    }
-}
-
-
-auto UpdateQueueIndex() -> void
+/// @brief Update the queue index (and in this case also the entries) to form a loop.
+auto UpdateEduQueueIndex() -> void
 {
     queueIndex++;
 
     if(queueIndex >= eduProgramQueue.size())
     {
         queueIndex = 0;
+        for(auto & entry : eduProgramQueue)
+        {
+            entry.startTime += eduProgramQueuePeriod;
+            if(entry.programId == sensorProgramId)
+            {
+                entry.queueId++;
+            }
+        }
     }
 }
 }

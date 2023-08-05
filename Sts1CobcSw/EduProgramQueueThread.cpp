@@ -2,7 +2,7 @@
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/EduProgramStatusHistory.hpp>
-#include <Sts1CobcSw/LoopedEduProgramQueue.hpp>
+#include <Sts1CobcSw/HardCodedEduProgramQueue.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
@@ -149,11 +149,9 @@ private:
                 RODOS::PRINTF("Resuming from execution time\n");
                 utility::PrintFormattedSystemUtc();
 
-                // Loop EDU program queue
                 utility::PrintSeconds();
-                RODOS::PRINTF("\n\nUpdating queue entry for next iteration\n\n");
-                UpdateEduProgramQueueEntry(&eduProgramQueue[queueIndex]);
-                UpdateQueueIndex();
+                RODOS::PRINTF("\n\nUpdating queue index\n\n");
+                UpdateEduQueueIndex();  // Potentially loopes a hard coded EDU queue
             }
         }
     }

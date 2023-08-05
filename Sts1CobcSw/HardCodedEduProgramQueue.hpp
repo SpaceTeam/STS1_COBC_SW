@@ -7,6 +7,5 @@ struct EduQueueEntry;
 
 
 auto InitializeEduProgramQueue() -> void;
-auto UpdateEduProgramQueueEntry(EduQueueEntry * entry) -> void;
-auto UpdateQueueIndex() -> void;
+auto UpdateEduQueueIndex() -> void;
 }
