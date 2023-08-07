@@ -5,6 +5,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <cinttypes>
+
 
 namespace sts1cobcsw
 {
@@ -21,9 +23,9 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
 
     // TODO: Debug print, to be removed
     RODOS::PRINTF("Header start character : %c\n", gsCommandHeader.startCharacter);
-    RODOS::PRINTF("Header commandID       : %d\n", gsCommandHeader.commandId);
-    RODOS::PRINTF("Header utc             : %d\n", gsCommandHeader.utc);
-    RODOS::PRINTF("Header length          : %d\n", gsCommandHeader.length);
+    RODOS::PRINTF("Header commandID       : %" PRIi8 "\n", gsCommandHeader.commandId);
+    RODOS::PRINTF("Header utc             : %" PRIi32 "\n", gsCommandHeader.utc);
+    RODOS::PRINTF("Header length          : %" PRIi16 "\n", gsCommandHeader.length);
 
     // TODO: Move this somewhere else
     RODOS::sysTime.setUTC(utility::UnixToRodosTime(gsCommandHeader.utc));
@@ -88,10 +90,10 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
     {
         auto entry = Deserialize<EduQueueEntry>(queueEntries.first<serialSize<EduQueueEntry>>());
 
-        RODOS::PRINTF("Prog ID      : %d\n", entry.programId.get());
-        RODOS::PRINTF("Queue ID     : %d\n", entry.queueId.get());
-        RODOS::PRINTF("Start Time   : %d\n", entry.startTime.get());
-        RODOS::PRINTF("Timeout      : %d\n", entry.timeout.get());
+        RODOS::PRINTF("Prog ID      : %" PRIu16 "\n", entry.programId.get());  // NO
+        RODOS::PRINTF("Queue ID     : %" PRIu16 "\n", entry.queueId.get());
+        RODOS::PRINTF("Start Time   : %" PRIu32 "\n", entry.startTime.get());
+        RODOS::PRINTF("Timeout      : %" PRIi16 "\n", entry.timeout.get());
 
         eduProgramQueue.push_back(entry);
         queueEntries = queueEntries.subspan<serialSize<EduQueueEntry>>();

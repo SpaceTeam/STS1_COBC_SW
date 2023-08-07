@@ -27,7 +27,10 @@ Checks: "*,\
   -llvmlibc-*,\
   -misc-non-private-member-variables-in-classes,\
   -mpi-*,\
-  -openmp-*"
+  -openmp-*,\
+  -misc-unused-using-decls,\
+  -clang-diagnostic-unused-command-line-argument,\
+  -bugprone-implicit-widening-of-multiplication-result"
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
@@ -68,7 +71,9 @@ CheckOptions:
     value: 'true'
 # For variables of generic type T and variables called id
   - key: 'readability-identifier-length.IgnoredVariableNames'
-    value: '^t$|^id$'
+    value: '^(t|id)$'
+  - key: 'readability-identifier-length.IgnoredParameterNames'
+    value: '^t$'
 # These seem to be the most common identifier styles
   - key: 'readability-identifier-naming.AbstractClassCase'
     value: 'CamelCase'

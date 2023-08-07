@@ -8,6 +8,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <cinttypes>
+
 
 namespace sts1cobcsw
 {
@@ -138,11 +140,11 @@ auto EduIsAlive() -> bool
     auto begin = RODOS::NOW();
 
     auto refHeartbeat = eduHeartbeatGpioPin.Read();
-    auto heartbeat = eduHeartbeatGpioPin.Read();
     auto edgeCounter = 0;
-    for(int i = 0; i < 1'000'000; ++i)
+    constexpr auto eduHeartbeatReads = 1'000'000;
+    for(int i = 0; i < eduHeartbeatReads; ++i)
     {
-        heartbeat = eduHeartbeatGpioPin.Read();
+        auto heartbeat = eduHeartbeatGpioPin.Read();
         if(heartbeat != refHeartbeat)
         {
             edgeCounter++;
@@ -154,8 +156,8 @@ auto EduIsAlive() -> bool
         }
     }
     auto executionTime = RODOS::NOW() - begin;
-    RODOS::PRINTF("Execution Time of EduIsAlive (ns) : %lld\n", executionTime);
-    RODOS::PRINTF("Execution Time of EduIsAlive (ms) : %lld\n",
+    RODOS::PRINTF("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", executionTime);
+    RODOS::PRINTF("Execution Time of EduIsAlive (ms) : %" PRIi64 "\n",
                   executionTime / RODOS::MILLISECONDS);
     return false;
 }

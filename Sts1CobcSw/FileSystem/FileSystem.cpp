@@ -58,7 +58,7 @@ const lfs_config lfsConfig{.read = &Read,
 
                            .read_buffer = data(readBuffer),
                            .prog_buffer = data(programBuffer),
-                           .lookahead_buffer = data(lookaheadBuffer)};
+                           .lookahead_buffer = data(lookaheadBuffer)};  // NOLINT
 
 
 // --- Public function definitions ---
@@ -130,7 +130,7 @@ auto Ls(char const * path) -> int
     PRINTF("$ ls %s\n", path);
 
     auto directory = lfs_dir_t{};
-    int errorCode = lfs_dir_open(&lfs, &directory, path);
+    const int errorCode = lfs_dir_open(&lfs, &directory, path);
     if(errorCode != 0)
     {
         return errorCode;
@@ -139,7 +139,7 @@ auto Ls(char const * path) -> int
     auto info = lfs_info{};
     while(true)
     {
-        int result = lfs_dir_read(&lfs, &directory, &info);
+        const int result = lfs_dir_read(&lfs, &directory, &info);
         if(result < 0)
         {
             // An error occurred
