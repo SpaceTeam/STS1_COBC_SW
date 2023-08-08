@@ -179,21 +179,9 @@ auto ComputeStartDelay() -> std::int64_t
     return startDelay;
 }
 
-
-// TODO: Think about whether this is the right way to declare, design, use, etc. this
-class ResumeEduProgramQueueThreadEvent : public RODOS::TimeEvent
-{
-public:
-    auto handle() -> void override
-    {
-        eduProgramQueueThread.resume();
-        RODOS::PRINTF("EduProgramQueueThread resumed from me\n");
-    }
-} resumeEduProgramQueueThreadEvent;
-
-
 auto ResumeEduProgramQueueThread() -> void
 {
-    resumeEduProgramQueueThreadEvent.handle();
+    eduProgramQueueThread.resume();
+    RODOS::PRINTF("EduProgramQueueThread resumed from me\n");
 }
 }
