@@ -13,7 +13,7 @@ namespace ts = type_safe;
 using ts::operator""_u16;
 
 
-enum class EduProgramStatus : uint8_t
+enum class ProgramStatus : uint8_t
 {
     programRunning,
     programCouldNotBeStarted,
@@ -30,12 +30,12 @@ struct EduProgramStatusHistoryEntry
 {
     ts::uint16_t programId = 0_u16;
     ts::uint16_t queueId = 0_u16;
-    EduProgramStatus status = EduProgramStatus::programRunning;
+    ProgramStatus status = ProgramStatus::programRunning;
 };
 
 
-inline constexpr auto eduProgramStatusHistorySize = 20;
-extern RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySize>
+inline constexpr auto programStatusHistorySize = 20;
+extern RODOS::RingBuffer<EduProgramStatusHistoryEntry, programStatusHistorySize>
     eduProgramStatusHistory;
 
 

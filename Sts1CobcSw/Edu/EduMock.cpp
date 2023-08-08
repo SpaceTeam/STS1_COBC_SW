@@ -1,4 +1,7 @@
-#include <Sts1CobcSw/Periphery/Edu.hpp>
+#include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/Edu/Names.hpp>
+#include <Sts1CobcSw/Hal/Communication.hpp>
+#include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 
@@ -21,8 +24,8 @@ auto ResumeEduProgramQueueThread() -> void
 }
 
 
-// TODO: This file is not used at all right now. Think about mocking later.
-namespace periphery
+// TODO: This file is not used at all right now. Think about the mocking later.
+namespace edu
 {
 Edu edu;
 
@@ -61,45 +64,45 @@ auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
+auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
            data.programId.get(),
            data.queueId.get(),
            data.timeout.get());
-    return EduErrorCode::success;
+    return ErrorCode::success;
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::StopProgram() -> EduErrorCode
+auto Edu::StopProgram() -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StopProgram()\n");
-    return EduErrorCode::success;
+    return ErrorCode::success;
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::GetStatus() -> EduStatus
+auto Edu::GetStatus() -> Status
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to GetStatus()\n");
-    return {.statusType = EduStatusType::invalid,
+    return {.statusType = StatusType::invalid,
             .programId = 0,
             .queueId = 0,
             .exitCode = 0,
-            .errorCode = EduErrorCode::success};
+            .errorCode = ErrorCode::success};
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::UpdateTime(UpdateTimeData const & data) -> EduErrorCode
+auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UpdateTime(timestamp = %d)\n", data.timestamp.get());
-    return EduErrorCode::success;
+    return ErrorCode::success;
 }
 
 
@@ -112,20 +115,20 @@ auto Edu::SendCommand(Byte commandId) -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
+auto Edu::SendData(std::span<Byte> data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to SendData(size(data) = %d)\n", size(data));
-    return EduErrorCode::success;
+    return ErrorCode::success;
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> EduErrorCode
+auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UartReceive(size(destination) = %d)\n", size(destination));
-    return EduErrorCode::success;
+    return ErrorCode::success;
 }
 
 

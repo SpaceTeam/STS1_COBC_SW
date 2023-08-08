@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/EduProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
@@ -45,7 +45,7 @@ inline constexpr std::size_t serialSize<GsCommandHeader> =
 // TODO: Choose a proper value for the commandSize. Right now this is just size required by the
 // DispatchCommand() test.
 inline constexpr std::size_t commandSize =
-    serial::serialSize<GsCommandHeader> + 2 * serial::serialSize<EduQueueEntry>;
+    serial::serialSize<GsCommandHeader> + 2 * serial::serialSize<edu::QueueEntry>;
 
 
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;

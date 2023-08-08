@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Edu/Edu.hpp>
+
 #include <cstdint>
 
 

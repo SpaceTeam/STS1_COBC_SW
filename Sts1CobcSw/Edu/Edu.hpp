@@ -1,10 +1,11 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Edu/Enums.hpp>
+#include <Sts1CobcSw/Edu/Names.hpp>
+#include <Sts1CobcSw/Edu/Structs.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Periphery/EduEnums.hpp>
-#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -13,7 +14,7 @@
 #include <span>
 
 
-namespace sts1cobcsw::periphery
+namespace sts1cobcsw::edu
 {
 using sts1cobcsw::serial::Byte;
 
@@ -32,24 +33,24 @@ public:
 
     // TODO: Why does this return a std::int32_t?
     [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> std::int32_t;
-    [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode;
-    [[nodiscard]] auto StopProgram() -> EduErrorCode;
+    [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode;
+    [[nodiscard]] auto StopProgram() -> ErrorCode;
     // TODD: Find better name (or maybe even mechanism) for GetStatus
-    [[nodiscard]] auto GetStatus() -> EduStatus;
+    [[nodiscard]] auto GetStatus() -> Status;
     [[nodiscard]] auto ReturnResult() -> ResultInfo;
-    [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> EduErrorCode;
+    [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> ErrorCode;
 
 private:
     // TODO: Rework -> Send(EduBasicCommand command) -> void;
     auto SendCommand(Byte commandId) -> void;
-    [[nodiscard]] auto SendData(std::span<Byte> data) -> EduErrorCode;
+    [[nodiscard]] auto SendData(std::span<Byte> data) -> ErrorCode;
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
     // Deserialize<>() internally.
-    [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> EduErrorCode;
-    [[nodiscard]] auto UartReceive(void * destination) -> EduErrorCode;
+    [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> ErrorCode;
+    [[nodiscard]] auto UartReceive(void * destination) -> ErrorCode;
     auto FlushUartBuffer() -> void;
-    [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> EduErrorCode;
-    [[nodiscard]] auto GetStatusCommunication() -> EduStatus;
+    [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> ErrorCode;
+    [[nodiscard]] auto GetStatusCommunication() -> Status;
     [[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
     [[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
     void MockWriteToFile(std::span<Byte> data);
@@ -62,5 +63,9 @@ private:
 };
 
 
-extern Edu edu;
+}
+
+namespace sts1cobcsw
+{
+extern edu::Edu eduUnit;
 }

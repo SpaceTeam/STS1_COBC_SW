@@ -1,12 +1,11 @@
-#include <Sts1CobcSw/EduProgramStatusHistory.hpp>
+#include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 
-#include <rodos.h>
+#include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw
 {
-RODOS::RingBuffer<EduProgramStatusHistoryEntry, eduProgramStatusHistorySize>
-    eduProgramStatusHistory;
+RODOS::RingBuffer<EduProgramStatusHistoryEntry, programStatusHistorySize> eduProgramStatusHistory;
 
 
 auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
@@ -22,5 +21,6 @@ auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t que
             or eduProgramStatusHistoryEntry.programId != programId);
 
     return eduProgramStatusHistoryEntry;
+    int a = 3;
 }
 }

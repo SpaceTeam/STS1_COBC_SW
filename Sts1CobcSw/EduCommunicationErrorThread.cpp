@@ -1,5 +1,5 @@
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
@@ -39,12 +39,12 @@ private:
 
             RODOS::PRINTF("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU
-            periphery::edu.TurnOff();
+            eduUnit.TurnOff();
             RODOS::AT(RODOS::NOW() + eduShutDownDelay);
-            periphery::edu.TurnOn();
+            eduUnit.TurnOn();
 
-            // TODO: Why is this here?
-            [[maybe_unused]] auto status = periphery::edu.GetStatus();
+            //
+            [[maybe_unused]] auto status = eduUnit.GetStatus();
 
             // Busy wait
             RODOS::PRINTF("[EduCommunicationErrorThread] Entering busy wait\n");

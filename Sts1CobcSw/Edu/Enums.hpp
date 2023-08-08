@@ -1,11 +1,10 @@
 #pragma once
 
 
-// TODO: Rename this file to EduEduEnums.hpp or merge it with EduStructs to EduTypes.
-namespace sts1cobcsw::periphery
+// TODO: Rename this file to Enums.hpp or merge it with EduStructs to EduTypes.
+namespace sts1cobcsw::edu
 {
-// TODO: Remove error prefix in enum values, the type already has "error" in it
-enum class EduErrorCode
+enum class ErrorCode
 {
     noErrorCodeSet,
     success,
@@ -30,7 +29,7 @@ enum class EduErrorCode
 };
 
 
-enum class EduStatusType
+enum class StatusType
 {
     noEvent,
     programFinished,

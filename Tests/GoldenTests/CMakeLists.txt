@@ -15,11 +15,10 @@ add_golden_test(
     "DispatchCommand.test.cpp"
     SOURCE
     "${Sts1CobcSw}/CommandParser.cpp"
-    "${Sts1CobcSw}/EduProgramQueue.cpp"
     LIB
     rodos::rodos
     etl::etl
-    Sts1CobcSw_Periphery
+    Sts1CobcSw_Edu
     Sts1CobcSw_Utility
     Sts1CobcSw_Serial
 )

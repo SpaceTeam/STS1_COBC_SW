@@ -1,7 +1,7 @@
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
-#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -30,7 +30,7 @@ public:
 private:
     void init() override
     {
-        periphery::edu.Initialize();
+        eduUnit.Initialize();
         eduUpdateGpioPin.Direction(hal::PinDirection::in);
         uciUart.init();
     }
