@@ -69,7 +69,7 @@ private:
                     // RODOS::PRINTF(
                     //   "[EduListenerThread] Edu communication error after call to
                     //   GetStatus().\n");
-                    ResumeEduErrorCommunicationThread();
+                    ResumeEduCommunicationErrorThread();
                 }
                 else
                 {
@@ -117,7 +117,7 @@ private:
                                 "[EduListenerThread] Communication error after call to "
                                 "ReturnResult().\n");
                                 */
-                            ResumeEduErrorCommunicationThread();
+                            ResumeEduCommunicationErrorThread();
                         }
                         else
                         {

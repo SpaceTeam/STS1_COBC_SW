@@ -58,21 +58,9 @@ private:
     }
 } eduCommunicationErrorThread;
 
-
-// TODO: Think about whether this is the right way to declare, design, use, etc. this
-class ResumeEduErrorCommunicationThread : public RODOS::TimeEvent
+auto ResumeEduCommunicationErrorThread() -> void
 {
-public:
-    auto handle() -> void override
-    {
-        eduCommunicationErrorThread.resume();
-        RODOS::PRINTF("[EduCommunicationErrorThread] EduCommunicationThread resumed\n");
-    }
-} resumeEduErrorCommunicationThread;
-
-
-auto ResumeEduErrorCommunicationThread() -> void
-{
-    resumeEduErrorCommunicationThread.handle();
+    eduCommunicationErrorThread.resume();
+    RODOS::PRINTF("[EduCommunicationErrorThread] EduCommunicationErrorThread resumed\n");
 }
 }
