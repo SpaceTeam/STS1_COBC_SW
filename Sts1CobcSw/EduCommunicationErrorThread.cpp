@@ -58,9 +58,9 @@ private:
     }
 } eduCommunicationErrorThread;
 
-auto ResumeEduErrorCommunicationThread() -> void
+auto ResumeEduCommunicationErrorThread() -> void
 {
     eduCommunicationErrorThread.resume();
-    RODOS::PRINTF("[EduCommunicationErrorThread] EduCommunicationThread resumed\n");
+    RODOS::PRINTF("[EduCommunicationErrorThread] EduCommunicationErrorThread resumed\n");
 }
 }

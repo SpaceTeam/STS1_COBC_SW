@@ -109,7 +109,7 @@ private:
                 RODOS::PRINTF("UpdateTime error code : %d\n", errorCode);
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
-                ResumeEduErrorCommunicationThread();
+                ResumeEduCommunicationErrorThread();
             }
 
             auto startDelay2 = ComputeStartDelay();
@@ -143,7 +143,7 @@ private:
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to "
                     "ExecuteProgram().\n");
-                ResumeEduErrorCommunicationThread();
+                ResumeEduCommunicationErrorThread();
             }
             else
             {
@@ -182,6 +182,6 @@ auto ComputeStartDelay() -> std::int64_t
 auto ResumeEduProgramQueueThread() -> void
 {
     eduProgramQueueThread.resume();
-    RODOS::PRINTF("EduProgramQueueThread resumed from me\n");
+    RODOS::PRINTF("[EduProgramQueueThread] EduProgramQueueThread resumed\n");
 }
 }
