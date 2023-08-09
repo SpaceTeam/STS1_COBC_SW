@@ -19,7 +19,7 @@ void PrintFormattedSystemUtc()
     RODOS::TimeModel::localTime2Calendar(sysUTC, year, month, day, hour, min, sec);
     // Print only seconds by casting it to long
     RODOS::PRINTF("DateUTC(DD/MM/YYYY HH:MIN:SS) : %02" PRIi32 "/%02" PRIi32 "/%02" PRIi32
-                  " %" PRIi32 ":%02" PRIi32 "%02.0f\n",
+                  " %02" PRIi32 ":%02" PRIi32 ":%02.0f\n",
                   day,
                   month,
                   year,
