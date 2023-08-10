@@ -100,8 +100,7 @@ auto Edu::TurnOff() -> void
 
 
 // TODO: Implement this
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::StoreArchive(StoreArchiveData const & /*data*/) -> std::int32_t
+auto Edu::StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_t
 {
     return 0;
 }
@@ -178,7 +177,6 @@ auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 //! <- [N/ACK]
 //! <- [N/ACK]
 //! @returns A relevant error code
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Edu::StopProgram() -> EduErrorCode
 {
     return EduErrorCode::success;
@@ -628,8 +626,7 @@ auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 
         // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
-        auto answer =
-            0xAA_b;  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+        auto answer = 0xAA_b;  // Why is this set to 0xAA?
         uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
         auto nReadBytes = uart_.read(&answer, 1);
