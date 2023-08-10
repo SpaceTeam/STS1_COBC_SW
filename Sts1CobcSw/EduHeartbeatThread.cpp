@@ -141,8 +141,8 @@ auto EduIsAlive() -> bool
 
     auto refHeartbeat = eduHeartbeatGpioPin.Read();
     auto edgeCounter = 0;
-    constexpr auto eduHeartbeatReads = 1'000'000;
-    for(int i = 0; i < eduHeartbeatReads; ++i)
+    constexpr auto nEduHeartbeatReads = 1'000'000;
+    for(int i = 0; i < nEduHeartbeatReads; ++i)
     {
         auto heartbeat = eduHeartbeatGpioPin.Read();
         if(heartbeat != refHeartbeat)

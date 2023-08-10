@@ -31,8 +31,8 @@ constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet
 constexpr auto cmdNack = 0x27_b;  //! Not Acknowledging a (invalid) data packet
 constexpr auto cmdEof = 0x59_b;   //! Transmission of multiple packets is complete
 // TODO: Use this
-[[maybe_unused]] constexpr auto cmdStop =
-    0xb4_b;                       //! Transmission of multiple packets should be stopped
+//! Transmission of multiple packets should be stopped
+[[maybe_unused]] constexpr auto cmdStop = 0xb4_b;
 constexpr auto cmdData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
 // GetStatus result types
@@ -608,7 +608,7 @@ void Edu::SendCommand(Byte commandId)
 //! @param data The data to be sent
 auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
-    const std::size_t nBytes = data.size();
+    std::size_t const nBytes = data.size();
     if(nBytes >= maxDataLength)
     {
         return EduErrorCode::sendDataTooLong;
@@ -730,7 +730,7 @@ auto Edu::FlushUartBuffer() -> void
 
 auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
 {
-    const uint32_t computedCrc32 = utility::Crc32(data);
+    auto const computedCrc32 = utility::Crc32(data);
 
     // DEBUG
     // RODOS::PRINTF("\nComputed CRC: ");

@@ -172,7 +172,7 @@ auto ComputeStartDelay() -> std::int64_t
     auto nextProgramStartTime =
         eduProgramQueue[queueIndex].startTime.get() - (utility::rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-    const std::int64_t startDelay =
+    std::int64_t const startDelay =
         std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
 
     return startDelay;

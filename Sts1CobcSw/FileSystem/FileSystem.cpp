@@ -43,7 +43,7 @@ lfs_t lfs{};
 lfs_file_t lfsFile{};
 // TODO: Maybe add a conifg header to set things like NAME_MAX or whatever. That could safe a bit of
 // RAM.
-const lfs_config lfsConfig{.read = &Read,
+lfs_config const lfsConfig{.read = &Read,
                            .prog = &Program,
                            .erase = &Erase,
                            .sync = &Sync,
@@ -130,7 +130,7 @@ auto Ls(char const * path) -> int
     PRINTF("$ ls %s\n", path);
 
     auto directory = lfs_dir_t{};
-    const int errorCode = lfs_dir_open(&lfs, &directory, path);
+    int const errorCode = lfs_dir_open(&lfs, &directory, path);
     if(errorCode != 0)
     {
         return errorCode;
@@ -139,7 +139,7 @@ auto Ls(char const * path) -> int
     auto info = lfs_info{};
     while(true)
     {
-        const int result = lfs_dir_read(&lfs, &directory, &info);
+        int const result = lfs_dir_read(&lfs, &directory, &info);
         if(result < 0)
         {
             // An error occurred
