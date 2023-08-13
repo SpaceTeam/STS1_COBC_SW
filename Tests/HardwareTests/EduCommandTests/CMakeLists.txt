@@ -4,6 +4,12 @@ target_link_libraries(
                                        Sts1CobcSw_Periphery Sts1CobcSw_Hal
 )
 
+add_program(RfEdu RfEdu.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_RfEdu PUBLIC rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
+                                 Sts1CobcSw_Periphery Sts1CobcSw_Hal
+)
+
 get_property(
     edu_command_test_targets
     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
