@@ -51,8 +51,11 @@ constexpr auto sectorErase4ByteAddress = 0x21_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
-auto spi = RODOS::HAL_SPI(
-    hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
+auto spi = RODOS::HAL_SPI(hal::flashSpiIndex,
+                          hal::flashSpiSckPin,
+                          hal::flashSpiMisoPin,
+                          hal::flashSpiMosiPin,
+                          hal::spiNssDummyPin);
 
 
 // --- Private function declarations ---

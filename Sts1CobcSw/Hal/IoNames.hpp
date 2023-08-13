@@ -48,4 +48,8 @@ inline constexpr auto rfSdnPin = pb14;
 inline constexpr auto rfGpio0Pin = pc6;
 inline constexpr auto rfGpio1Pin = pc8;
 inline constexpr auto rfPaEnablePin = pc9;
+
+// We don't need/use NSS pins but due to a bug in Rodos we must specify one so we choose this
+// unconnected pin.
+inline constexpr auto spiNssDummyPin = pa0;
 }
