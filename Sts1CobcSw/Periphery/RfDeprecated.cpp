@@ -19,7 +19,8 @@ using RODOS::NOW;
 
 // --- Globals ---
 
-auto spi = RODOS::HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+auto spi = RODOS::HAL_SPI(
+    hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);

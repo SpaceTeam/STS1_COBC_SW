@@ -22,8 +22,9 @@
 namespace sts1cobcsw
 {
 
-// auto rfSpi =
-//     RODOS::HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+// auto rfSpi = RODOS::HAL_SPI(
+//     hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin,
+//     hal::spiNssDummyPin);
 
 
 class RfSimpleTest : public RODOS::StaticThread<>

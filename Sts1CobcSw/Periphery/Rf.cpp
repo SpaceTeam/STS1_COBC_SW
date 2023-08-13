@@ -74,7 +74,8 @@ constexpr std::uint8_t morse9 = (5U << maxMorseLetterLength) | 0b00001U;
 constexpr std::uint8_t morse0 = (5U << maxMorseLetterLength) | 0b00000U;
 constexpr std::uint8_t morseSpace = 0;
 
-auto spi = RODOS::HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+auto spi = RODOS::HAL_SPI(
+    hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
