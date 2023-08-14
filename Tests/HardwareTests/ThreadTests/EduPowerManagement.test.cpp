@@ -15,7 +15,6 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
-periphery::Edu edu{};
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
@@ -31,7 +30,7 @@ public:
 private:
     void init() override
     {
-        edu.Initialize();
+        periphery::edu.Initialize();
         eduUpdateGpioPin.Direction(hal::PinDirection::in);
         uciUart.init();
     }

@@ -57,7 +57,7 @@ private:
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
                 // Communicate with EDU
 
-                auto status = edu.GetStatus();
+                auto status = periphery::edu.GetStatus();
                 // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
                 // status.errorCode);
 
@@ -104,7 +104,7 @@ private:
                         // Edu wants to send result file
                         // Send return result to Edu, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
-                        auto resultsInfo = edu.ReturnResult();
+                        auto resultsInfo = periphery::edu.ReturnResult();
                         auto errorCode = resultsInfo.errorCode;
                         if(errorCode != periphery::EduErrorCode::success
                            and errorCode != periphery::EduErrorCode::successEof)

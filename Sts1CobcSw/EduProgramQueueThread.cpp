@@ -38,8 +38,6 @@ using RODOS::SECONDS;
 constexpr auto stackSize = 8'000U;
 constexpr auto eduCommunicationDelay = 2 * SECONDS;
 
-periphery::Edu edu = periphery::Edu();
-
 
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
 {
@@ -51,7 +49,7 @@ public:
 private:
     void init() override
     {
-        edu.Initialize();
+        periphery::edu.Initialize();
 
         // auto queueEntry1 = EduQueueEntry{
         //    .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
@@ -103,7 +101,7 @@ private:
             utility::PrintFormattedSystemUtc();
 
             auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
-            auto errorCode = edu.UpdateTime(updateTimeData);
+            auto errorCode = periphery::edu.UpdateTime(updateTimeData);
             if(errorCode != periphery::EduErrorCode::success)
             {
                 RODOS::PRINTF("UpdateTime error code : %d\n", errorCode);
@@ -135,7 +133,7 @@ private:
             auto executeProgramData = periphery::ExecuteProgramData{
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
-            errorCode = edu.ExecuteProgram(executeProgramData);
+            errorCode = periphery::edu.ExecuteProgram(executeProgramData);
             // errorCode = periphery::EduErrorCode::success;
 
             if(errorCode != periphery::EduErrorCode::success)

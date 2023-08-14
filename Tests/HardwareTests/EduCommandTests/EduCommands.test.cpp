@@ -19,7 +19,6 @@ using RODOS::PRINTF;
 using sts1cobcsw::serial::Byte;
 
 
-auto edu = periphery::Edu();
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
@@ -33,7 +32,7 @@ public:
 private:
     void init() override
     {
-        edu.Initialize();
+        periphery::edu.Initialize();
         uciUart.init();
     }
 
@@ -41,7 +40,7 @@ private:
     void run() override
     {
         // Permanently turn on EDU for this test
-        edu.TurnOn();
+        periphery::edu.TurnOn();
 
         PRINTF("\n");
         PRINTF("EDU commands test\n");
@@ -64,7 +63,7 @@ private:
                 {
                     auto timestamp = utility::GetUnixUtc();
                     PRINTF("Sending UpdateTime(timestamp = %d)\n", static_cast<int>(timestamp));
-                    auto errorCode = edu.UpdateTime({.timestamp = timestamp});
+                    auto errorCode = periphery::edu.UpdateTime({.timestamp = timestamp});
                     PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
                     break;
                 }
@@ -92,7 +91,7 @@ private:
                            static_cast<int>(programId),
                            static_cast<int>(queueId),
                            static_cast<int>(timeout));
-                    auto errorCode = edu.ExecuteProgram(
+                    auto errorCode = periphery::edu.ExecuteProgram(
                         {.programId = programId, .queueId = queueId, .timeout = timeout});
                     PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
                     break;
@@ -100,7 +99,7 @@ private:
                 case 'g':
                 {
                     PRINTF("Sending GetStatus()\n");
-                    auto status = edu.GetStatus();
+                    auto status = periphery::edu.GetStatus();
                     PRINTF("Returned status:\n");
                     PRINTF("  type       = %d\n", static_cast<int>(status.statusType));
                     PRINTF("  program ID = %d\n", static_cast<int>(status.programId));
@@ -112,7 +111,7 @@ private:
                 case 'r':
                 {
                     PRINTF("Sending ReturnResult()\n");
-                    auto resultInfo = edu.ReturnResult();
+                    auto resultInfo = periphery::edu.ReturnResult();
                     PRINTF("Returned result info:\n");
                     PRINTF("  error code  = %d\n", static_cast<int>(resultInfo.errorCode));
                     PRINTF("  result size = %d\n", static_cast<int>(resultInfo.resultSize.get()));

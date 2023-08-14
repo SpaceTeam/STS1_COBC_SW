@@ -18,9 +18,6 @@ using serial::Byte;
 using serial::operator""_b;
 
 
-periphery::Edu edu = periphery::Edu();
-
-
 class DispatchCommandTest : public RODOS::StaticThread<>
 {
 public:

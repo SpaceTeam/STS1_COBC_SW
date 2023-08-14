@@ -15,6 +15,9 @@ using ts::operator""_u16;
 using ts::operator""_usize;
 
 
+Edu edu = Edu();
+
+
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
 constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet
