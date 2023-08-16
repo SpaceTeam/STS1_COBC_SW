@@ -4,6 +4,9 @@
 
 #include <etl/vector.h>
 
+#include <cstdint>
+#include <span>
+
 
 namespace sts1cobcsw
 {

@@ -1,6 +1,9 @@
 #include <Sts1CobcSw/CommandParser.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw
@@ -33,12 +36,12 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
         {
             case CommandId::turnEduOn:
             {
-                edu.TurnOn();
+                periphery::edu.TurnOn();
                 return;
             }
             case CommandId::turnEduOff:
             {
-                edu.TurnOff();
+                periphery::edu.TurnOff();
                 return;
             }
             case CommandId::buildQueue:

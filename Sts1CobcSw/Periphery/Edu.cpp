@@ -2,8 +2,14 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
+
+#include <type_safe/types.hpp>
+
+#include <algorithm>
+#include <array>
+#include <cstddef>
 
 
 namespace sts1cobcsw::periphery
@@ -11,8 +17,12 @@ namespace sts1cobcsw::periphery
 using sts1cobcsw::serial::operator""_b;
 using sts1cobcsw::serial::Byte;
 
+namespace ts = type_safe;
 using ts::operator""_u16;
 using ts::operator""_usize;
+
+
+Edu edu;
 
 
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
@@ -116,9 +126,9 @@ auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
-                  data.programId,
-                  data.queueId,
-                  data.timeout);
+                  data.programId.get(),
+                  data.queueId.get(),
+                  data.timeout.get());
     // Check if data command was successful
     auto serialData = serial::Serialize(data);
     auto errorCode = SendData(serialData);

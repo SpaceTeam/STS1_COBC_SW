@@ -1,8 +1,6 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/Edu.hpp>
-
 #include <cstdint>
 
 

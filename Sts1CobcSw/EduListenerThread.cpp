@@ -1,37 +1,32 @@
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduListenerThread.hpp>
-#include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/EduProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
-#include <Sts1CobcSw/Periphery/EduNames.hpp>
+#include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
-#include <type_safe/narrow_cast.hpp>
-#include <type_safe/types.hpp>
-
-#include <rodos.h>
-
-#include "Sts1CobcSw/TopicsAndSubscribers.hpp"
+#include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw
 {
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
 
-// Can't use auto here since GCC throws an error about conflicting declarations otherwise :(
+// TODO: This should also go to Edu.hpp/.cpp
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 
 
-class EduListenerThread : public StaticThread<>
+class EduListenerThread : public RODOS::StaticThread<>
 {
 public:
     EduListenerThread() : StaticThread("EduListenerThread", eduListenerThreadPriority)
     {
     }
+
 
 private:
     void init() override
@@ -57,7 +52,7 @@ private:
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
                 // Communicate with EDU
 
-                auto status = edu.GetStatus();
+                auto status = periphery::edu.GetStatus();
                 // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
                 // status.errorCode);
 
@@ -104,7 +99,7 @@ private:
                         // Edu wants to send result file
                         // Send return result to Edu, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
-                        auto resultsInfo = edu.ReturnResult();
+                        auto resultsInfo = periphery::edu.ReturnResult();
                         auto errorCode = resultsInfo.errorCode;
                         if(errorCode != periphery::EduErrorCode::success
                            and errorCode != periphery::EduErrorCode::successEof)

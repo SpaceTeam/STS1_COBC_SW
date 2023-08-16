@@ -1,7 +1,4 @@
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Periphery/Edu.hpp>
-#include <Sts1CobcSw/Periphery/EduNames.hpp>
-#include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 
@@ -11,7 +8,7 @@ using RODOS::PRINTF;
 using utility::PrintFormattedSystemUtc;
 
 
-// TODO: Move this in the proper file
+// TODO: Move this to the proper file
 auto ResumeEduErrorCommunicationThread() -> void
 {
     PRINTF("\nCall to ResumeEduErrorCommunicationThread()\n");
@@ -24,9 +21,12 @@ auto ResumeEduProgramQueueThread() -> void
 }
 
 
-// TODO: This file is not used at all right now. Think about the mocking later.
+// TODO: This file is not used at all right now. Think about mocking later.
 namespace periphery
 {
+Edu edu;
+
+
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Edu::Initialize() -> void
 {
