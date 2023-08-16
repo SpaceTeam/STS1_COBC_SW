@@ -21,9 +21,12 @@ auto ResumeEduProgramQueueThread() -> void
 }
 
 
-// TODO: This file is not used at all right now. Think about the mocking later.
+// TODO: This file is not used at all right now. Think about mocking later.
 namespace periphery
 {
+Edu edu;
+
+
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Edu::Initialize() -> void
 {
