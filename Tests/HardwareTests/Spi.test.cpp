@@ -38,13 +38,21 @@ using RODOS::PRINTF;
 
 namespace sts1cobcsw
 {
-auto spis = std::array{
-    HAL_SPI(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin),
-    HAL_SPI(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin),
-    HAL_SPI(hal::framEpsSpiIndex,
-            hal::framEpsSpiSckPin,
-            hal::framEpsSpiMisoPin,
-            hal::framEpsSpiMosiPin)};
+auto spis = std::array{HAL_SPI(hal::flashSpiIndex,
+                               hal::flashSpiSckPin,
+                               hal::flashSpiMisoPin,
+                               hal::flashSpiMosiPin,
+                               hal::spiNssDummyPin),
+                       HAL_SPI(hal::rfSpiIndex,
+                               hal::rfSpiSckPin,
+                               hal::rfSpiMisoPin,
+                               hal::rfSpiMosiPin,
+                               hal::spiNssDummyPin),
+                       HAL_SPI(hal::framEpsSpiIndex,
+                               hal::framEpsSpiSckPin,
+                               hal::framEpsSpiMisoPin,
+                               hal::framEpsSpiMosiPin,
+                               hal::spiNssDummyPin)};
 
 
 class SpiTest : public RODOS::StaticThread<>
