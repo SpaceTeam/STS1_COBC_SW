@@ -6,5 +6,6 @@
 
 namespace sts1cobcsw
 {
+// TODO: This should also go to Edu.hpp/.cpp
 extern hal::GpioPin eduUpdateGpioPin;
 }

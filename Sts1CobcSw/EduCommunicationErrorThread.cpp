@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
@@ -20,6 +20,7 @@ public:
         : StaticThread("EduCommunicationThread", eduCommunicationErrorThreadPriority)
     {
     }
+
 
 private:
     void init() override
@@ -42,7 +43,7 @@ private:
             RODOS::AT(RODOS::NOW() + eduShutDownDelay);
             periphery::edu.TurnOn();
 
-            //
+            // TODO: Why is this here?
             [[maybe_unused]] auto status = periphery::edu.GetStatus();
 
             // Busy wait
@@ -57,6 +58,7 @@ private:
         }
     }
 } eduCommunicationErrorThread;
+
 
 auto ResumeEduCommunicationErrorThread() -> void
 {

@@ -2,10 +2,9 @@
 //! @brief  Manages the power of the EDU module
 
 #include <Sts1CobcSw/EduListenerThread.hpp>
-#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Hal/PinNames.hpp>
+#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
@@ -14,8 +13,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <algorithm>
-#include <cinttypes>
+#include <cstdint>
 
 
 namespace sts1cobcsw

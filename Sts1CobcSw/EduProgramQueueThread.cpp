@@ -2,16 +2,17 @@
 #include <Sts1CobcSw/EduProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/EduProgramStatusHistory.hpp>
+#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduEnums.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <rodos/support/support-libs/ringbuffer.h>
-#include <rodos_no_using_namespace.h>
+#include <type_safe/types.hpp>
 
-#include <etl/vector.h>
+#include <rodos_no_using_namespace.h>
 
 #include <algorithm>
 #include <cinttypes>
@@ -100,8 +101,8 @@ private:
             RODOS::PRINTF("Resuming here after first wait.\n");
             utility::PrintFormattedSystemUtc();
 
-            auto updateTimeData = periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
-            auto errorCode = periphery::edu.UpdateTime(updateTimeData);
+            auto errorCode = periphery::edu.UpdateTime(
+                periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
             if(errorCode != periphery::EduErrorCode::success)
             {
                 RODOS::PRINTF("UpdateTime error code : %d\n", errorCode);
