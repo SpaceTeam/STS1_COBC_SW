@@ -22,7 +22,7 @@ using ts::operator""_u16;
 using ts::operator""_usize;
 
 
-Edu edu = Edu();
+Edu edu;
 
 
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
