@@ -126,9 +126,9 @@ auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> EduErrorCode
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
-                  data.programId,
-                  data.queueId,
-                  data.timeout);
+                  data.programId.get(),
+                  data.queueId.get(),
+                  data.timeout.get());
     // Check if data command was successful
     auto serialData = serial::Serialize(data);
     auto errorCode = SendData(serialData);

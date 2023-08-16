@@ -130,7 +130,7 @@ private:
             auto programId = eduProgramQueue[queueIndex].programId;
             auto timeout = eduProgramQueue[queueIndex].timeout;
 
-            RODOS::PRINTF("Executing program %d\n", programId);
+            RODOS::PRINTF("Executing program %d\n", programId.get());
             auto executeProgramData = periphery::ExecuteProgramData{
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
