@@ -49,7 +49,7 @@ private:
             char readCharacter = 0;
             // TODO: This needs to be abstracted away because "IRL" we receive commands via the RF
             // module
-            std::size_t nReadCharacters =
+            std::size_t const nReadCharacters =
                 RODOS::uart_stdout.read(&readCharacter, sizeof(readCharacter));
             if(nReadCharacters == 0U)
             {

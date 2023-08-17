@@ -105,7 +105,7 @@ private:
                 periphery::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
             if(errorCode != periphery::EduErrorCode::success)
             {
-                RODOS::PRINTF("UpdateTime error code : %d\n", errorCode);
+                RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode));
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
                 ResumeEduCommunicationErrorThread();
@@ -172,7 +172,7 @@ auto ComputeStartDelay() -> std::int64_t
     auto nextProgramStartTime =
         eduProgramQueue[queueIndex].startTime.get() - (utility::rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-    std::int64_t startDelay =
+    std::int64_t const startDelay =
         std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
 
     return startDelay;

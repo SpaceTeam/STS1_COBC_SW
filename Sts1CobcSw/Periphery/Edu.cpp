@@ -30,7 +30,9 @@ Edu edu;
 constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet
 constexpr auto cmdNack = 0x27_b;  //! Not Acknowledging a (invalid) data packet
 constexpr auto cmdEof = 0x59_b;   //! Transmission of multiple packets is complete
-constexpr auto cmdStop = 0xb4_b;  //! Transmission of multiple packets should be stopped
+// TODO: Use this
+//! Transmission of multiple packets should be stopped
+[[maybe_unused]] constexpr auto cmdStop = 0xb4_b;
 constexpr auto cmdData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
 // GetStatus result types
@@ -98,7 +100,7 @@ auto Edu::TurnOff() -> void
 
 
 // TODO: Implement this
-auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
+auto Edu::StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_t
 {
     return 0;
 }
@@ -218,8 +220,8 @@ auto Edu::GetStatus() -> EduStatus
     if(sendDataError != EduErrorCode::success)
     {
         RODOS::PRINTF("  Returned .statusType = %d, .errorCode = %d\n",
-                      EduStatusType::invalid,
-                      sendDataError);
+                      static_cast<int>(EduStatusType::invalid),
+                      static_cast<int>(sendDataError));
         return EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
     }
 
@@ -240,8 +242,8 @@ auto Edu::GetStatus() -> EduStatus
     RODOS::PRINTF(
         "  .statusType = %d\n  .errorCode = %d\n  .programId = %d\n  .queueId = %d\n  exitCode = "
         "%d\n",
-        status.statusType,
-        status.errorCode,
+        static_cast<int>(status.statusType),
+        static_cast<int>(status.errorCode),
         status.programId,
         status.queueId,
         status.exitCode);
@@ -604,7 +606,7 @@ void Edu::SendCommand(Byte commandId)
 //! @param data The data to be sent
 auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 {
-    std::size_t nBytes = data.size();
+    std::size_t const nBytes = data.size();
     if(nBytes >= maxDataLength)
     {
         return EduErrorCode::sendDataTooLong;
@@ -624,7 +626,7 @@ auto Edu::SendData(std::span<Byte> data) -> EduErrorCode
 
         // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
-        auto answer = 0xAA_b;
+        auto answer = 0xAA_b;  // Why is this set to 0xAA?
         uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
         auto nReadBytes = uart_.read(&answer, 1);
@@ -725,7 +727,7 @@ auto Edu::FlushUartBuffer() -> void
 
 auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
 {
-    uint32_t computedCrc32 = utility::Crc32(data);
+    auto const computedCrc32 = utility::Crc32(data);
 
     // DEBUG
     // RODOS::PRINTF("\nComputed CRC: ");
@@ -759,9 +761,9 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> EduErrorCode
 auto Print(std::span<Byte> data, int nRows) -> void
 {
     auto iRows = 0;
-    for(auto x : data)
+    for(auto byte : data)
     {
-        RODOS::PRINTF("%c", static_cast<char>(x));
+        RODOS::PRINTF("%c", static_cast<char>(byte));
         iRows++;
         if(iRows == nRows)
         {

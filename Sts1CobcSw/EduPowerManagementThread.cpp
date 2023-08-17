@@ -57,8 +57,8 @@ private:
             std::int64_t startDelay = 0;
             nextProgramStartDelayBuffer.get(startDelay);
 
-            ts::bool_t epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
-            ts::bool_t eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
+            ts::bool_t const epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
+            ts::bool_t const eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
 
             auto eduIsAlive = false;
             eduIsAliveBufferForPowerManagement.get(eduIsAlive);
