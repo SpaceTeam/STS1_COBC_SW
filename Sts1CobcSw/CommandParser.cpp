@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/CommandParser.hpp>
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -38,12 +38,12 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
         {
             case CommandId::turnEduOn:
             {
-                periphery::edu.TurnOn();
+                eduUnit.TurnOn();
                 return;
             }
             case CommandId::turnEduOff:
             {
-                periphery::edu.TurnOff();
+                eduUnit.TurnOff();
                 return;
             }
             case CommandId::buildQueue:
@@ -67,12 +67,12 @@ auto BuildEduQueue(std::span<Byte const> commandData) -> void
 {
     RODOS::PRINTF("Entering build queue command parsing\n");
 
-    eduProgramQueue.clear();
+    edu::programQueue.clear();
     ParseAndAddQueueEntries(commandData);
-    queueIndex = 0U;
+    edu::queueIndex = 0U;
 
     RODOS::PRINTF("Queue index reset. Current size of EDU program queue is %d.\n",
-                  static_cast<int>(eduProgramQueue.size()));
+                  static_cast<int>(edu::programQueue.size()));
 
     ResumeEduProgramQueueThread();
 }
@@ -86,17 +86,18 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
 {
     RODOS::PRINTF("Printing and parsing\n");
 
-    while(queueEntries.size() >= serialSize<EduQueueEntry> and (not eduProgramQueue.full()))
+    while(queueEntries.size() >= serialSize<edu::QueueEntry> and (not edu::programQueue.full()))
     {
-        auto entry = Deserialize<EduQueueEntry>(queueEntries.first<serialSize<EduQueueEntry>>());
+        auto entry =
+            Deserialize<edu::QueueEntry>(queueEntries.first<serialSize<edu::QueueEntry>>());
 
         RODOS::PRINTF("Prog ID      : %" PRIu16 "\n", entry.programId.get());
         RODOS::PRINTF("Queue ID     : %" PRIu16 "\n", entry.queueId.get());
         RODOS::PRINTF("Start Time   : %" PRIu32 "\n", entry.startTime.get());
         RODOS::PRINTF("Timeout      : %" PRIi16 "\n", entry.timeout.get());
 
-        eduProgramQueue.push_back(entry);
-        queueEntries = queueEntries.subspan<serialSize<EduQueueEntry>>();
+        edu::programQueue.push_back(entry);
+        queueEntries = queueEntries.subspan<serialSize<edu::QueueEntry>>();
     }
 }
 }

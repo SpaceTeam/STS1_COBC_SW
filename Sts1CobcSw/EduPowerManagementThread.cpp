@@ -1,10 +1,9 @@
 //! @file
 //! @brief  Manages the power of the EDU module
-
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/EduListenerThread.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
@@ -72,7 +71,7 @@ private:
                     if(not(eduHasUpdate or startDelay < startDelayLimit))
                     {
                         RODOS::PRINTF("Turning Edu off\n");
-                        periphery::edu.TurnOff();
+                        eduUnit.TurnOff();
                     }
                 }
                 else
@@ -80,13 +79,13 @@ private:
                     if(startDelay < (eduBootTime + eduBootTimeMargin))
                     {
                         RODOS::PRINTF("Turning Edu on\n");
-                        periphery::edu.TurnOn();
+                        eduUnit.TurnOn();
                     }
                 }
             }
             else
             {
-                periphery::edu.TurnOff();
+                eduUnit.TurnOff();
             }
         }
     }

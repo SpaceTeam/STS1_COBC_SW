@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <array>

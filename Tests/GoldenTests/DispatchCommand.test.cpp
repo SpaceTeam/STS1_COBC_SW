@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/CommandParser.hpp>
-#include <Sts1CobcSw/EduProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -16,6 +16,8 @@ namespace sts1cobcsw
 {
 using serial::Byte;
 using serial::operator""_b;
+using type_safe::operator""_u16;
+using type_safe::operator""_i16;
 
 
 class DispatchCommandTest : public RODOS::StaticThread<>
@@ -37,14 +39,14 @@ private:
             serial::Serialize(GsCommandHeader{.startCharacter = 'a',
                                               .utc = 0x65920080,
                                               .commandId = 52,
-                                              .length = 2 * serial::serialSize<EduQueueEntry>});
+                                              .length = 2 * serial::serialSize<edu::QueueEntry>});
         command.insert(command.end(), header.begin(), header.end());
 
-        auto entry1 = serial::Serialize(EduQueueEntry{
+        auto entry1 = serial::Serialize(edu::QueueEntry{
             .programId = 1_u16, .queueId = 16_u16, .startTime = 1048577, .timeout = 1_i16});
         command.insert(command.end(), entry1.begin(), entry1.end());
 
-        auto entry2 = serial::Serialize(EduQueueEntry{
+        auto entry2 = serial::Serialize(edu::QueueEntry{
             .programId = 2_u16, .queueId = 32_u16, .startTime = 2097154, .timeout = 2_i16});
         command.insert(command.end(), entry2.begin(), entry2.end());
 

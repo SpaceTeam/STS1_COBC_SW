@@ -1,11 +1,11 @@
+#include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/Edu/Enums.hpp>
+#include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
+#include <Sts1CobcSw/Edu/Structs.hpp>
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduListenerThread.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/EduProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Periphery/Edu.hpp>
-#include <Sts1CobcSw/Periphery/EduEnums.hpp>
-#include <Sts1CobcSw/Periphery/EduStructs.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
@@ -52,12 +52,12 @@ private:
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
                 // Communicate with EDU
 
-                auto status = periphery::edu.GetStatus();
+                auto status = eduUnit.GetStatus();
                 // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
                 // status.errorCode);
 
-                if(status.errorCode != periphery::EduErrorCode::success
-                   and status.errorCode != periphery::EduErrorCode::successEof)
+                if(status.errorCode != edu::ErrorCode::success
+                   and status.errorCode != edu::ErrorCode::successEof)
                 {
                     // RODOS::PRINTF("[EduListenerThread] GetStatus() error code : %d.\n",
                     // status.errorCode);
@@ -74,35 +74,35 @@ private:
 
                 switch(status.statusType)
                 {
-                    case periphery::EduStatusType::programFinished:
+                    case edu::StatusType::programFinished:
                     {
                         // Program has finished
                         // Find the correspongind queueEntry and update it, then resume edu queue
                         // thread
                         auto eduProgramStatusHistoryEntry =
-                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
+                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
                         if(status.exitCode == 0)
                         {
                             eduProgramStatusHistoryEntry.status =
-                                EduProgramStatus::programExecutionSucceeded;
+                                edu::ProgramStatus::programExecutionSucceeded;
                         }
                         else
                         {
                             eduProgramStatusHistoryEntry.status =
-                                EduProgramStatus::programExecutionFailed;
+                                edu::ProgramStatus::programExecutionFailed;
                         }
                         ResumeEduProgramQueueThread();
                         break;
                     }
-                    case periphery::EduStatusType::resultsReady:
+                    case edu::StatusType::resultsReady:
                     {
                         // Edu wants to send result file
                         // Send return result to Edu, Communicate, and interpret the results to
                         // update the S&H Entry from 3 or 4 to 5.
-                        auto resultsInfo = periphery::edu.ReturnResult();
+                        auto resultsInfo = eduUnit.ReturnResult();
                         auto errorCode = resultsInfo.errorCode;
-                        if(errorCode != periphery::EduErrorCode::success
-                           and errorCode != periphery::EduErrorCode::successEof)
+                        if(errorCode != edu::ErrorCode::success
+                           and errorCode != edu::ErrorCode::successEof)
                         {
                             /*
                             RODOS::PRINTF(
@@ -123,15 +123,15 @@ private:
                         // break;
 
                         auto eduProgramStatusHistoryEntry =
-                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
+                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
                         // TODO: Pretty sure that there is a .put() or something like that missing
                         // here and the status is actually never updated in the ring buffer.
                         eduProgramStatusHistoryEntry.status =
-                            EduProgramStatus::resultFileTransfered;
+                            edu::ProgramStatus::resultFileTransfered;
                         break;
                     }
-                    case periphery::EduStatusType::invalid:
-                    case periphery::EduStatusType::noEvent:
+                    case edu::StatusType::invalid:
+                    case edu::StatusType::noEvent:
                     {
                         break;
                     }
