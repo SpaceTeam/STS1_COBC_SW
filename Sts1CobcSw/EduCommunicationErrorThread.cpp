@@ -43,7 +43,7 @@ private:
             RODOS::AT(RODOS::NOW() + eduShutDownDelay);
             eduUnit.TurnOn();
 
-            //
+            // TODO: Why is this here?
             [[maybe_unused]] auto status = eduUnit.GetStatus();
 
             // Busy wait

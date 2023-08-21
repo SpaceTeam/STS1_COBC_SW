@@ -60,9 +60,8 @@ private:
     // RODOS::HAL_UART uart_ =
     //     RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 };
-
-
 }
+
 
 namespace sts1cobcsw
 {

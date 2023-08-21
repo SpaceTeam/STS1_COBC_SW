@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 
 #include <rodos_no_using_namespace.h>

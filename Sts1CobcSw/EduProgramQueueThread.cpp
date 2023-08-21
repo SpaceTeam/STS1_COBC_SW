@@ -47,6 +47,7 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
@@ -101,8 +102,8 @@ private:
             RODOS::PRINTF("Resuming here after first wait.\n");
             utility::PrintFormattedSystemUtc();
 
-            auto updateTimeData = edu::UpdateTimeData{.timestamp = utility::GetUnixUtc()};
-            auto errorCode = eduUnit.UpdateTime(updateTimeData);
+            auto errorCode =
+                eduUnit.UpdateTime(edu::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
             if(errorCode != edu::ErrorCode::success)
             {
                 RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode));

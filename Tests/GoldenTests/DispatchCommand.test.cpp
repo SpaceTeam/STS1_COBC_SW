@@ -40,7 +40,7 @@ private:
                                               .utc = 0x65920080,
                                               .commandId = 52,
                                               .length = 2 * serial::serialSize<edu::QueueEntry>});
-        command.insert(command.end(), std::begin(header), std::end(header));
+        command.insert(command.end(), header.begin(), header.end());
 
         auto entry1 = serial::Serialize(edu::QueueEntry{
             .programId = 1_u16, .queueId = 16_u16, .startTime = 1048577, .timeout = 1_i16});

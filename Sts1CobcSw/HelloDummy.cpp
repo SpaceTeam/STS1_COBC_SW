@@ -5,6 +5,7 @@
 #include <span>
 #include <string_view>
 
+
 namespace RODOS
 {
 #if defined(LINUX_SYSTEM)
@@ -12,8 +13,8 @@ HAL_UART uart_stdout(RODOS::UART_IDX2);  // NOLINT
 #elif defined(GENERIC_SYSTEM)
 extern HAL_UART uart_stdout;  // NOLINT
 #endif
-
 }
+
 
 namespace sts1cobcsw
 {

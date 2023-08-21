@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Edu/Enums.hpp>
 #include <Sts1CobcSw/Edu/Names.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -15,6 +16,7 @@ namespace sts1cobcsw
 namespace edu
 {
 namespace ts = type_safe;
+
 using sts1cobcsw::serial::Byte;
 using sts1cobcsw::serial::operator""_b;
 using ts::operator""_u16;

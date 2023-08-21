@@ -10,6 +10,7 @@ using sts1cobcsw::serial::Byte;
 using sts1cobcsw::serial::DeserializeFrom;
 using sts1cobcsw::serial::SerializeTo;
 
+
 etl::vector<QueueEntry, programQueueSize> programQueue{};
 std::uint16_t queueIndex = 0U;
 

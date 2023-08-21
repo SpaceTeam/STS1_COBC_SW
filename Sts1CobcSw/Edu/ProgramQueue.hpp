@@ -1,5 +1,6 @@
 #pragma once
 
+
 // clang-format off
 #include <cstdint>
 // TODO: Change install rules of rodos such that this must be included as
@@ -32,6 +33,7 @@ using serial::Byte;
 using serial::DeserializeFrom;
 using serial::SerializeTo;
 
+
 struct QueueEntry
 {
     ts::uint16_t programId = 0_u16;
@@ -56,8 +58,10 @@ inline constexpr std::size_t serialSize<edu::QueueEntry> =
 namespace edu
 {
 inline constexpr auto programQueueSize = 20;
+
 extern uint16_t queueIndex;
 extern etl::vector<QueueEntry, programQueueSize> programQueue;
+
 
 auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *;
 auto SerializeTo(void * destination, QueueEntry const & data) -> void *;
