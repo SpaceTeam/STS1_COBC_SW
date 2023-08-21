@@ -38,8 +38,7 @@ struct ProgramStatusHistoryEntry
 inline constexpr auto programStatusHistorySize = 20;
 
 
-extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize>
-    programStatusHistory;
+extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
 auto FindProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
