@@ -23,7 +23,8 @@ auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *
     return source;
 }
 
-auto SerializeTo(void * destination, sts1cobcsw::edu::QueueEntry const & data) -> void *
+
+auto SerializeTo(void * destination, QueueEntry const & data) -> void *
 {
     destination = SerializeTo(destination, data.programId);
     destination = SerializeTo(destination, data.queueId);

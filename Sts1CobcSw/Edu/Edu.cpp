@@ -271,14 +271,12 @@ auto Edu::GetStatusCommunication() -> Status
 
     if(headerData.command != cmdData)
     {
-        return edu::Status{.statusType = StatusType::invalid,
-                           .errorCode = ErrorCode::invalidCommand};
+        return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidCommand};
     }
 
     if(headerData.length == 0_u16)
     {
-        return edu::Status{.statusType = StatusType::invalid,
-                           .errorCode = ErrorCode::invalidLength};
+        return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
     }
 
     // Get the status type code
@@ -294,8 +292,7 @@ auto Edu::GetStatusCommunication() -> Status
     {
         if(headerData.length != nNoEventBytes)
         {
-            return edu::Status{.statusType = StatusType::invalid,
-                               .errorCode = ErrorCode::invalidLength};
+            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
         }
 
         std::array<Byte, 1> statusTypeArray = {statusType};
@@ -305,19 +302,18 @@ auto Edu::GetStatusCommunication() -> Status
             return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
         }
 
-        return edu::Status{.statusType = StatusType::noEvent,
-                           .programId = 0,
-                           .queueId = 0,
-                           .exitCode = 0,
-                           .errorCode = ErrorCode::success};
+        return Status{.statusType = StatusType::noEvent,
+                      .programId = 0,
+                      .queueId = 0,
+                      .exitCode = 0,
+                      .errorCode = ErrorCode::success};
     }
 
     if(statusType == programFinishedCode)
     {
         if(headerData.length != nProgramFinishedBytes)
         {
-            return edu::Status{.statusType = StatusType::invalid,
-                               .errorCode = ErrorCode::invalidLength};
+            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
         }
 
         auto dataBuffer = serial::SerialBuffer<ProgramFinishedStatus>{};
@@ -351,8 +347,7 @@ auto Edu::GetStatusCommunication() -> Status
     {
         if(headerData.length != nResultsReadyBytes)
         {
-            return edu::Status{.statusType = StatusType::invalid,
-                               .errorCode = ErrorCode::invalidLength};
+            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
         }
 
         auto dataBuffer = serial::SerialBuffer<ResultsReadyStatus>{};
@@ -379,8 +374,7 @@ auto Edu::GetStatusCommunication() -> Status
                       .errorCode = ErrorCode::success};
     }
 
-    return edu::Status{.statusType = StatusType::invalid,
-                       .errorCode = ErrorCode::invalidStatusType};
+    return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidStatusType};
 }
 
 
