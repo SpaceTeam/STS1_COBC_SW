@@ -7,13 +7,13 @@
 #include <cstdint>
 
 
-namespace sts1cobcsw
+namespace sts1cobcsw::edu
 {
 namespace ts = type_safe;
 using ts::operator""_u16;
 
 
-enum class ProgramStatus : uint8_t
+enum class ProgramStatus : std::uint8_t
 {
     programRunning,
     programCouldNotBeStarted,
@@ -26,7 +26,7 @@ enum class ProgramStatus : uint8_t
 };
 
 
-struct EduProgramStatusHistoryEntry
+struct ProgramStatusHistoryEntry
 {
     ts::uint16_t programId = 0_u16;
     ts::uint16_t queueId = 0_u16;
@@ -35,10 +35,12 @@ struct EduProgramStatusHistoryEntry
 
 
 inline constexpr auto programStatusHistorySize = 20;
-extern RODOS::RingBuffer<EduProgramStatusHistoryEntry, programStatusHistorySize>
-    eduProgramStatusHistory;
 
 
-auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
-    -> EduProgramStatusHistoryEntry;
+extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize>
+    programStatusHistory;
+
+
+auto FindProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
+    -> ProgramStatusHistoryEntry;
 }

@@ -80,16 +80,16 @@ private:
                         // Find the correspongind queueEntry and update it, then resume edu queue
                         // thread
                         auto eduProgramStatusHistoryEntry =
-                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
+                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
                         if(status.exitCode == 0)
                         {
                             eduProgramStatusHistoryEntry.status =
-                                ProgramStatus::programExecutionSucceeded;
+                                edu::ProgramStatus::programExecutionSucceeded;
                         }
                         else
                         {
                             eduProgramStatusHistoryEntry.status =
-                                ProgramStatus::programExecutionFailed;
+                                edu::ProgramStatus::programExecutionFailed;
                         }
                         ResumeEduProgramQueueThread();
                         break;
@@ -123,10 +123,11 @@ private:
                         // break;
 
                         auto eduProgramStatusHistoryEntry =
-                            FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
+                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
                         // TODO: Pretty sure that there is a .put() or something like that missing
                         // here and the status is actually never updated in the ring buffer.
-                        eduProgramStatusHistoryEntry.status = ProgramStatus::resultFileTransfered;
+                        eduProgramStatusHistoryEntry.status =
+                            edu::ProgramStatus::resultFileTransfered;
                         break;
                     }
                     case edu::StatusType::invalid:

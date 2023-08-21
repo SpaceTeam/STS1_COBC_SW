@@ -146,10 +146,10 @@ private:
             }
             else
             {
-                eduProgramStatusHistory.put(
-                    EduProgramStatusHistoryEntry{.programId = programId,
-                                                 .queueId = queueId,
-                                                 .status = ProgramStatus::programRunning});
+                edu::programStatusHistory.put(
+                    edu::ProgramStatusHistoryEntry{.programId = programId,
+                                                   .queueId = queueId,
+                                                   .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
                 auto const executionTime = timeout.get() + eduCommunicationDelay;

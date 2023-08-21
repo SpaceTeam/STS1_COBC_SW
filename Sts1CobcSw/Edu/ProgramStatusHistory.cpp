@@ -3,24 +3,25 @@
 // #include <rodos_no_using_namespace.h>
 
 
-namespace sts1cobcsw
+namespace sts1cobcsw::edu
 {
-RODOS::RingBuffer<EduProgramStatusHistoryEntry, programStatusHistorySize> eduProgramStatusHistory;
+RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
-auto FindEduProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
-    -> EduProgramStatusHistoryEntry
+// TODO: This should probably not return a copy but a reference or pointer so that the user code can
+// modify the entry.
+auto FindProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
+    -> ProgramStatusHistoryEntry
 {
-    auto eduProgramStatusHistoryEntry = EduProgramStatusHistoryEntry{};
+    auto programStatusHistoryEntry = ProgramStatusHistoryEntry{};
     do
     {
-        eduProgramStatusHistory.get(eduProgramStatusHistoryEntry);
+        programStatusHistory.get(programStatusHistoryEntry);
         // RODOS::PRINTF("%d,%d vs %d,%d\n", eduProgramStatusHistoryEntry.programId,
         // eduProgramStatusHistoryEntry.queueId, programId, queueId);
-    } while(eduProgramStatusHistoryEntry.queueId != queueId
-            or eduProgramStatusHistoryEntry.programId != programId);
+    } while(programStatusHistoryEntry.queueId != queueId
+            or programStatusHistoryEntry.programId != programId);
 
-    return eduProgramStatusHistoryEntry;
-    int a = 3;
+    return programStatusHistoryEntry;
 }
 }
