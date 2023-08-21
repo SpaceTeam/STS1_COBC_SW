@@ -20,9 +20,6 @@ using type_safe::operator""_u16;
 using type_safe::operator""_i16;
 
 
-edu::Edu eduUnit = edu::Edu();
-
-
 class DispatchCommandTest : public RODOS::StaticThread<>
 {
 public:

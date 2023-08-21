@@ -11,12 +11,16 @@ using RODOS::PRINTF;
 using utility::PrintFormattedSystemUtc;
 
 
+edu::Edu eduUnit;
+
+
 // TODO: Move this to the proper file
 auto ResumeEduErrorCommunicationThread() -> void
 {
     PRINTF("\nCall to ResumeEduErrorCommunicationThread()\n");
     PrintFormattedSystemUtc();
 }
+
 
 auto ResumeEduProgramQueueThread() -> void
 {
@@ -27,9 +31,6 @@ auto ResumeEduProgramQueueThread() -> void
 // TODO: This file is not used at all right now. Think about the mocking later.
 namespace edu
 {
-Edu edu;
-
-
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Edu::Initialize() -> void
 {
