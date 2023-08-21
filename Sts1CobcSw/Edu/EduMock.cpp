@@ -1,7 +1,4 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/Edu/Names.hpp>
-#include <Sts1CobcSw/Hal/Communication.hpp>
-#include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 

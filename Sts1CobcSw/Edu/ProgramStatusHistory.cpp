@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 
-#include <rodos_no_using_namespace.h>
+// #include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw
