@@ -206,12 +206,11 @@ auto Edu::GetStatus() -> EduStatus
     if(sendDataError != EduErrorCode::success)
     {
         auto status = EduStatus{.statusType = EduStatusType::invalid, .errorCode = sendDataError};
-        // RODOS::PRINTF("  SendingDataError");
-        // RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
-        // RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
-        // RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
-        // RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
-        // RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
+        RODOS::PRINTF("  .statusType = %d\n", static_cast<int>(status.statusType));
+        RODOS::PRINTF("  .programId  = %d\n", static_cast<int>(status.programId));
+        RODOS::PRINTF("  .queueId    = %d\n", static_cast<int>(status.queueId));
+        RODOS::PRINTF("  .exitCode   = %d\n", static_cast<int>(status.exitCode));
+        RODOS::PRINTF("  .errorCode  = %d\n", static_cast<int>(status.errorCode));
         return status;
     }
 
