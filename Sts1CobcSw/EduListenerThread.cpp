@@ -8,7 +8,7 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
-#include <Sts1CobcSw/Periphery/Rf.hpp>  // Only for MFT
+#include <Sts1CobcSw/Periphery/Rf.hpp>  // Only for MFT/HAF
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <type_safe/narrow_cast.hpp>
@@ -22,6 +22,7 @@
 namespace sts1cobcsw
 {
 constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
+
 
 // Can't use auto here since GCC throws an error about conflicting declarations otherwise :(
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
@@ -44,53 +45,31 @@ private:
 
     void run() override
     {
-        // Only for MFT
-        RODOS::PRINTF("Initialize RF module\n");
+        // Only for MFT/HAF
+        RODOS::PRINTF("Initializing RF module\n");
         periphery::rf::Initialize(periphery::rf::TxType::packet);
 
 
         TIME_LOOP(0, timeLoopPeriod)
         {
-            // RODOS::PRINTF("[EduListenerThread] Start of TimeLoop Iteration\n");
             auto eduHasUpdate = (eduUpdateGpioPin.Read() == hal::PinState::set);
-
             auto eduIsAlive = false;
             eduIsAliveBufferForListener.get(eduIsAlive);
-            // RODOS::PRINTF("[EduListenerThread] Read eduHasUpdate pin\n");
 
             // TODO: Check if EDU is alive
             if(eduIsAlive and eduHasUpdate)
             {
-                // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
-                // Communicate with EDU
-
                 auto status = edu.GetStatus();
-                // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
-                // status.errorCode);
-
                 if(status.errorCode != periphery::EduErrorCode::success
                    and status.errorCode != periphery::EduErrorCode::successEof)
                 {
-                    // RODOS::PRINTF("[EduListenerThread] GetStatus() error code : %d.\n",
-                    // status.errorCode);
-                    // RODOS::PRINTF(
-                    //   "[EduListenerThread] Edu communication error after call to
-                    //   GetStatus().\n");
                     ResumeEduErrorCommunicationThread();
-                }
-                else
-                {
-                    // RODOS::PRINTF("[EduListenerThread] Call to GetStatus() resulted in
-                    // success.\n");
                 }
 
                 switch(status.statusType)
                 {
                     case periphery::EduStatusType::programFinished:
                     {
-                        // Program has finished
-                        // Find the correspongind queueEntry and update it, then resume EDU queue
-                        // thread
                         auto eduProgramStatusHistoryEntry =
                             FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
                         if(status.exitCode == 0)
@@ -108,35 +87,16 @@ private:
                     }
                     case periphery::EduStatusType::resultsReady:
                     {
-                        // EDU wants to send result file
-                        // Send return result to EDU, Communicate, and interpret the results to
-                        // update the S&H Entry from 3 or 4 to 5.
-                        RODOS::PRINTF("Call to Return result with program id = %d, queueId = %d\n",
+                        RODOS::PRINTF("Calling ReturnResult(program id = %d, queueId = %d)\n",
                                       status.programId,
                                       status.queueId);  // NOLINT
                         auto resultsInfo = edu.ReturnResult(
                             {.programId = status.programId, .queueId = status.queueId});
-                        auto errorCode = resultsInfo.errorCode;
-                        if(errorCode != periphery::EduErrorCode::success
-                           and errorCode != periphery::EduErrorCode::successEof)
+                        if(resultsInfo.errorCode != periphery::EduErrorCode::success
+                           and resultsInfo.errorCode != periphery::EduErrorCode::successEof)
                         {
-                            /*
-                            RODOS::PRINTF(
-                                "[EduListenerThread] Error Code From ReturnResult() : %d.\n",
-                                errorCode);
-                            RODOS::PRINTF(
-                                "[EduListenerThread] Communication error after call to "
-                                "ReturnResult().\n");
-                                */
                             ResumeEduErrorCommunicationThread();
                         }
-                        else
-                        {
-                            // RODOS::PRINTF(
-                            //    "[EduListenerThread] Call to ReturnResults() resulted in "
-                            //    "success.\n");
-                        }
-                        // break;
 
                         auto eduProgramStatusHistoryEntry =
                             FindEduProgramStatusHistoryEntry(status.programId, status.queueId);
@@ -145,18 +105,19 @@ private:
                         eduProgramStatusHistoryEntry.status =
                             EduProgramStatus::resultFileTransfered;
 
-                        // Only for MFT
+                        // Only for MFT/HAF
                         RODOS::PRINTF("\n");
-                        RODOS::PRINTF("Sending call sign ...\n");
-                        periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(
-                                                        periphery::rf::portableCallSign.data()),
-                                                    periphery::rf::portableCallSign.size());
-
-                        RODOS::PRINTF("Sending 'test' ...\n");
-                        std::uint8_t testMessage[] = "test";
-                        periphery::rf::TransmitData(&testMessage[0], std::size(testMessage));
+                        // RODOS::PRINTF("Sending call sign ...\n");
+                        // periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(
+                        //                                 periphery::rf::portableCallSign.data()),
+                        //                             periphery::rf::portableCallSign.size());
+                        // RODOS::PRINTF("Sending 'test' ...\n");
+                        // std::uint8_t testMessage[] = "test";
+                        // periphery::rf::TransmitData(&testMessage[0], std::size(testMessage));
 
                         RODOS::PRINTF("Sending result file ...\n");
+                        // Setting the TX type again is necessary because the beacon is Morsed
+                        periphery::rf::SetTxType(periphery::rf::TxType::packet);
                         periphery::rf::TransmitData(
                             reinterpret_cast<std::uint8_t const *>(periphery::cepDataBuffer.data()),
                             resultsInfo.resultSize.get());
@@ -172,7 +133,6 @@ private:
                     }
                 }
             }
-            // RODOS::PRINTF("[EduListenerThread] Edu Has no uppdate\n");
         }
     }
 } eduListenerThread;
