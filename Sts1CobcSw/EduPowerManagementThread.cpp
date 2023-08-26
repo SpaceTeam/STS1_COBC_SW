@@ -71,7 +71,7 @@ private:
                     if(not(eduHasUpdate or startDelay < startDelayLimit))
                     {
                         RODOS::PRINTF("Turning Edu off\n");
-                        eduUnit.TurnOff();
+                        edu::TurnOff();
                     }
                 }
                 else
@@ -79,13 +79,13 @@ private:
                     if(startDelay < (eduBootTime + eduBootTimeMargin))
                     {
                         RODOS::PRINTF("Turning Edu on\n");
-                        eduUnit.TurnOn();
+                        edu::TurnOn();
                     }
                 }
             }
             else
             {
-                eduUnit.TurnOff();
+                edu::TurnOff();
             }
         }
     }
