@@ -9,7 +9,7 @@
 #include <rodos_no_using_namespace.h>
 
 
-namespace sts1cobcsw::periphery::fram
+namespace sts1cobcsw::fram
 {
 using serial::operator""_b;
 

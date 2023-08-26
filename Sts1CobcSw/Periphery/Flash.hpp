@@ -8,7 +8,7 @@
 #include <span>
 
 
-namespace sts1cobcsw::periphery::flash
+namespace sts1cobcsw::flash
 {
 [[maybe_unused]] constexpr std::size_t pageSize = 256;                 // bytes
 [[maybe_unused]] constexpr std::size_t sectorSize = 4 * 1024;          // bytes

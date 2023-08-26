@@ -44,7 +44,7 @@ private:
     void init() override
     {
         epsBatteryGoodGpioPin.Direction(hal::PinDirection::in);
-        periphery::persistentstate::Initialize();
+        persistentstate::Initialize();
     }
 
 

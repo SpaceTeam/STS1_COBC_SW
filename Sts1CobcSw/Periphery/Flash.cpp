@@ -16,13 +16,12 @@ namespace sts1cobcsw
 namespace serial
 {
 template<>
-inline constexpr std::size_t serialSize<periphery::flash::JedecId> =
-    totalSerialSize<decltype(periphery::flash::JedecId::manufacturerId),
-                    decltype(periphery::flash::JedecId::deviceId)>;
+inline constexpr std::size_t serialSize<flash::JedecId> =
+    totalSerialSize<decltype(flash::JedecId::manufacturerId), decltype(flash::JedecId::deviceId)>;
 }
 
 
-namespace periphery::flash
+namespace flash
 {
 using serial::operator""_b;
 
@@ -96,7 +95,7 @@ auto Initialize() -> std::int32_t
     constexpr auto baudrate = 1'000'000;
     auto errorCode = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
 
-    periphery::flash::Enter4ByteAdressMode();
+    flash::Enter4ByteAdressMode();
 
     return errorCode;
 }

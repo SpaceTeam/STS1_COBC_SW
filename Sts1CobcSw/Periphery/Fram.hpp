@@ -9,7 +9,7 @@
 #include <span>
 
 
-namespace sts1cobcsw::periphery::fram
+namespace sts1cobcsw::fram
 {
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 using DeviceId = std::array<serial::Byte, 9>;
