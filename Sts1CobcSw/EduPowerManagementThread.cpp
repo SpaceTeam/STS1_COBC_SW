@@ -25,11 +25,13 @@ namespace ts = type_safe;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
+
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 20 * RODOS::SECONDS;  // Measured ~19 s
-constexpr auto eduPowerManagementThreadPeriod = 2 * RODOS::SECONDS;
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
+constexpr auto eduPowerManagementThreadPeriod = 2 * RODOS::SECONDS;
+
 
 // TODO: There should be an Eps.hpp/.cpp for this
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
@@ -56,24 +58,24 @@ private:
     {
         TIME_LOOP(0, eduPowerManagementThreadPeriod)
         {
-            // RODOS::PRINTF("[EduPowerManagementThread] Start of Loop\n");
             std::int64_t startDelay = 0;
             nextProgramStartDelayBuffer.get(startDelay);
 
             ts::bool_t epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
+            // TODO: Remove the following line once the EPS that pin is working correctly
+            epsBatteryIsGood = true;
             ts::bool_t eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
 
             auto eduIsAlive = false;
             eduIsAliveBufferForPowerManagement.get(eduIsAlive);
 
 
-            // if(epsBatteryIsGood)
-            if(true)
+            if(epsBatteryIsGood)
             {
                 if(eduIsAlive)
                 {
                     // TODO: also perform a check about archives on cobc
-                    if(not(eduHasUpdate or startDelay < startDelayLimit))
+                    if(not eduHasUpdate and startDelay >= startDelayLimit)
                     {
                         RODOS::PRINTF("Turning Edu off\n");
                         edu.TurnOff();
