@@ -10,6 +10,8 @@ namespace sts1cobcsw
 {
 constexpr auto stackSize = 2'000U;
 constexpr auto eduShutDownDelay = 2 * RODOS::SECONDS;
+
+
 std::int32_t eduCommunicationErrorCounter = 0;
 
 
@@ -33,28 +35,25 @@ private:
         while(true)
         {
             RODOS::AT(RODOS::END_OF_TIME);
-            // RODOS::PRINTF("EduCommunicationThread resumed in main loop\n");
 
             eduCommunicationErrorCounter++;
 
-            RODOS::PRINTF("[EduCommunicationErrorThread] Resetting the Edu\n");
-            // Reset EDU
+            RODOS::PRINTF("[EduCommunicationErrorThread] Resetting the EDU\n");
             edu.TurnOff();
             RODOS::AT(RODOS::NOW() + eduShutDownDelay);
+            // This might collide with what the power management thread decides
             edu.TurnOn();
 
-            //
             [[maybe_unused]] auto status = edu.GetStatus();
 
             // Busy wait
-            RODOS::PRINTF("[EduCommunicationErrorThread] Entering busy wait\n");
+            RODOS::PRINTF("[EduCommunicationErrorThread] Busy waiting\n");
             auto eduIsAlive = false;
             while(not eduIsAlive)
             {
-                yield();  // Force recalculation of scheduling!
+                yield();  // Force recalculation of scheduling
                 eduIsAliveBufferForCommunicationError.get(eduIsAlive);
             }
-            RODOS::PRINTF("[EduCommunicationErrorThread] Leaving busy wait\n");
         }
     }
 } eduCommunicationErrorThread;
