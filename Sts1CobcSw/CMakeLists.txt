@@ -56,7 +56,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 EduProgramQueue.cpp
                 EduProgramQueueThread.cpp
                 EduProgramStatusHistory.cpp
-                LoopedEduProgramQueue.cpp
+                MftEduProgramQueue.cpp
                 TopicsAndSubscribers.cpp
     )
     target_link_libraries(
