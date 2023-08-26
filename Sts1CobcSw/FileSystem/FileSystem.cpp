@@ -12,7 +12,6 @@
 namespace sts1cobcsw::fs
 {
 using flash::pageSize;
-using serial::Byte;
 
 
 // --- Private function declarations ---
@@ -34,9 +33,9 @@ auto Sync(lfs_config const * config) -> int;
 
 // --- Globals ---
 
-auto readBuffer = std::array<serial::Byte, pageSize>{};
-auto programBuffer = std::array<serial::Byte, pageSize>{};
-auto lookaheadBuffer = std::array<serial::Byte, pageSize>{};
+auto readBuffer = std::array<Byte, pageSize>{};
+auto programBuffer = std::array<Byte, pageSize>{};
+auto lookaheadBuffer = std::array<Byte, pageSize>{};
 
 // TODO: Check if they need to be global
 lfs_t lfs{};

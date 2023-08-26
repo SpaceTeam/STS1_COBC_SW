@@ -15,7 +15,6 @@
 
 namespace sts1cobcsw::edu
 {
-using sts1cobcsw::serial::Byte;
 
 
 // TODO: Think about const-correctness and whether to make uart_ mutable or not

@@ -27,7 +27,7 @@
 
 
 // TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
-namespace sts1cobcsw::serial
+namespace sts1cobcsw
 {
 // T::integer_type is for the type_safe fixed-width integers
 template<typename T>

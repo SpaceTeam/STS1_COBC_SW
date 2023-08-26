@@ -10,10 +10,6 @@
 
 namespace sts1cobcsw
 {
-using serial::Byte;
-using sts1cobcsw::serial::DeserializeFrom;
-using sts1cobcsw::serial::SerializeTo;
-
 
 enum CommandId : char
 {
@@ -32,20 +28,17 @@ struct GsCommandHeader
 };
 
 
-namespace serial
-{
 template<>
 inline constexpr std::size_t serialSize<GsCommandHeader> =
     totalSerialSize<decltype(GsCommandHeader::startCharacter),
                     decltype(GsCommandHeader::utc),
                     decltype(GsCommandHeader::commandId),
                     decltype(GsCommandHeader::length)>;
-}
 
 // TODO: Choose a proper value for the commandSize. Right now this is just size required by the
 // DispatchCommand() test.
 inline constexpr std::size_t commandSize =
-    serial::serialSize<GsCommandHeader> + 2 * serial::serialSize<edu::QueueEntry>;
+    serialSize<GsCommandHeader> + 2 * serialSize<edu::QueueEntry>;
 
 
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;

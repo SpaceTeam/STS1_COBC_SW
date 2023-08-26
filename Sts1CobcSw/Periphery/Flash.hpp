@@ -20,7 +20,6 @@ namespace sts1cobcsw::flash
 [[maybe_unused]] constexpr std::size_t nLargeBlocks = flashSize / largeBlockSize;
 
 
-using serial::Byte;
 using Page = std::array<Byte, pageSize>;
 using PageSpan = std::span<Byte, pageSize>;
 

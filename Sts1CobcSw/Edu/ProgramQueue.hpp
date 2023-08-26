@@ -29,10 +29,6 @@ using ts::operator""_i16;
 using ts::operator""_u16;
 using ts::operator""_i32;
 
-using serial::Byte;
-using serial::DeserializeFrom;
-using serial::SerializeTo;
-
 
 struct QueueEntry
 {
@@ -44,15 +40,12 @@ struct QueueEntry
 }
 
 
-namespace serial
-{
 template<>
 inline constexpr std::size_t serialSize<edu::QueueEntry> =
     totalSerialSize<decltype(edu::QueueEntry::programId),
                     decltype(edu::QueueEntry::queueId),
                     decltype(edu::QueueEntry::startTime),
                     decltype(edu::QueueEntry::timeout)>;
-}
 
 
 namespace edu

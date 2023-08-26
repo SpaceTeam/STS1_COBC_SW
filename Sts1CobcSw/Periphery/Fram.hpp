@@ -12,7 +12,7 @@
 namespace sts1cobcsw::fram
 {
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-using DeviceId = std::array<serial::Byte, 9>;
+using DeviceId = std::array<Byte, 9>;
 // TODO: Use a strong typedef or create class that ensures, that the address is only 20 bits long
 using Address = std::uint32_t;
 

@@ -9,7 +9,7 @@
 #include <type_traits>
 
 
-namespace ps = sts1cobcsw::periphery::persistentstate;
+namespace ps = sts1cobcsw::persistentstate;
 
 
 TEST_CASE("Persistent state getters and setters")

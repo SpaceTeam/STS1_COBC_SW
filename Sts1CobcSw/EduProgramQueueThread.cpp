@@ -21,7 +21,6 @@
 namespace sts1cobcsw
 {
 namespace ts = type_safe;
-using serial::Byte;
 
 using ts::operator""_i16;
 using ts::operator""_u16;

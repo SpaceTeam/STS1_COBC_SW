@@ -14,8 +14,6 @@
 
 namespace sts1cobcsw::edu
 {
-using sts1cobcsw::serial::operator""_b;
-using sts1cobcsw::serial::Byte;
 
 namespace ts = type_safe;
 using ts::operator""_u16;
@@ -143,7 +141,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
                   data.queueId.get(),
                   data.timeout.get());
     // Check if data command was successful
-    auto serialData = serial::Serialize(data);
+    auto serialData = Serialize(data);
     auto errorCode = SendData(serialData);
     if(errorCode != ErrorCode::success)
     {
@@ -226,7 +224,7 @@ auto StopProgram() -> ErrorCode
 auto GetStatus() -> Status
 {
     RODOS::PRINTF("GetStatus()\n");
-    auto serialData = serial::Serialize(getStatusId);
+    auto serialData = Serialize(getStatusId);
     auto sendDataError = SendData(serialData);
     if(sendDataError != ErrorCode::success)
     {
@@ -268,9 +266,9 @@ auto GetStatus() -> Status
 auto GetStatusCommunication() -> Status
 {
     // Get header data
-    auto headerBuffer = serial::SerialBuffer<HeaderData>{};
+    auto headerBuffer = SerialBuffer<HeaderData>{};
     auto headerReceiveError = UartReceive(headerBuffer);
-    auto headerData = serial::Deserialize<HeaderData>(headerBuffer);
+    auto headerData = Deserialize<HeaderData>(headerBuffer);
 
     if(headerReceiveError != ErrorCode::success)
     {
@@ -324,7 +322,7 @@ auto GetStatusCommunication() -> Status
             return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
         }
 
-        auto dataBuffer = serial::SerialBuffer<ProgramFinishedStatus>{};
+        auto dataBuffer = SerialBuffer<ProgramFinishedStatus>{};
         auto programFinishedError = UartReceive(dataBuffer);
 
         if(programFinishedError != ErrorCode::success)
@@ -343,7 +341,7 @@ auto GetStatusCommunication() -> Status
             return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
         }
 
-        auto programFinishedData = serial::Deserialize<ProgramFinishedStatus>(dataBuffer);
+        auto programFinishedData = Deserialize<ProgramFinishedStatus>(dataBuffer);
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
                       .queueId = programFinishedData.queueId,
@@ -358,7 +356,7 @@ auto GetStatusCommunication() -> Status
             return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
         }
 
-        auto dataBuffer = serial::SerialBuffer<ResultsReadyStatus>{};
+        auto dataBuffer = SerialBuffer<ResultsReadyStatus>{};
         auto resultsReadyError = UartReceive(dataBuffer);
         if(resultsReadyError != ErrorCode::success)
         {
@@ -375,7 +373,7 @@ auto GetStatusCommunication() -> Status
         {
             return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
         }
-        auto resultsReadyData = serial::Deserialize<ResultsReadyStatus>(dataBuffer);
+        auto resultsReadyData = Deserialize<ResultsReadyStatus>(dataBuffer);
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
                       .queueId = resultsReadyData.queueId,
@@ -393,7 +391,7 @@ auto ReturnResult() -> ResultInfo
     // END DEBUG
 
     // Send command
-    auto serialCommand = serial::Serialize(returnResultId);
+    auto serialCommand = Serialize(returnResultId);
     auto commandError = SendData(serialCommand);
     if(commandError != ErrorCode::success)
     {
@@ -493,14 +491,14 @@ auto ReturnResultCommunication() -> ResultInfo
     // RODOS::PRINTF("\nGet Length\n");
     // END DEBUG
 
-    auto dataLengthBuffer = serial::SerialBuffer<ts::uint16_t>{};
+    auto dataLengthBuffer = SerialBuffer<ts::uint16_t>{};
     auto lengthError = UartReceive(dataLengthBuffer);
     if(lengthError != ErrorCode::success)
     {
         return ResultInfo{.errorCode = lengthError, .resultSize = 0U};
     }
 
-    auto actualDataLength = serial::Deserialize<ts::uint16_t>(dataLengthBuffer);
+    auto actualDataLength = Deserialize<ts::uint16_t>(dataLengthBuffer);
     if(actualDataLength == 0U or actualDataLength > maxDataLength)
     {
         return ResultInfo{.errorCode = ErrorCode::invalidLength, .resultSize = 0U};
@@ -557,7 +555,7 @@ auto ReturnResultCommunication() -> ResultInfo
 auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
 {
     RODOS::PRINTF("UpdateTime()\n");
-    auto serialData = serial::Serialize(data);
+    auto serialData = Serialize(data);
     auto errorCode = SendData(serialData);
     if(errorCode != ErrorCode::success)
     {
@@ -741,7 +739,7 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
     // END DEBUG
 
 
-    auto crc32Buffer = serial::SerialBuffer<ts::uint32_t>{};
+    auto crc32Buffer = SerialBuffer<ts::uint32_t>{};
     auto receiveError = UartReceive(crc32Buffer);
 
     // DEBUG
@@ -754,7 +752,7 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
     {
         return receiveError;
     }
-    if(computedCrc32 != serial::Deserialize<ts::uint32_t>(crc32Buffer))
+    if(computedCrc32 != Deserialize<ts::uint32_t>(crc32Buffer))
     {
         return ErrorCode::wrongChecksum;
     }

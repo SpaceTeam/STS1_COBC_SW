@@ -17,8 +17,7 @@ namespace edu
 {
 namespace ts = type_safe;
 
-using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::operator""_b;
+using sts1cobcsw::operator""_b;
 using ts::operator""_u16;
 using ts::operator""_usize;
 
@@ -86,8 +85,6 @@ struct ResultInfo
 }
 
 
-namespace serial
-{
 template<>
 inline constexpr std::size_t serialSize<edu::HeaderData> =
     totalSerialSize<decltype(edu::HeaderData::command), decltype(edu::HeaderData::length)>;
@@ -118,7 +115,6 @@ inline constexpr std::size_t serialSize<edu::ExecuteProgramData> =
 template<>
 inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
     totalSerialSize<decltype(edu::UpdateTimeData::id), decltype(edu::UpdateTimeData::timestamp)>;
-}
 
 
 namespace edu

@@ -18,7 +18,6 @@ extern HAL_UART uart_stdout;
 
 namespace sts1cobcsw
 {
-using sts1cobcsw::serial::Byte;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.

@@ -14,8 +14,6 @@ std::uint32_t printfMask = 0;
 
 namespace sts1cobcsw
 {
-using serial::Byte;
-using serial::operator""_b;
 using type_safe::operator""_u16;
 using type_safe::operator""_i16;
 
@@ -35,18 +33,17 @@ private:
         auto command = etl::vector<Byte, commandSize>();
 
         // Start character; doesn't matter which one since DispatchCommand() does not check it
-        auto header =
-            serial::Serialize(GsCommandHeader{.startCharacter = 'a',
-                                              .utc = 0x65920080,
-                                              .commandId = 52,
-                                              .length = 2 * serial::serialSize<edu::QueueEntry>});
+        auto header = Serialize(GsCommandHeader{.startCharacter = 'a',
+                                                .utc = 0x65920080,
+                                                .commandId = 52,
+                                                .length = 2 * serialSize<edu::QueueEntry>});
         command.insert(command.end(), header.begin(), header.end());
 
-        auto entry1 = serial::Serialize(edu::QueueEntry{
+        auto entry1 = Serialize(edu::QueueEntry{
             .programId = 1_u16, .queueId = 16_u16, .startTime = 1048577, .timeout = 1_i16});
         command.insert(command.end(), entry1.begin(), entry1.end());
 
-        auto entry2 = serial::Serialize(edu::QueueEntry{
+        auto entry2 = Serialize(edu::QueueEntry{
             .programId = 2_u16, .queueId = 32_u16, .startTime = 2097154, .timeout = 2_i16});
         command.insert(command.end(), entry2.begin(), entry2.end());
 

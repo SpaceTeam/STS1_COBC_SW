@@ -12,10 +12,9 @@
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
-using serial::operator""_b;
 
 
-auto PrintDeviceId(periphery::fram::DeviceId const & deviceId) -> void;
+auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
 
 
 std::int32_t errorCode = 0;
@@ -31,7 +30,7 @@ public:
 private:
     void init() override
     {
-        errorCode = periphery::fram::Initialize();
+        errorCode = fram::Initialize();
     }
 
     void run() override
@@ -42,7 +41,7 @@ private:
         Check(errorCode == 0);
 
         PRINTF("\n");
-        auto deviceId = periphery::fram::ReadDeviceId();
+        auto deviceId = fram::ReadDeviceId();
         PRINTF("Device ID: ");
         PrintDeviceId(deviceId);
         PRINTF(" ==\n");
@@ -60,25 +59,25 @@ private:
         PRINTF("\n");
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr uint32_t nAdressBits = 20U;
-        auto address = periphery::fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
+        auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
         constexpr auto number1 = 0b1010'1100_b;
         constexpr auto number2 = ~number1;
 
-        periphery::fram::WriteTo(address, number1);
+        fram::WriteTo(address, number1);
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number1));
-        auto data = periphery::fram::Read<decltype(number1)>(address);
+        auto data = fram::Read<decltype(number1)>(address);
         PRINTF("Reading from address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(data));
         Check(data == number1);
 
-        periphery::fram::WriteTo(address, number2);
+        fram::WriteTo(address, number2);
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number2));
-        data = periphery::fram::Read<decltype(number2)>(address);
+        data = fram::Read<decltype(number2)>(address);
         PRINTF("Reading from address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(data));
@@ -87,7 +86,7 @@ private:
 } framTest;
 
 
-auto PrintDeviceId(periphery::fram::DeviceId const & deviceId) -> void
+auto PrintDeviceId(fram::DeviceId const & deviceId) -> void
 {
     PRINTF("0x");
     PRINTF("%02x", static_cast<unsigned int>(deviceId[8]));
