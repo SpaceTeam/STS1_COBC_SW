@@ -7,6 +7,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSw_Periphery PRIVATE Edu.cpp PersistentState.cpp Flash.cpp Fram.cpp Rf.cpp
     )
     target_link_libraries(Sts1CobcSw_Periphery PUBLIC Sts1CobcSw_Hal)
+
+    if(DEFINED EDU_VERSION)
+        target_compile_definitions(Sts1CobcSw_Periphery PRIVATE EDU_VERSION="${EDU_VERSION}")
+    endif()
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_sources(Sts1CobcSw_Periphery PRIVATE EduMock.cpp)

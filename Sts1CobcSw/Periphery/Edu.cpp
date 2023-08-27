@@ -5,6 +5,13 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 
+#include <string_view>
+
+
+#ifndef EDU_VERSION
+    #define EDU_VERSION "2.5"
+#endif
+
 
 namespace sts1cobcsw::periphery
 {
@@ -14,6 +21,8 @@ using sts1cobcsw::serial::Byte;
 using ts::operator""_u16;
 using ts::operator""_usize;
 
+
+constexpr auto eduVersion = std::string_view(EDU_VERSION);
 
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
@@ -64,6 +73,9 @@ auto Edu::Initialize() -> void
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
     constexpr auto baudRate = 115'200;
     uart_.init(baudRate);
+
+    RODOS::PRINTF("\n");
+    RODOS::PRINTF("EDU_VERSION = %s\n", EDU_VERSION);
 }
 
 
@@ -72,7 +84,15 @@ auto Edu::TurnOn() -> void
     // Set EduShouldBePowered to True, persistentstate is initialized in
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(true);
-    eduEnableGpioPin_.Set();
+    if constexpr(eduVersion < "2.5")
+    {
+        // EDU EN pin is active low
+        eduEnableGpioPin_.Reset();
+    }
+    else
+    {
+        eduEnableGpioPin_.Set();
+    }
 }
 
 
@@ -81,7 +101,15 @@ auto Edu::TurnOff() -> void
     // Set EduShouldBePowered to False, persistentstate is initialized in
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(false);
-    eduEnableGpioPin_.Reset();
+    if constexpr(eduVersion < "2.5")
+    {
+        // EDU EN pin is active low
+        eduEnableGpioPin_.Set();
+    }
+    else
+    {
+        eduEnableGpioPin_.Reset();
+    }
 }
 
 
