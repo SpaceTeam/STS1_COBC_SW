@@ -27,7 +27,7 @@ namespace ts = type_safe;
 constexpr auto stackSize = 2'000U;
 
 // TODO: Come up with the "right" numbers
-constexpr auto eduBootTime = 20 * RODOS::SECONDS;  // Measured ~19 s
+constexpr auto eduBootTime = 21 * RODOS::SECONDS;  // Measured ~19s, and ~20 s
 constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
 constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
 constexpr auto eduPowerManagementThreadPeriod = 2 * RODOS::SECONDS;
