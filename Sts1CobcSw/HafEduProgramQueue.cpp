@@ -14,8 +14,8 @@ using ts::operator""_i32;
 // NOLINTEND(misc-unused-using-decls)
 
 
-constexpr auto initialProgramDelay = 30_i32;  // s, should be > eduBootTime
-constexpr auto eduProgramQueuePeriod = 20;    // s
+constexpr auto initialProgramDelay = 35_i32;  // s, should be > eduBootTime
+constexpr auto eduProgramQueuePeriod = 120;   // s
 
 constexpr auto sensorProgramId = 0_u16;
 constexpr auto initialSensorProgramQueueId = 0U;
@@ -23,8 +23,8 @@ constexpr auto sensorProgramStartTimeOffset = 0;  // s
 constexpr auto sensorProgramTimeout = 5_i16;      // s
 
 constexpr auto photoProgramId = 1_u16;
-constexpr auto initialPhotoProgramQueueId = 100U;
-constexpr auto photoProgramStartTimeOffset = 10_i32;  // s
+constexpr auto initialPhotoProgramQueueId = 200U;
+constexpr auto photoProgramStartTimeOffset = 60_i32;  // s
 constexpr auto photoProgramTimeout = 5_i16;           // s
 
 constexpr ts::int32_t rodosUnixOffsetSeconds =
