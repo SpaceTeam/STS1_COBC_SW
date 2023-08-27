@@ -72,7 +72,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 EduProgramQueueThread.cpp
                 EduProgramQueue.cpp
                 EduProgramStatusHistory.cpp
-                LoopedEduProgramQueue.cpp
+                HafEduProgramQueue.cpp
                 EduListenerThread.cpp
                 HafBeaconThread.cpp
                 TopicsAndSubscribers.cpp
