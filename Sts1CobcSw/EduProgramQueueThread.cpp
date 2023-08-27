@@ -98,17 +98,12 @@ private:
             if(errorCode != periphery::EduErrorCode::success)
             {
                 PRINTF("[EduProgramQueueThread] Communication error after call to UpdateTime()\n");
-                PRINTF("  Returned error code = %d\n", errorCode);
+                PRINTF("  Returned error code = %d\n", static_cast<int>(errorCode));
                 ResumeEduErrorCommunicationThread();
             }
 
             auto startDelay2 = ComputeStartDelay();
             nextProgramStartDelayTopic.publish(startDelay2 / SECONDS);
-
-            utility::PrintSeconds();
-            PRINTF("Program at queue index %d will start in %" PRIi64 " s\n",
-                   queueIndex,
-                   startDelay2 / SECONDS);
 
             AT(NOW() + startDelay2);
 
@@ -136,16 +131,11 @@ private:
 
                 // Suspend Self for execution time
                 auto const executionTime = timeout.get() + eduCommunicationDelay;
-                utility::PrintSeconds();
-                PRINTF("Suspending for execution time\n");
                 AT(NOW() + executionTime);
-                utility::PrintSeconds();
-                PRINTF("Resuming from execution time\n");
-                utility::PrintFormattedSystemUtc();
 
                 // Loop EDU program queue
                 utility::PrintSeconds();
-                PRINTF("\n\nUpdating queue entry for next iteration\n\n");
+                PRINTF("Updating queue entry for next iteration\n\n");
                 UpdateEduProgramQueueEntry(&eduProgramQueue[queueIndex]);
                 UpdateQueueIndex();
             }
