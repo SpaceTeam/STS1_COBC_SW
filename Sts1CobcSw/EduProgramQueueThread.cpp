@@ -105,6 +105,11 @@ private:
             auto startDelay2 = ComputeStartDelay();
             nextProgramStartDelayTopic.publish(startDelay2 / SECONDS);
 
+            utility::PrintSeconds();
+            PRINTF("Program at queue index %d will start in %" PRIi64 " s\n",
+                   queueIndex,
+                   startDelay2 / SECONDS);
+
             AT(NOW() + startDelay2);
 
             auto queueId = eduProgramQueue[queueIndex].queueId;
