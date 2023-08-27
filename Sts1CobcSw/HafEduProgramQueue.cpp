@@ -25,7 +25,7 @@ constexpr auto sensorProgramTimeout = 5_i16;      // s
 constexpr auto photoProgramId = 1_u16;
 constexpr auto initialPhotoProgramQueueId = 100U;
 constexpr auto photoProgramStartTimeOffset = 10_i32;  // s
-constexpr auto photoProgramTimeout = 5_i16;          // s
+constexpr auto photoProgramTimeout = 5_i16;           // s
 
 constexpr ts::int32_t rodosUnixOffsetSeconds =
     static_cast<int32_t>(utility::rodosUnixOffset / RODOS::SECONDS);

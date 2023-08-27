@@ -109,7 +109,7 @@ private:
                         // RODOS::PRINTF("\n");
                         // // RODOS::PRINTF("Sending call sign ...\n");
                         // // periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(
-                        // //                                 periphery::rf::portableCallSign.data()),
+                        // // periphery::rf::portableCallSign.data()),
                         // //                             periphery::rf::portableCallSign.size());
                         // // RODOS::PRINTF("Sending 'test' ...\n");
                         // // std::uint8_t testMessage[] = "test";
@@ -119,8 +119,8 @@ private:
                         // // Setting the TX type again is necessary because the beacon is Morsed
                         // periphery::rf::SetTxType(periphery::rf::TxType::packet);
                         // periphery::rf::TransmitData(
-                        //     reinterpret_cast<std::uint8_t const *>(periphery::cepDataBuffer.data()),
-                        //     resultsInfo.resultSize.get());
+                        //     reinterpret_cast<std::uint8_t const
+                        //     *>(periphery::cepDataBuffer.data()), resultsInfo.resultSize.get());
                         // RODOS::PRINTF("  Done\n");
                         // RODOS::PRINTF("\n");
 
