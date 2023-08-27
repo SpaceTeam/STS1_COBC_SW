@@ -45,7 +45,7 @@ private:
 
         constexpr auto heartbeatFrequency = 10_isize;                     // Hz
         constexpr auto samplingFrequency = 5_isize * heartbeatFrequency;  // Hz
-        constexpr auto samplingPeriod = 1_isize * MILLISECONDS / samplingFrequency;
+        constexpr auto samplingPeriod = 1000_isize * MILLISECONDS / samplingFrequency;
         constexpr auto edgeCounterThreshold = 4;
 
         auto edgeCounter = 0_i;
