@@ -8,7 +8,7 @@
 #include <Sts1CobcSw/Periphery/Edu.hpp>
 #include <Sts1CobcSw/Periphery/EduNames.hpp>
 #include <Sts1CobcSw/Periphery/EduStructs.hpp>
-#include <Sts1CobcSw/Periphery/Rf.hpp>  // Only for MFT/HAF
+// #include <Sts1CobcSw/Periphery/Rf.hpp>  // Only for MFT
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <type_safe/narrow_cast.hpp>
@@ -45,9 +45,9 @@ private:
 
     void run() override
     {
-        // Only for MFT/HAF
-        RODOS::PRINTF("Initializing RF module\n");
-        periphery::rf::Initialize(periphery::rf::TxType::packet);
+        // // Only for MFT/HAF
+        // RODOS::PRINTF("Initializing RF module\n");
+        // periphery::rf::Initialize(periphery::rf::TxType::packet);
 
 
         TIME_LOOP(0, timeLoopPeriod)
@@ -105,24 +105,24 @@ private:
                         eduProgramStatusHistoryEntry.status =
                             EduProgramStatus::resultFileTransfered;
 
-                        // Only for MFT/HAF
-                        RODOS::PRINTF("\n");
-                        // RODOS::PRINTF("Sending call sign ...\n");
-                        // periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(
-                        //                                 periphery::rf::portableCallSign.data()),
-                        //                             periphery::rf::portableCallSign.size());
-                        // RODOS::PRINTF("Sending 'test' ...\n");
-                        // std::uint8_t testMessage[] = "test";
-                        // periphery::rf::TransmitData(&testMessage[0], std::size(testMessage));
+                        // // Only for MFT
+                        // RODOS::PRINTF("\n");
+                        // // RODOS::PRINTF("Sending call sign ...\n");
+                        // // periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(
+                        // //                                 periphery::rf::portableCallSign.data()),
+                        // //                             periphery::rf::portableCallSign.size());
+                        // // RODOS::PRINTF("Sending 'test' ...\n");
+                        // // std::uint8_t testMessage[] = "test";
+                        // // periphery::rf::TransmitData(&testMessage[0], std::size(testMessage));
 
-                        RODOS::PRINTF("Sending result file ...\n");
-                        // Setting the TX type again is necessary because the beacon is Morsed
-                        periphery::rf::SetTxType(periphery::rf::TxType::packet);
-                        periphery::rf::TransmitData(
-                            reinterpret_cast<std::uint8_t const *>(periphery::cepDataBuffer.data()),
-                            resultsInfo.resultSize.get());
-                        RODOS::PRINTF("  Done\n");
-                        RODOS::PRINTF("\n");
+                        // RODOS::PRINTF("Sending result file ...\n");
+                        // // Setting the TX type again is necessary because the beacon is Morsed
+                        // periphery::rf::SetTxType(periphery::rf::TxType::packet);
+                        // periphery::rf::TransmitData(
+                        //     reinterpret_cast<std::uint8_t const *>(periphery::cepDataBuffer.data()),
+                        //     resultsInfo.resultSize.get());
+                        // RODOS::PRINTF("  Done\n");
+                        // RODOS::PRINTF("\n");
 
                         break;
                     }
