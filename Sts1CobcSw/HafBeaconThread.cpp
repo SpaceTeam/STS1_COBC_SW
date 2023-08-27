@@ -39,10 +39,12 @@ private:
             periphery::rf::SetTxType(periphery::rf::TxType::morse);
             periphery::rf::Morse(callSign);
 
+            RODOS::AT(RODOS::NOW() + 1 * RODOS::SECONDS);
+
             RODOS::PRINTF("\n");
             RODOS::PRINTF("Sending call sign ...\n");
             periphery::rf::SetTxType(periphery::rf::TxType::packet);
-            periphery::rf::TransmitData(reinterpret_cast<uint8_t const *>(callSign.data()),
+            periphery::rf::TransmitData(reinterpret_cast<std::uint8_t const *>(callSign.data()),
                                         callSign.size());
         }
     }
