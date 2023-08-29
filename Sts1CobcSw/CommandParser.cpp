@@ -100,4 +100,24 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
         queueEntries = queueEntries.subspan<serialSize<edu::QueueEntry>>();
     }
 }
+
+
+auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *
+{
+    source = DeserializeFrom(source, &(data->startCharacter));
+    source = DeserializeFrom(source, &(data->utc));
+    source = DeserializeFrom(source, &(data->commandId));
+    source = DeserializeFrom(source, &(data->length));
+    return source;
+}
+
+
+auto SerializeTo(void * destination, GsCommandHeader const & data) -> void *
+{
+    destination = SerializeTo(destination, data.startCharacter);
+    destination = SerializeTo(destination, data.utc);
+    destination = SerializeTo(destination, data.commandId);
+    destination = SerializeTo(destination, data.length);
+    return destination;
+}
 }

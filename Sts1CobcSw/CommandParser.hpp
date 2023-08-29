@@ -51,26 +51,6 @@ inline constexpr std::size_t commandSize =
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;
 auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void;
 auto BuildEduQueue(std::span<Byte const> commandData) -> void;
-
-
-// TODO: Turn into noninline function
-inline auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *
-{
-    source = DeserializeFrom(source, &(data->startCharacter));
-    source = DeserializeFrom(source, &(data->utc));
-    source = DeserializeFrom(source, &(data->commandId));
-    source = DeserializeFrom(source, &(data->length));
-    return source;
-}
-
-
-// TODO: Turn into noninline function
-inline auto SerializeTo(void * destination, GsCommandHeader const & data) -> void *
-{
-    destination = SerializeTo(destination, data.startCharacter);
-    destination = SerializeTo(destination, data.utc);
-    destination = SerializeTo(destination, data.commandId);
-    destination = SerializeTo(destination, data.length);
-    return destination;
-}
+auto DeserializeFrom(void const* source, GsCommandHeader* data) -> void const*;
+auto SerializeTo(void * destination, GsCommandHeader const & data) -> void *;
 }
