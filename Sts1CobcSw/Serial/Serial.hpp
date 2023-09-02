@@ -57,33 +57,31 @@ using SerialBuffer = std::array<Byte, serialSize<T>>;
 // TODO: Rename data -> t or variable
 // Must be overloaded for user-defined types to be serializable
 template<TriviallySerializable T>
-constexpr auto SerializeTo(void * destination, T const & data) -> void *;
+auto SerializeTo(void * destination, T const & data) -> void *;
 
 // TODO: Make DeserializeFrom const correct (Byte const * source, -> Byte const *)
 // Must be overloaded for user-defined types to be deserializable
 template<TriviallySerializable T>
-constexpr auto DeserializeFrom(void const * source, T * data) -> void const *;
+auto DeserializeFrom(void const * source, T * data) -> void const *;
 
 template<typename T>
-[[nodiscard]] constexpr auto Serialize(T const & data) -> SerialBuffer<T>;
+[[nodiscard]] auto Serialize(T const & data) -> SerialBuffer<T>;
 
 template<std::default_initializable T>
-[[nodiscard]] constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
+[[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
 
 template<utility::TypeSafeInteger T>
-[[nodiscard]] constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
+[[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
 
 template<typename T>
     requires std::is_same_v<T, type_safe::boolean>
-[[nodiscard]] constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
+[[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
 
 
 // --- Function template definitions ---
 
-// TODO: constexpr functions are automatically inline so remove the superfluous inline keyword
-// TODO: actually, remove constexpr and keep inline
 template<TriviallySerializable T>
-inline constexpr auto SerializeTo(void * destination, T const & data) -> void *
+inline auto SerializeTo(void * destination, T const & data) -> void *
 {
     std::memcpy(destination, &data, serialSize<T>);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -93,7 +91,7 @@ inline constexpr auto SerializeTo(void * destination, T const & data) -> void *
 
 // TODO: Add template parameter for endianness (Flash needs big endian)
 template<TriviallySerializable T>
-inline constexpr auto DeserializeFrom(void const * source, T * data) -> void const *
+inline auto DeserializeFrom(void const * source, T * data) -> void const *
 {
     std::memcpy(data, source, serialSize<T>);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -102,7 +100,7 @@ inline constexpr auto DeserializeFrom(void const * source, T * data) -> void con
 
 
 template<typename T>
-constexpr auto Serialize(T const & data) -> SerialBuffer<T>
+auto Serialize(T const & data) -> SerialBuffer<T>
 {
     auto buffer = SerialBuffer<T>{};
     SerializeTo(buffer.data(), data);
@@ -111,7 +109,7 @@ constexpr auto Serialize(T const & data) -> SerialBuffer<T>
 
 
 template<std::default_initializable T>
-constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
     auto t = T{};
     DeserializeFrom(source.data(), &t);
@@ -120,7 +118,7 @@ constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 
 
 template<utility::TypeSafeInteger T>
-constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
     auto t = utility::TypeSafeZero<T>();
     DeserializeFrom(source.data(), &t);
@@ -130,7 +128,7 @@ constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 
 template<typename T>
     requires std::is_same_v<T, type_safe::boolean>
-constexpr auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
     auto t = T{false};  // NOLINT(bugprone-argument-comment)
     DeserializeFrom(source.data(), &t);
