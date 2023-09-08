@@ -18,20 +18,8 @@ constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 //! @brief Print UTC system time in human readable format.
 auto PrintFormattedSystemUtc() -> void;
 
-[[nodiscard]] inline auto UnixToRodosTime(std::int32_t unixTimeSeconds) -> std::int64_t;
-[[nodiscard]] inline auto GetUnixUtc() -> std::int32_t;
-
-
-//! @brief Given a time in seconds since 01.01.1970, return a time in nanoseconds since 01.01.2000.
-inline auto UnixToRodosTime(std::int32_t unixTimeSeconds) -> std::int64_t
-{
-    return static_cast<std::int64_t>(unixTimeSeconds) * RODOS::SECONDS - rodosUnixOffset;
+[[nodiscard]] auto UnixToRodosTime(std::int32_t unixTimeSeconds) -> std::int64_t;
+[[nodiscard]] auto GetUnixUtc() -> std::int32_t;
 }
 
-
-inline auto GetUnixUtc() -> std::int32_t
-{
-    auto unixUtc = (RODOS::sysTime.getUTC() + rodosUnixOffset) / RODOS::SECONDS;
-    return static_cast<std::int32_t>(unixUtc);
-}
-}
+#include <Sts1CobcSw/Utility/Time.ipp>
