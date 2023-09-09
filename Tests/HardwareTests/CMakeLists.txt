@@ -10,6 +10,12 @@ target_include_directories(
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos)
 
+add_program(DeviceIds DeviceIds.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_DeviceIds PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery
+                                      Sts1CobcSw_Serial Sts1CobcSwTests_Utility
+)
+
 add_program(FileSystem FileSystem.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_FileSystem PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
