@@ -51,6 +51,6 @@ auto FlushUartBuffer() -> void;
 void MockWriteToFile(std::span<Byte> data);
 
 extern hal::GpioPin eduEnableGpioPin;
-extern RODOS::HAL_UART uart;  // RODOS::HAL_UART uart_ = RODOS::HAL_UART(hal::uciUartIndex,
-                              // hal::uciUartTxPin, hal::uciUartRxPin); }
+extern RODOS::HAL_UART eduUart;  // RODOS::HAL_UART uart_ = RODOS::HAL_UART(hal::uciUartIndex,
+                                 // hal::uciUartTxPin, hal::uciUartRxPin); }
 }
