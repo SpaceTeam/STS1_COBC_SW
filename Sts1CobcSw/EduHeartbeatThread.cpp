@@ -22,8 +22,6 @@ auto ledGpioPin = hal::GpioPin(hal::led1Pin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
-// periphery::Edu edu = periphery::Edu();
-
 auto constexpr edgeCounterThreshold = 4;
 
 

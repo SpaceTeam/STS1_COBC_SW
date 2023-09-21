@@ -135,7 +135,7 @@ private:
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
             errorCode = edu::ExecuteProgram(executeProgramData);
-            // errorCode = periphery::EduErrorCode::success;
+            // errorCode = edu::ErrorCode::success;
 
             if(errorCode != edu::ErrorCode::success)
             {
