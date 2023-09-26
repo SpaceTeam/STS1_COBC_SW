@@ -7,7 +7,7 @@
 
 #include <outcome-experimental.hpp>
 
-#include <rodos.h>
+#include <rodos_no_using_namespace.h>
 
 
 struct RebootPolicy : outcome_v2::experimental::policy::base

@@ -6,6 +6,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/Outcome.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -16,6 +17,9 @@
 namespace sts1cobcsw::edu
 {
 using sts1cobcsw::serial::Byte;
+
+template<typename T>
+using Result = outcome_v2::experimental::status_result<T, edu::ErrorCode, RebootPolicy>;
 
 
 // TODO: Think about const-correctness and whether to make uart_ mutable or not
@@ -31,7 +35,7 @@ public:
     auto TurnOff() -> void;
 
     // TODO: Why does this return a std::int32_t?
-    [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> std::int32_t;
+    [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>;
     [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode;
     [[nodiscard]] auto StopProgram() -> ErrorCode;
     // TODD: Find better name (or maybe even mechanism) for GetStatus

@@ -103,7 +103,7 @@ auto Edu::TurnOff() -> void
 
 
 // TODO: Implement this
-auto Edu::StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_t
+auto Edu::StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> Result<std::int32_t>
 {
     return 0;
 }
