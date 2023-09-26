@@ -99,13 +99,20 @@ private:
                 case 'g':
                 {
                     PRINTF("Sending GetStatus()\n");
-                    auto status = eduUnit.GetStatus();
+                    auto result = eduUnit.GetStatus();
                     PRINTF("Returned status:\n");
-                    PRINTF("  type       = %d\n", static_cast<int>(status.statusType));
-                    PRINTF("  program ID = %d\n", static_cast<int>(status.programId));
-                    PRINTF("  queue ID   = %d\n", static_cast<int>(status.queueId));
-                    PRINTF("  exit code  = %d\n", static_cast<int>(status.exitCode));
-                    PRINTF("  error code = %d\n", static_cast<int>(status.errorCode));
+                    if(result.has_value())
+                    {
+                        auto status = result.value();
+                        PRINTF("  type       = %d\n", static_cast<int>(status.statusType));
+                        PRINTF("  program ID = %d\n", static_cast<int>(status.programId));
+                        PRINTF("  queue ID   = %d\n", static_cast<int>(status.queueId));
+                        PRINTF("  exit code  = %d\n", static_cast<int>(status.exitCode));
+                    }
+                    else
+                    {
+                        PRINTF("  error code = %d\n", static_cast<int>(result.error()));
+                    }
                     break;
                 }
                 case 'r':

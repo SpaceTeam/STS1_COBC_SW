@@ -55,11 +55,11 @@ struct UpdateTimeData
 
 struct Status
 {
-    StatusType statusType = StatusType::invalid;
+    StatusType statusType = StatusType::noEvent;
     std::uint16_t programId = 0;
     std::uint16_t queueId = 0;
     std::uint8_t exitCode = 0;
-    ErrorCode errorCode = ErrorCode::noErrorCodeSet;
+    // ErrorCode errorCode = ErrorCode::noErrorCodeSet;
 };
 
 

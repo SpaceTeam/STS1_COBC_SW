@@ -34,6 +34,5 @@ enum class StatusType
     noEvent,
     programFinished,
     resultsReady,
-    invalid,
 };
 }

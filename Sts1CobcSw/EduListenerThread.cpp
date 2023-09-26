@@ -56,8 +56,10 @@ private:
                 // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
                 // status.errorCode);
 
-                if(status.errorCode != edu::ErrorCode::success
-                   and status.errorCode != edu::ErrorCode::successEof)
+                // FIXME: It is really possible to get edu::errorCode::successEof here ?
+                // if(status.errorCode != edu::ErrorCode::success
+                // and status.errorCode != edu::ErrorCode::successEof)
+                if(status.has_error())
                 {
                     // RODOS::PRINTF("[EduListenerThread] GetStatus() error code : %d.\n",
                     // status.errorCode);
@@ -72,16 +74,18 @@ private:
                     // success.\n");
                 }
 
-                switch(status.statusType)
+                // FIXME: This might lead to wide value check
+                // It is necessary to add an if condition here
+                switch(status.value().statusType)
                 {
                     case edu::StatusType::programFinished:
                     {
                         // Program has finished
                         // Find the correspongind queueEntry and update it, then resume edu queue
                         // thread
-                        auto eduProgramStatusHistoryEntry =
-                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
-                        if(status.exitCode == 0)
+                        auto eduProgramStatusHistoryEntry = edu::FindProgramStatusHistoryEntry(
+                            status.value().programId, status.value().queueId);
+                        if(status.value().exitCode == 0)
                         {
                             eduProgramStatusHistoryEntry.status =
                                 edu::ProgramStatus::programExecutionSucceeded;
@@ -122,15 +126,15 @@ private:
                         }
                         // break;
 
-                        auto eduProgramStatusHistoryEntry =
-                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
+                        auto eduProgramStatusHistoryEntry = edu::FindProgramStatusHistoryEntry(
+                            status.value().programId, status.value().queueId);
                         // TODO: Pretty sure that there is a .put() or something like that missing
                         // here and the status is actually never updated in the ring buffer.
                         eduProgramStatusHistoryEntry.status =
                             edu::ProgramStatus::resultFileTransfered;
                         break;
                     }
-                    case edu::StatusType::invalid:
+                    // case edu::StatusType::invalid:
                     case edu::StatusType::noEvent:
                     {
                         break;

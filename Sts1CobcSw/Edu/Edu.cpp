@@ -215,25 +215,23 @@ auto Edu::StopProgram() -> ErrorCode
 //! @returns A status containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error
 //!          Code). Values in square brackets are only valid if the relevant Status Type is
 //!          returned.
-auto Edu::GetStatus() -> Status
+auto Edu::GetStatus() -> Result<Status>
 {
     RODOS::PRINTF("GetStatus()\n");
     auto serialData = serial::Serialize(getStatusId);
     auto sendDataError = SendData(serialData);
     if(sendDataError != ErrorCode::success)
     {
-        RODOS::PRINTF("  Returned .statusType = %d, .errorCode = %d\n",
-                      static_cast<int>(StatusType::invalid),
-                      static_cast<int>(sendDataError));
-        return Status{.statusType = StatusType::invalid, .errorCode = sendDataError};
+        RODOS::PRINTF("  Returned .errorCode = %d\n", static_cast<int>(sendDataError));
+        return sendDataError;
     }
 
-    Status status;
+    Result<Status> status = ErrorCode::noErrorCodeSet;
     std::size_t errorCount = 0;
     do
     {
         status = GetStatusCommunication();
-        if(status.errorCode == ErrorCode::success)
+        if(status.has_value())
         {
             SendCommand(cmdAck);
             break;
@@ -242,14 +240,20 @@ auto Edu::GetStatus() -> Status
         SendCommand(cmdNack);
     } while(errorCount++ < maxNNackRetries);
 
-    RODOS::PRINTF(
-        "  .statusType = %d\n  .errorCode = %d\n  .programId = %d\n  .queueId = %d\n  exitCode = "
-        "%d\n",
-        static_cast<int>(status.statusType),
-        static_cast<int>(status.errorCode),
-        status.programId,
-        status.queueId,
-        status.exitCode);
+    if(status.has_value())
+    {
+        RODOS::PRINTF(
+            "  .statusType = %d\n  .programId = %d\n  .queueId = %d\n  exitCode = "
+            "%d\n",
+            status.value().statusType,
+            status.value().programId,
+            status.value().queueId,
+            status.value().exitCode);
+    }
+    else
+    {
+        RODOS::PRINTF("  .errorCode = %d\n  = %d\n", status.error());
+    }
     return status;
 }
 
@@ -257,7 +261,7 @@ auto Edu::GetStatus() -> Status
 //! @brief Communication function for GetStatus() to separate a single try from
 //! retry logic.
 //! @returns The received EDU status
-auto Edu::GetStatusCommunication() -> Status
+auto Edu::GetStatusCommunication() -> Result<Status>
 {
     // Get header data
     auto headerBuffer = serial::SerialBuffer<HeaderData>{};
@@ -266,17 +270,17 @@ auto Edu::GetStatusCommunication() -> Status
 
     if(headerReceiveError != ErrorCode::success)
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = headerReceiveError};
+        return headerReceiveError;
     }
 
     if(headerData.command != cmdData)
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidCommand};
+        return ErrorCode::invalidCommand;
     }
 
     if(headerData.length == 0_u16)
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+        return ErrorCode::invalidLength;
     }
 
     // Get the status type code
@@ -285,35 +289,32 @@ auto Edu::GetStatusCommunication() -> Status
 
     if(statusErrorCode != ErrorCode::success)
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = statusErrorCode};
+        return statusErrorCode;
     }
 
     if(statusType == noEventCode)
     {
         if(headerData.length != nNoEventBytes)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+            return ErrorCode::invalidLength;
         }
 
         std::array<Byte, 1> statusTypeArray = {statusType};
         auto crc32Error = CheckCrc32(std::span<Byte>(statusTypeArray));
         if(crc32Error != ErrorCode::success)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
+            return crc32Error;
         }
 
-        return Status{.statusType = StatusType::noEvent,
-                      .programId = 0,
-                      .queueId = 0,
-                      .exitCode = 0,
-                      .errorCode = ErrorCode::success};
+        return Status{
+            .statusType = StatusType::noEvent, .programId = 0, .queueId = 0, .exitCode = 0};
     }
 
     if(statusType == programFinishedCode)
     {
         if(headerData.length != nProgramFinishedBytes)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+            return ErrorCode::invalidLength;
         }
 
         auto dataBuffer = serial::SerialBuffer<ProgramFinishedStatus>{};
@@ -321,7 +322,7 @@ auto Edu::GetStatusCommunication() -> Status
 
         if(programFinishedError != ErrorCode::success)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = programFinishedError};
+            return programFinishedError;
         }
 
         // Create another Buffer which includes the status type that was received beforehand because
@@ -332,29 +333,28 @@ auto Edu::GetStatusCommunication() -> Status
         auto crc32Error = CheckCrc32(fullDataBuffer);
         if(crc32Error != ErrorCode::success)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
+            return crc32Error;
         }
 
         auto programFinishedData = serial::Deserialize<ProgramFinishedStatus>(dataBuffer);
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
                       .queueId = programFinishedData.queueId,
-                      .exitCode = programFinishedData.exitCode,
-                      .errorCode = ErrorCode::success};
+                      .exitCode = programFinishedData.exitCode};
     }
 
     if(statusType == resultsReadyCode)
     {
         if(headerData.length != nResultsReadyBytes)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+            return ErrorCode::invalidLength;
         }
 
         auto dataBuffer = serial::SerialBuffer<ResultsReadyStatus>{};
         auto resultsReadyError = UartReceive(dataBuffer);
         if(resultsReadyError != ErrorCode::success)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = resultsReadyError};
+            return resultsReadyError;
         }
 
         // Create another Buffer which includes the status type that was received beforehand because
@@ -365,16 +365,15 @@ auto Edu::GetStatusCommunication() -> Status
         auto crc32Error = CheckCrc32(fullDataBuffer);
         if(crc32Error != ErrorCode::success)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
+            return crc32Error;
         }
         auto resultsReadyData = serial::Deserialize<ResultsReadyStatus>(dataBuffer);
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
-                      .queueId = resultsReadyData.queueId,
-                      .errorCode = ErrorCode::success};
+                      .queueId = resultsReadyData.queueId};
     }
 
-    return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidStatusType};
+    return ErrorCode::invalidStatusType;
 }
 
 
