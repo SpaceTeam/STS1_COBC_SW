@@ -301,9 +301,9 @@ auto Edu::GetStatusCommunication() -> Result<Status>
 
         std::array<Byte, 1> statusTypeArray = {statusType};
         auto crc32Error = CheckCrc32(std::span<Byte>(statusTypeArray));
-        if(crc32Error != ErrorCode::success)
+        if(crc32Error.has_error())
         {
-            return crc32Error;
+            return crc32Error.error();
         }
 
         return Status{
@@ -330,10 +330,10 @@ auto Edu::GetStatusCommunication() -> Result<Status>
         auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
-        auto crc32Error = CheckCrc32(fullDataBuffer);
-        if(crc32Error != ErrorCode::success)
+        auto crc32Result = CheckCrc32(fullDataBuffer);
+        if(crc32Result.has_error())
         {
-            return crc32Error;
+            return crc32Result.error();
         }
 
         auto programFinishedData = serial::Deserialize<ProgramFinishedStatus>(dataBuffer);
@@ -362,10 +362,10 @@ auto Edu::GetStatusCommunication() -> Result<Status>
         auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
-        auto crc32Error = CheckCrc32(fullDataBuffer);
-        if(crc32Error != ErrorCode::success)
+        auto crc32Result = CheckCrc32(fullDataBuffer);
+        if(crc32Result)
         {
-            return crc32Error;
+            return crc32Result.error();
         }
         auto resultsReadyData = serial::Deserialize<ResultsReadyStatus>(dataBuffer);
         return Status{.statusType = StatusType::resultsReady,
@@ -518,12 +518,12 @@ auto Edu::ReturnResultCommunication() -> Result<ts::size_t>
     // RODOS::PRINTF("\nCheck CRC\n");
     // END DEBUG
 
-    auto crc32Error = CheckCrc32(
+    auto crc32Result = CheckCrc32(
         std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength.get()));
 
-    if(crc32Error != ErrorCode::success)
+    if(crc32Result.has_error())
     {
-        return crc32Error;
+        return crc32Result.error();
     }
 
     // DEBUG
@@ -724,7 +724,7 @@ auto Edu::FlushUartBuffer() -> void
 }
 
 
-auto Edu::CheckCrc32(std::span<Byte> data) -> ErrorCode
+auto Edu::CheckCrc32(std::span<Byte> data) -> Result<void>
 {
     auto const computedCrc32 = utility::Crc32(data);
 
@@ -753,7 +753,6 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> ErrorCode
     {
         return ErrorCode::wrongChecksum;
     }
-    return ErrorCode::success;
 }
 
 

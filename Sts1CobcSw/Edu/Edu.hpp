@@ -52,7 +52,7 @@ private:
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> ErrorCode;
     [[nodiscard]] auto UartReceive(void * destination) -> ErrorCode;
     auto FlushUartBuffer() -> void;
-    [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> ErrorCode;
+    [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> Result<void>;
     [[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
     [[nodiscard]] auto ReturnResultCommunication() -> Result<ts::size_t>;
     [[nodiscard]] auto ReturnResultRetry() -> Result<ts::size_t>;
