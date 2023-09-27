@@ -54,8 +54,8 @@ private:
     auto FlushUartBuffer() -> void;
     [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> ErrorCode;
     [[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
-    [[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
-    [[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
+    [[nodiscard]] auto ReturnResultCommunication() -> Result<ts::size_t>;
+    [[nodiscard]] auto ReturnResultRetry() -> Result<ts::size_t>;
     void MockWriteToFile(std::span<Byte> data);
 
     hal::GpioPin eduEnableGpioPin_ = hal::GpioPin(hal::eduEnablePin);

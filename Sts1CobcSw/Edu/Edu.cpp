@@ -397,30 +397,31 @@ auto Edu::ReturnResult() -> ResultInfo
 
     ts::size_t totalResultSize = 0_usize;
     ts::size_t packets = 0_usize;
-    ResultInfo resultInfo;
+    Result<ts::size_t> result = ErrorCode::noErrorCodeSet;
+    auto errorCode = ErrorCode::success;
     // TODO: Turn into for loop
     while(packets < maxNPackets)
     {
         // DEBUG
         // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets.get()));
         // END DEBUG
-        resultInfo = ReturnResultRetry();
-        // DEBUG
-        RODOS::PRINTF("ResultInfo{errorCode = %d, resultSize = %d}\n",
-                      static_cast<int>(resultInfo.errorCode),
-                      static_cast<int>(resultInfo.resultSize.get()));
-        // END DEBUG
-        if(resultInfo.errorCode != ErrorCode::success)
+        result = ReturnResultRetry();
+        if(result.has_error())
         {
+            errorCode = result.error();
+            RODOS::PRINTF(" ResultResultRetry() resulted in an error : %d",
+                          static_cast<int>(errorCode));
             break;
         }
         // RODOS::PRINTF("\nWriting to file...\n");
         // TODO: Actually write to a file
 
-        totalResultSize += resultInfo.resultSize;
+        RODOS::PRINTF(" ResultResultRetry() resulted in a success and returned  %d ",
+                      static_cast<int>(result.value().get()));
+        totalResultSize += result.value();
         packets++;
     }
-    return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
+    return ResultInfo{.errorCode = errorCode, .resultSize = totalResultSize};
 }
 
 
@@ -428,23 +429,24 @@ auto Edu::ReturnResult() -> ResultInfo
 //! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
 //!
 //! @returns An error code and the number of received bytes in ResultInfo
-auto Edu::ReturnResultRetry() -> ResultInfo
+auto Edu::ReturnResultRetry() -> Result<ts::size_t>
 {
-    ResultInfo resultInfo;
+    Result<ts::size_t> result = ErrorCode::noErrorCodeSet;
     std::size_t errorCount = 0U;
     do
     {
-        resultInfo = ReturnResultCommunication();
-        if(resultInfo.errorCode == ErrorCode::success
-           or resultInfo.errorCode == ErrorCode::successEof)
+        result = ReturnResultCommunication();
+        if(result.has_value() or (result.has_error() and result.error() == ErrorCode::successEof))
         {
-            SendCommand(cmdAck);
-            return resultInfo;
+            SendCommand(cmdNack);
+            // Return ts::size_t
+            return result;
         }
         FlushUartBuffer();
         SendCommand(cmdNack);
     } while(errorCount++ < maxNNackRetries);
-    return resultInfo;
+    // Return an error
+    return result;
 }
 
 
@@ -452,7 +454,7 @@ auto Edu::ReturnResultRetry() -> ResultInfo
 // directly and instead writes to a non-primary RAM bank as an intermediate step.
 //
 // Simple results -> 1 round should work with DMA to RAM
-auto Edu::ReturnResultCommunication() -> ResultInfo
+auto Edu::ReturnResultCommunication() -> Result<ts::size_t>
 {
     // Receive command
     // If no result is available, the command will be NACK,
@@ -461,23 +463,25 @@ auto Edu::ReturnResultCommunication() -> ResultInfo
     auto commandError = UartReceive(&command);
     if(commandError != ErrorCode::success)
     {
-        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
+        return commandError;
     }
     if(command == cmdNack)
     {
         // TODO: necessary to differentiate errors or just return success with resultSize 0?
-        return ResultInfo{.errorCode = ErrorCode::noResultAvailable, .resultSize = 0U};
+        // return ResultInfo{.errorCode = ErrorCode::noResultAvailable, .resultSize = 0U};
+        return ErrorCode::noResultAvailable;
     }
     if(command == cmdEof)
     {
-        return ResultInfo{.errorCode = ErrorCode::successEof, .resultSize = 0U};
+        // return ResultInfo{.errorCode = ErrorCode::successEof, .resultSize = 0U};
+        return ErrorCode::successEof;
     }
     if(command != cmdData)
     {
         // DEBUG
         RODOS::PRINTF("\nNot DATA command\n");
         // END DEBUG
-        return ResultInfo{.errorCode = ErrorCode::invalidCommand, .resultSize = 0U};
+        return ErrorCode::invalidCommand;
     }
 
     // DEBUG
@@ -488,13 +492,13 @@ auto Edu::ReturnResultCommunication() -> ResultInfo
     auto lengthError = UartReceive(dataLengthBuffer);
     if(lengthError != ErrorCode::success)
     {
-        return ResultInfo{.errorCode = lengthError, .resultSize = 0U};
+        return lengthError;
     }
 
     auto actualDataLength = serial::Deserialize<ts::uint16_t>(dataLengthBuffer);
     if(actualDataLength == 0U or actualDataLength > maxDataLength)
     {
-        return ResultInfo{.errorCode = ErrorCode::invalidLength, .resultSize = 0U};
+        return ErrorCode::invalidLength;
     }
 
     // DEBUG
@@ -507,7 +511,7 @@ auto Edu::ReturnResultCommunication() -> ResultInfo
 
     if(dataError != ErrorCode::success)
     {
-        return ResultInfo{.errorCode = dataError, .resultSize = 0U};
+        return dataError;
     }
 
     // DEBUG
@@ -519,14 +523,14 @@ auto Edu::ReturnResultCommunication() -> ResultInfo
 
     if(crc32Error != ErrorCode::success)
     {
-        return ResultInfo{.errorCode = crc32Error, .resultSize = 0U};
+        return crc32Error;
     }
 
     // DEBUG
     RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
-    return {ErrorCode::success, actualDataLength.get()};
+    return actualDataLength;
 }
 
 
