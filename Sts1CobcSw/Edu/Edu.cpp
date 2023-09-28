@@ -265,12 +265,12 @@ auto Edu::GetStatusCommunication() -> Result<Status>
 {
     // Get header data
     auto headerBuffer = serial::SerialBuffer<HeaderData>{};
-    auto headerReceiveError = UartReceive(headerBuffer);
+    auto headerReceiveResult = UartReceive(headerBuffer);
     auto headerData = serial::Deserialize<HeaderData>(headerBuffer);
 
-    if(headerReceiveError != ErrorCode::success)
+    if(headerReceiveResult.has_error())
     {
-        return headerReceiveError;
+        return headerReceiveResult.error();
     }
 
     if(headerData.command != cmdData)
@@ -285,11 +285,11 @@ auto Edu::GetStatusCommunication() -> Result<Status>
 
     // Get the status type code
     auto statusType = 0_b;
-    auto statusErrorCode = UartReceive(&statusType);
+    auto statusTypeResult = UartReceive(&statusType);
 
-    if(statusErrorCode != ErrorCode::success)
+    if(statusTypeResult)
     {
-        return statusErrorCode;
+        return statusTypeResult.error();
     }
 
     if(statusType == noEventCode)
@@ -318,11 +318,11 @@ auto Edu::GetStatusCommunication() -> Result<Status>
         }
 
         auto dataBuffer = serial::SerialBuffer<ProgramFinishedStatus>{};
-        auto programFinishedError = UartReceive(dataBuffer);
+        auto programFinishedResult = UartReceive(dataBuffer);
 
-        if(programFinishedError != ErrorCode::success)
+        if(programFinishedResult.has_error())
         {
-            return programFinishedError;
+            return programFinishedResult.error();
         }
 
         // Create another Buffer which includes the status type that was received beforehand because
@@ -352,9 +352,9 @@ auto Edu::GetStatusCommunication() -> Result<Status>
 
         auto dataBuffer = serial::SerialBuffer<ResultsReadyStatus>{};
         auto resultsReadyError = UartReceive(dataBuffer);
-        if(resultsReadyError != ErrorCode::success)
+        if(resultsReadyError.has_error())
         {
-            return resultsReadyError;
+            return resultsReadyError.error();
         }
 
         // Create another Buffer which includes the status type that was received beforehand because
@@ -460,10 +460,10 @@ auto Edu::ReturnResultCommunication() -> Result<ts::size_t>
     // If no result is available, the command will be NACK,
     // otherwise DATA
     Byte command = 0_b;
-    auto commandError = UartReceive(&command);
-    if(commandError != ErrorCode::success)
+    auto commandResult = UartReceive(&command);
+    if(commandResult.has_error())
     {
-        return commandError;
+        return commandResult.error();
     }
     if(command == cmdNack)
     {
@@ -489,10 +489,10 @@ auto Edu::ReturnResultCommunication() -> Result<ts::size_t>
     // END DEBUG
 
     auto dataLengthBuffer = serial::SerialBuffer<ts::uint16_t>{};
-    auto lengthError = UartReceive(dataLengthBuffer);
-    if(lengthError != ErrorCode::success)
+    auto lengthResult = UartReceive(dataLengthBuffer);
+    if(lengthResult.has_error())
     {
-        return lengthError;
+        return lengthResult.error();
     }
 
     auto actualDataLength = serial::Deserialize<ts::uint16_t>(dataLengthBuffer);
@@ -506,12 +506,12 @@ auto Edu::ReturnResultCommunication() -> Result<ts::size_t>
     // END DEBUG
 
     // Get the actual data
-    auto dataError = UartReceive(
+    auto dataResult = UartReceive(
         std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength.get()));
 
-    if(dataError != ErrorCode::success)
+    if(dataResult.has_error())
     {
-        return dataError;
+        return dataResult.error();
     }
 
     // DEBUG
@@ -661,7 +661,7 @@ auto Edu::SendData(std::span<Byte> data) -> ErrorCode
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-auto Edu::UartReceive(std::span<Byte> destination) -> ErrorCode
+auto Edu::UartReceive(std::span<Byte> destination) -> Result<void>
 {
     if(size(destination) > maxDataLength)
     {
@@ -681,7 +681,6 @@ auto Edu::UartReceive(std::span<Byte> destination) -> ErrorCode
         }
         totalReceivedBytes += nReceivedBytes;
     }
-    return ErrorCode::success;
 }
 
 
@@ -691,7 +690,7 @@ auto Edu::UartReceive(std::span<Byte> destination) -> ErrorCode
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-auto Edu::UartReceive(void * destination) -> ErrorCode
+auto Edu::UartReceive(void * destination) -> Result<void>
 {
     uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
     auto nReceivedBytes = uart_.read(destination, 1);
@@ -699,7 +698,6 @@ auto Edu::UartReceive(void * destination) -> ErrorCode
     {
         return ErrorCode::timeout;
     }
-    return ErrorCode::success;
 }
 
 
@@ -737,7 +735,7 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> Result<void>
 
 
     auto crc32Buffer = serial::SerialBuffer<ts::uint32_t>{};
-    auto receiveError = UartReceive(crc32Buffer);
+    auto receiveResult = UartReceive(crc32Buffer);
 
     // DEBUG
     // RODOS::PRINTF("Received CRC: ");
@@ -745,9 +743,9 @@ auto Edu::CheckCrc32(std::span<Byte> data) -> Result<void>
     // RODOS::PRINTF("\n");
     // END DEBUG
 
-    if(receiveError != ErrorCode::success)
+    if(receiveResult.has_error())
     {
-        return receiveError;
+        return receiveResult;
     }
     if(computedCrc32 != serial::Deserialize<ts::uint32_t>(crc32Buffer))
     {

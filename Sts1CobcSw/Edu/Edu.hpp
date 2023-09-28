@@ -48,9 +48,9 @@ private:
     auto SendCommand(Byte commandId) -> void;
     [[nodiscard]] auto SendData(std::span<Byte> data) -> ErrorCode;
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
-    // Deserialize<>() internally.
-    [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> ErrorCode;
-    [[nodiscard]] auto UartReceive(void * destination) -> ErrorCode;
+    // Deserialize<>() internally
+    [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> Result<void>;
+    [[nodiscard]] auto UartReceive(void * destination) -> Result<void>;
     auto FlushUartBuffer() -> void;
     [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> Result<void>;
     [[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
