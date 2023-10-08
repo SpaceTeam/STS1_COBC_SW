@@ -107,15 +107,20 @@ jobs:
     - name: Configure
       run: cmake --preset=ci-cobc
 
-    - name: Build
+    - name: Build COBC SW
       run: cmake --build build/cobc -j 2
+
+    - name: Build tests
+      run: cmake --build build/cobc -t AllTests -j 2
 
     - name: Upload artifacts
       if: github.event_name == 'push'
       uses: actions/upload-artifact@v3
       with:
         name: CobcBinaries
-        path: ./build/cobc/*.bin
+        path: |
+          ./build/cobc/*.bin
+          ./build/cobc/Test/**/*.bin
         retention-days: 7
 
     - name: Add assets to release
