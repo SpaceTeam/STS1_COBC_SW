@@ -1,0 +1,12 @@
+Occupied count : 5
+Vals[0] = .id(1), .status(notStarted)
+Vals[1] = .id(2), .status(notStarted)
+Vals[2] = .id(3), .status(notStarted)
+Vals[3] = .id(4), .status(notStarted)
+Vals[4] = .id(5), .status(notStarted)
+Vals[0] = .id(1), .status(running)
+Vals[1] = .id(2), .status(notStarted)
+Vals[2] = .id(3), .status(running)
+Vals[3] = .id(4), .status(notStarted)
+Vals[4] = .id(5), .status(notStarted)
+hw_resetAndReboot() -> exit
