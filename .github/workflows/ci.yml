@@ -120,7 +120,7 @@ jobs:
         name: CobcBinaries
         path: |
           ./build/cobc/*.bin
-          ./build/cobc/Test/**/*.bin
+          ./build/cobc/Tests/**/*.bin
         retention-days: 7
 
     - name: Add assets to release
