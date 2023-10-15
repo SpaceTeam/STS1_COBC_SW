@@ -104,9 +104,9 @@ private:
 
             auto errorCode =
                 eduUnit.UpdateTime(edu::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
-            if(errorCode != edu::ErrorCode::success)
+            if(errorCode.has_error())
             {
-                RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode));
+                RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode.error()));
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
                 ResumeEduCommunicationErrorThread();
@@ -138,7 +138,7 @@ private:
             errorCode = eduUnit.ExecuteProgram(executeProgramData);
             // errorCode = periphery::EduErrorCode::success;
 
-            if(errorCode != edu::ErrorCode::success)
+            if(errorCode.has_error())
             {
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to "

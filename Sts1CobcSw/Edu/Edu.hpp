@@ -36,17 +36,17 @@ public:
 
     // TODO: Why does this return a std::int32_t?
     [[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>;
-    [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode;
+    [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>;
     [[nodiscard]] auto StopProgram() -> ErrorCode;
     // TODD: Find better name (or maybe even mechanism) for GetStatus
     [[nodiscard]] auto GetStatus() -> Result<Status>;
     [[nodiscard]] auto ReturnResult() -> ResultInfo;
-    [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> ErrorCode;
+    [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> Result<void>;
 
 private:
     // TODO: Rework -> Send(EduBasicCommand command) -> void;
     auto SendCommand(Byte commandId) -> void;
-    [[nodiscard]] auto SendData(std::span<Byte> data) -> ErrorCode;
+    [[nodiscard]] auto SendData(std::span<Byte> data) -> Result<void>;
     // TODO: Make this read and return a Type instead of having to provide a destination. Use
     // Deserialize<>() internally
     [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> Result<void>;

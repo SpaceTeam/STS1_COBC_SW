@@ -128,7 +128,7 @@ auto Edu::StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> Result
 //! @param timeout The available execution time for the student program
 //!
 //! @returns A relevant error code
-auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
+auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
                   data.programId.get(),
@@ -136,11 +136,7 @@ auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
                   data.timeout.get());
     // Check if data command was successful
     auto serialData = serial::Serialize(data);
-    auto errorCode = SendData(serialData);
-    if(errorCode != ErrorCode::success)
-    {
-        return errorCode;
-    }
+    OUTCOME_TRY(SendData(serialData));
 
     // eduTimeout != timeout argument for data!
     // timeout specifies the time the student program has to execute
@@ -219,11 +215,11 @@ auto Edu::GetStatus() -> Result<Status>
 {
     RODOS::PRINTF("GetStatus()\n");
     auto serialData = serial::Serialize(getStatusId);
-    auto sendDataError = SendData(serialData);
-    if(sendDataError != ErrorCode::success)
+    auto sendDataResult = SendData(serialData);
+    if(sendDataResult.has_error())
     {
-        RODOS::PRINTF("  Returned .errorCode = %d\n", static_cast<int>(sendDataError));
-        return sendDataError;
+        RODOS::PRINTF("  Returned .errorCode = %d\n", static_cast<int>(sendDataResult.error()));
+        return sendDataResult.error();
     }
 
     Result<Status> status = ErrorCode::noErrorCodeSet;
@@ -385,10 +381,10 @@ auto Edu::ReturnResult() -> ResultInfo
 
     // Send command
     auto serialCommand = serial::Serialize(returnResultId);
-    auto commandError = SendData(serialCommand);
-    if(commandError != ErrorCode::success)
+    auto sendCommandResult = SendData(serialCommand);
+    if(sendCommandResult.has_error())
     {
-        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
+        return ResultInfo{.errorCode = sendCommandResult.error(), .resultSize = 0U};
     }
 
     // DEBUG
@@ -549,15 +545,15 @@ auto Edu::ReturnResultCommunication() -> Result<ts::size_t>
 //! @param timestamp A unix timestamp
 //!
 //! @returns A relevant error code
-auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
+auto Edu::UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     RODOS::PRINTF("UpdateTime()\n");
     auto serialData = serial::Serialize(data);
-    auto errorCode = SendData(serialData);
-    if(errorCode != ErrorCode::success)
-    {
-        return errorCode;
-    }
+    OUTCOME_TRY(SendData(serialData))
+    // if(errorCode != ErrorCode::success)
+    //{
+    //     return errorCode;
+    // }
 
     // On success, wait for second N/ACK
     // TODO: (Daniel) Change to UartReceive()
@@ -603,7 +599,7 @@ void Edu::SendCommand(Byte commandId)
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
-auto Edu::SendData(std::span<Byte> data) -> ErrorCode
+auto Edu::SendData(std::span<Byte> data) -> Result<void>
 {
     std::size_t const nBytes = data.size();
     if(nBytes >= maxDataLength)

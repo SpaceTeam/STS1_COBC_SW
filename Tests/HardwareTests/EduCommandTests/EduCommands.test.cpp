@@ -64,7 +64,8 @@ private:
                     auto timestamp = utility::GetUnixUtc();
                     PRINTF("Sending UpdateTime(timestamp = %d)\n", static_cast<int>(timestamp));
                     auto errorCode = eduUnit.UpdateTime({.timestamp = timestamp});
-                    PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
+                    PRINTF("Returned error code: %d\n",
+                           errorCode.has_error() ? static_cast<int>(errorCode.assume_error()) : 0);
                     break;
                 }
                 case 'e':
@@ -93,7 +94,8 @@ private:
                            static_cast<int>(timeout));
                     auto errorCode = eduUnit.ExecuteProgram(
                         {.programId = programId, .queueId = queueId, .timeout = timeout});
-                    PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
+                    PRINTF("Returned error code: %d\n",
+                           errorCode.has_error() ? static_cast<int>(errorCode.assume_error()) : 0);
                     break;
                 }
                 case 'g':
