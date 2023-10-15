@@ -64,6 +64,20 @@ constexpr auto maxDataLength = 32768;
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 
+// TODO: Rework -> Send(EduBasicCommand command) -> void;
+auto SendCommand(Byte commandId) -> void;
+[[nodiscard]] auto SendData(std::span<Byte> data) -> ErrorCode;
+// TODO: Make this read and return a Type instead of having to provide a destination. Use
+// Deserialize<>() internally.
+[[nodiscard]] auto UartReceive(std::span<Byte> destination) -> ErrorCode;
+[[nodiscard]] auto UartReceive(void * destination) -> ErrorCode;
+auto FlushUartBuffer() -> void;
+[[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> ErrorCode;
+[[nodiscard]] auto GetStatusCommunication() -> Status;
+[[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
+[[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
+
+void MockWriteToFile(std::span<Byte> data);
 auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
 
 

@@ -36,21 +36,4 @@ auto TurnOff() -> void;
 [[nodiscard]] auto GetStatus() -> Status;
 [[nodiscard]] auto ReturnResult() -> ResultInfo;
 [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> ErrorCode;
-// TODO: Rework -> Send(EduBasicCommand command) -> void;
-auto SendCommand(Byte commandId) -> void;
-[[nodiscard]] auto SendData(std::span<Byte> data) -> ErrorCode;
-// TODO: Make this read and return a Type instead of having to provide a destination. Use
-// Deserialize<>() internally.
-[[nodiscard]] auto UartReceive(std::span<Byte> destination) -> ErrorCode;
-[[nodiscard]] auto UartReceive(void * destination) -> ErrorCode;
-auto FlushUartBuffer() -> void;
-[[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> ErrorCode;
-[[nodiscard]] auto GetStatusCommunication() -> Status;
-[[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
-[[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
-void MockWriteToFile(std::span<Byte> data);
-
-extern hal::GpioPin eduEnableGpioPin;
-extern RODOS::HAL_UART eduUart;  // RODOS::HAL_UART uart_ = RODOS::HAL_UART(hal::uciUartIndex,
-                                 // hal::uciUartTxPin, hal::uciUartRxPin); }
 }
