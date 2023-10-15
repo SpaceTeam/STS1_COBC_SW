@@ -3,7 +3,7 @@ name: Continuous Integration
 # format-and-spell-check        : push, pull_request, release
 # coverage                      : push, pull_request, release
 # sanitize                      : push, pull_request, release
-# build-cobc                    : push (Upload of artifacts), pull_request, release (upload binaries to release)
+# build-cobc                    : push, pull_request (Upload of artifacts), release (upload binaries to release)
 # test                          : push, pull_request, release
 # docs                          : release
 
@@ -114,13 +114,13 @@ jobs:
       run: cmake --build build/cobc -t AllTests -j 2
 
     - name: Upload artifacts
-      if: github.event_name == 'push'
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
       uses: actions/upload-artifact@v3
       with:
         name: CobcBinaries
         path: |
           ./build/cobc/*.bin
-          ./build/cobc/Test/**/*.bin
+          ./build/cobc/Tests/**/*.bin
         retention-days: 7
 
     - name: Add assets to release
