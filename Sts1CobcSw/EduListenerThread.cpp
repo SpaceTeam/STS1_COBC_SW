@@ -79,17 +79,19 @@ private:
                         // Program has finished
                         // Find the correspongind queueEntry and update it, then resume edu queue
                         // thread
-                        auto eduProgramStatusHistoryEntry =
-                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
                         if(status.exitCode == 0)
                         {
-                            eduProgramStatusHistoryEntry.status =
-                                edu::ProgramStatus::programExecutionSucceeded;
+                            edu::UpdateProgramStatusHistory(
+                                status.programId,
+                                status.queueId,
+                                edu::ProgramStatus::programExecutionSucceeded);
                         }
                         else
                         {
-                            eduProgramStatusHistoryEntry.status =
-                                edu::ProgramStatus::programExecutionFailed;
+                            edu::UpdateProgramStatusHistory(
+                                status.programId,
+                                status.queueId,
+                                edu::ProgramStatus::programExecutionFailed);
                         }
                         ResumeEduProgramQueueThread();
                         break;
@@ -122,12 +124,9 @@ private:
                         }
                         // break;
 
-                        auto eduProgramStatusHistoryEntry =
-                            edu::FindProgramStatusHistoryEntry(status.programId, status.queueId);
-                        // TODO: Pretty sure that there is a .put() or something like that missing
-                        // here and the status is actually never updated in the ring buffer.
-                        eduProgramStatusHistoryEntry.status =
-                            edu::ProgramStatus::resultFileTransfered;
+                        edu::UpdateProgramStatusHistory(status.programId,
+                                                        status.queueId,
+                                                        edu::ProgramStatus::resultFileTransfered);
                         break;
                     }
                     case edu::StatusType::invalid:

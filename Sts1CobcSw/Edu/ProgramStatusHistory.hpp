@@ -41,6 +41,7 @@ inline constexpr auto programStatusHistorySize = 20;
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
-auto FindProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
-    -> ProgramStatusHistoryEntry;
+auto UpdateProgramStatusHistory(std::uint16_t programId,
+                                std::uint16_t queueId,
+                                ProgramStatus newStatus) -> void;
 }
