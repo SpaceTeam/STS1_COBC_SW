@@ -93,24 +93,19 @@ auto Initialize() -> void
 
 auto TurnOn() -> void
 {
+    periphery::persistentstate::EduShouldBePowered(true);
+    eduEnableGpioPin.Set();
+
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
     constexpr auto baudRate = 921'600;
     uart.init(baudRate);
-
-    // Set EduShouldBePowered to True, persistentstate is initialized in
-    // EduPowerManagementThread.cpp
-    periphery::persistentstate::EduShouldBePowered(true);
-    eduEnableGpioPin.Set();
 }
 
 
 auto TurnOff() -> void
 {
-    // Set EduShouldBePowered to False, persistentstate is initialized in
-    // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(false);
     eduEnableGpioPin.Reset();
-
     uart.reset();
 }
 
