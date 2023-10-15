@@ -88,6 +88,13 @@ auto Initialize() -> void
     // TODO: I think we should actually read from persistent state to determine whether the EDU
     // should be powered or not. We do have a separate EDU power management thread which though.
     TurnOff();
+}
+
+
+auto TurnOn() -> void
+{
+    periphery::persistentstate::EduShouldBePowered(true);
+    eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
     constexpr auto baudRate = 921'600;
@@ -95,21 +102,11 @@ auto Initialize() -> void
 }
 
 
-auto TurnOn() -> void
-{
-    // Set EduShouldBePowered to True, persistentstate is initialized in
-    // EduPowerManagementThread.cpp
-    periphery::persistentstate::EduShouldBePowered(true);
-    eduEnableGpioPin.Set();
-}
-
-
 auto TurnOff() -> void
 {
-    // Set EduShouldBePowered to False, persistentstate is initialized in
-    // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(false);
     eduEnableGpioPin.Reset();
+    uart.reset();
 }
 
 
