@@ -39,12 +39,12 @@ private:
 
             RODOS::PRINTF("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU
-            eduUnit.TurnOff();
+            edu::TurnOff();
             RODOS::AT(RODOS::NOW() + eduShutDownDelay);
-            eduUnit.TurnOn();
+            edu::TurnOn();
 
             // TODO: Why is this here?
-            [[maybe_unused]] auto status = eduUnit.GetStatus();
+            [[maybe_unused]] auto status = edu::GetStatus();
 
             // Busy wait
             RODOS::PRINTF("[EduCommunicationErrorThread] Entering busy wait\n");

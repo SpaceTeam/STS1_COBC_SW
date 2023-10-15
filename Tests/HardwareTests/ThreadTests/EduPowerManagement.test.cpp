@@ -30,7 +30,7 @@ public:
 private:
     void init() override
     {
-        eduUnit.Initialize();
+        edu::Initialize();
         eduUpdateGpioPin.Direction(hal::PinDirection::in);
         uciUart.init();
     }

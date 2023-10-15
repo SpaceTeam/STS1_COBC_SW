@@ -8,9 +8,6 @@ using RODOS::PRINTF;
 using utility::PrintFormattedSystemUtc;
 
 
-edu::Edu eduUnit;
-
-
 // TODO: Move this to the proper file
 auto ResumeEduErrorCommunicationThread() -> void
 {
@@ -29,7 +26,7 @@ auto ResumeEduProgramQueueThread() -> void
 namespace edu
 {
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::Initialize() -> void
+auto Initialize() -> void
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to Initialize()\n");
@@ -37,7 +34,7 @@ auto Edu::Initialize() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::TurnOn() -> void
+auto TurnOn() -> void
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to TurnOn()\n");
@@ -45,7 +42,7 @@ auto Edu::TurnOn() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::TurnOff() -> void
+auto TurnOff() -> void
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to TurnOff()\n");
@@ -53,7 +50,7 @@ auto Edu::TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
+auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StoreArchive(programId = %d)\n", data.programId.get());
@@ -62,7 +59,7 @@ auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
+auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
@@ -74,7 +71,7 @@ auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::StopProgram() -> ErrorCode
+auto StopProgram() -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StopProgram()\n");
@@ -83,7 +80,7 @@ auto Edu::StopProgram() -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::GetStatus() -> Status
+auto GetStatus() -> Status
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to GetStatus()\n");
@@ -96,7 +93,7 @@ auto Edu::GetStatus() -> Status
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
+auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UpdateTime(timestamp = %d)\n", data.timestamp.get());
@@ -105,7 +102,7 @@ auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::SendCommand(Byte commandId) -> void
+auto SendCommand(Byte commandId) -> void
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to SendCommand(commandId = 0x%02x)\n", static_cast<unsigned int>(commandId));
@@ -113,7 +110,7 @@ auto Edu::SendCommand(Byte commandId) -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::SendData(std::span<Byte> data) -> ErrorCode
+auto SendData(std::span<Byte> data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to SendData(size(data) = %d)\n", size(data));
@@ -122,7 +119,7 @@ auto Edu::SendData(std::span<Byte> data) -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> ErrorCode
+auto UartReceive([[maybe_unused]] std::span<Byte> destination) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UartReceive(size(destination) = %d)\n", size(destination));
@@ -131,7 +128,7 @@ auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void Edu::FlushUartBuffer()
+void FlushUartBuffer()
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to FlushUartBuffer()\n");

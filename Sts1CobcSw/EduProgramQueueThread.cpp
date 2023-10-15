@@ -51,7 +51,7 @@ public:
 private:
     void init() override
     {
-        eduUnit.Initialize();
+        edu::Initialize();
 
         // auto queueEntry1 = EduQueueEntry{
         //    .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
@@ -103,7 +103,7 @@ private:
             utility::PrintFormattedSystemUtc();
 
             auto errorCode =
-                eduUnit.UpdateTime(edu::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
+                edu::UpdateTime(edu::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
             if(errorCode != edu::ErrorCode::success)
             {
                 RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode));
@@ -135,7 +135,7 @@ private:
             auto executeProgramData = edu::ExecuteProgramData{
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
-            errorCode = eduUnit.ExecuteProgram(executeProgramData);
+            errorCode = edu::ExecuteProgram(executeProgramData);
             // errorCode = periphery::EduErrorCode::success;
 
             if(errorCode != edu::ErrorCode::success)

@@ -12,12 +12,6 @@
 #include <cstddef>
 
 
-namespace sts1cobcsw
-{
-edu::Edu eduUnit;
-}
-
-
 namespace sts1cobcsw::edu
 {
 using sts1cobcsw::serial::operator""_b;
@@ -27,6 +21,9 @@ namespace ts = type_safe;
 using ts::operator""_u16;
 using ts::operator""_usize;
 
+
+auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
+auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
@@ -67,43 +64,57 @@ constexpr auto maxDataLength = 32768;
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 
+// TODO: Rework -> Send(EduBasicCommand command) -> void;
+auto SendCommand(Byte commandId) -> void;
+[[nodiscard]] auto SendData(std::span<Byte> data) -> ErrorCode;
+// TODO: Make this read and return a Type instead of having to provide a destination. Use
+// Deserialize<>() internally.
+[[nodiscard]] auto UartReceive(std::span<Byte> destination) -> ErrorCode;
+[[nodiscard]] auto UartReceive(void * destination) -> ErrorCode;
+auto FlushUartBuffer() -> void;
+[[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> ErrorCode;
+[[nodiscard]] auto GetStatusCommunication() -> Status;
+[[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
+[[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
+
+void MockWriteToFile(std::span<Byte> data);
 auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
 
 
 //! @brief  Must be called in an init() function of a thread.
-auto Edu::Initialize() -> void
+auto Initialize() -> void
 {
-    eduEnableGpioPin_.Direction(hal::PinDirection::out);
+    eduEnableGpioPin.Direction(hal::PinDirection::out);
     // TODO: I think we should actually read from persistent state to determine whether the EDU
     // should be powered or not. We do have a separate EDU power management thread which though.
     TurnOff();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
     constexpr auto baudRate = 921'600;
-    uart_.init(baudRate);
+    uart.init(baudRate);
 }
 
 
-auto Edu::TurnOn() -> void
+auto TurnOn() -> void
 {
     // Set EduShouldBePowered to True, persistentstate is initialized in
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(true);
-    eduEnableGpioPin_.Set();
+    eduEnableGpioPin.Set();
 }
 
 
-auto Edu::TurnOff() -> void
+auto TurnOff() -> void
 {
     // Set EduShouldBePowered to False, persistentstate is initialized in
     // EduPowerManagementThread.cpp
     periphery::persistentstate::EduShouldBePowered(false);
-    eduEnableGpioPin_.Reset();
+    eduEnableGpioPin.Reset();
 }
 
 
 // TODO: Implement this
-auto Edu::StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_t
+auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_t
 {
     return 0;
 }
@@ -128,7 +139,7 @@ auto Edu::StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::i
 //! @param timeout The available execution time for the student program
 //!
 //! @returns A relevant error code
-auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
+auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
                   data.programId.get(),
@@ -146,9 +157,9 @@ auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
     // timeout specifies the time the student program has to execute
     // eduTimeout is the max. allowed time to reveice N/ACK from EDU
     auto answer = 0x00_b;
-    uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-    auto nReadBytes = uart_.read(&answer, 1);
+    auto nReadBytes = uart.read(&answer, 1);
     if(nReadBytes == 0)
     {
         return ErrorCode::timeout;
@@ -180,7 +191,7 @@ auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 //! <- [N/ACK]
 //! <- [N/ACK]
 //! @returns A relevant error code
-auto Edu::StopProgram() -> ErrorCode
+auto StopProgram() -> ErrorCode
 {
     return ErrorCode::success;
     // std::array<std::uint8_t, 3> dataBuf = {stopProgram};
@@ -215,7 +226,7 @@ auto Edu::StopProgram() -> ErrorCode
 //! @returns A status containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error
 //!          Code). Values in square brackets are only valid if the relevant Status Type is
 //!          returned.
-auto Edu::GetStatus() -> Status
+auto GetStatus() -> Status
 {
     RODOS::PRINTF("GetStatus()\n");
     auto serialData = serial::Serialize(getStatusId);
@@ -257,7 +268,7 @@ auto Edu::GetStatus() -> Status
 //! @brief Communication function for GetStatus() to separate a single try from
 //! retry logic.
 //! @returns The received EDU status
-auto Edu::GetStatusCommunication() -> Status
+auto GetStatusCommunication() -> Status
 {
     // Get header data
     auto headerBuffer = serial::SerialBuffer<HeaderData>{};
@@ -378,7 +389,7 @@ auto Edu::GetStatusCommunication() -> Status
 }
 
 
-auto Edu::ReturnResult() -> ResultInfo
+auto ReturnResult() -> ResultInfo
 {
     // DEBUG
     RODOS::PRINTF("ReturnResult()\n");
@@ -429,7 +440,7 @@ auto Edu::ReturnResult() -> ResultInfo
 //! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
 //!
 //! @returns An error code and the number of received bytes in ResultInfo
-auto Edu::ReturnResultRetry() -> ResultInfo
+auto ReturnResultRetry() -> ResultInfo
 {
     ResultInfo resultInfo;
     std::size_t errorCount = 0U;
@@ -453,7 +464,7 @@ auto Edu::ReturnResultRetry() -> ResultInfo
 // directly and instead writes to a non-primary RAM bank as an intermediate step.
 //
 // Simple results -> 1 round should work with DMA to RAM
-auto Edu::ReturnResultCommunication() -> ResultInfo
+auto ReturnResultCommunication() -> ResultInfo
 {
     // Receive command
     // If no result is available, the command will be NACK,
@@ -546,7 +557,7 @@ auto Edu::ReturnResultCommunication() -> ResultInfo
 //! @param timestamp A unix timestamp
 //!
 //! @returns A relevant error code
-auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
+auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
 {
     RODOS::PRINTF("UpdateTime()\n");
     auto serialData = serial::Serialize(data);
@@ -561,9 +572,9 @@ auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
     // TODO: Refactor this common pattern into a function
     // TODO: Implement read functions that return a type and internally use Deserialize<T>()
     auto answer = 0x00_b;
-    uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-    auto nReadBytes = uart_.read(&answer, 1);
+    auto nReadBytes = uart.read(&answer, 1);
     if(nReadBytes == 0)
     {
         return ErrorCode::timeout;
@@ -589,18 +600,18 @@ auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
 //! @brief Send a CEP command to the EDU.
 //!
 //! @param cmd The command
-void Edu::SendCommand(Byte commandId)
+void SendCommand(Byte commandId)
 {
     auto data = std::array{commandId};
     // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
-    hal::WriteTo(&uart_, std::span(data));
+    hal::WriteTo(&uart, std::span(data));
 }
 
 
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
-auto Edu::SendData(std::span<Byte> data) -> ErrorCode
+auto SendData(std::span<Byte> data) -> ErrorCode
 {
     std::size_t const nBytes = data.size();
     if(nBytes >= maxDataLength)
@@ -616,16 +627,16 @@ auto Edu::SendData(std::span<Byte> data) -> ErrorCode
     while(nackCount < maxNNackRetries)
     {
         SendCommand(cmdData);
-        hal::WriteTo(&uart_, std::span<std::uint16_t>(len));
-        hal::WriteTo(&uart_, data);
-        hal::WriteTo(&uart_, std::span<std::uint32_t>(crc));
+        hal::WriteTo(&uart, std::span<std::uint16_t>(len));
+        hal::WriteTo(&uart, data);
+        hal::WriteTo(&uart, std::span<std::uint32_t>(crc));
 
         // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
         auto answer = 0xAA_b;  // Why is this set to 0xAA?
-        uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-        auto nReadBytes = uart_.read(&answer, 1);
+        auto nReadBytes = uart.read(&answer, 1);
         if(nReadBytes == 0)
         {
             return ErrorCode::timeout;
@@ -658,7 +669,7 @@ auto Edu::SendData(std::span<Byte> data) -> ErrorCode
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-auto Edu::UartReceive(std::span<Byte> destination) -> ErrorCode
+auto UartReceive(std::span<Byte> destination) -> ErrorCode
 {
     if(size(destination) > maxDataLength)
     {
@@ -669,9 +680,9 @@ auto Edu::UartReceive(std::span<Byte> destination) -> ErrorCode
     const auto destinationSize = size(destination);
     while(totalReceivedBytes < destinationSize)
     {
-        uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto nReceivedBytes = uart_.read(data(destination) + totalReceivedBytes,
-                                         destinationSize - totalReceivedBytes);
+        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        auto nReceivedBytes =
+            uart.read(data(destination) + totalReceivedBytes, destinationSize - totalReceivedBytes);
         if(nReceivedBytes == 0)
         {
             return ErrorCode::timeout;
@@ -688,10 +699,10 @@ auto Edu::UartReceive(std::span<Byte> destination) -> ErrorCode
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-auto Edu::UartReceive(void * destination) -> ErrorCode
+auto UartReceive(void * destination) -> ErrorCode
 {
-    uart_.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    auto nReceivedBytes = uart_.read(destination, 1);
+    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    auto nReceivedBytes = uart.read(destination, 1);
     if(nReceivedBytes == 0)
     {
         return ErrorCode::timeout;
@@ -703,7 +714,7 @@ auto Edu::UartReceive(void * destination) -> ErrorCode
 //! @brief Flush the EDU UART read buffer.
 //!
 //! This can be used to clear all buffer data after an error to request a resend.
-auto Edu::FlushUartBuffer() -> void
+auto FlushUartBuffer() -> void
 {
     auto garbageBuffer = std::array<Byte, garbageBufferSize>{};
     ts::bool_t dataReceived = true;
@@ -711,8 +722,8 @@ auto Edu::FlushUartBuffer() -> void
     // Keep reading until no data is coming for flushTimeout
     while(dataReceived)
     {
-        uart_.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
-        auto nReceivedBytes = uart_.read(garbageBuffer.data(), garbageBufferSize);
+        uart.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
+        auto nReceivedBytes = uart.read(garbageBuffer.data(), garbageBufferSize);
         if(nReceivedBytes == 0)
         {
             dataReceived = false;
@@ -721,7 +732,7 @@ auto Edu::FlushUartBuffer() -> void
 }
 
 
-auto Edu::CheckCrc32(std::span<Byte> data) -> ErrorCode
+auto CheckCrc32(std::span<Byte> data) -> ErrorCode
 {
     auto const computedCrc32 = utility::Crc32(data);
 

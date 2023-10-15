@@ -38,12 +38,12 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
         {
             case CommandId::turnEduOn:
             {
-                eduUnit.TurnOn();
+                edu::TurnOn();
                 return;
             }
             case CommandId::turnEduOff:
             {
-                eduUnit.TurnOff();
+                edu::TurnOff();
                 return;
             }
             case CommandId::buildQueue:
