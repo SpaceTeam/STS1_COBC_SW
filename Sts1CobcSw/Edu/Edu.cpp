@@ -22,8 +22,8 @@ using ts::operator""_u16;
 using ts::operator""_usize;
 
 
-hal::GpioPin eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
-RODOS::HAL_UART eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
+auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
+auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
@@ -91,7 +91,7 @@ auto Initialize() -> void
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
     constexpr auto baudRate = 921'600;
-    eduUart.init(baudRate);
+    uart.init(baudRate);
 }
 
 
@@ -157,9 +157,9 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
     // timeout specifies the time the student program has to execute
     // eduTimeout is the max. allowed time to reveice N/ACK from EDU
     auto answer = 0x00_b;
-    eduUart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-    auto nReadBytes = eduUart.read(&answer, 1);
+    auto nReadBytes = uart.read(&answer, 1);
     if(nReadBytes == 0)
     {
         return ErrorCode::timeout;
@@ -572,9 +572,9 @@ auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
     // TODO: Refactor this common pattern into a function
     // TODO: Implement read functions that return a type and internally use Deserialize<T>()
     auto answer = 0x00_b;
-    eduUart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-    auto nReadBytes = eduUart.read(&answer, 1);
+    auto nReadBytes = uart.read(&answer, 1);
     if(nReadBytes == 0)
     {
         return ErrorCode::timeout;
@@ -604,7 +604,7 @@ void SendCommand(Byte commandId)
 {
     auto data = std::array{commandId};
     // TODO: ambiguity when using arrays directly with Write operations (Communication.hpp)
-    hal::WriteTo(&eduUart, std::span(data));
+    hal::WriteTo(&uart, std::span(data));
 }
 
 
@@ -627,16 +627,16 @@ auto SendData(std::span<Byte> data) -> ErrorCode
     while(nackCount < maxNNackRetries)
     {
         SendCommand(cmdData);
-        hal::WriteTo(&eduUart, std::span<std::uint16_t>(len));
-        hal::WriteTo(&eduUart, data);
-        hal::WriteTo(&eduUart, std::span<std::uint32_t>(crc));
+        hal::WriteTo(&uart, std::span<std::uint16_t>(len));
+        hal::WriteTo(&uart, data);
+        hal::WriteTo(&uart, std::span<std::uint32_t>(crc));
 
         // TODO: Refactor this common pattern into a function
         // Data is always answered by N/ACK
         auto answer = 0xAA_b;  // Why is this set to 0xAA?
-        eduUart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
 
-        auto nReadBytes = eduUart.read(&answer, 1);
+        auto nReadBytes = uart.read(&answer, 1);
         if(nReadBytes == 0)
         {
             return ErrorCode::timeout;
@@ -680,8 +680,8 @@ auto UartReceive(std::span<Byte> destination) -> ErrorCode
     const auto destinationSize = size(destination);
     while(totalReceivedBytes < destinationSize)
     {
-        eduUart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto nReceivedBytes = eduUart.read(data(destination) + totalReceivedBytes,
+        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        auto nReceivedBytes = uart.read(data(destination) + totalReceivedBytes,
                                            destinationSize - totalReceivedBytes);
         if(nReceivedBytes == 0)
         {
@@ -701,8 +701,8 @@ auto UartReceive(std::span<Byte> destination) -> ErrorCode
 // TODO: Use hal::ReadFrom()
 auto UartReceive(void * destination) -> ErrorCode
 {
-    eduUart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    auto nReceivedBytes = eduUart.read(destination, 1);
+    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    auto nReceivedBytes = uart.read(destination, 1);
     if(nReceivedBytes == 0)
     {
         return ErrorCode::timeout;
@@ -722,8 +722,8 @@ auto FlushUartBuffer() -> void
     // Keep reading until no data is coming for flushTimeout
     while(dataReceived)
     {
-        eduUart.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
-        auto nReceivedBytes = eduUart.read(garbageBuffer.data(), garbageBufferSize);
+        uart.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
+        auto nReceivedBytes = uart.read(garbageBuffer.data(), garbageBufferSize);
         if(nReceivedBytes == 0)
         {
             dataReceived = false;
