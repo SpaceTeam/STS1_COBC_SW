@@ -681,8 +681,8 @@ auto UartReceive(std::span<Byte> destination) -> ErrorCode
     while(totalReceivedBytes < destinationSize)
     {
         uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto nReceivedBytes = uart.read(data(destination) + totalReceivedBytes,
-                                           destinationSize - totalReceivedBytes);
+        auto nReceivedBytes =
+            uart.read(data(destination) + totalReceivedBytes, destinationSize - totalReceivedBytes);
         if(nReceivedBytes == 0)
         {
             return ErrorCode::timeout;
