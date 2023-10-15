@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
+#include <outcome-experimental.hpp>
+
 
 namespace sts1cobcsw
 {
@@ -53,7 +55,7 @@ auto Edu::TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
+auto Edu::StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StoreArchive(programId = %d)\n", data.programId.get());
@@ -62,14 +64,14 @@ auto Edu::StoreArchive(StoreArchiveData const & data) -> std::int32_t
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
+auto Edu::ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
            data.programId.get(),
            data.queueId.get(),
            data.timeout.get());
-    return ErrorCode::success;
+    // NOLINTNEXTLINE(clang-diagnostic-return-type)
 }
 
 
@@ -83,24 +85,20 @@ auto Edu::StopProgram() -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::GetStatus() -> Status
+auto Edu::GetStatus() -> Result<Status>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to GetStatus()\n");
-    return {.statusType = StatusType::invalid,
-            .programId = 0,
-            .queueId = 0,
-            .exitCode = 0,
-            .errorCode = ErrorCode::success};
+    return Status{.statusType = StatusType::noEvent, .programId = 0, .queueId = 0, .exitCode = 0};
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::UpdateTime(UpdateTimeData const & data) -> ErrorCode
+auto Edu::UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UpdateTime(timestamp = %d)\n", data.timestamp.get());
-    return ErrorCode::success;
+    // NOLINTNEXTLINE(clang-diagnostic-return-type)
 }
 
 
@@ -113,20 +111,20 @@ auto Edu::SendCommand(Byte commandId) -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::SendData(std::span<Byte> data) -> ErrorCode
+auto Edu::SendData(std::span<Byte> data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to SendData(size(data) = %d)\n", size(data));
-    return ErrorCode::success;
+    // NOLINTNEXTLINE(clang-diagnostic-return-type)
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> ErrorCode
+auto Edu::UartReceive([[maybe_unused]] std::span<Byte> destination) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UartReceive(size(destination) = %d)\n", size(destination));
-    return ErrorCode::success;
+    // NOLINTNEXTLINE(clang-diagnostic-return-type)
 }
 
 
