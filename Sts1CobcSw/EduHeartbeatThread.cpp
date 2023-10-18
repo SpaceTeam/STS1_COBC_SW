@@ -186,7 +186,7 @@ private:
         auto queueId = 5_u16;
         auto timeout = 10_i16;
 
-        auto executeProgramData = periphery::ExecuteProgramData{
+        auto executeProgramData = ExecuteProgramData{
             .programId = programId, .queueId = queueId, .timeout = timeout};
         edu.ExecuteProgram(executeProgramData);
 

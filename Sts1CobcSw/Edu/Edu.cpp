@@ -733,7 +733,7 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
 
     // DEBUG
     // RODOS::PRINTF("\nComputed CRC: ");
-    // auto crcSerial = serial::Serialize(computedCrc32);
+    // auto crcSerial = Serialize(computedCrc32);
     // Print(crcSerial);
     // RODOS::PRINTF("\n");
     // END DEBUG
