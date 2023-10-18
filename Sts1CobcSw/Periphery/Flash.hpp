@@ -8,7 +8,7 @@
 #include <span>
 
 
-namespace sts1cobcsw::periphery::flash
+namespace sts1cobcsw::flash
 {
 [[maybe_unused]] constexpr std::size_t pageSize = 256;                 // bytes
 [[maybe_unused]] constexpr std::size_t sectorSize = 4 * 1024;          // bytes
@@ -20,7 +20,6 @@ namespace sts1cobcsw::periphery::flash
 [[maybe_unused]] constexpr std::size_t nLargeBlocks = flashSize / largeBlockSize;
 
 
-using serial::Byte;
 using Page = std::array<Byte, pageSize>;
 using PageSpan = std::span<Byte, pageSize>;
 

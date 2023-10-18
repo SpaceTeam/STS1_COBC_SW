@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 
 
-namespace sts1cobcsw::periphery::fram
+namespace sts1cobcsw::fram
 {
 template<typename T>
 auto Read(Address address) -> T

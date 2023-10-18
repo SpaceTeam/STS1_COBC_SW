@@ -22,15 +22,15 @@ using ts::operator""_i64;
 using ts::operator""_u64;
 // NOLINTEND(misc-unused-using-decls)
 
-using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::operator""_b;
-using sts1cobcsw::serial::Deserialize;
-using sts1cobcsw::serial::Serialize;
+using sts1cobcsw::Byte;
+using sts1cobcsw::operator""_b;
+using sts1cobcsw::Deserialize;
+using sts1cobcsw::Serialize;
 
 
 TEST_CASE("TriviallySerializable")
 {
-    using sts1cobcsw::serial::TriviallySerializable;
+    using sts1cobcsw::TriviallySerializable;
 
     struct EmptyStruct
     {
@@ -154,7 +154,7 @@ struct S
 };
 
 
-namespace sts1cobcsw::serial
+namespace sts1cobcsw
 {
 // 1. Add a specialization of the variable template serialSize<> which computes the buffer size
 //    necessary to hold a serialized S.
@@ -170,16 +170,16 @@ constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::u16), decltype
 //    returned pointer must point to the next free byte in memory.
 auto SerializeTo(void * destination, S const & data) -> void *
 {
-    destination = sts1cobcsw::serial::SerializeTo(destination, data.u16);
-    destination = sts1cobcsw::serial::SerializeTo(destination, data.i32);
+    destination = sts1cobcsw::SerializeTo(destination, data.u16);
+    destination = sts1cobcsw::SerializeTo(destination, data.i32);
     return destination;
 }
 
 
 auto DeserializeFrom(void const * source, S * data) -> void const *
 {
-    source = sts1cobcsw::serial::DeserializeFrom(source, &(data->u16));
-    source = sts1cobcsw::serial::DeserializeFrom(source, &(data->i32));
+    source = sts1cobcsw::DeserializeFrom(source, &(data->u16));
+    source = sts1cobcsw::DeserializeFrom(source, &(data->i32));
     return source;
 }
 

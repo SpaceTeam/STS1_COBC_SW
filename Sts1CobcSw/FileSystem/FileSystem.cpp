@@ -11,8 +11,7 @@
 
 namespace sts1cobcsw::fs
 {
-using periphery::flash::pageSize;
-using serial::Byte;
+using flash::pageSize;
 
 
 // --- Private function declarations ---
@@ -34,9 +33,9 @@ auto Sync(lfs_config const * config) -> int;
 
 // --- Globals ---
 
-auto readBuffer = std::array<serial::Byte, pageSize>{};
-auto programBuffer = std::array<serial::Byte, pageSize>{};
-auto lookaheadBuffer = std::array<serial::Byte, pageSize>{};
+auto readBuffer = std::array<Byte, pageSize>{};
+auto programBuffer = std::array<Byte, pageSize>{};
+auto lookaheadBuffer = std::array<Byte, pageSize>{};
 
 // TODO: Check if they need to be global
 lfs_t lfs{};
@@ -50,8 +49,8 @@ lfs_config const lfsConfig{.read = &Read,
 
                            .read_size = pageSize,
                            .prog_size = pageSize,
-                           .block_size = periphery::flash::sectorSize,
-                           .block_count = periphery::flash::nSectors,
+                           .block_size = flash::sectorSize,
+                           .block_count = flash::nSectors,
                            .block_cycles = 200,
                            .cache_size = pageSize,
                            .lookahead_size = pageSize,
@@ -65,7 +64,7 @@ lfs_config const lfsConfig{.read = &Read,
 
 auto Initialize() -> void
 {
-    [[maybe_unused]] auto errorCode = periphery::flash::Initialize();
+    [[maybe_unused]] auto errorCode = flash::Initialize();
 }
 
 
@@ -189,14 +188,13 @@ auto Read(lfs_config const * config,
     auto startAddress = blockNo * config->block_size + offset;
     for(auto i = 0U; i < size; i += config->read_size)
     {
-        auto page = periphery::flash::ReadPage(startAddress + i);
+        auto page = flash::ReadPage(startAddress + i);
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         std::copy(begin(page), end(page), (static_cast<Byte *>(buffer) + i));
     }
 
     return 0;
 }
-
 
 auto Program(lfs_config const * config,
              lfs_block_t blockNo,
@@ -208,12 +206,12 @@ auto Program(lfs_config const * config,
     auto startAddress = blockNo * config->block_size + offset;
     for(auto i = 0U; i < size; i += config->prog_size)
     {
-        auto page = periphery::flash::Page{};
+        auto page = flash::Page{};
         std::copy((static_cast<Byte const *>(buffer) + i),                      // NOLINT
                   (static_cast<Byte const *>(buffer) + i + config->prog_size),  // NOLINT
                   begin(page));
-        periphery::flash::ProgramPage(startAddress + i, std::span(page));
-        periphery::flash::WaitWhileBusy();
+        flash::ProgramPage(startAddress + i, std::span(page));
+        flash::WaitWhileBusy();
     }
     return 0;
 }
@@ -221,15 +219,15 @@ auto Program(lfs_config const * config,
 
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 {
-    periphery::flash::EraseSector(blockNo * config->block_size);
-    periphery::flash::WaitWhileBusy();
+    flash::EraseSector(blockNo * config->block_size);
+    flash::WaitWhileBusy();
     return 0;
 }
 
 
 auto Sync([[maybe_unused]] lfs_config const * config) -> int
 {
-    periphery::flash::WaitWhileBusy();
+    flash::WaitWhileBusy();
     return 0;
 }
 }

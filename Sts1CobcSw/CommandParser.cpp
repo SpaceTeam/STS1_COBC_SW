@@ -10,10 +10,6 @@
 
 namespace sts1cobcsw
 {
-using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::Deserialize;
-using sts1cobcsw::serial::SerialBuffer;
-using sts1cobcsw::serial::serialSize;
 
 
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void

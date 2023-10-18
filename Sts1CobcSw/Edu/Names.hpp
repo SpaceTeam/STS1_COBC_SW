@@ -7,7 +7,6 @@
 // TODO: This could be in Edu.cpp cause AFAICS users don't need to know about this
 namespace sts1cobcsw::edu
 {
-using sts1cobcsw::serial::operator""_b;
 
 
 // TODO: Maybe turn this into enums

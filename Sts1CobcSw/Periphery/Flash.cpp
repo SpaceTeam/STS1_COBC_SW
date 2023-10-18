@@ -13,18 +13,17 @@
 
 namespace sts1cobcsw
 {
-namespace serial
-{
+
+
 template<>
-inline constexpr std::size_t serialSize<periphery::flash::JedecId> =
-    totalSerialSize<decltype(periphery::flash::JedecId::manufacturerId),
-                    decltype(periphery::flash::JedecId::deviceId)>;
-}
+inline constexpr std::size_t serialSize<flash::JedecId> =
+    totalSerialSize<decltype(flash::JedecId::manufacturerId), decltype(flash::JedecId::deviceId)>;
 
 
-namespace periphery::flash
+namespace flash
 {
-using serial::operator""_b;
+
+using sts1cobcsw::DeserializeFrom;
 
 
 struct SimpleInstruction
@@ -96,7 +95,7 @@ auto Initialize() -> std::int32_t
     constexpr auto baudrate = 1'000'000;
     auto errorCode = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
 
-    periphery::flash::Enter4ByteAdressMode();
+    flash::Enter4ByteAdressMode();
 
     return errorCode;
 }
@@ -107,7 +106,7 @@ auto ReadJedecId() -> JedecId
     csGpioPin.Reset();
     auto answer = SendInstruction<readJedecId>();
     csGpioPin.Set();
-    return serial::Deserialize<JedecId>(std::span(answer));
+    return Deserialize<JedecId>(std::span(answer));
 }
 
 
@@ -136,7 +135,7 @@ auto ReadStatusRegister(int8_t registerNo) -> Byte
 
 auto ReadPage(std::uint32_t address) -> Page
 {
-    auto addressBytes = serial::Serialize(address);
+    auto addressBytes = Serialize(address);
     auto message = std::array<Byte, 1 + size(addressBytes)>{readData4ByteAddress};
     // Copy address bytes to message in reverse (big endian) order
     std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
@@ -152,7 +151,7 @@ auto ReadPage(std::uint32_t address) -> Page
 // TODO: Maybe check BUSY flag before writing or something
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
-    auto addressBytes = serial::Serialize(address);
+    auto addressBytes = Serialize(address);
     auto message = std::array<Byte, 1 + size(addressBytes)>{pageProgram4ByteAddress};
     // Copy address bytes to message in reverse (big endian) order
     std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
@@ -172,7 +171,7 @@ auto EraseSector(std::uint32_t address) -> void
 {
     // Round address down to the nearest sector address
     address = (address / sectorSize) * sectorSize;
-    auto addressBytes = serial::Serialize(address);
+    auto addressBytes = Serialize(address);
     auto message = std::array<Byte, 1 + size(addressBytes)>{sectorErase4ByteAddress};
     // Copy address bytes to message in reverse (big endian) order
     std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
@@ -273,12 +272,12 @@ inline auto SendInstruction() -> void
 // TODO: Replace this super ugyl hack with a proper big endian deserialization
 auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *
 {
-    source = serial::DeserializeFrom<std::uint8_t>(source, &(jedecId->manufacturerId));
+    source = DeserializeFrom<std::uint8_t>(source, &(jedecId->manufacturerId));
     std::uint16_t deviceId = 0;
-    source = serial::DeserializeFrom<std::uint16_t>(source, &(deviceId));
-    auto deviceIdBytes = serial::Serialize(deviceId);
+    source = DeserializeFrom<std::uint16_t>(source, &(deviceId));
+    auto deviceIdBytes = Serialize(deviceId);
     std::reverse(begin(deviceIdBytes), end(deviceIdBytes));
-    jedecId->deviceId = serial::Deserialize<std::uint16_t>(std::span(deviceIdBytes));
+    jedecId->deviceId = Deserialize<std::uint16_t>(std::span(deviceIdBytes));
     return source;
 }
 }

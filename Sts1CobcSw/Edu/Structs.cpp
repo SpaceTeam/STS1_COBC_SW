@@ -3,9 +3,9 @@
 
 namespace sts1cobcsw::edu
 {
-using sts1cobcsw::serial::Byte;
-using sts1cobcsw::serial::DeserializeFrom;
-using sts1cobcsw::serial::SerializeTo;
+
+using sts1cobcsw::DeserializeFrom;
+using sts1cobcsw::SerializeTo;
 
 
 auto DeserializeFrom(void const * source, HeaderData * data) -> void const *

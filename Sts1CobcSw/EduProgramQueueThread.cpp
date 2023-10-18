@@ -21,7 +21,6 @@
 namespace sts1cobcsw
 {
 namespace ts = type_safe;
-using serial::Byte;
 
 using ts::operator""_i16;
 using ts::operator""_u16;
@@ -136,7 +135,7 @@ private:
                 .programId = programId, .queueId = queueId, .timeout = timeout};
             // Start Process
             errorCode = edu::ExecuteProgram(executeProgramData);
-            // errorCode = periphery::EduErrorCode::success;
+            // errorCode = edu::ErrorCode::success;
 
             if(errorCode != edu::ErrorCode::success)
             {

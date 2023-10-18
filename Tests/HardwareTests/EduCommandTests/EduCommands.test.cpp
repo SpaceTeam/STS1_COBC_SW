@@ -16,7 +16,6 @@
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
-using sts1cobcsw::serial::Byte;
 
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);

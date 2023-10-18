@@ -9,9 +9,8 @@
 #include <rodos_no_using_namespace.h>
 
 
-namespace sts1cobcsw::periphery::fram
+namespace sts1cobcsw::fram
 {
-using serial::operator""_b;
 
 
 // --- Private globals ---
@@ -63,7 +62,7 @@ auto ReadDeviceId() -> DeviceId
 
 auto ReadFrom(Address address, void * data, std::size_t size) -> void
 {
-    auto addressBytes = serial::Serialize(address);
+    auto addressBytes = Serialize(address);
     // FRAM expects 3-byte address in big endian
     auto commandMessage =
         std::array{opcode::readData, addressBytes[2], addressBytes[1], addressBytes[0]};
@@ -77,7 +76,7 @@ auto ReadFrom(Address address, void * data, std::size_t size) -> void
 
 auto WriteTo(Address address, void const * data, std::size_t size) -> void
 {
-    auto addressBytes = serial::Serialize(address);
+    auto addressBytes = Serialize(address);
     // FRAM expects 3-byte address in big endian
     auto commandMessage =
         std::array{opcode::writeData, addressBytes[2], addressBytes[1], addressBytes[0]};

@@ -7,7 +7,7 @@
 
 
 // This is just a dummy implementation that does not store anything in a persistent memory.
-namespace sts1cobcsw::periphery::persistentstate
+namespace sts1cobcsw::persistentstate
 {
 // Must be called once in a thread's init() function
 auto Initialize() -> void;

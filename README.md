@@ -198,7 +198,6 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
 - There should be an OBJECT or INTERFACE library target for each component (this should
   make linking source code dependencies for tests easier).
 - Each subfolder should have its own `CMakeLists.txt`
-- Each component should introduce its own nested namespace.
 - Rodos already provides some kind of hardware abstraction. `Hal/` should therefore
   provide type-safe and more specifically named C++ wrappers for this low-level Rodos
   stuff.

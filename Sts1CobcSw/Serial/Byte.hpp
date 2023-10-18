@@ -4,7 +4,7 @@
 #include <cstddef>
 
 
-namespace sts1cobcsw::serial
+namespace sts1cobcsw
 {
 // Allegedly std::byte is quite heavyweight. This type alias allows us to easily replace std::byte
 // with std::uint8_t or whatever type we want to use for low-level memory access and some such.

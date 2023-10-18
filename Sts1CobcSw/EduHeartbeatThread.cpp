@@ -22,8 +22,6 @@ auto ledGpioPin = hal::GpioPin(hal::led1Pin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
-// periphery::Edu edu = periphery::Edu();
-
 auto constexpr edgeCounterThreshold = 4;
 
 
@@ -188,7 +186,7 @@ private:
         auto queueId = 5_u16;
         auto timeout = 10_i16;
 
-        auto executeProgramData = periphery::ExecuteProgramData{
+        auto executeProgramData = ExecuteProgramData{
             .programId = programId, .queueId = queueId, .timeout = timeout};
         edu.ExecuteProgram(executeProgramData);
 

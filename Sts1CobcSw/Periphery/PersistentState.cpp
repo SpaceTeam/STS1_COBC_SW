@@ -2,7 +2,7 @@
 
 
 // This is just a dummy implementation that does not store anything in a persistent memory.
-namespace sts1cobcsw::periphery::persistentstate
+namespace sts1cobcsw::persistentstate
 {
 namespace ts = type_safe;
 

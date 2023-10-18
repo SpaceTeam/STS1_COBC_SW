@@ -15,7 +15,6 @@
 // TODO: Add declarations at the top to see all provided functionality at once
 namespace sts1cobcsw::hal
 {
-using serial::Byte;
 
 
 template<typename T, std::size_t size>
