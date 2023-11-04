@@ -3,8 +3,6 @@
 
 #include <Sts1CobcSw/Edu/Enums.hpp>
 #include <Sts1CobcSw/Edu/Structs.hpp>
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
-#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -15,8 +13,6 @@
 
 namespace sts1cobcsw::edu
 {
-
-
 // TODO: Think about const-correctness and whether to make uart_ mutable or not
 //
 // TODO: There is no reason for this to be a class (there is no class invariant), so this being a
