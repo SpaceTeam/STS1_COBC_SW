@@ -195,7 +195,7 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
   spell out the directory structure, e.g., `#include <Sts1CobcSw/Hal/IoNames.hpp>`.
 - Also, all includes, even the "project local" ones use `<>` instead of `""`.
 - Subfolders for the source code should comprise somewhat standalone "components".
-- There should be an OBJECT or INTERFACE library target for each component (this should
+- There should be a STATIC or INTERFACE library target for each component (this should
   make linking source code dependencies for tests easier).
 - Each subfolder should have its own `CMakeLists.txt`
 - Rodos already provides some kind of hardware abstraction. `Hal/` should therefore

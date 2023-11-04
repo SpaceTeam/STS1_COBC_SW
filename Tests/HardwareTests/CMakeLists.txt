@@ -1,7 +1,7 @@
 add_subdirectory(EduCommandTests)
 add_subdirectory(ThreadTests)
 
-add_library(Sts1CobcSwTests_Utility OBJECT Utility.cpp)
+add_library(Sts1CobcSwTests_Utility STATIC Utility.cpp)
 target_link_libraries(Sts1CobcSwTests_Utility PRIVATE rodos::rodos)
 target_include_directories(
     Sts1CobcSwTests_Utility PUBLIC ${warning_guard} "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
