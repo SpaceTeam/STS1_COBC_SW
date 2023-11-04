@@ -8,7 +8,16 @@ set(Sts1CobcSw "${CMAKE_SOURCE_DIR}/Sts1CobcSw")
 add_golden_test(
     TESTFILE "HelloWorld.test.cpp" SOURCE "${Sts1CobcSw}/TopicsAndSubscribers.cpp" LIB rodos::rodos
 )
+
 add_golden_test(TESTFILE "HelloDummy.test.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
+
+add_golden_test(
+    TESTFILE
+    "UpdateRingBuffer.test.cpp"
+    LIB
+    rodos::rodos
+    Sts1CobcSw_Edu
+)
 
 add_golden_test(
     TESTFILE

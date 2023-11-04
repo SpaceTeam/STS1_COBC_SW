@@ -8,20 +8,20 @@ namespace sts1cobcsw::edu
 RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
-// TODO: This should probably not return a copy but a reference or pointer so that the user code can
-// modify the entry.
-auto FindProgramStatusHistoryEntry(std::uint16_t programId, std::uint16_t queueId)
-    -> ProgramStatusHistoryEntry
+auto UpdateProgramStatusHistory(std::uint16_t programId,
+                                std::uint16_t queueId,
+                                ProgramStatus newStatus) -> void
 {
-    auto programStatusHistoryEntry = ProgramStatusHistoryEntry{};
-    do
-    {
-        programStatusHistory.get(programStatusHistoryEntry);
-        // RODOS::PRINTF("%d,%d vs %d,%d\n", eduProgramStatusHistoryEntry.programId,
-        // eduProgramStatusHistoryEntry.queueId, programId, queueId);
-    } while(programStatusHistoryEntry.queueId != queueId
-            or programStatusHistoryEntry.programId != programId);
+    // TODO: Check that there is only one entry matching program/queue ID, or should it be the case
+    // by construction ?
 
-    return programStatusHistoryEntry;
+    for(std::uint32_t i = 0; i < programStatusHistory.occupiedCnt; ++i)
+    {
+        if(programStatusHistory.vals[i].queueId == queueId
+           and programStatusHistory.vals[i].programId == programId)
+        {
+            programStatusHistory.vals[i].status = newStatus;
+        }
+    }
 }
 }
