@@ -18,7 +18,6 @@ add_golden_test(
     rodos::rodos
     Sts1CobcSw_Edu
     Sts1CobcSw_Utility
-    Sts1CobcSw_Dummy
 )
 
 add_golden_test(
