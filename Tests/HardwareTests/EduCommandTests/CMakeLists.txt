@@ -1,7 +1,7 @@
 add_program(EduCommands EduCommands.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_EduCommands PUBLIC rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
-                                       Sts1CobcSw_Periphery Sts1CobcSw_Hal Sts1CobcSw_Edu
+                                       Sts1CobcSw_Hal Sts1CobcSw_Edu
 )
 
 get_property(

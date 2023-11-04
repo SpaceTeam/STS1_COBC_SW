@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Names.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
@@ -14,7 +16,6 @@
 
 namespace sts1cobcsw::edu
 {
-
 namespace ts = type_safe;
 using ts::operator""_u16;
 using ts::operator""_usize;

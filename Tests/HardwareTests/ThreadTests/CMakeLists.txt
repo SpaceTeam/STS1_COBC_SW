@@ -7,8 +7,7 @@ target_sources(
             ${source_directory}/EduHeartbeatThread.cpp ${source_directory}/TopicsAndSubscribers.cpp
 )
 target_link_libraries(
-    Sts1CobcSwTests_EduPowerManagement PRIVATE rodos::rodos type_safe Sts1CobcSw_Periphery
-                                               Sts1CobcSw_Hal Sts1CobcSw_Utility Sts1CobcSw_Edu
+    Sts1CobcSwTests_EduPowerManagement PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Edu
 )
 
 get_property(
