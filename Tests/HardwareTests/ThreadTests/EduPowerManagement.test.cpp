@@ -2,7 +2,6 @@
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Hal/PinNames.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <rodos_no_using_namespace.h>
