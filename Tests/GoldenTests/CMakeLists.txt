@@ -17,7 +17,6 @@ add_golden_test(
     LIB
     rodos::rodos
     Sts1CobcSw_Edu
-    Sts1CobcSw_Utility
 )
 
 add_golden_test(
