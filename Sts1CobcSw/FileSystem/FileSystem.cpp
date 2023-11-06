@@ -42,7 +42,9 @@ lfs_t lfs{};
 lfs_file_t lfsFile{};
 // TODO: Maybe add a config header to set things like NAME_MAX or whatever. That could safe a bit of
 // RAM.
-lfs_config const lfsConfig{.read = &Read,
+lfs_config const lfsConfig{.context = nullptr,
+
+                           .read = &Read,
                            .prog = &Program,
                            .erase = &Erase,
                            .sync = &Sync,
@@ -57,7 +59,12 @@ lfs_config const lfsConfig{.read = &Read,
 
                            .read_buffer = data(readBuffer),
                            .prog_buffer = data(programBuffer),
-                           .lookahead_buffer = data(lookaheadBuffer)};  // NOLINT
+                           .lookahead_buffer = data(lookaheadBuffer),
+
+                           .name_max = LFS_NAME_MAX,
+                           .file_max = LFS_FILE_MAX,
+                           .attr_max = LFS_ATTR_MAX,
+                           .metadata_max = flash::sectorSize};
 
 
 // --- Public function definitions ---
