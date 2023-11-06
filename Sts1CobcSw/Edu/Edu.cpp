@@ -59,16 +59,16 @@ auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 // TODO: Rework -> Send(EduBasicCommand command) -> void;
 auto SendCommand(Byte commandId) -> void;
-[[nodiscard]] auto SendData(std::span<Byte> data) -> ErrorCode;
+[[nodiscard]] auto SendData(std::span<Byte> data) -> Result<void>;
 // TODO: Make this read and return a Type instead of having to provide a destination. Use
 // Deserialize<>() internally.
-[[nodiscard]] auto UartReceive(std::span<Byte> destination) -> ErrorCode;
-[[nodiscard]] auto UartReceive(void * destination) -> ErrorCode;
+[[nodiscard]] auto UartReceive(std::span<Byte> destination) -> Result<void>;
+[[nodiscard]] auto UartReceive(void * destination) -> Result<void>;
 auto FlushUartBuffer() -> void;
-[[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> ErrorCode;
-[[nodiscard]] auto GetStatusCommunication() -> Status;
-[[nodiscard]] auto ReturnResultCommunication() -> ResultInfo;
-[[nodiscard]] auto ReturnResultRetry() -> ResultInfo;
+[[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> Result<void>;
+[[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
+[[nodiscard]] auto ReturnResultCommunication() -> Result<ts::size_t>;
+[[nodiscard]] auto ReturnResultRetry() -> Result<ts::size_t>;
 
 void MockWriteToFile(std::span<Byte> data);
 auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
@@ -104,7 +104,7 @@ auto TurnOff() -> void
 
 
 // TODO: Implement this
-auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_t
+auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> Result<std::int32_t>
 {
     return 0;
 }
@@ -129,7 +129,7 @@ auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_
 //! @param timeout The available execution time for the student program
 //!
 //! @returns A relevant error code
-auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
+auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
                   data.programId,
@@ -138,7 +138,8 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
     // Check if data command was successful
     auto serialData = Serialize(data);
     auto errorCode = SendData(serialData);
-    if(errorCode != ErrorCode::success)
+    // TODO: OUTCOME_TRY
+    if(errorCode.has_error())
     {
         return errorCode;
     }
@@ -156,10 +157,6 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
     }
     switch(answer)
     {
-        case cmdAck:
-        {
-            return ErrorCode::success;
-        }
         case cmdNack:
         {
             return ErrorCode::nack;
@@ -181,9 +178,8 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 //! <- [N/ACK]
 //! <- [N/ACK]
 //! @returns A relevant error code
-auto StopProgram() -> ErrorCode
+auto StopProgram() -> Result<void>
 {
-    return ErrorCode::success;
     // std::array<std::uint8_t, 3> dataBuf = {stopProgram};
     // auto errorCode = SendData(dataBuf);
 
@@ -216,41 +212,49 @@ auto StopProgram() -> ErrorCode
 //! @returns A status containing (Status Type, [Program ID], [Queue ID], [Exit Code], Error
 //!          Code). Values in square brackets are only valid if the relevant Status Type is
 //!          returned.
-auto GetStatus() -> Status
+auto GetStatus() -> Result<Status>
 {
     RODOS::PRINTF("GetStatus()\n");
     auto serialData = Serialize(getStatusId);
     auto sendDataError = SendData(serialData);
-    if(sendDataError != ErrorCode::success)
+    // TODO: OUTCOME_TRY, and change name
+    if(sendDataError.has_error())
     {
-        RODOS::PRINTF("  Returned .statusType = %d, .errorCode = %d\n",
-                      static_cast<int>(StatusType::invalid),
-                      static_cast<int>(sendDataError));
-        return Status{.statusType = StatusType::invalid, .errorCode = sendDataError};
+        return sendDataError.error();
+        // RODOS::PRINTF("  Returned .statusType = %d, .errorCode = %d\n",
+        //               static_cast<int>(StatusType::invalid),
+        //               static_cast<int>(sendDataError));
+        // return Status{.statusType = StatusType::invalid, .errorCode = sendDataError};
     }
 
-    Status status;
+    Result<Status> status = ErrorCode::noErrorCodeSet;
     std::size_t errorCount = 0;
     do
     {
         status = GetStatusCommunication();
-        if(status.errorCode == ErrorCode::success)
+        if(status.has_value())
         {
             SendCommand(cmdAck);
             break;
         }
+
         FlushUartBuffer();
         SendCommand(cmdNack);
     } while(errorCount++ < maxNNackRetries);
 
-    RODOS::PRINTF(
-        "  .statusType = %d\n  .errorCode = %d\n  .programId = %d\n  .startTime = %" PRIi32
-        "\n  exitCode = %d\n",
-        static_cast<int>(status.statusType),
-        static_cast<int>(status.errorCode),
-        status.programId,
-        status.startTime,
-        status.exitCode);
+    if(status.has_value())
+    {
+        RODOS::PRINTF("  .statusType = %d\n  .programId = %d\n  .startTime = %" PRIi32
+                      "\n  .exitCode = %d\n",
+                      static_cast<int>(status.value().statusType),
+                      status.value().programId,
+                      status.value().startTime,
+                      status.value().exitCode);
+    }
+    else
+    {
+        RODOS::PRINTF("  .errorCode = %d\n", status.error());
+    }
     return status;
 }
 
@@ -258,71 +262,72 @@ auto GetStatus() -> Status
 //! @brief Communication function for GetStatus() to separate a single try from
 //! retry logic.
 //! @returns The received EDU status
-auto GetStatusCommunication() -> Status
+auto GetStatusCommunication() -> Result<Status>
 {
     // Get header data
     auto headerBuffer = Buffer<HeaderData>{};
     auto headerReceiveError = UartReceive(headerBuffer);
     auto headerData = Deserialize<HeaderData>(headerBuffer);
 
-    if(headerReceiveError != ErrorCode::success)
+    // TODO: OUTCOME_TRY
+    if(headerReceiveError.has_error())
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = headerReceiveError};
+        return headerReceiveError.error();
     }
 
     if(headerData.command != cmdData)
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidCommand};
+        return ErrorCode::invalidCommand;
+        // return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidCommand};
     }
 
     if(headerData.length == 0U)
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+        return ErrorCode::invalidLength;
     }
 
     // Get the status type code
     auto statusType = 0_b;
     auto statusErrorCode = UartReceive(&statusType);
 
-    if(statusErrorCode != ErrorCode::success)
+    // TODO: OUTCOME_TRY
+    if(statusErrorCode.has_error())
     {
-        return Status{.statusType = StatusType::invalid, .errorCode = statusErrorCode};
+        return statusErrorCode.error();
     }
 
     if(statusType == noEventCode)
     {
         if(headerData.length != nNoEventBytes)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+            return ErrorCode::invalidLength;
         }
 
         std::array<Byte, 1> statusTypeArray = {statusType};
         auto crc32Error = CheckCrc32(std::span<Byte>(statusTypeArray));
-        if(crc32Error != ErrorCode::success)
+        if(crc32Error.has_error())
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
+            return crc32Error.error();
         }
 
-        return Status{.statusType = StatusType::noEvent,
-                      .programId = 0,
-                      .startTime = 0,
-                      .exitCode = 0,
-                      .errorCode = ErrorCode::success};
+        return Status{
+            .statusType = StatusType::noEvent, .programId = 0, .startTime = 0, .exitCode = 0};
     }
 
     if(statusType == programFinishedCode)
     {
         if(headerData.length != nProgramFinishedBytes)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+            return ErrorCode::invalidLength;
         }
 
         auto dataBuffer = Buffer<ProgramFinishedStatus>{};
         auto programFinishedError = UartReceive(dataBuffer);
 
-        if(programFinishedError != ErrorCode::success)
+        // TODO: OUTCOME_TRY
+        if(programFinishedError.has_error())
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = programFinishedError};
+            return programFinishedError.error();
         }
 
         // Create another Buffer which includes the status type that was received beforehand because
@@ -331,31 +336,32 @@ auto GetStatusCommunication() -> Status
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
         auto crc32Error = CheckCrc32(fullDataBuffer);
-        if(crc32Error != ErrorCode::success)
+        // TODO:OUTCOME_TRY
+        if(crc32Error.has_error())
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
+            return crc32Error.error();
         }
 
         auto programFinishedData = Deserialize<ProgramFinishedStatus>(dataBuffer);
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
                       .startTime = programFinishedData.startTime,
-                      .exitCode = programFinishedData.exitCode,
-                      .errorCode = ErrorCode::success};
+                      .exitCode = programFinishedData.exitCode};
     }
 
     if(statusType == resultsReadyCode)
     {
         if(headerData.length != nResultsReadyBytes)
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
+            return ErrorCode::invalidLength;
         }
 
         auto dataBuffer = Buffer<ResultsReadyStatus>{};
         auto resultsReadyError = UartReceive(dataBuffer);
-        if(resultsReadyError != ErrorCode::success)
+        // TODO:OUTCOME_TRY
+        if(resultsReadyError.has_error())
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = resultsReadyError};
+            return resultsReadyError.error();
         }
 
         // Create another Buffer which includes the status type that was received beforehand because
@@ -364,22 +370,22 @@ auto GetStatusCommunication() -> Status
         fullDataBuffer[0] = statusType;
         std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
         auto crc32Error = CheckCrc32(fullDataBuffer);
-        if(crc32Error != ErrorCode::success)
+        // TODO: OUTCOME_TRY
+        if(crc32Error.has_error())
         {
-            return Status{.statusType = StatusType::invalid, .errorCode = crc32Error};
+            return crc32Error.error();
         }
         auto resultsReadyData = Deserialize<ResultsReadyStatus>(dataBuffer);
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
-                      .startTime = resultsReadyData.startTime,
-                      .errorCode = ErrorCode::success};
+                      .startTime = resultsReadyData.startTime};
     }
 
-    return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidStatusType};
+    return ErrorCode::invalidStatusType;
 }
 
 
-auto ReturnResult() -> ResultInfo
+auto ReturnResult() -> Result<ts::size_t>
 {
     // DEBUG
     RODOS::PRINTF("ReturnResult()\n");
@@ -388,9 +394,9 @@ auto ReturnResult() -> ResultInfo
     // Send command
     auto serialCommand = Serialize(returnResultId);
     auto commandError = SendData(serialCommand);
-    if(commandError != ErrorCode::success)
+    if(commandError.has_error())
     {
-        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
+        return commandError.error();
     }
 
     // DEBUG
@@ -399,7 +405,7 @@ auto ReturnResult() -> ResultInfo
 
     std::size_t totalResultSize = 0U;
     std::size_t packets = 0U;
-    ResultInfo resultInfo;
+    Result<ts::size_t> resultInfo = ErrorCode::noErrorCodeSet;
     // TODO: Turn into for loop
     while(packets < maxNPackets)
     {
@@ -408,21 +414,21 @@ auto ReturnResult() -> ResultInfo
         // END DEBUG
         resultInfo = ReturnResultRetry();
         // DEBUG
-        RODOS::PRINTF("ResultInfo{errorCode = %d, resultSize = %d}\n",
-                      static_cast<int>(resultInfo.errorCode),
-                      static_cast<int>(resultInfo.resultSize));
-        // END DEBUG
-        if(resultInfo.errorCode != ErrorCode::success)
+        if(resultInfo.has_error())
         {
+            auto errorCode = resultInfo.error();
+            RODOS::PRINTF(" ResultResultRetry() resulted in an error : %d",
+                          static_cast<int>(errorCode));
             break;
         }
+        // END DEBUG
         // RODOS::PRINTF("\nWriting to file...\n");
         // TODO: Actually write to a file
 
-        totalResultSize += resultInfo.resultSize;
+        totalResultSize += resultInfo.value();
         packets++;
     }
-    return ResultInfo{.errorCode = resultInfo.errorCode, .resultSize = totalResultSize};
+    return totalResultSize;
 }
 
 
@@ -430,23 +436,23 @@ auto ReturnResult() -> ResultInfo
 //! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
 //!
 //! @returns An error code and the number of received bytes in ResultInfo
-auto ReturnResultRetry() -> ResultInfo
+auto ReturnResultRetry() -> Result<ts::size_t>
 {
-    ResultInfo resultInfo;
+    Result<ts::size_t> result = ErrorCode::noErrorCodeSet;
     std::size_t errorCount = 0U;
     do
     {
-        resultInfo = ReturnResultCommunication();
-        if(resultInfo.errorCode == ErrorCode::success
-           or resultInfo.errorCode == ErrorCode::successEof)
+        result = ReturnResultCommunication();
+        // TODO: That is ugly, maybe a successCommunicationEnum would be better
+        if(result.has_value() or (result.has_error() and result.error() == ErrorCode::successEof))
         {
-            SendCommand(cmdAck);
-            return resultInfo;
+            SendCommand(cmdNack);
+            return result;
         }
         FlushUartBuffer();
         SendCommand(cmdNack);
     } while(errorCount++ < maxNNackRetries);
-    return resultInfo;
+    return result.value();
 }
 
 
@@ -454,32 +460,32 @@ auto ReturnResultRetry() -> ResultInfo
 // directly and instead writes to a non-primary RAM bank as an intermediate step.
 //
 // Simple results -> 1 round should work with DMA to RAM
-auto ReturnResultCommunication() -> ResultInfo
+auto ReturnResultCommunication() -> Result<ts::size_t>
 {
     // Receive command
     // If no result is available, the command will be NACK,
     // otherwise DATA
     Byte command = 0_b;
     auto commandError = UartReceive(&command);
-    if(commandError != ErrorCode::success)
+    if(commandError.has_error())
     {
-        return ResultInfo{.errorCode = commandError, .resultSize = 0U};
+        return commandError.error();
     }
     if(command == cmdNack)
     {
         // TODO: necessary to differentiate errors or just return success with resultSize 0?
-        return ResultInfo{.errorCode = ErrorCode::noResultAvailable, .resultSize = 0U};
+        return ErrorCode::noResultAvailable;
     }
     if(command == cmdEof)
     {
-        return ResultInfo{.errorCode = ErrorCode::successEof, .resultSize = 0U};
+        return ErrorCode::successEof;
     }
     if(command != cmdData)
     {
         // DEBUG
         RODOS::PRINTF("\nNot DATA command\n");
         // END DEBUG
-        return ResultInfo{.errorCode = ErrorCode::invalidCommand, .resultSize = 0U};
+        return ErrorCode::invalidCommand;
     }
 
     // DEBUG
@@ -488,15 +494,16 @@ auto ReturnResultCommunication() -> ResultInfo
 
     auto dataLengthBuffer = Buffer<std::uint16_t>{};
     auto lengthError = UartReceive(dataLengthBuffer);
-    if(lengthError != ErrorCode::success)
+    // TODO: OUTCOME_TRY
+    if(lengthError.has_error())
     {
-        return ResultInfo{.errorCode = lengthError, .resultSize = 0U};
+        return lengthError.error();
     }
 
     auto actualDataLength = Deserialize<std::uint16_t>(dataLengthBuffer);
     if(actualDataLength == 0U or actualDataLength > maxDataLength)
     {
-        return ResultInfo{.errorCode = ErrorCode::invalidLength, .resultSize = 0U};
+        return ErrorCode::invalidLength;
     }
 
     // DEBUG
@@ -507,9 +514,9 @@ auto ReturnResultCommunication() -> ResultInfo
     auto dataError = UartReceive(
         std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength));
 
-    if(dataError != ErrorCode::success)
+    if(dataError.has_error())
     {
-        return ResultInfo{.errorCode = dataError, .resultSize = 0U};
+        return dataError.error();
     }
 
     // DEBUG
@@ -519,16 +526,16 @@ auto ReturnResultCommunication() -> ResultInfo
     auto crc32Error = CheckCrc32(
         std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength));
 
-    if(crc32Error != ErrorCode::success)
+    if(crc32Error.has_error())
     {
-        return ResultInfo{.errorCode = crc32Error, .resultSize = 0U};
+        return crc32Error.error();
     }
 
     // DEBUG
     RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
-    return {ErrorCode::success, actualDataLength};
+    return actualDataLength;
 }
 
 
@@ -547,14 +554,15 @@ auto ReturnResultCommunication() -> ResultInfo
 //! @param currentTime A unix timestamp
 //!
 //! @returns A relevant error code
-auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
+auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     RODOS::PRINTF("UpdateTime()\n");
     auto serialData = Serialize(data);
     auto errorCode = SendData(serialData);
-    if(errorCode != ErrorCode::success)
+    // TODO:OUTCOME_TRY
+    if(errorCode.has_error())
     {
-        return errorCode;
+        return errorCode.error();
     }
 
     // On success, wait for second N/ACK
@@ -571,10 +579,6 @@ auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
     }
     switch(answer)
     {
-        case cmdAck:
-        {
-            return ErrorCode::success;
-        }
         case cmdNack:
         {
             return ErrorCode::nack;
@@ -601,7 +605,7 @@ void SendCommand(Byte commandId)
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
-auto SendData(std::span<Byte> data) -> ErrorCode
+auto SendData(std::span<Byte> data) -> Result<void>
 {
     std::size_t const nBytes = data.size();
     if(nBytes >= maxDataLength)
@@ -634,10 +638,10 @@ auto SendData(std::span<Byte> data) -> ErrorCode
         // RODOS::PRINTF("[Edu] answer in sendData is now : %c\n", static_cast<char>(answer));
         switch(answer)
         {
-            case cmdAck:
-            {
-                return ErrorCode::success;
-            }
+            // case cmdAck:
+            //{
+            //     return ErrorCode::success;
+            // }
             case cmdNack:
             {
                 nackCount++;
@@ -659,7 +663,7 @@ auto SendData(std::span<Byte> data) -> ErrorCode
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-auto UartReceive(std::span<Byte> destination) -> ErrorCode
+auto UartReceive(std::span<Byte> destination) -> Result<void>
 {
     if(size(destination) > maxDataLength)
     {
@@ -679,7 +683,6 @@ auto UartReceive(std::span<Byte> destination) -> ErrorCode
         }
         totalReceivedBytes += nReceivedBytes;
     }
-    return ErrorCode::success;
 }
 
 
@@ -689,7 +692,7 @@ auto UartReceive(std::span<Byte> destination) -> ErrorCode
 //!
 //! @returns A relevant EDU error code
 // TODO: Use hal::ReadFrom()
-auto UartReceive(void * destination) -> ErrorCode
+auto UartReceive(void * destination) -> Result<void>
 {
     uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
     auto nReceivedBytes = uart.read(destination, 1);
@@ -697,7 +700,6 @@ auto UartReceive(void * destination) -> ErrorCode
     {
         return ErrorCode::timeout;
     }
-    return ErrorCode::success;
 }
 
 
@@ -722,7 +724,7 @@ auto FlushUartBuffer() -> void
 }
 
 
-auto CheckCrc32(std::span<Byte> data) -> ErrorCode
+auto CheckCrc32(std::span<Byte> data) -> Result<void>
 {
     auto const computedCrc32 = utility::Crc32(data);
 
@@ -743,7 +745,8 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
     // RODOS::PRINTF("\n");
     // END DEBUG
 
-    if(receiveError != ErrorCode::success)
+    // TODO: OUTCOME_TRY
+    if(receiveError.has_error())
     {
         return receiveError;
     }
@@ -751,7 +754,6 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
     {
         return ErrorCode::wrongChecksum;
     }
-    return ErrorCode::success;
 }
 
 
