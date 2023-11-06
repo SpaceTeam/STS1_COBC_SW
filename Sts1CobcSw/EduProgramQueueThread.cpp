@@ -53,7 +53,7 @@ private:
         // eduProgramQueue.push_back(queueEntry1);
         // eduProgramQueue.push_back(queueEntry2);
 
-        RODOS::PRINTF("Size of EduProgramQueue : %d\n", edu::programQueue.size());
+        RODOS::PRINTF("Size of EduProgramQueue : %zu\n", edu::programQueue.size());
     }
 
     void run() override
