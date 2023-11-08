@@ -157,6 +157,11 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
     }
     switch(answer)
     {
+        // TODO: Return outcome::success
+        // case cmdAck:
+        //{
+        //    return ;
+        //}
         case cmdNack:
         {
             return ErrorCode::nack;
@@ -180,6 +185,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 //! @returns A relevant error code
 auto StopProgram() -> Result<void>
 {
+    return outcome_v2::success();
     // std::array<std::uint8_t, 3> dataBuf = {stopProgram};
     // auto errorCode = SendData(dataBuf);
 
@@ -579,6 +585,10 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
     }
     switch(answer)
     {
+        // case cmdAck:
+        //{
+        //     return ErrorCode::succes;
+        // }
         case cmdNack:
         {
             return ErrorCode::nack;
@@ -638,6 +648,7 @@ auto SendData(std::span<Byte> data) -> Result<void>
         // RODOS::PRINTF("[Edu] answer in sendData is now : %c\n", static_cast<char>(answer));
         switch(answer)
         {
+            // TODO: Return outcome::success
             // case cmdAck:
             //{
             //     return ErrorCode::success;
@@ -683,6 +694,8 @@ auto UartReceive(std::span<Byte> destination) -> Result<void>
         }
         totalReceivedBytes += nReceivedBytes;
     }
+    // TODO: Test this
+    return outcome_v2::success();
 }
 
 
@@ -754,6 +767,7 @@ auto CheckCrc32(std::span<Byte> data) -> Result<void>
     {
         return ErrorCode::wrongChecksum;
     }
+    // TODO: Return outcome::successs
 }
 
 

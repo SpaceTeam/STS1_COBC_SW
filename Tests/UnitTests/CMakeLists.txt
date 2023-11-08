@@ -13,6 +13,9 @@ endif()
 add_program(Serial Serial.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
 
+add_program(Outcome Outcome.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
+
 get_property(
     all_unit_test_targets
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

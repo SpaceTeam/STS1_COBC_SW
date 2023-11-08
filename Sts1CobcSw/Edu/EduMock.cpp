@@ -52,7 +52,7 @@ auto TurnOff() -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
+auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StoreArchive(programId = %d)\n", data.programId);
@@ -61,7 +61,7 @@ auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
+auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
@@ -73,7 +73,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto StopProgram() -> ErrorCode
+auto StopProgram() -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StopProgram()\n");
@@ -82,20 +82,16 @@ auto StopProgram() -> ErrorCode
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto GetStatus() -> Status
+auto GetStatus() -> Result<Status>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to GetStatus()\n");
-    return {.statusType = StatusType::invalid,
-            .programId = 0,
-            .startTime = 0,
-            .exitCode = 0,
-            .errorCode = ErrorCode::success};
+    return Status{.statusType = StatusType::invalid, .programId = 0, .startTime = 0, .exitCode = 0};
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
+auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime);
