@@ -1,8 +1,6 @@
 #pragma once
 
-#if defined(GENERIC_SYSTEM)
-    #define OUTCOME_DISABLE_EXECINFO
-    #define SYSTEM_ERROR2_NOT_POSIX
+#if defined(SYSTEM_ERROR2_NOT_POSIX)
     #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
 #endif
 
