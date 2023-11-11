@@ -150,7 +150,7 @@ TEST_CASE("TRY macro")
     // Test failure
     auto result1 = Write(/*shouldSucceed=*/false);
     assert(result1.has_error());
-    REQUIRE(result1.error() == ConversionErrc::illegalChar);
+    REQUIRE(result1.error() == ConversionErrc::emptyString);
 
     // Test success
     auto result2 = Write(/*shouldSucceed=*/true);
