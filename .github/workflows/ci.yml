@@ -32,9 +32,6 @@ jobs:
       with:
         python-version: "3.8"
 
-    - name: Install codespell
-      run: pip3 install codespell
-
     - name: Format check
       run: cmake -D FORMAT_COMMAND=clang-format -P cmake/format.cmake
 
