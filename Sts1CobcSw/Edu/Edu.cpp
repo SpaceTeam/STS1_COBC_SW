@@ -67,8 +67,8 @@ auto SendCommand(Byte commandId) -> void;
 auto FlushUartBuffer() -> void;
 [[nodiscard]] auto CheckCrc32(std::span<Byte> data) -> Result<void>;
 [[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
-[[nodiscard]] auto ReturnResultCommunication() -> Result<ts::size_t>;
-[[nodiscard]] auto ReturnResultRetry() -> Result<ts::size_t>;
+[[nodiscard]] auto ReturnResultCommunication() -> Result<ResultInfo>;
+[[nodiscard]] auto ReturnResultRetry() -> Result<ResultInfo>;
 
 void MockWriteToFile(std::span<Byte> data);
 auto Print(std::span<Byte> data, int nRows = 30) -> void;  // NOLINT
@@ -218,41 +218,40 @@ auto GetStatus() -> Result<Status>
     auto serialData = Serialize(getStatusId);
     OUTCOME_TRY(SendData(serialData));
 
-    Result<Status> status = ErrorCode::noErrorCodeSet;
     std::size_t errorCount = 0;
-    do
+
+    while(true)
     {
-        status = GetStatusCommunication();
-        if(status.has_value())
+        auto status = GetStatusCommunication();
+        if(status)
         {
             SendCommand(cmdAck);
-            break;
+            RODOS::PRINTF(
+                "  .statusType = %d\n  .programId = %d\n  .startTime = %d\n  exitCode = %d\n",
+                status.value().statusType,
+                status.value().programId,
+                status.value().startTime,
+                status.value().exitCode);
+            return status;
         }
-
+        // Error in GetStatusCommunication()
         FlushUartBuffer();
         SendCommand(cmdNack);
-    } while(errorCount++ < maxNNackRetries);
+        errorCount++;
 
-    if(status.has_value())
-    {
-        RODOS::PRINTF("  .statusType = %d\n  .programId = %d\n  .startTime = %" PRIi32
-                      "\n  .exitCode = %d\n",
-                      static_cast<int>(status.value().statusType),
-                      status.value().programId,
-                      status.value().startTime,
-                      status.value().exitCode);
+        if(errorCount >= maxNNackRetries)
+        {
+            RODOS::PRINTF("  .errorCode = %d\n", status.error());
+            return status.error();
+        }
     }
-    else
-    {
-        RODOS::PRINTF("  .errorCode = %d\n", status.error());
-    }
-    return status;
 }
 
 
 //! @brief Communication function for GetStatus() to separate a single try from
 //! retry logic.
 //! @returns The received EDU status
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto GetStatusCommunication() -> Result<Status>
 {
     // Get header data
@@ -345,7 +344,7 @@ auto GetStatusCommunication() -> Result<Status>
 }
 
 
-auto ReturnResult() -> Result<ts::size_t>
+auto ReturnResult() -> Result<ResultInfo>
 {
     // DEBUG
     RODOS::PRINTF("ReturnResult()\n");
@@ -366,29 +365,38 @@ auto ReturnResult() -> Result<ts::size_t>
     std::size_t totalResultSize = 0U;
     std::size_t packets = 0U;
     Result<ts::size_t> resultInfo = ErrorCode::noErrorCodeSet;
-    // TODO: Turn into for loop
+    //  TODO: Turn into for loop
     while(packets < maxNPackets)
     {
         // DEBUG
         // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets));
         // END DEBUG
-        resultInfo = ReturnResultRetry();
+        auto resultInfo = ReturnResultRetry();
+        // TYPE Result<something>
         // DEBUG
+
+        // Break if returned an error or reached EOF
         if(resultInfo.has_error())
         {
             auto errorCode = resultInfo.error();
             RODOS::PRINTF(" ResultResultRetry() resulted in an error : %d",
                           static_cast<int>(errorCode));
-            break;
+            return resultInfo.error();
         }
+        if(resultInfo.value().reachedEof)
+        {
+            RODOS::PRINTF(" ResultResultRetry() reached EOF\n");
+            return {/*reachedEof*/ true, totalResultSize};
+        }
+
         // END DEBUG
         // RODOS::PRINTF("\nWriting to file...\n");
         // TODO: Actually write to a file
 
-        totalResultSize += resultInfo.value();
+        totalResultSize += resultInfo.value().resultSize;
         packets++;
     }
-    return totalResultSize;
+    return {false, totalResultSize};
 }
 
 
@@ -396,23 +404,49 @@ auto ReturnResult() -> Result<ts::size_t>
 //! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
 //!
 //! @returns An error code and the number of received bytes in ResultInfo
-auto ReturnResultRetry() -> Result<ts::size_t>
+auto ReturnResultRetry() -> Result<ResultInfo>
 {
-    Result<ts::size_t> result = ErrorCode::noErrorCodeSet;
     std::size_t errorCount = 0U;
-    do
+
+    // TODO: infinite loop could be avoided by setting
+    // errorCount <= maxNNackRetries as the termination condition
+    while(true)
     {
-        result = ReturnResultCommunication();
-        // TODO: That is ugly, maybe a successCommunicationEnum would be better
-        if(result.has_value() or (result.has_error() and result.error() == ErrorCode::successEof))
+        auto resultInfo = ReturnResultCommunication();
+        if(resultInfo.has_value())
         {
-            SendCommand(cmdNack);
-            return result;
+            SendCommand(cmdAck);
+            // returns {reachedEof, resultSize}
+            return resultInfo.value();
         }
+
+        // Error in ReturnResultCommunication()
         FlushUartBuffer();
         SendCommand(cmdNack);
-    } while(errorCount++ < maxNNackRetries);
-    return result.value();
+        errorCount++;
+        if(errorCount == maxNNackRetries)
+        {
+            return resultInfo.error();
+        }
+    }
+
+
+    // Result<ResultInfo> result = ErrorCode::noErrorCodeSet;
+    // std::size_t errorCount = 0U;
+    // // TODO: CHange this
+    // do
+    // {
+    //     result = ReturnResultCommunication();
+    //     // Could have reached EOF or not
+    //     if(result.has_value())
+    //     {
+    //         SendCommand(cmdAck);
+    //         return result;
+    //     }
+    //     FlushUartBuffer();
+    //     SendCommand(cmdNack);
+    // } while(errorCount++ < maxNNackRetries);
+    // return result.value();
 }
 
 
@@ -420,7 +454,7 @@ auto ReturnResultRetry() -> Result<ts::size_t>
 // directly and instead writes to a non-primary RAM bank as an intermediate step.
 //
 // Simple results -> 1 round should work with DMA to RAM
-auto ReturnResultCommunication() -> Result<ts::size_t>
+auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 {
     // Receive command
     // If no result is available, the command will be NACK,
@@ -438,7 +472,7 @@ auto ReturnResultCommunication() -> Result<ts::size_t>
     }
     if(command == cmdEof)
     {
-        return ErrorCode::successEof;
+        return {/*reachedEof*/ true, 0_usize};
     }
     if(command != cmdData)
     {
@@ -469,6 +503,7 @@ auto ReturnResultCommunication() -> Result<ts::size_t>
     auto dataError = UartReceive(
         std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength));
 
+    // TODO: OUTCOME_TRY
     if(dataError.has_error())
     {
         return dataError.error();
@@ -490,7 +525,7 @@ auto ReturnResultCommunication() -> Result<ts::size_t>
     RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
-    return actualDataLength;
+    return {false, actualDataLength};
 }
 
 

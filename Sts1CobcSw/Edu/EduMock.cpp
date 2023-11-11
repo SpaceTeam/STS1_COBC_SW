@@ -68,7 +68,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
            data.programId,
            data.startTime,
            data.timeout);
-    return ErrorCode::success;
+    return outcome_v2::success();
 }
 
 
@@ -77,7 +77,7 @@ auto StopProgram() -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StopProgram()\n");
-    return ErrorCode::success;
+    return outcome_v2::success();
 }
 
 
@@ -95,7 +95,7 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime);
-    return ErrorCode::success;
+    return outcome_v2::success();
 }
 
 
@@ -108,20 +108,20 @@ auto SendCommand(Byte commandId) -> void
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto SendData(std::span<Byte> data) -> ErrorCode
+auto SendData(std::span<Byte> data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to SendData(size(data) = %d)\n", size(data));
-    return ErrorCode::success;
+    return outcome_v2::success();
 }
 
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto UartReceive([[maybe_unused]] std::span<Byte> destination) -> ErrorCode
+auto UartReceive([[maybe_unused]] std::span<Byte> destination) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UartReceive(size(destination) = %d)\n", size(destination));
-    return ErrorCode::success;
+    return outcome_v2::success();
 }
 
 

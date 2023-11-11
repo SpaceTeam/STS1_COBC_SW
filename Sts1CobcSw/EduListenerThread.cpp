@@ -35,6 +35,7 @@ private:
     }
 
 
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     void run() override
     {
         TIME_LOOP(0, timeLoopPeriod)

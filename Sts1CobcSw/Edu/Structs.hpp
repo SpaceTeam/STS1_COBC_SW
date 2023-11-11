@@ -76,7 +76,7 @@ struct ProgramFinishedStatus
 
 struct ResultInfo
 {
-    ErrorCode errorCode = ErrorCode::noErrorCodeSet;
+    bool reachedEof = false;
     std::size_t resultSize = 0;
 };
 }
