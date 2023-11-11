@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Names.hpp>
+#include <Sts1CobcSw/Edu/Structs.hpp>
 #include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -386,7 +387,7 @@ auto ReturnResult() -> Result<ResultInfo>
         if(resultInfo.value().reachedEof)
         {
             RODOS::PRINTF(" ResultResultRetry() reached EOF\n");
-            return {/*reachedEof*/ true, totalResultSize};
+            return ResultInfo{.reachedEof = true, .resultSize = totalResultSize};
         }
 
         // END DEBUG
@@ -396,7 +397,7 @@ auto ReturnResult() -> Result<ResultInfo>
         totalResultSize += resultInfo.value().resultSize;
         packets++;
     }
-    return {false, totalResultSize};
+    return ResultInfo{.reachedEof = false, .resultSize = totalResultSize};
 }
 
 
@@ -472,7 +473,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     }
     if(command == cmdEof)
     {
-        return {/*reachedEof*/ true, 0_usize};
+        return ResultInfo{.reachedEof = true, .resultSize = 0_usize};
     }
     if(command != cmdData)
     {
@@ -525,7 +526,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
-    return {false, actualDataLength};
+    return ResultInfo{.reachedEof = false, .resultSize = actualDataLength};
 }
 
 
@@ -691,6 +692,7 @@ auto UartReceive(void * destination) -> Result<void>
     {
         return ErrorCode::timeout;
     }
+    return outcome_v2::success();
 }
 
 
