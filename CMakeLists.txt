@@ -18,7 +18,6 @@ include(cmake/clang-tidy-cache.cmake)
 # ---- Find dependencies ----
 
 find_package_and_notify(etl)
-find_package_and_notify(type_safe)
 find_rodos()
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     find_package_and_notify(littlefs)

@@ -8,7 +8,6 @@ project(Sts1CobcSwTests LANGUAGES CXX)
 
 find_package_and_notify(Catch2)
 find_package_and_notify(etl)
-find_package_and_notify(type_safe)
 find_rodos()
 
 # ---- Tests ----

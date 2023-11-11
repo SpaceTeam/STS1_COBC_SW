@@ -6,8 +6,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
-#include <type_safe/types.hpp>
-
+#include <cstddef>
 #include <cstdint>
 
 
@@ -15,40 +14,39 @@ namespace sts1cobcsw
 {
 namespace edu
 {
-namespace ts = type_safe;
-
 using sts1cobcsw::operator""_b;
-using ts::operator""_u16;
-using ts::operator""_usize;
 
 
 struct HeaderData
 {
     Byte command = 0x00_b;
-    ts::uint16_t length = 0_u16;
+    std::uint16_t length = 0;
 };
+
+
+// TODO: Add = 0; to all std::(u)intxx_t fields
 
 
 struct StoreArchiveData
 {
     static constexpr auto id = storeArchiveId;
-    ts::uint16_t programId;
+    std::uint16_t programId;
 };
 
 
 struct ExecuteProgramData
 {
     static constexpr auto id = executeProgramId;
-    ts::uint16_t programId;
-    ts::uint16_t queueId;
-    ts::int16_t timeout;
+    std::uint16_t programId;
+    std::uint16_t queueId;
+    std::int16_t timeout;
 };
 
 
 struct UpdateTimeData
 {
     static constexpr auto id = updateTimeId;
-    ts::int32_t timestamp;
+    std::int32_t timestamp;
 };
 
 
@@ -80,7 +78,7 @@ struct ProgramFinishedStatus
 struct ResultInfo
 {
     ErrorCode errorCode = ErrorCode::noErrorCodeSet;
-    ts::size_t resultSize = 0_usize;
+    std::size_t resultSize = 0;
 };
 }
 

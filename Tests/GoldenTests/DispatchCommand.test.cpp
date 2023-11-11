@@ -14,10 +14,6 @@ std::uint32_t printfMask = 0;
 
 namespace sts1cobcsw
 {
-using type_safe::operator""_u16;
-using type_safe::operator""_i16;
-
-
 class DispatchCommandTest : public RODOS::StaticThread<>
 {
 public:
@@ -39,12 +35,12 @@ private:
                                                 .length = 2 * serialSize<edu::QueueEntry>});
         command.insert(command.end(), header.begin(), header.end());
 
-        auto entry1 = Serialize(edu::QueueEntry{
-            .programId = 1_u16, .queueId = 16_u16, .startTime = 1048577, .timeout = 1_i16});
+        auto entry1 = Serialize(
+            edu::QueueEntry{.programId = 1, .queueId = 16, .startTime = 1048577, .timeout = 1});
         command.insert(command.end(), entry1.begin(), entry1.end());
 
-        auto entry2 = Serialize(edu::QueueEntry{
-            .programId = 2_u16, .queueId = 32_u16, .startTime = 2097154, .timeout = 2_i16});
+        auto entry2 = Serialize(
+            edu::QueueEntry{.programId = 2, .queueId = 32, .startTime = 2097154, .timeout = 2});
         command.insert(command.end(), entry2.begin(), entry2.end());
 
         while(not command.full())

@@ -23,12 +23,11 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 
-#include <type_safe/types.hpp>
-
 #include <rodos_no_using_namespace.h>
 
 #include <etl/string.h>
 
+#include <cstddef>
 #include <string_view>
 
 
@@ -68,9 +67,7 @@ class SpiTest : public RODOS::StaticThread<>
 
     void run() override
     {
-        namespace ts = type_safe;
         using std::operator""sv;
-        using ts::operator""_usize;
 
         constexpr auto messages = std::array{
             "Hello from SPI1!"sv,
@@ -79,18 +76,17 @@ class SpiTest : public RODOS::StaticThread<>
         };
         static_assert(std::size(spis) == std::size(messages));
 
-        auto i = 0_usize;
+        std::size_t i = 0;
         TIME_LOOP(0, 500 * RODOS::MILLISECONDS)
         {
             // PRINTF is super weird because without the static_cast %u causes "expected unsigned
             // int but got unsigned long" and %lu causes "expected unsigned long but got unsigned
             // int". I guess this is because int and long are both 32bit on an STM32.
-            PRINTF("Writing to SPI%lu\n", static_cast<unsigned long>((i + 1U).get()));
+            PRINTF("Writing to SPI%lu\n", static_cast<unsigned long>((i + 1U)));
             auto answer = etl::string<std::size(messages[0])>();
-            ts::int_t nReceivedBytes =
-                hal::WriteToReadFrom(&spis[i.get()], messages[i.get()], &answer);
+            auto nReceivedBytes = hal::WriteToReadFrom(&spis[i], messages[i], &answer);
 
-            PRINTF("nReceivedBytes = %i\n", nReceivedBytes.get());
+            PRINTF("nReceivedBytes = %i\n", nReceivedBytes);
             PRINTF("answer = '%s'\n\n", answer.c_str());
 
             i++;

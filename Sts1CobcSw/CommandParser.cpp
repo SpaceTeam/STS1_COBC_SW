@@ -87,10 +87,10 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
         auto entry =
             Deserialize<edu::QueueEntry>(queueEntries.first<serialSize<edu::QueueEntry>>());
 
-        RODOS::PRINTF("Prog ID      : %" PRIu16 "\n", entry.programId.get());
-        RODOS::PRINTF("Queue ID     : %" PRIu16 "\n", entry.queueId.get());
-        RODOS::PRINTF("Start Time   : %" PRIu32 "\n", entry.startTime.get());
-        RODOS::PRINTF("Timeout      : %" PRIi16 "\n", entry.timeout.get());
+        RODOS::PRINTF("Prog ID      : %" PRIu16 "\n", entry.programId);
+        RODOS::PRINTF("Queue ID     : %" PRIu16 "\n", entry.queueId);
+        RODOS::PRINTF("Start Time   : %" PRIu32 "\n", entry.startTime);
+        RODOS::PRINTF("Timeout      : %" PRIi16 "\n", entry.timeout);
 
         edu::programQueue.push_back(entry);
         queueEntries = queueEntries.subspan<serialSize<edu::QueueEntry>>();

@@ -1,12 +1,13 @@
 #include <Sts1CobcSw/Dummy.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 
-#include <type_safe/types.hpp>
-
+// clang-format off
+#include <cstdint>
+// ringbuffer.h does not include <cstdint> even though it requires it
 #include <rodos/support/support-libs/ringbuffer.h>
+// clang-format on
 #include <rodos_no_using_namespace.h>
 
-#include <cstdint>
 #include <string_view>
 
 
@@ -38,7 +39,7 @@ void PrintBuffer()
     {
         RODOS::PRINTF("Vals[%d] = .id(%d), .status(%s)\n",
                       i,
-                      edu::programStatusHistory.vals[i].programId.get(),
+                      edu::programStatusHistory.vals[i].programId,
                       ToString(edu::programStatusHistory.vals[i].status).data());
     }
 }
@@ -48,20 +49,16 @@ class UpdateRingBufferTest : public RODOS::StaticThread<>
 {
     void run() override
     {
-        using type_safe::operator""_u16;
-
         printfMask = 1;
 
-        edu::programStatusHistory.put(
-            edu::ProgramStatusHistoryEntry{.programId = 1_u16,
-                                           .queueId = 1_u16,
-                                           .status = edu::ProgramStatus::programExecutionFailed});
         edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 2_u16, .queueId = 1_u16, .status = edu::ProgramStatus::programRunning});
+            .programId = 1, .queueId = 1, .status = edu::ProgramStatus::programExecutionFailed});
         edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 3_u16, .queueId = 1_u16, .status = edu::ProgramStatus::programRunning});
+            .programId = 2, .queueId = 1, .status = edu::ProgramStatus::programRunning});
         edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 4_u16, .queueId = 1_u16, .status = edu::ProgramStatus::programRunning});
+            .programId = 3, .queueId = 1, .status = edu::ProgramStatus::programRunning});
+        edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
+            .programId = 4, .queueId = 1, .status = edu::ProgramStatus::programRunning});
 
 
         auto readCnt = edu::programStatusHistory.readCnt;
@@ -73,7 +70,7 @@ class UpdateRingBufferTest : public RODOS::StaticThread<>
         edu::UpdateProgramStatusHistory(2, 1, edu::ProgramStatus::programExecutionSucceeded);
         edu::UpdateProgramStatusHistory(4, 1, edu::ProgramStatus::programExecutionFailed);
         edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 5_u16, .queueId = 1_u16, .status = edu::ProgramStatus::programRunning});
+            .programId = 5, .queueId = 1, .status = edu::ProgramStatus::programRunning});
         edu::UpdateProgramStatusHistory(5, 1, edu::ProgramStatus::programExecutionSucceeded);
 
         // 1, because we did not read anything

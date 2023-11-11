@@ -53,7 +53,7 @@ auto TurnOff() -> void
 auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
 {
     PrintFormattedSystemUtc();
-    PRINTF("Call to StoreArchive(programId = %d)\n", data.programId.get());
+    PRINTF("Call to StoreArchive(programId = %d)\n", data.programId);
     return 0;
 }
 
@@ -63,9 +63,9 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
-           data.programId.get(),
-           data.queueId.get(),
-           data.timeout.get());
+           data.programId,
+           data.queueId,
+           data.timeout);
     return ErrorCode::success;
 }
 
@@ -96,7 +96,7 @@ auto GetStatus() -> Status
 auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
-    PRINTF("Call to UpdateTime(timestamp = %d)\n", data.timestamp.get());
+    PRINTF("Call to UpdateTime(timestamp = %d)\n", data.timestamp);
     return ErrorCode::success;
 }
 

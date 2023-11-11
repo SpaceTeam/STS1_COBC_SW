@@ -4,6 +4,7 @@
 
 #include <etl/vector.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <span>
 
