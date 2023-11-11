@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <outcome-experimental.hpp>
 
+#include <algorithm>
 #include <iostream>
 
 // First define a policy
