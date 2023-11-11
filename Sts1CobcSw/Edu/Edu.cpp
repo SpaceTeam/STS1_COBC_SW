@@ -531,7 +531,7 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
     {
         // case cmdAck:
         //{
-        //     return ErrorCode::succes;
+        //     return ErrorCode::success;
         // }
         case cmdNack:
         {

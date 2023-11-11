@@ -1,4 +1,4 @@
-// Test the outcome libarary
+// Test the outcome library
 
 #include <catch2/catch_test_macros.hpp>
 #include <outcome-experimental.hpp>
@@ -83,7 +83,7 @@ TEST_CASE("Inspecting result")
     REQUIRE(result.has_value());
     REQUIRE(result);  // Boolean cast
 
-    // Test each defined convertion error
+    // Test each defined conversion error
     result = Convert("abc");
     REQUIRE(result.has_error());
     REQUIRE(result.error() == ConversionErrc::illegalChar);
@@ -104,6 +104,20 @@ TEST_CASE("Inspecting result")
     REQUIRE(result.value() == 278);
 }
 
+
+// Dummy function to chain with Convert
+auto WriteData(int * buffer, bool shouldSucceed) -> Result<void>
+{
+    if(shouldSucceed)
+    {
+        *buffer = 1;
+        return outcome_v2::success();
+    }
+    // Return some dummy error here, just to check that it is handled correctly
+    return ConversionErrc::emptyString;
+}
+
+
 // Dummy function to chain with Convert
 // Return type is a pair just to display how OUTCOME_TRY works with different return<> types
 auto Add(int op1, const std::string & str) -> Result<std::pair<int, int>>
@@ -112,25 +126,46 @@ auto Add(int op1, const std::string & str) -> Result<std::pair<int, int>>
     // Our control statement means:
     // if Convert() returned failure, this same error information should be returned from Add(),
     // even though Add() and Convert() have different result<> types.
-    // If Covnert returned success, we create variable op2 of type int with the value returned from
+    // If Convert returned success, we create variable op2 of type int with the value returned from
     // Convert. If control goes to subsequent line, it means Convert succeeded and variable of type
     // BigInt is in scope.
     OUTCOME_TRY(auto op2, Convert(str));
+
+
     return std::make_pair(op1 + op2, op2);
 }
 
+auto Write(bool shouldSucceed) -> Result<int>
+{
+    // Same thing as in Add(), but this time the function that we are calling returns void in case
+    // of success, thus we do not need to provide two parameters to OUTCOME_TRY
+    int buffer = 0;
+    OUTCOME_TRY(WriteData(&buffer, shouldSucceed));
+    return buffer;
+}
 
 TEST_CASE("TRY macro")
 {
     // Test failure
-    auto result1 = Add(1, "3.14");
-    REQUIRE(not result1.has_value());
-    REQUIRE(result1.has_error());
+    auto result1 = Write(/*shouldSucceed=*/false);
+    assert(result1.has_error());
     REQUIRE(result1.error() == ConversionErrc::illegalChar);
 
     // Test success
-    auto result2 = Add(1, "278");
-    REQUIRE(result2.has_value());
-    REQUIRE(result2);
-    REQUIRE(result2.value().first == 279);
+    auto result2 = Write(/*shouldSucceed=*/true);
+    assert(result2.has_value());
+    assert(result2);
+    REQUIRE(result2.value() == 1);
+
+    // Test failure
+    auto result3 = Add(1, "3.14");
+    REQUIRE(not result3.has_value());
+    REQUIRE(result3.has_error());
+    REQUIRE(result3.error() == ConversionErrc::illegalChar);
+
+    // Test success
+    auto result4 = Add(1, "278");
+    REQUIRE(result4.has_value());
+    REQUIRE(result4);
+    REQUIRE(result4.value().first == 279);
 }
