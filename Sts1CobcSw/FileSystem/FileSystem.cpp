@@ -40,7 +40,7 @@ auto lookaheadBuffer = std::array<Byte, pageSize>{};
 // TODO: Check if they need to be global
 lfs_t lfs{};
 lfs_file_t lfsFile{};
-// TODO: Maybe add a conifg header to set things like NAME_MAX or whatever. That could safe a bit of
+// TODO: Maybe add a config header to set things like NAME_MAX or whatever. That could safe a bit of
 // RAM.
 lfs_config const lfsConfig{.read = &Read,
                            .prog = &Program,
