@@ -8,8 +8,6 @@
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
-#include <type_safe/types.hpp>
-
 #include <rodos_no_using_namespace.h>
 
 #include <cstdint>
@@ -17,9 +15,6 @@
 
 namespace sts1cobcsw
 {
-namespace ts = type_safe;
-
-
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
@@ -56,8 +51,8 @@ private:
             std::int64_t startDelay = 0;
             nextProgramStartDelayBuffer.get(startDelay);
 
-            ts::bool_t const epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
-            ts::bool_t const eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
+            auto const epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
+            auto const eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
 
             auto eduIsAlive = false;
             eduIsAliveBufferForPowerManagement.get(eduIsAlive);
@@ -68,7 +63,7 @@ private:
                 if(eduIsAlive)
                 {
                     // TODO: also perform a check about archives on cobc
-                    if(not(eduHasUpdate or startDelay < startDelayLimit))
+                    if(!eduHasUpdate && startDelay >= startDelayLimit)
                     {
                         RODOS::PRINTF("Turning Edu off\n");
                         edu::TurnOff();

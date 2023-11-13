@@ -7,8 +7,6 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 
-#include <type_safe/types.hpp>
-
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -16,11 +14,6 @@
 
 namespace sts1cobcsw::edu
 {
-namespace ts = type_safe;
-using ts::operator""_u16;
-using ts::operator""_usize;
-
-
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
 auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 
@@ -56,7 +49,7 @@ constexpr auto garbageBufferSize = 128;
 // Max. amount of send retries after receiving NACK
 constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
-constexpr auto maxNPackets = 100_usize;
+constexpr std::size_t maxNPackets = 100;
 // Max. length of a single data packet
 constexpr auto maxDataLength = 32768;
 // Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
@@ -138,9 +131,9 @@ auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_
 auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
     RODOS::PRINTF("ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
-                  data.programId.get(),
-                  data.queueId.get(),
-                  data.timeout.get());
+                  data.programId,
+                  data.queueId,
+                  data.timeout);
     // Check if data command was successful
     auto serialData = Serialize(data);
     auto errorCode = SendData(serialData);
@@ -281,7 +274,7 @@ auto GetStatusCommunication() -> Status
         return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidCommand};
     }
 
-    if(headerData.length == 0_u16)
+    if(headerData.length == 0U)
     {
         return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
     }
@@ -403,20 +396,20 @@ auto ReturnResult() -> ResultInfo
     // RODOS::PRINTF("\nStart receiving result\n");
     // END DEBUG
 
-    ts::size_t totalResultSize = 0_usize;
-    ts::size_t packets = 0_usize;
+    std::size_t totalResultSize = 0U;
+    std::size_t packets = 0U;
     ResultInfo resultInfo;
     // TODO: Turn into for loop
     while(packets < maxNPackets)
     {
         // DEBUG
-        // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets.get()));
+        // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets));
         // END DEBUG
         resultInfo = ReturnResultRetry();
         // DEBUG
         RODOS::PRINTF("ResultInfo{errorCode = %d, resultSize = %d}\n",
                       static_cast<int>(resultInfo.errorCode),
-                      static_cast<int>(resultInfo.resultSize.get()));
+                      static_cast<int>(resultInfo.resultSize));
         // END DEBUG
         if(resultInfo.errorCode != ErrorCode::success)
         {
@@ -492,14 +485,14 @@ auto ReturnResultCommunication() -> ResultInfo
     // RODOS::PRINTF("\nGet Length\n");
     // END DEBUG
 
-    auto dataLengthBuffer = SerialBuffer<ts::uint16_t>{};
+    auto dataLengthBuffer = SerialBuffer<std::uint16_t>{};
     auto lengthError = UartReceive(dataLengthBuffer);
     if(lengthError != ErrorCode::success)
     {
         return ResultInfo{.errorCode = lengthError, .resultSize = 0U};
     }
 
-    auto actualDataLength = Deserialize<ts::uint16_t>(dataLengthBuffer);
+    auto actualDataLength = Deserialize<std::uint16_t>(dataLengthBuffer);
     if(actualDataLength == 0U or actualDataLength > maxDataLength)
     {
         return ResultInfo{.errorCode = ErrorCode::invalidLength, .resultSize = 0U};
@@ -511,7 +504,7 @@ auto ReturnResultCommunication() -> ResultInfo
 
     // Get the actual data
     auto dataError = UartReceive(
-        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength.get()));
+        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength));
 
     if(dataError != ErrorCode::success)
     {
@@ -523,7 +516,7 @@ auto ReturnResultCommunication() -> ResultInfo
     // END DEBUG
 
     auto crc32Error = CheckCrc32(
-        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength.get()));
+        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength));
 
     if(crc32Error != ErrorCode::success)
     {
@@ -534,7 +527,7 @@ auto ReturnResultCommunication() -> ResultInfo
     RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
-    return {ErrorCode::success, actualDataLength.get()};
+    return {ErrorCode::success, actualDataLength};
 }
 
 
@@ -713,7 +706,7 @@ auto UartReceive(void * destination) -> ErrorCode
 auto FlushUartBuffer() -> void
 {
     auto garbageBuffer = std::array<Byte, garbageBufferSize>{};
-    ts::bool_t dataReceived = true;
+    auto dataReceived = true;
 
     // Keep reading until no data is coming for flushTimeout
     while(dataReceived)
@@ -740,7 +733,7 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
     // END DEBUG
 
 
-    auto crc32Buffer = SerialBuffer<ts::uint32_t>{};
+    auto crc32Buffer = SerialBuffer<std::uint32_t>{};
     auto receiveError = UartReceive(crc32Buffer);
 
     // DEBUG
@@ -753,7 +746,7 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
     {
         return receiveError;
     }
-    if(computedCrc32 != Deserialize<ts::uint32_t>(crc32Buffer))
+    if(computedCrc32 != Deserialize<std::uint32_t>(crc32Buffer))
     {
         return ErrorCode::wrongChecksum;
     }

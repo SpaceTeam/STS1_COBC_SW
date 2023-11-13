@@ -10,8 +10,6 @@
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <type_safe/types.hpp>
-
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
@@ -20,12 +18,6 @@
 
 namespace sts1cobcsw
 {
-namespace ts = type_safe;
-
-using ts::operator""_i16;
-using ts::operator""_u16;
-using ts::operator""_i32;
-
 using RODOS::AT;
 using RODOS::NOW;
 using RODOS::SECONDS;
@@ -152,7 +144,7 @@ private:
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
-                auto const executionTime = timeout.get() + eduCommunicationDelay;
+                auto const executionTime = timeout + eduCommunicationDelay;
                 RODOS::PRINTF("Suspending for execution time\n");
                 AT(NOW() + executionTime);
                 RODOS::PRINTF("Resuming from execution time\n");
@@ -170,7 +162,7 @@ private:
 auto ComputeStartDelay() -> std::int64_t
 {
     auto nextProgramStartTime =
-        edu::programQueue[edu::queueIndex].startTime.get() - (utility::rodosUnixOffset / SECONDS);
+        edu::programQueue[edu::queueIndex].startTime - (utility::rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
     std::int64_t const startDelay =
         std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);

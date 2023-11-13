@@ -2,25 +2,11 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <catch2/catch_test_macros.hpp>
-#include <type_safe/types.hpp>
 
 #include <array>
 #include <cstddef>
 #include <cstdint>
 
-
-namespace ts = type_safe;
-
-// NOLINTBEGIN(misc-unused-using-decls)
-using ts::operator""_i8;
-using ts::operator""_u8;
-using ts::operator""_i16;
-using ts::operator""_u16;
-using ts::operator""_i32;
-using ts::operator""_u32;
-using ts::operator""_i64;
-using ts::operator""_u64;
-// NOLINTEND(misc-unused-using-decls)
 
 using sts1cobcsw::Byte;
 using sts1cobcsw::operator""_b;
@@ -53,12 +39,6 @@ TEST_CASE("TriviallySerializable")
     REQUIRE(TriviallySerializable<float>);
     REQUIRE(TriviallySerializable<double>);
     REQUIRE(TriviallySerializable<bool>);
-    // So are type_safe integer and bool types
-    REQUIRE(TriviallySerializable<ts::uint8_t>);
-    REQUIRE(TriviallySerializable<ts::int16_t>);
-    REQUIRE(TriviallySerializable<ts::uint32_t>);
-    REQUIRE(TriviallySerializable<ts::size_t>);
-    REQUIRE(TriviallySerializable<ts::bool_t>);
     // Pointers and arrays are not TriviallySerializable
     REQUIRE(not TriviallySerializable<char *>);
     REQUIRE(not TriviallySerializable<int[]>);  // NOLINT
@@ -72,17 +52,17 @@ TEST_CASE("TriviallySerializable")
 TEST_CASE("Serialize TriviallySerializable types")
 {
     auto byteBuffer = Serialize(std::byte{0xAA});
-    auto int8Buffer = Serialize(-4_i8);
-    auto uint16Buffer = Serialize(11_u16);
-    auto int32Buffer = Serialize(-2_i32);
-    auto uint64Buffer = Serialize(0x0102030405060708_u64);
+    auto int8Buffer = Serialize(static_cast<std::int8_t>(-4));
+    auto uint16Buffer = Serialize(static_cast<std::uint16_t>(11));
+    auto int32Buffer = Serialize(static_cast<std::int32_t>(-2));
+    auto uint64Buffer = Serialize(static_cast<std::uint64_t>(0x0102030405060708));
     [[maybe_unused]] auto boolBuffer = Serialize(true);  // NOLINT(bugprone-argument-comment)
 
     REQUIRE(std::is_same_v<decltype(byteBuffer), std::array<Byte, sizeof(std::byte)>>);
-    REQUIRE(std::is_same_v<decltype(int8Buffer), std::array<Byte, sizeof(ts::int8_t)>>);
-    REQUIRE(std::is_same_v<decltype(uint16Buffer), std::array<Byte, sizeof(ts::uint16_t)>>);
-    REQUIRE(std::is_same_v<decltype(int32Buffer), std::array<Byte, sizeof(ts::int32_t)>>);
-    REQUIRE(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(ts::uint64_t)>>);
+    REQUIRE(std::is_same_v<decltype(int8Buffer), std::array<Byte, sizeof(std::int8_t)>>);
+    REQUIRE(std::is_same_v<decltype(uint16Buffer), std::array<Byte, sizeof(std::uint16_t)>>);
+    REQUIRE(std::is_same_v<decltype(int32Buffer), std::array<Byte, sizeof(std::int32_t)>>);
+    REQUIRE(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
     REQUIRE(std::is_same_v<decltype(boolBuffer), std::array<Byte, sizeof(bool)>>);
 
     // REQUIRE magic can't handle std::byte, so we cast
@@ -124,24 +104,24 @@ TEST_CASE("Deserialize TriviallySerializable types")
 TEST_CASE("Deserialize() is the inverse of Serialize()")
 {
     auto cBuffer = Serialize('x');
-    auto uint8Buffer = Serialize(56_u8);
-    auto int16Buffer = Serialize(-3333_i16);
-    auto uint32Buffer = Serialize(123456_u32);
-    auto int64Buffer = Serialize(-999999_i64);
-    auto booleanBuffer = Serialize(ts::bool_t{true});  // NOLINT(bugprone-argument-comment)
+    auto uint8Buffer = Serialize(static_cast<std::uint8_t>(56));
+    auto int16Buffer = Serialize(static_cast<std::int16_t>(-3333));
+    auto uint32Buffer = Serialize(static_cast<std::uint32_t>(123456));
+    auto int64Buffer = Serialize(static_cast<std::int64_t>(-999999));
+    auto booleanBuffer = Serialize(true);  // NOLINT(bugprone-argument-comment)
 
     auto character = Deserialize<char>(cBuffer);
-    auto uint8 = Deserialize<ts::uint8_t>(uint8Buffer);
-    auto int16 = Deserialize<ts::int16_t>(int16Buffer);
-    auto uint32 = Deserialize<ts::uint32_t>(uint32Buffer);
-    auto int64 = Deserialize<ts::int64_t>(int64Buffer);
-    auto boolean = Deserialize<ts::bool_t>(booleanBuffer);
+    auto uint8 = Deserialize<std::uint8_t>(uint8Buffer);
+    auto int16 = Deserialize<std::int16_t>(int16Buffer);
+    auto uint32 = Deserialize<std::uint32_t>(uint32Buffer);
+    auto int64 = Deserialize<std::int64_t>(int64Buffer);
+    auto boolean = Deserialize<bool>(booleanBuffer);
 
     REQUIRE(character == 'x');
-    REQUIRE(uint8.get() == 56);
-    REQUIRE(int16.get() == -3333);
-    REQUIRE(uint32.get() == 123456);
-    REQUIRE(int64.get() == -999999);
+    REQUIRE(uint8 == 56);
+    REQUIRE(int16 == -3333);
+    REQUIRE(uint32 == 123456);
+    REQUIRE(int64 == -999999);
     REQUIRE(boolean == true);
 }
 
@@ -149,8 +129,8 @@ TEST_CASE("Deserialize() is the inverse of Serialize()")
 // The following shows everything that is necessary to (de-)serialize a user-defined type
 struct S
 {
-    ts::uint16_t u16 = 0_u16;
-    ts::int32_t i32 = 0_i32;
+    std::uint16_t u16 = 0;
+    std::int32_t i32 = 0;
 };
 
 
@@ -162,7 +142,7 @@ template<>
 constexpr std::size_t serialSize<S> = totalSerialSize<decltype(S::u16), decltype(S::i32)>;
 // You could also write
 // template<>
-// constexpr std::size_t serialSize<S> = totalSerialSize<ts::uint16_t, ts::int32_t>;
+// constexpr std::size_t serialSize<S> = totalSerialSize<std::uint16_t, std::int32_t>;
 }
 
 
@@ -186,7 +166,7 @@ auto DeserializeFrom(void const * source, S * data) -> void const *
 
 TEST_CASE("(De-)Serialize user-defined types")
 {
-    auto sBuffer = Serialize(S{.u16 = 0xABCD_u16, .i32 = 0x12345678_i32});
+    auto sBuffer = Serialize(S{.u16 = 0xABCD, .i32 = 0x12345678});
     REQUIRE(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
     // REQUIRE magic can't handle std::byte, so we cast
@@ -198,6 +178,6 @@ TEST_CASE("(De-)Serialize user-defined types")
     REQUIRE(int(sBuffer[5]) == 0x12);
 
     auto s = Deserialize<S>(sBuffer);  // NOLINT(readability-identifier-length)
-    REQUIRE(s.u16.get() == 0xABCD);
-    REQUIRE(s.i32.get() == 0x12345678);
+    REQUIRE(s.u16 == 0xABCD);
+    REQUIRE(s.i32 == 0x12345678);
 }

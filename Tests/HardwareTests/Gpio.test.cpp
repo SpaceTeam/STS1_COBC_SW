@@ -2,8 +2,6 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
 
-#include <type_safe/types.hpp>
-
 #include <rodos_no_using_namespace.h>
 
 #include <array>
@@ -31,7 +29,7 @@ class GpioTest : public RODOS::StaticThread<>
 
     void run() override
     {
-        type_safe::bool_t toggle = true;
+        auto toggle = true;
 
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
         {

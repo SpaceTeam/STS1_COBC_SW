@@ -14,9 +14,6 @@
 
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/TypeSafe.hpp>
-
-#include <type_safe/boolean.hpp>
 
 #include <array>
 #include <concepts>
@@ -29,11 +26,8 @@
 // TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
 namespace sts1cobcsw
 {
-// T::integer_type is for the type_safe fixed-width integers
 template<typename T>
-concept TriviallySerializable =
-    std::is_arithmetic_v<T> or std::is_enum_v<T> or std::is_arithmetic_v<typename T::integer_type>
-    or std::is_enum_v<typename T::integer_type> or std::is_same_v<T, type_safe::boolean>;
+concept TriviallySerializable = std::is_arithmetic_v<T> or std::is_enum_v<T>;
 
 
 // Must be specialized for user-defined types to be serializable
@@ -68,13 +62,6 @@ template<typename T>
 [[nodiscard]] auto Serialize(T const & data) -> SerialBuffer<T>;
 
 template<std::default_initializable T>
-[[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
-
-template<utility::TypeSafeInteger T>
-[[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
-
-template<typename T>
-    requires std::is_same_v<T, type_safe::boolean>
 [[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
 
 
@@ -112,25 +99,6 @@ template<std::default_initializable T>
 auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
 {
     auto t = T{};
-    DeserializeFrom(source.data(), &t);
-    return t;
-}
-
-
-template<utility::TypeSafeInteger T>
-auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
-{
-    auto t = utility::TypeSafeZero<T>();
-    DeserializeFrom(source.data(), &t);
-    return t;
-}
-
-
-template<typename T>
-    requires std::is_same_v<T, type_safe::boolean>
-auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
-{
-    auto t = T{false};  // NOLINT(bugprone-argument-comment)
     DeserializeFrom(source.data(), &t);
     return t;
 }

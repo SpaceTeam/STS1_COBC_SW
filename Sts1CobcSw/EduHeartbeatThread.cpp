@@ -4,8 +4,6 @@
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
-#include <type_safe/types.hpp>
-
 #include <rodos_no_using_namespace.h>
 
 #include <cinttypes>
@@ -22,7 +20,7 @@ auto ledGpioPin = hal::GpioPin(hal::led1Pin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
-auto constexpr edgeCounterThreshold = 4;
+auto const edgeCounterThreshold = 4;
 
 
 auto EduIsAlive() -> bool;
@@ -63,22 +61,19 @@ private:
         //        }
 
         // RODOS::AT(RODOS::END_OF_TIME);
-        namespace ts = type_safe;
-        using ts::operator""_i;
-        using ts::operator""_isize;
 
-        constexpr auto heartbeatFrequency = 10_isize;                     // Hz
-        constexpr auto samplingFrequency = 5_isize * heartbeatFrequency;  // Hz
-        constexpr auto samplingPeriod = 1'000_isize * MILLISECONDS / samplingFrequency;
+        auto const heartbeatFrequency = 10;                     // Hz
+        auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
+        auto const samplingPeriod = 1'000 * MILLISECONDS / samplingFrequency;
 
-        auto samplingCount = 0_i;
-        ts::bool_t heartbeatIsConstant = true;
+        auto samplingCount = 0;
+        auto heartbeatIsConstant = true;
         auto oldHeartbeat = eduHeartbeatGpioPin.Read();
-        auto edgeCounter = 0_i;
+        auto edgeCounter = 0;
 
-        RODOS::PRINTF("Sampling period : %lld\n", samplingPeriod.get() / RODOS::MILLISECONDS);
+        RODOS::PRINTF("Sampling period : %lld\n", samplingPeriod / MILLISECONDS);
         auto toggle = true;
-        TIME_LOOP(0, samplingPeriod.get())
+        TIME_LOOP(0, samplingPeriod)
         {
             // Read current heartbeat value
 
@@ -126,7 +121,7 @@ private:
                     eduIsAliveTopic.publish(false);
                 }
                 heartbeatIsConstant = true;
-                samplingCount = 0_i;
+                samplingCount = 0;
             }
         }
     }
@@ -139,8 +134,8 @@ auto EduIsAlive() -> bool
 
     auto refHeartbeat = eduHeartbeatGpioPin.Read();
     auto edgeCounter = 0;
-    constexpr auto nEduHeartbeatReads = 1'000'000;
-    for(int i = 0; i < nEduHeartbeatReads; ++i)
+    auto const nEduHeartbeatReads = 1'000'000;
+    for(auto i = 0; i < nEduHeartbeatReads; ++i)
     {
         auto heartbeat = eduHeartbeatGpioPin.Read();
         if(heartbeat != refHeartbeat)
@@ -153,6 +148,7 @@ auto EduIsAlive() -> bool
             }
         }
     }
+
     auto executionTime = RODOS::NOW() - begin;
     RODOS::PRINTF("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", executionTime);
     RODOS::PRINTF("Execution Time of EduIsAlive (ms) : %" PRIi64 "\n",
@@ -200,5 +196,4 @@ private:
 
 } dummyThread;
 */
-
 }

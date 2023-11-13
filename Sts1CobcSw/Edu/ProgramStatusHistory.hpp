@@ -1,19 +1,15 @@
 #pragma once
 
 
-#include <type_safe/types.hpp>
-
-#include <rodos/support/support-libs/ringbuffer.h>
-
+// clang-format off
 #include <cstdint>
+// ringbuffer.h does not include <cstdint> even though it requires it
+#include <rodos/support/support-libs/ringbuffer.h>
+// clang-format on
 
 
 namespace sts1cobcsw::edu
 {
-namespace ts = type_safe;
-using ts::operator""_u16;
-
-
 enum class ProgramStatus : std::uint8_t
 {
     programRunning,
@@ -29,8 +25,8 @@ enum class ProgramStatus : std::uint8_t
 
 struct ProgramStatusHistoryEntry
 {
-    ts::uint16_t programId = 0_u16;
-    ts::uint16_t queueId = 0_u16;
+    std::uint16_t programId = 0;
+    std::uint16_t queueId = 0;
     ProgramStatus status = ProgramStatus::programRunning;
 };
 

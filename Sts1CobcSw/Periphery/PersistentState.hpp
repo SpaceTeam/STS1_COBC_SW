@@ -1,8 +1,6 @@
 #pragma once
 
 
-#include <type_safe/types.hpp>
-
 #include <cstdint>
 
 
@@ -13,22 +11,22 @@ namespace sts1cobcsw::persistentstate
 auto Initialize() -> void;
 
 // Getters
-[[nodiscard]] auto NotOkCounter() -> type_safe::int8_t;
-[[nodiscard]] auto ActiveFirmwareImage() -> type_safe::int8_t;
-[[nodiscard]] auto BackupFirmwareImage() -> type_safe::int8_t;
+[[nodiscard]] auto NotOkCounter() -> std::int8_t;
+[[nodiscard]] auto ActiveFirmwareImage() -> std::int8_t;
+[[nodiscard]] auto BackupFirmwareImage() -> std::int8_t;
 
-[[nodiscard]] auto AntennasShouldBeDeployed() -> type_safe::bool_t;
-[[nodiscard]] auto TxIsOn() -> type_safe::bool_t;
-[[nodiscard]] auto EduShouldBePowered() -> type_safe::bool_t;
-[[nodiscard]] auto UtcOffset() -> type_safe::int32_t;
+[[nodiscard]] auto AntennasShouldBeDeployed() -> bool;
+[[nodiscard]] auto TxIsOn() -> bool;
+[[nodiscard]] auto EduShouldBePowered() -> bool;
+[[nodiscard]] auto UtcOffset() -> std::int32_t;
 
 // Setters
-auto NotOkCounter(type_safe::int8_t value) -> void;
-auto ActiveFirmwareImage(type_safe::int8_t value) -> void;
-auto BackupFirmwareImage(type_safe::int8_t value) -> void;
+auto NotOkCounter(std::int8_t value) -> void;
+auto ActiveFirmwareImage(std::int8_t value) -> void;
+auto BackupFirmwareImage(std::int8_t value) -> void;
 
-auto AntennasShouldBeDeployed(type_safe::bool_t value) -> void;
-auto TxIsOn(type_safe::bool_t value) -> void;
-auto EduShouldBePowered(type_safe::bool_t value) -> void;
-auto UtcOffset(type_safe::int32_t value) -> void;
+auto AntennasShouldBeDeployed(bool value) -> void;
+auto TxIsOn(bool value) -> void;
+auto EduShouldBePowered(bool value) -> void;
+auto UtcOffset(std::int32_t value) -> void;
 }
