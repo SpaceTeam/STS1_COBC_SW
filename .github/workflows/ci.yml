@@ -99,7 +99,17 @@ jobs:
     container: tuwienspaceteam/sts1-cobc:latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+
+    - uses: actions/cache/restore@v3
+      id: restorecache
+      with:
+        path: /.cache/clang-tidy
+        key: ctcache
+
+    - name: Echo cache miss
+      if: steps.restorecache.outputs.cache-hit != 'true'
+      run: echo "Cache miss"
 
     - name: Configure
       run: cmake --preset=ci-cobc
@@ -109,6 +119,12 @@ jobs:
 
     - name: Build tests
       run: cmake --build build/cobc -t AllTests -j 2
+
+    - uses: actions/cache/save@v3
+      id: savecache
+      with:
+        path: /.cache/clang-tidy
+        key: ctcache
 
     - name: Upload artifacts
       if: github.event_name == 'push' || github.event_name == 'pull_request'
