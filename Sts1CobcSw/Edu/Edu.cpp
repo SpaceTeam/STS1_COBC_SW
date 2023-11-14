@@ -85,7 +85,7 @@ auto Initialize() -> void
 
 auto TurnOn() -> void
 {
-    persistentstate::EduShouldBePowered(true);
+    persistentstate::EduShouldBePowered(/*value=*/true);
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
@@ -96,7 +96,7 @@ auto TurnOn() -> void
 
 auto TurnOff() -> void
 {
-    persistentstate::EduShouldBePowered(false);
+    persistentstate::EduShouldBePowered(/*value=*/false);
     eduEnableGpioPin.Reset();
     uart.reset();
 }
