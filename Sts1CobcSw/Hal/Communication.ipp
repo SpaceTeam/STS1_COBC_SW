@@ -66,4 +66,13 @@ inline auto WriteToReadFrom(auto * communicationInterface,
 
     return nReceivedBytes;
 }
+
+template<std::size_t nBytes>
+auto WriteToReadFrom(auto * communicationInterface, std::span<Byte, nBytes> data)
+    -> std::array<Byte, nBytes>
+{
+    auto readData = std::array<Byte, nBytes>{};
+    communicationInterface->writeRead(std::data(data), nBytes, std::data(readData), nBytes);
+    return readData;
+}
 }
