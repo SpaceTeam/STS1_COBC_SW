@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 
-namespace sts1cobcsw::serial
+namespace sts1cobcsw
 {
 inline constexpr auto operator"" _b(unsigned long long number) -> Byte
 {
