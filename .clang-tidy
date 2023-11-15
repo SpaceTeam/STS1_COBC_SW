@@ -20,6 +20,7 @@ Checks: "*,\
   -google-objc-*,\
   -google-readability-todo,\
   -google-readability-namespace-comments,\
+  -google-runtime-int,\
   -hicpp-vararg,\
   -linuxkernel-must-use-errs,\
   -llvm-header-guard,\
