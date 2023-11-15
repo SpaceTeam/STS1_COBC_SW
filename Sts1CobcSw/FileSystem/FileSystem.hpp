@@ -10,6 +10,7 @@ extern lfs_t lfs;
 extern lfs_file_t lfsFile;
 extern const lfs_config lfsConfig;
 
+
 // Must be called once in a thread's init() function
 auto Initialize() -> void;
 auto Format() -> int;
@@ -34,5 +35,6 @@ auto Ls(char const * path) -> int;
 // TODO: Implement cat
 // TODO: Implement simple hexdump
 }
+
 
 #include <Sts1CobcSw/FileSystem/FileSystem.ipp>

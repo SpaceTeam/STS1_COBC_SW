@@ -36,7 +36,7 @@ public:
 private:
     mutable RODOS::HAL_GPIO pin_;
 };
-
 }
+
 
 #include <Sts1CobcSw/Hal/GpioPin.ipp>

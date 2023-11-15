@@ -39,4 +39,5 @@ auto WriteToReadFrom(auto * communicationInterface, std::span<Byte, nBytes> data
     -> std::array<Byte, nBytes>;
 }
 
+
 #include <Sts1CobcSw/Hal/Communication.ipp>

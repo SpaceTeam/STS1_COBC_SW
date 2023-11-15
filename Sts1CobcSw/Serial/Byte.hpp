@@ -11,8 +11,8 @@ namespace sts1cobcsw
 using Byte = std::byte;
 
 
-constexpr auto operator"" _b(unsigned long long number)  // NOLINT(google-runtime-int)
-    -> Byte;
+constexpr auto operator"" _b(unsigned long long number) -> Byte;
 }
+
 
 #include <Sts1CobcSw/Serial/Byte.ipp>

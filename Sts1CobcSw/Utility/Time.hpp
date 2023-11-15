@@ -22,4 +22,5 @@ auto PrintFormattedSystemUtc() -> void;
 [[nodiscard]] auto GetUnixUtc() -> std::int32_t;
 }
 
+
 #include <Sts1CobcSw/Utility/Time.ipp>
