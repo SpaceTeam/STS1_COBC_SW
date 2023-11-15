@@ -63,7 +63,7 @@ private:
                 if(eduIsAlive)
                 {
                     // TODO: also perform a check about archives on cobc
-                    if(!eduHasUpdate && startDelay >= startDelayLimit)
+                    if((not eduHasUpdate) and (startDelay >= startDelayLimit))
                     {
                         RODOS::PRINTF("Turning Edu off\n");
                         edu::TurnOff();
