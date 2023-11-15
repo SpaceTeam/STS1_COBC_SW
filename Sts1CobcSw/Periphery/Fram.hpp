@@ -31,4 +31,4 @@ auto WriteTo(Address address, T const & t) -> void;
 }
 
 
-#include <Sts1CobcSw/Periphery/Fram.tpp>
+#include <Sts1CobcSw/Periphery/Fram.ipp>
