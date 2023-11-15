@@ -66,7 +66,6 @@ template<std::default_initializable T>
 
 
 // --- Function template definitions ---
-
 template<TriviallySerializable T>
 inline auto SerializeTo(void * destination, T const & data) -> void *
 {
