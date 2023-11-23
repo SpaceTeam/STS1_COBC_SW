@@ -126,9 +126,13 @@ inline auto SerializeTo(void * destination, T const & t) -> void *
 {
     if constexpr(HasEndianness<T> and endianness != std::endian::native)
     {
-        t = ReverseBytes(t);
+        auto data = ReverseBytes(t);
+        std::memcpy(destination, &data, serialSize<T>);
     }
-    std::memcpy(destination, &t, serialSize<T>);
+    else
+    {
+        std::memcpy(destination, &t, serialSize<T>);
+    }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return static_cast<Byte *>(destination) + serialSize<T>;
 }

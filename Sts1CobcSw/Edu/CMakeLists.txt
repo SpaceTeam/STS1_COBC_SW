@@ -1,4 +1,4 @@
-target_sources(Sts1CobcSw_Edu PRIVATE ProgramQueue.cpp Structs.cpp ProgramStatusHistory.cpp)
+target_sources(Sts1CobcSw_Edu PRIVATE ProgramQueue.cpp ProgramStatusHistory.cpp)
 target_link_libraries(Sts1CobcSw_Edu PUBLIC rodos::rodos Sts1CobcSw_Serial)
 target_link_libraries(Sts1CobcSw_Edu PRIVATE Sts1CobcSw_Utility)
 
