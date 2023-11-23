@@ -215,7 +215,7 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
   them on the FlatSat too, because `PRINTF()` prints to the UCI UART which is connected to
   the PC.
 
-The following shows how the directory structure could actually look like.
+The following shows what the directory structure could actually look like.
 
 <details>
   <summary>Directory structure</summary>
