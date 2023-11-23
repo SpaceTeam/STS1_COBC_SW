@@ -27,8 +27,7 @@
 #include <type_traits>
 
 
-// TODO: Make everything compile again, i.e., add endianness to SerializeTo() for all user-defined
-// types
+// TODO: Make ALL SerializeTo() and DeserializeFrom() functions [[nodiscard]]
 namespace sts1cobcsw
 {
 template<typename T>
@@ -100,7 +99,7 @@ template<std::endian endianness, typename T>
 inline auto Serialize(T const & t) -> Buffer<T>
 {
     auto buffer = Buffer<T>{};
-    SerializeTo<endianness>(buffer.data(), t);
+    (void)SerializeTo<endianness>(buffer.data(), t);
     return buffer;
 }
 
@@ -154,7 +153,11 @@ inline auto DeserializeFrom(void const * source, T * t) -> void const *
 template<HasEndianness T>
 constexpr inline auto ReverseBytes(T t) -> T
 {
-    if constexpr(std::integral<T>)
+    if constexpr(sizeof(T) == 1)
+    {
+        return t;
+    }
+    else if constexpr(std::integral<T>)
     {
         return etl::byteswap(t);
     }
