@@ -77,11 +77,11 @@ template<std::endian endianness, std::default_initializable T>
 
 // Must be overloaded for user-defined types to be serializable
 template<std::endian endianness, TriviallySerializable T>
-auto SerializeTo(void * destination, T const & t) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, T const & t) -> void *;
 
 // Must be overloaded for user-defined types to be deserializable
 template<std::endian endianness, TriviallySerializable T>
-auto DeserializeFrom(void const * source, T * t) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, T * t) -> void const *;
 
 template<HasEndianness T>
 [[nodiscard]] constexpr auto ReverseBytes(T t) -> T;
