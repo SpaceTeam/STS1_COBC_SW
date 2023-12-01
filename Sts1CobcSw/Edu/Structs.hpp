@@ -118,17 +118,18 @@ inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
 namespace edu
 {
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, HeaderData * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, HeaderData * data) -> void const *;
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedStatus * data)
+    -> void const *;
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
 template<std::endian endianness>
-auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
 template<std::endian endianness>
-auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
 template<std::endian endianness>
-auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
 }
 }
 

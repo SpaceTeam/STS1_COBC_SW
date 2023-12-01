@@ -15,8 +15,6 @@ using sts1cobcsw::Deserialize;
 using sts1cobcsw::Serialize;
 
 
-// TODO: Add tests for (De)Serialize with endianness
-
 TEST_CASE("TriviallySerializable")
 {
     using sts1cobcsw::TriviallySerializable;

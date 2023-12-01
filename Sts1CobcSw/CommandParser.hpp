@@ -47,7 +47,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void;
 auto BuildEduQueue(std::span<Byte const> commandData) -> void;
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *;
 template<std::endian endianness>
-auto SerializeTo(void * destination, GsCommandHeader const & data) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, GsCommandHeader const & data) -> void *;
 }

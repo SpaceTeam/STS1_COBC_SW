@@ -78,7 +78,7 @@ template<SimpleInstruction const & instruction>
 auto SendInstruction() -> void;
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
 
 
 // ---Public function definitions ---

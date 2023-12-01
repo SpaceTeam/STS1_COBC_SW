@@ -47,8 +47,8 @@ extern etl::vector<QueueEntry, programQueueSize> programQueue;
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *;
 template<std::endian endianness>
-auto SerializeTo(void * destination, QueueEntry const & data) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, QueueEntry const & data) -> void *;
 }
 }

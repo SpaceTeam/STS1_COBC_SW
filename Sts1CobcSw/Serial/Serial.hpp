@@ -27,7 +27,6 @@
 #include <type_traits>
 
 
-// TODO: Make ALL SerializeTo() and DeserializeFrom() functions [[nodiscard]]
 namespace sts1cobcsw
 {
 template<typename T>
