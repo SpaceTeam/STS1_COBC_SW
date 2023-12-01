@@ -117,11 +117,21 @@ inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
 
 namespace edu
 {
-auto DeserializeFrom(void const * source, HeaderData * data) -> void const *;
-auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void const *;
-auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
-auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
-auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
-auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, HeaderData * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedStatus * data)
+    -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
 }
 }
+
+
+#include <Sts1CobcSw/Edu/Structs.ipp>

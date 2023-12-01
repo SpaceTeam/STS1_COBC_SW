@@ -13,8 +13,6 @@
 
 namespace sts1cobcsw
 {
-
-
 template<>
 inline constexpr std::size_t serialSize<flash::JedecId> =
     totalSerialSize<decltype(flash::JedecId::manufacturerId), decltype(flash::JedecId::deviceId)>;
@@ -22,7 +20,6 @@ inline constexpr std::size_t serialSize<flash::JedecId> =
 
 namespace flash
 {
-
 using sts1cobcsw::DeserializeFrom;
 
 
@@ -80,7 +77,8 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
 auto SendInstruction() -> void;
 
-auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
 
 
 // ---Public function definitions ---
@@ -106,7 +104,7 @@ auto ReadJedecId() -> JedecId
     csGpioPin.Reset();
     auto answer = SendInstruction<readJedecId>();
     csGpioPin.Set();
-    return Deserialize<JedecId>(std::span(answer));
+    return Deserialize<std::endian::big, JedecId>(std::span(answer));
 }
 
 
@@ -269,15 +267,11 @@ inline auto SendInstruction() -> void
 }
 
 
-// TODO: Replace this super ugyl hack with a proper big endian deserialization
+template<std::endian endianness>
 auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *
 {
-    source = DeserializeFrom<std::uint8_t>(source, &(jedecId->manufacturerId));
-    std::uint16_t deviceId = 0;
-    source = DeserializeFrom<std::uint16_t>(source, &(deviceId));
-    auto deviceIdBytes = Serialize(deviceId);
-    std::reverse(begin(deviceIdBytes), end(deviceIdBytes));
-    jedecId->deviceId = Deserialize<std::uint16_t>(std::span(deviceIdBytes));
+    source = DeserializeFrom<endianness>(source, &(jedecId->manufacturerId));
+    source = DeserializeFrom<endianness>(source, &(jedecId->deviceId));
     return source;
 }
 }

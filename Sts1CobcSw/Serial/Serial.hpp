@@ -15,6 +15,10 @@
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+// We need std::byteswap which is C++23 but for some reason clang-tidy crashes when using C++23, so
+// we use the ETL version
+#include <etl/bit.h>
+
 #include <array>
 #include <concepts>
 #include <cstddef>
@@ -23,11 +27,14 @@
 #include <type_traits>
 
 
-// TODO: Enforce endianness with std::endian::native, std::endian::little, std::byteswap, etc.
 namespace sts1cobcsw
 {
 template<typename T>
 concept TriviallySerializable = std::is_arithmetic_v<T> or std::is_enum_v<T>;
+
+// HasEndianness = TriviallySerializable - floats because is_integral_v = is_arithmetic_v - floats
+template<typename T>
+concept HasEndianness = std::is_integral_v<T> or std::is_enum_v<T>;
 
 
 // Must be specialized for user-defined types to be serializable
@@ -40,65 +47,122 @@ inline constexpr std::size_t serialSize<T> = sizeof(T);
 template<typename... Ts>
 inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
+inline constexpr auto defaultEndianness = std::endian::little;
+
 
 template<typename T>
     requires(serialSize<T> != 0U)
-using SerialBuffer = std::array<Byte, serialSize<T>>;
+using Buffer = std::array<Byte, serialSize<T>>;
+
+template<typename T>
+    requires(serialSize<T> != 0U)
+using BufferView = std::span<Byte const, serialSize<T>>;
 
 
 // --- Function declarations ---
 
-// TODO: Rename data -> t or variable
-// Must be overloaded for user-defined types to be serializable
-template<TriviallySerializable T>
-auto SerializeTo(void * destination, T const & data) -> void *;
-
-// TODO: Make DeserializeFrom const correct (Byte const * source, -> Byte const *)
-// Must be overloaded for user-defined types to be deserializable
-template<TriviallySerializable T>
-auto DeserializeFrom(void const * source, T * data) -> void const *;
-
 template<typename T>
-[[nodiscard]] auto Serialize(T const & data) -> SerialBuffer<T>;
+[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>;
+
+template<std::endian endianness, typename T>
+[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>;
 
 template<std::default_initializable T>
-[[nodiscard]] auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T;
+[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
+
+template<std::endian endianness, std::default_initializable T>
+[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
+
+// Must be overloaded for user-defined types to be serializable
+template<std::endian endianness, TriviallySerializable T>
+[[nodiscard]] auto SerializeTo(void * destination, T const & t) -> void *;
+
+// Must be overloaded for user-defined types to be deserializable
+template<std::endian endianness, TriviallySerializable T>
+[[nodiscard]] auto DeserializeFrom(void const * source, T * t) -> void const *;
+
+template<HasEndianness T>
+[[nodiscard]] constexpr auto ReverseBytes(T t) -> T;
 
 
 // --- Function template definitions ---
-template<TriviallySerializable T>
-inline auto SerializeTo(void * destination, T const & data) -> void *
-{
-    std::memcpy(destination, &data, serialSize<T>);
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    return static_cast<Byte *>(destination) + serialSize<T>;
-}
-
-
-// TODO: Add template parameter for endianness (Flash needs big endian)
-template<TriviallySerializable T>
-inline auto DeserializeFrom(void const * source, T * data) -> void const *
-{
-    std::memcpy(data, source, serialSize<T>);
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    return static_cast<Byte const *>(source) + serialSize<T>;
-}
-
 
 template<typename T>
-auto Serialize(T const & data) -> SerialBuffer<T>
+inline auto Serialize(T const & t) -> Buffer<T>
 {
-    auto buffer = SerialBuffer<T>{};
-    SerializeTo(buffer.data(), data);
+    return Serialize<defaultEndianness>(t);
+}
+
+
+template<std::endian endianness, typename T>
+inline auto Serialize(T const & t) -> Buffer<T>
+{
+    auto buffer = Buffer<T>{};
+    (void)SerializeTo<endianness>(buffer.data(), t);
     return buffer;
 }
 
 
 template<std::default_initializable T>
-auto Deserialize(std::span<const Byte, serialSize<T>> source) -> T
+inline auto Deserialize(BufferView<T> bufferView) -> T
+{
+    return Deserialize<defaultEndianness, T>(bufferView);
+}
+
+
+template<std::endian endianness, std::default_initializable T>
+inline auto Deserialize(BufferView<T> bufferView) -> T
 {
     auto t = T{};
-    DeserializeFrom(source.data(), &t);
+    DeserializeFrom<endianness>(bufferView.data(), &t);
     return t;
+}
+
+
+template<std::endian endianness, TriviallySerializable T>
+inline auto SerializeTo(void * destination, T const & t) -> void *
+{
+    if constexpr(HasEndianness<T> and endianness != std::endian::native)
+    {
+        auto data = ReverseBytes(t);
+        std::memcpy(destination, &data, serialSize<T>);
+    }
+    else
+    {
+        std::memcpy(destination, &t, serialSize<T>);
+    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    return static_cast<Byte *>(destination) + serialSize<T>;
+}
+
+
+template<std::endian endianness, TriviallySerializable T>
+inline auto DeserializeFrom(void const * source, T * t) -> void const *
+{
+    std::memcpy(t, source, serialSize<T>);
+    if constexpr(HasEndianness<T> and endianness != std::endian::native)
+    {
+        *t = ReverseBytes(*t);
+    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    return static_cast<Byte const *>(source) + serialSize<T>;
+}
+
+
+template<HasEndianness T>
+constexpr inline auto ReverseBytes(T t) -> T
+{
+    if constexpr(sizeof(T) == 1)
+    {
+        return t;
+    }
+    else if constexpr(std::integral<T>)
+    {
+        return etl::byteswap(t);
+    }
+    else if constexpr(std::is_enum_v<T>)
+    {
+        return static_cast<T>(etl::byteswap(static_cast<std::underlying_type<T>>(t)));
+    }
 }
 }

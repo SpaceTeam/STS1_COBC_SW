@@ -98,22 +98,32 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
 }
 
 
+template<std::endian endianness>
 auto DeserializeFrom(void const * source, GsCommandHeader * data) -> void const *
 {
-    source = DeserializeFrom(source, &(data->startCharacter));
-    source = DeserializeFrom(source, &(data->utc));
-    source = DeserializeFrom(source, &(data->commandId));
-    source = DeserializeFrom(source, &(data->length));
+    source = DeserializeFrom<endianness>(source, &(data->startCharacter));
+    source = DeserializeFrom<endianness>(source, &(data->utc));
+    source = DeserializeFrom<endianness>(source, &(data->commandId));
+    source = DeserializeFrom<endianness>(source, &(data->length));
     return source;
 }
 
+// Explicit template specializations to keep everything in .cpp file
+template auto DeserializeFrom<std::endian::big>(void const *, GsCommandHeader *) -> void const *;
+template auto DeserializeFrom<std::endian::little>(void const *, GsCommandHeader *) -> void const *;
 
+
+template<std::endian endianness>
 auto SerializeTo(void * destination, GsCommandHeader const & data) -> void *
 {
-    destination = SerializeTo(destination, data.startCharacter);
-    destination = SerializeTo(destination, data.utc);
-    destination = SerializeTo(destination, data.commandId);
-    destination = SerializeTo(destination, data.length);
+    destination = SerializeTo<endianness>(destination, data.startCharacter);
+    destination = SerializeTo<endianness>(destination, data.utc);
+    destination = SerializeTo<endianness>(destination, data.commandId);
+    destination = SerializeTo<endianness>(destination, data.length);
     return destination;
 }
+
+// Explicit template specializations to keep everything in .cpp file
+template auto SerializeTo<std::endian::big>(void *, GsCommandHeader const &) -> void *;
+template auto SerializeTo<std::endian::little>(void *, GsCommandHeader const &) -> void *;
 }

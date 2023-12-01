@@ -260,7 +260,7 @@ auto GetStatus() -> Status
 auto GetStatusCommunication() -> Status
 {
     // Get header data
-    auto headerBuffer = SerialBuffer<HeaderData>{};
+    auto headerBuffer = Buffer<HeaderData>{};
     auto headerReceiveError = UartReceive(headerBuffer);
     auto headerData = Deserialize<HeaderData>(headerBuffer);
 
@@ -316,7 +316,7 @@ auto GetStatusCommunication() -> Status
             return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
         }
 
-        auto dataBuffer = SerialBuffer<ProgramFinishedStatus>{};
+        auto dataBuffer = Buffer<ProgramFinishedStatus>{};
         auto programFinishedError = UartReceive(dataBuffer);
 
         if(programFinishedError != ErrorCode::success)
@@ -350,7 +350,7 @@ auto GetStatusCommunication() -> Status
             return Status{.statusType = StatusType::invalid, .errorCode = ErrorCode::invalidLength};
         }
 
-        auto dataBuffer = SerialBuffer<ResultsReadyStatus>{};
+        auto dataBuffer = Buffer<ResultsReadyStatus>{};
         auto resultsReadyError = UartReceive(dataBuffer);
         if(resultsReadyError != ErrorCode::success)
         {
@@ -485,7 +485,7 @@ auto ReturnResultCommunication() -> ResultInfo
     // RODOS::PRINTF("\nGet Length\n");
     // END DEBUG
 
-    auto dataLengthBuffer = SerialBuffer<std::uint16_t>{};
+    auto dataLengthBuffer = Buffer<std::uint16_t>{};
     auto lengthError = UartReceive(dataLengthBuffer);
     if(lengthError != ErrorCode::success)
     {
@@ -733,7 +733,7 @@ auto CheckCrc32(std::span<Byte> data) -> ErrorCode
     // END DEBUG
 
 
-    auto crc32Buffer = SerialBuffer<std::uint32_t>{};
+    auto crc32Buffer = Buffer<std::uint32_t>{};
     auto receiveError = UartReceive(crc32Buffer);
 
     // DEBUG

@@ -46,7 +46,9 @@ extern std::uint16_t queueIndex;
 extern etl::vector<QueueEntry, programQueueSize> programQueue;
 
 
-auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *;
-auto SerializeTo(void * destination, QueueEntry const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, QueueEntry const & data) -> void *;
 }
 }
