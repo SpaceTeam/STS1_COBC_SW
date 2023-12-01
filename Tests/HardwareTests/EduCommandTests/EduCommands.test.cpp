@@ -10,6 +10,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <charconv>
+#include <cinttypes>
 #include <cstdint>
 
 
@@ -77,8 +78,8 @@ private:
 
                     PRINTF("Please enter a queue ID (1 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
-                    std::uint16_t queueId = 0;
-                    std::from_chars(begin(userInput), end(userInput), queueId);
+                    std::int32_t timestamp = 0;
+                    std::from_chars(begin(userInput), end(userInput), timestamp);
 
                     PRINTF("Please enter a timeout (1 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
@@ -86,12 +87,13 @@ private:
                     std::from_chars(begin(userInput), end(userInput), timeout);
 
                     PRINTF("\n");
-                    PRINTF("Sending ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
+                    PRINTF("Sending ExecuteProgram(programId = %d, timestamp = %" PRIu32
+                           ", timeout = %d)\n",
                            static_cast<int>(programId),
-                           static_cast<int>(queueId),
+                           static_cast<int>(timestamp),
                            static_cast<int>(timeout));
                     auto errorCode = edu::ExecuteProgram(
-                        {.programId = programId, .queueId = queueId, .timeout = timeout});
+                        {.programId = programId, .timestamp = timestamp, .timeout = timeout});
                     PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
                     break;
                 }
@@ -102,7 +104,7 @@ private:
                     PRINTF("Returned status:\n");
                     PRINTF("  type       = %d\n", static_cast<int>(status.statusType));
                     PRINTF("  program ID = %d\n", static_cast<int>(status.programId));
-                    PRINTF("  queue ID   = %d\n", static_cast<int>(status.queueId));
+                    PRINTF("  timestamp  = %d\n", static_cast<int>(status.timestamp));
                     PRINTF("  exit code  = %d\n", static_cast<int>(status.exitCode));
                     PRINTF("  error code = %d\n", static_cast<int>(status.errorCode));
                     break;

@@ -88,7 +88,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
             Deserialize<edu::QueueEntry>(queueEntries.first<serialSize<edu::QueueEntry>>());
 
         RODOS::PRINTF("Prog ID      : %" PRIu16 "\n", entry.programId);
-        RODOS::PRINTF("Queue ID     : %" PRIu16 "\n", entry.queueId);
+        RODOS::PRINTF("Timestamp    : %" PRIu32 "\n", entry.timestamp);
         RODOS::PRINTF("Start Time   : %" PRIu32 "\n", entry.startTime);
         RODOS::PRINTF("Timeout      : %" PRIi16 "\n", entry.timeout);
 

@@ -36,11 +36,11 @@ private:
         command.insert(command.end(), header.begin(), header.end());
 
         auto entry1 = Serialize(
-            edu::QueueEntry{.programId = 1, .queueId = 16, .startTime = 1048577, .timeout = 1});
+            edu::QueueEntry{.programId = 1, .timestamp = 16, .startTime = 1048577, .timeout = 1});
         command.insert(command.end(), entry1.begin(), entry1.end());
 
         auto entry2 = Serialize(
-            edu::QueueEntry{.programId = 2, .queueId = 32, .startTime = 2097154, .timeout = 2});
+            edu::QueueEntry{.programId = 2, .timestamp = 32, .startTime = 2097154, .timeout = 2});
         command.insert(command.end(), entry2.begin(), entry2.end());
 
         while(not command.full())

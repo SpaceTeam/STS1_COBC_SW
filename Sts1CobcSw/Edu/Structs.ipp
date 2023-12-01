@@ -23,7 +23,7 @@ template<std::endian endianness>
 auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &(data->programId));
-    source = DeserializeFrom<endianness>(source, &(data->queueId));
+    source = DeserializeFrom<endianness>(source, &(data->timestamp));
     source = DeserializeFrom<endianness>(source, &(data->exitCode));
     return source;
 }
@@ -33,7 +33,7 @@ template<std::endian endianness>
 auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &(data->programId));
-    source = DeserializeFrom<endianness>(source, &(data->queueId));
+    source = DeserializeFrom<endianness>(source, &(data->timestamp));
     return source;
 }
 
@@ -52,7 +52,7 @@ auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, ExecuteProgramData::id);
     destination = SerializeTo<endianness>(destination, data.programId);
-    destination = SerializeTo<endianness>(destination, data.queueId);
+    destination = SerializeTo<endianness>(destination, data.timestamp);
     destination = SerializeTo<endianness>(destination, data.timeout);
     return destination;
 }
