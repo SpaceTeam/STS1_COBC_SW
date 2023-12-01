@@ -133,7 +133,7 @@ TEST_CASE("Serialize TriviallySerializable types (big endian)")
     auto byteBuffer = Serialize<endian::big>(std::byte{0xAA});
     auto int8Buffer = Serialize<endian::big>(static_cast<std::int8_t>(-4));
     auto uint16Buffer = Serialize<endian::big>(static_cast<std::uint16_t>(11));
-    auto int32Buffer = Serialize<endian::big>(static_cast<std::int32_t>(-2));
+    auto int32Buffer = Serialize<endian::big>(-2);
     auto uint64Buffer = Serialize<endian::big>(static_cast<std::uint64_t>(0x0102030405060708));
 
     // REQUIRE magic can't handle std::byte, so we cast
@@ -151,9 +151,9 @@ TEST_CASE("Serialize TriviallySerializable types (big endian)")
     REQUIRE(int(uint64Buffer[0]) == 0x01);
     REQUIRE(int(uint64Buffer[1]) == 0x02);
     REQUIRE(int(uint64Buffer[2]) == 0x03);
+    REQUIRE(int(uint64Buffer[3]) == 0x04);
     REQUIRE(int(uint64Buffer[4]) == 0x05);
     REQUIRE(int(uint64Buffer[5]) == 0x06);
-    REQUIRE(int(uint64Buffer[3]) == 0x04);
     REQUIRE(int(uint64Buffer[6]) == 0x07);
     REQUIRE(int(uint64Buffer[7]) == 0x08);
 }
@@ -216,7 +216,6 @@ TEST_CASE("Deserialize() is the inverse of Serialize() (big endian)")
 {
     using std::endian;
 
-    // TODO: Change this to use big endian
     auto cBuffer = Serialize<endian::big>('x');
     auto uint8Buffer = Serialize<endian::big>(static_cast<std::uint8_t>(56));
     auto int16Buffer = Serialize<endian::big>(static_cast<std::int16_t>(-3333));
@@ -304,12 +303,12 @@ TEST_CASE("(De-)Serialize user-defined types (big endian)")
     REQUIRE(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
     // REQUIRE magic can't handle std::byte, so we cast
-    REQUIRE(int(sBuffer[0]) == 0x12);
-    REQUIRE(int(sBuffer[1]) == 0x34);
-    REQUIRE(int(sBuffer[2]) == 0x56);
-    REQUIRE(int(sBuffer[3]) == 0x78);
-    REQUIRE(int(sBuffer[4]) == 0xAB);
-    REQUIRE(int(sBuffer[5]) == 0xCD);
+    REQUIRE(int(sBuffer[0]) == 0xAB);
+    REQUIRE(int(sBuffer[1]) == 0xCD);
+    REQUIRE(int(sBuffer[2]) == 0x12);
+    REQUIRE(int(sBuffer[3]) == 0x34);
+    REQUIRE(int(sBuffer[4]) == 0x56);
+    REQUIRE(int(sBuffer[5]) == 0x78);
 
     auto s = Deserialize<std::endian::big, S>(sBuffer);  // NOLINT(readability-identifier-length)
     REQUIRE(s.u16 == 0xABCD);
