@@ -365,7 +365,6 @@ auto ReturnResult() -> Result<ResultInfo>
 
     std::size_t totalResultSize = 0U;
     std::size_t packets = 0U;
-    Result<ts::size_t> resultInfo = ErrorCode::noErrorCodeSet;
     //  TODO: Turn into for loop
     while(packets < maxNPackets)
     {
@@ -473,7 +472,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     }
     if(command == cmdEof)
     {
-        return ResultInfo{.reachedEof = true, .resultSize = 0_usize};
+        return ResultInfo{.reachedEof = true, .resultSize = 0U};
     }
     if(command != cmdData)
     {
@@ -738,11 +737,6 @@ auto CheckCrc32(std::span<Byte> data) -> Result<void>
     // RODOS::PRINTF("\n");
     // END DEBUG
 
-    // TODO: OUTCOME_TRY
-    if(receiveError.has_error())
-    {
-        return receiveError;
-    }
     if(computedCrc32 != Deserialize<std::uint32_t>(crc32Buffer))
     {
         return ErrorCode::wrongChecksum;
