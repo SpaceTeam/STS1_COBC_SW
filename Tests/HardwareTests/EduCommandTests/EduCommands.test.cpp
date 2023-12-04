@@ -87,11 +87,11 @@ private:
                     std::from_chars(begin(userInput), end(userInput), timeout);
 
                     PRINTF("\n");
-                    PRINTF("Sending ExecuteProgram(programId = %d, timestamp = %" PRIu32
-                           ", timeout = %d)\n",
-                           static_cast<int>(programId),
-                           static_cast<int>(timestamp),
-                           static_cast<int>(timeout));
+                    PRINTF("Sending ExecuteProgram(programId = %" PRIu16 ", timestamp = %" PRIi32
+                           ", timeout = %" PRIi16 ")\n",
+                           programId,
+                           timestamp,
+                           timeout);
                     auto errorCode = edu::ExecuteProgram(
                         {.programId = programId, .timestamp = timestamp, .timeout = timeout});
                     PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
