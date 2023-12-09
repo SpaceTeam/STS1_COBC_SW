@@ -76,7 +76,7 @@ struct ProgramFinishedStatus
 
 struct ResultInfo
 {
-    bool reachedEof = false;
+    bool eofIsReached = false;
     std::size_t resultSize = 0;
 };
 }

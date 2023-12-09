@@ -383,10 +383,10 @@ auto ReturnResult() -> Result<ResultInfo>
                           static_cast<int>(errorCode));
             return resultInfo.error();
         }
-        if(resultInfo.value().reachedEof)
+        if(resultInfo.value().eofIsReached)
         {
             RODOS::PRINTF(" ResultResultRetry() reached EOF\n");
-            return ResultInfo{.reachedEof = true, .resultSize = totalResultSize};
+            return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
         }
 
         // END DEBUG
@@ -396,7 +396,7 @@ auto ReturnResult() -> Result<ResultInfo>
         totalResultSize += resultInfo.value().resultSize;
         packets++;
     }
-    return ResultInfo{.reachedEof = false, .resultSize = totalResultSize};
+    return ResultInfo{.eofIsReached = false, .resultSize = totalResultSize};
 }
 
 
@@ -416,7 +416,7 @@ auto ReturnResultRetry() -> Result<ResultInfo>
         if(resultInfo.has_value())
         {
             SendCommand(cmdAck);
-            // returns {reachedEof, resultSize}
+            // returns {eofIsReached, resultSize}
             return resultInfo.value();
         }
 
@@ -472,7 +472,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     }
     if(command == cmdEof)
     {
-        return ResultInfo{.reachedEof = true, .resultSize = 0U};
+        return ResultInfo{.eofIsReached = true, .resultSize = 0U};
     }
     if(command != cmdData)
     {
@@ -525,7 +525,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
-    return ResultInfo{.reachedEof = false, .resultSize = actualDataLength};
+    return ResultInfo{.eofIsReached = false, .resultSize = actualDataLength};
 }
 
 
