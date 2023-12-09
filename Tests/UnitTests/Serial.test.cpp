@@ -289,7 +289,7 @@ TEST_CASE("(De-)Serialize user-defined types (default endian)")
     REQUIRE(int(sBuffer[4]) == 0x34);
     REQUIRE(int(sBuffer[5]) == 0x12);
 
-    auto s = Deserialize<S>(sBuffer);  // NOLINT(readability-identifier-length)
+    auto s = Deserialize<S>(sBuffer);
     REQUIRE(s.u16 == 0xABCD);
     REQUIRE(s.i32 == 0x12345678);
 }
@@ -308,7 +308,7 @@ TEST_CASE("(De-)Serialize user-defined types (big endian)")
     REQUIRE(int(sBuffer[4]) == 0x56);
     REQUIRE(int(sBuffer[5]) == 0x78);
 
-    auto s = Deserialize<std::endian::big, S>(sBuffer);  // NOLINT(readability-identifier-length)
+    auto s = Deserialize<std::endian::big, S>(sBuffer);
     REQUIRE(s.u16 == 0xABCD);
     REQUIRE(s.i32 == 0x12345678);
 }
