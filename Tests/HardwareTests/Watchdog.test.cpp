@@ -6,22 +6,22 @@
 
 namespace sts1cobcsw
 {
-auto ledGpio = hal::GpioPin(hal::led1Pin);
+static auto led1Gpio = hal::GpioPin(hal::led1Pin);
 
 
 class WatchdogTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        ledGpio.Direction(hal::PinDirection::out);
+        led1Gpio.Direction(hal::PinDirection::out);
     }
 
 
     void run() override
     {
-        ledGpio.Reset();
+        led1Gpio.Reset();
         RODOS::AT(RODOS::NOW() + 800 * RODOS::MILLISECONDS);
-        ledGpio.Set();
+        led1Gpio.Set();
     }
 } watchdogTest;
 }

@@ -39,6 +39,9 @@ target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal)
 add_program(Watchdog Watchdog.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Watchdog PRIVATE rodos::rodos Sts1CobcSw_Hal)
 
+add_program(WatchdogClear Watchdog.test.cpp WatchdogClear.test.cpp)
+target_link_libraries(Sts1CobcSwTests_WatchdogClear PRIVATE rodos::rodos Sts1CobcSw_Hal)
+
 get_property(
     top_level_hw_test_targets
     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
