@@ -63,10 +63,10 @@ private:
                 {
                     auto currentTime = utility::GetUnixUtc();
                     PRINTF("Sending UpdateTime(currentTime = %d)\n", static_cast<int>(currentTime));
-                    auto errorCode = edu::UpdateTime({.currentTime = currentTime});
-                    if(errorCode.has_error())
+                    auto result = edu::UpdateTime({.currentTime = currentTime});
+                    if(result.has_error())
                     {
-                        PRINTF("Returned error code: %d\n", static_cast<int>(errorCode.error()));
+                        PRINTF("Returned error code: %d\n", static_cast<int>(result.error()));
                     }
                     else
                     {
@@ -99,12 +99,12 @@ private:
                            programId,
                            startTime,
                            timeout);
-                    auto errorCode = edu::ExecuteProgram(
+                    auto result = edu::ExecuteProgram(
                         {.programId = programId, .startTime = startTime, .timeout = timeout});
                     // TODO: Fix naming
-                    if(errorCode.has_error())
+                    if(result.has_error())
                     {
-                        PRINTF("Returned error code: %d\n", static_cast<int>(errorCode.error()));
+                        PRINTF("Returned error code: %d\n", static_cast<int>(result.error()));
                     }
                     else
                     {
@@ -115,15 +115,15 @@ private:
                 case 'g':
                 {
                     PRINTF("Sending GetStatus()\n");
-                    auto statusResult = edu::GetStatus();
+                    auto result = edu::GetStatus();
                     PRINTF("Returned status:\n");
-                    if(statusResult.has_error())
+                    if(result.has_error())
                     {
-                        PRINTF("  error code = %d\n", static_cast<int>(statusResult.error()));
+                        PRINTF("  error code = %d\n", static_cast<int>(result.error()));
                     }
                     else
                     {
-                        auto status = statusResult.value();
+                        auto status = result.value();
                         PRINTF("  type       = %d\n", static_cast<int>(status.statusType));
                         PRINTF("  program ID = %d\n", static_cast<int>(status.programId));
                         PRINTF("  startTime  = %d\n", static_cast<int>(status.startTime));
@@ -134,16 +134,15 @@ private:
                 case 'r':
                 {
                     PRINTF("Sending ReturnResult()\n");
-                    auto resultStatus = edu::ReturnResult();
+                    auto result = edu::ReturnResult();
                     PRINTF("Returned result info:\n");
-                    if(resultStatus.has_error())
+                    if(result.has_error())
                     {
-                        PRINTF("  error code  = %d\n", static_cast<int>(resultStatus.error()));
+                        PRINTF("  error code  = %d\n", static_cast<int>(result.error()));
                     }
                     else
                     {
-                        PRINTF("  result size = %d\n",
-                               static_cast<int>(resultStatus.value().resultSize));
+                        PRINTF("  result size = %d\n", static_cast<int>(result.value().resultSize));
                     }
                     break;
                 }
