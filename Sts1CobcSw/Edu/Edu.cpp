@@ -283,14 +283,9 @@ auto GetStatusCommunication() -> Result<Status>
         }
 
         std::array<Byte, 1> statusTypeArray = {statusType};
-        auto crc32Error = CheckCrc32(std::span<Byte>(statusTypeArray));
-        if(crc32Error.has_error())
-        {
-            return crc32Error.error();
-        }
+        OUTCOME_TRY(CheckCrc32(std::span<Byte>(statusTypeArray)));
 
-        return Status{
-            .statusType = StatusType::noEvent, .programId = 0, .startTime = 0, .exitCode = 0};
+        return Status{.statusType = StatusType::noEvent};
     }
 
     if(statusType == programFinishedCode)
@@ -325,7 +320,6 @@ auto GetStatusCommunication() -> Result<Status>
         }
 
         auto dataBuffer = Buffer<ResultsReadyStatus>{};
-        auto resultsReadyError = UartReceive(dataBuffer);
         OUTCOME_TRY(UartReceive(dataBuffer));
 
         // Create another Buffer which includes the status type that was received beforehand because
@@ -353,20 +347,16 @@ auto ReturnResult() -> Result<ResultInfo>
 
     // Send command
     auto serialCommand = Serialize(returnResultId);
-    auto commandError = SendData(serialCommand);
-    if(commandError.has_error())
-    {
-        return commandError.error();
-    }
+    OUTCOME_TRY(SendData(serialCommand));
 
     // DEBUG
     // RODOS::PRINTF("\nStart receiving result\n");
     // END DEBUG
 
     std::size_t totalResultSize = 0U;
-    std::size_t packets = 0U;
+    std::size_t nPackets = 0U;
     //  TODO: Turn into for loop
-    while(packets < maxNPackets)
+    while(nPackets < maxNPackets)
     {
         // DEBUG
         // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets));
@@ -375,17 +365,18 @@ auto ReturnResult() -> Result<ResultInfo>
         // TYPE Result<something>
         // DEBUG
 
-        // Break if returned an error or reached EOF
+        // Break if an error is returned
         if(resultInfo.has_error())
         {
             auto errorCode = resultInfo.error();
-            RODOS::PRINTF(" ResultResultRetry() resulted in an error : %d",
+            RODOS::PRINTF(" ReturnResultRetry() resulted in an error : %d",
                           static_cast<int>(errorCode));
             return resultInfo.error();
         }
+        // or if EOF is reached
         if(resultInfo.value().eofIsReached)
         {
-            RODOS::PRINTF(" ResultResultRetry() reached EOF\n");
+            RODOS::PRINTF(" ReturnResultRetry() reached EOF\n");
             return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
         }
 
@@ -394,7 +385,7 @@ auto ReturnResult() -> Result<ResultInfo>
         // TODO: Actually write to a file
 
         totalResultSize += resultInfo.value().resultSize;
-        packets++;
+        nPackets++;
     }
     return ResultInfo{.eofIsReached = false, .resultSize = totalResultSize};
 }
@@ -460,11 +451,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     // If no result is available, the command will be NACK,
     // otherwise DATA
     Byte command = 0_b;
-    auto commandError = UartReceive(&command);
-    if(commandError.has_error())
-    {
-        return commandError.error();
-    }
+    OUTCOME_TRY(UartReceive(&command));
     if(command == cmdNack)
     {
         // TODO: necessary to differentiate errors or just return success with resultSize 0?
@@ -488,8 +475,8 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 
     auto dataLengthBuffer = Buffer<std::uint16_t>{};
     OUTCOME_TRY(UartReceive(dataLengthBuffer));
-
     auto actualDataLength = Deserialize<std::uint16_t>(dataLengthBuffer);
+
     if(actualDataLength == 0U or actualDataLength > maxDataLength)
     {
         return ErrorCode::invalidLength;
@@ -500,26 +487,15 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     // END DEBUG
 
     // Get the actual data
-    auto dataError = UartReceive(
-        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength));
-
-    // TODO: OUTCOME_TRY
-    if(dataError.has_error())
-    {
-        return dataError.error();
-    }
+    OUTCOME_TRY(UartReceive(
+        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength)));
 
     // DEBUG
     // RODOS::PRINTF("\nCheck CRC\n");
     // END DEBUG
 
-    auto crc32Error = CheckCrc32(
-        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength));
-
-    if(crc32Error.has_error())
-    {
-        return crc32Error.error();
-    }
+    OUTCOME_TRY(CheckCrc32(
+        std::span<Byte>(cepDataBuffer.begin(), cepDataBuffer.begin() + actualDataLength)));
 
     // DEBUG
     RODOS::PRINTF("\nSuccess\n");
@@ -551,23 +527,17 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
     OUTCOME_TRY(SendData(serialData));
 
     // On success, wait for second N/ACK
-    // TODO: (Daniel) Change to UartReceive()
     // TODO: Refactor this common pattern into a function
     // TODO: Implement read functions that return a type and internally use Deserialize<T>()
     auto answer = 0x00_b;
-    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    OUTCOME_TRY(UartReceive(&answer));
 
-    auto nReadBytes = uart.read(&answer, 1);
-    if(nReadBytes == 0)
-    {
-        return ErrorCode::timeout;
-    }
     switch(answer)
     {
-        // case cmdAck:
-        //{
-        //     return ErrorCode::success;
-        // }
+        case cmdAck:
+        {
+            return outcome_v2::success();
+        }
         case cmdNack:
         {
             return ErrorCode::nack;
@@ -627,7 +597,6 @@ auto SendData(std::span<Byte> data) -> Result<void>
         // RODOS::PRINTF("[Edu] answer in sendData is now : %c\n", static_cast<char>(answer));
         switch(answer)
         {
-            // TODO: Return outcome::success
             case cmdAck:
             {
                 return outcome_v2::success();
