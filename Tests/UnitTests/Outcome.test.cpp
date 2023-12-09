@@ -4,7 +4,11 @@
 #include <outcome-experimental.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <iostream>
+#include <limits>
+#include <string>
+
 
 // First define a policy
 struct AbortPolicy : outcome_v2::experimental::policy::base
@@ -13,8 +17,6 @@ struct AbortPolicy : outcome_v2::experimental::policy::base
     // NOLINTNEXTLINE(readability-identifier-naming)
     static constexpr void wide_value_check(Impl && self)
     {
-        //! Call RODOS::hwResetAndReboot() whenever .value() is called on an object that does not
-        //! contain a value
         if(!base::_has_value(std::forward<Impl>(self)))
         {
             std::abort();
@@ -25,8 +27,6 @@ struct AbortPolicy : outcome_v2::experimental::policy::base
     // NOLINTNEXTLINE(readability-identifier-naming)
     static constexpr void wide_error_check(Impl && self)
     {
-        //! Call RODOS::hwResetAndReboot() whenever .error() is called on an object that does not
-        //! contain an error
         if(!base::_has_error(std::forward<Impl>(self)))
         {
             std::abort();
@@ -44,6 +44,7 @@ struct AbortPolicy : outcome_v2::experimental::policy::base
     }
 };
 
+
 enum class ConversionErrc
 {
     success = 0,      // 0 should not represent an error
@@ -52,32 +53,35 @@ enum class ConversionErrc
     tooLong = 3,
 };
 
+
 template<typename T>
 using Result = outcome_v2::experimental::status_result<T, ConversionErrc, AbortPolicy>;
 
 
-auto Convert(const std::string & str) noexcept -> Result<int>
+auto Convert(std::string const & str) noexcept -> Result<int>
 {
     if(str.empty())
     {
         return ConversionErrc::emptyString;
     }
 
-    if(!std::all_of(str.begin(), str.end(), ::isdigit))
+    // NOLINTNEXTLINE(readability-identifier-length)
+    if(!std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isdigit(c); }))
     {
         return ConversionErrc::illegalChar;
     }
 
-    if(str.length() > 9)
+    if(str.length() > std::numeric_limits<int>::digits10)
     {
         return ConversionErrc::tooLong;
     }
 
-    // NOLINTNEXTLINE (cert-err34-c)
+    // NOLINTNEXTLINE(cert-err34-c)
     return atoi(str.c_str());
 }
 
 
+// NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("Inspecting result")
 {
     Result<int> result = outcome_v2::success();
@@ -119,22 +123,20 @@ auto WriteData(int * buffer, bool shouldSucceed) -> Result<void>
 }
 
 
-// Dummy function to chain with Convert
-// Return type is a pair just to display how OUTCOME_TRY works with different return<> types
-auto Add(int op1, const std::string & str) -> Result<std::pair<int, int>>
+// Dummy function to chain with Convert. Return type is a pair just to display how OUTCOME_TRY works
+// with different return types
+auto Add(int op1, std::string const & str) -> Result<std::pair<int, int>>
 {
     // From https://ned14.github.io/outcome/tutorial/essential/result/inspecting/
-    // Our control statement means:
-    // if Convert() returned failure, this same error information should be returned from Add(),
-    // even though Add() and Convert() have different result<> types.
-    // If Convert returned success, we create variable op2 of type int with the value returned from
-    // Convert. If control goes to subsequent line, it means Convert succeeded and variable of type
-    // BigInt is in scope.
+    // Our control statement means: if Convert() returned failure, this same error information
+    // should be returned from Add(), even though Add() and Convert() have different result<> types.
+    // If Convert() returned success, we create variable op2 of type int with the value returned
+    // from Convert(). If control goes to subsequent line, it means Convert() succeeded and variable
+    // of type int is in scope.
     OUTCOME_TRY(auto op2, Convert(str));
-
-
     return std::make_pair(op1 + op2, op2);
 }
+
 
 auto Write(bool shouldSucceed) -> Result<int>
 {
@@ -144,6 +146,7 @@ auto Write(bool shouldSucceed) -> Result<int>
     OUTCOME_TRY(WriteData(&buffer, shouldSucceed));
     return buffer;
 }
+
 
 TEST_CASE("TRY macro")
 {
