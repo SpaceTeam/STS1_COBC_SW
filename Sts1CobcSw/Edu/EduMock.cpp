@@ -27,7 +27,6 @@ auto ResumeEduProgramQueueThread() -> void
 // TODO: This file is not used at all right now. Think about the mocking later.
 namespace edu
 {
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Initialize() -> void
 {
     PrintFormattedSystemUtc();
@@ -35,7 +34,6 @@ auto Initialize() -> void
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto TurnOn() -> void
 {
     PrintFormattedSystemUtc();
@@ -43,7 +41,6 @@ auto TurnOn() -> void
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto TurnOff() -> void
 {
     PrintFormattedSystemUtc();
@@ -51,7 +48,6 @@ auto TurnOff() -> void
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>
 {
     PrintFormattedSystemUtc();
@@ -60,7 +56,6 @@ auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
@@ -72,7 +67,6 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto StopProgram() -> Result<void>
 {
     PrintFormattedSystemUtc();
@@ -81,7 +75,6 @@ auto StopProgram() -> Result<void>
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto GetStatus() -> Result<Status>
 {
     PrintFormattedSystemUtc();
@@ -90,7 +83,6 @@ auto GetStatus() -> Result<Status>
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
@@ -99,7 +91,6 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto SendCommand(Byte commandId) -> void
 {
     PrintFormattedSystemUtc();
@@ -107,7 +98,6 @@ auto SendCommand(Byte commandId) -> void
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto SendData(std::span<Byte> data) -> Result<void>
 {
     PrintFormattedSystemUtc();
@@ -116,7 +106,6 @@ auto SendData(std::span<Byte> data) -> Result<void>
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto UartReceive([[maybe_unused]] std::span<Byte> destination) -> Result<void>
 {
     PrintFormattedSystemUtc();
@@ -125,7 +114,6 @@ auto UartReceive([[maybe_unused]] std::span<Byte> destination) -> Result<void>
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void FlushUartBuffer()
 {
     PrintFormattedSystemUtc();
