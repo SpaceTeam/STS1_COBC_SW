@@ -35,7 +35,6 @@ private:
     }
 
 
-    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     void run() override
     {
         TIME_LOOP(0, timeLoopPeriod)
@@ -47,7 +46,7 @@ private:
             eduIsAliveBufferForListener.get(eduIsAlive);
             // RODOS::PRINTF("[EduListenerThread] Read eduHasUpdate pin\n");
 
-            // TODO: Check if edu is alive
+            // TODO: Check if EDU is alive
             if(eduIsAlive and eduHasUpdate)
             {
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
@@ -104,9 +103,8 @@ private:
                             // Edu wants to send result file
                             // Send return result to Edu, Communicate, and interpret the results to
                             // update the S&H Entry from 3 or 4 to 5.
-                            auto resultsInfo = edu::ReturnResult();
-                            // TODO: Naming
-                            if(resultsInfo.has_error())
+                            auto resultInfoResult = edu::ReturnResult();
+                            if(resultInfoResult.has_error())
                             {
                                 /*
                                 RODOS::PRINTF(
