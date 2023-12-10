@@ -179,11 +179,11 @@ private:
 
         RODOS::PRINTF("Hello From DummyThread Timeloop\n");
         auto programId = 0_u16;
-        auto queueId = 5_u16;
+        auto timestamp = 5_u16;
         auto timeout = 10_i16;
 
         auto executeProgramData = ExecuteProgramData{
-            .programId = programId, .queueId = queueId, .timeout = timeout};
+            .programId = programId, .timestamp = timestamp, .timeout = timeout};
         edu.ExecuteProgram(executeProgramData);
 
         RODOS::AT(RODOS::NOW() + 11 * RODOS::SECONDS);

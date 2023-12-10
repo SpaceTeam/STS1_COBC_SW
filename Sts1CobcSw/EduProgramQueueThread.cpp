@@ -45,10 +45,10 @@ private:
         edu::Initialize();
 
         // auto queueEntry1 = EduQueueEntry{
-        //    .programId = 0, .queueId = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
+        //    .programId = 0, .timestamp = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
 
         // auto queueEntry2 = EduQueueEntry{
-        //    .programId = 0, .queueId = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
+        //    .programId = 0, .timestamp = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
 
         // eduProgramQueue.push_back(queueEntry1);
         // eduProgramQueue.push_back(queueEntry2);
@@ -94,7 +94,7 @@ private:
             utility::PrintFormattedSystemUtc();
 
             auto errorCode =
-                edu::UpdateTime(edu::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
+                edu::UpdateTime(edu::UpdateTimeData{.currentTime = utility::GetUnixUtc()});
             if(errorCode != edu::ErrorCode::success)
             {
                 RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode));
@@ -118,13 +118,13 @@ private:
             // Never reached
             RODOS::PRINTF("Done suspending for the second time\n");
 
-            auto queueId = edu::programQueue[edu::queueIndex].queueId;
+            auto startTime = edu::programQueue[edu::queueIndex].startTime;
             auto programId = edu::programQueue[edu::queueIndex].programId;
             auto timeout = edu::programQueue[edu::queueIndex].timeout;
 
             RODOS::PRINTF("Executing program %d\n", programId);
             auto executeProgramData = edu::ExecuteProgramData{
-                .programId = programId, .queueId = queueId, .timeout = timeout};
+                .programId = programId, .startTime = startTime, .timeout = timeout};
             // Start Process
             errorCode = edu::ExecuteProgram(executeProgramData);
             // errorCode = edu::ErrorCode::success;
@@ -140,7 +140,7 @@ private:
             {
                 edu::programStatusHistory.put(
                     edu::ProgramStatusHistoryEntry{.programId = programId,
-                                                   .queueId = queueId,
+                                                   .startTime = startTime,
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time

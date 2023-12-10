@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
+#include <cinttypes>
+
 
 namespace sts1cobcsw
 {
@@ -62,9 +64,9 @@ auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
 auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
-    PRINTF("Call to ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
+    PRINTF("Call to ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
            data.programId,
-           data.queueId,
+           data.startTime,
            data.timeout);
     return ErrorCode::success;
 }
@@ -86,7 +88,7 @@ auto GetStatus() -> Status
     PRINTF("Call to GetStatus()\n");
     return {.statusType = StatusType::invalid,
             .programId = 0,
-            .queueId = 0,
+            .startTime = 0,
             .exitCode = 0,
             .errorCode = ErrorCode::success};
 }
@@ -96,7 +98,7 @@ auto GetStatus() -> Status
 auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
-    PRINTF("Call to UpdateTime(timestamp = %d)\n", data.timestamp);
+    PRINTF("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime);
     return ErrorCode::success;
 }
 

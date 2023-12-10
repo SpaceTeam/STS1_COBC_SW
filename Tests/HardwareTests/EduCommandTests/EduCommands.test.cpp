@@ -10,6 +10,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <charconv>
+#include <cinttypes>
 #include <cstdint>
 
 
@@ -60,9 +61,9 @@ private:
             {
                 case 'u':
                 {
-                    auto timestamp = utility::GetUnixUtc();
-                    PRINTF("Sending UpdateTime(timestamp = %d)\n", static_cast<int>(timestamp));
-                    auto errorCode = edu::UpdateTime({.timestamp = timestamp});
+                    auto currentTime = utility::GetUnixUtc();
+                    PRINTF("Sending UpdateTime(currentTime = %d)\n", static_cast<int>(currentTime));
+                    auto errorCode = edu::UpdateTime({.currentTime = currentTime});
                     PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
                     break;
                 }
@@ -75,10 +76,10 @@ private:
                     std::uint16_t programId = 0;
                     std::from_chars(begin(userInput), end(userInput), programId);
 
-                    PRINTF("Please enter a queue ID (1 character)\n");
+                    PRINTF("Please enter a start time (1 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
-                    std::uint16_t queueId = 0;
-                    std::from_chars(begin(userInput), end(userInput), queueId);
+                    std::int32_t startTime = 0;
+                    std::from_chars(begin(userInput), end(userInput), startTime);
 
                     PRINTF("Please enter a timeout (1 character)\n");
                     hal::ReadFrom(&uciUart, std::span(userInput));
@@ -86,12 +87,13 @@ private:
                     std::from_chars(begin(userInput), end(userInput), timeout);
 
                     PRINTF("\n");
-                    PRINTF("Sending ExecuteProgram(programId = %d, queueId = %d, timeout = %d)\n",
-                           static_cast<int>(programId),
-                           static_cast<int>(queueId),
-                           static_cast<int>(timeout));
+                    PRINTF("Sending ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
+                           ", timeout = %" PRIi16 ")\n",
+                           programId,
+                           startTime,
+                           timeout);
                     auto errorCode = edu::ExecuteProgram(
-                        {.programId = programId, .queueId = queueId, .timeout = timeout});
+                        {.programId = programId, .startTime = startTime, .timeout = timeout});
                     PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
                     break;
                 }
@@ -102,7 +104,7 @@ private:
                     PRINTF("Returned status:\n");
                     PRINTF("  type       = %d\n", static_cast<int>(status.statusType));
                     PRINTF("  program ID = %d\n", static_cast<int>(status.programId));
-                    PRINTF("  queue ID   = %d\n", static_cast<int>(status.queueId));
+                    PRINTF("  startTime  = %d\n", static_cast<int>(status.startTime));
                     PRINTF("  exit code  = %d\n", static_cast<int>(status.exitCode));
                     PRINTF("  error code = %d\n", static_cast<int>(status.errorCode));
                     break;
