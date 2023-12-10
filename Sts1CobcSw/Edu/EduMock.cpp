@@ -64,9 +64,9 @@ auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
 auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
-    PRINTF("Call to ExecuteProgram(programId = %d, timestamp = %" PRIi32 ", timeout = %d)\n",
+    PRINTF("Call to ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
            data.programId,
-           data.timestamp,
+           data.startTime,
            data.timeout);
     return ErrorCode::success;
 }
@@ -88,7 +88,7 @@ auto GetStatus() -> Status
     PRINTF("Call to GetStatus()\n");
     return {.statusType = StatusType::invalid,
             .programId = 0,
-            .timestamp = 0,
+            .startTime = 0,
             .exitCode = 0,
             .errorCode = ErrorCode::success};
 }

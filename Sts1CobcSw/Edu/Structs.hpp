@@ -38,7 +38,7 @@ struct ExecuteProgramData
 {
     static constexpr auto id = executeProgramId;
     std::uint16_t programId;
-    std::int32_t timestamp;
+    std::int32_t startTime;
     std::int16_t timeout;
 };
 
@@ -54,7 +54,7 @@ struct Status
 {
     StatusType statusType = StatusType::invalid;
     std::uint16_t programId = 0;
-    std::int32_t timestamp = 0;
+    std::int32_t startTime = 0;
     std::uint8_t exitCode = 0;
     ErrorCode errorCode = ErrorCode::noErrorCodeSet;
 };
@@ -63,14 +63,14 @@ struct Status
 struct ResultsReadyStatus
 {
     std::uint16_t programId;
-    std::int32_t timestamp;
+    std::int32_t startTime;
 };
 
 
 struct ProgramFinishedStatus
 {
     std::uint16_t programId;
-    std::int32_t timestamp;
+    std::int32_t startTime;
     std::uint8_t exitCode;
 };
 
@@ -90,13 +90,13 @@ inline constexpr std::size_t serialSize<edu::HeaderData> =
 template<>
 inline constexpr std::size_t serialSize<edu::ProgramFinishedStatus> =
     totalSerialSize<decltype(edu::ProgramFinishedStatus::programId),
-                    decltype(edu::ProgramFinishedStatus::timestamp),
+                    decltype(edu::ProgramFinishedStatus::startTime),
                     decltype(edu::ProgramFinishedStatus::exitCode)>;
 
 template<>
 inline constexpr std::size_t serialSize<edu::ResultsReadyStatus> =
     totalSerialSize<decltype(edu::ResultsReadyStatus::programId),
-                    decltype(edu::ResultsReadyStatus::timestamp)>;
+                    decltype(edu::ResultsReadyStatus::startTime)>;
 
 template<>
 inline constexpr std::size_t serialSize<edu::StoreArchiveData> =
@@ -107,7 +107,7 @@ template<>
 inline constexpr std::size_t serialSize<edu::ExecuteProgramData> =
     totalSerialSize<decltype(edu::ExecuteProgramData::id),
                     decltype(edu::ExecuteProgramData::programId),
-                    decltype(edu::ExecuteProgramData::timestamp),
+                    decltype(edu::ExecuteProgramData::startTime),
                     decltype(edu::ExecuteProgramData::timeout)>;
 
 template<>

@@ -118,13 +118,13 @@ private:
             // Never reached
             RODOS::PRINTF("Done suspending for the second time\n");
 
-            auto timestamp = edu::programQueue[edu::queueIndex].timestamp;
+            auto startTime = edu::programQueue[edu::queueIndex].startTime;
             auto programId = edu::programQueue[edu::queueIndex].programId;
             auto timeout = edu::programQueue[edu::queueIndex].timeout;
 
             RODOS::PRINTF("Executing program %d\n", programId);
             auto executeProgramData = edu::ExecuteProgramData{
-                .programId = programId, .timestamp = timestamp, .timeout = timeout};
+                .programId = programId, .startTime = startTime, .timeout = timeout};
             // Start Process
             errorCode = edu::ExecuteProgram(executeProgramData);
             // errorCode = edu::ErrorCode::success;
@@ -140,7 +140,7 @@ private:
             {
                 edu::programStatusHistory.put(
                     edu::ProgramStatusHistoryEntry{.programId = programId,
-                                                   .timestamp = timestamp,
+                                                   .startTime = startTime,
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time

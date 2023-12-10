@@ -116,7 +116,7 @@ auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_
 //! -> [DATA]
 //! -> [Command Header]
 //! -> [Program ID]
-//! -> [Timestamp]
+//! -> [Start Time]
 //! -> [Timeout]
 //! <- [N/ACK]
 //! <- [N/ACK]
@@ -125,15 +125,15 @@ auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> std::int32_
 //! the second N/ACK confirms that the program has been started.
 //!
 //! @param programId The student program ID
-//! @param timestamp The student program timestamp
+//! @param startTime The student program start time
 //! @param timeout The available execution time for the student program
 //!
 //! @returns A relevant error code
 auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
 {
-    RODOS::PRINTF("ExecuteProgram(programId = %d, timestamp = %" PRIi32 ", timeout = %d)\n",
+    RODOS::PRINTF("ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
                   data.programId,
-                  data.timestamp,
+                  data.startTime,
                   data.timeout);
     // Check if data command was successful
     auto serialData = Serialize(data);
@@ -244,12 +244,12 @@ auto GetStatus() -> Status
     } while(errorCount++ < maxNNackRetries);
 
     RODOS::PRINTF(
-        "  .statusType = %d\n  .errorCode = %d\n  .programId = %d\n  .timestamp = %" PRIi32
+        "  .statusType = %d\n  .errorCode = %d\n  .programId = %d\n  .startTime = %" PRIi32
         "\n  exitCode = %d\n",
         static_cast<int>(status.statusType),
         static_cast<int>(status.errorCode),
         status.programId,
-        status.timestamp,
+        status.startTime,
         status.exitCode);
     return status;
 }
@@ -305,7 +305,7 @@ auto GetStatusCommunication() -> Status
 
         return Status{.statusType = StatusType::noEvent,
                       .programId = 0,
-                      .timestamp = 0,
+                      .startTime = 0,
                       .exitCode = 0,
                       .errorCode = ErrorCode::success};
     }
@@ -339,7 +339,7 @@ auto GetStatusCommunication() -> Status
         auto programFinishedData = Deserialize<ProgramFinishedStatus>(dataBuffer);
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
-                      .timestamp = programFinishedData.timestamp,
+                      .startTime = programFinishedData.startTime,
                       .exitCode = programFinishedData.exitCode,
                       .errorCode = ErrorCode::success};
     }
@@ -371,7 +371,7 @@ auto GetStatusCommunication() -> Status
         auto resultsReadyData = Deserialize<ResultsReadyStatus>(dataBuffer);
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
-                      .timestamp = resultsReadyData.timestamp,
+                      .startTime = resultsReadyData.startTime,
                       .errorCode = ErrorCode::success};
     }
 

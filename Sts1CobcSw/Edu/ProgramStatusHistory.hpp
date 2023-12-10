@@ -26,7 +26,7 @@ enum class ProgramStatus : std::uint8_t
 struct ProgramStatusHistoryEntry
 {
     std::uint16_t programId = 0;
-    std::int32_t timestamp = 0;
+    std::int32_t startTime = 0;
     ProgramStatus status = ProgramStatus::programRunning;
 };
 
@@ -38,6 +38,6 @@ extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> pr
 
 
 auto UpdateProgramStatusHistory(std::uint16_t programId,
-                                std::int32_t timestamp,
+                                std::int32_t startTime,
                                 ProgramStatus newStatus) -> void;
 }

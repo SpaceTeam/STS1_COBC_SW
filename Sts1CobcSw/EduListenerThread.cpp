@@ -83,14 +83,14 @@ private:
                         {
                             edu::UpdateProgramStatusHistory(
                                 status.programId,
-                                status.timestamp,
+                                status.startTime,
                                 edu::ProgramStatus::programExecutionSucceeded);
                         }
                         else
                         {
                             edu::UpdateProgramStatusHistory(
                                 status.programId,
-                                status.timestamp,
+                                status.startTime,
                                 edu::ProgramStatus::programExecutionFailed);
                         }
                         ResumeEduProgramQueueThread();
@@ -125,7 +125,7 @@ private:
                         // break;
 
                         edu::UpdateProgramStatusHistory(status.programId,
-                                                        status.timestamp,
+                                                        status.startTime,
                                                         edu::ProgramStatus::resultFileTransfered);
                         break;
                     }

@@ -23,7 +23,6 @@ namespace edu
 struct QueueEntry
 {
     std::uint16_t programId = 0;
-    std::int32_t timestamp = 0;
     std::int32_t startTime = 0;
     std::int16_t timeout = 0;
 };
@@ -33,7 +32,6 @@ struct QueueEntry
 template<>
 inline constexpr std::size_t serialSize<edu::QueueEntry> =
     totalSerialSize<decltype(edu::QueueEntry::programId),
-                    decltype(edu::QueueEntry::timestamp),
                     decltype(edu::QueueEntry::startTime),
                     decltype(edu::QueueEntry::timeout)>;
 
