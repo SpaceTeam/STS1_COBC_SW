@@ -537,14 +537,14 @@ auto ReturnResultCommunication() -> ResultInfo
 //! Update Time:
 //! -> [DATA]
 //! -> [Command Header]
-//! -> [Timestamp]
+//! -> [Current Time]
 //! <- [N/ACK]
 //! <- [N/ACK]
 //!
 //! The first N/ACK confirms a valid data packet,
 //! the second N/ACK confirms the time update.
 //!
-//! @param timestamp A unix timestamp
+//! @param currentTime A unix timestamp
 //!
 //! @returns A relevant error code
 auto UpdateTime(UpdateTimeData const & data) -> ErrorCode

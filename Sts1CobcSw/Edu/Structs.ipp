@@ -62,7 +62,7 @@ template<std::endian endianness>
 auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, UpdateTimeData::id);
-    destination = SerializeTo<endianness>(destination, data.timestamp);
+    destination = SerializeTo<endianness>(destination, data.currentTime);
     return destination;
 }
 }

@@ -98,7 +98,7 @@ auto GetStatus() -> Status
 auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
 {
     PrintFormattedSystemUtc();
-    PRINTF("Call to UpdateTime(timestamp = %" PRIi32 ")\n", data.timestamp);
+    PRINTF("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime);
     return ErrorCode::success;
 }
 

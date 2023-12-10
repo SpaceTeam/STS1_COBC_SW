@@ -61,9 +61,9 @@ private:
             {
                 case 'u':
                 {
-                    auto timestamp = utility::GetUnixUtc();
-                    PRINTF("Sending UpdateTime(timestamp = %d)\n", static_cast<int>(timestamp));
-                    auto errorCode = edu::UpdateTime({.timestamp = timestamp});
+                    auto currentTime = utility::GetUnixUtc();
+                    PRINTF("Sending UpdateTime(currentTime = %d)\n", static_cast<int>(currentTime));
+                    auto errorCode = edu::UpdateTime({.currentTime = currentTime});
                     PRINTF("Returned error code: %d\n", static_cast<int>(errorCode));
                     break;
                 }

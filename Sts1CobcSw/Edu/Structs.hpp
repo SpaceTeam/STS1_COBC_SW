@@ -46,7 +46,7 @@ struct ExecuteProgramData
 struct UpdateTimeData
 {
     static constexpr auto id = updateTimeId;
-    std::int32_t timestamp;
+    std::int32_t currentTime;
 };
 
 
@@ -112,7 +112,7 @@ inline constexpr std::size_t serialSize<edu::ExecuteProgramData> =
 
 template<>
 inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
-    totalSerialSize<decltype(edu::UpdateTimeData::id), decltype(edu::UpdateTimeData::timestamp)>;
+    totalSerialSize<decltype(edu::UpdateTimeData::id), decltype(edu::UpdateTimeData::currentTime)>;
 
 
 namespace edu

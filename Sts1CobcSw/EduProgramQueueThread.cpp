@@ -94,7 +94,7 @@ private:
             utility::PrintFormattedSystemUtc();
 
             auto errorCode =
-                edu::UpdateTime(edu::UpdateTimeData{.timestamp = utility::GetUnixUtc()});
+                edu::UpdateTime(edu::UpdateTimeData{.currentTime = utility::GetUnixUtc()});
             if(errorCode != edu::ErrorCode::success)
             {
                 RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode));
