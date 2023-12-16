@@ -20,6 +20,8 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         //! contain a value
         if(!base::_has_value(std::forward<Impl>(self)))
         {
+            RODOS::PRINTF(
+                "Error: The value is not present. Performing hardware reset and reboot.\n");
             RODOS::hwResetAndReboot();
         }
     }
@@ -32,6 +34,8 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         //! contain an error
         if(!base::_has_error(std::forward<Impl>(self)))
         {
+            RODOS::PRINTF(
+                "Error: The error is not present. Performing hardware reset and reboot.\n");
             RODOS::hwResetAndReboot();
         }
     }
@@ -42,6 +46,8 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
     {
         if(!base::_has_exception(std::forward<Impl>(self)))
         {
+            RODOS::PRINTF(
+                "Error: The exception is not present. Performing hardware reset and reboot.\n");
             RODOS::hwResetAndReboot();
         }
     }
