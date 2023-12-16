@@ -52,11 +52,11 @@ private:
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
                 // Communicate with EDU
 
-                auto statusResult = edu::GetStatus();
+                auto getStatusResult = edu::GetStatus();
                 // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
                 // status.errorCode);
 
-                if(statusResult.has_error())
+                if(getStatusResult.has_error())
                 {
                     // RODOS::PRINTF("[EduListenerThread] GetStatus() error code : %d.\n",
                     // status.errorCode);
@@ -65,15 +65,12 @@ private:
                     //   GetStatus().\n");
                     ResumeEduCommunicationErrorThread();
                 }
-                else
+
+                if(getStatusResult.has_value())
                 {
                     // RODOS::PRINTF("[EduListenerThread] Call to GetStatus() resulted in
                     // success.\n");
-                }
-
-                if(statusResult.has_value())
-                {
-                    auto status = statusResult.value();
+                    auto status = getStatusResult.value();
                     switch(status.statusType)
                     {
                         case edu::StatusType::programFinished:

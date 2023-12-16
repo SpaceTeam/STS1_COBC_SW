@@ -223,16 +223,17 @@ auto GetStatus() -> Result<Status>
 
     while(true)
     {
-        auto status = GetStatusCommunication();
-        if(status)
+        auto getStatusCommunicationResult = GetStatusCommunication();
+        if(getStatusCommunicationResult.has_value())
         {
+            auto status = getStatusCommunicationResult.value();
             SendCommand(cmdAck);
             RODOS::PRINTF(
                 "  .statusType = %d\n  .programId = %d\n  .startTime = %d\n  exitCode = %d\n",
-                status.value().statusType,
-                status.value().programId,
-                status.value().startTime,
-                status.value().exitCode);
+                status.statusType,
+                status.programId,
+                status.startTime,
+                status.exitCode);
             return status;
         }
         // Error in GetStatusCommunication()
@@ -242,8 +243,8 @@ auto GetStatus() -> Result<Status>
 
         if(errorCount >= maxNNackRetries)
         {
-            RODOS::PRINTF("  .errorCode = %d\n", status.error());
-            return status.error();
+            RODOS::PRINTF("  .errorCode = %d\n", getStatusCommunicationResult.error());
+            return getStatusCommunicationResult.error();
         }
     }
 }
@@ -361,20 +362,20 @@ auto ReturnResult() -> Result<ResultInfo>
         // DEBUG
         // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets));
         // END DEBUG
-        auto resultInfo = ReturnResultRetry();
+        auto returnResultRetryResult = ReturnResultRetry();
         // TYPE Result<something>
         // DEBUG
 
         // Break if an error is returned
-        if(resultInfo.has_error())
+        if(returnResultRetryResult.has_error())
         {
-            auto errorCode = resultInfo.error();
+            auto errorCode = returnResultRetryResult.error();
             RODOS::PRINTF(" ReturnResultRetry() resulted in an error : %d",
                           static_cast<int>(errorCode));
-            return resultInfo.error();
+            return returnResultRetryResult.error();
         }
         // or if EOF is reached
-        if(resultInfo.value().eofIsReached)
+        if(returnResultRetryResult.value().eofIsReached)
         {
             RODOS::PRINTF(" ReturnResultRetry() reached EOF\n");
             return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
@@ -384,7 +385,7 @@ auto ReturnResult() -> Result<ResultInfo>
         // RODOS::PRINTF("\nWriting to file...\n");
         // TODO: Actually write to a file
 
-        totalResultSize += resultInfo.value().resultSize;
+        totalResultSize += returnResultRetryResult.value().resultSize;
         nPackets++;
     }
     return ResultInfo{.eofIsReached = false, .resultSize = totalResultSize};
@@ -403,12 +404,12 @@ auto ReturnResultRetry() -> Result<ResultInfo>
     // errorCount <= maxNNackRetries as the termination condition
     while(true)
     {
-        auto resultInfo = ReturnResultCommunication();
-        if(resultInfo.has_value())
+        auto returnResultCommunicationResult = ReturnResultCommunication();
+        if(returnResultCommunicationResult.has_value())
         {
             SendCommand(cmdAck);
             // returns {eofIsReached, resultSize}
-            return resultInfo.value();
+            return returnResultCommunicationResult.value();
         }
 
         // Error in ReturnResultCommunication()
@@ -417,7 +418,7 @@ auto ReturnResultRetry() -> Result<ResultInfo>
         errorCount++;
         if(errorCount == maxNNackRetries)
         {
-            return resultInfo.error();
+            return returnResultCommunicationResult.error();
         }
     }
 
