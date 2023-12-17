@@ -100,8 +100,8 @@ private:
                             // Edu wants to send result file
                             // Send return result to Edu, Communicate, and interpret the results to
                             // update the S&H Entry from 3 or 4 to 5.
-                            auto resultInfoResult = edu::ReturnResult();
-                            if(resultInfoResult.has_error())
+                            auto returnResultResult = edu::ReturnResult();
+                            if(returnResultResult.has_error())
                             {
                                 /*
                                 RODOS::PRINTF(
