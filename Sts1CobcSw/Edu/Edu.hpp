@@ -3,7 +3,7 @@
 
 #include <Sts1CobcSw/Edu/Enums.hpp>
 #include <Sts1CobcSw/Edu/Structs.hpp>
-#include <Sts1CobcSw/ErrorHandling/Outcome.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
