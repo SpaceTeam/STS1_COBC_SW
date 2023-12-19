@@ -1,4 +1,3 @@
 Checks: "-readability-identifier-length, \
          -*magic-numbers*"
 InheritParentConfig: true
-

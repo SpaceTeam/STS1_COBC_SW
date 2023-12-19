@@ -10,14 +10,7 @@ using RODOS::PRINTF;
 using utility::PrintFormattedSystemUtc;
 
 
-// TODO: Move this to the proper file
-auto ResumeEduErrorCommunicationThread() -> void
-{
-    PRINTF("\nCall to ResumeEduErrorCommunicationThread()\n");
-    PrintFormattedSystemUtc();
-}
-
-
+// TODO: Move this to EduProgramQueueThreadMock.cpp or something
 auto ResumeEduProgramQueueThread() -> void
 {
     PRINTF("Call to ResumeEduProgramQueueThread()\n");
@@ -27,7 +20,6 @@ auto ResumeEduProgramQueueThread() -> void
 // TODO: This file is not used at all right now. Think about the mocking later.
 namespace edu
 {
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Initialize() -> void
 {
     PrintFormattedSystemUtc();
@@ -35,7 +27,6 @@ auto Initialize() -> void
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto TurnOn() -> void
 {
     PrintFormattedSystemUtc();
@@ -43,7 +34,6 @@ auto TurnOn() -> void
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto TurnOff() -> void
 {
     PrintFormattedSystemUtc();
@@ -51,8 +41,7 @@ auto TurnOff() -> void
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
+auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StoreArchive(programId = %d)\n", data.programId);
@@ -60,80 +49,38 @@ auto StoreArchive(StoreArchiveData const & data) -> std::int32_t
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto ExecuteProgram(ExecuteProgramData const & data) -> ErrorCode
+auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
            data.programId,
            data.startTime,
            data.timeout);
-    return ErrorCode::success;
+    return outcome_v2::success();
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto StopProgram() -> ErrorCode
+auto StopProgram() -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StopProgram()\n");
-    return ErrorCode::success;
+    return outcome_v2::success();
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto GetStatus() -> Status
+auto GetStatus() -> Result<Status>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to GetStatus()\n");
-    return {.statusType = StatusType::invalid,
-            .programId = 0,
-            .startTime = 0,
-            .exitCode = 0,
-            .errorCode = ErrorCode::success};
+    return Status{.statusType = StatusType::invalid, .programId = 0, .startTime = 0, .exitCode = 0};
 }
 
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto UpdateTime(UpdateTimeData const & data) -> ErrorCode
+auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime);
-    return ErrorCode::success;
-}
-
-
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto SendCommand(Byte commandId) -> void
-{
-    PrintFormattedSystemUtc();
-    PRINTF("Call to SendCommand(commandId = 0x%02x)\n", static_cast<unsigned int>(commandId));
-}
-
-
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto SendData(std::span<Byte> data) -> ErrorCode
-{
-    PrintFormattedSystemUtc();
-    PRINTF("Call to SendData(size(data) = %d)\n", size(data));
-    return ErrorCode::success;
-}
-
-
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto UartReceive([[maybe_unused]] std::span<Byte> destination) -> ErrorCode
-{
-    PrintFormattedSystemUtc();
-    PRINTF("Call to UartReceive(size(destination) = %d)\n", size(destination));
-    return ErrorCode::success;
-}
-
-
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void FlushUartBuffer()
-{
-    PrintFormattedSystemUtc();
-    PRINTF("Call to FlushUartBuffer()\n");
+    return outcome_v2::success();
 }
 }
 }

@@ -27,6 +27,7 @@ endif()
 
 add_library(Sts1CobcSw_Dummy STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
+add_library(Sts1CobcSw_Outcome INTERFACE)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility STATIC)
 add_program(HelloDummy)

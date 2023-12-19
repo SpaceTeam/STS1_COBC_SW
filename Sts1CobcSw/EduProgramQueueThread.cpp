@@ -93,11 +93,12 @@ private:
             RODOS::PRINTF("Resuming here after first wait.\n");
             utility::PrintFormattedSystemUtc();
 
-            auto errorCode =
+            auto updateTimeResult =
                 edu::UpdateTime(edu::UpdateTimeData{.currentTime = utility::GetUnixUtc()});
-            if(errorCode != edu::ErrorCode::success)
+            if(updateTimeResult.has_error())
             {
-                RODOS::PRINTF("UpdateTime error code : %d\n", static_cast<int>(errorCode));
+                RODOS::PRINTF("UpdateTime error code : %d\n",
+                              static_cast<int>(updateTimeResult.error()));
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
                 ResumeEduCommunicationErrorThread();
@@ -126,10 +127,10 @@ private:
             auto executeProgramData = edu::ExecuteProgramData{
                 .programId = programId, .startTime = startTime, .timeout = timeout};
             // Start Process
-            errorCode = edu::ExecuteProgram(executeProgramData);
+            auto executeProgramResult = edu::ExecuteProgram(executeProgramData);
             // errorCode = edu::ErrorCode::success;
 
-            if(errorCode != edu::ErrorCode::success)
+            if(executeProgramResult.has_error())
             {
                 RODOS::PRINTF(
                     "[EduProgramQueueThread] Communication error after call to "

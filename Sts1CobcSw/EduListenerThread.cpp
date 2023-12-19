@@ -46,18 +46,17 @@ private:
             eduIsAliveBufferForListener.get(eduIsAlive);
             // RODOS::PRINTF("[EduListenerThread] Read eduHasUpdate pin\n");
 
-            // TODO: Check if edu is alive
+            // TODO: Check if EDU is alive
             if(eduIsAlive and eduHasUpdate)
             {
                 // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
                 // Communicate with EDU
 
-                auto status = edu::GetStatus();
+                auto getStatusResult = edu::GetStatus();
                 // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
                 // status.errorCode);
 
-                if(status.errorCode != edu::ErrorCode::success
-                   and status.errorCode != edu::ErrorCode::successEof)
+                if(getStatusResult.has_error())
                 {
                     // RODOS::PRINTF("[EduListenerThread] GetStatus() error code : %d.\n",
                     // status.errorCode);
@@ -66,73 +65,73 @@ private:
                     //   GetStatus().\n");
                     ResumeEduCommunicationErrorThread();
                 }
-                else
+
+                if(getStatusResult.has_value())
                 {
                     // RODOS::PRINTF("[EduListenerThread] Call to GetStatus() resulted in
                     // success.\n");
-                }
-
-                switch(status.statusType)
-                {
-                    case edu::StatusType::programFinished:
+                    auto status = getStatusResult.value();
+                    switch(status.statusType)
                     {
-                        // Program has finished
-                        // Find the correspongind queueEntry and update it, then resume edu queue
-                        // thread
-                        if(status.exitCode == 0)
+                        case edu::StatusType::programFinished:
                         {
+                            // Program has finished
+                            // Find the correspongind queueEntry and update it, then resume edu
+                            // queue thread
+                            if(status.exitCode == 0)
+                            {
+                                edu::UpdateProgramStatusHistory(
+                                    status.programId,
+                                    status.startTime,
+                                    edu::ProgramStatus::programExecutionSucceeded);
+                            }
+                            else
+                            {
+                                edu::UpdateProgramStatusHistory(
+                                    status.programId,
+                                    status.startTime,
+                                    edu::ProgramStatus::programExecutionFailed);
+                            }
+                            ResumeEduProgramQueueThread();
+                            break;
+                        }
+                        case edu::StatusType::resultsReady:
+                        {
+                            // Edu wants to send result file
+                            // Send return result to Edu, Communicate, and interpret the results to
+                            // update the S&H Entry from 3 or 4 to 5.
+                            auto returnResultResult = edu::ReturnResult();
+                            if(returnResultResult.has_error())
+                            {
+                                /*
+                                RODOS::PRINTF(
+                                    "[EduListenerThread] Error Code From ReturnResult() : %d.\n",
+                                    errorCode);
+                                RODOS::PRINTF(
+                                    "[EduListenerThread] Communication error after call to "
+                                    "ReturnResult().\n");
+                                    */
+                                ResumeEduCommunicationErrorThread();
+                            }
+                            else
+                            {
+                                // RODOS::PRINTF(
+                                //    "[EduListenerThread] Call to ReturnResults() resulted in "
+                                //    "success.\n");
+                            }
+                            // break;
+
                             edu::UpdateProgramStatusHistory(
                                 status.programId,
                                 status.startTime,
-                                edu::ProgramStatus::programExecutionSucceeded);
+                                edu::ProgramStatus::resultFileTransfered);
+                            break;
                         }
-                        else
+                        case edu::StatusType::invalid:
+                        case edu::StatusType::noEvent:
                         {
-                            edu::UpdateProgramStatusHistory(
-                                status.programId,
-                                status.startTime,
-                                edu::ProgramStatus::programExecutionFailed);
+                            break;
                         }
-                        ResumeEduProgramQueueThread();
-                        break;
-                    }
-                    case edu::StatusType::resultsReady:
-                    {
-                        // Edu wants to send result file
-                        // Send return result to Edu, Communicate, and interpret the results to
-                        // update the S&H Entry from 3 or 4 to 5.
-                        auto resultsInfo = edu::ReturnResult();
-                        auto errorCode = resultsInfo.errorCode;
-                        if(errorCode != edu::ErrorCode::success
-                           and errorCode != edu::ErrorCode::successEof)
-                        {
-                            /*
-                            RODOS::PRINTF(
-                                "[EduListenerThread] Error Code From ReturnResult() : %d.\n",
-                                errorCode);
-                            RODOS::PRINTF(
-                                "[EduListenerThread] Communication error after call to "
-                                "ReturnResult().\n");
-                                */
-                            ResumeEduCommunicationErrorThread();
-                        }
-                        else
-                        {
-                            // RODOS::PRINTF(
-                            //    "[EduListenerThread] Call to ReturnResults() resulted in "
-                            //    "success.\n");
-                        }
-                        // break;
-
-                        edu::UpdateProgramStatusHistory(status.programId,
-                                                        status.startTime,
-                                                        edu::ProgramStatus::resultFileTransfered);
-                        break;
-                    }
-                    case edu::StatusType::invalid:
-                    case edu::StatusType::noEvent:
-                    {
-                        break;
                     }
                 }
             }

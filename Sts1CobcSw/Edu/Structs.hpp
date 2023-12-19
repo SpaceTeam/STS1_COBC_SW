@@ -56,7 +56,6 @@ struct Status
     std::uint16_t programId = 0;
     std::int32_t startTime = 0;
     std::uint8_t exitCode = 0;
-    ErrorCode errorCode = ErrorCode::noErrorCodeSet;
 };
 
 
@@ -77,7 +76,7 @@ struct ProgramFinishedStatus
 
 struct ResultInfo
 {
-    ErrorCode errorCode = ErrorCode::noErrorCodeSet;
+    bool eofIsReached = false;
     std::size_t resultSize = 0;
 };
 }

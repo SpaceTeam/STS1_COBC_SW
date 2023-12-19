@@ -6,10 +6,7 @@ namespace sts1cobcsw::edu
 {
 enum class ErrorCode
 {
-    noErrorCodeSet,
-    success,
-    successEof,
-    invalidResult,
+    invalidResult = 1,
     bufferTooSmall,
     uartNotInitialized,
     timeout,
