@@ -21,7 +21,7 @@ namespace sts1cobcsw::flash
 
 
 using Page = std::array<Byte, pageSize>;
-using PageSpan = std::span<Byte, pageSize>;
+using PageSpan = std::span<Byte const, pageSize>;
 
 
 struct JedecId
