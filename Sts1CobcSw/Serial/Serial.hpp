@@ -54,6 +54,7 @@ template<typename T>
     requires(serialSize<T> != 0U)
 using Buffer = std::array<Byte, serialSize<T>>;
 
+// TODO: Maybe remove this type alias or prepend "Serial" to both again
 template<typename T>
     requires(serialSize<T> != 0U)
 using BufferView = std::span<Byte const, serialSize<T>>;

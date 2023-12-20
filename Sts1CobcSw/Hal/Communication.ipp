@@ -6,12 +6,11 @@
 
 namespace sts1cobcsw::hal
 {
-template<typename T, std::size_t size>
-inline auto WriteTo(auto * communicationInterface, std::span<T, size> data)
+template<typename T, std::size_t extent>
+inline auto WriteTo(auto * communicationInterface, std::span<T const, extent> data) -> void
 {
     std::size_t nSentBytes = 0U;
     auto bytes = std::as_bytes(data);
-
     while(nSentBytes < bytes.size())
     {
         nSentBytes +=
@@ -20,60 +19,23 @@ inline auto WriteTo(auto * communicationInterface, std::span<T, size> data)
 }
 
 
-inline auto WriteTo(auto * communicationInterface, std::string_view message)
-{
-    std::size_t nSentBytes = 0U;
-    while(nSentBytes < message.size())
-    {
-        nSentBytes +=
-            communicationInterface->write(message.data() + nSentBytes, message.size() - nSentBytes);
-    }
-}
-
-
-template<std::size_t size>
-inline auto ReadFrom(auto * communicationInterface, std::span<std::byte, size> readBuffer)
+template<std::size_t extent>
+inline auto ReadFrom(auto * communicationInterface, std::span<Byte, extent> data) -> void
 {
     std::size_t nReadBytes = 0U;
-    while(nReadBytes < size)
+    while(nReadBytes < data.size())
     {
         nReadBytes +=
-            communicationInterface->read(data(readBuffer) + nReadBytes, size - nReadBytes);
+            communicationInterface->read(data.data() + nReadBytes, data.size() - nReadBytes);
     }
 }
 
 
 template<std::size_t size>
-inline auto ReadFrom(auto * communicationInterface, std::span<char, size> readBuffer)
+inline auto ReadFrom(RODOS::HAL_SPI * spi) -> std::array<Byte, size>
 {
-    std::size_t nReadBytes = 0U;
-    while(nReadBytes < size)
-    {
-        nReadBytes +=
-            communicationInterface->read(data(readBuffer) + nReadBytes, size - nReadBytes);
-    }
-}
-
-
-template<std::size_t size>
-inline auto WriteToReadFrom(auto * communicationInterface,
-                            std::string_view message,
-                            etl::string<size> * answer)
-{
-    answer->initialize_free_space();
-    auto nReceivedBytes = communicationInterface->writeRead(
-        message.data(), message.size(), answer->data(), answer->capacity());
-    answer->trim_to_terminator();
-
-    return nReceivedBytes;
-}
-
-template<std::size_t nBytes>
-auto WriteToReadFrom(auto * communicationInterface, std::span<Byte, nBytes> data)
-    -> std::array<Byte, nBytes>
-{
-    auto readData = std::array<Byte, nBytes>{};
-    communicationInterface->writeRead(std::data(data), nBytes, std::data(readData), nBytes);
-    return readData;
+    auto buffer = std::array<Byte, size>{};
+    ReadFrom(spi, std::span(buffer));
+    return buffer;
 }
 }

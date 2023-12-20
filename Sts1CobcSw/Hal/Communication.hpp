@@ -15,28 +15,15 @@
 // TODO: Add declarations at the top to see all provided functionality at once
 namespace sts1cobcsw::hal
 {
+// TODO: Remove extent to avoid code bload?
+template<typename T, std::size_t extent>
+auto WriteTo(auto * communicationInterface, std::span<T const, extent> data) -> void;
 
-
-template<typename T, std::size_t size>
-auto WriteTo(auto * communicationInterface, std::span<T, size> data);
-
-auto WriteTo(auto * communicationInterface, std::string_view message);
-
-template<std::size_t size>
-auto ReadFrom(auto * communicationInterface, std::span<std::byte, size> readBuffer);
+template<std::size_t extent>
+auto ReadFrom(auto * communicationInterface, std::span<Byte, extent> data) -> void;
 
 template<std::size_t size>
-auto ReadFrom(auto * communicationInterface, std::span<char, size> readBuffer);
-
-template<std::size_t size>
-auto WriteToReadFrom(auto * communicationInterface,
-                     std::string_view message,
-                     etl::string<size> * answer);
-
-// TODO: Try const correctness for span again
-template<std::size_t nBytes>
-auto WriteToReadFrom(auto * communicationInterface, std::span<Byte, nBytes> data)
-    -> std::array<Byte, nBytes>;
+auto ReadFrom(RODOS::HAL_SPI * spi) -> std::array<Byte, size>;
 }
 
 
