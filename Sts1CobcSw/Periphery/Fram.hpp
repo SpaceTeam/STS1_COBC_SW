@@ -11,7 +11,7 @@
 
 namespace sts1cobcsw::fram
 {
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+// NOLINTNEXTLINE(*magic-numbers)
 using DeviceId = std::array<Byte, 9>;
 // TODO: Use a strong typedef or create class that ensures, that the address is only 20 bits long
 using Address = std::uint32_t;
@@ -20,14 +20,23 @@ using Address = std::uint32_t;
 [[nodiscard]] auto Initialize() -> std::int32_t;
 [[nodiscard]] auto ReadDeviceId() -> DeviceId;
 
-// TODO: Rename to ReadFrom() and WriteTo()
-auto ReadFrom(Address address, void * data, std::size_t size) -> void;
-auto WriteTo(Address address, void const * data, std::size_t size) -> void;
+template<std::size_t extent>
+auto WriteTo(Address address, std::span<Byte const, extent> data) -> void;
 
-template<typename T>
-[[nodiscard]] auto Read(Address address) -> T;
-template<typename T>
-auto WriteTo(Address address, T const & t) -> void;
+template<std::size_t extent>
+auto ReadFrom(Address address, std::span<Byte, extent> data) -> void;
+
+template<std::size_t size>
+[[nodiscard]] auto ReadFrom(Address address) -> std::array<Byte, size>;
+
+
+// Contents of namespace internal is only for internal use and not part of the public interface. The
+// declarations here are necessary because of templates.
+namespace internal
+{
+auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void;
+auto ReadFrom(Address address, void * data, std::size_t nBytes) -> void;
+}
 }
 
 
