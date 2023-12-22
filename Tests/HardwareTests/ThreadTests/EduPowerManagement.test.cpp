@@ -41,7 +41,7 @@ private:
         PRINTF("\n");
         PRINTF("EDU power management test\n");
 
-        std::int64_t startDelay = 0;
+        // std::int64_t startDelay = 0;
 
         /*
         while(true)

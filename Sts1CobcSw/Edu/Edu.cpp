@@ -225,12 +225,12 @@ auto GetStatus() -> Result<Status>
         {
             auto status = getStatusCommunicationResult.value();
             SendCommand(cmdAck);
-            RODOS::PRINTF(
-                "  .statusType = %d\n  .programId = %d\n  .startTime = %d\n  exitCode = %d\n",
-                status.statusType,
-                status.programId,
-                status.startTime,
-                status.exitCode);
+            RODOS::PRINTF("  .statusType = %d\n  .programId = %d\n  .startTime = %" PRIi32
+                          "\n  exitCode = %d\n",
+                          static_cast<int>(status.statusType),
+                          status.programId,
+                          status.startTime,
+                          status.exitCode);
             return status;
         }
         FlushUartBuffer();
@@ -238,7 +238,8 @@ auto GetStatus() -> Result<Status>
         nErrors++;
         if(nErrors >= maxNNackRetries)
         {
-            RODOS::PRINTF("  .errorCode = %d\n", getStatusCommunicationResult.error());
+            RODOS::PRINTF("  .errorCode = %d\n",
+                          static_cast<int>(getStatusCommunicationResult.error()));
             return getStatusCommunicationResult.error();
         }
     }

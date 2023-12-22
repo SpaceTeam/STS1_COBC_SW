@@ -64,7 +64,7 @@ private:
         PRINTF("Status register 3: 0x%02x == 0x41\n", static_cast<unsigned int>(statusRegister));
         Check(statusRegister == 0x41_b);
 
-        std::uint32_t pageAddress = 0x00'01'00'00;
+        std::uint32_t const pageAddress = 0x00'01'00'00U;
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
@@ -89,7 +89,6 @@ private:
         Print(page);
 
         PRINTF("\n");
-        // constexpr auto sectorAddress = 0x00'00'00'00;
         PRINTF("Erasing sector containing address 0x%08x:\n",
                static_cast<unsigned int>(pageAddress));
         flash::EraseSector(pageAddress);
