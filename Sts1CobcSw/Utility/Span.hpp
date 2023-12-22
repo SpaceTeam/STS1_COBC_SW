@@ -5,7 +5,7 @@
 //! in this file to turn single objects or arrays of objects to the "correct" `std::span`.
 //! Parameters passed by `& const` are converted to spans with read-only elements, and those passed
 //! as a non-const pointer are converted to spans with mutable elements. This solves the problem
-//! that `std::span<T>` does not implicitely convert to `std::span<T const>`.
+//! that `std::span<T>` does not implicitly convert to `std::span<T const>`.
 
 #pragma once
 

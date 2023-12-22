@@ -15,7 +15,7 @@
 // TODO: Add declarations at the top to see all provided functionality at once
 namespace sts1cobcsw::hal
 {
-// TODO: Remove extent to avoid code bload?
+// TODO: Remove extent to avoid code bloat?
 template<typename T, std::size_t extent>
 auto WriteTo(auto * communicationInterface, std::span<T const, extent> data) -> void;
 

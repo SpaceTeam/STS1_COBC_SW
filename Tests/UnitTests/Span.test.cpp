@@ -10,7 +10,7 @@
 using sts1cobcsw::Span;
 
 
-// The extra level of indirection privided by this function object is necessary to test if some
+// The extra level of indirection provided by this function object is necessary to test if some
 // calls to Span() do not compile without actually throwing compiler errors. The magic lies in
 // decltype(expression) which only pretends to evaluate the expression to get its type. If the
 // expression is ill-formed (i.e. it would not compile) the operator() for this type T is removed
