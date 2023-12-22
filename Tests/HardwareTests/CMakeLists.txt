@@ -30,9 +30,6 @@ target_link_libraries(
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PRIVATE rodos::rodos Sts1CobcSw_Hal)
 
-add_program(Spi Spi.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Spi PRIVATE etl::etl rodos::rodos Sts1CobcSw_Hal)
-
 add_program(Uart Uart.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Utility)
 
