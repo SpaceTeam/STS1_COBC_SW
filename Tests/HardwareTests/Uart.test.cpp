@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -40,7 +41,7 @@ class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        constexpr auto uartBaudRate = 115200;
+        auto uartBaudRate = 115200U;
         eduUart.init(uartBaudRate);
         uciUart.init(uartBaudRate);
     }
@@ -48,21 +49,20 @@ class UartTest : public RODOS::StaticThread<>
 
     void run() override
     {
-        hal::WriteTo(&uciUart, "Hello UCI UART!\n");
+        hal::WriteTo(&uciUart, Span("Hello UCI UART!\n"));
 
         while(true)
         {
             constexpr auto bufferSize = 5;
             auto buffer = std::array<std::byte, bufferSize>{};
 
-            hal::WriteTo(&uciUart, "\nPlease send ");
-            auto bufferSizeString = ToChars(bufferSize);
-            hal::WriteTo(&uciUart, std::span(bufferSizeString));
-            hal::WriteTo(&uciUart, " characters\n");
-            hal::ReadFrom(&uciUart, std::span(buffer));
-            hal::WriteTo(&uciUart, "You sent: ");
-            hal::WriteTo(&uciUart, std::span(buffer));
-            hal::WriteTo(&uciUart, "\n");
+            hal::WriteTo(&uciUart, Span("\nPlease send "));
+            hal::WriteTo(&uciUart, Span(ToChars(bufferSize)));
+            hal::WriteTo(&uciUart, Span(" characters\n"));
+            hal::ReadFrom(&uciUart, Span(&buffer));
+            hal::WriteTo(&uciUart, Span("You sent: "));
+            hal::WriteTo(&uciUart, Span(buffer));
+            hal::WriteTo(&uciUart, Span("\n"));
         }
     }
 } uartTest;

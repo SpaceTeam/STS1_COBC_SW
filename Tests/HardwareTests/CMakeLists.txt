@@ -34,7 +34,7 @@ add_program(Spi Spi.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Spi PRIVATE etl::etl rodos::rodos Sts1CobcSw_Hal)
 
 add_program(Uart Uart.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal)
+target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Utility)
 
 add_program(Watchdog Watchdog.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Watchdog PRIVATE rodos::rodos Sts1CobcSw_Hal)
