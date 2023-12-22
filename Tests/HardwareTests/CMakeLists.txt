@@ -1,4 +1,3 @@
-add_subdirectory(EduCommandTests)
 add_subdirectory(ThreadTests)
 
 add_library(Sts1CobcSwTests_Utility STATIC Utility.cpp)
@@ -9,6 +8,12 @@ target_include_directories(
 
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos)
+
+add_program(EduCommands EduCommands.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_EduCommands PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
+                                        Sts1CobcSw_Hal Sts1CobcSw_Edu
+)
 
 add_program(FileSystem FileSystem.test.cpp)
 target_link_libraries(
@@ -46,4 +51,4 @@ get_property(
 )
 
 add_custom_target(AllHardwareTests) # Must be defined after getting all hardware test targets
-add_dependencies(AllHardwareTests ${top_level_hw_test_targets} AllEduCommandTests AllThreadTests)
+add_dependencies(AllHardwareTests ${top_level_hw_test_targets} AllThreadTests)
