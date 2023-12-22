@@ -36,7 +36,7 @@ add_program(HelloDummy)
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_FileSystem STATIC)
     add_library(Sts1CobcSw_Periphery STATIC)
-    add_library(Sts1CobcSw_Hal INTERFACE)
+    add_library(Sts1CobcSw_Hal STATIC)
     add_program(CobcSw)
 endif()
 

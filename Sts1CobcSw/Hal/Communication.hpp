@@ -8,13 +8,16 @@
 #include <etl/string.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <span>
 #include <string_view>
 
 
-// TODO: Add declarations at the top to see all provided functionality at once
 namespace sts1cobcsw::hal
 {
+auto Initialize(RODOS::HAL_SPI * spi, std::uint32_t baudRate) -> std::int32_t;
+auto Initialize(RODOS::HAL_UART * uart, std::uint32_t baudRate) -> std::int32_t;
+
 // TODO: Remove extent to avoid code bloat?
 template<typename T, std::size_t extent>
 auto WriteTo(auto * communicationInterface, std::span<T const, extent> data) -> void;

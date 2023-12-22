@@ -94,8 +94,8 @@ auto Initialize() -> std::int32_t
     csGpioPin.Set();
     writeProtectionGpioPin.Set();
 
-    constexpr auto baudrate = 1'000'000;
-    auto errorCode = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+    constexpr auto baudRate = 1'000'000;
+    auto errorCode = hal::Initialize(&spi, baudRate);
 
     Enter4ByteAdressMode();
 

@@ -50,8 +50,8 @@ auto Initialize() -> std::int32_t
     csGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
 
-    auto const baudrate = 1'000'000;
-    return spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+    auto const baudRate = 1'000'000;
+    return hal::Initialize(&spi, baudRate);
 }
 
 

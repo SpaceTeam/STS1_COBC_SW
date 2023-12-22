@@ -32,7 +32,8 @@ private:
     {
         edu::Initialize();
         eduUpdateGpioPin.Direction(hal::PinDirection::in);
-        uciUart.init();
+        auto const baudRate = 115'200;
+        hal::Initialize(&uciUart, baudRate);
     }
 
 

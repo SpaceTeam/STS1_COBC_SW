@@ -1,6 +1,6 @@
 add_program(EduCommands EduCommands.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_EduCommands PUBLIC rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
+    Sts1CobcSwTests_EduCommands PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
                                        Sts1CobcSw_Hal Sts1CobcSw_Edu
 )
 

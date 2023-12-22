@@ -13,6 +13,7 @@ inline auto WriteTo(auto * communicationInterface, std::span<T const, extent> da
     auto bytes = std::as_bytes(data);
     while(nSentBytes < bytes.size())
     {
+        // TODO: Fix warnings
         nSentBytes +=
             communicationInterface->write(bytes.data() + nSentBytes, bytes.size() - nSentBytes);
     }

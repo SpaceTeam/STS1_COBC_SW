@@ -39,7 +39,8 @@ private:
     void init() override
     {
         edu::Initialize();
-        uciUart.init();
+        auto const baudRate = 115'200;
+        hal::Initialize(&uciUart, baudRate);
     }
 
 
