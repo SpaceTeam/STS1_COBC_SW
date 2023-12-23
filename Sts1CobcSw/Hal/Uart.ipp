@@ -19,10 +19,7 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
         // UART_IDX is out of range. Since we can check that statically, we do not have to worry
         // about that though.
         nWrittenBytes += uart->write(bytes.data() + nWrittenBytes, bytes.size() - nWrittenBytes);
-        // TODO: See if AllowShortBlocksOnASingleLine: true does not break anything
-        while(not uart->isWriteFinished())
-        {
-        }
+        while(not uart->isWriteFinished()) {}
     }
 }
 
@@ -58,9 +55,7 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
     std::size_t nReadBytes = 0U;
     while(nReadBytes < bytes.size())
     {
-        while(not uart->isDataReady())
-        {
-        }
+        while(not uart->isDataReady()) {}
         // uart.read() reads at most RODOS::UART_BUF_SIZE bytes and returns how many it has actually
         // read. If a DMA receive is already in progress it reads nothing but still returns the
         // number of bytes it would have read.
