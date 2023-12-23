@@ -71,7 +71,7 @@ lfs_config const lfsConfig{.context = nullptr,
 
 auto Initialize() -> void
 {
-    [[maybe_unused]] auto errorCode = flash::Initialize();
+    flash::Initialize();
 }
 
 

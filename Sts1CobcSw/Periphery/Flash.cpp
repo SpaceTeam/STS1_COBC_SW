@@ -1,6 +1,6 @@
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -87,7 +87,7 @@ template<std::endian endianness>
 
 // ---Public function definitions ---
 
-auto Initialize() -> std::int32_t
+auto Initialize() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
     writeProtectionGpioPin.Direction(hal::PinDirection::out);
@@ -95,11 +95,9 @@ auto Initialize() -> std::int32_t
     writeProtectionGpioPin.Set();
 
     constexpr auto baudRate = 1'000'000;
-    auto errorCode = hal::Initialize(&spi, baudRate);
+    hal::Initialize(&spi, baudRate);
 
     Enter4ByteAdressMode();
-
-    return errorCode;
 }
 
 
@@ -235,7 +233,9 @@ inline auto Read(std::span<Byte, extent> data) -> void
 template<std::size_t size>
 inline auto Read() -> std::array<Byte, size>
 {
-    return hal::ReadFrom<size>(&spi);
+    auto answer = std::array<Byte, size>{};
+    hal::ReadFrom(&spi, Span(&answer));
+    return answer;
 }
 
 

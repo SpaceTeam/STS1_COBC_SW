@@ -18,9 +18,6 @@ using RODOS::PRINTF;
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
 
 
-std::int32_t errorCode = 0;
-
-
 class FramTest : public RODOS::StaticThread<>
 {
 public:
@@ -31,15 +28,12 @@ public:
 private:
     void init() override
     {
-        errorCode = fram::Initialize();
+        fram::Initialize();
     }
 
     void run() override
     {
         PRINTF("\nFRAM test\n\n");
-
-        PRINTF("Initialize(): %i == 0\n", static_cast<int>(errorCode));
-        Check(errorCode == 0);
 
         PRINTF("\n");
         auto deviceId = fram::ReadDeviceId();

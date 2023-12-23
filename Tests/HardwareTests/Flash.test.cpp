@@ -16,7 +16,6 @@ using RODOS::PRINTF;
 
 
 constexpr std::size_t stackSize = 5'000;
-std::int32_t errorCode = 0;
 
 
 auto Print(flash::Page const & page) -> void;
@@ -29,19 +28,17 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
-        errorCode = flash::Initialize();
+        flash::Initialize();
     }
 
 
     void run() override
     {
         PRINTF("\nFlash test\n\n");
-
-        PRINTF("Initialize(): %i == 0\n", static_cast<int>(errorCode));
-        Check(errorCode == 0);
 
         PRINTF("\n");
         auto jedecId = flash::ReadJedecId();

@@ -1,9 +1,9 @@
 //! @file
 //! @brief  Low-level driver for the FRAM chip CY15B108QN-40SXI
 
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
@@ -45,13 +45,13 @@ auto SetWriteEnableLatch() -> void;
 
 // --- Public function definitions ---
 
-auto Initialize() -> std::int32_t
+auto Initialize() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
 
     auto const baudRate = 1'000'000;
-    return hal::Initialize(&spi, baudRate);
+    hal::Initialize(&spi, baudRate);
 }
 
 

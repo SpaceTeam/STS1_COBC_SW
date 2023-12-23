@@ -6,10 +6,10 @@
 //!
 //! After flashing the COBC just follow the instructions on the screen.
 
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/PinNames.hpp>
+#include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -41,9 +41,9 @@ class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        auto uartBaudRate = 115200U;
-        eduUart.init(uartBaudRate);
-        uciUart.init(uartBaudRate);
+        auto uartBaudRate = 115'200U;
+        hal::Initialize(&eduUart, uartBaudRate);
+        hal::Initialize(&uciUart, uartBaudRate);
     }
 
 

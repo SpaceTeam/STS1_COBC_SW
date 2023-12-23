@@ -17,7 +17,7 @@ using DeviceId = std::array<Byte, 9>;
 using Address = std::uint32_t;
 
 
-[[nodiscard]] auto Initialize() -> std::int32_t;
+auto Initialize() -> void;
 [[nodiscard]] auto ReadDeviceId() -> DeviceId;
 
 template<std::size_t extent>
