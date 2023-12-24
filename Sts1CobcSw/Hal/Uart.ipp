@@ -7,7 +7,40 @@
 namespace sts1cobcsw::hal
 {
 template<typename T, std::size_t extent>
-auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
+inline auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
+{
+    internal::WriteTo(uart, std::span<T const, std::dynamic_extent>(data));
+}
+
+
+template<typename T, std::size_t extent>
+inline auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64_t timeout)
+    -> void
+{
+    internal::WriteTo(uart, std::span<T const, std::dynamic_extent>(data), timeout);
+}
+
+
+template<typename T, std::size_t extent>
+inline auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
+{
+    internal::ReadFrom(uart, std::span<T, std::dynamic_extent>(data));
+}
+
+
+template<typename T, std::size_t extent>
+inline auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t timeout)
+    -> void
+{
+    internal::ReadFrom(uart, std::span<T, std::dynamic_extent>(data), timeout);
+}
+
+
+namespace internal
+{
+// These internal functions use a span of dynamic extent to hopefully reduce binary size
+template<typename T>
+auto WriteTo(RODOS::HAL_UART * uart, std::span<T const> data) -> void
 {
     auto bytes = std::as_bytes(data);
     std::size_t nWrittenBytes = 0U;
@@ -24,8 +57,8 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
 }
 
 
-template<typename T, std::size_t extent>
-auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64_t timeout) -> void
+template<typename T>
+auto WriteTo(RODOS::HAL_UART * uart, std::span<T const> data, std::int64_t timeout) -> void
 {
     auto bytes = std::as_bytes(data);
     std::size_t nWrittenBytes = 0U;
@@ -48,8 +81,8 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64
 }
 
 
-template<typename T, std::size_t extent>
-auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
+template<typename T>
+auto ReadFrom(RODOS::HAL_UART * uart, std::span<T> data) -> void
 {
     auto bytes = std::as_writable_bytes(data);
     std::size_t nReadBytes = 0U;
@@ -64,8 +97,8 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
 }
 
 
-template<typename T, std::size_t extent>
-auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t timeout) -> void
+template<typename T>
+auto ReadFrom(RODOS::HAL_UART * uart, std::span<T> data, std::int64_t timeout) -> void
 {
     auto bytes = std::as_writable_bytes(data);
     std::size_t nReadBytes = 0U;
@@ -83,5 +116,6 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t ti
         // number of bytes it would have read.
         nReadBytes += uart->read(bytes.data() + nReadBytes, bytes.size() - nReadBytes);
     }
+}
 }
 }
