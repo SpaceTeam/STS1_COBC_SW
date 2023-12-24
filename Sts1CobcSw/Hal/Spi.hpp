@@ -19,8 +19,8 @@ auto Initialize(RODOS::HAL_SPI * spi, std::uint32_t baudRate) -> void;
 template<typename T, std::size_t extent>
 auto WriteTo(RODOS::HAL_SPI * spi, std::span<T const, extent> data) -> void;
 
-template<std::size_t extent>
-auto ReadFrom(RODOS::HAL_SPI * spi, std::span<Byte, extent> data) -> void;
+template<typename T, std::size_t extent>
+auto ReadFrom(RODOS::HAL_SPI * spi, std::span<T, extent> data) -> void;
 }
 
 

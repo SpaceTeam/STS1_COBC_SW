@@ -16,8 +16,8 @@ inline auto WriteTo(RODOS::HAL_SPI * spi, std::span<T const, extent> data) -> vo
 }
 
 
-template<std::size_t extent>
-inline auto ReadFrom(RODOS::HAL_SPI * spi, std::span<Byte, extent> data) -> void
+template<typename T, std::size_t extent>
+inline auto ReadFrom(RODOS::HAL_SPI * spi, std::span<T, extent> data) -> void
 {
     // spi.read() only returns -1 or the given buffer length. It only returns -1 if the SPI is not
     // initialized, which we can check/ensure statically. Therefore, we do not need to check the
