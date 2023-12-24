@@ -7,7 +7,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
-
+#include <type_traits>
 
 using sts1cobcsw::Byte;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)

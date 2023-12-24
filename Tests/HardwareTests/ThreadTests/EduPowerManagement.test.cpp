@@ -1,7 +1,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -32,7 +32,8 @@ private:
     {
         edu::Initialize();
         eduUpdateGpioPin.Direction(hal::PinDirection::in);
-        uciUart.init();
+        auto const baudRate = 115'200;
+        hal::Initialize(&uciUart, baudRate);
     }
 
 
@@ -41,7 +42,7 @@ private:
         PRINTF("\n");
         PRINTF("EDU power management test\n");
 
-        std::int64_t startDelay = 0;
+        // std::int64_t startDelay = 0;
 
         /*
         while(true)

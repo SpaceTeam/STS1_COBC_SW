@@ -19,5 +19,5 @@ namespace sts1cobcsw::utility
 //!
 //! @param data The data over which the checksum is calculated
 //! @returns The 32 bit checksum
-[[nodiscard]] auto Crc32(std::span<Byte> data) -> std::uint32_t;
+[[nodiscard]] auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t;
 }

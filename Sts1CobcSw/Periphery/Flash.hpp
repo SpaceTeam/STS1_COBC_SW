@@ -21,7 +21,7 @@ namespace sts1cobcsw::flash
 
 
 using Page = std::array<Byte, pageSize>;
-using PageSpan = std::span<Byte, pageSize>;
+using PageSpan = std::span<Byte const, pageSize>;
 
 
 struct JedecId
@@ -32,7 +32,7 @@ struct JedecId
 
 
 // TODO: Proper error handling/return type
-[[nodiscard]] auto Initialize() -> std::int32_t;
+auto Initialize() -> void;
 [[nodiscard]] auto ReadJedecId() -> JedecId;
 [[nodiscard]] auto ReadStatusRegister(std::int8_t registerNo) -> Byte;
 

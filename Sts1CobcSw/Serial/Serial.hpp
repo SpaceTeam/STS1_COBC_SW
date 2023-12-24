@@ -1,14 +1,14 @@
-// @file
-// @brief   Library for serializing and deserializing types
-//
-// End users should only directly call Serialize() and Deserialize(). These functions use the
-// low-level SerializeTo() and DeserializeFrom() which actually define how the (de-)serialization is
-// done. The low-level functions together with the variable template serialSize<> must be overloaded
-// for user-defined types to be (de-)serializable. For TriviallySerializable types this is already
-// done in this header. User-defined types should build on that.
-//
-// An example for (de-)serializing a simple user-defined type can be found in the unit test
-// Serial.test.cpp.
+//! @file
+//! @brief  Library for serializing and deserializing types
+//!
+//! End users should only directly call Serialize() and Deserialize(). These functions use the
+//! low-level SerializeTo() and DeserializeFrom() which actually define how the (de-)serialization
+//! is done. The low-level functions together with the variable template serialSize<> must be
+//! overloaded for user-defined types to be (de-)serializable. For TriviallySerializable types this
+//! is already done in this header. User-defined types should build on that.
+//!
+//! An example for (de-)serializing a simple user-defined type can be found in the unit test
+//! Serial.test.cpp.
 
 #pragma once
 
@@ -54,6 +54,7 @@ template<typename T>
     requires(serialSize<T> != 0U)
 using Buffer = std::array<Byte, serialSize<T>>;
 
+// TODO: Maybe remove this type alias or prepend "Serial" to both again
 template<typename T>
     requires(serialSize<T> != 0U)
 using BufferView = std::span<Byte const, serialSize<T>>;

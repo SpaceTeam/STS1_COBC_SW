@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <Tests/HardwareTests/Utility.hpp>
 
@@ -17,9 +18,6 @@ using RODOS::PRINTF;
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
 
 
-std::int32_t errorCode = 0;
-
-
 class FramTest : public RODOS::StaticThread<>
 {
 public:
@@ -30,15 +28,12 @@ public:
 private:
     void init() override
     {
-        errorCode = fram::Initialize();
+        fram::Initialize();
     }
 
     void run() override
     {
         PRINTF("\nFRAM test\n\n");
-
-        PRINTF("Initialize(): %i == 0\n", static_cast<int>(errorCode));
-        Check(errorCode == 0);
 
         PRINTF("\n");
         auto deviceId = fram::ReadDeviceId();
@@ -63,21 +58,21 @@ private:
         constexpr auto number1 = 0b1010'1100_b;
         constexpr auto number2 = ~number1;
 
-        fram::WriteTo(address, number1);
+        fram::WriteTo(address, Span(number1));
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number1));
-        auto data = fram::Read<decltype(number1)>(address);
+        auto data = fram::ReadFrom<1>(address)[0];
         PRINTF("Reading from address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(data));
         Check(data == number1);
 
-        fram::WriteTo(address, number2);
+        fram::WriteTo(address, Span(number2));
         PRINTF("Writing to   address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(number2));
-        data = fram::Read<decltype(number2)>(address);
+        fram::ReadFrom(address, Span(&data));
         PRINTF("Reading from address 0x%08x: 0x%02x\n",
                static_cast<unsigned int>(address),
                static_cast<unsigned char>(data));

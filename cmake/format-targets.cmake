@@ -1,7 +1,7 @@
 set(
     FORMAT_PATTERNS
-    Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp
-    Tests/*.cpp Tests/*.hpp
+    Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp Sts1CobcSw/*.ipp
+    Tests/*.cpp Tests/*.hpp Tests/*.ipp
     CACHE STRING
     "; separated patterns relative to the project source dir to format"
 )

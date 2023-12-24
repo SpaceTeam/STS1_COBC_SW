@@ -16,7 +16,6 @@ using RODOS::PRINTF;
 
 
 constexpr std::size_t stackSize = 5'000;
-std::int32_t errorCode = 0;
 
 
 auto Print(flash::Page const & page) -> void;
@@ -29,19 +28,17 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
-        errorCode = flash::Initialize();
+        flash::Initialize();
     }
 
 
     void run() override
     {
         PRINTF("\nFlash test\n\n");
-
-        PRINTF("Initialize(): %i == 0\n", static_cast<int>(errorCode));
-        Check(errorCode == 0);
 
         PRINTF("\n");
         auto jedecId = flash::ReadJedecId();
@@ -64,7 +61,7 @@ private:
         PRINTF("Status register 3: 0x%02x == 0x41\n", static_cast<unsigned int>(statusRegister));
         Check(statusRegister == 0x41_b);
 
-        std::uint32_t pageAddress = 0x00'01'00'00;
+        std::uint32_t const pageAddress = 0x00'01'00'00U;
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
@@ -89,7 +86,6 @@ private:
         Print(page);
 
         PRINTF("\n");
-        // constexpr auto sectorAddress = 0x00'00'00'00;
         PRINTF("Erasing sector containing address 0x%08x:\n",
                static_cast<unsigned int>(pageAddress));
         flash::EraseSector(pageAddress);

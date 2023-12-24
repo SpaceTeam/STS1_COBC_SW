@@ -1,6 +1,7 @@
 #pragma once
 
 #if defined(SYSTEM_ERROR2_NOT_POSIX)
+    // NOLINTNEXTLINE(*macro-usage)
     #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
 #endif
 

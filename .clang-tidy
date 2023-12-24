@@ -4,6 +4,7 @@
 # restrictive, we don't write Objective-C and don't develop the Linux kernel or LLVM-libc.
 # misc-non-private-member-variables-in-classes: the options don't do anything
 Checks: "*,\
+  -*avoid-c-arrays,\
   -abseil-*,\
   -altera-id-dependent-backward-branch,\
   -altera-kernel-name-restriction,\

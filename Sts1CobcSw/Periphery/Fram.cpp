@@ -1,21 +1,27 @@
-// FRAM chip: CY15B108QN-40SXI
+//! @file
+//! @brief  Low-level driver for the FRAM chip CY15B108QN-40SXI
 
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <bit>
 
 
 namespace sts1cobcsw::fram
 {
-
-
 // --- Private globals ---
 
-// Command opcodes according to section 4.1 in CY15B108QN-40SXI datasheet
+constexpr auto endianness = std::endian::big;
+
+// Command opcodes according to section 4.1 in CY15B108QN-40SXI datasheet. I couldn't use an enum
+// class because std::byte is already an enum class so it cannot be used as the underlying type of
+// another enum.
 namespace opcode
 {
 constexpr auto writeData = 0x02_b;
@@ -37,55 +43,52 @@ auto spi = RODOS::HAL_SPI(hal::framEpsSpiIndex,
 auto SetWriteEnableLatch() -> void;
 
 
-// --- Public function definitions
+// --- Public function definitions ---
 
-auto Initialize() -> std::int32_t
+auto Initialize() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
 
-    constexpr auto baudrate = 1'000'000;
-    return spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+    auto const baudRate = 1'000'000;
+    hal::Initialize(&spi, baudRate);
 }
 
 
 auto ReadDeviceId() -> DeviceId
 {
     csGpioPin.Reset();
-    spi.write(&opcode::readDeviceId, sizeof(opcode::readDeviceId));
+    hal::WriteTo(&spi, Span(opcode::readDeviceId));
     auto deviceId = DeviceId{};
-    spi.read(deviceId.data(), deviceId.size());
+    hal::ReadFrom(&spi, Span(&deviceId));
     csGpioPin.Set();
     return deviceId;
 }
 
 
-auto ReadFrom(Address address, void * data, std::size_t size) -> void
+namespace internal
 {
-    auto addressBytes = Serialize(address);
-    // FRAM expects 3-byte address in big endian
-    auto commandMessage =
-        std::array{opcode::readData, addressBytes[2], addressBytes[1], addressBytes[0]};
-
+auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void
+{
+    SetWriteEnableLatch();
     csGpioPin.Reset();
-    spi.write(commandMessage.data(), commandMessage.size());
-    spi.read(data, size);
+    hal::WriteTo(&spi, Span(opcode::writeData));
+    // FRAM expects 3-byte address in big endian
+    hal::WriteTo(&spi, Span(Serialize<endianness>(address)).subspan<1, 3>());
+    hal::WriteTo(&spi, std::span(static_cast<Byte const *>(data), nBytes));
     csGpioPin.Set();
 }
 
 
-auto WriteTo(Address address, void const * data, std::size_t size) -> void
+auto ReadFrom(Address address, void * data, std::size_t nBytes) -> void
 {
-    auto addressBytes = Serialize(address);
-    // FRAM expects 3-byte address in big endian
-    auto commandMessage =
-        std::array{opcode::writeData, addressBytes[2], addressBytes[1], addressBytes[0]};
-
-    SetWriteEnableLatch();
     csGpioPin.Reset();
-    spi.write(commandMessage.data(), commandMessage.size());
-    spi.write(data, size);
+    hal::WriteTo(&spi, Span(opcode::readData));
+    // FRAM expects 3-byte address in big endian
+    hal::WriteTo(&spi, Span(Serialize<endianness>(address)).subspan<1, 3>());
+    hal::ReadFrom(&spi, std::span(static_cast<Byte *>(data), nBytes));
     csGpioPin.Set();
+}
 }
 
 
@@ -94,7 +97,7 @@ auto WriteTo(Address address, void const * data, std::size_t size) -> void
 auto SetWriteEnableLatch() -> void
 {
     csGpioPin.Reset();
-    spi.write(&opcode::setWriteEnableLatch, sizeof(opcode::setWriteEnableLatch));
+    hal::WriteTo(&spi, Span(opcode::setWriteEnableLatch));
     csGpioPin.Set();
 }
 }

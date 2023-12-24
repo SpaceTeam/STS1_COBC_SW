@@ -1,10 +1,11 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Enums.hpp>
 #include <Sts1CobcSw/Edu/Structs.hpp>
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -12,6 +13,7 @@
 #include <charconv>
 #include <cinttypes>
 #include <cstdint>
+#include <span>
 
 
 namespace sts1cobcsw
@@ -20,6 +22,10 @@ using RODOS::PRINTF;
 
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+
+
+template<std::size_t nCharacters>
+auto ReadCharacters() -> std::array<char, nCharacters>;
 
 
 class EduCommandsTest : public RODOS::StaticThread<>
@@ -33,7 +39,8 @@ private:
     void init() override
     {
         edu::Initialize();
-        uciUart.init();
+        auto const baudRate = 115'200;
+        hal::Initialize(&uciUart, baudRate);
     }
 
 
@@ -54,10 +61,9 @@ private:
             PRINTF("  g: GetStatus\n");
             PRINTF("  r: ReturnResult\n");
 
-            auto command = std::array<char, 1>{};
-            hal::ReadFrom(&uciUart, std::span(command));
+            auto command = ReadCharacters<1>()[0];
             PRINTF("\n");
-            switch(command[0])
+            switch(command)
             {
                 case 'u':
                 {
@@ -77,20 +83,18 @@ private:
                 }
                 case 'e':
                 {
-                    auto userInput = std::array<char, 1>{};
-
                     PRINTF("Please enter a program ID (1 character)\n");
-                    hal::ReadFrom(&uciUart, std::span(userInput));
+                    auto userInput = ReadCharacters<1>();
                     std::uint16_t programId = 0;
                     std::from_chars(begin(userInput), end(userInput), programId);
 
                     PRINTF("Please enter a start time (1 character)\n");
-                    hal::ReadFrom(&uciUart, std::span(userInput));
+                    userInput = ReadCharacters<1>();
                     std::int32_t startTime = 0;
                     std::from_chars(begin(userInput), end(userInput), startTime);
 
                     PRINTF("Please enter a timeout (1 character)\n");
-                    hal::ReadFrom(&uciUart, std::span(userInput));
+                    userInput = ReadCharacters<1>();
                     std::int16_t timeout = 0;
                     std::from_chars(begin(userInput), end(userInput), timeout);
 
@@ -102,7 +106,6 @@ private:
                            timeout);
                     auto executeProgramResult = edu::ExecuteProgram(
                         {.programId = programId, .startTime = startTime, .timeout = timeout});
-                    // TODO: Fix naming
                     if(executeProgramResult.has_error())
                     {
                         PRINTF("Returned error code: %d\n",
@@ -159,4 +162,14 @@ private:
         }
     }
 } eduCommandsTest;
+
+
+template<std::size_t nCharacters>
+auto ReadCharacters() -> std::array<char, nCharacters>
+{
+    auto string = std::array<char, nCharacters>{};
+    // NOLINTNEXTLINE(*reinterpret-cast)
+    hal::ReadFrom(&uciUart, std::span(reinterpret_cast<Byte *>(string.data()), nCharacters));
+    return string;
+}
 }

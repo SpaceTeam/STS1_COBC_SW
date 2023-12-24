@@ -1,13 +1,15 @@
-#include <Sts1CobcSw/Hal/Communication.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
+#include <bit>
 #include <string_view>
 
 
@@ -31,6 +33,8 @@ struct SimpleInstruction
 
 
 // --- Private globals ---
+
+constexpr auto endianness = std::endian::big;
 
 // Instructions according to section 7.3 in W25Q01JV datasheet
 constexpr auto readJedecId = SimpleInstruction{.id = 0x9F_b, .answerLength = 3};
@@ -57,17 +61,17 @@ auto spi = RODOS::HAL_SPI(hal::flashSpiIndex,
 // --- Private function declarations ---
 
 auto Enter4ByteAdressMode() -> void;
-auto WriteEnable() -> void;
-auto WriteDisable() -> void;
+auto EnableWriting() -> void;
+auto DisableWriting() -> void;
 
-template<std::size_t nBytes>
-auto Write(std::span<Byte, nBytes> data) -> void;
+template<std::size_t extent>
+auto Write(std::span<Byte const, extent> data) -> void;
 
-template<std::size_t nBytes>
-[[nodiscard]] auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>;
+template<std::size_t extent>
+auto Read(std::span<Byte, extent> data) -> void;
 
-template<std::size_t nReadBytes, std::size_t nWriteBytes>
-[[nodiscard]] auto WriteRead(std::span<Byte, nWriteBytes> message) -> std::array<Byte, nReadBytes>;
+template<std::size_t size>
+auto Read() -> std::array<Byte, size>;
 
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
@@ -83,19 +87,17 @@ template<std::endian endianness>
 
 // ---Public function definitions ---
 
-auto Initialize() -> std::int32_t
+auto Initialize() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
     writeProtectionGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
     writeProtectionGpioPin.Set();
 
-    constexpr auto baudrate = 1'000'000;
-    auto errorCode = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
+    constexpr auto baudRate = 1'000'000;
+    hal::Initialize(&spi, baudRate);
 
-    flash::Enter4ByteAdressMode();
-
-    return errorCode;
+    Enter4ByteAdressMode();
 }
 
 
@@ -104,7 +106,7 @@ auto ReadJedecId() -> JedecId
     csGpioPin.Reset();
     auto answer = SendInstruction<readJedecId>();
     csGpioPin.Set();
-    return Deserialize<std::endian::big, JedecId>(std::span(answer));
+    return Deserialize<endianness, JedecId>(Span(answer));
 }
 
 
@@ -133,13 +135,10 @@ auto ReadStatusRegister(int8_t registerNo) -> Byte
 
 auto ReadPage(std::uint32_t address) -> Page
 {
-    auto addressBytes = Serialize(address);
-    auto message = std::array<Byte, 1 + size(addressBytes)>{readData4ByteAddress};
-    // Copy address bytes to message in reverse (big endian) order
-    std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
-
     csGpioPin.Reset();
-    auto page = WriteRead<pageSize>(std::span(message));
+    Write(Span(readData4ByteAddress));
+    Write(Span(Serialize<endianness>(address)));
+    auto page = Read<pageSize>();
     csGpioPin.Set();
 
     return page;
@@ -149,19 +148,15 @@ auto ReadPage(std::uint32_t address) -> Page
 // TODO: Maybe check BUSY flag before writing or something
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
-    auto addressBytes = Serialize(address);
-    auto message = std::array<Byte, 1 + size(addressBytes)>{pageProgram4ByteAddress};
-    // Copy address bytes to message in reverse (big endian) order
-    std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
-
-    WriteEnable();
-
+    EnableWriting();
     csGpioPin.Reset();
-    Write(std::span(message));
-    Write(data);
-    csGpioPin.Set();
 
-    WriteDisable();
+    Write(Span(pageProgram4ByteAddress));
+    Write(Span(Serialize<endianness>(address)));
+    Write(data);
+
+    csGpioPin.Set();
+    DisableWriting();
 }
 
 
@@ -169,26 +164,22 @@ auto EraseSector(std::uint32_t address) -> void
 {
     // Round address down to the nearest sector address
     address = (address / sectorSize) * sectorSize;
-    auto addressBytes = Serialize(address);
-    auto message = std::array<Byte, 1 + size(addressBytes)>{sectorErase4ByteAddress};
-    // Copy address bytes to message in reverse (big endian) order
-    std::copy(rbegin(addressBytes), rend(addressBytes), begin(message) + 1);
 
-    WriteEnable();
-
+    EnableWriting();
     csGpioPin.Reset();
-    Write(std::span(message));
-    csGpioPin.Set();
 
-    WriteDisable();
+    Write(Span(sectorErase4ByteAddress));
+    Write(Span(Serialize<endianness>(address)));
+
+    csGpioPin.Set();
+    DisableWriting();
 }
 
 
 auto WaitWhileBusy() -> void
 {
-    constexpr auto pollingCycleTime = 1 * RODOS::MILLISECONDS;
-    constexpr auto busyBitMask = 0x01_b;
-
+    auto pollingCycleTime = 1 * RODOS::MILLISECONDS;
+    auto busyBitMask = 0x01_b;
     auto isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
     while(isBusy)
     {
@@ -208,7 +199,7 @@ auto Enter4ByteAdressMode() -> void
 }
 
 
-auto WriteEnable() -> void
+auto EnableWriting() -> void
 {
     csGpioPin.Reset();
     SendInstruction<writeEnable>();
@@ -216,7 +207,7 @@ auto WriteEnable() -> void
 }
 
 
-auto WriteDisable() -> void
+auto DisableWriting() -> void
 {
     csGpioPin.Reset();
     SendInstruction<writeDisable>();
@@ -224,26 +215,27 @@ auto WriteDisable() -> void
 }
 
 
+// TODO:: Maybe this is one level of indirection too much?
 template<std::size_t nBytes>
-inline auto Write(std::span<Byte, nBytes> data) -> void
+inline auto Write(std::span<Byte const, nBytes> data) -> void
 {
-    hal::WriteToReadFrom(&spi, data);
+    hal::WriteTo(&spi, data);
 }
 
 
-template<std::size_t nBytes>
-inline auto WriteRead(std::span<Byte, nBytes> data) -> std::array<Byte, nBytes>
+template<std::size_t extent>
+inline auto Read(std::span<Byte, extent> data) -> void
 {
-    return hal::WriteToReadFrom(&spi, data);
+    hal::ReadFrom(&spi, data);
 }
 
 
-template<std::size_t nReadBytes, std::size_t nWriteBytes>
-auto WriteRead(std::span<Byte, nWriteBytes> message) -> std::array<Byte, nReadBytes>
+template<std::size_t size>
+inline auto Read() -> std::array<Byte, size>
 {
-    hal::WriteToReadFrom(&spi, message);
-    auto dummyBytes = std::array<Byte, nReadBytes>{};
-    return hal::WriteToReadFrom(&spi, std::span(dummyBytes));
+    auto answer = std::array<Byte, size>{};
+    hal::ReadFrom(&spi, Span(&answer));
+    return answer;
 }
 
 
@@ -251,10 +243,8 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
 auto SendInstruction() -> std::array<Byte, instruction.answerLength>
 {
-    auto message1 = std::array{instruction.id};
-    hal::WriteToReadFrom(&spi, std::span(message1));
-    auto message2 = std::array<Byte, instruction.answerLength>{};
-    return hal::WriteToReadFrom(&spi, std::span(message2));
+    Write(Span(instruction.id));
+    return Read<instruction.answerLength>();
 }
 
 
@@ -262,8 +252,7 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
 inline auto SendInstruction() -> void
 {
-    auto message1 = std::array{instruction.id};
-    hal::WriteToReadFrom(&spi, std::span(message1));
+    Write(Span(instruction.id));
 }
 
 

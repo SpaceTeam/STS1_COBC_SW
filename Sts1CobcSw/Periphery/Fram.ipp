@@ -6,18 +6,25 @@
 
 namespace sts1cobcsw::fram
 {
-template<typename T>
-auto Read(Address address) -> T
+template<std::size_t extent>
+inline auto WriteTo(Address address, std::span<Byte const, extent> data) -> void
 {
-    auto t = T{};
-    ReadFrom(address, &t, sizeof(T));
-    return t;
+    internal::WriteTo(address, data.data(), data.size());
 }
 
 
-template<typename T>
-auto WriteTo(Address address, T const & t) -> void
+template<std::size_t extent>
+inline auto ReadFrom(Address address, std::span<Byte, extent> data) -> void
 {
-    WriteTo(address, &t, sizeof(T));
+    internal::ReadFrom(address, data.data(), data.size());
+}
+
+
+template<std::size_t size>
+auto ReadFrom(Address address) -> std::array<Byte, size>
+{
+    auto data = std::array<Byte, size>{};
+    internal::ReadFrom(address, data.data(), data.size());
+    return data;
 }
 }

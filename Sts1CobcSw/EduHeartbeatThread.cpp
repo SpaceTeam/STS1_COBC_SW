@@ -29,7 +29,6 @@ auto EduIsAlive() -> bool;
 class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    // TODO: Add this to all the other threads as well
     EduHeartbeatThread() : StaticThread("EduHeartbeatThread", eduHeartbeatThreadPriority)
     {
     }
@@ -155,7 +154,6 @@ auto EduIsAlive() -> bool
                   executionTime / RODOS::MILLISECONDS);
     return false;
 }
-// TODO: Get back to the inline thread variable definition (like above) for all threads
 /*
 constexpr auto dummyThreadPriority = 100;
 class DummyThread : public RODOS::StaticThread<>
