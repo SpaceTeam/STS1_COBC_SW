@@ -20,6 +20,10 @@ namespace sts1cobcsw::edu
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
 auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 
+// TODO: To be able to better (or at all) distinguish the low-level protocol commands (cmdAck, ...)
+// and the high-level EDU commands (update time, ...) rename them CEP commands and EDU commands,
+// respectively.
+
 // TODO: Turn this into Bytes, maybe even an enum class : Byte
 // CEP basic commands (see EDU PDD)
 constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet
@@ -54,7 +58,6 @@ constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
 constexpr std::size_t maxNPackets = 100;
 // Max. length of a single data packet
-// TODO: Reduce maxDataLength to at most 16 * 1014
 constexpr auto maxDataLength = 32768;
 // Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};

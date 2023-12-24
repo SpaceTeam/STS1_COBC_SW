@@ -37,8 +37,6 @@ auto ToChars(int i)
 }
 
 
-// TODO: Make this test usable even if there is no EDU connected/working. This means two threads,
-// one for EDU one for UCI and it should use suspendUntilDataReady() and maybe a timeout, etc.
 class UartTest : public RODOS::StaticThread<>
 {
     void init() override
