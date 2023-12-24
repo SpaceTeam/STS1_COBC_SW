@@ -1,8 +1,6 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Serial/Byte.hpp>
-
 #include <rodos_no_using_namespace.h>
 
 #include <cstddef>
