@@ -25,22 +25,6 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void;
 
 template<typename T, std::size_t extent>
 auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t timeout) -> void;
-
-
-namespace internal
-{
-template<typename T>
-auto WriteTo(RODOS::HAL_UART * uart, std::span<T const> data) -> void;
-
-template<typename T>
-auto WriteTo(RODOS::HAL_UART * uart, std::span<T const> data, std::int64_t timeout) -> void;
-
-template<typename T>
-auto ReadFrom(RODOS::HAL_UART * uart, std::span<T> data) -> void;
-
-template<typename T>
-auto ReadFrom(RODOS::HAL_UART * uart, std::span<T> data, std::int64_t timeout) -> void;
-}
 }
 
 
