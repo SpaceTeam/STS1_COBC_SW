@@ -1,14 +1,14 @@
 #pragma once
 
+
+#include <rodos_no_using_namespace.h>
+
 #if defined(SYSTEM_ERROR2_NOT_POSIX)
     // NOLINTNEXTLINE(*macro-usage)
     #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
 #endif
 
-
 #include <outcome-experimental.hpp>
-
-#include <rodos_no_using_namespace.h>
 
 
 struct RebootPolicy : outcome_v2::experimental::policy::base
