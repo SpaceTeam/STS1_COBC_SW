@@ -25,7 +25,8 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
 
 
 template<typename T, std::size_t extent>
-auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64_t timeout) -> void
+auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64_t timeout)
+    -> Result<void>
 {
     auto bytes = std::as_bytes(data);
     std::size_t nWrittenBytes = 0U;
@@ -41,10 +42,10 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64
         uart->suspendUntilWriteFinished(reactivationTime);
         if(RODOS::NOW() >= reactivationTime)
         {
-            // Timeout error
-            return;
+            return ErrorCode::timeout;
         }
     }
+    return outcome_v2::success();
 }
 
 
@@ -65,7 +66,8 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
 
 
 template<typename T, std::size_t extent>
-auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t timeout) -> void
+auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t timeout)
+    -> Result<void>
 {
     auto bytes = std::as_writable_bytes(data);
     std::size_t nReadBytes = 0U;
@@ -75,13 +77,13 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t ti
         uart->suspendUntilDataReady(reactivationTime);
         if(RODOS::NOW() >= reactivationTime)
         {
-            // Timeout error
-            return;
+            return ErrorCode::timeout;
         }
         // uart.read() reads at most RODOS::UART_BUF_SIZE bytes and returns how many it has actually
         // read. If a DMA receive is already in progress it reads nothing but still returns the
         // number of bytes it would have read.
         nReadBytes += uart->read(bytes.data() + nReadBytes, bytes.size() - nReadBytes);
     }
+    return outcome_v2::success();
 }
 }
