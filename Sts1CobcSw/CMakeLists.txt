@@ -6,6 +6,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_subdirectory(Hal)
 endif()
 add_subdirectory(Edu)
+add_subdirectory(Outcome)
 add_subdirectory(Serial)
 add_subdirectory(Utility)
 
@@ -33,12 +34,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 EduListenerThread.cpp
     )
     target_link_libraries(
-        Sts1CobcSw_CobcSw
-        PRIVATE etl::etl
-                rodos::rodos
-                Sts1CobcSw_Edu
-                Sts1CobcSw_Hal
-                Sts1CobcSw_Utility
-                Sts1CobcSw_Periphery
+        Sts1CobcSw_CobcSw PRIVATE etl::etl rodos::rodos Sts1CobcSw_Edu Sts1CobcSw_Hal
+                                  Sts1CobcSw_Utility Sts1CobcSw_Periphery
     )
 endif()
