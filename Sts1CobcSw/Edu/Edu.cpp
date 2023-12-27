@@ -93,7 +93,7 @@ auto TurnOn() -> void
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    constexpr auto baudRate = 921'600;
+    constexpr auto baudRate = 115'200;
     hal::Initialize(&uart, baudRate);
 }
 
