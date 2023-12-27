@@ -138,8 +138,23 @@ private:
                 }
                 case 'r':
                 {
-                    PRINTF("Sending ReturnResult()\n");
-                    auto returnResultResult = edu::ReturnResult();
+                    PRINTF("Please enter a program ID (1 character)\n");
+                    auto userInput = ReadCharacters<1>();
+                    std::uint16_t programId = 0;
+                    std::from_chars(begin(userInput), end(userInput), programId);
+
+                    PRINTF("Please enter a start time (1 character)\n");
+                    userInput = ReadCharacters<1>();
+                    std::int32_t startTime = 0;
+                    std::from_chars(begin(userInput), end(userInput), startTime);
+
+                    PRINTF("\n");
+                    PRINTF("Sending ReturnResult(programId = %" PRIu16 ", startTime = %" PRIi32
+                           ")\n",
+                           programId,
+                           startTime);
+                    auto returnResultResult = edu::ReturnResult(
+                        edu::ReturnResultData{.programId = programId, .startTime = startTime});
                     PRINTF("Returned result info:\n");
                     if(returnResultResult.has_error())
                     {

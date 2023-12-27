@@ -100,7 +100,8 @@ private:
                             // Edu wants to send result file
                             // Send return result to Edu, Communicate, and interpret the results to
                             // update the S&H Entry from 3 or 4 to 5.
-                            auto returnResultResult = edu::ReturnResult();
+                            auto returnResultResult = edu::ReturnResult(
+                                {.programId = status.programId, .startTime = status.startTime});
                             if(returnResultResult.has_error())
                             {
                                 /*
