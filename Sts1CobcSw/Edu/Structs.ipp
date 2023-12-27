@@ -59,6 +59,16 @@ auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *
 
 
 template<std::endian endianness>
+auto SerializeTo(void * destination, ReturnResultData const & data) -> void *
+{
+    destination = SerializeTo<endianness>(destination, ReturnResultData::id);
+    destination = SerializeTo<endianness>(destination, data.programId);
+    destination = SerializeTo<endianness>(destination, data.startTime);
+    return destination;
+}
+
+
+template<std::endian endianness>
 auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, UpdateTimeData::id);

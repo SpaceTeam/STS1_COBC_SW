@@ -43,6 +43,14 @@ struct ExecuteProgramData
 };
 
 
+struct ReturnResultData
+{
+    static constexpr auto id = returnResultId;
+    std::uint16_t programId = 0U;
+    std::int32_t startTime = 0U;
+};
+
+
 struct UpdateTimeData
 {
     static constexpr auto id = updateTimeId;
@@ -110,6 +118,12 @@ inline constexpr std::size_t serialSize<edu::ExecuteProgramData> =
                     decltype(edu::ExecuteProgramData::timeout)>;
 
 template<>
+inline constexpr std::size_t serialSize<edu::ReturnResultData> =
+    totalSerialSize<decltype(edu::ReturnResultData::id),
+                    decltype(edu::ReturnResultData::programId),
+                    decltype(edu::ReturnResultData::startTime)>;
+
+template<>
 inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
     totalSerialSize<decltype(edu::UpdateTimeData::id), decltype(edu::UpdateTimeData::currentTime)>;
 
@@ -127,6 +141,8 @@ template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, ReturnResultData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
 }

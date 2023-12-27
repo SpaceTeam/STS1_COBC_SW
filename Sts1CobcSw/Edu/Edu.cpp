@@ -41,8 +41,8 @@ constexpr auto resultsReadyCode = 0x02_b;
 
 // Status types byte counts
 constexpr auto nNoEventBytes = 1;
-constexpr auto nProgramFinishedBytes = 6;
-constexpr auto nResultsReadyBytes = 5;
+constexpr auto nProgramFinishedBytes = 8;
+constexpr auto nResultsReadyBytes = 7;
 
 // TODO: Check real timeouts
 // Max. time for the EDU to respond to a request
@@ -93,7 +93,7 @@ auto TurnOn() -> void
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    constexpr auto baudRate = 921'600;
+    constexpr auto baudRate = 115'200;
     hal::Initialize(&uart, baudRate);
 }
 
@@ -329,13 +329,13 @@ auto GetStatusCommunication() -> Result<Status>
 }
 
 
-auto ReturnResult() -> Result<ResultInfo>
+auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
 {
     // DEBUG
     RODOS::PRINTF("ReturnResult()\n");
     // END DEBUG
 
-    OUTCOME_TRY(SendData(Serialize(returnResultId)));
+    OUTCOME_TRY(SendData(Serialize(data)));
 
     // DEBUG
     // RODOS::PRINTF("\nStart receiving result\n");
@@ -363,6 +363,11 @@ auto ReturnResult() -> Result<ResultInfo>
         if(returnResultRetryResult.value().eofIsReached)
         {
             RODOS::PRINTF(" ReturnResultRetry() reached EOF\n");
+
+            // TODO: This is a dummy implementation. Store the result instead.
+            RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
+            SendCommand(cmdAck);
+
             return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
         }
 
@@ -373,6 +378,7 @@ auto ReturnResult() -> Result<ResultInfo>
         totalResultSize += returnResultRetryResult.value().resultSize;
         nPackets++;
     }
+
     return ResultInfo{.eofIsReached = false, .resultSize = totalResultSize};
 }
 
