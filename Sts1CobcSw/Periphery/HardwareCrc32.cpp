@@ -6,23 +6,29 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/bit.h>
+
 #include <span>
 
 
 namespace sts1cobcsw::periphery
 {
 
+constexpr auto bytesPerWord = 4U;
+auto crcDma = DMA2_Stream1;
+
+
 extern "C"
 {
 void DMA1_Stream1_IRQHandler();
 }
 
-auto crcDma = DMA2_Stream1;
 
 auto EnableHardwareCrc() -> void
 {
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
 }
+
 
 auto EnableHardwareCrcAndDma() -> void
 {
@@ -37,16 +43,19 @@ auto EnableHardwareCrcAndDma() -> void
     DMA_StructInit(&dmaInitStruct);
 
     // Check if this is needed, seen in an online example but not in the STM manual
-    // DMA_DeInit(DMA2_Stream1); 
+    // DMA_DeInit(DMA2_Stream1);
     dmaInitStruct.DMA_DIR = DMA_DIR_MemoryToMemory;
 
+    // Changed when there is an actual transfer
     // dmaInitStruct.DMA_PeripheralBaseAddr = static_cast<uint32_t>(0U);
-    dmaInitStruct.DMA_Memory0BaseAddr = reinterpret_cast<uintptr_t>(&(CRC->DR));;
+
+    dmaInitStruct.DMA_Memory0BaseAddr = reinterpret_cast<uintptr_t>(&(CRC->DR));
     dmaInitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
     dmaInitStruct.DMA_MemoryInc = DMA_MemoryInc_Disable;
 
     // Changed when there is an actual transfer
-    dmaInitStruct.DMA_BufferSize = static_cast<uint32_t>(1U);
+    // dmaInitStruct.DMA_BufferSize = static_cast<uint32_t>(1U);
+
     dmaInitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
 
     // TODO: Test this with byte and memory 4-burst instead of single and word
@@ -72,14 +81,41 @@ auto EnableHardwareCrcAndDma() -> void
     NVIC_EnableIRQ(DMA2_Stream1_IRQn);
 }
 
-auto DmaCrc32(std::span<uint32_t> data) -> void
+auto DmaCrc32(std::span<uint8_t> data) -> void
 {
-    CRC_ResetDR();
+    // Format data byte buffer to words
+    // If not divisible by 4 bytes, 1 word padding is needed
+    auto trailingBytes = data.size() % bytesPerWord;
+    auto padding = trailingBytes == 0 ? 0U : 1U;
+    auto tmpBufferSize = data.size() / bytesPerWord + padding;
+    uint32_t tmpBuffer[tmpBufferSize];
+
+    // Careful: don't forget that trailing bytes can't be added like this
+    for(size_t i = 0; i < tmpBufferSize - padding; i++)
+    {
+        uint32_t word = 0U;
+        word |= (data[i * 4U] << CHAR_BIT * 3) | (data[i * 4U + 1] << CHAR_BIT * 2)
+              | (data[i * 4U + 2] << CHAR_BIT) | (data[i * 4U + 3]);
+        tmpBuffer[i] = word;
+    }
+    if(padding != 0)
+    {
+        tmpBuffer[tmpBufferSize - 1] = 0U;
+        for(size_t i = 0; i < trailingBytes; i++)
+        {
+            // Last byte has no shift, second to last 1 byte, ...
+            tmpBuffer[tmpBufferSize - 1] |= (data[data.size() - 1 - i] << (i * CHAR_BIT));
+        }
+        // RODOS::PRINTF("Last word: %lx\n", tmpBuffer[tmpBufferSize - 1]);
+    }
+
+
     DMA_Cmd(crcDma, DISABLE);
     // Set new data address
-    crcDma->PAR = reinterpret_cast<uintptr_t>(data.data());
+    crcDma->PAR = reinterpret_cast<uintptr_t>(tmpBuffer);
     // Set new data length
-    crcDma->NDTR = static_cast<uint32_t>(data.size());
+    crcDma->NDTR = static_cast<uint32_t>(tmpBufferSize);
+    CRC_ResetDR();
     DMA_Cmd(crcDma, ENABLE);
 }
 
