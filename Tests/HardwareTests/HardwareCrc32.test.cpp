@@ -10,26 +10,27 @@
 namespace sts1cobcsw
 {
 
-auto ledPin = hal::GpioPin(hal::pa5);
-
 class HardwareCrc32Test : public RODOS::StaticThread<>
 {
     void init() override
     {
-        constexpr auto uartBaudRate = 115200;
-        ledPin.Direction(hal::PinDirection::out);
     }
-
 
     void run() override
     {
-        periphery::EnableHardwareCrc();
-        auto testDataByte = std::to_array<uint8_t>({0xD, 0xE, 0xA, 0xD, 0xB, 0xE, 0xE, 0xF});
-        auto testDataDWord = std::to_array<uint32_t>({0xDEADBEEF, 0xCABBA5E3});
-        auto truth = 0xA962D97B;
-        // -> CRC32 should be 0xA962D97B
-        auto crc32 = periphery::HardwareCrc32(std::span<uint32_t, 2>(testDataDWord));
-        RODOS::PRINTF("CRC: %x\n", crc32);
+        auto testDataByte =
+            std::to_array<uint8_t>({0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3});
+        auto testDataWord = std::to_array<uint32_t>({0xDEADBEEF, 0xCABBA5E3});
+        // For online calc comparison:
+        // DEADBEEFCABBA5E3: 0xA962D97B
+        // EFBEADDEE3A5BBCA: 0x78B4282B
+        // // -> CRC32 should be 0xA962D97B
+
+        RODOS::PRINTF("DMA CRC32:\n");
+        // Wait shortly for better readability in HTerm
+        RODOS::AT(RODOS::NOW() + 200 * RODOS::MILLISECONDS);
+        periphery::EnableHardwareCrcAndDma();
+        periphery::DmaCrc32(std::span<uint32_t>(testDataWord));
     }
 } hardwareCrc32Test;
 }
