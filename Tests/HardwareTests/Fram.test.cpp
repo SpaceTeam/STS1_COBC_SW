@@ -7,6 +7,8 @@
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
+#include <cinttypes>
 #include <cstdint>
 
 
@@ -36,6 +38,10 @@ private:
         PRINTF("\nFRAM test\n\n");
 
         PRINTF("\n");
+        auto actualBaudRate = fram::ReturnActualBaudRate();
+        PRINTF("Actual BaudRate: %" PRIi32 "\n", actualBaudRate);
+
+        PRINTF("\n");
         auto deviceId = fram::ReadDeviceId();
         PRINTF("Device ID: ");
         PrintDeviceId(deviceId);
@@ -55,28 +61,57 @@ private:
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr uint32_t nAdressBits = 20U;
         auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
-        constexpr auto number1 = 0b1010'1100_b;
-        constexpr auto number2 = ~number1;
 
-        fram::WriteTo(address, Span(number1));
-        PRINTF("Writing to   address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(number1));
-        auto data = fram::ReadFrom<1>(address)[0];
-        PRINTF("Reading from address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(data));
-        Check(data == number1);
+        const size_t arraySize = 11 * 1024;  // 11 KiB
+        const size_t outputAmount = 10;
+        auto testArray = std::array<Byte, arraySize>{};
+        std::fill(testArray.begin(), testArray.end(), Byte{0x00});
 
-        fram::WriteTo(address, Span(number2));
-        PRINTF("Writing to   address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(number2));
+        fram::WriteTo(address, Span(testArray));
+        PRINTF("Writing to   address 0x%08x:\n", static_cast<unsigned int>(address));
+        for(size_t i = 0; i < outputAmount; i++)
+        {
+            PRINTF("0x%02x  ", static_cast<unsigned char>(testArray[i]));
+        }
+        auto data = fram::ReadFrom<arraySize>(address);
+        PRINTF("Reading from address 0x%08x:\n", static_cast<unsigned int>(address));
+        for(size_t i = 0; i < outputAmount; i++)
+        {
+            PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
+        }
+        Check(data == testArray);
+
+        std::fill(testArray.begin(), testArray.end(), Byte{0xFF});
+
+        fram::WriteTo(address, Span(testArray));
+        PRINTF("Writing to   address 0x%08x:\n", static_cast<unsigned int>(address));
+        for(size_t i = 0; i < outputAmount; i++)
+        {
+            PRINTF("0x%02x  ", static_cast<unsigned char>(testArray[i]));
+        }
         fram::ReadFrom(address, Span(&data));
-        PRINTF("Reading from address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(data));
-        Check(data == number2);
+        PRINTF("Reading from address 0x%08x:\n", static_cast<unsigned int>(address));
+        for(size_t i = 0; i < outputAmount; i++)
+        {
+            PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
+        }
+        Check(data == testArray);
+
+        std::fill(testArray.begin(), testArray.end(), Byte{0x00});
+
+        fram::WriteTo(address, Span(testArray));
+        PRINTF("Writing to   address 0x%08x:\n", static_cast<unsigned int>(address));
+        for(size_t i = 0; i < outputAmount; i++)
+        {
+            PRINTF("0x%02x  ", static_cast<unsigned char>(testArray[i]));
+        }
+        fram::ReadFrom(address, Span(&data));
+        PRINTF("Reading from address 0x%08x:\n", static_cast<unsigned int>(address));
+        for(size_t i = 0; i < outputAmount; i++)
+        {
+            PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
+        }
+        Check(data == testArray);
     }
 } framTest;
 

@@ -40,4 +40,5 @@ auto Initialize() -> void;
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
 auto EraseSector(std::uint32_t address) -> void;
 auto WaitWhileBusy() -> void;
+auto ReturnActualBaudRate() -> int32_t;
 }
