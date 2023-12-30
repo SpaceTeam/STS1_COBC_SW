@@ -44,6 +44,13 @@
       }
     },
     {
+      "name": "include-what-you-use",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_INCLUDE_WHAT_YOU_USE": "include-what-you-use"
+      }
+    },
+    {
       "name": "cpp-std",
       "description": "This preset makes sure the project actually builds with at least the specified standard",
       "hidden": true,
