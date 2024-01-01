@@ -15,9 +15,16 @@
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
+using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
+
+
+const size_t testDataSize = 11 * 1024;  // 11 KiB
 
 
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
+auto WriteAndReadData(const fram::Address & address,
+                      std::array<Byte, testDataSize> & data,
+                      size_t nPrintedBytes) -> void;
 
 
 class FramTest : public RODOS::StaticThread<>
@@ -38,8 +45,8 @@ private:
         PRINTF("\nFRAM test\n\n");
 
         PRINTF("\n");
-        auto actualBaudRate = fram::ReturnActualBaudRate();
-        PRINTF("Actual BaudRate: %" PRIi32 "\n", actualBaudRate);
+        auto actualBaudRate = fram::ActualBaudRate();
+        PRINTF("Actual baud rate: %" PRIi32 "\n", actualBaudRate);
 
         PRINTF("\n");
         auto deviceId = fram::ReadDeviceId();
@@ -62,56 +69,12 @@ private:
         constexpr uint32_t nAdressBits = 20U;
         auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
 
-        const size_t arraySize = 11 * 1024;  // 11 KiB
-        const size_t outputAmount = 10;
-        auto testArray = std::array<Byte, arraySize>{};
-        std::fill(testArray.begin(), testArray.end(), Byte{0x00});
-
-        fram::WriteTo(address, Span(testArray));
-        PRINTF("Writing to   address 0x%08x:\n", static_cast<unsigned int>(address));
-        for(size_t i = 0; i < outputAmount; i++)
-        {
-            PRINTF("0x%02x  ", static_cast<unsigned char>(testArray[i]));
-        }
-        auto data = fram::ReadFrom<arraySize>(address);
-        PRINTF("Reading from address 0x%08x:\n", static_cast<unsigned int>(address));
-        for(size_t i = 0; i < outputAmount; i++)
-        {
-            PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
-        }
-        Check(data == testArray);
-
-        std::fill(testArray.begin(), testArray.end(), Byte{0xFF});
-
-        fram::WriteTo(address, Span(testArray));
-        PRINTF("Writing to   address 0x%08x:\n", static_cast<unsigned int>(address));
-        for(size_t i = 0; i < outputAmount; i++)
-        {
-            PRINTF("0x%02x  ", static_cast<unsigned char>(testArray[i]));
-        }
-        fram::ReadFrom(address, Span(&data));
-        PRINTF("Reading from address 0x%08x:\n", static_cast<unsigned int>(address));
-        for(size_t i = 0; i < outputAmount; i++)
-        {
-            PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
-        }
-        Check(data == testArray);
-
-        std::fill(testArray.begin(), testArray.end(), Byte{0x00});
-
-        fram::WriteTo(address, Span(testArray));
-        PRINTF("Writing to   address 0x%08x:\n", static_cast<unsigned int>(address));
-        for(size_t i = 0; i < outputAmount; i++)
-        {
-            PRINTF("0x%02x  ", static_cast<unsigned char>(testArray[i]));
-        }
-        fram::ReadFrom(address, Span(&data));
-        PRINTF("Reading from address 0x%08x:\n", static_cast<unsigned int>(address));
-        for(size_t i = 0; i < outputAmount; i++)
-        {
-            PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
-        }
-        Check(data == testArray);
+        auto testData = std::array<Byte, testDataSize>{};
+        WriteAndReadData(address, testData, 10);
+        std::fill(testData.begin(), testData.end(), 0xFF_b);
+        WriteAndReadData(address, testData, 10);
+        std::fill(testData.begin(), testData.end(), 0x00_b);
+        WriteAndReadData(address, testData, 10);
     }
 } framTest;
 
@@ -132,5 +95,28 @@ auto PrintDeviceId(fram::DeviceId const & deviceId) -> void
     PRINTF("'");
     PRINTF("%02x", static_cast<unsigned int>(deviceId[1]));
     PRINTF("%02x", static_cast<unsigned int>(deviceId[0]));
+}
+
+auto WriteAndReadData(const fram::Address & address,
+                      std::array<Byte, testDataSize> & data,
+                      size_t nPrintedBytes) -> void
+{
+    fram::WriteTo(address, Span(data));
+    PRINTF("Writing %zu bytes to   address 0x%08x:\n",
+           nPrintedBytes,
+           static_cast<unsigned int>(address));
+    for(size_t i = 0; i < nPrintedBytes; i++)
+    {
+        PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
+    }
+    auto readData = fram::ReadFrom<testDataSize>(address);
+    PRINTF("Reading %zu bytes from address 0x%08x:\n",
+           nPrintedBytes,
+           static_cast<unsigned int>(address));
+    for(size_t i = 0; i < nPrintedBytes; i++)
+    {
+        PRINTF("0x%02x  ", static_cast<unsigned char>(readData[i]));
+    }
+    Check(readData == data);
 }
 }

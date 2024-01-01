@@ -189,7 +189,7 @@ auto WaitWhileBusy() -> void
 }
 
 
-auto ReturnActualBaudRate() -> int32_t
+auto ActualBaudRate() -> int32_t
 {
     return spi.status(RODOS::SPI_STATUS_BAUDRATE);
 }

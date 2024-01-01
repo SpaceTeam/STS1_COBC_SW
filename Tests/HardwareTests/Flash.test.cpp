@@ -42,8 +42,8 @@ private:
         PRINTF("\nFlash test\n\n");
 
         PRINTF("\n");
-        auto actualBaudRate = flash::ReturnActualBaudRate();
-        PRINTF("Actual BaudRate: %" PRIi32 "\n", actualBaudRate);
+        auto actualBaudRate = flash::ActualBaudRate();
+        PRINTF("Actual baud rate: %" PRIi32 "\n", actualBaudRate);
 
         PRINTF("\n");
         auto jedecId = flash::ReadJedecId();
