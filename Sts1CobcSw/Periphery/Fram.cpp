@@ -50,7 +50,7 @@ auto Initialize() -> void
     csGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
 
-    auto const baudRate = 25'000'000;
+    auto const baudRate = 12'000'000;
     hal::Initialize(&spi, baudRate);
 }
 

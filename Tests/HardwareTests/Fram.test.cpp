@@ -19,12 +19,12 @@ using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
 const size_t testDataSize = 11 * 1024;  // 11 KiB
+auto testData = std::array<Byte, testDataSize>{};
+auto readData = std::array<Byte, testDataSize>{};
 
 
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
-auto WriteAndReadData(const fram::Address & address,
-                      std::array<Byte, testDataSize> & data,
-                      size_t nPrintedBytes) -> void;
+auto WriteAndReadTestData(fram::Address const & address) -> void;
 
 
 class FramTest : public RODOS::StaticThread<>
@@ -34,11 +34,13 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
         fram::Initialize();
     }
+
 
     void run() override
     {
@@ -54,27 +56,20 @@ private:
         PrintDeviceId(deviceId);
         PRINTF(" ==\n");
         PRINTF("           0x7F'7F7F'7F7F'7FC2'2E03\n");
-        Check(deviceId[8] == 0x7F_b);
-        Check(deviceId[7] == 0x7F_b);
-        Check(deviceId[6] == 0x7F_b);
-        Check(deviceId[5] == 0x7F_b);
-        Check(deviceId[4] == 0x7F_b);
-        Check(deviceId[3] == 0x7F_b);
-        Check(deviceId[2] == 0xC2_b);
-        Check(deviceId[1] == 0x2E_b);
-        Check(deviceId[0] == 0x03_b);
+        auto correctDeviceId =
+            std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
+        Check(deviceId == correctDeviceId);
 
-        PRINTF("\n");
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr uint32_t nAdressBits = 20U;
         auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
 
-        auto testData = std::array<Byte, testDataSize>{};
-        WriteAndReadData(address, testData, 10);
+        PRINTF("\n");
+        WriteAndReadTestData(address);
         std::fill(testData.begin(), testData.end(), 0xFF_b);
-        WriteAndReadData(address, testData, 10);
+        WriteAndReadTestData(address);
         std::fill(testData.begin(), testData.end(), 0x00_b);
-        WriteAndReadData(address, testData, 10);
+        WriteAndReadTestData(address);
     }
 } framTest;
 
@@ -97,26 +92,42 @@ auto PrintDeviceId(fram::DeviceId const & deviceId) -> void
     PRINTF("%02x", static_cast<unsigned int>(deviceId[0]));
 }
 
-auto WriteAndReadData(const fram::Address & address,
-                      std::array<Byte, testDataSize> & data,
-                      size_t nPrintedBytes) -> void
+
+auto WriteAndReadTestData(fram::Address const & address) -> void
 {
-    fram::WriteTo(address, Span(data));
-    PRINTF("Writing %zu bytes to   address 0x%08x:\n",
-           nPrintedBytes,
+    auto nBytesToPrint = 10U;
+
+    PRINTF("\n");
+    PRINTF("Writing %d bytes to address   0x%08x ...\n",
+           static_cast<int>(testDataSize),
            static_cast<unsigned int>(address));
-    for(size_t i = 0; i < nPrintedBytes; i++)
-    {
-        PRINTF("0x%02x  ", static_cast<unsigned char>(data[i]));
-    }
-    auto readData = fram::ReadFrom<testDataSize>(address);
-    PRINTF("Reading %zu bytes from address 0x%08x:\n",
-           nPrintedBytes,
+    auto begin = RODOS::NOW();
+    fram::WriteTo(address, Span(testData));
+    auto end = RODOS::NOW();
+    PRINTF("  took %d us\n", static_cast<int>((end - begin) / RODOS::MICROSECONDS));
+
+    PRINTF("Reading %d bytes from address 0x%08x ...\n",
+           static_cast<int>(testDataSize),
            static_cast<unsigned int>(address));
-    for(size_t i = 0; i < nPrintedBytes; i++)
+    begin = RODOS::NOW();
+    fram::ReadFrom(address, Span(&readData));
+    end = RODOS::NOW();
+    PRINTF("  took %d us\n", static_cast<int>((end - begin) / RODOS::MICROSECONDS));
+
+    PRINTF("\n");
+    PRINTF("Comparing first %d written and read bytes:\n", nBytesToPrint);
+    PRINTF("  ");
+    for(auto byte : Span(testData).first(nBytesToPrint))
     {
-        PRINTF("0x%02x  ", static_cast<unsigned char>(readData[i]));
+        PRINTF("0x%02x ", static_cast<unsigned char>(byte));
     }
-    Check(readData == data);
+    PRINTF("\n  ");
+    for(auto byte : Span(readData).first(nBytesToPrint))
+    {
+        PRINTF("0x%02x ", static_cast<unsigned char>(byte));
+    }
+    PRINTF("\n");
+    PRINTF("Comparing the full arrays ...\n");
+    Check(readData == testData);
 }
 }
