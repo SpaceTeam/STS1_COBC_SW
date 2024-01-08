@@ -83,10 +83,10 @@ private:
 
         flash::WaitWhileBusy();
         auto end = RODOS::NOW();
-        PRINTF("ProgrammPage took %d ms\n",
-               static_cast<int>((endPage - begin) / RODOS::MILLISECONDS));
-        PRINTF("WaitWhileBusy took %d ms\n",
-               static_cast<int>((end - endPage) / RODOS::MILLISECONDS));
+        PRINTF("ProgrammPage took %d us\n",
+               static_cast<int>((endPage - begin) / RODOS::MICROSECONDS));
+        PRINTF("WaitWhileBusy took %d us\n",
+               static_cast<int>((end - endPage) / RODOS::MICROSECONDS));
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
@@ -101,8 +101,8 @@ private:
         begin = RODOS::NOW();
         flash::WaitWhileBusy();
         end = RODOS::NOW();
-        PRINTF("Erasing sector took %d ms\n",
-               static_cast<int>((end - begin) / RODOS::MILLISECONDS));
+        PRINTF("Erasing sector took %d us\n",
+               static_cast<int>((end - begin) / RODOS::MICROSECONDS));
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));

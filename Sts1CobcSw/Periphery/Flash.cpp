@@ -94,7 +94,7 @@ auto Initialize() -> void
     csGpioPin.Set();
     writeProtectionGpioPin.Set();
 
-    constexpr auto baudRate = 50'000'000;
+    constexpr auto baudRate = 48'000'000;
     hal::Initialize(&spi, baudRate);
 
     Enter4ByteAdressMode();
