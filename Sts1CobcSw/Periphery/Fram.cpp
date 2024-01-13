@@ -50,7 +50,7 @@ auto Initialize() -> void
     csGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
 
-    auto const baudRate = 1'000'000;
+    auto const baudRate = 12'000'000;
     hal::Initialize(&spi, baudRate);
 }
 
@@ -63,6 +63,12 @@ auto ReadDeviceId() -> DeviceId
     hal::ReadFrom(&spi, Span(&deviceId));
     csGpioPin.Set();
     return deviceId;
+}
+
+
+auto ActualBaudRate() -> int32_t
+{
+    return spi.status(RODOS::SPI_STATUS_BAUDRATE);
 }
 
 

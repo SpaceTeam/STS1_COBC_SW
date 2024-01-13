@@ -6,6 +6,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
+#include <cinttypes>
 #include <cstdint>
 #include <string_view>
 
@@ -41,6 +42,10 @@ private:
         PRINTF("\nFlash test\n\n");
 
         PRINTF("\n");
+        auto actualBaudRate = flash::ActualBaudRate();
+        PRINTF("Actual baud rate: %" PRIi32 "\n", actualBaudRate);
+
+        PRINTF("\n");
         auto jedecId = flash::ReadJedecId();
         PRINTF("Manufacturer ID: 0x%02x == 0xEF\n",
                static_cast<unsigned int>(jedecId.manufacturerId));
@@ -72,13 +77,16 @@ private:
         std::fill(begin(page), end(page), 0x00_b);
         PRINTF("Programming page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
         Print(page);
-        flash::ProgramPage(pageAddress, page);
-
         auto begin = RODOS::NOW();
+        flash::ProgramPage(pageAddress, page);
+        auto endPage = RODOS::NOW();
+
         flash::WaitWhileBusy();
         auto end = RODOS::NOW();
-        PRINTF("Programming page took %d ms\n",
-               static_cast<int>((end - begin) / RODOS::MILLISECONDS));
+        PRINTF("ProgrammPage took %d us\n",
+               static_cast<int>((endPage - begin) / RODOS::MICROSECONDS));
+        PRINTF("WaitWhileBusy took %d us\n",
+               static_cast<int>((end - endPage) / RODOS::MICROSECONDS));
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
@@ -93,8 +101,8 @@ private:
         begin = RODOS::NOW();
         flash::WaitWhileBusy();
         end = RODOS::NOW();
-        PRINTF("Erasing sector took %d ms\n",
-               static_cast<int>((end - begin) / RODOS::MILLISECONDS));
+        PRINTF("Erasing sector took %d us\n",
+               static_cast<int>((end - begin) / RODOS::MICROSECONDS));
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));

@@ -7,15 +7,24 @@
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
+#include <cinttypes>
 #include <cstdint>
 
 
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
+using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
+
+
+const size_t testDataSize = 11 * 1024;  // 11 KiB
+auto testData = std::array<Byte, testDataSize>{};
+auto readData = std::array<Byte, testDataSize>{};
 
 
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
+auto WriteAndReadTestData(fram::Address const & address) -> void;
 
 
 class FramTest : public RODOS::StaticThread<>
@@ -25,15 +34,21 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
         fram::Initialize();
     }
 
+
     void run() override
     {
         PRINTF("\nFRAM test\n\n");
+
+        PRINTF("\n");
+        auto actualBaudRate = fram::ActualBaudRate();
+        PRINTF("Actual baud rate: %" PRIi32 "\n", actualBaudRate);
 
         PRINTF("\n");
         auto deviceId = fram::ReadDeviceId();
@@ -41,42 +56,20 @@ private:
         PrintDeviceId(deviceId);
         PRINTF(" ==\n");
         PRINTF("           0x7F'7F7F'7F7F'7FC2'2E03\n");
-        Check(deviceId[8] == 0x7F_b);
-        Check(deviceId[7] == 0x7F_b);
-        Check(deviceId[6] == 0x7F_b);
-        Check(deviceId[5] == 0x7F_b);
-        Check(deviceId[4] == 0x7F_b);
-        Check(deviceId[3] == 0x7F_b);
-        Check(deviceId[2] == 0xC2_b);
-        Check(deviceId[1] == 0x2E_b);
-        Check(deviceId[0] == 0x03_b);
+        auto correctDeviceId =
+            std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
+        Check(deviceId == correctDeviceId);
 
-        PRINTF("\n");
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr uint32_t nAdressBits = 20U;
         auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
-        constexpr auto number1 = 0b1010'1100_b;
-        constexpr auto number2 = ~number1;
 
-        fram::WriteTo(address, Span(number1));
-        PRINTF("Writing to   address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(number1));
-        auto data = fram::ReadFrom<1>(address)[0];
-        PRINTF("Reading from address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(data));
-        Check(data == number1);
-
-        fram::WriteTo(address, Span(number2));
-        PRINTF("Writing to   address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(number2));
-        fram::ReadFrom(address, Span(&data));
-        PRINTF("Reading from address 0x%08x: 0x%02x\n",
-               static_cast<unsigned int>(address),
-               static_cast<unsigned char>(data));
-        Check(data == number2);
+        PRINTF("\n");
+        WriteAndReadTestData(address);
+        std::fill(testData.begin(), testData.end(), 0xFF_b);
+        WriteAndReadTestData(address);
+        std::fill(testData.begin(), testData.end(), 0x00_b);
+        WriteAndReadTestData(address);
     }
 } framTest;
 
@@ -97,5 +90,44 @@ auto PrintDeviceId(fram::DeviceId const & deviceId) -> void
     PRINTF("'");
     PRINTF("%02x", static_cast<unsigned int>(deviceId[1]));
     PRINTF("%02x", static_cast<unsigned int>(deviceId[0]));
+}
+
+
+auto WriteAndReadTestData(fram::Address const & address) -> void
+{
+    auto nBytesToPrint = 10U;
+
+    PRINTF("\n");
+    PRINTF("Writing %d bytes to address   0x%08x ...\n",
+           static_cast<int>(testDataSize),
+           static_cast<unsigned int>(address));
+    auto begin = RODOS::NOW();
+    fram::WriteTo(address, Span(testData));
+    auto end = RODOS::NOW();
+    PRINTF("  took %d us\n", static_cast<int>((end - begin) / RODOS::MICROSECONDS));
+
+    PRINTF("Reading %d bytes from address 0x%08x ...\n",
+           static_cast<int>(testDataSize),
+           static_cast<unsigned int>(address));
+    begin = RODOS::NOW();
+    fram::ReadFrom(address, Span(&readData));
+    end = RODOS::NOW();
+    PRINTF("  took %d us\n", static_cast<int>((end - begin) / RODOS::MICROSECONDS));
+
+    PRINTF("\n");
+    PRINTF("Comparing first %d written and read bytes:\n", nBytesToPrint);
+    PRINTF("  ");
+    for(auto byte : Span(testData).first(nBytesToPrint))
+    {
+        PRINTF("0x%02x ", static_cast<unsigned char>(byte));
+    }
+    PRINTF("\n  ");
+    for(auto byte : Span(readData).first(nBytesToPrint))
+    {
+        PRINTF("0x%02x ", static_cast<unsigned char>(byte));
+    }
+    PRINTF("\n");
+    PRINTF("Comparing the full arrays ...\n");
+    Check(readData == testData);
 }
 }

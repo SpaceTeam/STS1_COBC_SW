@@ -94,7 +94,7 @@ auto Initialize() -> void
     csGpioPin.Set();
     writeProtectionGpioPin.Set();
 
-    constexpr auto baudRate = 1'000'000;
+    constexpr auto baudRate = 48'000'000;
     hal::Initialize(&spi, baudRate);
 
     Enter4ByteAdressMode();
@@ -186,6 +186,12 @@ auto WaitWhileBusy() -> void
         RODOS::AT(RODOS::NOW() + pollingCycleTime);
         isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
     }
+}
+
+
+auto ActualBaudRate() -> int32_t
+{
+    return spi.status(RODOS::SPI_STATUS_BAUDRATE);
 }
 
 
