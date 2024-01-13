@@ -3,6 +3,7 @@ Language: Cpp
 # BasedOnStyle: Chromium
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Right
 AlignConsecutiveAssignments: false
 AlignConsecutiveBitFields: Consecutive
 AlignConsecutiveDeclarations: false
@@ -51,10 +52,10 @@ BreakAfterJavaFieldAnnotations: true
 BreakBeforeBinaryOperators: NonAssignment
 # Choosing Allman would probably give the same result, but I am not sure
 BreakBeforeBraces: Custom
-BreakBeforeConceptDeclarations: true
+BreakBeforeConceptDeclarations: Always
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
-BreakInheritanceList: BeforeColon
+BreakInheritanceList: AfterComma
 BreakStringLiterals: true
 ColumnLimit: 100
 CommentPragmas: '^ IWYU pragma:'
@@ -66,6 +67,7 @@ Cpp11BracedListStyle: true
 DeriveLineEnding: false
 DerivePointerAlignment: false
 DisableFormat: false
+EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: LogicalBlock
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: false
@@ -73,6 +75,7 @@ ForEachMacros:
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
+IfMacros: []
 IncludeBlocks: Regroup
 IncludeCategories:
   # Parsing is done in the order defined here, so this is not ordered by priority but specificity of
@@ -101,29 +104,34 @@ IncludeCategories:
     Priority: 2
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
+IndentAccessModifiers: false
 IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: NoIndent
 IndentGotoLabels: true
 IndentPPDirectives: BeforeHash
-# Indent requires because RequiresClausePosition is not yet available (clang 15) and without it it
-# looks even worse
-IndentRequires:  true
+IndentRequiresClause: true
 IndentWidth: 4
 IndentWrappedFunctionNames: false
+InsertBraces: true
 InsertTrailingCommas: Wrapped
 JavaScriptQuotes: Double
 JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
+LambdaBodyIndentation: Signature
 MacroBlockBegin: ''
 MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: None
+QualifierAlignment: Custom
+QualifierOrder: ['static', 'inline', 'constexpr', 'type', 'const', 'volatile']
 ObjCBinPackProtocolList: Auto
 ObjCBlockIndentWidth: 4
 ObjCBreakBeforeNestedBlockParam: true
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: true
+PPIndentWidth: -1
+PackConstructorInitializers: NextLine
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 1
 PenaltyBreakComment: 300
@@ -165,8 +173,11 @@ RawStringFormats:
     CanonicalDelimiter: ''
     BasedOnStyle: google
 ReflowComments: true
-# RequiresClausePosition: WithPreceding # requires clang-format 15
-SortIncludes: true
+RemoveBracesLLVM: false
+RequiresClausePosition: OwnLine
+# Unfortunately "Always" enforces a single line between blocks but I want 2
+SeparateDefinitionBlocks: Leave
+SortIncludes: CaseInsensitive
 SortJavaStaticImport: Before
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
@@ -185,10 +196,13 @@ SpaceBeforeSquareBrackets: false
 SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 2
-SpacesInAngles: false
+SpacesInAngles: Never
 SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
+SpacesInLineCommentPrefix:
+  Minimum:  1
+  Maximum: -1
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 Standard: Auto

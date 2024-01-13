@@ -27,7 +27,7 @@ TEST_CASE("Span() converts to the right std::span")
     auto i = 256;
     auto const ci = 17;
     short a[] = {1, 2, 3};  // NOLINT(misc-const-correctness)
-    const char ca[] = "asdf";
+    char const ca[] = "asdf";
     auto sa = std::array<short, 3>{2, 3, 4};
     auto const csa = std::array{0x12, 0x34};
 
