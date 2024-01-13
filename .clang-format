@@ -52,7 +52,7 @@ BreakAfterJavaFieldAnnotations: true
 BreakBeforeBinaryOperators: NonAssignment
 # Choosing Allman would probably give the same result, but I am not sure
 BreakBeforeBraces: Custom
-BreakBeforeConceptDeclarations: true
+BreakBeforeConceptDeclarations: Always
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: AfterComma
@@ -110,11 +110,10 @@ IndentCaseLabels: true
 IndentExternBlock: NoIndent
 IndentGotoLabels: true
 IndentPPDirectives: BeforeHash
-# Indent requires because RequiresClausePosition is not yet available (clang 15) and without it it
-# looks even worse
-IndentRequires:  true
+IndentRequiresClause: true
 IndentWidth: 4
 IndentWrappedFunctionNames: false
+InsertBraces: true
 InsertTrailingCommas: Wrapped
 JavaScriptQuotes: Double
 JavaScriptWrapImports: true
