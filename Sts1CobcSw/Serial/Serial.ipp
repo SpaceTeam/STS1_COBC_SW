@@ -69,7 +69,7 @@ inline auto DeserializeFrom(void const * source, T * t) -> void const *
 
 
 template<HasEndianness T>
-constexpr inline auto ReverseBytes(T t) -> T
+inline constexpr auto ReverseBytes(T t) -> T
 {
     if constexpr(sizeof(T) == 1)
     {
