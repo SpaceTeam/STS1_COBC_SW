@@ -1,14 +1,24 @@
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 
+#include <stm32f4xx_crc.h>
+#include <stm32f4xx_dma.h>
+#include <stm32f4xx_rcc.h>
+
+#include <rodos_no_using_namespace.h>
+
 #include <array>
-#include <climits>
+#include <bit>
 #include <cstdint>
+#include <span>
 
 
 namespace sts1cobcsw::utility
 {
-constexpr unsigned int nBitsPerByte = CHAR_BIT;
-constexpr auto initialCrc32Value = 0xFFFFFFFFU;
+constexpr auto oneByteWidth = 8U;
+constexpr auto crc32Init = 0xFFFFFFFFU;
+constexpr auto bytesPerWord = 4U;
+auto crcDma = DMA2_Stream1;
 
 constexpr auto crcTable = std::to_array<std::uint32_t>(
     {0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b, 0x1a864db2,
@@ -49,18 +59,190 @@ constexpr auto crcTable = std::to_array<std::uint32_t>(
      0x9e7d9662, 0x933eb0bb, 0x97ffad0c, 0xafb010b1, 0xab710d06, 0xa6322bdf, 0xa2f33668,
      0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4});
 
-
-// TODO: A parameter pack of spans would be very convenient
-auto ComputeCrc32(std::span<Byte const> data) -> uint32_t
+enum class DmaBurstType
 {
-    std::uint32_t crc32 = initialCrc32Value;
-    for(auto const & element : data)
+    singleWord,
+    fourBytes
+};
+
+// Private function prototypes
+// Interrupt handler not needed at the moment since we poll the TCIF
+// extern "C"
+// {
+// void DMA2_Stream1_IRQHandler();
+// }
+
+auto EnableCrcHardware() -> void;
+auto EnableCrcDma(DmaBurstType dmaBurstType) -> void;
+
+// Private function implementations
+
+//! @brief Enable the CRC peripheral.
+auto EnableCrcHardware() -> void
+{
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
+}
+
+
+//! @brief Enable the CRC DMA.
+//! @param dmaBurstType Whether to write single words or burst 4 bytes at a time
+//! @returns The corresponding CRC32 checksum
+auto EnableCrcDma(DmaBurstType dmaBurstType) -> void
+{
+    // Proposed: DMA 2 Stream 1
+
+    // Enable DMA 2
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+
+    // Initialize
+    // https://www.st.com/resource/en/application_note/an4187-using-the-crc-peripheral-on-stm32-microcontrollers-stmicroelectronics.pdf
+    DMA_InitTypeDef dmaInitStruct;
+    DMA_StructInit(&dmaInitStruct);
+
+    // Check if this is needed, seen in an online example but not in the STM manual
+    // DMA_DeInit(DMA2_Stream1);
+
+    dmaInitStruct.DMA_DIR = DMA_DIR_MemoryToMemory;
+
+    // Changed when there is an actual transfer, so keep default
+    // dmaInitStruct.DMA_PeripheralBaseAddr = static_cast<uint32_t>(...);
+
+    // M2M transfer -> Memory address is CRC data register address
+    dmaInitStruct.DMA_Memory0BaseAddr = reinterpret_cast<uintptr_t>(&(CRC->DR));
+    dmaInitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
+    dmaInitStruct.DMA_MemoryInc = DMA_MemoryInc_Disable;
+
+    // Changed when there is an actual transfer, so keep default
+    // dmaInitStruct.DMA_BufferSize = static_cast<uint32_t>(...);
+
+    // Either write words, or a burst of 4 bytes
+    dmaInitStruct.DMA_PeripheralDataSize = (dmaBurstType == DmaBurstType::singleWord)
+                                             ? DMA_PeripheralDataSize_Word
+                                             : DMA_PeripheralDataSize_Byte;
+    dmaInitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
+    dmaInitStruct.DMA_Mode = DMA_Mode_Normal;
+    dmaInitStruct.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+    dmaInitStruct.DMA_PeripheralBurst = (dmaBurstType == DmaBurstType::singleWord)
+                                          ? DMA_PeripheralBurst_Single
+                                          : DMA_PeripheralBurst_INC4;
+    dmaInitStruct.DMA_FIFOMode = DMA_FIFOMode_Disable;
+
+    // TODO: Check necessary priority, default is low
+    // DMA_InitStruct.DMA_Priority = DMA_Priority_something;
+
+    DMA_Init(crcDma, &dmaInitStruct);
+
+    // Enable DMA 2 Stream 1 Interrupt
+    // Don't enable for now, since we poll the TCIF for now instead of using an interrupt
+    // DMA_ITConfig(crcDma, DMA_IT_TC, DISABLE);
+    // NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+}
+
+// Public function implementations
+
+//! @brief Compute the CRC32 (MPEG-2) over a given data buffer in software.
+//! @param data The data buffer
+//! @returns The corresponding CRC32 checksum
+auto Crc32(std::span<Byte> data) -> std::uint32_t
+{
+    // https://en.wikipedia.org/wiki/Cyclic_redundancy_check    -> What is CRC
+    // https://reveng.sourceforge.io/crc-catalogue/all.htm      -> Description of MPEG-2
+    // https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html          -> Rust implementation (EDU)
+    // https://gist.github.com/Miliox/b86b60b9755faf3bd7cf      -> C++ implementation
+    // https://crccalc.com/                                     -> To check the implementation
+    std::uint32_t crc32 = crc32Init;
+    const std::size_t nBytes = data.size();
+
+    for(std::size_t i = 0; i < nBytes; i++)
     {
-        auto lookupIndex =
-            // NOLINTNEXTLINE(*magic-numbers*)
-            ((crc32 >> 24U) ^ std::to_integer<std::uint32_t>(element)) & 0xFFU;
-        crc32 = (crc32 << nBitsPerByte) ^ crcTable[lookupIndex];
+        const std::uint32_t lookupIndex =
+            ((crc32 >> 24U) ^ std::to_integer<std::uint32_t>(data[i])) & 0xFFU;
+        crc32 = (crc32 << oneByteWidth)
+              ^ crcTable[lookupIndex];  // CRCTable is an array of 256 32-bit constants
     }
     return crc32;
 }
+
+
+//! @brief Initialize the CRC DMA and the CRC peripheral itself.
+auto InitializeCrc32Hardware() -> void
+{
+    EnableCrcDma();
+    EnableCrcHardware();
+}
+
+
+//! @brief Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//! While DMA is used, the function currently polls the TCIF flag instead of using an interrupt.
+//! @param data The data buffer
+//! @return The corresponding CRC32 checksum
+auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
+{
+    static_assert(std::endian::native == std::endian::little);
+    // Format data byte buffer to words
+    // If not divisible by 4 bytes, 1 word padding is needed
+    auto trailingBytes = data.size() % bytesPerWord;
+    auto isWordAligned = (trailingBytes == 0U);
+
+    DMA_Cmd(crcDma, DISABLE);
+    // Set new data address
+    crcDma->PAR = reinterpret_cast<uintptr_t>(data.data());
+    // Set new data length
+    auto dataLength = data.length - (isWordAligned ? 0 : 1);
+    crcDma->NDTR = static_cast<uint32_t>(dataLength);
+    CRC_ResetDR();
+    DMA_Cmd(crcDma, ENABLE);
+
+    // Temporary implementation: Poll TCIF, then write trailing bytes (or return)
+    while(DMA_GetFlagStatus(crcDma, DMA_FLAG_TCIF1) == RESET)
+    {
+        RODOS::yield();
+    }
+    DMA_ClearFlag(crcDma, DMA_FLAG_TCIF1);
+
+    if(not isWordAligned)
+    {
+        // Write trailing bytes
+        std::uint32_t trailingWord = 0U;
+        auto lastIndex = data.size() - 1;
+        for(size_t i = 0; i < trailingBytes; i++)
+        {
+            trailingWord |= (data[lastIndex - i] << (trailingBytes - i));
+        }
+        CRC_CalcCRC(trailingWord);
+    }
+
+    return CRC_GetCRC();
+}
+
+
+//! @brief Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//! @param data The data over which the CRC32 is calculated, requires uint32_t data
+//! @returns The corresponding CRC32 checksum
+auto ComputeCrc32Blocking(std::span<std::uint32_t> data) -> std::uint32_t
+{
+    CRC_ResetDR();
+    auto crc = CRC_CalcBlockCRC(data.data(), data.size());
+    return crc;
+}
+
+
+// Interrupt handler not needed at the moment since we poll the TCIF
+// extern "C"
+// {
+// void DMA2_Stream1_IRQHandler()
+// {
+//     if(DMA_GetITStatus(DMA2_Stream1, DMA_IT_TCIF1))
+//     {
+//         DMA_ClearITPendingBit(DMA2_Stream1, DMA_IT_TCIF1);
+//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
+//         // TODO: Make usable
+//         RODOS::PRINTF("Interrupt CRC: %lx\n", CRC_GetCRC());
+//     }
+//     else
+//     {
+//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
+//     }
+// }
+// }
 }
