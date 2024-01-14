@@ -6,6 +6,12 @@
 
 namespace sts1cobcsw::hal
 {
+inline auto Deinitialize(RODOS::HAL_UART * uart) -> void
+{
+    uart->reset();
+}
+
+
 template<typename T, std::size_t extent>
 auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
 {

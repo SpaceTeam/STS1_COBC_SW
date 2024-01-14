@@ -101,7 +101,7 @@ auto TurnOff() -> void
 {
     persistentstate::EduShouldBePowered(/*value=*/false);
     eduEnableGpioPin.Reset();
-    uart.reset();
+    hal::Deinitialize(&uart);
 }
 
 

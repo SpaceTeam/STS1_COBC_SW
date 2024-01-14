@@ -23,6 +23,7 @@ using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolic
 
 
 auto Initialize(RODOS::HAL_UART * uart, std::uint32_t baudRate) -> void;
+auto Deinitialize(RODOS::HAL_UART * uart) -> void;
 
 template<typename T, std::size_t extent>
 auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void;
