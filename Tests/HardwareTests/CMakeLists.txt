@@ -10,7 +10,7 @@ add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos)
 
 add_program(HardwareCrc32 HardwareCrc32.test.cpp)
-target_link_libraries(Sts1CobcSwTests_HardwareCrc32 PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery)
+target_link_libraries(Sts1CobcSwTests_HardwareCrc32 PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Utility)
 
 add_program(FileSystem FileSystem.test.cpp)
 target_link_libraries(
