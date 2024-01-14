@@ -91,7 +91,7 @@ auto EnableCrcDma(DmaBurstType dmaBurstType) -> void
 
     // Initialize
     // https://www.st.com/resource/en/application_note/an4187-using-the-crc-peripheral-on-stm32-microcontrollers-stmicroelectronics.pdf
-    DMA_InitTypeDef dmaInitStruct;
+    auto dmaInitStruct = DMA_InitTypeDef{};
     DMA_StructInit(&dmaInitStruct);
 
     // Check if this is needed, seen in an online example but not in the STM manual
@@ -103,7 +103,7 @@ auto EnableCrcDma(DmaBurstType dmaBurstType) -> void
     // dmaInitStruct.DMA_PeripheralBaseAddr = static_cast<uint32_t>(...);
 
     // M2M transfer -> Memory address is CRC data register address
-    dmaInitStruct.DMA_Memory0BaseAddr = reinterpret_cast<uintptr_t>(&(CRC->DR));
+    dmaInitStruct.DMA_Memory0BaseAddr = reinterpret_cast<std::uintptr_t>(&(CRC->DR));
     dmaInitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
     dmaInitStruct.DMA_MemoryInc = DMA_MemoryInc_Disable;
 
@@ -181,10 +181,10 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
 
     DMA_Cmd(crcDma, DISABLE);
     // Set new data address
-    crcDma->PAR = reinterpret_cast<uintptr_t>(data.data());
+    crcDma->PAR = reinterpret_cast<std::uintptr_t>(data.data());
     // Set new data length
     auto dataLength = data.length - (isWordAligned ? 0 : 1);
-    crcDma->NDTR = static_cast<uint32_t>(dataLength);
+    crcDma->NDTR = static_cast<std::uint32_t>(dataLength);
     CRC_ResetDR();
     DMA_Cmd(crcDma, ENABLE);
 
@@ -200,9 +200,9 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
         // Write trailing bytes
         std::uint32_t trailingWord = 0U;
         auto lastIndex = data.size() - 1;
-        for(size_t i = 0; i < trailingBytes; i++)
+        for(size_t i = 0; i < nTrailingBytes; i++)
         {
-            trailingWord |= (data[lastIndex - i] << (trailingBytes - i));
+            trailingWord |= (data[lastIndex - i] << (nTrailingBytes - i));
         }
         CRC_CalcCRC(trailingWord);
     }
