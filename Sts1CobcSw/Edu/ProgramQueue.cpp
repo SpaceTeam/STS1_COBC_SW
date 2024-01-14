@@ -11,7 +11,7 @@ using sts1cobcsw::SerializeTo;
 
 
 etl::vector<QueueEntry, programQueueSize> programQueue{};
-std::uint16_t queueIndex = 0U;
+std::uint16_t queueIndex = 0;
 
 
 template<std::endian endianness>

@@ -26,8 +26,8 @@ using PageSpan = std::span<Byte const, pageSize>;
 
 struct JedecId
 {
-    std::uint8_t manufacturerId = 0U;
-    std::uint16_t deviceId = 0U;
+    std::uint8_t manufacturerId = 0;
+    std::uint16_t deviceId = 0;
 };
 
 

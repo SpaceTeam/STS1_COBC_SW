@@ -16,7 +16,7 @@ template<typename T, std::size_t extent>
 auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
 {
     auto bytes = std::as_bytes(data);
-    std::size_t nWrittenBytes = 0U;
+    std::size_t nWrittenBytes = 0;
     while(nWrittenBytes < bytes.size())
     {
         // uart.write() writes at most RODOS::UART_BUF_SIZE bytes and returns how many it has
@@ -35,7 +35,7 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64
     -> Result<void>
 {
     auto bytes = std::as_bytes(data);
-    std::size_t nWrittenBytes = 0U;
+    std::size_t nWrittenBytes = 0;
     auto reactivationTime = RODOS::NOW() + timeout;
     while(nWrittenBytes < bytes.size())
     {
@@ -59,7 +59,7 @@ template<typename T, std::size_t extent>
 auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
 {
     auto bytes = std::as_writable_bytes(data);
-    std::size_t nReadBytes = 0U;
+    std::size_t nReadBytes = 0;
     while(nReadBytes < bytes.size())
     {
         while(not uart->isDataReady()) {}
@@ -76,7 +76,7 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t ti
     -> Result<void>
 {
     auto bytes = std::as_writable_bytes(data);
-    std::size_t nReadBytes = 0U;
+    std::size_t nReadBytes = 0;
     auto reactivationTime = RODOS::NOW() + timeout;
     while(nReadBytes < bytes.size())
     {

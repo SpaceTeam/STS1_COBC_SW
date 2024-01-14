@@ -24,7 +24,7 @@ TEST_CASE("TriviallySerializable")
     };
     struct SingleInt32
     {
-        std::int32_t i;
+        std::int32_t i = 0;
     };
 
     // POD types are TriviallySerializable
@@ -59,7 +59,7 @@ TEST_CASE("HasEndianness")
     };
     struct SingleInt32
     {
-        std::int32_t i;
+        std::int32_t i = 0;
     };
 
     // POD types are HasEndianness

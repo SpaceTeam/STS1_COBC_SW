@@ -48,7 +48,7 @@ private:
             // module
             std::size_t const nReadCharacters =
                 RODOS::uart_stdout.read(&readCharacter, sizeof(readCharacter));
-            if(nReadCharacters == 0U)
+            if(nReadCharacters == 0)
             {
                 RODOS::uart_stdout.suspendUntilDataReady();
                 continue;

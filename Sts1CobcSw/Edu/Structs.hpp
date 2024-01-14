@@ -27,36 +27,34 @@ inline constexpr auto returnResultId = 0x05_b;    //! Request student program re
 inline constexpr auto updateTimeId = 0x06_b;      //! Update EDU system time
 
 
-// TODO: Add = 0; to all std::(u)intxx_t fields
-
 struct StoreProgramData
 {
     static constexpr auto id = storeProgramId;
-    std::uint16_t programId;
+    std::uint16_t programId = 0;
 };
 
 
 struct ExecuteProgramData
 {
     static constexpr auto id = executeProgramId;
-    std::uint16_t programId;
-    std::int32_t startTime;
-    std::int16_t timeout;
+    std::uint16_t programId = 0;
+    std::int32_t startTime = 0;
+    std::int16_t timeout = 0;
 };
 
 
 struct ReturnResultData
 {
     static constexpr auto id = returnResultId;
-    std::uint16_t programId = 0U;
-    std::int32_t startTime = 0U;
+    std::uint16_t programId = 0;
+    std::int32_t startTime = 0;
 };
 
 
 struct UpdateTimeData
 {
     static constexpr auto id = updateTimeId;
-    std::int32_t currentTime;
+    std::int32_t currentTime = 0;
 };
 
 
@@ -71,16 +69,16 @@ struct Status
 
 struct ResultsReadyStatus
 {
-    std::uint16_t programId;
-    std::int32_t startTime;
+    std::uint16_t programId = 0;
+    std::int32_t startTime = 0;
 };
 
 
 struct ProgramFinishedStatus
 {
-    std::uint16_t programId;
-    std::int32_t startTime;
-    std::uint8_t exitCode;
+    std::uint16_t programId = 0;
+    std::int32_t startTime = 0;
+    std::uint8_t exitCode = 0;
 };
 
 

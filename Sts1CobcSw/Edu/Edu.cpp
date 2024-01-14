@@ -323,8 +323,8 @@ auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
     // RODOS::PRINTF("\nStart receiving result\n");
     // END DEBUG
 
-    std::size_t totalResultSize = 0U;
-    std::size_t nPackets = 0U;
+    std::size_t totalResultSize = 0;
+    std::size_t nPackets = 0;
     //  TODO: Turn into for loop
     while(nPackets < maxNPackets)
     {
@@ -371,7 +371,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
 //! @returns An error code and the number of received bytes in ResultInfo
 auto ReturnResultRetry() -> Result<ResultInfo>
 {
-    std::size_t errorCount = 0U;
+    std::size_t errorCount = 0;
     // TODO: infinite loop could be avoided by setting errorCount <= maxNNackRetries as the
     // termination condition
     while(true)
@@ -392,7 +392,7 @@ auto ReturnResultRetry() -> Result<ResultInfo>
     }
 
     // Result<ResultInfo> result = ErrorCode::noErrorCodeSet;
-    // std::size_t errorCount = 0U;
+    // std::size_t errorCount = 0;
     // // TODO: CHange this
     // do
     // {
@@ -424,7 +424,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     }
     if(answer == cepEof)
     {
-        return ResultInfo{.eofIsReached = true, .resultSize = 0U};
+        return ResultInfo{.eofIsReached = true, .resultSize = 0};
     }
     if(answer != cepData)
     {
