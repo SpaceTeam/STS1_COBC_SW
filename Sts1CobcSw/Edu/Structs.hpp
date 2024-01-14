@@ -2,7 +2,6 @@
 
 
 #include <Sts1CobcSw/Edu/Enums.hpp>
-#include <Sts1CobcSw/Edu/Names.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
@@ -17,6 +16,17 @@ namespace edu
 using sts1cobcsw::operator""_b;
 
 
+// TODO: Directly define the numbers in the <Command>Data structs
+
+// CEP high-level command headers (see EDU PDD)
+inline constexpr auto storeProgramId = 0x01_b;    //! Transfer student programs from COBC to EDU
+inline constexpr auto executeProgramId = 0x02_b;  //! Execute student program
+inline constexpr auto stopProgramId = 0x03_b;     //! Stop student program
+inline constexpr auto getStatusId = 0x04_b;       //! Get the student program status
+inline constexpr auto returnResultId = 0x05_b;    //! Request student program result
+inline constexpr auto updateTimeId = 0x06_b;      //! Update EDU system time
+
+
 struct HeaderData
 {
     Byte command = 0x00_b;
@@ -25,7 +35,6 @@ struct HeaderData
 
 
 // TODO: Add = 0; to all std::(u)intxx_t fields
-
 
 struct StoreProgramData
 {
