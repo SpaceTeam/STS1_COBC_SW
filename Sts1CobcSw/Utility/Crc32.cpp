@@ -60,12 +60,6 @@ constexpr auto crcTable = std::to_array<std::uint32_t>(
      0x9e7d9662, 0x933eb0bb, 0x97ffad0c, 0xafb010b1, 0xab710d06, 0xa6322bdf, 0xa2f33668,
      0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4});
 
-enum class DmaBurstType
-{
-    singleWord,
-    fourBytes
-};
-
 // Private function prototypes
 // Interrupt handler not needed at the moment since we poll the TCIF
 // extern "C"
@@ -144,7 +138,7 @@ auto EnableCrcDma(DmaBurstType dmaBurstType) -> void
 //! @brief Compute the CRC32 (MPEG-2) over a given data buffer in software.
 //! @param data The data buffer
 //! @returns The corresponding CRC32 checksum
-auto Crc32(std::span<Byte> data) -> std::uint32_t
+auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
 {
     // https://en.wikipedia.org/wiki/Cyclic_redundancy_check    -> What is CRC
     // https://reveng.sourceforge.io/crc-catalogue/all.htm      -> Description of MPEG-2
@@ -166,9 +160,9 @@ auto Crc32(std::span<Byte> data) -> std::uint32_t
 
 
 //! @brief Initialize the CRC DMA and the CRC peripheral itself.
-auto InitializeCrc32Hardware() -> void
+auto InitializeCrc32Hardware(DmaBurstType dmaBurstType) -> void
 {
-    EnableCrcDma();
+    EnableCrcDma(dmaBurstType);
     EnableCrcHardware();
 }
 
