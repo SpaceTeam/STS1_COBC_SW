@@ -11,10 +11,10 @@ using sts1cobcsw::SerializeTo;
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, HeaderData * data) -> void const *
+auto DeserializeFrom(void const * source, CepDataHeader * data) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &(data->command));
-    source = DeserializeFrom<endianness>(source, &(data->length));
+    source = DeserializeFrom<endianness>(source, &(data->dataLength));
     return source;
 }
 

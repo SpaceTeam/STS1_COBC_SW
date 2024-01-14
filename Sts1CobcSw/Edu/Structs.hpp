@@ -27,12 +27,10 @@ inline constexpr auto returnResultId = 0x05_b;    //! Request student program re
 inline constexpr auto updateTimeId = 0x06_b;      //! Update EDU system time
 
 
-// TODO: Rename to CepDataHeader or just DataHeader
-struct HeaderData
+struct CepDataHeader
 {
-    // TODO: Rename to eduCommand[Id]
     Byte command = 0x00_b;
-    std::uint16_t length = 0;
+    std::uint16_t dataLength = 0;
 };
 
 
@@ -102,8 +100,9 @@ struct ResultInfo
 
 
 template<>
-inline constexpr std::size_t serialSize<edu::HeaderData> =
-    totalSerialSize<decltype(edu::HeaderData::command), decltype(edu::HeaderData::length)>;
+inline constexpr std::size_t serialSize<edu::CepDataHeader> =
+    totalSerialSize<decltype(edu::CepDataHeader::command),
+                    decltype(edu::CepDataHeader::dataLength)>;
 
 template<>
 inline constexpr std::size_t serialSize<edu::ProgramFinishedStatus> =
@@ -142,7 +141,7 @@ inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
 namespace edu
 {
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, HeaderData * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, CepDataHeader * data) -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedStatus * data)
     -> void const *;
