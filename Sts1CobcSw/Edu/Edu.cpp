@@ -23,16 +23,14 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 // and the high-level EDU commands (update time, ...) rename them CEP commands and EDU commands,
 // respectively.
 
-// TODO: Turn this into Bytes, maybe even an enum class : Byte
-// CEP basic commands (see EDU PDD)
-constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet
-constexpr auto cmdNack = 0x27_b;  //! Not Acknowledging a (invalid) data packet
-constexpr auto cmdEof = 0x59_b;   //! Transmission of multiple packets is complete
-// TODO: Use this
-//! Transmission of multiple packets should be stopped
-[[maybe_unused]] constexpr auto cmdStop = 0xb4_b;
-constexpr auto cmdData = 0x8b_b;  //! Data packet format is used (not a command packet!)
+constexpr auto cepCommandAck = 0xd7_b;   //! Acknowledging a data packet
+constexpr auto cepCommandNack = 0x27_b;  //! Not Acknowledging a (invalid) data packet
+constexpr auto cepCommandEof = 0x59_b;   //! Transmission of multiple packets is complete
+constexpr auto cepCommandStop = 0xb4_b;  //! Transmission of multiple packets should be stopped
+constexpr auto cepCommandData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
+
+// TODO: Turn these into <Status>Data structs like the EDU commands
 // GetStatus result types
 constexpr auto noEventCode = 0x00_b;
 constexpr auto programFinishedCode = 0x01_b;
@@ -154,11 +152,11 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
     }
     switch(answer)
     {
-        case cmdAck:
+        case cepCommandAck:
         {
             return outcome_v2::success();
         }
-        case cmdNack:
+        case cepCommandNack:
         {
             return ErrorCode::nack;
         }
@@ -226,7 +224,7 @@ auto GetStatus() -> Result<Status>
         if(getStatusCommunicationResult.has_value())
         {
             auto status = getStatusCommunicationResult.value();
-            SendCommand(cmdAck);
+            SendCommand(cepCommandAck);
             RODOS::PRINTF("  .statusType = %d\n  .programId = %d\n  .startTime = %" PRIi32
                           "\n  exitCode = %d\n",
                           static_cast<int>(status.statusType),
@@ -236,7 +234,7 @@ auto GetStatus() -> Result<Status>
             return status;
         }
         FlushUartBuffer();
-        SendCommand(cmdNack);
+        SendCommand(cepCommandNack);
         nErrors++;
         if(nErrors >= maxNNackRetries)
         {
@@ -258,7 +256,7 @@ auto GetStatusCommunication() -> Result<Status>
     OUTCOME_TRY(UartReceive(headerBuffer));
     auto headerData = Deserialize<HeaderData>(headerBuffer);
 
-    if(headerData.command != cmdData)
+    if(headerData.command != cepCommandData)
     {
         return ErrorCode::invalidCommand;
     }
@@ -365,7 +363,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
 
             // TODO: This is a dummy implementation. Store the result instead.
             RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
-            SendCommand(cmdAck);
+            SendCommand(cepCommandAck);
 
             return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
         }
@@ -396,11 +394,11 @@ auto ReturnResultRetry() -> Result<ResultInfo>
         auto returnResultCommunicationResult = ReturnResultCommunication();
         if(returnResultCommunicationResult.has_value())
         {
-            SendCommand(cmdAck);
+            SendCommand(cepCommandAck);
             return returnResultCommunicationResult.value();
         }
         FlushUartBuffer();
-        SendCommand(cmdNack);
+        SendCommand(cepCommandNack);
         errorCount++;
         if(errorCount == maxNNackRetries)
         {
@@ -435,16 +433,16 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 {
     Byte command = 0x00_b;
     OUTCOME_TRY(UartReceive(&command));
-    if(command == cmdNack)
+    if(command == cepCommandNack)
     {
         // TODO: necessary to differentiate errors or just return success with resultSize 0?
         return ErrorCode::noResultAvailable;
     }
-    if(command == cmdEof)
+    if(command == cepCommandEof)
     {
         return ResultInfo{.eofIsReached = true, .resultSize = 0U};
     }
-    if(command != cmdData)
+    if(command != cepCommandData)
     {
         // DEBUG
         RODOS::PRINTF("\nNot DATA command\n");
@@ -511,11 +509,11 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
     OUTCOME_TRY(UartReceive(&answer));
     switch(answer)
     {
-        case cmdAck:
+        case cepCommandAck:
         {
             return outcome_v2::success();
         }
-        case cmdNack:
+        case cepCommandNack:
         {
             return ErrorCode::nack;
         }
@@ -552,7 +550,7 @@ auto SendData(std::span<Byte const> data) -> Result<void>
     auto nNacks = 0;
     while(nNacks < maxNNackRetries)
     {
-        SendCommand(cmdData);
+        SendCommand(cepCommandData);
         hal::WriteTo(&uart, Span(length));
         hal::WriteTo(&uart, data);
         hal::WriteTo(&uart, Span(checksum));
@@ -570,11 +568,11 @@ auto SendData(std::span<Byte const> data) -> Result<void>
 
         switch(answer)
         {
-            case cmdAck:
+            case cepCommandAck:
             {
                 return outcome_v2::success();
             }
-            case cmdNack:
+            case cepCommandNack:
             {
                 nNacks++;
                 continue;
