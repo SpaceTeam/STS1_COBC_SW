@@ -11,15 +11,6 @@ using sts1cobcsw::SerializeTo;
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, CepDataHeader * data) -> void const *
-{
-    source = DeserializeFrom<endianness>(source, &(data->command));
-    source = DeserializeFrom<endianness>(source, &(data->dataLength));
-    return source;
-}
-
-
-template<std::endian endianness>
 auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &(data->programId));

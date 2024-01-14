@@ -237,16 +237,17 @@ auto GetStatus() -> Result<Status>
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto GetStatusCommunication() -> Result<Status>
 {
-    // TODO: Ois aundas mochns so wie sunst a imma mit zerst command/answer und daun length
-    auto headerBuffer = Buffer<CepDataHeader>{};
-    OUTCOME_TRY(Receive(headerBuffer));
-    auto headerData = Deserialize<CepDataHeader>(headerBuffer);
-
-    if(headerData.command != cepData)
+    auto answer = 0x00_b;
+    OUTCOME_TRY(Receive(Span(&answer)));
+    if(answer != cepData)
     {
         return ErrorCode::invalidCommand;
     }
-    if(headerData.dataLength == 0U)
+
+    auto dataLengthBuffer = Buffer<std::int32_t>{};
+    OUTCOME_TRY(Receive(dataLengthBuffer));
+    auto dataLength = Deserialize<std::int32_t>(dataLengthBuffer);
+    if(dataLength == 0U)
     {
         return ErrorCode::invalidLength;
     }
@@ -256,7 +257,7 @@ auto GetStatusCommunication() -> Result<Status>
 
     if(statusType == noEventCode)
     {
-        if(headerData.dataLength != nNoEventBytes)
+        if(dataLength != nNoEventBytes)
         {
             return ErrorCode::invalidLength;
         }
@@ -265,7 +266,7 @@ auto GetStatusCommunication() -> Result<Status>
     }
     if(statusType == programFinishedCode)
     {
-        if(headerData.dataLength != nProgramFinishedBytes)
+        if(dataLength != nProgramFinishedBytes)
         {
             return ErrorCode::invalidLength;
         }
@@ -288,7 +289,7 @@ auto GetStatusCommunication() -> Result<Status>
     }
     if(statusType == resultsReadyCode)
     {
-        if(headerData.dataLength != nResultsReadyBytes)
+        if(dataLength != nResultsReadyBytes)
         {
             return ErrorCode::invalidLength;
         }
