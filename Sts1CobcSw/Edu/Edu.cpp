@@ -60,6 +60,10 @@ auto SendCommand(Byte commandId) -> void;
 // TODO: Make this read and return a Type instead of having to provide a destination. Use
 // Deserialize<>() internally.
 [[nodiscard]] auto Receive(std::span<Byte> data) -> Result<void>;
+template<typename T>
+[[nodiscard]] auto Receive() -> Result<T>;
+template<>
+[[nodiscard]] auto Receive<Byte>() -> Result<Byte>;
 auto FlushUartReceiveBuffer() -> void;
 [[nodiscard]] auto CheckCrc32(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
@@ -133,8 +137,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 
     // Check if data command was successful
     OUTCOME_TRY(Send(Serialize(data)));
-    auto answer = 0x00_b;
-    OUTCOME_TRY(Receive(Span(&answer)));
+    OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
     {
         case cepAck:
@@ -237,24 +240,19 @@ auto GetStatus() -> Result<Status>
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto GetStatusCommunication() -> Result<Status>
 {
-    auto answer = 0x00_b;
-    OUTCOME_TRY(Receive(Span(&answer)));
+    OUTCOME_TRY(auto answer, Receive<Byte>());
     if(answer != cepData)
     {
         return ErrorCode::invalidCommand;
     }
 
-    auto dataLengthBuffer = Buffer<std::int32_t>{};
-    OUTCOME_TRY(Receive(dataLengthBuffer));
-    auto dataLength = Deserialize<std::int32_t>(dataLengthBuffer);
-    if(dataLength == 0U)
+    OUTCOME_TRY(auto dataLength, Receive<std::int32_t>());
+    if(dataLength == 0)
     {
         return ErrorCode::invalidLength;
     }
 
-    auto statusType = 0x00_b;
-    OUTCOME_TRY(Receive(Span(&statusType)));
-
+    OUTCOME_TRY(auto statusType, Receive<Byte>());
     if(statusType == noEventCode)
     {
         if(dataLength != nNoEventBytes)
@@ -418,8 +416,7 @@ auto ReturnResultRetry() -> Result<ResultInfo>
 // Simple results -> 1 round should work with DMA to RAM
 auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 {
-    auto answer = 0x00_b;
-    OUTCOME_TRY(Receive(Span(&answer)));
+    OUTCOME_TRY(auto answer, Receive<Byte>());
     if(answer == cepNack)
     {
         // TODO: necessary to differentiate errors or just return success with resultSize 0?
@@ -441,10 +438,8 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     // RODOS::PRINTF("\nGet Length\n");
     // END DEBUG
 
-    auto dataLengthBuffer = Buffer<std::uint16_t>{};
-    OUTCOME_TRY(Receive(dataLengthBuffer));
-    auto actualDataLength = Deserialize<std::uint16_t>(dataLengthBuffer);
-    if(actualDataLength == 0U or actualDataLength > maxDataLength)
+    OUTCOME_TRY(auto dataLength, Receive<std::uint32_t>());
+    if(dataLength == 0 or dataLength > maxDataLength)
     {
         return ErrorCode::invalidLength;
     }
@@ -454,19 +449,19 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     // END DEBUG
 
     // Get the actual data
-    OUTCOME_TRY(Receive(Span(&cepDataBuffer).first(actualDataLength)));
+    OUTCOME_TRY(Receive(Span(&cepDataBuffer).first(dataLength)));
 
     // DEBUG
     // RODOS::PRINTF("\nCheck CRC\n");
     // END DEBUG
 
-    OUTCOME_TRY(CheckCrc32(Span(cepDataBuffer).first(actualDataLength)));
+    OUTCOME_TRY(CheckCrc32(Span(cepDataBuffer).first(dataLength)));
 
     // DEBUG
     RODOS::PRINTF("\nSuccess\n");
     // END DEBUG
 
-    return ResultInfo{.eofIsReached = false, .resultSize = actualDataLength};
+    return ResultInfo{.eofIsReached = false, .resultSize = dataLength};
 }
 
 
@@ -489,11 +484,7 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     RODOS::PRINTF("UpdateTime()\n");
     OUTCOME_TRY(Send(Serialize(data)));
-
-    // TODO: Refactor this common pattern into a function
-    // TODO: Implement read functions that return a type and internally use Deserialize<T>()
-    auto answer = 0x00_b;
-    OUTCOME_TRY(Receive(Span(&answer)));
+    OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
     {
         case cepAck:
@@ -542,8 +533,7 @@ auto Send(std::span<Byte const> data) -> Result<void>
         hal::WriteTo(&uart, data);
         hal::WriteTo(&uart, Span(checksum));
 
-        auto answer = 0x00_b;
-        OUTCOME_TRY(Receive(Span(&answer)));
+        OUTCOME_TRY(auto answer, Receive<Byte>());
         switch(answer)
         {
             case cepAck:
@@ -585,6 +575,24 @@ auto Receive(std::span<Byte> data) -> Result<void>
 }
 
 
+template<typename T>
+auto Receive() -> Result<T>
+{
+    auto buffer = Buffer<T>{};
+    OUTCOME_TRY(Receive(buffer));
+    return Deserialize<T>(buffer);
+}
+
+
+template<>
+auto Receive<Byte>() -> Result<Byte>
+{
+    auto byte = 0x00_b;
+    OUTCOME_TRY(Receive(Span(&byte)));
+    return byte;
+}
+
+
 //! @brief Flush the EDU UART read buffer.
 //!
 //! This can be used to clear all buffer data after an error to request a resend.
@@ -608,10 +616,8 @@ auto FlushUartReceiveBuffer() -> void
 auto CheckCrc32(std::span<Byte const> data) -> Result<void>
 {
     auto computedCrc32 = utility::ComputeCrc32(data);
-    auto crc32Buffer = Buffer<std::uint32_t>{};
-    OUTCOME_TRY(Receive(crc32Buffer));
-
-    if(computedCrc32 != Deserialize<std::uint32_t>(crc32Buffer))
+    OUTCOME_TRY(auto receivedCrc32, Receive<std::uint32_t>());
+    if(computedCrc32 != receivedCrc32)
     {
         return ErrorCode::wrongChecksum;
     }
