@@ -11,7 +11,7 @@ namespace sts1cobcsw::edu
 
 // TODO: Maybe turn this into enums
 // CEP high-level command headers (see EDU PDD)
-inline constexpr auto storeArchiveId = 0x01_b;    //! Transfer student programs from COBC to EDU
+inline constexpr auto storeProgramId = 0x01_b;    //! Transfer student programs from COBC to EDU
 inline constexpr auto executeProgramId = 0x02_b;  //! Execute student program
 inline constexpr auto stopProgramId = 0x03_b;     //! Stop student program
 inline constexpr auto getStatusId = 0x04_b;       //! Get the student program status

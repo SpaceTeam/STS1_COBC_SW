@@ -41,10 +41,10 @@ auto TurnOff() -> void
 }
 
 
-auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>
+auto StoreProgram(StoreProgramData const & data) -> Result<std::int32_t>
 {
     PrintFormattedSystemUtc();
-    PRINTF("Call to StoreArchive(programId = %d)\n", data.programId);
+    PRINTF("Call to StoreProgram(programId = %d)\n", data.programId);
     return 0;
 }
 

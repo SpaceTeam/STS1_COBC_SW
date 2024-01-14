@@ -21,7 +21,7 @@ auto TurnOn() -> void;
 auto TurnOff() -> void;
 
 // TODO: Why does this return a std::int32_t?
-[[nodiscard]] auto StoreArchive(StoreArchiveData const & data) -> Result<std::int32_t>;
+[[nodiscard]] auto StoreProgram(StoreProgramData const & data) -> Result<std::int32_t>;
 [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>;
 [[nodiscard]] auto StopProgram() -> Result<void>;
 // TODD: Find better name (or maybe even mechanism) for GetStatus

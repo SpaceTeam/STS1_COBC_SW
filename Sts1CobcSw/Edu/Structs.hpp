@@ -27,9 +27,9 @@ struct HeaderData
 // TODO: Add = 0; to all std::(u)intxx_t fields
 
 
-struct StoreArchiveData
+struct StoreProgramData
 {
-    static constexpr auto id = storeArchiveId;
+    static constexpr auto id = storeProgramId;
     std::uint16_t programId;
 };
 
@@ -106,9 +106,9 @@ inline constexpr std::size_t serialSize<edu::ResultsReadyStatus> =
                     decltype(edu::ResultsReadyStatus::startTime)>;
 
 template<>
-inline constexpr std::size_t serialSize<edu::StoreArchiveData> =
-    totalSerialSize<decltype(edu::StoreArchiveData::id),
-                    decltype(edu::StoreArchiveData::programId)>;
+inline constexpr std::size_t serialSize<edu::StoreProgramData> =
+    totalSerialSize<decltype(edu::StoreProgramData::id),
+                    decltype(edu::StoreProgramData::programId)>;
 
 template<>
 inline constexpr std::size_t serialSize<edu::ExecuteProgramData> =
@@ -138,7 +138,7 @@ template<std::endian endianness>
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
 template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, StoreProgramData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
 template<std::endian endianness>

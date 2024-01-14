@@ -39,9 +39,9 @@ auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void con
 
 
 template<std::endian endianness>
-auto SerializeTo(void * destination, StoreArchiveData const & data) -> void *
+auto SerializeTo(void * destination, StoreProgramData const & data) -> void *
 {
-    destination = SerializeTo<endianness>(destination, StoreArchiveData::id);
+    destination = SerializeTo<endianness>(destination, StoreProgramData::id);
     destination = SerializeTo<endianness>(destination, data.programId);
     return destination;
 }

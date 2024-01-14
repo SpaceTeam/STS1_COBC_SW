@@ -46,7 +46,7 @@ constexpr auto nResultsReadyBytes = 7;
 
 // TODO: Check real timeouts
 // Max. time for the EDU to respond to a request
-constexpr auto eduTimeout = 1 * RODOS::SECONDS;
+constexpr auto communicationTimeout = 1 * RODOS::SECONDS;
 // Timeout used when flushing the UART receive buffer
 constexpr auto flushTimeout = 1 * RODOS::MILLISECONDS;
 // UART flush garbage buffer size
@@ -58,8 +58,8 @@ constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
 constexpr std::size_t maxNPackets = 100;
 // Max. length of a single data packet
-constexpr auto maxDataLength = 32768;
-// Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
+constexpr auto maxDataLength = 32 * 1024;
+// Data buffer for potentially large data sizes (ReturnResult and StoreProgram)
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 
@@ -93,7 +93,7 @@ auto TurnOn() -> void
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    constexpr auto baudRate = 115'200;
+    auto const baudRate = 115'200;
     hal::Initialize(&uart, baudRate);
 }
 
@@ -107,7 +107,7 @@ auto TurnOff() -> void
 
 
 // TODO: Implement this
-auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> Result<std::int32_t>
+auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std::int32_t>
 {
     return 0;
 }
@@ -146,7 +146,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
     // timeout specifies the time the student program has to execute
     // eduTimeout is the max. allowed time to reveice N/ACK from EDU
     auto answer = 0x00_b;
-    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
 
     auto nReadBytes = uart.read(&answer, 1);
     if(nReadBytes == 0)
@@ -562,7 +562,7 @@ auto SendData(std::span<Byte const> data) -> Result<void>
         // Data is always answered by N/ACK
         auto answer = 0xAA_b;  // TODO: Why is this set to 0xAA?
         // TODO: Why do we first suspend and then read?
-        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
         auto nReadBytes = uart.read(&answer, 1);
         if(nReadBytes == 0)
         {
@@ -606,7 +606,7 @@ auto UartReceive(std::span<Byte> destination) -> Result<void>
     auto destinationSize = size(destination);
     while(totalReceivedBytes < destinationSize)
     {
-        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+        uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
         auto nReceivedBytes =
             uart.read(data(destination) + totalReceivedBytes, destinationSize - totalReceivedBytes);
         if(nReceivedBytes == 0)
@@ -626,7 +626,7 @@ auto UartReceive(std::span<Byte> destination) -> Result<void>
 //! @returns A relevant EDU error code
 auto UartReceive(void * destination) -> Result<void>
 {
-    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
+    uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
     auto nReceivedBytes = uart.read(destination, 1);
     if(nReceivedBytes == 0)
     {
