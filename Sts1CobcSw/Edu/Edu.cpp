@@ -26,7 +26,6 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 constexpr auto cepCommandAck = 0xd7_b;   //! Acknowledging a data packet
 constexpr auto cepCommandNack = 0x27_b;  //! Not Acknowledging a (invalid) data packet
 constexpr auto cepCommandEof = 0x59_b;   //! Transmission of multiple packets is complete
-constexpr auto cepCommandStop = 0xb4_b;  //! Transmission of multiple packets should be stopped
 constexpr auto cepCommandData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
 
