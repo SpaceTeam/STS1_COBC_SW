@@ -18,6 +18,7 @@ namespace sts1cobcsw::edu
 {
 // --- Globals ---
 
+// Low-level CEP commands
 constexpr auto cepAck = 0xd7_b;   //! Acknowledging a data packet
 constexpr auto cepNack = 0x27_b;  //! Not Acknowledging an (invalid) data packet
 constexpr auto cepEof = 0x59_b;   //! Transmission of multiple packets is complete
@@ -57,8 +58,6 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 // TODO: Rework -> Send(CepCommand command) -> void;
 auto SendCommand(Byte commandId) -> void;
 [[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
-// TODO: Make this read and return a Type instead of having to provide a destination. Use
-// Deserialize<>() internally.
 [[nodiscard]] auto Receive(std::span<Byte> data) -> Result<void>;
 template<typename T>
 [[nodiscard]] auto Receive() -> Result<T>;
@@ -130,11 +129,6 @@ auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std:
 //! @returns A relevant error code
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
-    RODOS::PRINTF("ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
-                  data.programId,
-                  data.startTime,
-                  data.timeout);
-
     // Check if data command was successful
     OUTCOME_TRY(Send(Serialize(data)));
     OUTCOME_TRY(auto answer, Receive<Byte>());
@@ -202,9 +196,7 @@ auto StopProgram() -> Result<void>
 //!          returned.
 auto GetStatus() -> Result<Status>
 {
-    RODOS::PRINTF("GetStatus()\n");
     OUTCOME_TRY(Send(Span(getStatusId)));
-
     std::size_t nErrors = 0;
     while(true)
     {
@@ -213,12 +205,6 @@ auto GetStatus() -> Result<Status>
         {
             auto status = getStatusCommunicationResult.value();
             SendCommand(cepAck);
-            RODOS::PRINTF("  .statusType = %d\n  .programId = %d\n  .startTime = %" PRIi32
-                          "\n  exitCode = %d\n",
-                          static_cast<int>(status.statusType),
-                          status.programId,
-                          status.startTime,
-                          status.exitCode);
             return status;
         }
         FlushUartReceiveBuffer();
@@ -226,8 +212,6 @@ auto GetStatus() -> Result<Status>
         nErrors++;
         if(nErrors >= maxNNackRetries)
         {
-            RODOS::PRINTF("  .errorCode = %d\n",
-                          static_cast<int>(getStatusCommunicationResult.error()));
             return getStatusCommunicationResult.error();
         }
     }
@@ -313,50 +297,26 @@ auto GetStatusCommunication() -> Result<Status>
 
 auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
 {
-    // DEBUG
-    RODOS::PRINTF("ReturnResult()\n");
-    // END DEBUG
-
     OUTCOME_TRY(Send(Serialize(data)));
-
-    // DEBUG
-    // RODOS::PRINTF("\nStart receiving result\n");
-    // END DEBUG
 
     std::size_t totalResultSize = 0;
     std::size_t nPackets = 0;
     //  TODO: Turn into for loop
     while(nPackets < maxNPackets)
     {
-        // DEBUG
-        // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets));
-        // END DEBUG
         auto returnResultRetryResult = ReturnResultRetry();
-        // TYPE Result<something>
-        // DEBUG
-
         if(returnResultRetryResult.has_error())
         {
             auto errorCode = returnResultRetryResult.error();
-            RODOS::PRINTF(" ReturnResultRetry() resulted in an error : %d",
-                          static_cast<int>(errorCode));
             return errorCode;
         }
         if(returnResultRetryResult.value().eofIsReached)
         {
-            RODOS::PRINTF(" ReturnResultRetry() reached EOF\n");
-
             // TODO: This is a dummy implementation. Store the result instead.
             RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
             SendCommand(cepAck);
-
             return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
         }
-
-        // END DEBUG
-        // RODOS::PRINTF("\nWriting to file...\n");
-        // TODO: Actually write to a file
-
         totalResultSize += returnResultRetryResult.value().resultSize;
         nPackets++;
     }
@@ -390,23 +350,6 @@ auto ReturnResultRetry() -> Result<ResultInfo>
             return returnResultCommunicationResult.error();
         }
     }
-
-    // Result<ResultInfo> result = ErrorCode::noErrorCodeSet;
-    // std::size_t errorCount = 0;
-    // // TODO: CHange this
-    // do
-    // {
-    //     result = ReturnResultCommunication();
-    //     // Could have reached EOF or not
-    //     if(result.has_value())
-    //     {
-    //         SendCommand(cmdAck);
-    //         return result;
-    //     }
-    //     FlushUartBuffer();
-    //     SendCommand(cmdNack);
-    // } while(errorCount++ < maxNNackRetries);
-    // return result.value();
 }
 
 
@@ -428,15 +371,8 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     }
     if(answer != cepData)
     {
-        // DEBUG
-        RODOS::PRINTF("\nNot DATA command\n");
-        // END DEBUG
         return ErrorCode::invalidCommand;
     }
-
-    // DEBUG
-    // RODOS::PRINTF("\nGet Length\n");
-    // END DEBUG
 
     OUTCOME_TRY(auto dataLength, Receive<std::uint32_t>());
     if(dataLength == 0 or dataLength > maxDataLength)
@@ -444,23 +380,8 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
         return ErrorCode::invalidLength;
     }
 
-    // DEBUG
-    // RODOS::PRINTF("\nGet Data\n");
-    // END DEBUG
-
-    // Get the actual data
     OUTCOME_TRY(Receive(Span(&cepDataBuffer).first(dataLength)));
-
-    // DEBUG
-    // RODOS::PRINTF("\nCheck CRC\n");
-    // END DEBUG
-
     OUTCOME_TRY(CheckCrc32(Span(cepDataBuffer).first(dataLength)));
-
-    // DEBUG
-    RODOS::PRINTF("\nSuccess\n");
-    // END DEBUG
-
     return ResultInfo{.eofIsReached = false, .resultSize = dataLength};
 }
 
@@ -482,7 +403,6 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 //! @returns A relevant error code
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
-    RODOS::PRINTF("UpdateTime()\n");
     OUTCOME_TRY(Send(Serialize(data)));
     OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
