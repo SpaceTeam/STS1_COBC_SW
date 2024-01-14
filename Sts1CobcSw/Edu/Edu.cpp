@@ -60,11 +60,13 @@ constexpr auto maxDataLength = 32 * 1024;
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 
-// TODO: Rework -> Send(EduBasicCommand command) -> void;
+// TODO: Rework -> Send(CepCommand command) -> void;
 auto SendCommand(Byte commandId) -> void;
+// TODO: Rename to just send. ADL FTW.
 [[nodiscard]] auto SendData(std::span<Byte const> data) -> Result<void>;
 // TODO: Make this read and return a Type instead of having to provide a destination. Use
 // Deserialize<>() internally.
+// TODO: Rename everything
 [[nodiscard]] auto UartReceive(std::span<Byte> destination) -> Result<void>;
 [[nodiscard]] auto UartReceive(void * destination) -> Result<void>;
 auto FlushUartBuffer() -> void;
@@ -135,21 +137,11 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
                   data.programId,
                   data.startTime,
                   data.timeout);
+
     // Check if data command was successful
-    auto serialData = Serialize(data);
-    OUTCOME_TRY(SendData(serialData));
-
-    // eduTimeout != timeout argument for data!
-    // timeout specifies the time the student program has to execute
-    // eduTimeout is the max. allowed time to reveice N/ACK from EDU
+    OUTCOME_TRY(SendData(Serialize(data)));
     auto answer = 0x00_b;
-    uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
-
-    auto nReadBytes = uart.read(&answer, 1);
-    if(nReadBytes == 0)
-    {
-        return ErrorCode::timeout;
-    }
+    OUTCOME_TRY(UartReceive(Span(&answer)));
     switch(answer)
     {
         case cepCommandAck:
@@ -266,7 +258,7 @@ auto GetStatusCommunication() -> Result<Status>
     }
 
     auto statusType = 0x00_b;
-    OUTCOME_TRY(UartReceive(&statusType));
+    OUTCOME_TRY(UartReceive(Span(&statusType)));
 
     if(statusType == noEventCode)
     {
@@ -431,8 +423,8 @@ auto ReturnResultRetry() -> Result<ResultInfo>
 // Simple results -> 1 round should work with DMA to RAM
 auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 {
-    Byte command = 0x00_b;
-    OUTCOME_TRY(UartReceive(&command));
+    auto command = 0x00_b;
+    OUTCOME_TRY(UartReceive(Span(&command)));
     if(command == cepCommandNack)
     {
         // TODO: necessary to differentiate errors or just return success with resultSize 0?
@@ -506,7 +498,7 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
     // TODO: Refactor this common pattern into a function
     // TODO: Implement read functions that return a type and internally use Deserialize<T>()
     auto answer = 0x00_b;
-    OUTCOME_TRY(UartReceive(&answer));
+    OUTCOME_TRY(UartReceive(Span(&answer)));
     switch(answer)
     {
         case cepCommandAck:
@@ -555,17 +547,8 @@ auto SendData(std::span<Byte const> data) -> Result<void>
         hal::WriteTo(&uart, data);
         hal::WriteTo(&uart, Span(checksum));
 
-        // TODO: Refactor this common pattern into a function
-        // Data is always answered by N/ACK
-        auto answer = 0xAA_b;  // TODO: Why is this set to 0xAA?
-        // TODO: Why do we first suspend and then read?
-        uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
-        auto nReadBytes = uart.read(&answer, 1);
-        if(nReadBytes == 0)
-        {
-            return ErrorCode::timeout;
-        }
-
+        auto answer = 0x00_b;
+        OUTCOME_TRY(UartReceive(Span(&answer)));
         switch(answer)
         {
             case cepCommandAck:
@@ -594,38 +577,12 @@ auto SendData(std::span<Byte const> data) -> Result<void>
 //! @returns A relevant EDU error code
 auto UartReceive(std::span<Byte> destination) -> Result<void>
 {
-    if(size(destination) > maxDataLength)
+    if(destination.size() > maxDataLength)
     {
         return ErrorCode::receiveDataTooLong;
     }
-
-    std::size_t totalReceivedBytes = 0U;
-    auto destinationSize = size(destination);
-    while(totalReceivedBytes < destinationSize)
-    {
-        uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
-        auto nReceivedBytes =
-            uart.read(data(destination) + totalReceivedBytes, destinationSize - totalReceivedBytes);
-        if(nReceivedBytes == 0)
-        {
-            return ErrorCode::timeout;
-        }
-        totalReceivedBytes += nReceivedBytes;
-    }
-    return outcome_v2::success();
-}
-
-
-//! @brief Receive a single byte over the EDU UART.
-//!
-//! @param destination The destination byte
-//!
-//! @returns A relevant EDU error code
-auto UartReceive(void * destination) -> Result<void>
-{
-    uart.suspendUntilDataReady(RODOS::NOW() + communicationTimeout);
-    auto nReceivedBytes = uart.read(destination, 1);
-    if(nReceivedBytes == 0)
+    auto readFromResult = hal::ReadFrom(&uart, destination, communicationTimeout);
+    if(readFromResult.has_error())
     {
         return ErrorCode::timeout;
     }
@@ -642,9 +599,8 @@ auto FlushUartBuffer() -> void
     // Keep reading until no data is coming for flushTimeout
     while(true)
     {
-        uart.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
-        auto nReceivedBytes = uart.read(garbageBuffer.data(), garbageBufferSize);
-        if(nReceivedBytes == 0)
+        auto readFromResult = hal::ReadFrom(&uart, Span(&garbageBuffer), flushTimeout);
+        if(readFromResult.has_error())
         {
             break;
         }

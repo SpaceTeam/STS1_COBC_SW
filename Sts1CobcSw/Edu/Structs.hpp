@@ -27,8 +27,10 @@ inline constexpr auto returnResultId = 0x05_b;    //! Request student program re
 inline constexpr auto updateTimeId = 0x06_b;      //! Update EDU system time
 
 
+// TODO: Rename to CepDataHeader or just DataHeader
 struct HeaderData
 {
+    // TODO: Rename to eduCommand[Id]
     Byte command = 0x00_b;
     std::uint16_t length = 0;
 };
