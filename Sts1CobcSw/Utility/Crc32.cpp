@@ -183,7 +183,7 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
     // Set new data address
     crcDma->PAR = reinterpret_cast<std::uintptr_t>(data.data());
     // Set new data length
-    auto dataLength = data.length - (isWordAligned ? 0 : 1);
+    auto dataLength = data.size() - (isWordAligned ? 0 : 1);
     crcDma->NDTR = static_cast<std::uint32_t>(dataLength);
     CRC_ResetDR();
     DMA_Cmd(crcDma, ENABLE);
