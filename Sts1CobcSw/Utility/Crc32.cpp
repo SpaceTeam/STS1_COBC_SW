@@ -9,8 +9,8 @@
 
 #include <array>
 #include <bit>
-#include <cstdint>
 #include <climits>
+#include <cstdint>
 #include <span>
 
 
@@ -68,9 +68,28 @@ constexpr auto crcTable = std::to_array<std::uint32_t>(
 // }
 
 auto EnableCrcHardware() -> void;
-auto EnableCrcDma(DmaBurstType dmaBurstType) -> void;
+auto EnableCrcDma(DmaBurstType dmaBurstType) -> void; 
 
 // Private function implementations
+
+// Interrupt handler not needed at the moment since we poll the TCIF
+// extern "C"
+// {
+// void DMA2_Stream1_IRQHandler()
+// {
+//     if(DMA_GetITStatus(DMA2_Stream1, DMA_IT_TCIF1))
+//     {
+//         DMA_ClearITPendingBit(DMA2_Stream1, DMA_IT_TCIF1);
+//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
+//         // TODO: Make usable
+//         RODOS::PRINTF("Interrupt CRC: %lx\n", CRC_GetCRC());
+//     }
+//     else
+//     {
+//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
+//     }
+// }
+// }
 
 //! @brief Enable the CRC peripheral.
 auto EnableCrcHardware() -> void
@@ -103,6 +122,7 @@ auto EnableCrcDma(DmaBurstType dmaBurstType) -> void
     // dmaInitStruct.DMA_PeripheralBaseAddr = static_cast<uint32_t>(...);
 
     // M2M transfer -> Memory address is CRC data register address
+    // NOLINTNEXTLINE(*reinterpret-cast*)
     dmaInitStruct.DMA_Memory0BaseAddr = reinterpret_cast<std::uintptr_t>(&(CRC->DR));
     dmaInitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
     dmaInitStruct.DMA_MemoryInc = DMA_MemoryInc_Disable;
@@ -181,6 +201,9 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
 
     DMA_Cmd(crcDma, DISABLE);
     // Set new data address
+    // The PAR register requires the address as uint32_t so we allow reinterpret_cast and potential
+    // shortening 64 bit to 32 bit warning
+    // NOLINTNEXTLINE(*reinterpret-cast*, *shorten*)
     crcDma->PAR = reinterpret_cast<std::uintptr_t>(data.data());
     // Set new data length
     auto dataLength = data.size() - (isWordAligned ? 0 : 1);
@@ -191,7 +214,7 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
     // Temporary implementation: Poll TCIF, then write trailing bytes (or return)
     while(DMA_GetFlagStatus(crcDma, DMA_FLAG_TCIF1) == RESET)
     {
-        RODOS::yield();
+        RODOS::Thread::yield();
     }
     DMA_ClearFlag(crcDma, DMA_FLAG_TCIF1);
 
@@ -202,7 +225,8 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
         auto lastIndex = data.size() - 1;
         for(size_t i = 0; i < nTrailingBytes; i++)
         {
-            trailingWord |= (data[lastIndex - i] << (nTrailingBytes - i));
+            trailingWord |=
+                static_cast<std::uint32_t>((data[lastIndex - i] << (nTrailingBytes - i)));
         }
         CRC_CalcCRC(trailingWord);
     }
@@ -212,32 +236,15 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
 
 
 //! @brief Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//! The const qualifier is omitted since the STM32 library function requires non-const uint32_t *
 //! @param data The data over which the CRC32 is calculated, requires uint32_t data
 //! @returns The corresponding CRC32 checksum
 auto ComputeCrc32Blocking(std::span<std::uint32_t> data) -> std::uint32_t
 {
     CRC_ResetDR();
+    // BufferLength is uint32_t, so allow shortening size_t to uint32_t warning
+    // NOLINTNEXTLINE(*shorten*)
     auto crc = CRC_CalcBlockCRC(data.data(), data.size());
     return crc;
 }
-
-
-// Interrupt handler not needed at the moment since we poll the TCIF
-// extern "C"
-// {
-// void DMA2_Stream1_IRQHandler()
-// {
-//     if(DMA_GetITStatus(DMA2_Stream1, DMA_IT_TCIF1))
-//     {
-//         DMA_ClearITPendingBit(DMA2_Stream1, DMA_IT_TCIF1);
-//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
-//         // TODO: Make usable
-//         RODOS::PRINTF("Interrupt CRC: %lx\n", CRC_GetCRC());
-//     }
-//     else
-//     {
-//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
-//     }
-// }
-// }
 }
