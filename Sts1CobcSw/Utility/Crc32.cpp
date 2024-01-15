@@ -68,7 +68,7 @@ constexpr auto crcTable = std::to_array<std::uint32_t>(
 // }
 
 auto EnableCrcHardware() -> void;
-auto EnableCrcDma(DmaBurstType dmaBurstType) -> void; 
+auto EnableCrcDma() -> void;
 
 // Private function implementations
 
@@ -99,9 +99,7 @@ auto EnableCrcHardware() -> void
 
 
 //! @brief Enable the CRC DMA.
-//! @param dmaBurstType Whether to write single words or burst 4 bytes at a time
-//! @returns The corresponding CRC32 checksum
-auto EnableCrcDma(DmaBurstType dmaBurstType) -> void
+auto EnableCrcDma() -> void
 {
     // Proposed: DMA 2 Stream 1
 
@@ -131,15 +129,11 @@ auto EnableCrcDma(DmaBurstType dmaBurstType) -> void
     // dmaInitStruct.DMA_BufferSize = static_cast<uint32_t>(...);
 
     // Either write words, or a burst of 4 bytes
-    dmaInitStruct.DMA_PeripheralDataSize = (dmaBurstType == DmaBurstType::singleWord)
-                                             ? DMA_PeripheralDataSize_Word
-                                             : DMA_PeripheralDataSize_Byte;
+    dmaInitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
     dmaInitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
     dmaInitStruct.DMA_Mode = DMA_Mode_Normal;
     dmaInitStruct.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-    dmaInitStruct.DMA_PeripheralBurst = (dmaBurstType == DmaBurstType::singleWord)
-                                          ? DMA_PeripheralBurst_Single
-                                          : DMA_PeripheralBurst_INC4;
+    dmaInitStruct.DMA_PeripheralBurst = DMA_PeripheralBurst_INC4;
     dmaInitStruct.DMA_FIFOMode = DMA_FIFOMode_Disable;
 
     // TODO: Check necessary priority, default is low
@@ -180,33 +174,35 @@ auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
 
 
 //! @brief Initialize the CRC DMA and the CRC peripheral itself.
-auto InitializeCrc32Hardware(DmaBurstType dmaBurstType) -> void
+auto InitializeCrc32Hardware() -> void
 {
-    EnableCrcDma(dmaBurstType);
+    EnableCrcDma();
     EnableCrcHardware();
 }
 
 
 //! @brief Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
 //! While DMA is used, the function currently polls the TCIF flag instead of using an interrupt.
+//! Careful! Using DMA with the original buffer inverts endianness word-wise!
+//! E.g. buffer {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3} is written (0xEFBEADDE,
+//! 0xE3A5BBCA), thus changing the result!
 //! @param data The data buffer
 //! @return The corresponding CRC32 checksum
 auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
 {
     static_assert(std::endian::native == std::endian::little);
-    // Format data byte buffer to words
-    // If not divisible by 4 bytes, 1 word padding is needed
-    auto trailingBytes = data.size() % bytesPerWord;
-    auto isWordAligned = (trailingBytes == 0U);
+    auto nTrailingBytes = data.size() % bytesPerWord;
 
     DMA_Cmd(crcDma, DISABLE);
+
     // Set new data address
     // The PAR register requires the address as uint32_t so we allow reinterpret_cast and potential
     // shortening 64 bit to 32 bit warning
     // NOLINTNEXTLINE(*reinterpret-cast*, *shorten*)
     crcDma->PAR = reinterpret_cast<std::uintptr_t>(data.data());
-    // Set new data length
-    auto dataLength = data.size() - (isWordAligned ? 0 : 1);
+
+    // Set new data length, reset CRC data register and start transfer
+    auto dataLength = data.size() - nTrailingBytes;
     crcDma->NDTR = static_cast<std::uint32_t>(dataLength);
     CRC_ResetDR();
     DMA_Cmd(crcDma, ENABLE);
@@ -214,19 +210,19 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
     // Temporary implementation: Poll TCIF, then write trailing bytes (or return)
     while(DMA_GetFlagStatus(crcDma, DMA_FLAG_TCIF1) == RESET)
     {
-        RODOS::Thread::yield();
+        // RODOS::Thread::yield();
     }
     DMA_ClearFlag(crcDma, DMA_FLAG_TCIF1);
 
-    if(not isWordAligned)
+    // Write remaining trailing bytes
+    if(nTrailingBytes > 0)
     {
-        // Write trailing bytes
         std::uint32_t trailingWord = 0U;
         auto lastIndex = data.size() - 1;
         for(size_t i = 0; i < nTrailingBytes; i++)
         {
-            trailingWord |=
-                static_cast<std::uint32_t>((data[lastIndex - i] << (nTrailingBytes - i)));
+            trailingWord |= static_cast<std::uint32_t>(data[lastIndex - i])
+                         << ((nTrailingBytes - i - 1) * CHAR_BIT);
         }
         CRC_CalcCRC(trailingWord);
     }
