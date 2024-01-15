@@ -16,10 +16,10 @@
 
 namespace sts1cobcsw::utility
 {
-constexpr auto oneByteWidth = 8U;
-constexpr auto crc32Init = 0xFFFFFFFFU;
-constexpr auto bytesPerWord = 4U;
-auto crcDma = DMA2_Stream1;
+unsigned int const nBitsPerByte = CHAR_BIT;
+std::uint32_t const initialCrc32Value = 0xFFFFFFFFU;
+
+auto crcDma = DMA2_Stream1;  // NOLINT
 
 constexpr auto crcTable = std::to_array<std::uint32_t>(
     {0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b, 0x1a864db2,
@@ -159,15 +159,13 @@ auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
     // https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html          -> Rust implementation (EDU)
     // https://gist.github.com/Miliox/b86b60b9755faf3bd7cf      -> C++ implementation
     // https://crccalc.com/                                     -> To check the implementation
-    std::uint32_t crc32 = crc32Init;
-    const std::size_t nBytes = data.size();
-
-    for(std::size_t i = 0; i < nBytes; i++)
+    std::uint32_t crc32 = initialCrc32Value;
+    for(auto const & element : data)
     {
-        const std::uint32_t lookupIndex =
-            ((crc32 >> 24U) ^ std::to_integer<std::uint32_t>(data[i])) & 0xFFU;
-        crc32 = (crc32 << oneByteWidth)
-              ^ crcTable[lookupIndex];  // CRCTable is an array of 256 32-bit constants
+        auto lookupIndex =
+            // NOLINTNEXTLINE(*magic-numbers*)
+            ((crc32 >> 24U) ^ std::to_integer<std::uint32_t>(element)) & 0xFFU;
+        crc32 = (crc32 << nBitsPerByte) ^ crcTable[lookupIndex];
     }
     return crc32;
 }
@@ -191,7 +189,7 @@ auto InitializeCrc32Hardware() -> void
 auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
 {
     static_assert(std::endian::native == std::endian::little);
-    auto nTrailingBytes = data.size() % bytesPerWord;
+    auto nTrailingBytes = data.size() % sizeof(std::uint32_t);
 
     DMA_Cmd(crcDma, DISABLE);
 
