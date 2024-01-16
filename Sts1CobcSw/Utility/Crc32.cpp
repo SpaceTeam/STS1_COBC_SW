@@ -19,7 +19,8 @@ namespace sts1cobcsw::utility
 unsigned int const nBitsPerByte = CHAR_BIT;
 std::uint32_t const initialCrc32Value = 0xFFFFFFFFU;
 
-auto crcDma = DMA2_Stream1;  // NOLINT
+auto crcDma = DMA2_Stream1;        // NOLINT
+auto crcDmaTcif = DMA_FLAG_TCIF1;  // NOLINT
 
 constexpr auto crcTable = std::to_array<std::uint32_t>(
     {0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b, 0x1a864db2,
@@ -186,7 +187,7 @@ auto InitializeCrc32Hardware() -> void
 //! 0xE3A5BBCA), thus changing the result!
 //! @param data The data buffer
 //! @return The corresponding CRC32 checksum
-auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
+auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
 {
     static_assert(std::endian::native == std::endian::little);
     auto nTrailingBytes = data.size() % sizeof(std::uint32_t);
@@ -206,11 +207,11 @@ auto ComputeCrc32(std::span<Byte> data) -> std::uint32_t
     DMA_Cmd(crcDma, ENABLE);
 
     // Temporary implementation: Poll TCIF, then write trailing bytes (or return)
-    while(DMA_GetFlagStatus(crcDma, DMA_FLAG_TCIF1) == RESET)
+    while(DMA_GetFlagStatus(crcDma, crcDmaTcif) == RESET)
     {
         // RODOS::Thread::yield();
     }
-    DMA_ClearFlag(crcDma, DMA_FLAG_TCIF1);
+    DMA_ClearFlag(crcDma, crcDmaTcif);
 
     // Write remaining trailing bytes
     if(nTrailingBytes > 0)
