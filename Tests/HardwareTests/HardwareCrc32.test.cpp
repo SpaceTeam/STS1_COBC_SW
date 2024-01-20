@@ -1,6 +1,5 @@
-//! @file HardwareCrc32.test.cpp
-//! @author Daniel Schloms <daniel.schloms@spaceteam.at>
-//! @brief A program to test the STM32F411 CRC32 peripheral.
+//! @file
+//! @brief  A program to test the STM32F411 CRC32 peripheral.
 //!
 //! Preparation:
 //!     - Connect the UCI UART to a computer to use with HTERM, Putty, etc.
@@ -19,6 +18,9 @@
 //! EFBEADDEE3A5BBCA000000AB:   0x3B485F9B
 //! EFBEADDEE3A5BBCA0000FFAB:   0x75F77B52
 //! EFBEADDEE3A5BBCA0010FFAB:   0x687DB322
+//!
+//! @author Daniel Schloms <daniel.schloms@spaceteam.at>
+
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>

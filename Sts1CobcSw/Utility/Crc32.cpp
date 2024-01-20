@@ -90,14 +90,14 @@ auto EnableCrcDma() -> void;
 // }
 // }
 
-//! @brief Enable the CRC peripheral.
+//! @brief  Enable the CRC peripheral.
 auto EnableCrcHardware() -> void
 {
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
 }
 
 
-//! @brief Enable the CRC DMA.
+//! @brief  Enable the CRC DMA.
 auto EnableCrcDma() -> void
 {
     // Proposed: DMA 2 Stream 1
@@ -148,9 +148,10 @@ auto EnableCrcDma() -> void
 
 // Public function implementations
 
-//! @brief Compute the CRC32 (MPEG-2) over a given data buffer in software.
-//! @param data The data buffer
-//! @returns The corresponding CRC32 checksum
+//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in software.
+//!
+//! @param  data    The data buffer
+//! @return The corresponding CRC32 checksum
 auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
 {
     // https://en.wikipedia.org/wiki/Cyclic_redundancy_check    -> What is CRC
@@ -170,7 +171,7 @@ auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
 }
 
 
-//! @brief Initialize the CRC DMA and the CRC peripheral itself.
+//! @brief  Initialize the CRC DMA and the CRC peripheral itself.
 auto InitializeCrc32Hardware() -> void
 {
     EnableCrcDma();
@@ -178,12 +179,14 @@ auto InitializeCrc32Hardware() -> void
 }
 
 
-//! @brief Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//!
 //! While DMA is used, the function currently polls the TCIF flag instead of using an interrupt.
-//! Careful! Using DMA with the original buffer inverts endianness word-wise!
-//! E.g. buffer {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3} is written (0xEFBEADDE,
-//! 0xE3A5BBCA), thus changing the result!
-//! @param data The data buffer
+//! Careful! Using DMA with the original buffer inverts endianness word-wise! E.g. buffer {0xDE,
+//! 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3} is written (0xEFBEADDE, 0xE3A5BBCA), thus changing the
+//! result!
+//!
+//! @param  data    The data buffer
 //! @return The corresponding CRC32 checksum
 auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
 {
@@ -228,10 +231,12 @@ auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
 }
 
 
-//! @brief Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//!
 //! The const qualifier is omitted since the STM32 library function requires non-const uint32_t *
-//! @param data The data over which the CRC32 is calculated, requires uint32_t data
-//! @returns The corresponding CRC32 checksum
+//!
+//! @param  data    The data over which the CRC32 is calculated, requires uint32_t data
+//! @return The corresponding CRC32 checksum
 auto ComputeCrc32Blocking(std::span<std::uint32_t> data) -> std::uint32_t
 {
     CRC_ResetDR();
