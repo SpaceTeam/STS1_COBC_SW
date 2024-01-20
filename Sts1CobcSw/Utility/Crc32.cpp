@@ -159,7 +159,7 @@ auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
     // https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html          -> Rust implementation (EDU)
     // https://gist.github.com/Miliox/b86b60b9755faf3bd7cf      -> C++ implementation
     // https://crccalc.com/                                     -> To check the implementation
-    std::uint32_t crc32 = initialCrc32Value;
+    std::uint32_t crc32 = initialCrc32Value;  // NOLINT(misc-const-correctness)
     for(auto const & element : data)
     {
         auto lookupIndex =
