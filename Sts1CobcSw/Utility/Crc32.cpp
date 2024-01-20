@@ -10,8 +10,6 @@
 #include <array>
 #include <bit>
 #include <climits>
-#include <cstdint>
-#include <span>
 
 
 namespace sts1cobcsw::utility

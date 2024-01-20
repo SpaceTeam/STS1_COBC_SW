@@ -63,7 +63,8 @@ private:
             "0xAD, 0xDE, 0xE3, 0xA5, 0xBB, 0xCA, 0x00, 0x10, 0xFF, 0xAB}\nwhen using a byte-based "
             "CRC32 calculator.\n");
 
-        // Currently the DMA CRC32 is implemented in a blocking manner, so we can just test like this
+        // Currently the DMA CRC32 is implemented in a blocking manner, so we can just test like
+        // this
         for(size_t i = 0; i <= nTrailingBytes; i++)
         {
             // NOLINTNEXTLINE(clang-diagnostic-format)
