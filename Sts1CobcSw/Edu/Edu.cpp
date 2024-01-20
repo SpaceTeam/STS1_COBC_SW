@@ -45,7 +45,7 @@ constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
 constexpr std::size_t maxNPackets = 100;
 // Max. length of a single data packet
-constexpr auto maxDataLength = 32 * 1024;
+constexpr auto maxDataLength = 11 * 1024;
 // Data buffer for potentially large data sizes (ReturnResult and StoreProgram)
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
