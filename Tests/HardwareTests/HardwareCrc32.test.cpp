@@ -26,20 +26,28 @@
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <Tests/HardwareTests/Utility.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <cinttypes>
 #include <span>
+
 
 namespace sts1cobcsw
 {
-constexpr auto testByteData = std::to_array<Byte>(
-    {0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b, 0xAB_b, 0xFF_b, 0x10_b});
-constexpr auto truthByteData =
-    std::to_array<uint32_t>({0x78B4282BU, 0x3B485F9B, 0x75F77B52, 0x687DB322});
+using RODOS::PRINTF;
 
-auto testWordData = std::to_array<std::uint32_t>({0xDEADBEEF, 0xCABBA5E3});
-constexpr auto truthWordData = static_cast<uint32_t>(0xA962D97BU);
+
+auto const testByteData = std::to_array<Byte>(
+    {0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b, 0xAB_b, 0xFF_b, 0x10_b});
+auto const truthByteData =
+    std::to_array<std::uint32_t>({0x78B4282BU, 0x3B485F9B, 0x75F77B52, 0x687DB322});
+
+auto const testWordData = std::to_array<std::uint32_t>({0xDEADBEEF, 0xCABBA5E3});
+std::uint32_t const truthWordData = 0xA962D97B;
+
 
 class HardwareCrc32Test : public RODOS::StaticThread<>
 {
@@ -54,47 +62,47 @@ private:
     {
     }
 
+
     void run() override
     {
+        PRINTF("\nCRC32 test\n\n");
+
         utility::InitializeCrc32Hardware();
-        static_assert(testByteData.size() > sizeof(uint32_t));
-        auto nTrailingBytes = testByteData.size() % sizeof(uint32_t);
+        static_assert(testByteData.size() > sizeof(std::uint32_t));
+        auto nTrailingBytes = testByteData.size() % sizeof(std::uint32_t);
         RODOS::PRINTF(
-            "INFO: Keep in mind that the DMA CRC32 version inverts endianness word-wise!\nSo "
-            "{0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3, 0xAB, 0xFF, 0x10}\n = {0xEF, 0xBE, "
-            "0xAD, 0xDE, 0xE3, 0xA5, 0xBB, 0xCA, 0x00, 0x10, 0xFF, 0xAB}\nwhen using a byte-based "
-            "CRC32 calculator.\n");
+            "INFO: Keep in mind that the DMA CRC32 version inverts endianness word wise!\n"
+            "So {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3, 0xAB, 0xFF, 0x10}\n"
+            " = {0xEF, 0xBE, 0xAD, 0xDE, 0xE3, 0xA5, 0xBB, 0xCA, 0x00, 0x10, 0xFF, 0xAB}\n"
+            "when using a byte-based CRC32 calculator.\n");
 
         // Currently the DMA CRC32 is implemented in a blocking manner, so we can just test like
         // this
-        for(size_t i = 0; i <= nTrailingBytes; i++)
+        for(std::size_t i = 0; i <= nTrailingBytes; ++i)
         {
-            // NOLINTNEXTLINE(clang-diagnostic-format)
-            RODOS::PRINTF("\nDMA CRC32 %u Trailing:\nData buffer:\n", i);
-
-            auto dataSpan = Span(testByteData).subspan(0, testByteData.size() - nTrailingBytes + i);
-            for(auto && element : dataSpan)
+            PRINTF("\n");
+            PRINTF("Test DMA CRC32 with %d trailing bytes\n\n", static_cast<int>(i));
+            PRINTF("Data:");
+            auto data = Span(testByteData).first(testByteData.size() - nTrailingBytes + i);
+            for(auto const & element : data)
             {
-                RODOS::PRINTF("%x ", static_cast<uint8_t>(element));
+                PRINTF(" 0x%02x", static_cast<std::uint8_t>(element));
             }
 
-            auto result = utility::ComputeCrc32(dataSpan);
-            // NOLINTBEGIN(clang-diagnostic-format)
-            RODOS::PRINTF("\nCRC32: %lx, Reference: %lx, %s\n",
-                          result,
-                          truthByteData[i],
-                          result == truthByteData[i] ? "PASS" : "FAIL");
-            // NOLINTEND(clang-diagnostic-format)
+            auto result = utility::ComputeCrc32(data);
+            PRINTF("CRC32: 0x%08x == 0x%08x\n",
+                   static_cast<unsigned int>(result),
+                   static_cast<unsigned int>(truthByteData[i]));
+            Check(result == truthByteData[i]);
         }
 
-        RODOS::PRINTF("\nNon-DMA HW CRC32 (words) -> keeps endianness:\n");
-        auto wordDataResult = utility::ComputeCrc32Blocking(Span(&testWordData));
-        // NOLINTBEGIN(clang-diagnostic-format)
-        RODOS::PRINTF("CRC32: %lx, Reference: %lx, %s\n",
-                      wordDataResult,
-                      truthWordData,
-                      wordDataResult == truthWordData ? "PASS" : "FAIL");
-        // NOLINTEND(clang-diagnostic-format)
+        PRINTF("\n");
+        PRINTF("Test non-DMA HW CRC32 (words) -> keeps endianness\n");
+        auto wordDataResult = utility::ComputeCrc32Blocking(Span(testWordData));
+        PRINTF("CRC32: 0x%08x == 0x%08x\n",
+               static_cast<unsigned int>(wordDataResult),
+               static_cast<unsigned int>(truthWordData));
+        Check(wordDataResult == truthWordData);
     }
 } hardwareCrc32Test;
 }
