@@ -237,12 +237,11 @@ auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
 //!
 //! @param  data    The data over which the CRC32 is calculated, requires uint32_t data
 //! @return The corresponding CRC32 checksum
-auto ComputeCrc32Blocking(std::span<std::uint32_t> data) -> std::uint32_t
+auto ComputeCrc32Blocking(std::span<std::uint32_t const> data) -> std::uint32_t
 {
     CRC_ResetDR();
-    // BufferLength is uint32_t, so allow shortening size_t to uint32_t warning
-    // NOLINTNEXTLINE(*shorten*)
-    auto crc = CRC_CalcBlockCRC(data.data(), data.size());
-    return crc;
+    // CRC_CalcBlockCRC() does not modify the data, so th const_cast is safe.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    return CRC_CalcBlockCRC(const_cast<std::uint32_t *>(data.data()), data.size());
 }
 }
