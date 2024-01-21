@@ -31,6 +31,24 @@ auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *
 
 
 template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, [[maybe_unused]] StopProgramData const & data)
+    -> void *
+{
+    destination = SerializeTo<endianness>(destination, StopProgramData::id);
+    return destination;
+}
+
+
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, [[maybe_unused]] GetStatusData const & data)
+    -> void *
+{
+    destination = SerializeTo<endianness>(destination, GetStatusData::id);
+    return destination;
+}
+
+
+template<std::endian endianness>
 auto SerializeTo(void * destination, ReturnResultData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, ReturnResultData::id);

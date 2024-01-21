@@ -16,36 +16,37 @@ namespace edu
 using sts1cobcsw::operator""_b;
 
 
-// TODO: Directly define the numbers in the <Command>Data structs
-
-// CEP high-level command headers (see EDU PDD)
-inline constexpr auto storeProgramId = 0x01_b;    //! Transfer student programs from COBC to EDU
-inline constexpr auto executeProgramId = 0x02_b;  //! Execute student program
-inline constexpr auto stopProgramId = 0x03_b;     //! Stop student program
-inline constexpr auto getStatusId = 0x04_b;       //! Get the student program status
-inline constexpr auto returnResultId = 0x05_b;    //! Request student program result
-inline constexpr auto updateTimeId = 0x06_b;      //! Update EDU system time
-
-
 struct StoreProgramData
 {
-    static constexpr auto id = storeProgramId;
+    static constexpr auto id = 0x01_b;
     std::uint16_t programId = 0;
 };
 
 
 struct ExecuteProgramData
 {
-    static constexpr auto id = executeProgramId;
+    static constexpr auto id = 0x02_b;
     std::uint16_t programId = 0;
     std::int32_t startTime = 0;
     std::int16_t timeout = 0;
 };
 
 
+struct StopProgramData
+{
+    static constexpr auto id = 0x03_b;
+};
+
+
+struct GetStatusData
+{
+    static constexpr auto id = 0x04_b;
+};
+
+
 struct ReturnResultData
 {
-    static constexpr auto id = returnResultId;
+    static constexpr auto id = 0x05_b;
     std::uint16_t programId = 0;
     std::int32_t startTime = 0;
 };
@@ -53,7 +54,7 @@ struct ReturnResultData
 
 struct UpdateTimeData
 {
-    static constexpr auto id = updateTimeId;
+    static constexpr auto id = 0x06_b;
     std::int32_t currentTime = 0;
 };
 
@@ -89,6 +90,7 @@ struct ResultInfo
 };
 }
 
+
 template<>
 inline constexpr std::size_t serialSize<edu::StoreProgramData> =
     totalSerialSize<decltype(edu::StoreProgramData::id),
@@ -100,6 +102,14 @@ inline constexpr std::size_t serialSize<edu::ExecuteProgramData> =
                     decltype(edu::ExecuteProgramData::programId),
                     decltype(edu::ExecuteProgramData::startTime),
                     decltype(edu::ExecuteProgramData::timeout)>;
+
+template<>
+inline constexpr std::size_t serialSize<edu::StopProgramData> =
+    totalSerialSize<decltype(edu::StopProgramData::id)>;
+
+template<>
+inline constexpr std::size_t serialSize<edu::GetStatusData> =
+    totalSerialSize<decltype(edu::GetStatusData::id)>;
 
 template<>
 inline constexpr std::size_t serialSize<edu::ReturnResultData> =
@@ -125,19 +135,24 @@ inline constexpr std::size_t serialSize<edu::ResultsReadyStatus> =
 
 namespace edu
 {
+template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, StoreProgramData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, StopProgramData const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, GetStatusData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ReturnResultData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
 template<std::endian endianness>
+
 [[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedStatus * data)
     -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
-template<std::endian endianness>
 }
 }
 

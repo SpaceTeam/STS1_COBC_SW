@@ -40,13 +40,13 @@ constexpr auto nResultsReadyBytes = 7;
 constexpr auto communicationTimeout = 1 * RODOS::SECONDS;
 
 // TODO: Choose proper values
-// Max. amount of send retries after receiving NACK
+// Max. number of send retries after receiving NACK
 constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
 constexpr std::size_t maxNPackets = 100;
 // Max. length of a single data packet
 constexpr auto maxDataLength = 11 * 1024;
-// Data buffer for potentially large data sizes (ReturnResult and StoreProgram)
+// Data buffer for potentially large data packets (ReturnResult and StoreProgram)
 auto cepDataBuffer = std::array<Byte, maxDataLength>{};
 
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
@@ -196,7 +196,7 @@ auto StopProgram() -> Result<void>
 //!          returned.
 auto GetStatus() -> Result<Status>
 {
-    OUTCOME_TRY(Send(Span(getStatusId)));
+    OUTCOME_TRY(Send(Serialize(GetStatusData())));
     std::size_t nErrors = 0;
     while(true)
     {
