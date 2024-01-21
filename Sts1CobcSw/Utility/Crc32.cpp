@@ -94,30 +94,19 @@ auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
     auto nTrailingBytes = data.size() % sizeof(std::uint32_t);
 
     DMA_Cmd(crcDmaStream, DISABLE);
-
-    // Set new data address
-    // The PAR register requires the address as uint32_t so we allow reinterpret_cast and potential
-    // shortening 64 bit to 32 bit warning
-    // NOLINTNEXTLINE(*reinterpret-cast*, *shorten*)
-    crcDmaStream->PAR = reinterpret_cast<std::uintptr_t>(data.data());
-
-    // Set new data length, reset CRC data register and start transfer
-    auto dataLength = data.size() - nTrailingBytes;
-    crcDmaStream->NDTR = static_cast<std::uint32_t>(dataLength);
+    // The PAR (peripheral address register) requires the address as uint32_t
+    // NOLINTNEXTLINE(*reinterpret-cast*)
+    crcDmaStream->PAR = static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(data.data()));
+    crcDmaStream->NDTR = static_cast<std::uint32_t>(data.size() - nTrailingBytes);
     CRC_ResetDR();
     DMA_Cmd(crcDmaStream, ENABLE);
 
-    // Temporary implementation: Poll TCIF, then write trailing bytes (or return)
-    while(DMA_GetFlagStatus(crcDmaStream, crcDmaTcif) == RESET)
-    {
-        // RODOS::Thread::yield();
-    }
+    while(DMA_GetFlagStatus(crcDmaStream, crcDmaTcif) == RESET) {}
     DMA_ClearFlag(crcDmaStream, crcDmaTcif);
 
-    // Write remaining trailing bytes
     if(nTrailingBytes > 0)
     {
-        std::uint32_t trailingWord = 0U;
+        std::uint32_t trailingWord = 0;
         auto lastIndex = data.size() - 1;
         for(size_t i = 0; i < nTrailingBytes; i++)
         {
@@ -126,7 +115,6 @@ auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
         }
         CRC_CalcCRC(trailingWord);
     }
-
     return CRC_GetCRC();
 }
 
@@ -140,23 +128,25 @@ auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
 auto ComputeCrc32Blocking(std::span<std::uint32_t const> data) -> std::uint32_t
 {
     CRC_ResetDR();
-    // CRC_CalcBlockCRC() does not modify the data, so th const_cast is safe.
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast, clang-diagnostic-shorten-64-to-32)
-    return CRC_CalcBlockCRC(const_cast<std::uint32_t *>(data.data()), data.size());
+    // CRC_CalcBlockCRC() does not modify the data, so the const_cast is safe.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    return CRC_CalcBlockCRC(const_cast<std::uint32_t *>(data.data()),
+                            static_cast<std::uint32_t>(data.size()));
 }
 
 
 //! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in software.
 //!
+//! https://en.wikipedia.org/wiki/Cyclic_redundancy_check    -> What is CRC
+//! https://reveng.sourceforge.io/crc-catalogue/all.htm      -> Description of MPEG-2
+//! https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html          -> Rust implementation (EDU)
+//! https://gist.github.com/Miliox/b86b60b9755faf3bd7cf      -> C++ implementation
+//! https://crccalc.com/                                     -> To check the implementation
+//!
 //! @param  data    The data buffer
 //! @return The corresponding CRC32 checksum
 auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
 {
-    // https://en.wikipedia.org/wiki/Cyclic_redundancy_check    -> What is CRC
-    // https://reveng.sourceforge.io/crc-catalogue/all.htm      -> Description of MPEG-2
-    // https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html          -> Rust implementation (EDU)
-    // https://gist.github.com/Miliox/b86b60b9755faf3bd7cf      -> C++ implementation
-    // https://crccalc.com/                                     -> To check the implementation
     std::uint32_t crc32 = initialCrc32Value;  // NOLINT(misc-const-correctness)
     for(auto const & element : data)
     {
@@ -179,35 +169,22 @@ auto EnableCrcHardware() -> void
 
 
 //! @brief  Enable the CRC DMA.
+//!
+//! For more information see
+//! https://www.st.com/resource/en/application_note/an4187-using-the-crc-peripheral-on-stm32-microcontrollers-stmicroelectronics.pdf.
 auto EnableCrcDma() -> void
 {
-    // Proposed: DMA 2 Stream 1
-
-    // Enable DMA 2
     RCC_AHB1PeriphClockCmd(crcDmaRcc, ENABLE);
 
-    // Initialize
-    // https://www.st.com/resource/en/application_note/an4187-using-the-crc-peripheral-on-stm32-microcontrollers-stmicroelectronics.pdf
     auto dmaInitStruct = DMA_InitTypeDef{};
     DMA_StructInit(&dmaInitStruct);
 
-    // Check if this is needed, seen in an online example but not in the STM manual
-    // DMA_DeInit(DMA2_Stream1);
-
     dmaInitStruct.DMA_DIR = DMA_DIR_MemoryToMemory;
-
-    // Changed when there is an actual transfer, so keep default
-    // dmaInitStruct.DMA_PeripheralBaseAddr = static_cast<uint32_t>(...);
-
-    // M2M transfer -> Memory address is CRC data register address
-    // NOLINTNEXTLINE(*reinterpret-cast*)
+    // CRC->DR = CRC data register
+    // NOLINTNEXTLINE(*reinterpret-cast*,*no-int-to-ptr,*pro-type-cstyle-cast)
     dmaInitStruct.DMA_Memory0BaseAddr = reinterpret_cast<std::uintptr_t>(&(CRC->DR));
     dmaInitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
     dmaInitStruct.DMA_MemoryInc = DMA_MemoryInc_Disable;
-
-    // Changed when there is an actual transfer, so keep default
-    // dmaInitStruct.DMA_BufferSize = static_cast<uint32_t>(...);
-
     // Either write words, or a burst of 4 bytes
     dmaInitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
     dmaInitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
@@ -215,15 +192,8 @@ auto EnableCrcDma() -> void
     dmaInitStruct.DMA_MemoryBurst = DMA_MemoryBurst_Single;
     dmaInitStruct.DMA_PeripheralBurst = DMA_PeripheralBurst_INC4;
     dmaInitStruct.DMA_FIFOMode = DMA_FIFOMode_Disable;
-
-    // TODO: Check necessary priority, default is low
-    // DMA_InitStruct.DMA_Priority = DMA_Priority_something;
+    // TODO: Check necessary DMA_InitStruct.DMA_Priority; default is low
 
     DMA_Init(crcDmaStream, &dmaInitStruct);
-
-    // Enable DMA 2 Stream 1 Interrupt
-    // Don't enable for now, since we poll the TCIF for now instead of using an interrupt
-    // DMA_ITConfig(crcDmaStream, DMA_IT_TC, DISABLE);
-    // NVIC_EnableIRQ(DMA2_Stream1_IRQn);
 }
 }
