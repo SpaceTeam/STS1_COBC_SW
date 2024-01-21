@@ -11,8 +11,7 @@ enum class ErrorCode
     uartNotInitialized,
     timeout,
     nack,
-    // Separate errors for the SendData function
-    // to differentiate where the error occurred
+    // Separate errors for the SendData function to differentiate where the error occurred
     invalidDataResult,
     sendDataTooLong,
     receiveDataTooLong,

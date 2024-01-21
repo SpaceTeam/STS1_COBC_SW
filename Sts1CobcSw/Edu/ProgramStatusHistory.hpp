@@ -32,8 +32,6 @@ struct ProgramStatusHistoryEntry
 
 
 inline constexpr auto programStatusHistorySize = 20;
-
-
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
