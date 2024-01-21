@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Edu/Structs.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 
 
 namespace sts1cobcsw::edu

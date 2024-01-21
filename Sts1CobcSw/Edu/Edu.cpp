@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/Edu/Structs.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>

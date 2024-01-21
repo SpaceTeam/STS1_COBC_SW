@@ -1,7 +1,6 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Edu/Enums.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
@@ -14,6 +13,36 @@ namespace sts1cobcsw
 namespace edu
 {
 using sts1cobcsw::operator""_b;
+
+
+enum class ErrorCode
+{
+    invalidResult = 1,
+    bufferTooSmall,
+    uartNotInitialized,
+    timeout,
+    nack,
+    // Separate errors for the SendData function to differentiate where the error occurred
+    invalidDataResult,
+    sendDataTooLong,
+    receiveDataTooLong,
+    tooManyNacks,
+    dataTimeout,
+    wrongChecksum,
+    invalidStatusType,
+    invalidLength,
+    invalidCommand,
+    noResultAvailable
+};
+
+
+enum class StatusType
+{
+    noEvent,
+    programFinished,
+    resultsReady,
+    invalid,
+};
 
 
 struct StoreProgramData
@@ -157,4 +186,4 @@ template<std::endian endianness>
 }
 
 
-#include <Sts1CobcSw/Edu/Structs.ipp>
+#include <Sts1CobcSw/Edu/Types.ipp>
