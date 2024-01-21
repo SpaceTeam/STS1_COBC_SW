@@ -10,6 +10,7 @@
 #include <array>
 #include <bit>
 #include <climits>
+#include <cstring>
 
 
 namespace sts1cobcsw::utility
@@ -90,7 +91,6 @@ auto InitializeCrc32Hardware() -> void
 //! @return The corresponding CRC32 checksum
 auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
 {
-    static_assert(std::endian::native == std::endian::little);
     auto nTrailingBytes = data.size() % sizeof(std::uint32_t);
 
     DMA_Cmd(crcDmaStream, DISABLE);
@@ -107,12 +107,7 @@ auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
     if(nTrailingBytes > 0)
     {
         std::uint32_t trailingWord = 0;
-        auto lastIndex = data.size() - 1;
-        for(size_t i = 0; i < nTrailingBytes; i++)
-        {
-            trailingWord |= static_cast<std::uint32_t>(data[lastIndex - i])
-                         << ((nTrailingBytes - i - 1) * CHAR_BIT);
-        }
+        std::memcpy(&trailingWord, data.last(nTrailingBytes).data(), nTrailingBytes);
         CRC_CalcCRC(trailingWord);
     }
     return CRC_GetCRC();
