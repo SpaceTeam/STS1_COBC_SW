@@ -67,18 +67,18 @@ struct Status
 };
 
 
-struct ResultsReadyStatus
-{
-    std::uint16_t programId = 0;
-    std::int32_t startTime = 0;
-};
-
-
 struct ProgramFinishedStatus
 {
     std::uint16_t programId = 0;
     std::int32_t startTime = 0;
     std::uint8_t exitCode = 0;
+};
+
+
+struct ResultsReadyStatus
+{
+    std::uint16_t programId = 0;
+    std::int32_t startTime = 0;
 };
 
 
@@ -88,18 +88,6 @@ struct ResultInfo
     std::size_t resultSize = 0;
 };
 }
-
-
-template<>
-inline constexpr std::size_t serialSize<edu::ProgramFinishedStatus> =
-    totalSerialSize<decltype(edu::ProgramFinishedStatus::programId),
-                    decltype(edu::ProgramFinishedStatus::startTime),
-                    decltype(edu::ProgramFinishedStatus::exitCode)>;
-
-template<>
-inline constexpr std::size_t serialSize<edu::ResultsReadyStatus> =
-    totalSerialSize<decltype(edu::ResultsReadyStatus::programId),
-                    decltype(edu::ResultsReadyStatus::startTime)>;
 
 template<>
 inline constexpr std::size_t serialSize<edu::StoreProgramData> =
@@ -123,15 +111,20 @@ template<>
 inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
     totalSerialSize<decltype(edu::UpdateTimeData::id), decltype(edu::UpdateTimeData::currentTime)>;
 
+template<>
+inline constexpr std::size_t serialSize<edu::ProgramFinishedStatus> =
+    totalSerialSize<decltype(edu::ProgramFinishedStatus::programId),
+                    decltype(edu::ProgramFinishedStatus::startTime),
+                    decltype(edu::ProgramFinishedStatus::exitCode)>;
+
+template<>
+inline constexpr std::size_t serialSize<edu::ResultsReadyStatus> =
+    totalSerialSize<decltype(edu::ResultsReadyStatus::programId),
+                    decltype(edu::ResultsReadyStatus::startTime)>;
+
 
 namespace edu
 {
-template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedStatus * data)
-    -> void const *;
-template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
-template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, StoreProgramData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
@@ -139,6 +132,12 @@ template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ReturnResultData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedStatus * data)
+    -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
+template<std::endian endianness>
 }
 }
 
