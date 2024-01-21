@@ -14,11 +14,14 @@
 
 namespace sts1cobcsw::utility
 {
+// --- Private globals ---
+
 unsigned int const nBitsPerByte = CHAR_BIT;
 std::uint32_t const initialCrc32Value = 0xFFFFFFFFU;
 
-auto crcDma = DMA2_Stream1;        // NOLINT
-auto crcDmaTcif = DMA_FLAG_TCIF1;  // NOLINT
+auto crcDmaStream = DMA2_Stream1;      // NOLINT
+auto crcDmaTcif = DMA_FLAG_TCIF1;      // NOLINT
+auto crcDmaRcc = RCC_AHB1Periph_DMA2;  // NOLINT
 
 constexpr auto crcTable = std::to_array<std::uint32_t>(
     {0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b, 0x1a864db2,
@@ -59,36 +62,114 @@ constexpr auto crcTable = std::to_array<std::uint32_t>(
      0x9e7d9662, 0x933eb0bb, 0x97ffad0c, 0xafb010b1, 0xab710d06, 0xa6322bdf, 0xa2f33668,
      0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4});
 
-// Private function prototypes
-// Interrupt handler not needed at the moment since we poll the TCIF
-// extern "C"
-// {
-// void DMA2_Stream1_IRQHandler();
-// }
+
+// --- Private function declarations ---
 
 auto EnableCrcHardware() -> void;
 auto EnableCrcDma() -> void;
 
-// Private function implementations
 
-// Interrupt handler not needed at the moment since we poll the TCIF
-// extern "C"
-// {
-// void DMA2_Stream1_IRQHandler()
-// {
-//     if(DMA_GetITStatus(DMA2_Stream1, DMA_IT_TCIF1))
-//     {
-//         DMA_ClearITPendingBit(DMA2_Stream1, DMA_IT_TCIF1);
-//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
-//         // TODO: Make usable
-//         RODOS::PRINTF("Interrupt CRC: %lx\n", CRC_GetCRC());
-//     }
-//     else
-//     {
-//         NVIC_ClearPendingIRQ(DMA2_Stream1_IRQn);
-//     }
-// }
-// }
+// --- Public function definitions ---
+
+//! @brief  Initialize the CRC DMA and the CRC peripheral itself.
+auto InitializeCrc32Hardware() -> void
+{
+    EnableCrcDma();
+    EnableCrcHardware();
+}
+
+
+//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//!
+//! While DMA is used, the function currently polls the TCIF flag instead of using an interrupt.
+//! Careful! Using DMA with the original buffer inverts endianness word-wise! E.g. buffer {0xDE,
+//! 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3} is written (0xEFBEADDE, 0xE3A5BBCA), thus changing the
+//! result!
+//!
+//! @param  data    The data buffer
+//! @return The corresponding CRC32 checksum
+auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
+{
+    static_assert(std::endian::native == std::endian::little);
+    auto nTrailingBytes = data.size() % sizeof(std::uint32_t);
+
+    DMA_Cmd(crcDmaStream, DISABLE);
+
+    // Set new data address
+    // The PAR register requires the address as uint32_t so we allow reinterpret_cast and potential
+    // shortening 64 bit to 32 bit warning
+    // NOLINTNEXTLINE(*reinterpret-cast*, *shorten*)
+    crcDmaStream->PAR = reinterpret_cast<std::uintptr_t>(data.data());
+
+    // Set new data length, reset CRC data register and start transfer
+    auto dataLength = data.size() - nTrailingBytes;
+    crcDmaStream->NDTR = static_cast<std::uint32_t>(dataLength);
+    CRC_ResetDR();
+    DMA_Cmd(crcDmaStream, ENABLE);
+
+    // Temporary implementation: Poll TCIF, then write trailing bytes (or return)
+    while(DMA_GetFlagStatus(crcDmaStream, crcDmaTcif) == RESET)
+    {
+        // RODOS::Thread::yield();
+    }
+    DMA_ClearFlag(crcDmaStream, crcDmaTcif);
+
+    // Write remaining trailing bytes
+    if(nTrailingBytes > 0)
+    {
+        std::uint32_t trailingWord = 0U;
+        auto lastIndex = data.size() - 1;
+        for(size_t i = 0; i < nTrailingBytes; i++)
+        {
+            trailingWord |= static_cast<std::uint32_t>(data[lastIndex - i])
+                         << ((nTrailingBytes - i - 1) * CHAR_BIT);
+        }
+        CRC_CalcCRC(trailingWord);
+    }
+
+    return CRC_GetCRC();
+}
+
+
+//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
+//!
+//! The const qualifier is omitted since the STM32 library function requires non-const uint32_t *
+//!
+//! @param  data    The data over which the CRC32 is calculated, requires uint32_t data
+//! @return The corresponding CRC32 checksum
+auto ComputeCrc32Blocking(std::span<std::uint32_t const> data) -> std::uint32_t
+{
+    CRC_ResetDR();
+    // CRC_CalcBlockCRC() does not modify the data, so th const_cast is safe.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast, clang-diagnostic-shorten-64-to-32)
+    return CRC_CalcBlockCRC(const_cast<std::uint32_t *>(data.data()), data.size());
+}
+
+
+//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in software.
+//!
+//! @param  data    The data buffer
+//! @return The corresponding CRC32 checksum
+auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
+{
+    // https://en.wikipedia.org/wiki/Cyclic_redundancy_check    -> What is CRC
+    // https://reveng.sourceforge.io/crc-catalogue/all.htm      -> Description of MPEG-2
+    // https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html          -> Rust implementation (EDU)
+    // https://gist.github.com/Miliox/b86b60b9755faf3bd7cf      -> C++ implementation
+    // https://crccalc.com/                                     -> To check the implementation
+    std::uint32_t crc32 = initialCrc32Value;  // NOLINT(misc-const-correctness)
+    for(auto const & element : data)
+    {
+        auto lookupIndex =
+            // NOLINTNEXTLINE(*magic-numbers*)
+            ((crc32 >> 24U) ^ std::to_integer<std::uint32_t>(element)) & 0xFFU;
+        crc32 = (crc32 << nBitsPerByte) ^ crcTable[lookupIndex];
+    }
+    return crc32;
+}
+
+
+// --- Private function definitions ---
 
 //! @brief  Enable the CRC peripheral.
 auto EnableCrcHardware() -> void
@@ -103,7 +184,7 @@ auto EnableCrcDma() -> void
     // Proposed: DMA 2 Stream 1
 
     // Enable DMA 2
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+    RCC_AHB1PeriphClockCmd(crcDmaRcc, ENABLE);
 
     // Initialize
     // https://www.st.com/resource/en/application_note/an4187-using-the-crc-peripheral-on-stm32-microcontrollers-stmicroelectronics.pdf
@@ -138,110 +219,11 @@ auto EnableCrcDma() -> void
     // TODO: Check necessary priority, default is low
     // DMA_InitStruct.DMA_Priority = DMA_Priority_something;
 
-    DMA_Init(crcDma, &dmaInitStruct);
+    DMA_Init(crcDmaStream, &dmaInitStruct);
 
     // Enable DMA 2 Stream 1 Interrupt
     // Don't enable for now, since we poll the TCIF for now instead of using an interrupt
-    // DMA_ITConfig(crcDma, DMA_IT_TC, DISABLE);
+    // DMA_ITConfig(crcDmaStream, DMA_IT_TC, DISABLE);
     // NVIC_EnableIRQ(DMA2_Stream1_IRQn);
-}
-
-// Public function implementations
-
-//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in software.
-//!
-//! @param  data    The data buffer
-//! @return The corresponding CRC32 checksum
-auto ComputeCrc32Sw(std::span<Byte const> data) -> std::uint32_t
-{
-    // https://en.wikipedia.org/wiki/Cyclic_redundancy_check    -> What is CRC
-    // https://reveng.sourceforge.io/crc-catalogue/all.htm      -> Description of MPEG-2
-    // https://docs.rs/crc/3.0.0/src/crc/crc32.rs.html          -> Rust implementation (EDU)
-    // https://gist.github.com/Miliox/b86b60b9755faf3bd7cf      -> C++ implementation
-    // https://crccalc.com/                                     -> To check the implementation
-    std::uint32_t crc32 = initialCrc32Value;  // NOLINT(misc-const-correctness)
-    for(auto const & element : data)
-    {
-        auto lookupIndex =
-            // NOLINTNEXTLINE(*magic-numbers*)
-            ((crc32 >> 24U) ^ std::to_integer<std::uint32_t>(element)) & 0xFFU;
-        crc32 = (crc32 << nBitsPerByte) ^ crcTable[lookupIndex];
-    }
-    return crc32;
-}
-
-
-//! @brief  Initialize the CRC DMA and the CRC peripheral itself.
-auto InitializeCrc32Hardware() -> void
-{
-    EnableCrcDma();
-    EnableCrcHardware();
-}
-
-
-//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
-//!
-//! While DMA is used, the function currently polls the TCIF flag instead of using an interrupt.
-//! Careful! Using DMA with the original buffer inverts endianness word-wise! E.g. buffer {0xDE,
-//! 0xAD, 0xBE, 0xEF, 0xCA, 0xBB, 0xA5, 0xE3} is written (0xEFBEADDE, 0xE3A5BBCA), thus changing the
-//! result!
-//!
-//! @param  data    The data buffer
-//! @return The corresponding CRC32 checksum
-auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t
-{
-    static_assert(std::endian::native == std::endian::little);
-    auto nTrailingBytes = data.size() % sizeof(std::uint32_t);
-
-    DMA_Cmd(crcDma, DISABLE);
-
-    // Set new data address
-    // The PAR register requires the address as uint32_t so we allow reinterpret_cast and potential
-    // shortening 64 bit to 32 bit warning
-    // NOLINTNEXTLINE(*reinterpret-cast*, *shorten*)
-    crcDma->PAR = reinterpret_cast<std::uintptr_t>(data.data());
-
-    // Set new data length, reset CRC data register and start transfer
-    auto dataLength = data.size() - nTrailingBytes;
-    crcDma->NDTR = static_cast<std::uint32_t>(dataLength);
-    CRC_ResetDR();
-    DMA_Cmd(crcDma, ENABLE);
-
-    // Temporary implementation: Poll TCIF, then write trailing bytes (or return)
-    while(DMA_GetFlagStatus(crcDma, crcDmaTcif) == RESET)
-    {
-        // RODOS::Thread::yield();
-    }
-    DMA_ClearFlag(crcDma, crcDmaTcif);
-
-    // Write remaining trailing bytes
-    if(nTrailingBytes > 0)
-    {
-        std::uint32_t trailingWord = 0U;
-        auto lastIndex = data.size() - 1;
-        for(size_t i = 0; i < nTrailingBytes; i++)
-        {
-            trailingWord |= static_cast<std::uint32_t>(data[lastIndex - i])
-                         << ((nTrailingBytes - i - 1) * CHAR_BIT);
-        }
-        CRC_CalcCRC(trailingWord);
-    }
-
-    return CRC_GetCRC();
-}
-
-
-//! @brief  Compute the CRC32 (MPEG-2) over a given data buffer in hardware with DMA.
-//!
-//! The const qualifier is omitted since the STM32 library function requires non-const uint32_t *
-//!
-//! @param  data    The data over which the CRC32 is calculated, requires uint32_t data
-//! @return The corresponding CRC32 checksum
-auto ComputeCrc32Blocking(std::span<std::uint32_t const> data) -> std::uint32_t
-{
-    CRC_ResetDR();
-    // CRC_CalcBlockCRC() does not modify the data, so th const_cast is safe.
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-    return CRC_CalcBlockCRC(const_cast<std::uint32_t *>(data.data()), data.size());
 }
 }
