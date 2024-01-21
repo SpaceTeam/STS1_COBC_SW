@@ -43,7 +43,7 @@ constexpr auto communicationTimeout = 1 * RODOS::SECONDS;
 // Max. number of send retries after receiving NACK
 constexpr auto maxNNackRetries = 10;
 // Max. number of data packets for a single command
-constexpr std::size_t maxNPackets = 100;
+constexpr auto maxNPackets = 100;
 // Max. length of a single data packet
 constexpr auto maxDataLength = 11 * 1024;
 // Data buffer for potentially large data packets (ReturnResult and StoreProgram)
@@ -129,7 +129,6 @@ auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std:
 //! @returns A relevant error code
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
-    // Check if data command was successful
     OUTCOME_TRY(Send(Serialize(data)));
     OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
@@ -300,9 +299,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
     OUTCOME_TRY(Send(Serialize(data)));
 
     std::size_t totalResultSize = 0;
-    std::size_t nPackets = 0;
-    //  TODO: Turn into for loop
-    while(nPackets < maxNPackets)
+    for(auto nPackets = 0; nPackets < maxNPackets; ++nPackets)
     {
         auto returnResultRetryResult = ReturnResultRetry();
         if(returnResultRetryResult.has_error())
@@ -318,9 +315,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
             return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
         }
         totalResultSize += returnResultRetryResult.value().resultSize;
-        nPackets++;
     }
-
     return ResultInfo{.eofIsReached = false, .resultSize = totalResultSize};
 }
 
@@ -332,8 +327,6 @@ auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
 auto ReturnResultRetry() -> Result<ResultInfo>
 {
     std::size_t errorCount = 0;
-    // TODO: infinite loop could be avoided by setting errorCount <= maxNNackRetries as the
-    // termination condition
     while(true)
     {
         auto returnResultCommunicationResult = ReturnResultCommunication();
@@ -345,7 +338,7 @@ auto ReturnResultRetry() -> Result<ResultInfo>
         FlushUartReceiveBuffer();
         SendCommand(cepNack);
         errorCount++;
-        if(errorCount == maxNNackRetries)
+        if(errorCount > maxNNackRetries)
         {
             return returnResultCommunicationResult.error();
         }
