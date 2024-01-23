@@ -8,6 +8,8 @@
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <etl/vector.h>
+
 #include <algorithm>
 #include <array>
 #include <cinttypes>
@@ -30,11 +32,6 @@ constexpr auto noEventCode = 0x00_b;
 constexpr auto programFinishedCode = 0x01_b;
 constexpr auto resultsReadyCode = 0x02_b;
 
-// Status types byte counts
-constexpr auto nNoEventBytes = 1;
-constexpr auto nProgramFinishedBytes = 8;
-constexpr auto nResultsReadyBytes = 7;
-
 // TODO: Check real timeouts
 // Max. time for EDU to respond to a request
 constexpr auto communicationTimeout = 1 * RODOS::SECONDS;
@@ -47,13 +44,15 @@ constexpr auto maxNPackets = 100;
 // Max. length of a single data packet
 constexpr auto maxDataLength = 11 * 1024;
 // Data buffer for potentially large data packets (ReturnResult and StoreProgram)
-auto cepDataBuffer = std::array<Byte, maxDataLength>{};
+auto cepDataBuffer = etl::vector<Byte, maxDataLength>{};
 
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
 auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 
 
 // --- Private function declarations ---
+
+// TODO: Rearrange function declarations and definitions
 
 // TODO: Rework -> Send(CepCommand command) -> void;
 auto SendCommand(Byte commandId) -> void;
@@ -65,7 +64,9 @@ template<>
 [[nodiscard]] auto Receive<Byte>() -> Result<Byte>;
 auto FlushUartReceiveBuffer() -> void;
 [[nodiscard]] auto CheckCrc32(std::span<Byte const> data) -> Result<void>;
-[[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
+[[nodiscard]] auto ReceiveAndParseStatus() -> Result<Status>;
+[[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
+[[nodiscard]] auto ParseStatus() -> Result<Status>;
 [[nodiscard]] auto ReturnResultCommunication() -> Result<ResultInfo>;
 [[nodiscard]] auto ReturnResultRetry() -> Result<ResultInfo>;
 
@@ -199,29 +200,31 @@ auto GetStatus() -> Result<Status>
     std::size_t nErrors = 0;
     while(true)
     {
-        auto getStatusCommunicationResult = GetStatusCommunication();
-        if(getStatusCommunicationResult.has_value())
+        auto receiveAndParseStatusResult = ReceiveAndParseStatus();
+        if(receiveAndParseStatusResult.has_value())
         {
-            auto status = getStatusCommunicationResult.value();
             SendCommand(cepAck);
-            return status;
+            return receiveAndParseStatusResult.value();
         }
         FlushUartReceiveBuffer();
         SendCommand(cepNack);
         nErrors++;
         if(nErrors >= maxNNackRetries)
         {
-            return getStatusCommunicationResult.error();
+            return receiveAndParseStatusResult.error();
         }
     }
 }
 
 
-//! @brief Communication function for GetStatus() to separate a single try from retry logic.
-//!
-//! @returns The received EDU status
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
-auto GetStatusCommunication() -> Result<Status>
+auto ReceiveAndParseStatus() -> Result<Status>
+{
+    OUTCOME_TRY(ReceiveDataPacket());
+    return ParseStatus();
+}
+
+
+auto ReceiveDataPacket() -> Result<void>
 {
     OUTCOME_TRY(auto answer, Receive<Byte>());
     if(answer != cepData)
@@ -229,40 +232,38 @@ auto GetStatusCommunication() -> Result<Status>
         return ErrorCode::invalidCommand;
     }
 
-    OUTCOME_TRY(auto dataLength, Receive<std::int32_t>());
-    if(dataLength == 0)
+    OUTCOME_TRY(auto dataLength, Receive<std::uint32_t>());
+    if(dataLength == 0 or dataLength > maxDataLength)
     {
         return ErrorCode::invalidLength;
     }
+    cepDataBuffer.resize(dataLength);
 
-    OUTCOME_TRY(auto statusType, Receive<Byte>());
+    OUTCOME_TRY(Receive(Span(&cepDataBuffer)));
+    OUTCOME_TRY(CheckCrc32(Span(cepDataBuffer)));
+    return outcome_v2::success();
+}
+
+
+auto ParseStatus() -> Result<Status>
+{
+    auto statusType = cepDataBuffer[0];
     if(statusType == noEventCode)
     {
-        if(dataLength != nNoEventBytes)
+        if(cepDataBuffer.size() - 1 != 0)
         {
             return ErrorCode::invalidLength;
         }
-        OUTCOME_TRY(CheckCrc32(Span(statusType)));
         return Status{.statusType = StatusType::noEvent};
     }
     if(statusType == programFinishedCode)
     {
-        if(dataLength != nProgramFinishedBytes)
+        if(cepDataBuffer.size() - 1 != serialSize<ProgramFinishedStatus>)
         {
             return ErrorCode::invalidLength;
         }
-
-        auto dataBuffer = Buffer<ProgramFinishedStatus>{};
-        OUTCOME_TRY(Receive(dataBuffer));
-
-        // Create another Buffer which includes the status type that was received beforehand because
-        // it is needed to calculate the CRC32 checksum
-        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
-        fullDataBuffer[0] = statusType;
-        std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
-        OUTCOME_TRY(CheckCrc32(fullDataBuffer));
-
-        auto programFinishedData = Deserialize<ProgramFinishedStatus>(dataBuffer);
+        auto programFinishedData = Deserialize<ProgramFinishedStatus>(
+            Span(cepDataBuffer).subspan<1, serialSize<ProgramFinishedStatus>>());
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
                       .startTime = programFinishedData.startTime,
@@ -270,22 +271,12 @@ auto GetStatusCommunication() -> Result<Status>
     }
     if(statusType == resultsReadyCode)
     {
-        if(dataLength != nResultsReadyBytes)
+        if(cepDataBuffer.size() - 1 != serialSize<ResultsReadyStatus>)
         {
             return ErrorCode::invalidLength;
         }
-
-        auto dataBuffer = Buffer<ResultsReadyStatus>{};
-        OUTCOME_TRY(Receive(dataBuffer));
-
-        // Create another Buffer which includes the status type that was received beforehand because
-        // it is needed to calculate the CRC32 checksum
-        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
-        fullDataBuffer[0] = statusType;
-        std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
-        OUTCOME_TRY(CheckCrc32(fullDataBuffer));
-
-        auto resultsReadyData = Deserialize<ResultsReadyStatus>(dataBuffer);
+        auto resultsReadyData = Deserialize<ResultsReadyStatus>(
+            Span(cepDataBuffer).subspan<1, serialSize<ResultsReadyStatus>>());
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
                       .startTime = resultsReadyData.startTime};

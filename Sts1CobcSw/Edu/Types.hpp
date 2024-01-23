@@ -15,6 +15,8 @@ namespace edu
 using sts1cobcsw::operator""_b;
 
 
+// TODO: Check if all those error codes are really needed. For example invalidResult and
+// invalidCommand are used for the same thing.
 enum class ErrorCode
 {
     invalidResult = 1,
@@ -97,6 +99,7 @@ struct Status
 };
 
 
+// TODO: Rename to ProgramFinishedData, add ID/code, and add NoEventData
 struct ProgramFinishedStatus
 {
     std::uint16_t programId = 0;
