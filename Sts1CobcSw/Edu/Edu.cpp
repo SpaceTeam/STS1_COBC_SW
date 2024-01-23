@@ -26,9 +26,12 @@ constexpr auto cepNack = 0x27_b;  //! Not Acknowledging an (invalid) data packet
 constexpr auto cepEof = 0x59_b;   //! Transmission of multiple packets is complete
 constexpr auto cepData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
-// TODO: Check real timeouts
-// Max. time for EDU to respond to a request
-constexpr auto communicationTimeout = 1 * RODOS::SECONDS;
+// The max. data length is 11 KiB. At 115'200 baud, this takes about 1 second to transmit. We use
+// 1.5 s just to be sure.
+constexpr auto sendTimeout = 1500 * RODOS::MILLISECONDS;
+constexpr auto receiveTimeout = 1500 * RODOS::MILLISECONDS;
+// TODO: Can we choose a smaller value?
+constexpr auto flushReceiveBufferTimeout = 1 * RODOS::MILLISECONDS;
 
 // TODO: Choose proper values
 // Max. number of send retries after receiving NACK
@@ -49,13 +52,13 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 [[nodiscard]] auto ReceiveAndParseStatus() -> Result<Status>;
 [[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
 [[nodiscard]] auto ParseStatus() -> Result<Status>;
-
 [[nodiscard]] auto ReturnResultRetry() -> Result<ResultInfo>;
 [[nodiscard]] auto ReturnResultCommunication() -> Result<ResultInfo>;
 
-[[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto SendDataPacket(std::span<Byte const> data) -> Result<void>;
 // TODO: Rework -> Send(CepCommand command) -> void;
-auto SendCommand(Byte commandId) -> void;
+[[nodiscard]] auto SendCommand(Byte commandId) -> Result<void>;
+[[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
 template<typename T>
 [[nodiscard]] auto Receive() -> Result<T>;
 template<>
@@ -124,7 +127,7 @@ auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std:
 //! @returns A relevant error code
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
-    OUTCOME_TRY(Send(Serialize(data)));
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
     OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
     {
@@ -190,18 +193,18 @@ auto StopProgram() -> Result<void>
 //!          returned.
 auto GetStatus() -> Result<Status>
 {
-    OUTCOME_TRY(Send(Serialize(GetStatusData())));
+    OUTCOME_TRY(SendDataPacket(Serialize(GetStatusData())));
     std::size_t nErrors = 0;
     while(true)
     {
         auto receiveAndParseStatusResult = ReceiveAndParseStatus();
         if(receiveAndParseStatusResult.has_value())
         {
-            SendCommand(cepAck);
+            OUTCOME_TRY(SendCommand(cepAck));
             return receiveAndParseStatusResult.value();
         }
         FlushUartReceiveBuffer();
-        SendCommand(cepNack);
+        OUTCOME_TRY(SendCommand(cepNack));
         nErrors++;
         if(nErrors >= maxNNackRetries)
         {
@@ -282,7 +285,7 @@ auto ParseStatus() -> Result<Status>
 
 auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
 {
-    OUTCOME_TRY(Send(Serialize(data)));
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
 
     std::size_t totalResultSize = 0;
     for(auto nPackets = 0; nPackets < maxNPackets; ++nPackets)
@@ -297,7 +300,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
         {
             // TODO: This is a dummy implementation. Store the result instead.
             RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
-            SendCommand(cepAck);
+            OUTCOME_TRY(SendCommand(cepAck));
             return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
         }
         totalResultSize += returnResultRetryResult.value().resultSize;
@@ -318,11 +321,11 @@ auto ReturnResultRetry() -> Result<ResultInfo>
         auto returnResultCommunicationResult = ReturnResultCommunication();
         if(returnResultCommunicationResult.has_value())
         {
-            SendCommand(cepAck);
+            OUTCOME_TRY(SendCommand(cepAck));
             return returnResultCommunicationResult.value();
         }
         FlushUartReceiveBuffer();
-        SendCommand(cepNack);
+        OUTCOME_TRY(SendCommand(cepNack));
         errorCount++;
         if(errorCount > maxNNackRetries)
         {
@@ -382,7 +385,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 //! @returns A relevant error code
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
-    OUTCOME_TRY(Send(Serialize(data)));
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
     OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
     {
@@ -405,7 +408,7 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
-auto Send(std::span<Byte const> data) -> Result<void>
+auto SendDataPacket(std::span<Byte const> data) -> Result<void>
 {
     if(data.size() >= maxDataLength)
     {
@@ -418,10 +421,10 @@ auto Send(std::span<Byte const> data) -> Result<void>
     auto nNacks = 0;
     while(nNacks < maxNNackRetries)
     {
-        SendCommand(cepData);
-        hal::WriteTo(&uart, Span(length));
-        hal::WriteTo(&uart, data);
-        hal::WriteTo(&uart, Span(checksum));
+        OUTCOME_TRY(SendCommand(cepData));
+        OUTCOME_TRY(Send(Span(length)));
+        OUTCOME_TRY(Send(data));
+        OUTCOME_TRY(Send(Span(checksum)));
 
         OUTCOME_TRY(auto answer, Receive<Byte>());
         switch(answer)
@@ -445,12 +448,23 @@ auto Send(std::span<Byte const> data) -> Result<void>
 }
 
 
-//! @brief Send a CEP command to the EDU.
-//!
-//! @param cmd The command
-inline auto SendCommand(Byte commandId) -> void
+auto SendCommand(Byte commandId) -> Result<void>
 {
-    hal::WriteTo(&uart, Span(commandId));
+    OUTCOME_TRY(Send(Span(commandId)));
+    return outcome_v2::success();
+}
+
+
+// This function is mainly here for converting error codes and ensuring that all send operations use
+// a timeout.
+auto Send(std::span<Byte const> data) -> Result<void>
+{
+    auto writeToResult = hal::WriteTo(&uart, data, sendTimeout);
+    if(writeToResult.has_error())
+    {
+        return ErrorCode::timeout;
+    }
+    return outcome_v2::success();
 }
 
 
@@ -478,7 +492,7 @@ auto Receive(std::span<Byte> data) -> Result<void>
     {
         return ErrorCode::receiveDataTooLong;
     }
-    auto readFromResult = hal::ReadFrom(&uart, data, communicationTimeout);
+    auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout);
     if(readFromResult.has_error())
     {
         return ErrorCode::timeout;
@@ -493,11 +507,9 @@ auto Receive(std::span<Byte> data) -> Result<void>
 auto FlushUartReceiveBuffer() -> void
 {
     auto garbageBuffer = std::array<Byte, 32>{};  // NOLINT(*magic-numbers)
-    // TODO: Can we choose a smaller value?
-    auto flushTimeout = 1 * RODOS::MILLISECONDS;
     while(true)
     {
-        auto readFromResult = hal::ReadFrom(&uart, Span(&garbageBuffer), flushTimeout);
+        auto readFromResult = hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout);
         if(readFromResult.has_error())
         {
             break;

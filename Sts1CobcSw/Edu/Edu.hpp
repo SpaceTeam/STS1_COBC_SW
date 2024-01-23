@@ -23,7 +23,7 @@ auto TurnOff() -> void;
 [[nodiscard]] auto StoreProgram(StoreProgramData const & data) -> Result<std::int32_t>;
 [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>;
 [[nodiscard]] auto StopProgram() -> Result<void>;
-// TODD: Find better name (or maybe even mechanism) for GetStatus
+// TODO: Find better name (or maybe even mechanism) for GetStatus
 [[nodiscard]] auto GetStatus() -> Result<Status>;
 [[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>;
 [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> Result<void>;
