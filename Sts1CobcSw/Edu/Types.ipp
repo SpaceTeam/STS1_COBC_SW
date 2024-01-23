@@ -31,8 +31,7 @@ auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *
 
 
 template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, [[maybe_unused]] StopProgramData const & data)
-    -> void *
+auto SerializeTo(void * destination, [[maybe_unused]] StopProgramData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, StopProgramData::id);
     return destination;
@@ -40,8 +39,7 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, [[maybe_unused]] GetStatusData const & data)
-    -> void *
+auto SerializeTo(void * destination, [[maybe_unused]] GetStatusData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, GetStatusData::id);
     return destination;
@@ -68,8 +66,19 @@ auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void const *
+auto DeserializeFrom(void const * source, [[maybe_unused]] NoEventData * data) -> void const *
 {
+    auto dummy = NoEventData::id;
+    source = DeserializeFrom<endianness>(source, &dummy);
+    return source;
+}
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, ProgramFinishedData * data) -> void const *
+{
+    auto dummy = ProgramFinishedData::id;
+    source = DeserializeFrom<endianness>(source, &dummy);
     source = DeserializeFrom<endianness>(source, &(data->programId));
     source = DeserializeFrom<endianness>(source, &(data->startTime));
     source = DeserializeFrom<endianness>(source, &(data->exitCode));
@@ -78,8 +87,10 @@ auto DeserializeFrom(void const * source, ProgramFinishedStatus * data) -> void 
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *
+auto DeserializeFrom(void const * source, ResultsReadyData * data) -> void const *
 {
+    auto dummy = ResultsReadyData::id;
+    source = DeserializeFrom<endianness>(source, &dummy);
     source = DeserializeFrom<endianness>(source, &(data->programId));
     source = DeserializeFrom<endianness>(source, &(data->startTime));
     return source;

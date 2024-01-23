@@ -99,17 +99,24 @@ struct Status
 };
 
 
-// TODO: Rename to ProgramFinishedData, add ID/code, and add NoEventData
-struct ProgramFinishedStatus
+struct NoEventData
 {
+    static constexpr auto id = 0x00_b;
+};
+
+
+struct ProgramFinishedData
+{
+    static constexpr auto id = 0x01_b;
     std::uint16_t programId = 0;
     std::int32_t startTime = 0;
     std::uint8_t exitCode = 0;
 };
 
 
-struct ResultsReadyStatus
+struct ResultsReadyData
 {
+    static constexpr auto id = 0x02_b;
     std::uint16_t programId = 0;
     std::int32_t startTime = 0;
 };
@@ -154,15 +161,21 @@ inline constexpr std::size_t serialSize<edu::UpdateTimeData> =
     totalSerialSize<decltype(edu::UpdateTimeData::id), decltype(edu::UpdateTimeData::currentTime)>;
 
 template<>
-inline constexpr std::size_t serialSize<edu::ProgramFinishedStatus> =
-    totalSerialSize<decltype(edu::ProgramFinishedStatus::programId),
-                    decltype(edu::ProgramFinishedStatus::startTime),
-                    decltype(edu::ProgramFinishedStatus::exitCode)>;
+inline constexpr std::size_t serialSize<edu::NoEventData> =
+    totalSerialSize<decltype(edu::NoEventData::id)>;
 
 template<>
-inline constexpr std::size_t serialSize<edu::ResultsReadyStatus> =
-    totalSerialSize<decltype(edu::ResultsReadyStatus::programId),
-                    decltype(edu::ResultsReadyStatus::startTime)>;
+inline constexpr std::size_t serialSize<edu::ProgramFinishedData> =
+    totalSerialSize<decltype(edu::ProgramFinishedData::id),
+                    decltype(edu::ProgramFinishedData::programId),
+                    decltype(edu::ProgramFinishedData::startTime),
+                    decltype(edu::ProgramFinishedData::exitCode)>;
+
+template<>
+inline constexpr std::size_t serialSize<edu::ResultsReadyData> =
+    totalSerialSize<decltype(edu::ResultsReadyData::id),
+                    decltype(edu::ResultsReadyData::programId),
+                    decltype(edu::ResultsReadyData::startTime)>;
 
 
 namespace edu
@@ -179,12 +192,13 @@ template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ReturnResultData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
-template<std::endian endianness>
 
-[[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedStatus * data)
-    -> void const *;
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyStatus * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, NoEventData * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedData * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyData * data) -> void const *;
 }
 }
 

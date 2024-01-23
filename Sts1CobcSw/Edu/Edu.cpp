@@ -26,12 +26,6 @@ constexpr auto cepNack = 0x27_b;  //! Not Acknowledging an (invalid) data packet
 constexpr auto cepEof = 0x59_b;   //! Transmission of multiple packets is complete
 constexpr auto cepData = 0x8b_b;  //! Data packet format is used (not a command packet!)
 
-// TODO: Turn these into <Status>Data structs like the EDU commands
-// GetStatus result types
-constexpr auto noEventCode = 0x00_b;
-constexpr auto programFinishedCode = 0x01_b;
-constexpr auto resultsReadyCode = 0x02_b;
-
 // TODO: Check real timeouts
 // Max. time for EDU to respond to a request
 constexpr auto communicationTimeout = 1 * RODOS::SECONDS;
@@ -247,36 +241,36 @@ auto ReceiveDataPacket() -> Result<void>
 
 auto ParseStatus() -> Result<Status>
 {
-    auto statusType = cepDataBuffer[0];
-    if(statusType == noEventCode)
+    auto statusId = cepDataBuffer[0];
+    if(statusId == NoEventData::id)
     {
-        if(cepDataBuffer.size() - 1 != 0)
+        if(cepDataBuffer.size() != serialSize<NoEventData>)
         {
             return ErrorCode::invalidLength;
         }
         return Status{.statusType = StatusType::noEvent};
     }
-    if(statusType == programFinishedCode)
+    if(statusId == ProgramFinishedData::id)
     {
-        if(cepDataBuffer.size() - 1 != serialSize<ProgramFinishedStatus>)
+        if(cepDataBuffer.size() != serialSize<ProgramFinishedData>)
         {
             return ErrorCode::invalidLength;
         }
-        auto programFinishedData = Deserialize<ProgramFinishedStatus>(
-            Span(cepDataBuffer).subspan<1, serialSize<ProgramFinishedStatus>>());
+        auto programFinishedData = Deserialize<ProgramFinishedData>(
+            Span(cepDataBuffer).first<serialSize<ProgramFinishedData>>());
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
                       .startTime = programFinishedData.startTime,
                       .exitCode = programFinishedData.exitCode};
     }
-    if(statusType == resultsReadyCode)
+    if(statusId == ResultsReadyData::id)
     {
-        if(cepDataBuffer.size() - 1 != serialSize<ResultsReadyStatus>)
+        if(cepDataBuffer.size() != serialSize<ResultsReadyData>)
         {
             return ErrorCode::invalidLength;
         }
-        auto resultsReadyData = Deserialize<ResultsReadyStatus>(
-            Span(cepDataBuffer).subspan<1, serialSize<ResultsReadyStatus>>());
+        auto resultsReadyData = Deserialize<ResultsReadyData>(
+            Span(cepDataBuffer).first<serialSize<ResultsReadyData>>());
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
                       .startTime = resultsReadyData.startTime};
