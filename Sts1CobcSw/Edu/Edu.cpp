@@ -46,23 +46,23 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 
 // --- Private function declarations ---
 
-// TODO: Rearrange function declarations and definitions
+[[nodiscard]] auto ReceiveAndParseStatus() -> Result<Status>;
+[[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
+[[nodiscard]] auto ParseStatus() -> Result<Status>;
 
+[[nodiscard]] auto ReturnResultRetry() -> Result<ResultInfo>;
+[[nodiscard]] auto ReturnResultCommunication() -> Result<ResultInfo>;
+
+[[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
 // TODO: Rework -> Send(CepCommand command) -> void;
 auto SendCommand(Byte commandId) -> void;
-[[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
-[[nodiscard]] auto Receive(std::span<Byte> data) -> Result<void>;
 template<typename T>
 [[nodiscard]] auto Receive() -> Result<T>;
 template<>
 [[nodiscard]] auto Receive<Byte>() -> Result<Byte>;
+[[nodiscard]] auto Receive(std::span<Byte> data) -> Result<void>;
 auto FlushUartReceiveBuffer() -> void;
 [[nodiscard]] auto CheckCrc32(std::span<Byte const> data) -> Result<void>;
-[[nodiscard]] auto ReceiveAndParseStatus() -> Result<Status>;
-[[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
-[[nodiscard]] auto ParseStatus() -> Result<Status>;
-[[nodiscard]] auto ReturnResultCommunication() -> Result<ResultInfo>;
-[[nodiscard]] auto ReturnResultRetry() -> Result<ResultInfo>;
 
 
 // --- Function definitions ---
@@ -218,6 +218,7 @@ auto ReceiveAndParseStatus() -> Result<Status>
 }
 
 
+// TODO: Maybe reuse this function in ReturnResult
 auto ReceiveDataPacket() -> Result<void>
 {
     OUTCOME_TRY(auto answer, Receive<Byte>());
@@ -401,15 +402,6 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 }
 
 
-//! @brief Send a CEP command to the EDU.
-//!
-//! @param cmd The command
-inline auto SendCommand(Byte commandId) -> void
-{
-    hal::WriteTo(&uart, Span(commandId));
-}
-
-
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
@@ -453,23 +445,12 @@ auto Send(std::span<Byte const> data) -> Result<void>
 }
 
 
-//! @brief Receive nBytes bytes over the EDU UART in a single round.
+//! @brief Send a CEP command to the EDU.
 //!
-//! @param destination The destination container
-//!
-//! @returns A relevant EDU error code
-auto Receive(std::span<Byte> data) -> Result<void>
+//! @param cmd The command
+inline auto SendCommand(Byte commandId) -> void
 {
-    if(data.size() > maxDataLength)
-    {
-        return ErrorCode::receiveDataTooLong;
-    }
-    auto readFromResult = hal::ReadFrom(&uart, data, communicationTimeout);
-    if(readFromResult.has_error())
-    {
-        return ErrorCode::timeout;
-    }
-    return outcome_v2::success();
+    hal::WriteTo(&uart, Span(commandId));
 }
 
 
@@ -488,6 +469,21 @@ auto Receive<Byte>() -> Result<Byte>
     auto byte = 0x00_b;
     OUTCOME_TRY(Receive(Span(&byte)));
     return byte;
+}
+
+
+auto Receive(std::span<Byte> data) -> Result<void>
+{
+    if(data.size() > maxDataLength)
+    {
+        return ErrorCode::receiveDataTooLong;
+    }
+    auto readFromResult = hal::ReadFrom(&uart, data, communicationTimeout);
+    if(readFromResult.has_error())
+    {
+        return ErrorCode::timeout;
+    }
+    return outcome_v2::success();
 }
 
 
