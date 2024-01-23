@@ -10,6 +10,8 @@
 #pragma once
 
 
+#include <etl/vector.h>
+
 #include <array>
 #include <cstddef>  // for std::size_t
 #include <span>
@@ -40,6 +42,12 @@ template<typename T, std::size_t size>
 
 template<typename T, std::size_t size>
 [[nodiscard]] auto Span(std::array<T, size> * array) -> std::span<T, size>;
+
+template<typename T, std::size_t size>
+[[nodiscard]] auto Span(etl::vector<T, size> const & vector) -> std::span<T const>;
+
+template<typename T, std::size_t size>
+[[nodiscard]] auto Span(etl::vector<T, size> * vector) -> std::span<T>;
 }
 
 

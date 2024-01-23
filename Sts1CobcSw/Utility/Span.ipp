@@ -51,4 +51,18 @@ inline auto Span(std::array<T, size> * array) -> std::span<T, size>
 {
     return std::span<T, size>(*array);
 }
+
+
+template<typename T, std::size_t size>
+inline auto Span(etl::vector<T, size> const & vector) -> std::span<T const>
+{
+    return std::span<T const>(vector);
+}
+
+
+template<typename T, std::size_t size>
+inline auto Span(etl::vector<T, size> * vector) -> std::span<T>
+{
+    return std::span<T>(*vector);
+}
 }
