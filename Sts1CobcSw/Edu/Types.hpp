@@ -34,7 +34,8 @@ enum class ErrorCode
     invalidStatusType,
     invalidLength,
     invalidCommand,
-    noResultAvailable
+    noResultAvailable,
+    tooManyDataPackets
 };
 
 

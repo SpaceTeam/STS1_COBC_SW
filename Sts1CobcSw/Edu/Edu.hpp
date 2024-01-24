@@ -25,6 +25,6 @@ auto TurnOff() -> void;
 [[nodiscard]] auto StopProgram() -> Result<void>;
 // TODO: Find better name (or maybe even mechanism) for GetStatus
 [[nodiscard]] auto GetStatus() -> Result<Status>;
-[[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>;
+[[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> Result<void>;
 [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> Result<void>;
 }
