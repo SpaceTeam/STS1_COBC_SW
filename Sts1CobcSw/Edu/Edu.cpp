@@ -49,9 +49,9 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 
 // --- Private function declarations ---
 
-[[nodiscard]] auto ReceiveAndParseStatus() -> Result<Status>;
+[[nodiscard]] auto ReceiveAndParseStatusData() -> Result<Status>;
 [[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
-[[nodiscard]] auto ParseStatus() -> Result<Status>;
+[[nodiscard]] auto ParseStatusData() -> Result<Status>;
 [[nodiscard]] auto ReturnResultRetry() -> Result<ResultInfo>;
 [[nodiscard]] auto ReturnResultCommunication() -> Result<ResultInfo>;
 
@@ -65,7 +65,7 @@ template<>
 [[nodiscard]] auto Receive<Byte>() -> Result<Byte>;
 [[nodiscard]] auto Receive(std::span<Byte> data) -> Result<void>;
 auto FlushUartReceiveBuffer() -> void;
-[[nodiscard]] auto CheckCrc32(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>;
 
 
 // --- Function definitions ---
@@ -197,27 +197,27 @@ auto GetStatus() -> Result<Status>
     std::size_t nErrors = 0;
     while(true)
     {
-        auto receiveAndParseStatusResult = ReceiveAndParseStatus();
-        if(receiveAndParseStatusResult.has_value())
+        auto receiveAndParseStatusDataResult = ReceiveAndParseStatusData();
+        if(receiveAndParseStatusDataResult.has_value())
         {
             OUTCOME_TRY(SendCommand(cepAck));
-            return receiveAndParseStatusResult.value();
+            return receiveAndParseStatusDataResult.value();
         }
         FlushUartReceiveBuffer();
         OUTCOME_TRY(SendCommand(cepNack));
         nErrors++;
         if(nErrors >= maxNNackRetries)
         {
-            return receiveAndParseStatusResult.error();
+            return receiveAndParseStatusDataResult.error();
         }
     }
 }
 
 
-auto ReceiveAndParseStatus() -> Result<Status>
+auto ReceiveAndParseStatusData() -> Result<Status>
 {
     OUTCOME_TRY(ReceiveDataPacket());
-    return ParseStatus();
+    return ParseStatusData();
 }
 
 
@@ -238,12 +238,12 @@ auto ReceiveDataPacket() -> Result<void>
     cepDataBuffer.resize(dataLength);
 
     OUTCOME_TRY(Receive(Span(&cepDataBuffer)));
-    OUTCOME_TRY(CheckCrc32(Span(cepDataBuffer)));
+    OUTCOME_TRY(ReceiveAndCheckCrc32(Span(cepDataBuffer)));
     return outcome_v2::success();
 }
 
 
-auto ParseStatus() -> Result<Status>
+auto ParseStatusData() -> Result<Status>
 {
     auto statusId = cepDataBuffer[0];
     if(statusId == NoEventData::id)
@@ -363,7 +363,7 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
     }
 
     OUTCOME_TRY(Receive(Span(&cepDataBuffer).first(dataLength)));
-    OUTCOME_TRY(CheckCrc32(Span(cepDataBuffer).first(dataLength)));
+    OUTCOME_TRY(ReceiveAndCheckCrc32(Span(cepDataBuffer).first(dataLength)));
     return ResultInfo{.eofIsReached = false, .resultSize = dataLength};
 }
 
@@ -519,7 +519,7 @@ auto FlushUartReceiveBuffer() -> void
 
 
 // TODO: A parameter pack of spans would be very convenient
-auto CheckCrc32(std::span<Byte const> data) -> Result<void>
+auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>
 {
     auto computedCrc32 = utility::ComputeCrc32(data);
     OUTCOME_TRY(auto receivedCrc32, Receive<std::uint32_t>());
