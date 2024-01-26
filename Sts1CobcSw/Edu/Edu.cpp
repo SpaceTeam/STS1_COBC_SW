@@ -56,14 +56,18 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 // TODO: Rework -> Send(CepCommand command) -> void;
 [[nodiscard]] auto SendCommand(Byte commandId) -> Result<void>;
 [[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
+
 [[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
 template<typename T>
 [[nodiscard]] auto Receive() -> Result<T>;
 template<>
 [[nodiscard]] auto Receive<Byte>() -> Result<Byte>;
 [[nodiscard]] auto Receive(std::span<Byte> data) -> Result<void>;
-auto FlushUartReceiveBuffer() -> void;
 [[nodiscard]] auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>;
+
+template<typename T>
+[[nodiscard]] auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
+auto FlushUartReceiveBuffer() -> void;
 
 
 // --- Function definitions ---
@@ -192,24 +196,9 @@ auto StopProgram() -> Result<void>
 auto GetStatus() -> Result<Status>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(GetStatusData())));
-    std::size_t nErrors = 0;
-    while(true)
-    {
-        auto receiveAndParseStatusDataResult = ReceiveAndParseStatusData();
-        if(receiveAndParseStatusDataResult.has_value())
-        {
-            OUTCOME_TRY(SendCommand(cepAck));
-            return receiveAndParseStatusDataResult.value();
-        }
-        FlushUartReceiveBuffer();
-        OUTCOME_TRY(SendCommand(cepNack));
-        nErrors++;
-        if(nErrors >= maxNNackRetries)
-        {
-            // TODO: Maybe return tooManyNacks here?
-            return receiveAndParseStatusDataResult.error();
-        }
-    }
+    OUTCOME_TRY(auto status, Retry(ReceiveAndParseStatusData, maxNNackRetries));
+    OUTCOME_TRY(SendCommand(cepAck));
+    return status;
 }
 
 
@@ -269,27 +258,11 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     for(auto nPackets = 0; nPackets < maxNPackets; ++nPackets)
     {
-        auto errorCount = 0;
-        while(true)
-        {
-            auto receiveDataPacketResult = ReceiveDataPacket();
-            if(receiveDataPacketResult.has_value())
-            {
-                break;
-            }
-            FlushUartReceiveBuffer();
-            OUTCOME_TRY(SendCommand(cepNack));
-            errorCount++;
-            if(errorCount > maxNNackRetries)
-            {
-                // TODO: Maybe return tooManyNacks here?
-                return receiveDataPacketResult.error();
-            }
-        }
-
+        OUTCOME_TRY(Retry(ReceiveDataPacket, maxNNackRetries));
+        // If the buffer is empty we received an EOF and are done with the transmission
         if(cepDataBuffer.empty())
         {
-            // We received EOF and are done with the transmission
+            // TODO: Do we also have a CRC32 over the whole file that needs to be checked here?
             OUTCOME_TRY(SendCommand(cepAck));
             return outcome_v2::success();
         }
@@ -462,6 +435,43 @@ auto Receive(std::span<Byte> data) -> Result<void>
 }
 
 
+// TODO: A parameter pack of spans would be very convenient
+auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>
+{
+    auto computedCrc32 = utility::ComputeCrc32(data);
+    OUTCOME_TRY(auto receivedCrc32, Receive<std::uint32_t>());
+    if(computedCrc32 != receivedCrc32)
+    {
+        return ErrorCode::wrongChecksum;
+    }
+    return outcome_v2::success();
+}
+
+
+template<typename T>
+auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>
+{
+    auto iTries = 0;
+    while(true)
+    {
+        auto result = communicationFunction();
+        if(result.has_value())
+        {
+            // No ACK is sent here. The caller is responsible for that.
+            return result;
+        }
+        FlushUartReceiveBuffer();
+        OUTCOME_TRY(SendCommand(cepNack));
+        iTries++;
+        if(iTries > nTries)
+        {
+            // TODO: Maybe return tooManyNacks here instead?
+            return result.error();
+        }
+    }
+}
+
+
 //! @brief Flush the EDU UART read buffer.
 //!
 //! This can be used to clear all buffer data after an error to request a resend.
@@ -476,18 +486,5 @@ auto FlushUartReceiveBuffer() -> void
             break;
         }
     }
-}
-
-
-// TODO: A parameter pack of spans would be very convenient
-auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>
-{
-    auto computedCrc32 = utility::ComputeCrc32(data);
-    OUTCOME_TRY(auto receivedCrc32, Receive<std::uint32_t>());
-    if(computedCrc32 != receivedCrc32)
-    {
-        return ErrorCode::wrongChecksum;
-    }
-    return outcome_v2::success();
 }
 }
