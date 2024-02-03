@@ -28,7 +28,7 @@ private:
     {
         PRINTF("\nRF test\n\n");
 
-        periphery::rf::Initialize();
+        periphery::rf::Initialize(periphery::rf::TxType::morse);
         PRINTF("RF module initialized\n");
 
         PRINTF("\n");

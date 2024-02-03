@@ -6,6 +6,12 @@
 
 namespace sts1cobcsw::periphery::rf
 {
-auto Initialize() -> void;
+enum class TxType
+{
+    morse,  // From GPIO pin
+    packet  // From FIFO
+};
+
+auto Initialize(TxType txType) -> void;
 auto ReadPartInfo() -> std::uint16_t;
 }
