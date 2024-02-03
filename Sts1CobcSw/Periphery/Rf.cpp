@@ -2,17 +2,13 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
-#include <Sts1CobcSw/Periphery/RfNames.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
 #include <climits>
-#include <cstdint>
 #include <span>
-#include <string_view>
 
 
 namespace sts1cobcsw::periphery::rf
@@ -22,7 +18,19 @@ using RODOS::MICROSECONDS;
 using RODOS::MILLISECONDS;
 using RODOS::NOW;
 
-// --- Globals ---
+enum class PowerUpBootOptions : std::uint8_t
+{
+    noPatch = 0x01,
+    patch = 0x81
+};
+
+enum class PowerUpXtalOptions : std::uint8_t
+{
+    xtal = 0x00,  // Reference signal is derived from the internal crystal oscillator
+    txco = 0x01   // Reference signal is derived from an external TCXO
+};
+
+// --- Private globals ---
 
 auto spi = RODOS::HAL_SPI(
     hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
@@ -36,10 +44,22 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
-constexpr std::uint16_t partInfo = 0x4463;
 constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 
+// Si4463 command headers
+constexpr auto cmdPartInfo = 0x01_b;
+constexpr auto cmdPowerUp = 0x02_b;
+constexpr auto cmdReadCmdBuff = 0x44_b;
+
+// Command response lengths
+constexpr auto partInfoResponseLength = 8U;
+
+// Check for this value when waiting for the Si4463 (WaitOnCts())
+constexpr auto readyCtsByte = 0xFF_b;
+
 // --- Private function declarations ---
+
+auto InitializeGpioAndSpi() -> void;
 
 auto PowerUp(PowerUpBootOptions bootOptions,
              PowerUpXtalOptions xtalOptions,
@@ -67,6 +87,19 @@ auto Initialize() -> void
     // Here comes the initialization of the RF module
 }
 
+
+auto ReadPartInfo() -> std::uint16_t
+{
+    auto const sendBuffer = std::to_array<Byte>({cmdPartInfo});
+    auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(sendBuffer);
+
+    // NOLINTNEXTLINE(hicpp-signed-bitwise)
+    return static_cast<std::uint16_t>(static_cast<std::uint16_t>(responseBuffer[1]) << CHAR_BIT
+                                      | static_cast<std::uint16_t>(responseBuffer[2]));
+}
+
+
+// --- Private function definitions ---
 
 auto InitializeGpioAndSpi() -> void
 {
@@ -103,19 +136,6 @@ auto InitializeGpioAndSpi() -> void
     AT(NOW() + 20 * MILLISECONDS);
 }
 
-
-auto GetPartInfo() -> std::uint16_t
-{
-    auto const sendBuffer = std::to_array<Byte>({cmdPartInfo});
-    auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(sendBuffer);
-
-    // NOLINTNEXTLINE(hicpp-signed-bitwise)
-    return static_cast<std::uint16_t>(static_cast<std::uint16_t>(responseBuffer[1]) << CHAR_BIT
-                                      | static_cast<std::uint16_t>(responseBuffer[2]));
-}
-
-
-// --- Private function definitions ---
 
 auto PowerUp(PowerUpBootOptions bootOptions,
              PowerUpXtalOptions xtalOptions,
@@ -189,7 +209,7 @@ auto WaitOnCts() -> void
         else
         {
             break;
-        } 
+        }
     } while(true);
 }
 }
