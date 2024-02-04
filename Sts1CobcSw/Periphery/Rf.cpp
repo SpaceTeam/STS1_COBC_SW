@@ -18,17 +18,20 @@ using RODOS::MICROSECONDS;
 using RODOS::MILLISECONDS;
 using RODOS::NOW;
 
+
 enum class PowerUpBootOptions : std::uint8_t
 {
     noPatch = 0x01,
     patch = 0x81
 };
 
+
 enum class PowerUpXtalOptions : std::uint8_t
 {
     xtal = 0x00,  // Reference signal is derived from the internal crystal oscillator
     txco = 0x01   // Reference signal is derived from an external TCXO
 };
+
 
 enum class PropertyGroup : std::uint8_t
 {
@@ -48,19 +51,8 @@ enum class PropertyGroup : std::uint8_t
     pti = 0xF0           // Packet trace interface
 };
 
+
 // --- Private globals ---
-
-auto spi = RODOS::HAL_SPI(
-    hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
-auto csGpioPin = hal::GpioPin(hal::rfCsPin);
-auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
-auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
-auto gpio0GpioPin = hal::GpioPin(hal::rfGpio0Pin);
-auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
-auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
-
-// TODO: This should probably be somewhere else as it is not directly related to the RF module
-auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
 constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 
@@ -80,10 +72,22 @@ constexpr auto readyCtsByte = 0xFF_b;
 constexpr auto maxNProperties = 12;
 constexpr auto setPropertyHeaderSize = 4;
 
+auto spi = RODOS::HAL_SPI(
+    hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
+auto csGpioPin = hal::GpioPin(hal::rfCsPin);
+auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
+auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
+auto gpio0GpioPin = hal::GpioPin(hal::rfGpio0Pin);
+auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
+auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
+
+// TODO: This should probably be somewhere else as it is not directly related to the RF module
+auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
+
+
 // --- Private function declarations ---
 
 auto InitializeGpioAndSpi() -> void;
-
 auto PowerUp(PowerUpBootOptions bootOptions,
              PowerUpXtalOptions xtalOptions,
              std::uint32_t xoFrequency) -> void;
@@ -92,22 +96,19 @@ auto PowerUp(PowerUpBootOptions bootOptions,
                                 std::size_t length,
                                 std::uint8_t * responseData,
                                 std::size_t responseLength) -> void;
-
 auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void;
-
 template<std::size_t nResponseBytes>
 auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
     -> std::array<Byte, nResponseBytes>;
 
 auto WaitOnCts() -> void;
-
 auto SetTxType(TxType txType) -> void;
-
 template<std::size_t nProperties>
     requires(nProperties >= 1 and nProperties <= maxNProperties)
 auto SetProperty(PropertyGroup propertyGroup,
                  Byte startProperty,
                  std::span<Byte, nProperties> propertyValues) -> void;
+
 
 // --- Public function definitions ---
 
