@@ -86,12 +86,20 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
 // Pause values for pin setting/resetting and PoR
-// TODO: Could not find all of them in datasheet, ask Jakob
-constexpr auto csPinAfterResetPause = 20 * MICROSECONDS;
-constexpr auto csPinPreSetPause = 2 * MICROSECONDS;
-constexpr auto porPause = 20 * MILLISECONDS;  // Time for Power on Reset (PoR) itself
+// Jakob: Pause times are VERY generously overestimated
+constexpr auto csPinAfterResetPause =
+    20 * MICROSECONDS;  // Pause time after pulling NSEL (here CS) low
+constexpr auto csPinPreSetPause =
+    2 * MICROSECONDS;  // Pause time before pulling NSEL (here CS) high
+constexpr auto porRunningPause =
+    20 * MILLISECONDS;  // Pause time to wait for Power on Reset to finish
 constexpr auto porCircuitSettlePause =
     100 * MILLISECONDS;  // Time until PoR circuit settles after applying power
+constexpr auto waitOnCtsStartPause =
+    20 * MICROSECONDS;  // Pause time at the beginning of the CTS wait loop
+constexpr auto watchDogResetPinPause =
+    1 * MILLISECONDS;  // Pause time for the sequence reset -> pause -> set -> pause -> reset in
+                       // initialization
 
 // --- Private function declarations ---
 
@@ -657,9 +665,9 @@ auto InitializeGpioAndSpi() -> void
 
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
     watchdogResetGpioPin.Reset();
-    AT(NOW() + 1 * MILLISECONDS);
+    AT(NOW() + watchDogResetPinPause);
     watchdogResetGpioPin.Set();
-    AT(NOW() + 1 * MILLISECONDS);
+    AT(NOW() + watchDogResetPinPause);
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 10'000'000;
@@ -674,7 +682,7 @@ auto InitializeGpioAndSpi() -> void
     // Enable Si4463 and wait for PoR to finish
     AT(NOW() + porCircuitSettlePause);
     sdnGpioPin.Reset();
-    AT(NOW() + porPause);
+    AT(NOW() + porRunningPause);
 }
 
 
@@ -711,7 +719,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
     auto req = std::to_array<uint8_t>({0x44, 0x00});
     do
     {
-        AT(NOW() + 20 * MICROSECONDS);
+        AT(NOW() + waitOnCtsStartPause);
         csGpioPin.Reset();
         AT(NOW() + csPinAfterResetPause);
         spi.writeRead(std::data(req), std::size(req), std::data(cts), std::size(cts));
@@ -771,7 +779,7 @@ auto WaitOnCts() -> void
     auto sendBuffer = std::to_array<Byte>({cmdReadCmdBuff});
     do
     {
-        AT(NOW() + 20 * MICROSECONDS);
+        AT(NOW() + waitOnCtsStartPause);
         csGpioPin.Reset();
         AT(NOW() + csPinAfterResetPause);
 
