@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -84,6 +85,12 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
+// Pause values for pin setting/resetting and PoR
+// TODO: Could not find all of them in datasheet, ask Jakob
+constexpr auto csPinAfterResetPause = 20 * MICROSECONDS;
+constexpr auto porPause = 20 * MILLISECONDS;  // Time for Power on Reset (PoR) itself
+constexpr auto porCircuitSettlePause =
+    100 * MILLISECONDS;  // Time until PoR circuit settles after applying power
 
 // --- Private function declarations ---
 
@@ -623,8 +630,8 @@ auto Initialize(TxType txType) -> void
 
 auto ReadPartInfo() -> std::uint16_t
 {
-    auto const sendBuffer = std::to_array<Byte>({cmdPartInfo});
-    auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(sendBuffer);
+    auto sendBuffer = std::to_array<Byte>({cmdPartInfo});
+    auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(Span(sendBuffer));
 
     // NOLINTNEXTLINE(hicpp-signed-bitwise)
     return static_cast<std::uint16_t>(static_cast<std::uint16_t>(responseBuffer[1]) << CHAR_BIT
@@ -664,9 +671,9 @@ auto InitializeGpioAndSpi() -> void
     }
 
     // Enable Si4463 and wait for PoR to finish
-    AT(NOW() + 100 * MILLISECONDS);
+    AT(NOW() + porCircuitSettlePause);
     sdnGpioPin.Reset();
-    AT(NOW() + 20 * MILLISECONDS);
+    AT(NOW() + porPause);
 }
 
 
@@ -683,7 +690,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
          static_cast<Byte>(xoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
          static_cast<Byte>(xoFrequency)});
 
-    SendCommandNoResponse(powerUpBuffer);
+    SendCommandNoResponse(Span(powerUpBuffer));
 }
 
 
@@ -694,7 +701,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
 {
     // RODOS::PRINTF("SendCommand()\n");
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
+    AT(NOW() + csPinAfterResetPause);
     spi.write(data, length);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
@@ -705,7 +712,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
     {
         AT(NOW() + 20 * MICROSECONDS);
         csGpioPin.Reset();
-        AT(NOW() + 20 * MICROSECONDS);
+        AT(NOW() + csPinAfterResetPause);
         spi.writeRead(std::data(req), std::size(req), std::data(cts), std::size(cts));
         if(cts[1] != 0xFF)
         {
@@ -727,7 +734,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
 auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void
 {
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
+    AT(NOW() + csPinAfterResetPause);
     hal::WriteTo(&spi, commandBuffer);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
@@ -742,7 +749,7 @@ auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
     -> std::array<Byte, nResponseBytes>
 {
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
+    AT(NOW() + csPinAfterResetPause);
     hal::WriteTo(&spi, commandBuffer);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
@@ -750,7 +757,7 @@ auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
     auto responseBuffer = std::array<Byte, nResponseBytes>{};
     WaitOnCts();
     // WaitOnCts leaves CS pin low, read response afterwards
-    hal::ReadFrom(&spi, std::span<Byte, nResponseBytes>(responseBuffer));
+    hal::ReadFrom(&spi, Span(&responseBuffer));
     csGpioPin.Set();
 
     return responseBuffer;
@@ -765,11 +772,11 @@ auto WaitOnCts() -> void
     {
         AT(NOW() + 20 * MICROSECONDS);
         csGpioPin.Reset();
-        AT(NOW() + 20 * MICROSECONDS);
+        AT(NOW() + csPinAfterResetPause);
 
-        hal::WriteTo(&spi, std::span<Byte const, std::size(sendBuffer)>(sendBuffer));
+        hal::WriteTo(&spi, Span(sendBuffer));
         auto ctsBuffer = std::array<Byte, 1>{};
-        hal::ReadFrom(&spi, std::span<Byte, std::size(ctsBuffer)>(ctsBuffer));
+        hal::ReadFrom(&spi, Span(&ctsBuffer));
 
         if(ctsBuffer[0] != readyCtsByte)
         {
