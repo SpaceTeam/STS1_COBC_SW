@@ -671,13 +671,7 @@ auto InitializeGpioAndSpi() -> void
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 10'000'000;
-    auto spiError = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
-    if(spiError == -1)
-    {
-        RODOS::PRINTF("Error initializing RF SPI!\n");
-        // TODO: proper error handling
-        return;
-    }
+    hal::Initialize(&spi, baudrate);
 
     // Enable Si4463 and wait for PoR to finish
     AT(NOW() + porCircuitSettlePause);
