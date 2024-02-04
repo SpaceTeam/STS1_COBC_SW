@@ -88,6 +88,7 @@ auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 // Pause values for pin setting/resetting and PoR
 // TODO: Could not find all of them in datasheet, ask Jakob
 constexpr auto csPinAfterResetPause = 20 * MICROSECONDS;
+constexpr auto csPinPreSetPause = 2 * MICROSECONDS;
 constexpr auto porPause = 20 * MILLISECONDS;  // Time for Power on Reset (PoR) itself
 constexpr auto porCircuitSettlePause =
     100 * MILLISECONDS;  // Time until PoR circuit settles after applying power
@@ -703,7 +704,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
     csGpioPin.Reset();
     AT(NOW() + csPinAfterResetPause);
     spi.write(data, length);
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
 
     auto cts = std::to_array<uint8_t>({0x00, 0x00});
@@ -716,7 +717,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
         spi.writeRead(std::data(req), std::size(req), std::data(cts), std::size(cts));
         if(cts[1] != 0xFF)
         {
-            AT(NOW() + 2 * MICROSECONDS);
+            AT(NOW() + csPinPreSetPause);
             csGpioPin.Set();
         }
     } while(cts[1] != 0xFF);
@@ -726,7 +727,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
         spi.read(responseData, responseLength);
     }
 
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
 }
 
@@ -736,7 +737,7 @@ auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void
     csGpioPin.Reset();
     AT(NOW() + csPinAfterResetPause);
     hal::WriteTo(&spi, commandBuffer);
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
     WaitOnCts();
     // No response -> just set the CS pin again
@@ -751,7 +752,7 @@ auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
     csGpioPin.Reset();
     AT(NOW() + csPinAfterResetPause);
     hal::WriteTo(&spi, commandBuffer);
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
 
     auto responseBuffer = std::array<Byte, nResponseBytes>{};
@@ -780,7 +781,7 @@ auto WaitOnCts() -> void
 
         if(ctsBuffer[0] != readyCtsByte)
         {
-            AT(NOW() + 2 * MICROSECONDS);
+            AT(NOW() + csPinPreSetPause);
             csGpioPin.Set();
         }
         else
