@@ -15,26 +15,16 @@ namespace edu
 using sts1cobcsw::operator""_b;
 
 
-// TODO: Check if all those error codes are really needed. For example invalidResult and
-// invalidCommand are used for the same thing.
 enum class ErrorCode
 {
-    invalidResult = 1,
-    bufferTooSmall,
-    uartNotInitialized,
-    timeout,
+    timeout = 1,
+    invalidAnswer,
     nack,
-    // Separate errors for the SendData function to differentiate where the error occurred
-    invalidDataResult,
-    sendDataTooLong,
-    receiveDataTooLong,
     tooManyNacks,
-    dataTimeout,
     wrongChecksum,
+    dataPacketTooLong,
     invalidStatusType,
     invalidLength,
-    invalidCommand,
-    noResultAvailable,
     tooManyDataPackets
 };
 

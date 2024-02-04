@@ -143,7 +143,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
         }
         default:
         {
-            return ErrorCode::invalidResult;
+            return ErrorCode::invalidAnswer;
         }
     }
 }
@@ -307,7 +307,7 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
         }
         default:
         {
-            return ErrorCode::invalidResult;
+            return ErrorCode::invalidAnswer;
         }
     }
 }
@@ -320,7 +320,7 @@ auto SendDataPacket(std::span<Byte const> data) -> Result<void>
 {
     if(data.size() >= maxDataLength)
     {
-        return ErrorCode::sendDataTooLong;
+        return ErrorCode::dataPacketTooLong;
     }
     // Casting the size to uint16_t is safe since it is checked against maxDataLength
     auto length = Serialize(static_cast<std::uint16_t>(data.size()));
@@ -348,7 +348,7 @@ auto SendDataPacket(std::span<Byte const> data) -> Result<void>
             }
             default:
             {
-                return ErrorCode::invalidResult;
+                return ErrorCode::invalidAnswer;
             }
         }
     }
@@ -386,7 +386,7 @@ auto ReceiveDataPacket() -> Result<void>
     }
     if(answer != cepData)
     {
-        return ErrorCode::invalidCommand;
+        return ErrorCode::invalidAnswer;
     }
 
     OUTCOME_TRY(auto dataLength, Receive<std::uint32_t>());
@@ -424,7 +424,7 @@ auto Receive(std::span<Byte> data) -> Result<void>
 {
     if(data.size() > maxDataLength)
     {
-        return ErrorCode::receiveDataTooLong;
+        return ErrorCode::dataPacketTooLong;
     }
     auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout);
     if(readFromResult.has_error())
