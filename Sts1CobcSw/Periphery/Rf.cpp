@@ -789,27 +789,27 @@ auto WaitForCts() -> void
 
 auto SetTxType(TxType txType) -> void
 {
-    Byte modulationMode;
-    std::uint32_t dataRate;
+    // Constants for setting the TX type (morse, 2GFSK)
+    constexpr uint32_t dataRateMorse = 20'000U;  // MODEM_DATA_RATE: unused, 20k Baud
+    constexpr uint32_t dataRate2Gfsk =
+        9'600U;  // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE *
+                 // TXOSR)/F_XTAL_Hz = (9600 * 2600000 * 10)/26000000 = 9600 = 0x002580
 
-    if(txType == TxType::morse)
-    {
-        modulationMode = 0x09_b;  // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
-        dataRate = 20'000;        // MODEM_DATA_RATE: unused, 20k Baud
-    }
-    else
-    {
-        modulationMode = 0x03_b;  // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
-        dataRate = 9600;  // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE *
-                          // TXOSR)/F_XTAL_Hz = (9600 * 2600000 * 10)/26000000 = 9600 = 0x002580
-    }
+    constexpr auto modemModTypeMorse =
+        0x09_b;  // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
+    constexpr auto modemModType2Gfsk =
+        0x03_b;  // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
 
-    auto propertyValues = std::to_array({modulationMode,
-                                         0x00_b,
-                                         0x07_b,  // DSM default config
-                                         static_cast<Byte>(dataRate >> (2 * CHAR_BIT)),
-                                         static_cast<Byte>(dataRate >> (CHAR_BIT)),
-                                         static_cast<Byte>(dataRate)});
+    auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
+    auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
+
+    auto propertyValues = std::to_array(
+        {modemModType,
+         0x00_b,
+         0x07_b,  // NOLINT(*magic-numbers*), Delta-Sigma Modulator (DSM) default config
+         static_cast<Byte>(dataRate >> (2 * CHAR_BIT)),  // NOLINT(hicpp-signed-bitwise)
+         static_cast<Byte>(dataRate >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
+         static_cast<Byte>(dataRate)});
 
     SetProperties(PropertyGroup::modem, 0x00_b, Span(propertyValues));
 }
