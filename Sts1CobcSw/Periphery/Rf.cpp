@@ -8,6 +8,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <climits>
@@ -76,7 +77,7 @@ constexpr auto partInfoAnswerLength = 8U;
 
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
-constexpr auto setPropertyHeaderSize = 4;
+constexpr auto setPropertiesHeaderSize = 4;
 
 auto spi = RODOS::HAL_SPI(
     hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
@@ -128,11 +129,9 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 
 auto WaitForCts() -> void;
 auto SetTxType(TxType txType) -> void;
-template<std::size_t nProperties>
-    requires(nProperties >= 1 and nProperties <= maxNProperties)
-auto SetProperty(PropertyGroup propertyGroup,
-                 Byte startProperty,
-                 std::span<Byte, nProperties> propertyValues) -> void;
+auto SetProperties(PropertyGroup propertyGroup,
+                   Byte startProperty,
+                   std::span<Byte const> propertyValues) -> void;
 
 
 // --- Public function definitions ---
@@ -812,33 +811,27 @@ auto SetTxType(TxType txType) -> void
                                          static_cast<Byte>(dataRate >> (CHAR_BIT)),
                                          static_cast<Byte>(dataRate)});
 
-    SetProperty<std::size(propertyValues)>(
-        PropertyGroup::modem, 0x00_b, std::span<Byte, std::size(propertyValues)>(propertyValues));
+    SetProperties(PropertyGroup::modem, 0x00_b, Span(propertyValues));
 }
 
 
-// TODO: This does not need any template stuff, just set the size of setPropertyBuffer to take 12
-// (max.) properties and use a subspan/.first() afterwards
-template<std::size_t nProperties>
-    requires(nProperties >= 1 and nProperties <= maxNProperties)
-auto SetProperty(PropertyGroup propertyGroup,
-                 Byte startProperty,
-                 std::span<Byte, nProperties> propertyValues) -> void
+auto SetProperties(PropertyGroup propertyGroup,
+                   Byte startProperty,
+                   std::span<Byte const> propertyValues) -> void
 {
-    auto setPropertyBuffer = std::array<Byte, setPropertyHeaderSize + nProperties>{};
+    auto setPropertiesBuffer = std::array<Byte, setPropertiesHeaderSize + maxNProperties>{};
 
-    setPropertyBuffer[0] = cmdSetProperty;
-    setPropertyBuffer[1] = static_cast<Byte>(propertyGroup);
-    setPropertyBuffer[2] = static_cast<Byte>(nProperties);
-    setPropertyBuffer[3] = startProperty;
+    setPropertiesBuffer[0] = cmdSetProperty;
+    setPropertiesBuffer[1] = static_cast<Byte>(propertyGroup);
+    setPropertiesBuffer[2] = static_cast<Byte>(std::size(propertyValues));
+    setPropertiesBuffer[3] = startProperty;
 
-    auto bufferIndex = setPropertyHeaderSize;
-    for(auto && propertyValue : propertyValues)
-    {
-        setPropertyBuffer[bufferIndex] = propertyValue;
-        bufferIndex++;
-    }
+    std::copy(std::begin(propertyValues),
+              std::end(propertyValues),
+              std::begin(setPropertiesBuffer) + setPropertiesHeaderSize);
+    auto nProperties = std::size(propertyValues);
+    auto bytesToSend = setPropertiesHeaderSize + nProperties;
 
-    SendCommand(setPropertyBuffer);
+    SendCommand(Span(setPropertiesBuffer).first(bytesToSend));
 }
 }
