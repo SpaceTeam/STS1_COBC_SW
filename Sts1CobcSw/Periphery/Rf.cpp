@@ -156,44 +156,46 @@ auto Initialize(TxType txType) -> void
     SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
     // Global XO Tune 2
-    sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x00;
-    sendBuffer[2] = 0x02;
-    sendBuffer[3] = 0x00;
-    sendBuffer[4] = 0x52;  // GLOBAL_XO_TUNE
-    sendBuffer[5] = 0x00;  // GLOBAL_CLK_CFG
-    SendCommand(data(sendBuffer), 6, nullptr, 0);
+    SetProperties(PropertyGroup::global,
+                  /*startProperty=*/0x00_b,
+                  Span({
+                      0x52_b,  // NOLINT(*magic-numbers*), GLOBAL_XO_TUNE
+                      0x00_b   // NOLINT(*magic-numbers*), GLOBAL_CLK_CFG
+                  }));
+
+    constexpr auto propertyGroupIndex = 1U;
+    constexpr auto startPropertyIndex = 3U;
+    constexpr auto nPropertiesIndex = 2U;
 
     // RF Global Config 1
-    sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x00;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x03;
-    sendBuffer[4] = 0x60;  // GLOBAL_CONFIG: High performance mode, Generic packet format, Split
-                           // FiFo mode, Fast sequencer mode
-    SendCommand(data(sendBuffer), 5, nullptr, 0);
+    SetProperties(PropertyGroup::global,
+                  0x03_b,
+                  Span({
+                      0x60_b  // NOLINT(*magic-numbers*), GLOBAL_CONFIG: High performance mode,
+                              // Generic packet format, Split FiFo mode, Fast sequencer mode
+                  }));
 
     // RF Int Ctl Enable
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x01;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x01;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x01;  // INT_CTL: Enable packet handler interrupts
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // TX Preamble Length
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x10;
-    sendBuffer[2] = 0x09;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x10;
+    sendBuffer[nPropertiesIndex] = 0x09;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x00;   // PREAMBLE_TX_LENGTH: 0 bytes preamble
     sendBuffer[5] = 0x14;   // PREAMBLE_CONFIG_STD_1: Normal sync timeout,
                             // 14 bit preamble RX threshold
-    sendBuffer[6] = 0x00;   // PREAMBLE_CONFIG_NSTD: No non-standard preamble pattern TODO: Maybe we
-                            // can detect RS+CC encoded preamble this way and be CCSDS compliant on
-                            // uplink too? Problem: Max pattern length is 32 bit
-    sendBuffer[7] = 0x0F;   // PREAMBLE_CONFIG_STD_2: No extended RX preamble timeout, 0x0f nibbles
-                            // timeout until detected preamble is discarded as invalid
+    sendBuffer[6] = 0x00;   // PREAMBLE_CONFIG_NSTD: No non-standard preamble pattern TODO: Maybe
+                            // we can detect RS+CC encoded preamble this way and be CCSDS
+                            // compliant on uplink too? Problem: Max pattern length is 32 bit
+    sendBuffer[7] = 0x0F;   // PREAMBLE_CONFIG_STD_2: No extended RX preamble timeout, 0x0f
+                            // nibbles timeout until detected preamble is discarded as invalid
     sendBuffer[8] = 0x31;   // PREAMBLE_CONFIG: First transmitted preamble bit is 1, unit of
                             // preampreamble TX length is in bytes
     sendBuffer[9] = 0x00;   // PREAMBLE_PATTERN: Non-standard pattern
@@ -204,9 +206,9 @@ auto Initialize(TxType txType) -> void
 
     // Sync word config
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x11;
-    sendBuffer[2] = 0x05;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x11;
+    sendBuffer[nPropertiesIndex] = 0x05;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x43;        // SYNC_CONFIG: Allow 4 bit sync word errors, 4 byte sync word
     sendBuffer[5] = 0b01011000;  // SYNC_BITS: Valid CCSDS TM sync word for
                                  // Reed-Solomon or convolutional coding
@@ -220,28 +222,28 @@ auto Initialize(TxType txType) -> void
 
     // CRC Config
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x12;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x12;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x00;  // PKT_CRC_CONFIG: No CRC
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // Whitening and Packet Parameters
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x12;
-    sendBuffer[2] = 0x02;
-    sendBuffer[3] = 0x05;
+    sendBuffer[propertyGroupIndex] = 0x12;
+    sendBuffer[nPropertiesIndex] = 0x02;
+    sendBuffer[startPropertyIndex] = 0x05;
     sendBuffer[4] = 0x00;  // PKT_WHT_BIT_NUM: Disable whitening
-    sendBuffer[5] = 0x01;  // PKT_CONFIG1: Don't split RX and TX field information (length, ...),
-                           // enable RX packet handler, use normal (2)FSK, no Manchester coding, no
-                           // CRC, data transmission with MSB first.
+    sendBuffer[5] = 0x01;  // PKT_CONFIG1: Don't split RX and TX field information (length,
+                           // ...), enable RX packet handler, use normal (2)FSK, no Manchester
+                           // coding, no CRC, data transmission with MSB first.
     SendCommand(data(sendBuffer), 6, nullptr, 0);
 
     // Pkt Length part 1
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x12;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x08;
+    sendBuffer[propertyGroupIndex] = 0x12;
+    sendBuffer[nPropertiesIndex] = 0x0C;
+    sendBuffer[startPropertyIndex] = 0x08;
     sendBuffer[4] = 0x60;  // PKT_LEN: Infinite receive, big endian (MSB first)
     sendBuffer[5] = 0x00;  // PKT_LEN_FIELD_SOURCE
     sendBuffer[6] = 0x00;  // PKT_LEN_ADJUST
@@ -260,9 +262,9 @@ auto Initialize(TxType txType) -> void
 
     // Pkt Length part 2
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x12;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x14;
+    sendBuffer[propertyGroupIndex] = 0x12;
+    sendBuffer[nPropertiesIndex] = 0x0C;
+    sendBuffer[startPropertyIndex] = 0x14;
     sendBuffer[4] = 0x00;  // PKT_FIELD_2_CRC_CONFIG
     sendBuffer[5] = 0x00;  // PKT_FIELD_3_LENGTH
     sendBuffer[6] = 0x00;
@@ -279,9 +281,9 @@ auto Initialize(TxType txType) -> void
 
     // Pkt Length part 3
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x12;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x20;
+    sendBuffer[propertyGroupIndex] = 0x12;
+    sendBuffer[nPropertiesIndex] = 0x0C;
+    sendBuffer[startPropertyIndex] = 0x20;
     sendBuffer[4] = 0x00;  // PKT_FIELD_5_CRC_CONFIG
     sendBuffer[5] = 0x00;  // PKT_RX_FIELD_1_LENGTH
     sendBuffer[6] = 0x00;
@@ -298,9 +300,9 @@ auto Initialize(TxType txType) -> void
 
     // Pkt Length part 4
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x12;
-    sendBuffer[2] = 0x09;
-    sendBuffer[3] = 0x2C;
+    sendBuffer[propertyGroupIndex] = 0x12;
+    sendBuffer[nPropertiesIndex] = 0x09;
+    sendBuffer[startPropertyIndex] = 0x2C;
     sendBuffer[4] = 0x00;  // PKT_RX_FIELD_3_CRC_CONFIG
     sendBuffer[5] = 0x00;  // PKT_RX_FIELD_4_LENGTH
     sendBuffer[6] = 0x00;
@@ -315,25 +317,26 @@ auto Initialize(TxType txType) -> void
     // RF Modem Mod Type
     SetTxType(txType);
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x07;
-    sendBuffer[3] = 0x06;  // SetTxType sets modem properties from 0x00 to 0x05
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x07;
+    sendBuffer[startPropertyIndex] = 0x06;  // SetTxType sets modem properties from 0x00 to 0x05
     sendBuffer[4] = 0x00;  // MODEM_TX_NCO_MODE: TXOSR=x10=0, NCOMOD=F_XTAL/10=2600000=0x027ac40
     sendBuffer[5] = 0x27;
     sendBuffer[6] = 0xAC;
     sendBuffer[7] = 0x40;
-    sendBuffer[8] = 0x00;  // MODEM_FREQ_DEVIATION: (2^19 * outdiv * deviation_Hz)/(N_presc * F_xo)
-                           // = (2^19 * 8 * 9600/4)/(2 * 26000000) = 194 = 0x0000C2
+    sendBuffer[8] = 0x00;  // MODEM_FREQ_DEVIATION: (2^19 * outdiv * deviation_Hz)/(N_presc *
+                           // F_xo) = (2^19 * 8 * 9600/4)/(2 * 26000000) = 194 = 0x0000C2
     sendBuffer[9] = 0x00;
     sendBuffer[10] = 0xC2;
     SendCommand(data(sendBuffer), 11, nullptr, 0);
 
 
-    // RF Modem TX Ramp Delay, Modem MDM Ctrl, Modem IF Ctrl, Modem IF Freq & Modem Decimation Cfg
+    // RF Modem TX Ramp Delay, Modem MDM Ctrl, Modem IF Ctrl, Modem IF Freq & Modem Decimation
+    // Cfg
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x08;
-    sendBuffer[3] = 0x18;
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x08;
+    sendBuffer[startPropertyIndex] = 0x18;
     sendBuffer[4] = 0x01;  // MODEM_TX_RAMP_DELAY: Ramp Delay 1
     sendBuffer[5] = 0x80;  // MODEM_MDM_CTRL: Slicer phase source from detector's output
     sendBuffer[6] = 0x08;  // MODEM_IF_CONTROL: No ETSI mode, fixed IF mode,
@@ -343,24 +346,24 @@ auto Initialize(TxType txType) -> void
                            // TODO: Is it important what we chose here?
     sendBuffer[8] = 0xC0;
     sendBuffer[9] = 0x00;
-    sendBuffer[10] = 0x70;  // MODEM_DECIMATION_CFG1: Decimation NDEC0 = 0, NDEC1 = decimation by 8,
-                            // NDEC2 = decimation by 2
+    sendBuffer[10] = 0x70;  // MODEM_DECIMATION_CFG1: Decimation NDEC0 = 0, NDEC1 = decimation
+                            // by 8, NDEC2 = decimation by 2
     sendBuffer[11] = 0x20;  // MODEM_DECIMATION_CFG0: Normal decimate-by-8 filter gain,
                             // don't bypass the
     // decimate-by-2 polyphase filter, bypass the decimate-by-3 polyphase filter, enable
     // droop compensation, channel selection filter in normal mode (27 tap filter)
     SendCommand(data(sendBuffer), 12, nullptr, 0);
 
-    // RF Modem BCR Oversampling Rate, Modem BCR NCO Offset, Modem BCR Gain, Modem BCR Gear & Modem
-    // BCR Misc
+    // RF Modem BCR Oversampling Rate, Modem BCR NCO Offset, Modem BCR Gain, Modem BCR Gear &
+    // Modem BCR Misc
     // TODO: What values to use here?
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x09;
-    sendBuffer[3] = 0x22;
-    sendBuffer[4] = 0x03;  // MODEM_BCR_OSR: RX symbol oversampling rate of 0x30D/8 = 781/8 = 97.625
-                           // (According to the datasheet usual values are in the range of 8 to 12
-                           // where this value seems to be odd?)
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x09;
+    sendBuffer[startPropertyIndex] = 0x22;
+    sendBuffer[4] = 0x03;  // MODEM_BCR_OSR: RX symbol oversampling rate of 0x30D/8 = 781/8
+                           // = 97.625 (According to the datasheet usual values are in the range
+                           // of 8 to 12 where this value seems to be odd?)
     sendBuffer[5] = 0x0D;
     sendBuffer[6] = 0x00;  // MODEM_BCR_NCO_OFFSET: BCR NCO offset of
                            // 0x00A7C6/64 = 42950/64 = 671.09375
@@ -380,11 +383,11 @@ auto Initialize(TxType txType) -> void
     // RF Modem AFC Gear, Modem AFC Wait, Modem AFC Gain, Modem AFC Limiter & Modem AFC Misc
     // TODO: What values to use here?
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x07;
-    sendBuffer[3] = 0x2C;
-    sendBuffer[4] = 0x04;  // MODEM_AFC_GEAR: AFC_SLOW gain 4, AFC_FAST gain 0, Switch gear after
-                           // detection of preamble
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x07;
+    sendBuffer[startPropertyIndex] = 0x2C;
+    sendBuffer[4] = 0x04;  // MODEM_AFC_GEAR: AFC_SLOW gain 4, AFC_FAST gain 0, Switch gear
+                           // after detection of preamble
     sendBuffer[5] = 0x36;  // MODEM_AFC_WAIT: LGWAIT = 6, SHWAIT = 3
     sendBuffer[6] = 0x80;  // MODEM_AFC_GAIN: AFC loop gain = 0x003, don't half the loop gain,
                            // disable adaptive RX bandwidth, enable frequency error estimation
@@ -392,20 +395,20 @@ auto Initialize(TxType txType) -> void
     sendBuffer[8] = 0x30;  // MODEM_AFC_LIMITER: 0x30AF
     sendBuffer[9] = 0xAF;
     sendBuffer[10] =
-        0x80;  // MODEM_AFC_MISC: Expected freq error is less then 12*symbol rate, AFC correction of
-               // PLL will be frozen if a consecutive string of 1s or 0s that exceed the search
-               // period is encountered, don't switch clock source for frequency estimator, don't
-               // freeze AFC at preamble end, AFC correction uses freq estimation by moving average
-               // or minmax detector in async demod,disable AFC value feedback to PLL, freeze AFC
-               // after gear switching
+        0x80;  // MODEM_AFC_MISC: Expected freq error is less then 12*symbol rate, AFC
+               // correction of PLL will be frozen if a consecutive string of 1s or 0s that
+               // exceed the search period is encountered, don't switch clock source for
+               // frequency estimator, don't freeze AFC at preamble end, AFC correction uses
+               // freq estimation by moving average or minmax detector in async demod,disable
+               // AFC value feedback to PLL, freeze AFC after gear switching
     SendCommand(data(sendBuffer), 11, nullptr, 0);
 
     // RF Modem AGC Control
     // TODO: What values to use here?
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x35;
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x35;
     sendBuffer[4] = 0xE2;  // MODEM_AGC_CONTROL: reset peak detectors only on change of gain
                            // indicated by peak detector output, reduce ADC gain when AGC gain is at
                            // minimum, normal AGC speed, don't increase AGC gain during signal
@@ -413,15 +416,15 @@ auto Initialize(TxType txType) -> void
                            // steps instead of 6dB steps, AGC is enabled over whole packet length
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
-    // RF Modem AGC Window Size, AGC RF Peak Detector Decay, AGC IF Peak Detector Decay, 4FSK Gain,
-    // 4FSK Slicer Threshold, 4FSK SYmbol Mapping Code, OOK Attack/Decay Times
+    // RF Modem AGC Window Size, AGC RF Peak Detector Decay, AGC IF Peak Detector Decay, 4FSK
+    // Gain, 4FSK Slicer Threshold, 4FSK SYmbol Mapping Code, OOK Attack/Decay Times
     // TODO: What values to use here?
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x09;
-    sendBuffer[3] = 0x38;
-    sendBuffer[4] = 0x11;  // MODEM_AGC_WINDOW_SIZE: AGC gain settling window size = 1, AGC signal
-                           // level measurement window = 1
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x09;
+    sendBuffer[startPropertyIndex] = 0x38;
+    sendBuffer[4] = 0x11;  // MODEM_AGC_WINDOW_SIZE: AGC gain settling window size = 1, AGC
+                           // signal level measurement window = 1
     sendBuffer[5] = 0xAB;  // MODEM_AGC_RFPD_DECAY: RF peak detector decay time = 0xAB = 171
     sendBuffer[6] = 0xAB;  // MODEM_AGC_IFPD_DECAY: IF peak detector decay time = 0xAB = 171
     sendBuffer[7] = 0x00;  // MODEM_FSK4_GAIN1: 4FSK Gain1 = 0,
@@ -436,13 +439,13 @@ auto Initialize(TxType txType) -> void
     // RF Modem OOK Control, OOK Misc, RAW Search, RAW Control, RAW Eye, Antenna Diversity Mode,
     // Antenna Diversity Control, RSSI Threshold
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x09;
-    sendBuffer[3] = 0x42;
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x09;
+    sendBuffer[startPropertyIndex] = 0x42;
     sendBuffer[4] =
-        0xA4;  // MODEM_OOK_CNT1: OOK Squelch off, OOK slicer output de-glitching by bit clock, raw
-               // output is synced to clock, MA_FREQUDOWN=0, AGC and OOK movign average detector
-               // threshold will be frozen after preamble detection, S2P_MAP=2
+        0xA4;  // MODEM_OOK_CNT1: OOK Squelch off, OOK slicer output de-glitching by bit clock,
+               // raw output is synced to clock, MA_FREQUDOWN=0, AGC and OOK movign average
+               // detector threshold will be frozen after preamble detection, S2P_MAP=2
     sendBuffer[5] = 0x02;  // MODEM_OOK_MISC: OOK uses moving average detector, OOK peak detector
                            // discharge does not affect decay rate, disable OOK squelch, always
                            // discharge peak detector, normal moving average window
@@ -452,33 +455,33 @@ auto Initialize(TxType txType) -> void
     sendBuffer[9] = 0xAD;
     sendBuffer[10] = 0x01;  // MODEM_ANT_DIV_MODE: Antenna diversity mode
     sendBuffer[11] = 0x80;  // MODEM_ANT_DIV_CONTROL: Antenna diversity control
-    sendBuffer[12] = 0xFF;  // MODEM_RSSI_THRESH: Threshold for clear channel assessment and RSSI
-                            // interrupt generation
+    sendBuffer[12] = 0xFF;  // MODEM_RSSI_THRESH: Threshold for clear channel assessment and
+                            // RSSI interrupt generation
     SendCommand(data(sendBuffer), 13, nullptr, 0);
 
     // RF Modem RSSI Control
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x4C;
-    sendBuffer[4] = 0x00;  // MODEM_RSSI_CONTROL: Disable RSSI latch, RSSI value is avg over last
-                           // 4*Tb bit periods, disable RSSI threshold check after latch
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x4C;
+    sendBuffer[4] = 0x00;  // MODEM_RSSI_CONTROL: Disable RSSI latch, RSSI value is avg over
+                           // last 4*Tb bit periods, disable RSSI threshold check after latch
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // RF Modem RSSI Compensation
     // TODO: Measure this
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x4E;
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x4E;
     sendBuffer[4] = 0x40;  // MODEM_RSSI_COMP: Compensation/offset of measured RSSI value
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // RF Modem Clock generation Band
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x20;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x51;
+    sendBuffer[propertyGroupIndex] = 0x20;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x51;
     sendBuffer[4] = 0x0A;  // MODEM_CLKGEN_BAND: Band = FVCO_DIV_8, high performance mode fixed
                            // prescaler div2, force recalibration
     SendCommand(data(sendBuffer), 5, nullptr, 0);
@@ -486,9 +489,9 @@ auto Initialize(TxType txType) -> void
     // RX Filter Coefficients
     // TODO: What values to use here?
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x21;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x21;
+    sendBuffer[nPropertiesIndex] = 0x0C;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0xFF;
     sendBuffer[5] = 0xC4;
     sendBuffer[6] = 0x30;
@@ -503,9 +506,9 @@ auto Initialize(TxType txType) -> void
     sendBuffer[15] = 0x0C;
     SendCommand(data(sendBuffer), 16, nullptr, 0);
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x21;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x0C;
+    sendBuffer[propertyGroupIndex] = 0x21;
+    sendBuffer[nPropertiesIndex] = 0x0C;
+    sendBuffer[startPropertyIndex] = 0x0C;
     sendBuffer[4] = 0x03;
     sendBuffer[5] = 0x00;
     sendBuffer[6] = 0x15;
@@ -520,9 +523,9 @@ auto Initialize(TxType txType) -> void
     sendBuffer[15] = 0xB5;
     SendCommand(data(sendBuffer), 16, nullptr, 0);
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x21;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x18;
+    sendBuffer[propertyGroupIndex] = 0x21;
+    sendBuffer[nPropertiesIndex] = 0x0C;
+    sendBuffer[startPropertyIndex] = 0x18;
     sendBuffer[4] = 0xB8;
     sendBuffer[5] = 0xDE;
     sendBuffer[6] = 0x05;
@@ -539,9 +542,9 @@ auto Initialize(TxType txType) -> void
 
     // RF PA Mode
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x22;
-    sendBuffer[2] = 0x04;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x22;
+    sendBuffer[nPropertiesIndex] = 0x04;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x08;  // PA_MODE: PA switching amp mode, PA_SEL = HP_COARSE, disable power
                            // sequencing, disable external TX ramp signal
     sendBuffer[5] =
@@ -552,13 +555,13 @@ auto Initialize(TxType txType) -> void
                            // modulation delay 10µs
     SendCommand(data(sendBuffer), 8, nullptr, 0);
 
-    // RF Synth Feed Forward Charge Pump Current, Integrated Charge Pump Current, VCO Gain Scaling
-    // Factor, FF Loop Filter Values
+    // RF Synth Feed Forward Charge Pump Current, Integrated Charge Pump Current, VCO Gain
+    // Scaling Factor, FF Loop Filter Values
     // TODO: What values to use here?
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x23;
-    sendBuffer[2] = 0x07;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x23;
+    sendBuffer[nPropertiesIndex] = 0x07;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x2C;   // SYNTH_PFDCP_CPFF: FF charge pump current = 60µA
     sendBuffer[5] = 0x0E;   // SYNTH_PFDCP_CPINT: Int charge pump current = 30µA
     sendBuffer[6] = 0x0B;   // SYNTH_VCO_KV: Set VCO scaling factor to maximum value, set tuning
@@ -571,9 +574,9 @@ auto Initialize(TxType txType) -> void
 
     // RF Match Mask
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x30;
-    sendBuffer[2] = 0x0C;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x30;
+    sendBuffer[nPropertiesIndex] = 0x0C;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x00;   // MATCH_VALUE_1
     sendBuffer[5] = 0x00;   // MATCH_MASK_1
     sendBuffer[6] = 0x00;   // MATCH_CTRL_1
@@ -590,9 +593,9 @@ auto Initialize(TxType txType) -> void
 
     // Frequency Control
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x40;
-    sendBuffer[2] = 0x08;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x40;
+    sendBuffer[nPropertiesIndex] = 0x08;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x41;  // FREQ_CONTROL_INTE: FC_inte = 0x41
     sendBuffer[5] = 0x0E;  // FREQ_CONTROL_FRAC: FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5
     sendBuffer[6] = 0xC4;
@@ -601,10 +604,10 @@ auto Initialize(TxType txType) -> void
     // RF_channel_Hz = (FC_inte + FC_frac/2^19)*((N_presc*F_xo)/outdiv) = 433.5000048MHz MHz
     sendBuffer[8] = 0x44;  // FREQ_CONTROL_CHANNEL_STEP_SIZE: Channel step size = 0x4444
     sendBuffer[9] = 0x44;
-    sendBuffer[10] =
-        0x20;  // FREQ_CONTROL_W_SIZE: Window gating period (in number of crystal clock cycles) = 32
-    sendBuffer[11] = 0xFE;  // FREQ_CONTROL_VCOCNT_RX_ADJ: Adjust target mode for VCO calibration in
-                            // RX mode = 0xFE int8_t
+    sendBuffer[10] = 0x20;  // FREQ_CONTROL_W_SIZE: Window gating period (in number of crystal
+                            // clock cycles) = 32
+    sendBuffer[11] = 0xFE;  // FREQ_CONTROL_VCOCNT_RX_ADJ: Adjust target mode for VCO
+                            // calibration in RX mode = 0xFE int8_t
     SendCommand(data(sendBuffer), 12, nullptr, 0);
 
     // Set RF4463 Module Antenna Switch
@@ -619,17 +622,17 @@ auto Initialize(TxType txType) -> void
 
     // Frequency Adjust (stolen from Arduino demo code)
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x00;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x00;
+    sendBuffer[propertyGroupIndex] = 0x00;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x00;
     sendBuffer[4] = 0x62;
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // TX Buffer = RX Buffer = 64 Byte
     sendBuffer[0] = 0x11;
-    sendBuffer[1] = 0x00;
-    sendBuffer[2] = 0x01;
-    sendBuffer[3] = 0x03;
+    sendBuffer[propertyGroupIndex] = 0x00;
+    sendBuffer[nPropertiesIndex] = 0x01;
+    sendBuffer[startPropertyIndex] = 0x03;
     sendBuffer[4] = 0x40;
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
@@ -813,17 +816,17 @@ auto SetProperties(PropertyGroup propertyGroup,
                    std::span<Byte const> propertyValues) -> void
 {
     auto setPropertiesBuffer = std::array<Byte, setPropertiesHeaderSize + maxNProperties>{};
+    auto nProperties = std::size(propertyValues);
+    auto bytesToSend = setPropertiesHeaderSize + nProperties;
 
     setPropertiesBuffer[0] = cmdSetProperty;
     setPropertiesBuffer[1] = static_cast<Byte>(propertyGroup);
-    setPropertiesBuffer[2] = static_cast<Byte>(std::size(propertyValues));
+    setPropertiesBuffer[2] = static_cast<Byte>(nProperties);
     setPropertiesBuffer[3] = startProperty;
 
     std::copy(std::begin(propertyValues),
               std::end(propertyValues),
               std::begin(setPropertiesBuffer) + setPropertiesHeaderSize);
-    auto nProperties = std::size(propertyValues);
-    auto bytesToSend = setPropertiesHeaderSize + nProperties;
 
     SendCommand(Span(setPropertiesBuffer).first(bytesToSend));
 }
