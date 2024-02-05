@@ -155,72 +155,75 @@ auto Initialize(TxType txType) -> void
     // GPIO Pin Cfg
     SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
+    constexpr auto propertyGroupIndex = 1U;
+    constexpr auto startPropertyIndex = 3U;
+    constexpr auto nPropertiesIndex = 2U;
+
+    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
     // Global XO Tune 2
     SetProperties(PropertyGroup::global,
                   /*startProperty=*/0x00_b,
                   Span({
-                      0x52_b,  // NOLINT(*magic-numbers*), GLOBAL_XO_TUNE
-                      0x00_b   // NOLINT(*magic-numbers*), GLOBAL_CLK_CFG
+                      0x52_b,  // GLOBAL_XO_TUNE
+                      0x00_b   // GLOBAL_CLK_CFG
                   }));
-
-    constexpr auto propertyGroupIndex = 1U;
-    constexpr auto startPropertyIndex = 3U;
-    constexpr auto nPropertiesIndex = 2U;
 
     // RF Global Config 1
     SetProperties(PropertyGroup::global,
                   0x03_b,
                   Span({
-                      0x60_b  // NOLINT(*magic-numbers*), GLOBAL_CONFIG: High performance mode,
+                      0x60_b  // GLOBAL_CONFIG: High performance mode,
                               // Generic packet format, Split FiFo mode, Fast sequencer mode
                   }));
 
     // RF Int Ctl Enable
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x01;
-    sendBuffer[nPropertiesIndex] = 0x01;
-    sendBuffer[startPropertyIndex] = 0x00;
-    sendBuffer[4] = 0x01;  // INT_CTL: Enable packet handler interrupts
-    SendCommand(data(sendBuffer), 5, nullptr, 0);
+    SetProperties(PropertyGroup::intCtl,
+                  /*startProperty=*/0x00_b,
+                  Span({
+                      0x01_b  // INT_CTL: Enable packet handler interrupts
+                  }));
 
     // TX Preamble Length
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x10;
-    sendBuffer[nPropertiesIndex] = 0x09;
-    sendBuffer[startPropertyIndex] = 0x00;
-    sendBuffer[4] = 0x00;   // PREAMBLE_TX_LENGTH: 0 bytes preamble
-    sendBuffer[5] = 0x14;   // PREAMBLE_CONFIG_STD_1: Normal sync timeout,
-                            // 14 bit preamble RX threshold
-    sendBuffer[6] = 0x00;   // PREAMBLE_CONFIG_NSTD: No non-standard preamble pattern TODO: Maybe
-                            // we can detect RS+CC encoded preamble this way and be CCSDS
-                            // compliant on uplink too? Problem: Max pattern length is 32 bit
-    sendBuffer[7] = 0x0F;   // PREAMBLE_CONFIG_STD_2: No extended RX preamble timeout, 0x0f
-                            // nibbles timeout until detected preamble is discarded as invalid
-    sendBuffer[8] = 0x31;   // PREAMBLE_CONFIG: First transmitted preamble bit is 1, unit of
-                            // preampreamble TX length is in bytes
-    sendBuffer[9] = 0x00;   // PREAMBLE_PATTERN: Non-standard pattern
-    sendBuffer[10] = 0x00;  // Non-standard pattern
-    sendBuffer[11] = 0x00;  // Non-standard pattern
-    sendBuffer[12] = 0x00;  // Non-standard pattern
-    SendCommand(data(sendBuffer), 13, nullptr, 0);
+    SetProperties(PropertyGroup::preamble,
+                  /*startProperty=*/0x00_b,
+                  Span({
+                      0x00_b,  // PREAMBLE_TX_LENGTH: 0 bytes preamble
+                      0x14_b,  // PREAMBLE_CONFIG_STD_1: Normal sync timeout,
+                               // 14 bit preamble RX threshold
+                      0x00_b,  // PREAMBLE_CONFIG_NSTD: No non-standard preamble pattern TODO: Maybe
+                               // we can detect RS+CC encoded preamble this way and be CCSDS
+                               // compliant on uplink too? Problem: Max pattern length is 32 bit
+                      0x0F_b,  // PREAMBLE_CONFIG_STD_2: No extended RX preamble timeout, 0x0f
+                               // nibbles timeout until detected preamble is discarded as invalid
+                      0x31_b,  // PREAMBLE_CONFIG: First transmitted preamble bit is 1, unit of
+                               // preampreamble TX length is in bytes
+                      0x00_b,  // PREAMBLE_PATTERN: Non-standard pattern
+                      0x00_b,  // Non-standard pattern
+                      0x00_b,  // Non-standard pattern
+                      0x00_b,  // Non-standard pattern
+                  }));
 
     // Sync word config
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x11;
-    sendBuffer[nPropertiesIndex] = 0x05;
-    sendBuffer[startPropertyIndex] = 0x00;
-    sendBuffer[4] = 0x43;        // SYNC_CONFIG: Allow 4 bit sync word errors, 4 byte sync word
-    sendBuffer[5] = 0b01011000;  // SYNC_BITS: Valid CCSDS TM sync word for
-                                 // Reed-Solomon or convolutional coding
-    sendBuffer[6] = 0b11110011;  // Be careful: Send order is MSB-first but Little endian so the
-                                 // lowest bit of the
-    sendBuffer[7] = 0b00111111;  // highest byte is transmitted first,
-                                 // which is different to how the CCSDS spec
-    sendBuffer[8] = 0b10111000;  // annotates those bit patterns!
-    // TODO: Check that pattern!
-    SendCommand(data(sendBuffer), 9, nullptr, 0);
+    SetProperties(PropertyGroup::sync,
+                  /*startProperty=*/0x00_b,
+                  Span({
+                      0x43_b,        // SYNC_CONFIG: Allow 4 bit sync word errors, 4 byte sync word
+                      0b01011000_b,  // SYNC_BITS: Valid CCSDS TM sync word for
+                                     // Reed-Solomon or convolutional coding
+                      0b11110011_b,  // Be careful: Send order is MSB-first but Little endian so the
+                                     // lowest bit of the
+                      0b00111111_b,  // highest byte is transmitted first,
+                                     // which is different to how the CCSDS spec
+                      0b10111000_b   // annotates those bit patterns!
+                  }));
+    // Jakob: TODO: Check that pattern!
 
     // CRC Config
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x12;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -228,7 +231,12 @@ auto Initialize(TxType txType) -> void
     sendBuffer[4] = 0x00;  // PKT_CRC_CONFIG: No CRC
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
+    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+
     // Whitening and Packet Parameters
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x12;
     sendBuffer[nPropertiesIndex] = 0x02;
@@ -240,6 +248,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 6, nullptr, 0);
 
     // Pkt Length part 1
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x12;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -261,6 +272,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 16, nullptr, 0);
 
     // Pkt Length part 2
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x12;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -280,6 +294,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 16, nullptr, 0);
 
     // Pkt Length part 3
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x12;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -299,6 +316,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 16, nullptr, 0);
 
     // Pkt Length part 4
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x12;
     sendBuffer[nPropertiesIndex] = 0x09;
@@ -315,6 +335,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 13, nullptr, 0);
 
     // RF Modem Mod Type
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     SetTxType(txType);
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
@@ -333,6 +356,9 @@ auto Initialize(TxType txType) -> void
 
     // RF Modem TX Ramp Delay, Modem MDM Ctrl, Modem IF Ctrl, Modem IF Freq & Modem Decimation
     // Cfg
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x08;
@@ -357,6 +383,9 @@ auto Initialize(TxType txType) -> void
     // RF Modem BCR Oversampling Rate, Modem BCR NCO Offset, Modem BCR Gain, Modem BCR Gear &
     // Modem BCR Misc
     // TODO: What values to use here?
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x09;
@@ -382,6 +411,9 @@ auto Initialize(TxType txType) -> void
 
     // RF Modem AFC Gear, Modem AFC Wait, Modem AFC Gain, Modem AFC Limiter & Modem AFC Misc
     // TODO: What values to use here?
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x07;
@@ -405,6 +437,9 @@ auto Initialize(TxType txType) -> void
 
     // RF Modem AGC Control
     // TODO: What values to use here?
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -419,6 +454,9 @@ auto Initialize(TxType txType) -> void
     // RF Modem AGC Window Size, AGC RF Peak Detector Decay, AGC IF Peak Detector Decay, 4FSK
     // Gain, 4FSK Slicer Threshold, 4FSK SYmbol Mapping Code, OOK Attack/Decay Times
     // TODO: What values to use here?
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x09;
@@ -438,6 +476,9 @@ auto Initialize(TxType txType) -> void
 
     // RF Modem OOK Control, OOK Misc, RAW Search, RAW Control, RAW Eye, Antenna Diversity Mode,
     // Antenna Diversity Control, RSSI Threshold
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x09;
@@ -460,6 +501,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 13, nullptr, 0);
 
     // RF Modem RSSI Control
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -470,6 +514,9 @@ auto Initialize(TxType txType) -> void
 
     // RF Modem RSSI Compensation
     // TODO: Measure this
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -478,6 +525,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // RF Modem Clock generation Band
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -488,6 +538,9 @@ auto Initialize(TxType txType) -> void
 
     // RX Filter Coefficients
     // TODO: What values to use here?
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x21;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -505,6 +558,10 @@ auto Initialize(TxType txType) -> void
     sendBuffer[14] = 0x16;
     sendBuffer[15] = 0x0C;
     SendCommand(data(sendBuffer), 16, nullptr, 0);
+
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x21;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -522,6 +579,10 @@ auto Initialize(TxType txType) -> void
     sendBuffer[14] = 0xF5;
     sendBuffer[15] = 0xB5;
     SendCommand(data(sendBuffer), 16, nullptr, 0);
+
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x21;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -541,6 +602,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 16, nullptr, 0);
 
     // RF PA Mode
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x22;
     sendBuffer[nPropertiesIndex] = 0x04;
@@ -558,6 +622,9 @@ auto Initialize(TxType txType) -> void
     // RF Synth Feed Forward Charge Pump Current, Integrated Charge Pump Current, VCO Gain
     // Scaling Factor, FF Loop Filter Values
     // TODO: What values to use here?
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x23;
     sendBuffer[nPropertiesIndex] = 0x07;
@@ -573,6 +640,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 11, nullptr, 0);
 
     // RF Match Mask
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x30;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -592,6 +662,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 16, nullptr, 0);
 
     // Frequency Control
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x40;
     sendBuffer[nPropertiesIndex] = 0x08;
@@ -621,6 +694,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 7, nullptr, 0);
 
     // Frequency Adjust (stolen from Arduino demo code)
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x00;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -629,6 +705,9 @@ auto Initialize(TxType txType) -> void
     SendCommand(data(sendBuffer), 5, nullptr, 0);
 
     // TX Buffer = RX Buffer = 64 Byte
+    // SetProperties(PropertyGroup::
+    //                   /*startProperty=*/
+    //               Span({
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x00;
     sendBuffer[nPropertiesIndex] = 0x01;
