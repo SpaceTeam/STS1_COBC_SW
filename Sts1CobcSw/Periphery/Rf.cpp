@@ -219,125 +219,101 @@ auto Initialize(TxType txType) -> void
     // Jakob: TODO: Check that pattern!
 
     // CRC Config
-    // SetProperties(PropertyGroup::
-    //                   /*startProperty=*/
-    //               Span({
-
-    //               }));
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x12;
-    sendBuffer[nPropertiesIndex] = 0x01;
-    sendBuffer[startPropertyIndex] = 0x00;
-    sendBuffer[4] = 0x00;  // PKT_CRC_CONFIG: No CRC
-    SendCommand(data(sendBuffer), 5, nullptr, 0);
-
-    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+    SetProperties(PropertyGroup::pkt,
+                  /*startProperty=*/0x00_b,
+                  Span({
+                      0x00_b  // PKT_CRC_CONFIG: No CRC
+                  }));
 
     // Whitening and Packet Parameters
-    // SetProperties(PropertyGroup::
-    //                   /*startProperty=*/
-    //               Span({
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x12;
-    sendBuffer[nPropertiesIndex] = 0x02;
-    sendBuffer[startPropertyIndex] = 0x05;
-    sendBuffer[4] = 0x00;  // PKT_WHT_BIT_NUM: Disable whitening
-    sendBuffer[5] = 0x01;  // PKT_CONFIG1: Don't split RX and TX field information (length,
-                           // ...), enable RX packet handler, use normal (2)FSK, no Manchester
-                           // coding, no CRC, data transmission with MSB first.
-    SendCommand(data(sendBuffer), 6, nullptr, 0);
+    SetProperties(PropertyGroup::pkt,
+                  /*startProperty=*/0x05_b,
+                  Span({
+                      0x00_b,  // PKT_WHT_BIT_NUM: Disable whitening
+                      0x01_b   // PKT_CONFIG1: Don't split RX and TX field information (length,
+                               // ...), enable RX packet handler, use normal (2)FSK, no Manchester
+                               // coding, no CRC, data transmission with MSB first.
+                  }));
 
     // Pkt Length part 1
-    // SetProperties(PropertyGroup::
-    //                   /*startProperty=*/
-    //               Span({
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x12;
-    sendBuffer[nPropertiesIndex] = 0x0C;
-    sendBuffer[startPropertyIndex] = 0x08;
-    sendBuffer[4] = 0x60;  // PKT_LEN: Infinite receive, big endian (MSB first)
-    sendBuffer[5] = 0x00;  // PKT_LEN_FIELD_SOURCE
-    sendBuffer[6] = 0x00;  // PKT_LEN_ADJUST
-    sendBuffer[7] = 0x30;  // PKT_TX_THRESHOLD: Trigger TX FiFo almost empty interrupt when 0x30
-                           // bytes in FiFo (size 0x40) are empty
-    sendBuffer[8] = 0x30;  // PKT_RX_THRESHOLD: Trigger RX FiFo almost full interrupt when 0x30
-                           // bytes in FiFo (size 0x40) are full
-    sendBuffer[9] = 0x00;  // PKT_FIELD_1_LENGTH
-    sendBuffer[10] = 0x00;
-    sendBuffer[11] = 0x04;  // PKT_FIELD_1_CONFIG
-    sendBuffer[12] = 0x80;  // PKT_FIELD_1_CRC_CONFIG
-    sendBuffer[13] = 0x00;  // PKT_FIELD_2_LENGTH
-    sendBuffer[14] = 0x00;
-    sendBuffer[15] = 0x00;  // PKT_FIELD_2_CONFIG
-    SendCommand(data(sendBuffer), 16, nullptr, 0);
+    SetProperties(PropertyGroup::pkt,
+                  /*startProperty=*/0x08_b,
+                  Span({
+                      0x60_b,  // PKT_LEN: Infinite receive, big endian (MSB first)
+                      0x00_b,  // PKT_LEN_FIELD_SOURCE
+                      0x00_b,  // PKT_LEN_ADJUST
+                      0x30_b,  // PKT_TX_THRESHOLD: Trigger TX FiFo almost empty interrupt when 0x30
+                               // bytes in FiFo (size 0x40) are empty
+                      0x30_b,  // PKT_RX_THRESHOLD: Trigger RX FiFo almost full interrupt when 0x30
+                               // bytes in FiFo (size 0x40) are full
+                      0x00_b,  // PKT_FIELD_1_LENGTH
+                      0x00_b,
+                      0x04_b,  // PKT_FIELD_1_CONFIG
+                      0x80_b,  // PKT_FIELD_1_CRC_CONFIG
+                      0x00_b,  // PKT_FIELD_2_LENGTH
+                      0x00_b,
+                      0x00_b  // PKT_FIELD_2_CONFIG
+                  }));
 
     // Pkt Length part 2
-    // SetProperties(PropertyGroup::
-    //                   /*startProperty=*/
-    //               Span({
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x12;
-    sendBuffer[nPropertiesIndex] = 0x0C;
-    sendBuffer[startPropertyIndex] = 0x14;
-    sendBuffer[4] = 0x00;  // PKT_FIELD_2_CRC_CONFIG
-    sendBuffer[5] = 0x00;  // PKT_FIELD_3_LENGTH
-    sendBuffer[6] = 0x00;
-    sendBuffer[7] = 0x00;  // PKT_FIELD_3_CONFIG
-    sendBuffer[8] = 0x00;  // PKT_FIELD_3_CRC_CONFIG
-    sendBuffer[9] = 0x00;  // PKT_FIELD_4_LENGTH
-    sendBuffer[10] = 0x00;
-    sendBuffer[11] = 0x00;  // PKT_FIELD_4_CONFIG
-    sendBuffer[12] = 0x00;  // PKT_FIELD_4_CRC_CONFIG
-    sendBuffer[13] = 0x00;  // PKT_FIELD_5_LENGTH
-    sendBuffer[14] = 0x00;
-    sendBuffer[15] = 0x00;  // PKT_FIELD_5_CONFIG
-    SendCommand(data(sendBuffer), 16, nullptr, 0);
+    SetProperties(PropertyGroup::pkt,
+                  /*startProperty=*/0x14_b,
+                  Span({
+                      0x00_b,  // PKT_FIELD_2_CRC_CONFIG
+                      0x00_b,  // PKT_FIELD_3_LENGTH
+                      0x00_b,
+                      0x00_b,  // PKT_FIELD_3_CONFIG
+                      0x00_b,  // PKT_FIELD_3_CRC_CONFIG
+                      0x00_b,  // PKT_FIELD_4_LENGTH
+                      0x00_b,
+                      0x00_b,  // PKT_FIELD_4_CONFIG
+                      0x00_b,  // PKT_FIELD_4_CRC_CONFIG
+                      0x00_b,  // PKT_FIELD_5_LENGTH
+                      0x00_b,
+                      0x00_b  // PKT_FIELD_5_CONFIG
+                  }));
 
     // Pkt Length part 3
-    // SetProperties(PropertyGroup::
-    //                   /*startProperty=*/
-    //               Span({
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x12;
-    sendBuffer[nPropertiesIndex] = 0x0C;
-    sendBuffer[startPropertyIndex] = 0x20;
-    sendBuffer[4] = 0x00;  // PKT_FIELD_5_CRC_CONFIG
-    sendBuffer[5] = 0x00;  // PKT_RX_FIELD_1_LENGTH
-    sendBuffer[6] = 0x00;
-    sendBuffer[7] = 0x00;  // PKT_RX_FIELD_1_CONFIG
-    sendBuffer[8] = 0x00;  // PKT_RX_FIELD_1_CRC_CONFIG
-    sendBuffer[9] = 0x00;  // PKT_RX_FIELD_2_LENGTH
-    sendBuffer[10] = 0x00;
-    sendBuffer[11] = 0x00;  // PKT_RX_FIELD_2_CONFIG
-    sendBuffer[12] = 0x00;  // PKT_RX_FIELD_2_CRC_CONFIG
-    sendBuffer[13] = 0x00;  // PKT_RX_FIELD_3_LENGTH
-    sendBuffer[14] = 0x00;
-    sendBuffer[15] = 0x00;  // PKT_RX_FIELD_3_CONFIG
-    SendCommand(data(sendBuffer), 16, nullptr, 0);
+    SetProperties(PropertyGroup::pkt,
+                  /*startProperty=*/0x20_b,
+                  Span({
+                      0x00_b,  // PKT_FIELD_5_CRC_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_1_LENGTH
+                      0x00_b,
+                      0x00_b,  // PKT_RX_FIELD_1_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_1_CRC_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_2_LENGTH
+                      0x00_b,
+                      0x00_b,  // PKT_RX_FIELD_2_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_2_CRC_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_3_LENGTH
+                      0x00_b,
+                      0x00_b  // PKT_RX_FIELD_3_CONFIG
+                  }));
 
     // Pkt Length part 4
-    // SetProperties(PropertyGroup::
-    //                   /*startProperty=*/
-    //               Span({
-    sendBuffer[0] = 0x11;
-    sendBuffer[propertyGroupIndex] = 0x12;
-    sendBuffer[nPropertiesIndex] = 0x09;
-    sendBuffer[startPropertyIndex] = 0x2C;
-    sendBuffer[4] = 0x00;  // PKT_RX_FIELD_3_CRC_CONFIG
-    sendBuffer[5] = 0x00;  // PKT_RX_FIELD_4_LENGTH
-    sendBuffer[6] = 0x00;
-    sendBuffer[7] = 0x00;  // PKT_RX_FIELD_4_CONFIG
-    sendBuffer[8] = 0x00;  // PKT_RX_FIELD_4_CRC_CONFIG
-    sendBuffer[9] = 0x00;  // PKT_RX_FIELD_5_LENGTH
-    sendBuffer[10] = 0x00;
-    sendBuffer[11] = 0x00;  // PKT_RX_FIELD_5_CONFIG
-    sendBuffer[12] = 0x00;  // PKT_RX_FIELD_5_CRC_CONFIG
-    SendCommand(data(sendBuffer), 13, nullptr, 0);
+    SetProperties(PropertyGroup::pkt,
+                  /*startProperty=*/0x2C_b,
+                  Span({
+                      0x00_b,  // PKT_RX_FIELD_3_CRC_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_4_LENGTH
+                      0x00_b,
+                      0x00_b,  // PKT_RX_FIELD_4_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_4_CRC_CONFIG
+                      0x00_b,  // PKT_RX_FIELD_5_LENGTH
+                      0x00_b,
+                      0x00_b,  // PKT_RX_FIELD_5_CONFIG
+                      0x00_b   // PKT_RX_FIELD_5_CRC_CONFIG
+                  }));
+
+    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 
     // RF Modem Mod Type
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     SetTxType(txType);
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
@@ -359,6 +335,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x08;
@@ -386,6 +364,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x09;
@@ -414,6 +394,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x07;
@@ -440,6 +422,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -457,6 +441,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x09;
@@ -479,6 +465,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x09;
@@ -504,6 +492,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -517,6 +507,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -528,6 +520,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x20;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -541,6 +535,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x21;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -562,6 +558,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x21;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -583,6 +581,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x21;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -605,6 +605,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x22;
     sendBuffer[nPropertiesIndex] = 0x04;
@@ -625,6 +627,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x23;
     sendBuffer[nPropertiesIndex] = 0x07;
@@ -643,6 +647,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x30;
     sendBuffer[nPropertiesIndex] = 0x0C;
@@ -665,6 +671,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x40;
     sendBuffer[nPropertiesIndex] = 0x08;
@@ -697,6 +705,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x00;
     sendBuffer[nPropertiesIndex] = 0x01;
@@ -708,6 +718,8 @@ auto Initialize(TxType txType) -> void
     // SetProperties(PropertyGroup::
     //                   /*startProperty=*/
     //               Span({
+
+    //               }));
     sendBuffer[0] = 0x11;
     sendBuffer[propertyGroupIndex] = 0x00;
     sendBuffer[nPropertiesIndex] = 0x01;
