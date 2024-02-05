@@ -67,6 +67,7 @@ constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 constexpr auto cmdPartInfo = 0x01_b;
 constexpr auto cmdPowerUp = 0x02_b;
 constexpr auto cmdSetProperty = 0x11_b;
+constexpr auto cmdGpioPinCfg = 0x13_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // Command answer lengths
@@ -152,15 +153,7 @@ auto Initialize(TxType txType) -> void
     PowerUp(PowerUpBootOptions::noPatch, PowerUpXtalOptions::xtal, powerUpXoFrequency);
 
     // GPIO Pin Cfg
-    sendBuffer[0] = 0x13;
-    sendBuffer[1] = 0x00;
-    sendBuffer[2] = 0x00;
-    sendBuffer[3] = 0x00;
-    sendBuffer[4] = 0x00;
-    sendBuffer[5] = 0x00;
-    sendBuffer[6] = 0x00;
-    sendBuffer[7] = 0x00;
-    SendCommand(data(sendBuffer), 8, nullptr, 0);
+    SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
     // Global XO Tune 2
     sendBuffer[0] = 0x11;
