@@ -128,8 +128,6 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 
 auto WaitForCts() -> void;
 
-auto SetTxType(TxType txType) -> void;
-
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startProperty,
                    std::span<Byte const> propertyValues) -> void;
@@ -633,6 +631,34 @@ auto ReadPartNumber() -> std::uint16_t
 }
 
 
+auto SetTxType(TxType txType) -> void
+{
+    // Constants for setting the TX type (morse, 2GFSK)
+    constexpr uint32_t dataRateMorse = 20'000U;  // MODEM_DATA_RATE: unused, 20k Baud
+    constexpr uint32_t dataRate2Gfsk =
+        9'600U;  // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE *
+                 // TXOSR)/F_XTAL_Hz = (9600 * 2600000 * 10)/26000000 = 9600 = 0x002580
+
+    constexpr auto modemModTypeMorse =
+        0x09_b;  // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
+    constexpr auto modemModType2Gfsk =
+        0x03_b;  // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
+
+    auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
+    auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
+
+    auto propertyValues = std::to_array(
+        {modemModType,
+         0x00_b,
+         0x07_b,  // NOLINT(*magic-numbers*), Delta-Sigma Modulator (DSM) default config
+         static_cast<Byte>(dataRate >> (2 * CHAR_BIT)),  // NOLINT(hicpp-signed-bitwise)
+         static_cast<Byte>(dataRate >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
+         static_cast<Byte>(dataRate)});
+
+    SetProperties(PropertyGroup::modem, 0x00_b, Span(propertyValues));
+}
+
+
 // --- Private function definitions ---
 
 auto InitializeGpioAndSpi() -> void
@@ -728,34 +754,6 @@ auto WaitForCts() -> void
     } while(true);
     // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
     // RF code
-}
-
-
-auto SetTxType(TxType txType) -> void
-{
-    // Constants for setting the TX type (morse, 2GFSK)
-    constexpr uint32_t dataRateMorse = 20'000U;  // MODEM_DATA_RATE: unused, 20k Baud
-    constexpr uint32_t dataRate2Gfsk =
-        9'600U;  // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE *
-                 // TXOSR)/F_XTAL_Hz = (9600 * 2600000 * 10)/26000000 = 9600 = 0x002580
-
-    constexpr auto modemModTypeMorse =
-        0x09_b;  // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
-    constexpr auto modemModType2Gfsk =
-        0x03_b;  // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
-
-    auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
-    auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
-
-    auto propertyValues = std::to_array(
-        {modemModType,
-         0x00_b,
-         0x07_b,  // NOLINT(*magic-numbers*), Delta-Sigma Modulator (DSM) default config
-         static_cast<Byte>(dataRate >> (2 * CHAR_BIT)),  // NOLINT(hicpp-signed-bitwise)
-         static_cast<Byte>(dataRate >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
-         static_cast<Byte>(dataRate)});
-
-    SetProperties(PropertyGroup::modem, 0x00_b, Span(propertyValues));
 }
 
 
