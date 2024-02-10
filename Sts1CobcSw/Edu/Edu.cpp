@@ -389,7 +389,7 @@ auto ReceiveDataPacket() -> Result<void>
         return ErrorCode::invalidAnswer;
     }
 
-    OUTCOME_TRY(auto dataLength, Receive<std::uint32_t>());
+    OUTCOME_TRY(auto dataLength, Receive<std::uint16_t>());
     if(dataLength == 0 or dataLength > maxDataLength)
     {
         return ErrorCode::invalidLength;
