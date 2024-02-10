@@ -262,7 +262,10 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
         // If the buffer is empty we received an EOF and are done with the transmission
         if(cepDataBuffer.empty())
         {
-            // TODO: Do we also have a CRC32 over the whole file that needs to be checked here?
+            OUTCOME_TRY(SendCommand(cepAck));
+            // TODO: Not sure if we actually have a CRC32 over the whole file that needs to be
+            // checked here, but we need to send two ACKs anyway
+            RODOS::PRINTF("Pretending to check the whole file's CRC32 ...\n");
             OUTCOME_TRY(SendCommand(cepAck));
             return outcome_v2::success();
         }
