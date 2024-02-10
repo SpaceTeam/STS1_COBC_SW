@@ -1,0 +1,48 @@
+[ 
+  # Include only rodos_no_using_namespace
+  { include: ["<rodos-version.h>",              "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<default-platform-parameter.h>", "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<rodos-errorcodes.h>",           "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<string_pico.h>",                "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<rodos-debug.h>",                "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<rodos-assert.h>",               "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<hostinfos.h>",                  "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<misc-rodos-funcs.h>",           "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<checksumes.h>",                 "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<stream-bytesex.h>",             "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<listelement.h>",                "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<initiator.h>",                  "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<timemodel.h>",                  "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<application.h>",                "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<reserved_application_ids.h>",   "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<thread.h>",                     "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<putter.h>",                     "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<fifo.h>",                       "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<commbuffer.h>",                 "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<barrier.h>",                    "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<rodos-semaphore.h>",            "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<timeevent.h>",                  "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<timepoints.h>",                 "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<topic.h>",                      "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<reserved_topic_ids.h>",         "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<subscriber.h>",                 "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<yprintf.h>",                    "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<gateway.h>",                    "private", "<rodos_no_using_namespace.h>", "public"] },
+
+  # Same thing for HAL components
+  { include: ["<hal_uart.h>","private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<hal_gpio.h>","private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<hal_i2c.h>", "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<hal_pwm.h>", "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<hal_can.h>", "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<hal_spi.h>", "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<hal_adc.h>", "private", "<rodos_no_using_namespace.h>", "public"] },
+
+  # Include support libs we use by their full path
+  { include: ["<ringbuffer.h>", "private", "<rodos/support/support-libs/ringbuffer.h>", "public"] },
+
+  { include: ["\"Sts1CobcwSw/Hal/Spi.ipp\"", "private", "\"Sts1CobcwSw/Hal/Spi.hpp\"", "public"] },
+  { include: ["\"Sts1CobcwSw/Hal/GpioPin.ipp\"", "private", "\"Sts1CobcwSw/Hal/GpioPin.hpp\"", "public"] },
+  { include: ["\"Sts1CobcwSw/Utility/Time.ipp\"", "private", "\"Sts1CobcwSw/Utility/Time.hpp\"", "public"] }
+
+]
