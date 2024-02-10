@@ -65,7 +65,7 @@ auto BuildEduQueue(std::span<Byte const> commandData) -> void
 
     edu::programQueue.clear();
     ParseAndAddQueueEntries(commandData);
-    edu::queueIndex = 0U;
+    edu::queueIndex = 0;
 
     RODOS::PRINTF("Queue index reset. Current size of EDU program queue is %d.\n",
                   static_cast<int>(edu::programQueue.size()));

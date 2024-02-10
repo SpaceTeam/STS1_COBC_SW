@@ -1,8 +1,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/Edu/Enums.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
-#include <Sts1CobcSw/Edu/Structs.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>

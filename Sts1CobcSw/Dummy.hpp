@@ -12,6 +12,6 @@ struct Dummy
 
     static constexpr auto maxNameLength = 42;
 
-    etl::string<maxNameLength> name;
+    etl::string<maxNameLength> name = "";
 };
 }

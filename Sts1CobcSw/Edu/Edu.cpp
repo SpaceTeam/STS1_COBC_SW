@@ -1,6 +1,5 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/Edu/Names.hpp>
-#include <Sts1CobcSw/Edu/Structs.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
@@ -8,6 +7,8 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+
+#include <etl/vector.h>
 
 #include <algorithm>
 #include <array>
@@ -17,65 +18,59 @@
 
 namespace sts1cobcsw::edu
 {
+// --- Globals ---
+
+// Low-level CEP commands
+constexpr auto cepAck = 0xd7_b;   //! Acknowledging a data packet
+constexpr auto cepNack = 0x27_b;  //! Not Acknowledging an (invalid) data packet
+constexpr auto cepEof = 0x59_b;   //! Transmission of multiple packets is complete
+constexpr auto cepData = 0x8b_b;  //! Data packet format is used (not a command packet!)
+
+// The max. data length is 11 KiB. At 115'200 baud, this takes about 1 second to transmit. We use
+// 1.5 s just to be sure.
+constexpr auto sendTimeout = 1500 * RODOS::MILLISECONDS;
+constexpr auto receiveTimeout = 1500 * RODOS::MILLISECONDS;
+// TODO: Can we choose a smaller value?
+constexpr auto flushReceiveBufferTimeout = 1 * RODOS::MILLISECONDS;
+
+// TODO: Choose proper values
+// Max. number of send retries after receiving NACK
+constexpr auto maxNNackRetries = 4;
+// Max. number of data packets for a single command
+constexpr auto maxNPackets = 100;
+// Max. length of a single data packet
+constexpr auto maxDataLength = 11 * 1024;
+// Data buffer for potentially large data packets (ReturnResult and StoreProgram)
+auto cepDataBuffer = etl::vector<Byte, maxDataLength>{};
+
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
 auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 
-// TODO: To be able to better (or at all) distinguish the low-level protocol commands (cmdAck, ...)
-// and the high-level EDU commands (update time, ...) rename them CEP commands and EDU commands,
-// respectively.
 
-// TODO: Turn this into Bytes, maybe even an enum class : Byte
-// CEP basic commands (see EDU PDD)
-constexpr auto cmdAck = 0xd7_b;   //! Acknowledging a data packet
-constexpr auto cmdNack = 0x27_b;  //! Not Acknowledging a (invalid) data packet
-constexpr auto cmdEof = 0x59_b;   //! Transmission of multiple packets is complete
-// TODO: Use this
-//! Transmission of multiple packets should be stopped
-[[maybe_unused]] constexpr auto cmdStop = 0xb4_b;
-constexpr auto cmdData = 0x8b_b;  //! Data packet format is used (not a command packet!)
+// --- Private function declarations ---
 
-// GetStatus result types
-constexpr auto noEventCode = 0x00_b;
-constexpr auto programFinishedCode = 0x01_b;
-constexpr auto resultsReadyCode = 0x02_b;
+[[nodiscard]] auto ReceiveAndParseStatusData() -> Result<Status>;
+[[nodiscard]] auto ParseStatusData() -> Result<Status>;
 
-// Status types byte counts
-constexpr auto nNoEventBytes = 1;
-constexpr auto nProgramFinishedBytes = 8;
-constexpr auto nResultsReadyBytes = 7;
+[[nodiscard]] auto SendDataPacket(std::span<Byte const> data) -> Result<void>;
+// TODO: Rework -> Send(CepCommand command) -> void;
+[[nodiscard]] auto SendCommand(Byte commandId) -> Result<void>;
+[[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
 
-// TODO: Check real timeouts
-// Max. time for the EDU to respond to a request
-constexpr auto eduTimeout = 1 * RODOS::SECONDS;
-// Timeout used when flushing the UART receive buffer
-constexpr auto flushTimeout = 1 * RODOS::MILLISECONDS;
-// UART flush garbage buffer size
-constexpr auto garbageBufferSize = 128;
+[[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
+template<typename T>
+[[nodiscard]] auto Receive() -> Result<T>;
+template<>
+[[nodiscard]] auto Receive<Byte>() -> Result<Byte>;
+[[nodiscard]] auto Receive(std::span<Byte> data) -> Result<void>;
+[[nodiscard]] auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>;
 
-// TODO: choose proper values
-// Max. amount of send retries after receiving NACK
-constexpr auto maxNNackRetries = 10;
-// Max. number of data packets for a single command
-constexpr std::size_t maxNPackets = 100;
-// Max. length of a single data packet
-constexpr auto maxDataLength = 32768;
-// Data buffer for potentially large data sizes (ReturnResult and StoreArchive)
-auto cepDataBuffer = std::array<Byte, maxDataLength>{};
+template<typename T>
+[[nodiscard]] auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
+auto FlushUartReceiveBuffer() -> void;
 
 
-// TODO: Rework -> Send(EduBasicCommand command) -> void;
-auto SendCommand(Byte commandId) -> void;
-[[nodiscard]] auto SendData(std::span<Byte const> data) -> Result<void>;
-// TODO: Make this read and return a Type instead of having to provide a destination. Use
-// Deserialize<>() internally.
-[[nodiscard]] auto UartReceive(std::span<Byte> destination) -> Result<void>;
-[[nodiscard]] auto UartReceive(void * destination) -> Result<void>;
-auto FlushUartBuffer() -> void;
-[[nodiscard]] auto CheckCrc32(std::span<Byte const> data) -> Result<void>;
-[[nodiscard]] auto GetStatusCommunication() -> Result<Status>;
-[[nodiscard]] auto ReturnResultCommunication() -> Result<ResultInfo>;
-[[nodiscard]] auto ReturnResultRetry() -> Result<ResultInfo>;
-
+// --- Function definitions ---
 
 //! @brief  Must be called in an init() function of a thread.
 auto Initialize() -> void
@@ -93,7 +88,7 @@ auto TurnOn() -> void
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    constexpr auto baudRate = 115'200;
+    auto const baudRate = 115'200;
     hal::Initialize(&uart, baudRate);
 }
 
@@ -102,12 +97,12 @@ auto TurnOff() -> void
 {
     persistentstate::EduShouldBePowered(/*value=*/false);
     eduEnableGpioPin.Reset();
-    uart.reset();
+    hal::Deinitialize(&uart);
 }
 
 
 // TODO: Implement this
-auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> Result<std::int32_t>
+auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std::int32_t>
 {
     return 0;
 }
@@ -134,38 +129,21 @@ auto StoreArchive([[maybe_unused]] StoreArchiveData const & data) -> Result<std:
 //! @returns A relevant error code
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
-    RODOS::PRINTF("ExecuteProgram(programId = %d, startTime = %" PRIi32 ", timeout = %d)\n",
-                  data.programId,
-                  data.startTime,
-                  data.timeout);
-    // Check if data command was successful
-    auto serialData = Serialize(data);
-    OUTCOME_TRY(SendData(serialData));
-
-    // eduTimeout != timeout argument for data!
-    // timeout specifies the time the student program has to execute
-    // eduTimeout is the max. allowed time to reveice N/ACK from EDU
-    auto answer = 0x00_b;
-    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-
-    auto nReadBytes = uart.read(&answer, 1);
-    if(nReadBytes == 0)
-    {
-        return ErrorCode::timeout;
-    }
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
+    OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
     {
-        case cmdAck:
+        case cepAck:
         {
             return outcome_v2::success();
         }
-        case cmdNack:
+        case cepNack:
         {
             return ErrorCode::nack;
         }
         default:
         {
-            return ErrorCode::invalidResult;
+            return ErrorCode::invalidAnswer;
         }
     }
 }
@@ -217,110 +195,56 @@ auto StopProgram() -> Result<void>
 //!          returned.
 auto GetStatus() -> Result<Status>
 {
-    RODOS::PRINTF("GetStatus()\n");
-    OUTCOME_TRY(SendData(Span(getStatusId)));
-
-    std::size_t nErrors = 0;
-    while(true)
-    {
-        auto getStatusCommunicationResult = GetStatusCommunication();
-        if(getStatusCommunicationResult.has_value())
-        {
-            auto status = getStatusCommunicationResult.value();
-            SendCommand(cmdAck);
-            RODOS::PRINTF("  .statusType = %d\n  .programId = %d\n  .startTime = %" PRIi32
-                          "\n  exitCode = %d\n",
-                          static_cast<int>(status.statusType),
-                          status.programId,
-                          status.startTime,
-                          status.exitCode);
-            return status;
-        }
-        FlushUartBuffer();
-        SendCommand(cmdNack);
-        nErrors++;
-        if(nErrors >= maxNNackRetries)
-        {
-            RODOS::PRINTF("  .errorCode = %d\n",
-                          static_cast<int>(getStatusCommunicationResult.error()));
-            return getStatusCommunicationResult.error();
-        }
-    }
+    OUTCOME_TRY(SendDataPacket(Serialize(GetStatusData())));
+    OUTCOME_TRY(auto status, Retry(ReceiveAndParseStatusData, maxNNackRetries));
+    OUTCOME_TRY(SendCommand(cepAck));
+    return status;
 }
 
 
-//! @brief Communication function for GetStatus() to separate a single try from retry logic.
-//!
-//! @returns The received EDU status
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
-auto GetStatusCommunication() -> Result<Status>
+auto ReceiveAndParseStatusData() -> Result<Status>
 {
-    auto headerBuffer = Buffer<HeaderData>{};
-    OUTCOME_TRY(UartReceive(headerBuffer));
-    auto headerData = Deserialize<HeaderData>(headerBuffer);
+    OUTCOME_TRY(ReceiveDataPacket());
+    return ParseStatusData();
+}
 
-    if(headerData.command != cmdData)
-    {
-        return ErrorCode::invalidCommand;
-    }
-    if(headerData.length == 0U)
+
+auto ParseStatusData() -> Result<Status>
+{
+    if(cepDataBuffer.empty())
     {
         return ErrorCode::invalidLength;
     }
-
-    auto statusType = 0x00_b;
-    OUTCOME_TRY(UartReceive(&statusType));
-
-    if(statusType == noEventCode)
+    auto statusId = cepDataBuffer[0];
+    if(statusId == NoEventData::id)
     {
-        if(headerData.length != nNoEventBytes)
+        if(cepDataBuffer.size() != serialSize<NoEventData>)
         {
             return ErrorCode::invalidLength;
         }
-        OUTCOME_TRY(CheckCrc32(Span(statusType)));
         return Status{.statusType = StatusType::noEvent};
     }
-    if(statusType == programFinishedCode)
+    if(statusId == ProgramFinishedData::id)
     {
-        if(headerData.length != nProgramFinishedBytes)
+        if(cepDataBuffer.size() != serialSize<ProgramFinishedData>)
         {
             return ErrorCode::invalidLength;
         }
-
-        auto dataBuffer = Buffer<ProgramFinishedStatus>{};
-        OUTCOME_TRY(UartReceive(dataBuffer));
-
-        // Create another Buffer which includes the status type that was received beforehand because
-        // it is needed to calculate the CRC32 checksum
-        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
-        fullDataBuffer[0] = statusType;
-        std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
-        OUTCOME_TRY(CheckCrc32(fullDataBuffer));
-
-        auto programFinishedData = Deserialize<ProgramFinishedStatus>(dataBuffer);
+        auto programFinishedData = Deserialize<ProgramFinishedData>(
+            Span(cepDataBuffer).first<serialSize<ProgramFinishedData>>());
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
                       .startTime = programFinishedData.startTime,
                       .exitCode = programFinishedData.exitCode};
     }
-    if(statusType == resultsReadyCode)
+    if(statusId == ResultsReadyData::id)
     {
-        if(headerData.length != nResultsReadyBytes)
+        if(cepDataBuffer.size() != serialSize<ResultsReadyData>)
         {
             return ErrorCode::invalidLength;
         }
-
-        auto dataBuffer = Buffer<ResultsReadyStatus>{};
-        OUTCOME_TRY(UartReceive(dataBuffer));
-
-        // Create another Buffer which includes the status type that was received beforehand because
-        // it is needed to calculate the CRC32 checksum
-        auto fullDataBuffer = std::array<Byte, dataBuffer.size() + 1>{};
-        fullDataBuffer[0] = statusType;
-        std::copy(dataBuffer.begin(), dataBuffer.end(), fullDataBuffer.begin() + 1);
-        OUTCOME_TRY(CheckCrc32(fullDataBuffer));
-
-        auto resultsReadyData = Deserialize<ResultsReadyStatus>(dataBuffer);
+        auto resultsReadyData = Deserialize<ResultsReadyData>(
+            Span(cepDataBuffer).first<serialSize<ResultsReadyData>>());
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
                       .startTime = resultsReadyData.startTime};
@@ -329,160 +253,29 @@ auto GetStatusCommunication() -> Result<Status>
 }
 
 
-auto ReturnResult(ReturnResultData const & data) -> Result<ResultInfo>
+auto ReturnResult(ReturnResultData const & data) -> Result<void>
 {
-    // DEBUG
-    RODOS::PRINTF("ReturnResult()\n");
-    // END DEBUG
-
-    OUTCOME_TRY(SendData(Serialize(data)));
-
-    // DEBUG
-    // RODOS::PRINTF("\nStart receiving result\n");
-    // END DEBUG
-
-    std::size_t totalResultSize = 0U;
-    std::size_t nPackets = 0U;
-    //  TODO: Turn into for loop
-    while(nPackets < maxNPackets)
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
+    for(auto nPackets = 0; nPackets < maxNPackets; ++nPackets)
     {
-        // DEBUG
-        // RODOS::PRINTF("\nPacket %d\n", static_cast<int>(packets));
-        // END DEBUG
-        auto returnResultRetryResult = ReturnResultRetry();
-        // TYPE Result<something>
-        // DEBUG
-
-        if(returnResultRetryResult.has_error())
+        OUTCOME_TRY(Retry(ReceiveDataPacket, maxNNackRetries));
+        // If the buffer is empty we received an EOF and are done with the transmission
+        if(cepDataBuffer.empty())
         {
-            auto errorCode = returnResultRetryResult.error();
-            RODOS::PRINTF(" ReturnResultRetry() resulted in an error : %d",
-                          static_cast<int>(errorCode));
-            return errorCode;
+            OUTCOME_TRY(SendCommand(cepAck));
+            // TODO: Not sure if we actually have a CRC32 over the whole file that needs to be
+            // checked here, but we need to send two ACKs anyway
+            RODOS::PRINTF("Pretending to check the whole file's CRC32 ...\n");
+            OUTCOME_TRY(SendCommand(cepAck));
+            return outcome_v2::success();
         }
-        if(returnResultRetryResult.value().eofIsReached)
-        {
-            RODOS::PRINTF(" ReturnResultRetry() reached EOF\n");
-
-            // TODO: This is a dummy implementation. Store the result instead.
-            RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
-            SendCommand(cmdAck);
-
-            return ResultInfo{.eofIsReached = true, .resultSize = totalResultSize};
-        }
-
-        // END DEBUG
-        // RODOS::PRINTF("\nWriting to file...\n");
-        // TODO: Actually write to a file
-
-        totalResultSize += returnResultRetryResult.value().resultSize;
-        nPackets++;
+        // TODO: Actually store the result in the COBC file system
+        RODOS::PRINTF("Pretending to write %d bytes to the file system ...\n",
+                      static_cast<int>(cepDataBuffer.size()));
+        RODOS::AT(RODOS::NOW() + 3 * RODOS::MILLISECONDS);
+        OUTCOME_TRY(SendCommand(cepAck));
     }
-
-    return ResultInfo{.eofIsReached = false, .resultSize = totalResultSize};
-}
-
-
-//! @brief This function handles the retry logic for a single transmission round and is called by
-//! the actual ReturnResult function. The communication happens in ReturnResultCommunication.
-//!
-//! @returns An error code and the number of received bytes in ResultInfo
-auto ReturnResultRetry() -> Result<ResultInfo>
-{
-    std::size_t errorCount = 0U;
-    // TODO: infinite loop could be avoided by setting errorCount <= maxNNackRetries as the
-    // termination condition
-    while(true)
-    {
-        auto returnResultCommunicationResult = ReturnResultCommunication();
-        if(returnResultCommunicationResult.has_value())
-        {
-            SendCommand(cmdAck);
-            return returnResultCommunicationResult.value();
-        }
-        FlushUartBuffer();
-        SendCommand(cmdNack);
-        errorCount++;
-        if(errorCount == maxNNackRetries)
-        {
-            return returnResultCommunicationResult.error();
-        }
-    }
-
-    // Result<ResultInfo> result = ErrorCode::noErrorCodeSet;
-    // std::size_t errorCount = 0U;
-    // // TODO: CHange this
-    // do
-    // {
-    //     result = ReturnResultCommunication();
-    //     // Could have reached EOF or not
-    //     if(result.has_value())
-    //     {
-    //         SendCommand(cmdAck);
-    //         return result;
-    //     }
-    //     FlushUartBuffer();
-    //     SendCommand(cmdNack);
-    // } while(errorCount++ < maxNNackRetries);
-    // return result.value();
-}
-
-
-// This function writes the result to the COBC file system (flash). Maybe it doesn't do that
-// directly and instead writes to a non-primary RAM bank as an intermediate step.
-//
-// Simple results -> 1 round should work with DMA to RAM
-auto ReturnResultCommunication() -> Result<edu::ResultInfo>
-{
-    Byte command = 0x00_b;
-    OUTCOME_TRY(UartReceive(&command));
-    if(command == cmdNack)
-    {
-        // TODO: necessary to differentiate errors or just return success with resultSize 0?
-        return ErrorCode::noResultAvailable;
-    }
-    if(command == cmdEof)
-    {
-        return ResultInfo{.eofIsReached = true, .resultSize = 0U};
-    }
-    if(command != cmdData)
-    {
-        // DEBUG
-        RODOS::PRINTF("\nNot DATA command\n");
-        // END DEBUG
-        return ErrorCode::invalidCommand;
-    }
-
-    // DEBUG
-    // RODOS::PRINTF("\nGet Length\n");
-    // END DEBUG
-
-    auto dataLengthBuffer = Buffer<std::uint16_t>{};
-    OUTCOME_TRY(UartReceive(dataLengthBuffer));
-    auto actualDataLength = Deserialize<std::uint16_t>(dataLengthBuffer);
-    if(actualDataLength == 0U or actualDataLength > maxDataLength)
-    {
-        return ErrorCode::invalidLength;
-    }
-
-    // DEBUG
-    // RODOS::PRINTF("\nGet Data\n");
-    // END DEBUG
-
-    // Get the actual data
-    OUTCOME_TRY(UartReceive(Span(&cepDataBuffer).first(actualDataLength)));
-
-    // DEBUG
-    // RODOS::PRINTF("\nCheck CRC\n");
-    // END DEBUG
-
-    OUTCOME_TRY(CheckCrc32(Span(cepDataBuffer).first(actualDataLength)));
-
-    // DEBUG
-    RODOS::PRINTF("\nSuccess\n");
-    // END DEBUG
-
-    return ResultInfo{.eofIsReached = false, .resultSize = actualDataLength};
+    return ErrorCode::tooManyDataPackets;
 }
 
 
@@ -503,86 +296,62 @@ auto ReturnResultCommunication() -> Result<edu::ResultInfo>
 //! @returns A relevant error code
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
-    RODOS::PRINTF("UpdateTime()\n");
-    OUTCOME_TRY(SendData(Serialize(data)));
-
-    // TODO: Refactor this common pattern into a function
-    // TODO: Implement read functions that return a type and internally use Deserialize<T>()
-    auto answer = 0x00_b;
-    OUTCOME_TRY(UartReceive(&answer));
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
+    OUTCOME_TRY(auto answer, Receive<Byte>());
     switch(answer)
     {
-        case cmdAck:
+        case cepAck:
         {
             return outcome_v2::success();
         }
-        case cmdNack:
+        case cepNack:
         {
             return ErrorCode::nack;
         }
         default:
         {
-            return ErrorCode::invalidResult;
+            return ErrorCode::invalidAnswer;
         }
     }
-}
-
-
-//! @brief Send a CEP command to the EDU.
-//!
-//! @param cmd The command
-inline auto SendCommand(Byte commandId) -> void
-{
-    hal::WriteTo(&uart, Span(commandId));
 }
 
 
 //! @brief Send a data packet over UART to the EDU.
 //!
 //! @param data The data to be sent
-auto SendData(std::span<Byte const> data) -> Result<void>
+auto SendDataPacket(std::span<Byte const> data) -> Result<void>
 {
     if(data.size() >= maxDataLength)
     {
-        return ErrorCode::sendDataTooLong;
+        return ErrorCode::dataPacketTooLong;
     }
     // Casting the size to uint16_t is safe since it is checked against maxDataLength
     auto length = Serialize(static_cast<std::uint16_t>(data.size()));
-    auto checksum = Serialize(utility::ComputeCrc32(data));
+    auto checksum = Serialize(utility::ComputeCrc32Sw(data));
 
     auto nNacks = 0;
     while(nNacks < maxNNackRetries)
     {
-        SendCommand(cmdData);
-        hal::WriteTo(&uart, Span(length));
-        hal::WriteTo(&uart, data);
-        hal::WriteTo(&uart, Span(checksum));
+        OUTCOME_TRY(SendCommand(cepData));
+        OUTCOME_TRY(Send(Span(length)));
+        OUTCOME_TRY(Send(data));
+        OUTCOME_TRY(Send(Span(checksum)));
 
-        // TODO: Refactor this common pattern into a function
-        // Data is always answered by N/ACK
-        auto answer = 0xAA_b;  // TODO: Why is this set to 0xAA?
-        // TODO: Why do we first suspend and then read?
-        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto nReadBytes = uart.read(&answer, 1);
-        if(nReadBytes == 0)
-        {
-            return ErrorCode::timeout;
-        }
-
+        OUTCOME_TRY(auto answer, Receive<Byte>());
         switch(answer)
         {
-            case cmdAck:
+            case cepAck:
             {
                 return outcome_v2::success();
             }
-            case cmdNack:
+            case cepNack:
             {
                 nNacks++;
                 continue;
             }
             default:
             {
-                return ErrorCode::invalidResult;
+                return ErrorCode::invalidAnswer;
             }
         }
     }
@@ -590,45 +359,19 @@ auto SendData(std::span<Byte const> data) -> Result<void>
 }
 
 
-//! @brief Receive nBytes bytes over the EDU UART in a single round.
-//!
-//! @param destination The destination container
-//!
-//! @returns A relevant EDU error code
-auto UartReceive(std::span<Byte> destination) -> Result<void>
+auto SendCommand(Byte commandId) -> Result<void>
 {
-    if(size(destination) > maxDataLength)
-    {
-        return ErrorCode::receiveDataTooLong;
-    }
-
-    std::size_t totalReceivedBytes = 0U;
-    auto destinationSize = size(destination);
-    while(totalReceivedBytes < destinationSize)
-    {
-        uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-        auto nReceivedBytes =
-            uart.read(data(destination) + totalReceivedBytes, destinationSize - totalReceivedBytes);
-        if(nReceivedBytes == 0)
-        {
-            return ErrorCode::timeout;
-        }
-        totalReceivedBytes += nReceivedBytes;
-    }
+    OUTCOME_TRY(Send(Span(commandId)));
     return outcome_v2::success();
 }
 
 
-//! @brief Receive a single byte over the EDU UART.
-//!
-//! @param destination The destination byte
-//!
-//! @returns A relevant EDU error code
-auto UartReceive(void * destination) -> Result<void>
+// This function is mainly here for converting error codes and ensuring that all send operations use
+// a timeout.
+auto Send(std::span<Byte const> data) -> Result<void>
 {
-    uart.suspendUntilDataReady(RODOS::NOW() + eduTimeout);
-    auto nReceivedBytes = uart.read(destination, 1);
-    if(nReceivedBytes == 0)
+    auto writeToResult = hal::WriteTo(&uart, data, sendTimeout);
+    if(writeToResult.has_error())
     {
         return ErrorCode::timeout;
     }
@@ -636,36 +379,115 @@ auto UartReceive(void * destination) -> Result<void>
 }
 
 
-//! @brief Flush the EDU UART read buffer.
-//!
-//! This can be used to clear all buffer data after an error to request a resend.
-auto FlushUartBuffer() -> void
+auto ReceiveDataPacket() -> Result<void>
 {
-    auto garbageBuffer = std::array<Byte, garbageBufferSize>{};
-    // Keep reading until no data is coming for flushTimeout
+    OUTCOME_TRY(auto answer, Receive<Byte>());
+    if(answer == cepEof)
+    {
+        cepDataBuffer.clear();
+        return outcome_v2::success();
+    }
+    if(answer != cepData)
+    {
+        return ErrorCode::invalidAnswer;
+    }
+
+    OUTCOME_TRY(auto dataLength, Receive<std::uint16_t>());
+    if(dataLength == 0 or dataLength > maxDataLength)
+    {
+        return ErrorCode::invalidLength;
+    }
+    cepDataBuffer.resize(dataLength);
+
+    OUTCOME_TRY(Receive(Span(&cepDataBuffer)));
+    OUTCOME_TRY(ReceiveAndCheckCrc32(Span(cepDataBuffer)));
+    return outcome_v2::success();
+}
+
+
+template<typename T>
+auto Receive() -> Result<T>
+{
+    auto buffer = Buffer<T>{};
+    OUTCOME_TRY(Receive(buffer));
+    return Deserialize<T>(buffer);
+}
+
+
+template<>
+auto Receive<Byte>() -> Result<Byte>
+{
+    auto byte = 0x00_b;
+    OUTCOME_TRY(Receive(Span(&byte)));
+    return byte;
+}
+
+
+auto Receive(std::span<Byte> data) -> Result<void>
+{
+    if(data.size() > maxDataLength)
+    {
+        return ErrorCode::dataPacketTooLong;
+    }
+    auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout);
+    if(readFromResult.has_error())
+    {
+        return ErrorCode::timeout;
+    }
+    return outcome_v2::success();
+}
+
+
+// TODO: A parameter pack of spans would be very convenient
+auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>
+{
+    auto computedCrc32 = utility::ComputeCrc32Sw(data);
+    OUTCOME_TRY(auto receivedCrc32, Receive<std::uint32_t>());
+    if(computedCrc32 != receivedCrc32)
+    {
+        return ErrorCode::wrongChecksum;
+    }
+    return outcome_v2::success();
+}
+
+
+template<typename T>
+auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>
+{
+    auto iTries = 0;
     while(true)
     {
-        uart.suspendUntilDataReady(RODOS::NOW() + flushTimeout);
-        auto nReceivedBytes = uart.read(garbageBuffer.data(), garbageBufferSize);
-        if(nReceivedBytes == 0)
+        auto result = communicationFunction();
+        if(result.has_value())
         {
-            break;
+            // No ACK is sent here. The caller is responsible for that.
+            return result;
+        }
+        FlushUartReceiveBuffer();
+        OUTCOME_TRY(SendCommand(cepNack));
+        iTries++;
+        if(iTries >= nTries)
+        {
+            // TODO: Maybe return tooManyNacks here instead?
+            return result.error();
         }
     }
 }
 
 
-// TODO: A parameter pack of spans would be very convenient
-auto CheckCrc32(std::span<Byte const> data) -> Result<void>
+//! @brief Flush the EDU UART read buffer.
+//!
+//! This can be used to clear all buffer data after an error to request a resend.
+auto FlushUartReceiveBuffer() -> void
 {
-    auto computedCrc32 = utility::ComputeCrc32(data);
-    auto crc32Buffer = Buffer<std::uint32_t>{};
-    OUTCOME_TRY(UartReceive(crc32Buffer));
-
-    if(computedCrc32 != Deserialize<std::uint32_t>(crc32Buffer))
+    auto garbageBuffer = std::array<Byte, 32>{};  // NOLINT(*magic-numbers)
+    while(true)
     {
-        return ErrorCode::wrongChecksum;
+        auto readFromResult = hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout);
+        if(readFromResult.has_error())
+        {
+            break;
+        }
     }
-    return outcome_v2::success();
 }
 }

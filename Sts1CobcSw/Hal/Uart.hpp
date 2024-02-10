@@ -12,10 +12,6 @@
 
 namespace sts1cobcsw::hal
 {
-// When removing namespace hal, I think it would be best to put ErrorCode and Result<T> into its own
-// uart namespace, because then we would use namespaces correct again (just for avoiding name
-// collisions) and in the smallest possible scope. Also, this is coherent with the EDU error codes
-// and future ones we will introduce for the file system, etc.
 enum class ErrorCode
 {
     timeout = 1
@@ -27,6 +23,7 @@ using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolic
 
 
 auto Initialize(RODOS::HAL_UART * uart, std::uint32_t baudRate) -> void;
+auto Deinitialize(RODOS::HAL_UART * uart) -> void;
 
 template<typename T, std::size_t extent>
 auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void;

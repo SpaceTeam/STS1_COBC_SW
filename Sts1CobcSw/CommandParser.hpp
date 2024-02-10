@@ -22,10 +22,10 @@ enum CommandId : char
 
 struct GsCommandHeader
 {
-    char startCharacter;
-    std::int32_t utc;
-    std::int8_t commandId;
-    std::int16_t length;
+    char startCharacter = '\0';
+    std::int32_t utc = 0;
+    std::int8_t commandId = 0;
+    std::int16_t length = 0;
 };
 
 

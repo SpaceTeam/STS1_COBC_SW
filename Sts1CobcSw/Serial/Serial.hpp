@@ -39,7 +39,7 @@ concept HasEndianness = std::is_integral_v<T> or std::is_enum_v<T>;
 
 // Must be specialized for user-defined types to be serializable
 template<typename T>
-inline constexpr std::size_t serialSize = 0U;
+inline constexpr std::size_t serialSize = 0;
 
 template<TriviallySerializable T>
 inline constexpr std::size_t serialSize<T> = sizeof(T);
@@ -51,12 +51,12 @@ inline constexpr auto defaultEndianness = std::endian::little;
 
 
 template<typename T>
-    requires(serialSize<T> != 0U)
+    requires(serialSize<T> != 0)
 using Buffer = std::array<Byte, serialSize<T>>;
 
 // TODO: Maybe remove this type alias or prepend "Serial" to both again
 template<typename T>
-    requires(serialSize<T> != 0U)
+    requires(serialSize<T> != 0)
 using BufferView = std::span<Byte const, serialSize<T>>;
 
 
