@@ -35,7 +35,7 @@ constexpr auto flushReceiveBufferTimeout = 1 * RODOS::MILLISECONDS;
 
 // TODO: Choose proper values
 // Max. number of send retries after receiving NACK
-constexpr auto maxNNackRetries = 10;
+constexpr auto maxNNackRetries = 4;
 // Max. number of data packets for a single command
 constexpr auto maxNPackets = 100;
 // Max. length of a single data packet
