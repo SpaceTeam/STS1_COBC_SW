@@ -463,7 +463,7 @@ auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>
         FlushUartReceiveBuffer();
         OUTCOME_TRY(SendCommand(cepNack));
         iTries++;
-        if(iTries > nTries)
+        if(iTries >= nTries)
         {
             // TODO: Maybe return tooManyNacks here instead?
             return result.error();
