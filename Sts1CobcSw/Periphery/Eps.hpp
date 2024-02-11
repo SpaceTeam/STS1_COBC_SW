@@ -2,4 +2,5 @@
 
 namespace sts1cobcsw::periphery::eps
 {
+auto Initialize() -> void;
 }
