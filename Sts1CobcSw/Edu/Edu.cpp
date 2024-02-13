@@ -4,16 +4,17 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 #include <etl/vector.h>
 
-#include <algorithm>
 #include <array>
-#include <cinttypes>
-#include <cstddef>
+#include <span>
 
 
 namespace sts1cobcsw::edu

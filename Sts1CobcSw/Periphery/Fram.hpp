@@ -41,4 +41,4 @@ auto ReadFrom(Address address, void * data, std::size_t nBytes) -> void;
 }
 
 
-#include <Sts1CobcSw/Periphery/Fram.ipp>
+#include <Sts1CobcSw/Periphery/Fram.ipp>  // IWYU pragma: keep

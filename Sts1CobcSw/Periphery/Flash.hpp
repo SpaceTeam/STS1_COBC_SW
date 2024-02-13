@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 

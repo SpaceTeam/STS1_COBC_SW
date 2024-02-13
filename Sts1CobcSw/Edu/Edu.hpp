@@ -3,9 +3,6 @@
 
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
-
-#include <rodos_no_using_namespace.h>
 
 #include <cstdint>
 

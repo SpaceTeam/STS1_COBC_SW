@@ -1,6 +1,5 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
-
-#include <rodos_no_using_namespace.h>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
 
 // TODO: Change namespace here too, or move it back to Sts1CobSw/

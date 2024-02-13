@@ -41,8 +41,41 @@
   # Include support libs we use by their full path
   { include: ["<ringbuffer.h>", "private", "<rodos/support/support-libs/ringbuffer.h>", "public"] },
 
-  { include: ["\"Sts1CobcwSw/Hal/Spi.ipp\"", "private", "\"Sts1CobcwSw/Hal/Spi.hpp\"", "public"] },
-  { include: ["\"Sts1CobcwSw/Hal/GpioPin.ipp\"", "private", "\"Sts1CobcwSw/Hal/GpioPin.hpp\"", "public"] },
-  { include: ["\"Sts1CobcwSw/Utility/Time.ipp\"", "private", "\"Sts1CobcwSw/Utility/Time.hpp\"", "public"] }
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.ipp\"", "private", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/Spi.ipp\"",               "private", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/GpioPin.ipp\"",           "private", "<Sts1CobcSw/Hal/GpioPin.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/Time.ipp\"",          "private", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Periphery/Fram.ipp\"",        "private", "<Sts1CobcSw/Periphery/Fram.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Serial/Byte.ipp\"",           "private", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",         "private", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",          "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Edu/Structs.ipp\"",           "private", "<Sts1CobcSw/Edu/Structs.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/Uart.ipp\"",              "private", "<Sts1CobcSw/Hal/Uart.hpp>", "public"] },
+
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.ipp\"", "private", "<Sts1CobcSw/FileSystem/FileSystem.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/Spi.ipp\"",               "private", "<Sts1CobcSw/Hal/Spi.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/GpioPin.ipp\"",           "private", "<Sts1CobcSw/Hal/GpioPin.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/Time.ipp\"",          "private", "<Sts1CobcSw/Utility/Time.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Periphery/Fram.ipp\"",        "private", "<Sts1CobcSw/Periphery/Fram.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Serial/Byte.ipp\"",           "private", "<Sts1CobcSw/Serial/Byte.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",         "private", "<Sts1CobcSw/Serial/Serial.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",          "private", "<Sts1CobcSw/Utility/Span.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Edu/Structs.ipp\"",           "private", "<Sts1CobcSw/Edu/Structs.ipp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/Uart.ipp\"",              "private", "<Sts1CobcSw/Hal/Uart.ipp>", "public"] },
+
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"", "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/Spi.hpp\"",               "public", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/GpioPin.hpp\"",           "public", "<Sts1CobcSw/Hal/GpioPin.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/Time.hpp\"",          "public", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Periphery/Fram.hpp\"",        "public", "<Sts1CobcSw/Periphery/Fram.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Serial/Byte.hpp\"",           "public", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Serial/Serial.hpp\"",         "public", "<Sts1CobcwSw/Serial/Serial.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",          "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Edu/Structs.hpp\"",           "public", "<Sts1CobcSw/Edu/Structs.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/Uart.hpp\"",              "public", "<Sts1CobcSw/Hal/Uart.hpp>", "public"] },
+
+  # Fixing iwyu bug where <tuple> is required to be include for array symbol
+  # unfortunately, the `symbol` directive does not work
+  { include: ["<tuple>", "public", "<array>", "public"] },
 
 ]

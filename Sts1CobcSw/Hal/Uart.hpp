@@ -42,4 +42,4 @@ template<typename T, std::size_t extent>
 }
 
 
-#include <Sts1CobcSw/Hal/Uart.ipp>
+#include <Sts1CobcSw/Hal/Uart.ipp>  // IWYU pragma: keep

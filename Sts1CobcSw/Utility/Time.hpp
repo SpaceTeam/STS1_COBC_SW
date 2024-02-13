@@ -23,4 +23,4 @@ auto PrintFormattedSystemUtc() -> void;
 }
 
 
-#include <Sts1CobcSw/Utility/Time.ipp>
+#include <Sts1CobcSw/Utility/Time.ipp>  // IWYU pragma: keep

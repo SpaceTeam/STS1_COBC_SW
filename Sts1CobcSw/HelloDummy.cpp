@@ -2,8 +2,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <span>
-#include <string_view>
+#include <etl/string.h>
 
 
 namespace RODOS

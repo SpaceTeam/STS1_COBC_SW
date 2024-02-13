@@ -1,16 +1,16 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 
+#include <stm32f4xx.h>
 #include <stm32f4xx_crc.h>
 #include <stm32f4xx_dma.h>
 #include <stm32f4xx_rcc.h>
 
-#include <rodos_no_using_namespace.h>
-
 #include <array>
-#include <bit>
 #include <climits>
+#include <cstddef>
 #include <cstring>
+#include <type_traits>
 
 
 namespace sts1cobcsw::utility

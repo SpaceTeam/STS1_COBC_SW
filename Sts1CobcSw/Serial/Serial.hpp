@@ -14,6 +14,7 @@
 
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
 // We need std::byteswap which is C++23 but for some reason clang-tidy crashes when using C++23, so
 // we use the ETL version

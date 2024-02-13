@@ -54,8 +54,8 @@ Docker image, the file should look something like the following:
           "dev-mode",
           "clang-tidy",
           "cppcheck",
-          "include-what-you-use",
-          "ci-unix"
+          "ci-unix",
+          "include-what-you-use"
         ],
         "generator": "Ninja",
         "cacheVariables": {
