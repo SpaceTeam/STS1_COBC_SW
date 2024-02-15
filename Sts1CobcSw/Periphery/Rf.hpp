@@ -4,7 +4,7 @@
 #include <cstdint>
 
 
-namespace sts1cobcsw::periphery::rf
+namespace sts1cobcsw::rf
 {
 enum class TxType
 {

@@ -28,12 +28,12 @@ private:
     {
         PRINTF("\nRF test\n\n");
 
-        periphery::rf::Initialize(periphery::rf::TxType::morse);
+        rf::Initialize(rf::TxType::morse);
         PRINTF("RF module initialized\n");
 
         PRINTF("\n");
         auto correctPartInfo = 0x4463;
-        auto partInfo = periphery::rf::ReadPartInfo();
+        auto partInfo = rf::ReadPartInfo();
         PRINTF("Part info: 0x%4x == 0x%4x\n", partInfo, correctPartInfo);
         Check(partInfo == correctPartInfo);
 

@@ -12,7 +12,7 @@
 #include <span>
 
 
-namespace sts1cobcsw::periphery::rf
+namespace sts1cobcsw::rf
 {
 using RODOS::AT;
 using RODOS::MICROSECONDS;
