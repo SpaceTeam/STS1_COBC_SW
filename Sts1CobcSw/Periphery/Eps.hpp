@@ -1,6 +1,6 @@
 #pragma once
 
-namespace sts1cobcsw::periphery::eps
+namespace sts1cobcsw::eps
 {
 auto Initialize() -> void;
 }

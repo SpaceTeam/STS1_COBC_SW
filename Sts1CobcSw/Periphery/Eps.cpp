@@ -7,7 +7,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-namespace sts1cobcsw::periphery::eps
+namespace sts1cobcsw::eps
 {
 // TODO: ask David F.
 // STS_EPS_ADCS schematics do not match Wiki description
@@ -87,7 +87,7 @@ auto epsSpi = RODOS::HAL_SPI(
 
 // --- Private function declarations ---
 
-auto SetSetupRegister() -> void;
+auto SetSetupRegister(hal::GpioPin * adcCsPin) -> void;
 
 
 // --- Public function definitions ---
@@ -101,18 +101,20 @@ auto Initialize() -> void
     cs3GpioPin.Direction(hal::PinDirection::out);
     cs3GpioPin.Set();
 
-    // TODO: Check if external clock mode is ever necessary
-    // Datasheet says 10 MHz max.
-    // TODO: FRAM code sets baudrate to 12 MHz
-    // SCLK can only run up to 4.8 MHz in clock mode 0b11
+    // TODO: FRAM code sets baudrate to 12 MHz, Datasheet says max. 10 MHz
     constexpr auto baudrate = 10'000'000;
     hal::Initialize(&epsSpi, baudrate);
+
+    // Setup ADCs
+    SetSetupRegister(&cs1GpioPin);
+    SetSetupRegister(&cs2GpioPin);
+    SetSetupRegister(&cs3GpioPin);
 }
 
 
 // --- Private function definitions ---
 
-auto SetSetupRegister() -> void
+auto SetSetupRegister(hal::GpioPin * adcCsPin) -> void
 {
     // Setup register values
     // [7:6]: Register selection bits = 0b01
@@ -128,6 +130,8 @@ auto SetSetupRegister() -> void
     constexpr auto clockMode = 0b10_b << 4;
     constexpr auto referenceMode = 0b00_b;
     auto setupData = 0_b | setupRegister | clockMode | referenceMode;
+    adcCsPin->Reset();
     hal::WriteTo(&epsSpi, Span(setupData));
+    adcCsPin->Set();
 }
 }
