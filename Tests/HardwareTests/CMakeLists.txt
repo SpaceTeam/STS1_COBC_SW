@@ -15,6 +15,9 @@ target_link_libraries(
                                         Sts1CobcSw_Hal Sts1CobcSw_Edu
 )
 
+add_program(Eps Eps.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+
 add_program(FileSystem FileSystem.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_FileSystem PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
