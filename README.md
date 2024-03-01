@@ -183,10 +183,10 @@ cmake --build --preset=dev-cobc --target Sts1CobcSwTests_Fram
 The following ideas are mainly stolen from [P1204R0 – Canonical Project
 Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
 
-- "All" file and folder names uses UpperCamalCase (unfortunately cmake-init uses different
+- "All" file and folder names uses UpperCamelCase (unfortunately cmake-init uses different
   cases, so this is a lot to change and `docs/` or `cmake/` might stay in the wrong case
   for a while).
-- Top level directory is project name in UpperCamalCase or GitHub repo name (unfortunately
+- Top level directory is project name in UpperCamelCase or GitHub repo name (unfortunately
   we use a different naming convention with SHOUTING_CASE on GitHub).
 - Source code is in subdirectory named after the project (no GitHub name this time and no
   `Source` or `Include` folders).
