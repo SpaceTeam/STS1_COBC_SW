@@ -64,7 +64,7 @@ constexpr auto cmdSetProperty = 0x11_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // Command response lengths
-constexpr auto partInfoResponseLength = 8U;
+constexpr auto partInfoAnswerLength = 8U;
 
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
@@ -113,10 +113,9 @@ auto PowerUp(PowerUpBootOptions bootOptions,
                                 std::size_t length,
                                 std::uint8_t * responseData,
                                 std::size_t responseLength) -> void;
-auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void;
-template<std::size_t nResponseBytes>
-auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
-    -> std::array<Byte, nResponseBytes>;
+auto SendCommand(std::span<Byte const> data) -> void;
+template<std::size_t answerLength>
+auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 
 auto WaitForCts() -> void;
 auto SetTxType(TxType txType) -> void;
@@ -694,7 +693,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
          static_cast<Byte>(xoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
          static_cast<Byte>(xoFrequency)});
 
-    SendCommandNoResponse(Span(powerUpBuffer));
+    SendCommand(Span(powerUpBuffer));
 }
 
 
@@ -735,35 +734,28 @@ auto PowerUp(PowerUpBootOptions bootOptions,
 }
 
 
-auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void
+auto SendCommand(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
     AT(NOW() + csPinAfterResetPause);
-    hal::WriteTo(&spi, commandBuffer);
+    hal::WriteTo(&spi, data);
     AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
     WaitForCts();
 }
 
 
-template<std::size_t nResponseBytes>
-auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
-    -> std::array<Byte, nResponseBytes>
+template<std::size_t answerLength>
+auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
+    SendCommand(data);
+    auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
     AT(NOW() + csPinAfterResetPause);
-    hal::WriteTo(&spi, commandBuffer);
+    hal::ReadFrom(&spi, Span(&answer));
     AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
-
-    auto responseBuffer = std::array<Byte, nResponseBytes>{};
-    WaitForCts();
-    csGpioPin.Reset();
-    AT(NOW() + csPinAfterResetPause);
-    hal::ReadFrom(&spi, Span(&responseBuffer));
-    csGpioPin.Set();
-
-    return responseBuffer;
+    return answer;
 }
 
 
@@ -842,6 +834,6 @@ auto SetProperty(PropertyGroup propertyGroup,
         bufferIndex++;
     }
 
-    SendCommandNoResponse(setPropertyBuffer);
+    SendCommand(setPropertyBuffer);
 }
 }
