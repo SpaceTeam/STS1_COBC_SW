@@ -98,7 +98,7 @@ auto Initialize() -> void
     adc6CsGpioPin.Direction(hal::PinDirection::out);
     adc6CsGpioPin.Set();
 
-    constexpr auto baudrate = 10'000'000;
+    constexpr auto baudrate = 6'000'000;
     hal::Initialize(&spi, baudrate);
 
     // Setup ADCs
