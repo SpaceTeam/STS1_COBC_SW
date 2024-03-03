@@ -40,9 +40,9 @@ inline constexpr auto framEpsSpiSckPin = pc10;
 inline constexpr auto framEpsSpiMisoPin = pc11;
 inline constexpr auto framEpsSpiMosiPin = pc12;
 inline constexpr auto framCsPin = pb13;
-inline constexpr auto epsCs1Pin = pd2;
-inline constexpr auto epsCs2Pin = pb4;
-inline constexpr auto epsCs3Pin = pb5;
+inline constexpr auto epsAdc4CsPin = pd2;
+inline constexpr auto epsAdc5CsPin = pb4;
+inline constexpr auto epsAdc6CsPin = pb5;
 
 inline constexpr auto rfSpiIndex = RODOS::SPI_IDX2;
 inline constexpr auto rfSpiSckPin = pc7;

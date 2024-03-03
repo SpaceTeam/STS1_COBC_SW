@@ -7,6 +7,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+
 namespace sts1cobcsw::eps
 {
 // TODO: ask David F.
@@ -72,66 +73,66 @@ namespace sts1cobcsw::eps
 
 // --- Private globals ---
 
-// MAX11632EEG+T registers
-
-constexpr auto setupRegister = 1_b << 6;
-
 // Pins and SPI
 
-auto cs1GpioPin = hal::GpioPin(hal::epsCs1Pin);
-auto cs2GpioPin = hal::GpioPin(hal::epsCs2Pin);
-auto cs3GpioPin = hal::GpioPin(hal::epsCs3Pin);
-auto epsSpi = RODOS::HAL_SPI(
+auto adc4CsGpioPin = hal::GpioPin(hal::epsAdc4CsPin);
+auto adc5CsGpioPin = hal::GpioPin(hal::epsAdc5CsPin);
+auto adc6CsGpioPin = hal::GpioPin(hal::epsAdc6CsPin);
+auto spi = RODOS::HAL_SPI(
     hal::framEpsSpiIndex, hal::framEpsSpiSckPin, hal::framEpsSpiMisoPin, hal::framEpsSpiMosiPin);
 
 
 // --- Private function declarations ---
 
-auto SetSetupRegister(hal::GpioPin * adcCsPin) -> void;
+auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
 
 
 // --- Public function definitions ---
 
 auto Initialize() -> void
 {
-    cs1GpioPin.Direction(hal::PinDirection::out);
-    cs1GpioPin.Set();
-    cs2GpioPin.Direction(hal::PinDirection::out);
-    cs2GpioPin.Set();
-    cs3GpioPin.Direction(hal::PinDirection::out);
-    cs3GpioPin.Set();
+    adc4CsGpioPin.Direction(hal::PinDirection::out);
+    adc4CsGpioPin.Set();
+    adc5CsGpioPin.Direction(hal::PinDirection::out);
+    adc5CsGpioPin.Set();
+    adc6CsGpioPin.Direction(hal::PinDirection::out);
+    adc6CsGpioPin.Set();
 
-    // TODO: FRAM code sets baudrate to 12 MHz, Datasheet says max. 10 MHz
     constexpr auto baudrate = 10'000'000;
-    hal::Initialize(&epsSpi, baudrate);
+    hal::Initialize(&spi, baudrate);
 
     // Setup ADCs
-    SetSetupRegister(&cs1GpioPin);
-    SetSetupRegister(&cs2GpioPin);
-    SetSetupRegister(&cs3GpioPin);
+    ConfigureSetupRegister(&adc4CsGpioPin);
+    ConfigureSetupRegister(&adc5CsGpioPin);
+    ConfigureSetupRegister(&adc6CsGpioPin);
 }
 
 
 // --- Private function definitions ---
 
-auto SetSetupRegister(hal::GpioPin * adcCsPin) -> void
+auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
 {
     // Setup register values
     // [7:6]: Register selection bits = 0b01
     // [5:4]: Clock mode and CNVST configuration
     //      Don't use CNVST modes, we use the analog configuration for the CNVST pin
-    //      Therefore clock mode = 0b10 << 4
+    //      Therefore clock mode = 0b10 << 4: No CNVST, internal clock
     // [3:2]: Reference mode configuration
     //      Reference off after scan; need wake-up delay: 0b00
     //      Reference always on; no wake-up delay: 0b10
     // [1:0]: Don't care
 
-    // Changing to CNVST mode could be bad (analog input in digital pin)
-    constexpr auto clockMode = 0b10_b << 4;
+    constexpr auto setupRegister = 01_b;
+    constexpr auto clockMode = 0b10_b;
     constexpr auto referenceMode = 0b00_b;
-    auto setupData = 0_b | setupRegister | clockMode | referenceMode;
+    constexpr auto setupData = (setupRegister << 6) | (clockMode << 4) | (referenceMode << 2);
+
+    // Changing to CNVST mode could be bad (analog input in digital pin)
+    // So statically check that bit 5 is set to 1
+    static_assert((setupData & (1_b << 5)) > 0_b);  // NOLINT(*magic-numbers*)
+
     adcCsPin->Reset();
-    hal::WriteTo(&epsSpi, Span(setupData));
+    hal::WriteTo(&spi, Span(setupData));
     adcCsPin->Set();
 }
 }
