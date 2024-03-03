@@ -3,15 +3,18 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <bit>
 #include <climits>
 #include <span>
 
 
-namespace sts1cobcsw::periphery::rf
+namespace sts1cobcsw::rf
 {
 using RODOS::AT;
 using RODOS::MICROSECONDS;
@@ -62,11 +65,11 @@ constexpr auto cmdPowerUp = 0x02_b;
 constexpr auto cmdSetProperty = 0x11_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
-// Command response lengths
-constexpr auto partInfoResponseLength = 8U;
-
-// Check for this value when waiting for the Si4463 (WaitOnCts())
-constexpr auto readyCtsByte = 0xFF_b;
+// Command answer lengths
+// TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
+// this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
+// instead.
+constexpr auto partInfoAnswerLength = 8U;
 
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
@@ -84,6 +87,26 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
+// Pause values for pin setting/resetting and PoR
+// Jakob: Pause times are VERY generously overestimated
+// TODO: Patrick: Are those delays really necessary? I have never seen something like that for SPI
+// communication
+// TODO: Use delay instead of pause, because that's how we did it everywhere else
+// TODO: Do not use trailing comments since they cause line breaks
+constexpr auto csPinAfterResetPause =
+    20 * MICROSECONDS;  // Pause time after pulling NSEL (here CS) low
+constexpr auto csPinPreSetPause =
+    2 * MICROSECONDS;  // Pause time before pulling NSEL (here CS) high
+constexpr auto porRunningPause =
+    20 * MILLISECONDS;  // Pause time to wait for Power on Reset to finish
+constexpr auto porCircuitSettlePause =
+    100 * MILLISECONDS;  // Time until PoR circuit settles after applying power
+constexpr auto initialWaitForCtsDelay =
+    20 * MICROSECONDS;  // Pause time at the beginning of the CTS wait loop
+constexpr auto watchDogResetPinPause =
+    1 * MILLISECONDS;  // Pause time for the sequence reset -> pause -> set -> pause -> reset in
+                       // initialization
+
 
 // --- Private function declarations ---
 
@@ -96,12 +119,11 @@ auto PowerUp(PowerUpBootOptions bootOptions,
                                 std::size_t length,
                                 std::uint8_t * responseData,
                                 std::size_t responseLength) -> void;
-auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void;
-template<std::size_t nResponseBytes>
-auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
-    -> std::array<Byte, nResponseBytes>;
+auto SendCommand(std::span<Byte const> data) -> void;
+template<std::size_t answerLength>
+auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 
-auto WaitOnCts() -> void;
+auto WaitForCts() -> void;
 auto SetTxType(TxType txType) -> void;
 template<std::size_t nProperties>
     requires(nProperties >= 1 and nProperties <= maxNProperties)
@@ -621,14 +643,10 @@ auto Initialize(TxType txType) -> void
 }
 
 
-auto ReadPartInfo() -> std::uint16_t
+auto ReadPartNumber() -> std::uint16_t
 {
-    auto const sendBuffer = std::to_array<Byte>({cmdPartInfo});
-    auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(sendBuffer);
-
-    // NOLINTNEXTLINE(hicpp-signed-bitwise)
-    return static_cast<std::uint16_t>(static_cast<std::uint16_t>(responseBuffer[1]) << CHAR_BIT
-                                      | static_cast<std::uint16_t>(responseBuffer[2]));
+    auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
+    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
 }
 
 
@@ -649,24 +667,18 @@ auto InitializeGpioAndSpi() -> void
 
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
     watchdogResetGpioPin.Reset();
-    AT(NOW() + 1 * MILLISECONDS);
+    AT(NOW() + watchDogResetPinPause);
     watchdogResetGpioPin.Set();
-    AT(NOW() + 1 * MILLISECONDS);
+    AT(NOW() + watchDogResetPinPause);
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 10'000'000;
-    auto spiError = spi.init(baudrate, /*slave=*/false, /*tiMode=*/false);
-    if(spiError == -1)
-    {
-        RODOS::PRINTF("Error initializing RF SPI!\n");
-        // TODO: proper error handling
-        return;
-    }
+    hal::Initialize(&spi, baudrate);
 
     // Enable Si4463 and wait for PoR to finish
-    AT(NOW() + 100 * MILLISECONDS);
+    AT(NOW() + porCircuitSettlePause);
     sdnGpioPin.Reset();
-    AT(NOW() + 20 * MILLISECONDS);
+    AT(NOW() + porRunningPause);
 }
 
 
@@ -683,7 +695,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
          static_cast<Byte>(xoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
          static_cast<Byte>(xoFrequency)});
 
-    SendCommandNoResponse(powerUpBuffer);
+    SendCommand(Span(powerUpBuffer));
 }
 
 
@@ -694,22 +706,22 @@ auto PowerUp(PowerUpBootOptions bootOptions,
 {
     // RODOS::PRINTF("SendCommand()\n");
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
+    AT(NOW() + csPinAfterResetPause);
     spi.write(data, length);
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
 
     auto cts = std::to_array<uint8_t>({0x00, 0x00});
     auto req = std::to_array<uint8_t>({0x44, 0x00});
     do
     {
-        AT(NOW() + 20 * MICROSECONDS);
+        AT(NOW() + initialWaitForCtsDelay);
         csGpioPin.Reset();
-        AT(NOW() + 20 * MICROSECONDS);
+        AT(NOW() + csPinAfterResetPause);
         spi.writeRead(std::data(req), std::size(req), std::data(cts), std::size(cts));
         if(cts[1] != 0xFF)
         {
-            AT(NOW() + 2 * MICROSECONDS);
+            AT(NOW() + csPinPreSetPause);
             csGpioPin.Set();
         }
     } while(cts[1] != 0xFF);
@@ -719,68 +731,57 @@ auto PowerUp(PowerUpBootOptions bootOptions,
         spi.read(responseData, responseLength);
     }
 
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
 }
 
 
-auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void
+auto SendCommand(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
-    hal::WriteTo(&spi, commandBuffer);
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinAfterResetPause);
+    hal::WriteTo(&spi, data);
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
-    WaitOnCts();
-    // No response -> just set the CS pin again
-    csGpioPin.Set();
+    WaitForCts();
 }
 
 
-template<std::size_t nResponseBytes>
-auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
-    -> std::array<Byte, nResponseBytes>
+template<std::size_t answerLength>
+auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
+    SendCommand(data);
+    auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
-    hal::WriteTo(&spi, commandBuffer);
-    AT(NOW() + 2 * MICROSECONDS);
+    AT(NOW() + csPinAfterResetPause);
+    hal::ReadFrom(&spi, Span(&answer));
+    AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
-
-    auto responseBuffer = std::array<Byte, nResponseBytes>{};
-    WaitOnCts();
-    // WaitOnCts leaves CS pin low, read response afterwards
-    hal::ReadFrom(&spi, std::span<Byte, nResponseBytes>(responseBuffer));
-    csGpioPin.Set();
-
-    return responseBuffer;
+    return answer;
 }
 
 
 //! @brief Polls the CTS byte until 0xFF is received (i.e. Si4463 is ready for command).
-auto WaitOnCts() -> void
+auto WaitForCts() -> void
 {
-    auto sendBuffer = std::to_array<Byte>({cmdReadCmdBuff});
+    auto const dataIsReadyValue = 0xFF_b;
+    AT(NOW() + initialWaitForCtsDelay);
     do
     {
-        AT(NOW() + 20 * MICROSECONDS);
         csGpioPin.Reset();
-        AT(NOW() + 20 * MICROSECONDS);
-
-        hal::WriteTo(&spi, std::span<Byte const, std::size(sendBuffer)>(sendBuffer));
-        auto ctsBuffer = std::array<Byte, 1>{};
-        hal::ReadFrom(&spi, std::span<Byte, std::size(ctsBuffer)>(ctsBuffer));
-
-        if(ctsBuffer[0] != readyCtsByte)
-        {
-            AT(NOW() + 2 * MICROSECONDS);
-            csGpioPin.Set();
-        }
-        else
+        AT(NOW() + csPinAfterResetPause);
+        hal::WriteTo(&spi, Span(cmdReadCmdBuff));
+        auto cts = 0x00_b;
+        hal::ReadFrom(&spi, Span(&cts));
+        AT(NOW() + csPinPreSetPause);
+        csGpioPin.Set();
+        if(cts == dataIsReadyValue)
         {
             break;
         }
     } while(true);
+    // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
+    // RF code
 }
 
 
@@ -835,6 +836,6 @@ auto SetProperty(PropertyGroup propertyGroup,
         bufferIndex++;
     }
 
-    SendCommandNoResponse(setPropertyBuffer);
+    SendCommand(setPropertyBuffer);
 }
 }
