@@ -637,7 +637,7 @@ auto Initialize(TxType txType) -> void
 }
 
 
-auto ReadPartInfo() -> std::uint16_t
+auto ReadPartNumber() -> std::uint16_t
 {
     auto sendBuffer = std::to_array<Byte>({cmdPartInfo});
     auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(Span(sendBuffer));
