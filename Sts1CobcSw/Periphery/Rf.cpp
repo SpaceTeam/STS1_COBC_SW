@@ -66,9 +66,6 @@ constexpr auto cmdReadCmdBuff = 0x44_b;
 // Command response lengths
 constexpr auto partInfoResponseLength = 8U;
 
-// Check for this value when waiting for the Si4463 (WaitOnCts())
-constexpr auto readyCtsByte = 0xFF_b;
-
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 constexpr auto setPropertyHeaderSize = 4;
@@ -87,6 +84,10 @@ auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
 // Pause values for pin setting/resetting and PoR
 // Jakob: Pause times are VERY generously overestimated
+// TODO: Patrick: Are those delays really necessary? I have never seen something like that for SPI
+// communication
+// TODO: Use delay instead of pause, because that's how we did it everywhere else
+// TODO: Do not use trailing comments since they cause line breaks
 constexpr auto csPinAfterResetPause =
     20 * MICROSECONDS;  // Pause time after pulling NSEL (here CS) low
 constexpr auto csPinPreSetPause =
@@ -95,7 +96,7 @@ constexpr auto porRunningPause =
     20 * MILLISECONDS;  // Pause time to wait for Power on Reset to finish
 constexpr auto porCircuitSettlePause =
     100 * MILLISECONDS;  // Time until PoR circuit settles after applying power
-constexpr auto waitOnCtsStartPause =
+constexpr auto initialWaitForCtsDelay =
     20 * MICROSECONDS;  // Pause time at the beginning of the CTS wait loop
 constexpr auto watchDogResetPinPause =
     1 * MILLISECONDS;  // Pause time for the sequence reset -> pause -> set -> pause -> reset in
@@ -117,7 +118,7 @@ template<std::size_t nResponseBytes>
 auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
     -> std::array<Byte, nResponseBytes>;
 
-auto WaitOnCts() -> void;
+auto WaitForCts() -> void;
 auto SetTxType(TxType txType) -> void;
 template<std::size_t nProperties>
     requires(nProperties >= 1 and nProperties <= maxNProperties)
@@ -713,7 +714,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
     auto req = std::to_array<uint8_t>({0x44, 0x00});
     do
     {
-        AT(NOW() + waitOnCtsStartPause);
+        AT(NOW() + initialWaitForCtsDelay);
         csGpioPin.Reset();
         AT(NOW() + csPinAfterResetPause);
         spi.writeRead(std::data(req), std::size(req), std::data(cts), std::size(cts));
@@ -741,9 +742,7 @@ auto SendCommandNoResponse(std::span<Byte const> commandBuffer) -> void
     hal::WriteTo(&spi, commandBuffer);
     AT(NOW() + csPinPreSetPause);
     csGpioPin.Set();
-    WaitOnCts();
-    // No response -> just set the CS pin again
-    csGpioPin.Set();
+    WaitForCts();
 }
 
 
@@ -758,8 +757,9 @@ auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
     csGpioPin.Set();
 
     auto responseBuffer = std::array<Byte, nResponseBytes>{};
-    WaitOnCts();
-    // WaitOnCts leaves CS pin low, read response afterwards
+    WaitForCts();
+    csGpioPin.Reset();
+    AT(NOW() + csPinAfterResetPause);
     hal::ReadFrom(&spi, Span(&responseBuffer));
     csGpioPin.Set();
 
@@ -768,29 +768,26 @@ auto SendCommandWithResponse(std::span<Byte const> commandBuffer)
 
 
 //! @brief Polls the CTS byte until 0xFF is received (i.e. Si4463 is ready for command).
-auto WaitOnCts() -> void
+auto WaitForCts() -> void
 {
-    auto sendBuffer = std::to_array<Byte>({cmdReadCmdBuff});
+    auto const dataIsReadyValue = 0xFF_b;
+    AT(NOW() + initialWaitForCtsDelay);
     do
     {
-        AT(NOW() + waitOnCtsStartPause);
         csGpioPin.Reset();
         AT(NOW() + csPinAfterResetPause);
-
-        hal::WriteTo(&spi, Span(sendBuffer));
-        auto ctsBuffer = std::array<Byte, 1>{};
-        hal::ReadFrom(&spi, Span(&ctsBuffer));
-
-        if(ctsBuffer[0] != readyCtsByte)
-        {
-            AT(NOW() + csPinPreSetPause);
-            csGpioPin.Set();
-        }
-        else
+        hal::WriteTo(&spi, Span(cmdReadCmdBuff));
+        auto cts = 0x00_b;
+        hal::ReadFrom(&spi, Span(&cts));
+        AT(NOW() + csPinPreSetPause);
+        csGpioPin.Set();
+        if(cts == dataIsReadyValue)
         {
             break;
         }
     } while(true);
+    // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
+    // RF code
 }
 
 
