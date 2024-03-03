@@ -3,11 +3,13 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <bit>
 #include <climits>
 #include <span>
 
@@ -63,7 +65,10 @@ constexpr auto cmdPowerUp = 0x02_b;
 constexpr auto cmdSetProperty = 0x11_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
-// Command response lengths
+// Command answer lengths
+// TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
+// this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
+// instead.
 constexpr auto partInfoAnswerLength = 8U;
 
 // Max. number of properties that can be set in a single command
@@ -101,6 +106,7 @@ constexpr auto initialWaitForCtsDelay =
 constexpr auto watchDogResetPinPause =
     1 * MILLISECONDS;  // Pause time for the sequence reset -> pause -> set -> pause -> reset in
                        // initialization
+
 
 // --- Private function declarations ---
 
@@ -639,12 +645,8 @@ auto Initialize(TxType txType) -> void
 
 auto ReadPartNumber() -> std::uint16_t
 {
-    auto sendBuffer = std::to_array<Byte>({cmdPartInfo});
-    auto responseBuffer = SendCommandWithResponse<partInfoResponseLength>(Span(sendBuffer));
-
-    // NOLINTNEXTLINE(hicpp-signed-bitwise)
-    return static_cast<std::uint16_t>(static_cast<std::uint16_t>(responseBuffer[1]) << CHAR_BIT
-                                      | static_cast<std::uint16_t>(responseBuffer[2]));
+    auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
+    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
 }
 
 
