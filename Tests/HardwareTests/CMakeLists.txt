@@ -7,13 +7,18 @@ target_include_directories(
 )
 
 add_program(Crc32 Crc32.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSwTests_Utility)
+target_link_libraries(
+    Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSwTests_Utility
+)
 
 add_program(EduCommands EduCommands.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_EduCommands PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
                                         Sts1CobcSw_Hal Sts1CobcSw_Edu
 )
+
+add_program(Eps Eps.test.cpp)
+target_link_libraries(Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Periphery)
 
 add_program(FileSystem FileSystem.test.cpp)
 target_link_libraries(
@@ -36,7 +41,9 @@ add_program(Gpio Gpio.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Gpio PRIVATE rodos::rodos Sts1CobcSw_Hal)
 
 add_program(Rf Rf.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSwTests_Utility)
+target_link_libraries(
+    Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSwTests_Utility
+)
 
 add_program(Uart Uart.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Utility)
