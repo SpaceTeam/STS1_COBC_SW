@@ -675,7 +675,7 @@ auto InitializeGpioAndSpi() -> void
     AT(NOW() + watchDogResetPinDelay);
     watchdogResetGpioPin.Reset();
 
-    constexpr auto baudrate = 10'000'000;
+    constexpr auto baudrate = 6'000'000;
     hal::Initialize(&spi, baudrate);
 
     // Enable Si4463 and wait for PoR to finish
