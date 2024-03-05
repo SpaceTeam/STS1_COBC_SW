@@ -292,9 +292,10 @@ auto Initialize(TxType txType) -> void
 
     // RF Modem Mod Type
     SetTxType(txType);
+    // SetTxType sets modem properties from 0x00 to 0x05
     SetProperties(
         PropertyGroup::modem,
-        0x06_b,  // SetTxType sets modem properties from 0x00 to 0x05
+        0x06_b,
         Span({0x00_b,  // MODEM_TX_NCO_MODE: TXOSR=x10=0, NCOMOD=F_XTAL/10=2600000=0x027ac40
               0x27_b,
               0xAC_b,
