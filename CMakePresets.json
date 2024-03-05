@@ -138,13 +138,13 @@
     {
       "name": "ci-linux-x86",
       "binaryDir": "${sourceDir}/build/linux-x86",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix", "include-what-you-use"],
       "toolchainFile": "/linux-x86.cmake"
     },
     {
       "name": "ci-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix", "include-what-you-use"],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"
