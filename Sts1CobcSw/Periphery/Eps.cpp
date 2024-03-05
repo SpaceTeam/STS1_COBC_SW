@@ -122,7 +122,7 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
     //      Reference always on; no wake-up delay: 0b10
     // [1:0]: Don't care
 
-    constexpr auto setupRegister = 01_b;
+    constexpr auto setupRegister = 0b01_b;
     constexpr auto clockMode = 0b10_b;
     constexpr auto referenceMode = 0b00_b;
     constexpr auto setupData = (setupRegister << 6) | (clockMode << 4) | (referenceMode << 2);
