@@ -52,17 +52,6 @@
   { include: ["\"Sts1CobcSw/Edu/Structs.ipp\"",           "private", "<Sts1CobcSw/Edu/Structs.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Uart.ipp\"",              "private", "<Sts1CobcSw/Hal/Uart.hpp>", "public"] },
 
-  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.ipp\"", "private", "<Sts1CobcSw/FileSystem/FileSystem.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Hal/Spi.ipp\"",               "private", "<Sts1CobcSw/Hal/Spi.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Hal/GpioPin.ipp\"",           "private", "<Sts1CobcSw/Hal/GpioPin.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/Time.ipp\"",          "private", "<Sts1CobcSw/Utility/Time.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Periphery/Fram.ipp\"",        "private", "<Sts1CobcSw/Periphery/Fram.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Serial/Byte.ipp\"",           "private", "<Sts1CobcSw/Serial/Byte.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",         "private", "<Sts1CobcSw/Serial/Serial.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",          "private", "<Sts1CobcSw/Utility/Span.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Edu/Structs.ipp\"",           "private", "<Sts1CobcSw/Edu/Structs.ipp>", "public"] },
-  { include: ["\"Sts1CobcSw/Hal/Uart.ipp\"",              "private", "<Sts1CobcSw/Hal/Uart.ipp>", "public"] },
-
   { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"", "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Spi.hpp\"",               "public", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/GpioPin.hpp\"",           "public", "<Sts1CobcSw/Hal/GpioPin.hpp>", "public"] },
