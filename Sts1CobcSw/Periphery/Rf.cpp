@@ -627,15 +627,16 @@ auto ReadPartNumber() -> std::uint16_t
 auto SetTxType(TxType txType) -> void
 {
     // Constants for setting the TX type (morse, 2GFSK)
-    constexpr uint32_t dataRateMorse = 20'000U;  // MODEM_DATA_RATE: unused, 20k Baud
-    constexpr uint32_t dataRate2Gfsk =
-        9'600U;  // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE *
-                 // TXOSR)/F_XTAL_Hz = (9600 * 2600000 * 10)/26000000 = 9600 = 0x002580
+    // MODEM_DATA_RATE: unused, 20k Baud
+    constexpr uint32_t dataRateMorse = 20'000U;
+    // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR)/F_XTAL_Hz = (9600 *
+    // 2600000 * 10)/26000000 = 9600 = 0x002580
+    constexpr uint32_t dataRate2Gfsk = 9'600U;
 
-    constexpr auto modemModTypeMorse =
-        0x09_b;  // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
-    constexpr auto modemModType2Gfsk =
-        0x03_b;  // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
+    // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
+    constexpr auto modemModTypeMorse = 0x09_b;
+    // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
+    constexpr auto modemModType2Gfsk = 0x03_b;
 
     auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
