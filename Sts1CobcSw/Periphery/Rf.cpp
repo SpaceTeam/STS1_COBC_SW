@@ -641,15 +641,15 @@ auto SetTxType(TxType txType) -> void
     auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
 
-    auto propertyValues = std::to_array(
-        {modemModType,
-         0x00_b,
-         0x07_b,  // NOLINT(*magic-numbers*), Delta-Sigma Modulator (DSM) default config
-         static_cast<Byte>(dataRate >> (2 * CHAR_BIT)),  // NOLINT(hicpp-signed-bitwise)
-         static_cast<Byte>(dataRate >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
-         static_cast<Byte>(dataRate)});
-
-    SetProperties(PropertyGroup::modem, 0x00_b, Span(propertyValues));
+    SetProperties(
+        PropertyGroup::modem,
+        0x00_b,
+        Span({modemModType,
+              0x00_b,
+              0x07_b,  // NOLINT(*magic-numbers*), Delta-Sigma Modulator (DSM) default config
+              static_cast<Byte>(dataRate >> (2 * CHAR_BIT)),  // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(dataRate >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(dataRate)}));
 }
 
 
