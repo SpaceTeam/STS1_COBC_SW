@@ -92,19 +92,18 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
-// Pause values for pin setting/resetting and PoR
+// Pause values for watchdog reset pin and PoR
 // Jakob: Pause times are VERY generously overestimated
 // TODO: Patrick: Are those delays really necessary? I have never seen something like that for SPI
 // communication
-// TODO: Use delay instead of pause, because that's how we did it everywhere else
 // TODO: Do not use trailing comments since they cause line breaks
-constexpr auto porRunningDelay =
-    20 * MILLISECONDS;  // Pause time to wait for Power on Reset to finish
-constexpr auto porCircuitSettleDelay =
-    100 * MILLISECONDS;  // Time until PoR circuit settles after applying power
-constexpr auto watchDogResetPinDelay =
-    1 * MILLISECONDS;  // Pause time for the sequence reset -> pause -> set -> pause -> reset in
-                       // initialization
+
+// Pause time to wait for Power on Reset to finish
+constexpr auto porRunningDelay = 20 * MILLISECONDS;
+// Time until PoR circuit settles after applying power
+constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
+// Pause time for the sequence reset -> pause -> set -> pause -> reset in initialization
+constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 
 
 // --- Private function declarations ---
@@ -147,7 +146,7 @@ auto Initialize(TxType txType) -> void
     // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
     // Global XO Tune 2
     SetProperties(PropertyGroup::global,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x52_b,  // GLOBAL_XO_TUNE
                       0x00_b   // GLOBAL_CLK_CFG
@@ -163,14 +162,14 @@ auto Initialize(TxType txType) -> void
 
     // RF Int Ctl Enable
     SetProperties(PropertyGroup::intCtl,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x01_b  // INT_CTL: Enable packet handler interrupts
                   }));
 
     // TX Preamble Length
     SetProperties(PropertyGroup::preamble,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x00_b,  // PREAMBLE_TX_LENGTH: 0 bytes preamble
                       0x14_b,  // PREAMBLE_CONFIG_STD_1: Normal sync timeout,
@@ -190,7 +189,7 @@ auto Initialize(TxType txType) -> void
 
     // Sync word config
     SetProperties(PropertyGroup::sync,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x43_b,        // SYNC_CONFIG: Allow 4 bit sync word errors, 4 byte sync word
                       0b01011000_b,  // SYNC_BITS: Valid CCSDS TM sync word for
@@ -205,14 +204,14 @@ auto Initialize(TxType txType) -> void
 
     // CRC Config
     SetProperties(PropertyGroup::pkt,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x00_b  // PKT_CRC_CONFIG: No CRC
                   }));
 
     // Whitening and Packet Parameters
     SetProperties(PropertyGroup::pkt,
-                  /*startProperty=*/0x05_b,
+                  0x05_b,
                   Span({
                       0x00_b,  // PKT_WHT_BIT_NUM: Disable whitening
                       0x01_b   // PKT_CONFIG1: Don't split RX and TX field information (length,
@@ -222,7 +221,7 @@ auto Initialize(TxType txType) -> void
 
     // Pkt Length part 1
     SetProperties(PropertyGroup::pkt,
-                  /*startProperty=*/0x08_b,
+                  0x08_b,
                   Span({
                       0x60_b,  // PKT_LEN: Infinite receive, big endian (MSB first)
                       0x00_b,  // PKT_LEN_FIELD_SOURCE
@@ -242,7 +241,7 @@ auto Initialize(TxType txType) -> void
 
     // Pkt Length part 2
     SetProperties(PropertyGroup::pkt,
-                  /*startProperty=*/0x14_b,
+                  0x14_b,
                   Span({
                       0x00_b,  // PKT_FIELD_2_CRC_CONFIG
                       0x00_b,  // PKT_FIELD_3_LENGTH
@@ -260,7 +259,7 @@ auto Initialize(TxType txType) -> void
 
     // Pkt Length part 3
     SetProperties(PropertyGroup::pkt,
-                  /*startProperty=*/0x20_b,
+                  0x20_b,
                   Span({
                       0x00_b,  // PKT_FIELD_5_CRC_CONFIG
                       0x00_b,  // PKT_RX_FIELD_1_LENGTH
@@ -278,7 +277,7 @@ auto Initialize(TxType txType) -> void
 
     // Pkt Length part 4
     SetProperties(PropertyGroup::pkt,
-                  /*startProperty=*/0x2C_b,
+                  0x2C_b,
                   Span({
                       0x00_b,  // PKT_RX_FIELD_3_CRC_CONFIG
                       0x00_b,  // PKT_RX_FIELD_4_LENGTH
@@ -295,7 +294,7 @@ auto Initialize(TxType txType) -> void
     SetTxType(txType);
     SetProperties(
         PropertyGroup::modem,
-        /*startProperty=*/0x06_b,  // SetTxType sets modem properties from 0x00 to 0x05
+        0x06_b,  // SetTxType sets modem properties from 0x00 to 0x05
         Span({0x00_b,  // MODEM_TX_NCO_MODE: TXOSR=x10=0, NCOMOD=F_XTAL/10=2600000=0x027ac40
               0x27_b,
               0xAC_b,
@@ -310,7 +309,7 @@ auto Initialize(TxType txType) -> void
     // Cfg
     SetProperties(
         PropertyGroup::modem,
-        /*startProperty=*/0x18_b,
+        0x18_b,
         Span({
             0x01_b,  // MODEM_TX_RAMP_DELAY: Ramp Delay 1
             0x80_b,  // MODEM_MDM_CTRL: Slicer phase source from detector's output
@@ -334,7 +333,7 @@ auto Initialize(TxType txType) -> void
     // TODO: What values to use here?
     SetProperties(
         PropertyGroup::modem,
-        /*startProperty=*/0x22_b,
+        0x22_b,
         Span({
             0x03_b,  // MODEM_BCR_OSR: RX symbol oversampling rate of 0x30D/8 = 781/8
                      // = 97.625 (According to the datasheet usual values are in the range
@@ -359,7 +358,7 @@ auto Initialize(TxType txType) -> void
     // TODO: What values to use here?
     SetProperties(
         PropertyGroup::modem,
-        /*startProperty=*/0x2C_b,
+        0x2C_b,
         Span({
             0x04_b,  // MODEM_AFC_GEAR: AFC_SLOW gain 4, AFC_FAST gain 0, Switch gear
                      // after detection of preamble
@@ -381,7 +380,7 @@ auto Initialize(TxType txType) -> void
     // TODO: What values to use here?
     SetProperties(
         PropertyGroup::modem,
-        /*startProperty=*/0x35_b,
+        0x35_b,
         Span({
             0xE2_b  // MODEM_AGC_CONTROL: reset peak detectors only on change of gain
                     // indicated by peak detector output, reduce ADC gain when AGC gain is at
@@ -394,7 +393,7 @@ auto Initialize(TxType txType) -> void
     // Gain, 4FSK Slicer Threshold, 4FSK SYmbol Mapping Code, OOK Attack/Decay Times
     // TODO: What values to use here?
     SetProperties(PropertyGroup::modem,
-                  /*startProperty=*/0x38_b,
+                  0x38_b,
                   Span({
                       0x11_b,  // MODEM_AGC_WINDOW_SIZE: AGC gain settling window size = 1, AGC
                                // signal level measurement window = 1
@@ -413,7 +412,7 @@ auto Initialize(TxType txType) -> void
     // Antenna Diversity Control, RSSI Threshold
     SetProperties(
         PropertyGroup::modem,
-        /*startProperty=*/0x42_b,
+        0x42_b,
         Span({
             0xA4_b,  // MODEM_OOK_CNT1: OOK Squelch off, OOK slicer output de-glitching by bit
                      // clock, raw output is synced to clock, MA_FREQUDOWN=0, AGC and OOK movign
@@ -434,7 +433,7 @@ auto Initialize(TxType txType) -> void
 
     // RF Modem RSSI Control
     SetProperties(PropertyGroup::modem,
-                  /*startProperty=*/0x4C_b,
+                  0x4C_b,
                   Span({
                       0x00_b  // MODEM_RSSI_CONTROL: Disable RSSI latch, RSSI value is avg over
                               // last 4*Tb bit periods, disable RSSI threshold check after latch
@@ -443,14 +442,14 @@ auto Initialize(TxType txType) -> void
     // RF Modem RSSI Compensation
     // TODO: Measure this
     SetProperties(PropertyGroup::modem,
-                  /*startProperty=*/0x4E_b,
+                  0x4E_b,
                   Span({
                       0x40_b  // MODEM_RSSI_COMP: Compensation/offset of measured RSSI value
                   }));
 
     // RF Modem Clock generation Band
     SetProperties(PropertyGroup::modem,
-                  /*startProperty=*/0x51_b,
+                  0x51_b,
                   Span({
                       0x0A_b  // MODEM_CLKGEN_BAND: Band = FVCO_DIV_8, high performance mode fixed
                               // prescaler div2, force recalibration
@@ -459,7 +458,7 @@ auto Initialize(TxType txType) -> void
     // RX Filter Coefficients
     // TODO: What values to use here?
     SetProperties(PropertyGroup::modemChflt,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0xFF_b,  // RX1_CHFLT_COE13[7:0]
                       0xC4_b,  // RX1_CHFLT_COE12[7:0]
@@ -477,7 +476,7 @@ auto Initialize(TxType txType) -> void
 
     SetProperties(
         PropertyGroup::modemChflt,
-        /*startProperty=*/0x0C_b,
+        0x0C_b,
         Span({
             0x03_b,  // RX1_CHFLT_COE1[7:0]
             0x00_b,  // RX1_CHFLT_COE0[7:0]
@@ -498,7 +497,7 @@ auto Initialize(TxType txType) -> void
 
     SetProperties(
         PropertyGroup::modemChflt,
-        /*startProperty=*/0x18_b,
+        0x18_b,
         Span({
             0xB8_b,  // RX2_CHFLT_COE7[7:0]
             0xDE_b,  // RX2_CHFLT_COE6[7:0]
@@ -519,7 +518,7 @@ auto Initialize(TxType txType) -> void
 
     // RF PA Mode
     SetProperties(PropertyGroup::pa,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x08_b,  // PA_MODE: PA switching amp mode, PA_SEL = HP_COARSE, disable power
                                // sequencing, disable external TX ramp signal
@@ -535,7 +534,7 @@ auto Initialize(TxType txType) -> void
     // Scaling Factor, FF Loop Filter Values
     // TODO: What values to use here?
     SetProperties(PropertyGroup::synth,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x2C_b,  // SYNTH_PFDCP_CPFF: FF charge pump current = 60µA
                       0x0E_b,  // SYNTH_PFDCP_CPINT: Int charge pump current = 30µA
@@ -549,7 +548,7 @@ auto Initialize(TxType txType) -> void
 
     // RF Match Mask
     SetProperties(PropertyGroup::match,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x00_b,  // MATCH_VALUE_1
                       0x00_b,  // MATCH_MASK_1
@@ -568,7 +567,7 @@ auto Initialize(TxType txType) -> void
     // Frequency Control
     SetProperties(
         PropertyGroup::freqControl,
-        /*startProperty=*/0x00_b,
+        0x00_b,
         Span({
             0x41_b,  // FREQ_CONTROL_INTE: FC_inte = 0x41
             0x0E_b,  // FREQ_CONTROL_FRAC: FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5
@@ -597,7 +596,7 @@ auto Initialize(TxType txType) -> void
 
     // Frequency Adjust (stolen from Arduino demo code)
     SetProperties(PropertyGroup::global,
-                  /*startProperty=*/0x00_b,
+                  0x00_b,
                   Span({
                       0x62_b  // GLOBAL_XO_TUNE
                   }));
@@ -605,7 +604,7 @@ auto Initialize(TxType txType) -> void
     // Change sequencer mode to guaranteed
     // TODO: Why?
     SetProperties(PropertyGroup::global,
-                  /*startProperty=*/0x03_b,
+                  0x03_b,
                   Span({
                       0x40_b  // GLOBAL_CONFIG: Split FIFO and guaranteed sequencer mode
                   }));
