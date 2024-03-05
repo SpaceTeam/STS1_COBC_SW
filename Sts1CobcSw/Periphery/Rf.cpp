@@ -688,16 +688,14 @@ auto PowerUp(PowerUpBootOptions bootOptions,
              PowerUpXtalOptions xtalOptions,
              std::uint32_t xoFrequency) -> void
 {
-    auto const powerUpBuffer = std::to_array<Byte>(
-        {cmdPowerUp,
-         static_cast<Byte>(bootOptions),
-         static_cast<Byte>(xtalOptions),
-         static_cast<Byte>(xoFrequency >> (CHAR_BIT * 3)),  // NOLINT(hicpp-signed-bitwise)
-         static_cast<Byte>(xoFrequency >> (CHAR_BIT * 2)),  // NOLINT(hicpp-signed-bitwise)
-         static_cast<Byte>(xoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
-         static_cast<Byte>(xoFrequency)});
-
-    SendCommand(Span(powerUpBuffer));
+    SendCommand(
+        Span({cmdPowerUp,
+              static_cast<Byte>(bootOptions),
+              static_cast<Byte>(xtalOptions),
+              static_cast<Byte>(xoFrequency >> (CHAR_BIT * 3)),  // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(xoFrequency >> (CHAR_BIT * 2)),  // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(xoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(xoFrequency)}));
 }
 
 
