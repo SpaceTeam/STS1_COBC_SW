@@ -98,16 +98,10 @@ auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 // communication
 // TODO: Use delay instead of pause, because that's how we did it everywhere else
 // TODO: Do not use trailing comments since they cause line breaks
-constexpr auto csPinAfterResetDelay =
-    20 * MICROSECONDS;  // Pause time after pulling NSEL (here CS) low
-constexpr auto csPinPreSetDelay =
-    2 * MICROSECONDS;  // Pause time before pulling NSEL (here CS) high
 constexpr auto porRunningDelay =
     20 * MILLISECONDS;  // Pause time to wait for Power on Reset to finish
 constexpr auto porCircuitSettleDelay =
     100 * MILLISECONDS;  // Time until PoR circuit settles after applying power
-constexpr auto initialWaitForCtsDelay =
-    20 * MICROSECONDS;  // Pause time at the beginning of the CTS wait loop
 constexpr auto watchDogResetPinDelay =
     1 * MILLISECONDS;  // Pause time for the sequence reset -> pause -> set -> pause -> reset in
                        // initialization
@@ -710,9 +704,7 @@ auto PowerUp(PowerUpBootOptions bootOptions,
 auto SendCommand(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
-    AT(NOW() + csPinAfterResetDelay);
     hal::WriteTo(&spi, data);
-    AT(NOW() + csPinPreSetDelay);
     csGpioPin.Set();
     WaitForCts();
 }
@@ -724,9 +716,7 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
     SendCommand(data);
     auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
-    AT(NOW() + csPinAfterResetDelay);
     hal::ReadFrom(&spi, Span(&answer));
-    AT(NOW() + csPinPreSetDelay);
     csGpioPin.Set();
     return answer;
 }
@@ -736,15 +726,12 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 auto WaitForCts() -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
-    AT(NOW() + initialWaitForCtsDelay);
     do
     {
         csGpioPin.Reset();
-        AT(NOW() + csPinAfterResetDelay);
         hal::WriteTo(&spi, Span(cmdReadCmdBuff));
         auto cts = 0x00_b;
         hal::ReadFrom(&spi, Span(&cts));
-        AT(NOW() + csPinPreSetDelay);
         csGpioPin.Set();
         if(cts == dataIsReadyValue)
         {
