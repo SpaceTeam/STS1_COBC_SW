@@ -129,6 +129,33 @@ your CPU. In general, `CMakeUserPresets.json` is the perfect place in which you 
 all sorts of things that depend on your personal setup or preference, and that you would
 otherwise want to pass to the CMake command in the terminal.
 
+### include-what-you-use
+
+To ensure that source files include only the header they need, we use the
+"include-what-you-use" program, built on top of clang.
+
+IWYU supports a [mapping file] (https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md) for more precise configuration, allowing us to make sure it works the way we want it to.
+
+Thus, for each pair of implementation (`.ipp`) and header (`.hpp`) files :
+
+* The implementation file must be mapped to the corresponding header file. This ensures that only the `.hpp` file gets included.
+```
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"", "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
+```
+
+* The header file needs to be mapped to be using bracket instead of quotes.
+```
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"", "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
+```
+
+* Finally, the header file needs to add a pragma when including its implementation file, as shown below :
+```
+#include <Sts1CobcSw/Hal/Uart.ipp>  // IWYU pragma: keep
+```
+
+The complete mapping file is called `iwyu.imp` and is located in the top level directory.
+
+
 
 ### Configure, build and test
 
