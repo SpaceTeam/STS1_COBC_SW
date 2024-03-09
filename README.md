@@ -129,32 +129,38 @@ your CPU. In general, `CMakeUserPresets.json` is the perfect place in which you 
 all sorts of things that depend on your personal setup or preference, and that you would
 otherwise want to pass to the CMake command in the terminal.
 
-### include-what-you-use
 
-To ensure that source files include only the header they need, we use the
-"include-what-you-use" program, built on top of clang.
+### Include What You Use
 
-IWYU supports a [mapping file] (https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md) for more precise configuration, allowing us to make sure it works the way we want it to.
+To ensure that source files include only the header files they need, we use [Include What
+You Use (IWYU)](https://github.com/include-what-you-use/include-what-you-use), a tool
+built on top of Clang. IWYU supports a [mapping
+file](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md)
+for more precise configuration, allowing us to make sure it works the way we want it to.
+In particular, this means that we have to do the following additional steps when adding a
+header (`.hpp`) or inline implementation (`.ipp`) file:
 
-Thus, for each pair of implementation (`.ipp`) and header (`.hpp`) files :
+- Add a line to the mappings file to ensure that the header file gets included with angle
+  brackets instead of quotes.
 
-* The implementation file must be mapped to the corresponding header file. This ensures that only the `.hpp` file gets included.
-```
-  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"", "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
-```
+  ~~~
+  { include: ["\"Sts1CobcSw/Hal/Spi.hpp\"", "public", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
+  ~~~
 
-* The header file needs to be mapped to be using bracket instead of quotes.
-```
-  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"", "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
-```
+- Add a line to the mappings file to ensure that the `.ipp` file is mapped to the
+  corresponding `.hpp` file. This ensures that only the `.hpp` file gets included.
 
-* Finally, the header file needs to add a pragma when including its implementation file, as shown below :
-```
-#include <Sts1CobcSw/Hal/Uart.ipp>  // IWYU pragma: keep
-```
+  ~~~
+  { include: ["\"Sts1CobcSw/Hal/Spi.ipp\"", "private", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
+  ~~~
 
-The complete mapping file is called `iwyu.imp` and is located in the top level directory.
+- Add a pragma when including the corresponding `.ipp` file in the `.hpp` file:
 
+  ~~~
+  #include <Sts1CobcSw/Hal/Spi.ipp>  // IWYU pragma: keep
+  ~~~
+
+The complete mapping file is called `iwyu.imp` and is located in the top-level directory.
 
 
 ### Configure, build and test
@@ -163,7 +169,8 @@ The following instructions assume that you added the above `CMakeUserPresets.jso
 that the commands are executed from within the Docker container. This is easy with VS Code
 since it allows directly [developing inside a
 container](https://code.visualstudio.com/docs/devcontainers/containers). If you don't use
-VS Code you must execute all commands via `docker run`. In this case it is convenient to use an alias like the following:
+VS Code you must execute all commands via `docker run`. In this case it is convenient to
+use an alias like the following:
 
 ~~~shell
 # Version 1: always mounts the STS1_COBC_SW folder
