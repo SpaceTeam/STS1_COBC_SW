@@ -15,4 +15,4 @@ constexpr auto operator"" _b(unsigned long long number) -> Byte;
 }
 
 
-#include <Sts1CobcSw/Serial/Byte.ipp>
+#include <Sts1CobcSw/Serial/Byte.ipp>  // IWYU pragma: keep

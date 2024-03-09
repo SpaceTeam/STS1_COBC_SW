@@ -1,4 +1,3 @@
-#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>

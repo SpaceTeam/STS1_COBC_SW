@@ -3,6 +3,8 @@
 
 #include <Sts1CobcSw/Hal/Spi.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 
 namespace sts1cobcsw::hal
 {

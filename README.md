@@ -1,7 +1,7 @@
 # STS1 COBC SW
 
 This project contains the software for the communication and onboard computer (COBC) of
-Space Team Satellite 1 (STS1).
+SpaceTeamSat1 (STS1).
 
 ## Contents
 
@@ -54,7 +54,8 @@ Docker image, the file should look something like the following:
           "dev-mode",
           "clang-tidy",
           "cppcheck",
-          "ci-unix"
+          "ci-unix",
+          "include-what-you-use"
         ],
         "generator": "Ninja",
         "cacheVariables": {
@@ -129,13 +130,47 @@ all sorts of things that depend on your personal setup or preference, and that y
 otherwise want to pass to the CMake command in the terminal.
 
 
+### Include What You Use
+
+To ensure that source files include only the header files they need, we use [Include What
+You Use (IWYU)](https://github.com/include-what-you-use/include-what-you-use), a tool
+built on top of Clang. IWYU supports a [mapping
+file](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md)
+for more precise configuration, allowing us to make sure it works the way we want it to.
+In particular, this means that we have to do the following additional steps when adding a
+header (`.hpp`) or inline implementation (`.ipp`) file:
+
+- Add a line to the mappings file to ensure that the header file gets included with angle
+  brackets instead of quotes.
+
+  ~~~
+  { include: ["\"Sts1CobcSw/Hal/Spi.hpp\"", "public", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
+  ~~~
+
+- Add a line to the mappings file to ensure that the `.ipp` file is mapped to the
+  corresponding `.hpp` file. This ensures that only the `.hpp` file gets included.
+
+  ~~~
+  { include: ["\"Sts1CobcSw/Hal/Spi.ipp\"", "private", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
+  ~~~
+
+- Add a pragma when including the corresponding `.ipp` file in the `.hpp` file:
+
+  ~~~
+  #include <Sts1CobcSw/Hal/Spi.ipp>  // IWYU pragma: keep
+  ~~~
+
+The complete mapping file is called `iwyu.imp` and is located in the top-level directory.
+
+
 ### Configure, build and test
 
 The following instructions assume that you added the above `CMakeUserPresets.json` and
 that the commands are executed from within the Docker container. This is easy with VS Code
 since it allows directly [developing inside a
 container](https://code.visualstudio.com/docs/devcontainers/containers). If you don't use
-VS Code you must execute all commands via `docker run`. In this case it is convenient to use an alias like the following:
+VS Code you must execute all commands via `docker run`. In this case it is convenient to
+use an alias like the following:
 
 ~~~shell
 # Version 1: always mounts the STS1_COBC_SW folder

@@ -22,4 +22,4 @@ auto ReadFrom(RODOS::HAL_SPI * spi, std::span<T, extent> data) -> void;
 }
 
 
-#include <Sts1CobcSw/Hal/Spi.ipp>
+#include <Sts1CobcSw/Hal/Spi.ipp>  // IWYU pragma: keep

@@ -44,6 +44,13 @@
       }
     },
     {
+      "name": "include-what-you-use",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_INCLUDE_WHAT_YOU_USE": "include-what-you-use;-Xiwyu;--mapping_file=${sourceDir}/iwyu.imp;-Xiwyu;--no_fwd_decls"
+      }
+    },
+    {
       "name": "cpp-std",
       "description": "This preset makes sure the project actually builds with at least the specified standard",
       "hidden": true,
@@ -131,13 +138,13 @@
     {
       "name": "ci-linux-x86",
       "binaryDir": "${sourceDir}/build/linux-x86",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix", "include-what-you-use"],
       "toolchainFile": "/linux-x86.cmake"
     },
     {
       "name": "ci-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix"],
+      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix", "include-what-you-use"],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"

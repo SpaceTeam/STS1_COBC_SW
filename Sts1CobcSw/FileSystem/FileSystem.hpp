@@ -37,4 +37,4 @@ auto Ls(char const * path) -> int;
 }
 
 
-#include <Sts1CobcSw/FileSystem/FileSystem.ipp>
+#include <Sts1CobcSw/FileSystem/FileSystem.ipp>  // IWYU pragma: keep

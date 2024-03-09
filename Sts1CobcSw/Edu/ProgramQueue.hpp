@@ -1,19 +1,13 @@
 #pragma once
 
 
-// clang-format off
-#include <cstdint>
-// ringbuffer.h does not include <cstdint> even though it requires it
-#include <rodos/support/support-libs/ringbuffer.h>
-// clang-format on
-
-#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
-#include <etl/string.h>
 #include <etl/vector.h>
 
+#include <bit>
 #include <cstddef>
+#include <cstdint>
 
 
 namespace sts1cobcsw

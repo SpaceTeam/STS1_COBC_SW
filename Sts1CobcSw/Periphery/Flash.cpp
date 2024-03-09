@@ -8,9 +8,8 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <algorithm>
+#include <array>
 #include <bit>
-#include <string_view>
 
 
 namespace sts1cobcsw

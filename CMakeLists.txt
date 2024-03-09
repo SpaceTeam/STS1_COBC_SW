@@ -5,7 +5,7 @@ include(cmake/prelude.cmake)
 project(
     Sts1CobcSw
     VERSION 0.1.0
-    DESCRIPTION "Software for the Communication and onboard computer of Space Team Sat 1"
+    DESCRIPTION "Software for the Communication and onboard computer of SpaceTeamSat1"
     HOMEPAGE_URL "https://github.com/SpaceTeam/STS1_COBC_SW"
     LANGUAGES CXX
 )
