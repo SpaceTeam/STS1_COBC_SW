@@ -104,7 +104,7 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 auto WaitForCts() -> void;
 
 auto SetProperties(PropertyGroup propertyGroup,
-                   Byte startProperty,
+                   Byte startIndex,
                    std::span<Byte const> propertyValues) -> void;
 
 
@@ -614,25 +614,29 @@ auto SetTxType(TxType txType) -> void
     // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR)/F_XTAL_Hz = (9600 *
     // 2600000 * 10)/26000000 = 9600 = 0x002580
     constexpr uint32_t dataRate2Gfsk = 9'600U;
-
     // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
     constexpr auto modemModTypeMorse = 0x09_b;
     // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
     constexpr auto modemModType2Gfsk = 0x03_b;
+    constexpr auto nProperties = 6;
+    constexpr auto startIndex = 0x00_b;
+    // Inconsistend naming pattern due to strict adherence to datasheet
+    constexpr auto modemMapControl = 0x00_b;
+    constexpr auto modemDsmCtrl = 0x07_b;
 
     auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
 
-    // TODO: Use serialize/deserialize
-    SetProperties(
-        PropertyGroup::modem,
-        0x00_b,
-        Span({modemModType,
-              0x00_b,
-              0x07_b,  // NOLINT(*magic-numbers*), Delta-Sigma Modulator (DSM) default config
-              static_cast<Byte>(dataRate >> (2 * CHAR_BIT)),  // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(dataRate >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(dataRate)}));
+    auto propertyValues = std::array<Byte, nProperties>{};
+    propertyValues[0] = modemModType;
+    propertyValues[1] = modemMapControl;
+    propertyValues[2] = modemDsmCtrl;
+    auto dataRateBytes = Serialize<std::endian::big, std::uint32_t>(dataRate);
+
+    // Ignore first byte, data rate is 3 bytes wide
+    std::copy(
+        std::begin(dataRateBytes) + 1, std::end(dataRateBytes), std::begin(propertyValues) + 3);
+    SetProperties(PropertyGroup::modem, startIndex, propertyValues);
 }
 
 
@@ -669,16 +673,17 @@ auto PowerUp() -> void
     constexpr auto bootOption = 0x01_b;
     constexpr auto xtalOption = 0x00_b;
     constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
+    constexpr auto commandLength = 7;
 
-    // TODO: Use serialize/deserialize
-    SendCommand(
-        Span({cmdPowerUp,
-              bootOption,
-              xtalOption,
-              static_cast<Byte>(powerUpXoFrequency >> (CHAR_BIT * 3)),  // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(powerUpXoFrequency >> (CHAR_BIT * 2)),  // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(powerUpXoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(powerUpXoFrequency)}));
+    auto commandBuffer = std::array<Byte, commandLength>{};
+    commandBuffer[0] = cmdPowerUp;
+    commandBuffer[1] = bootOption;
+    commandBuffer[2] = xtalOption;
+    auto xoFrequencyBytes = Serialize<std::endian::big, std::uint32_t>(powerUpXoFrequency);
+    std::copy(
+        std::begin(xoFrequencyBytes), std::end(xoFrequencyBytes), std::begin(commandBuffer) + 3);
+
+    SendCommand(commandBuffer);
 }
 
 
@@ -725,7 +730,7 @@ auto WaitForCts() -> void
 
 
 auto SetProperties(PropertyGroup propertyGroup,
-                   Byte startProperty,
+                   Byte startIndex,
                    std::span<Byte const> propertyValues) -> void
 {
     auto setPropertiesBuffer = std::array<Byte, setPropertiesHeaderSize + maxNProperties>{};
@@ -735,7 +740,7 @@ auto SetProperties(PropertyGroup propertyGroup,
     setPropertiesBuffer[0] = cmdSetProperty;
     setPropertiesBuffer[1] = static_cast<Byte>(propertyGroup);
     setPropertiesBuffer[2] = static_cast<Byte>(nProperties);
-    setPropertiesBuffer[3] = startProperty;
+    setPropertiesBuffer[3] = startIndex;
 
     std::copy(std::begin(propertyValues),
               std::end(propertyValues),
