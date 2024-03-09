@@ -26,20 +26,6 @@ using RODOS::MILLISECONDS;
 using RODOS::NOW;
 
 
-enum class PowerUpBootOptions : std::uint8_t
-{
-    noPatch = 0x01,
-    patch = 0x81
-};
-
-
-enum class PowerUpXtalOptions : std::uint8_t
-{
-    xtal = 0x00,  // Reference signal is derived from the internal crystal oscillator
-    txco = 0x01   // Reference signal is derived from an external TCXO
-};
-
-
 enum class PropertyGroup : std::uint8_t
 {
     global = 0x00,       //
@@ -60,8 +46,6 @@ enum class PropertyGroup : std::uint8_t
 
 
 // --- Private globals ---
-
-constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
 
 // Si4463 commands
 constexpr auto cmdPartInfo = 0x01_b;
@@ -110,9 +94,7 @@ constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 
 auto InitializeGpioAndSpi() -> void;
 
-auto PowerUp(PowerUpBootOptions bootOptions,
-             PowerUpXtalOptions xtalOptions,
-             std::uint32_t xoFrequency) -> void;
+auto PowerUp() -> void;
 
 auto SendCommand(std::span<Byte const> data) -> void;
 
@@ -138,7 +120,7 @@ auto Initialize(TxType txType) -> void
 
     InitializeGpioAndSpi();
 
-    PowerUp(PowerUpBootOptions::noPatch, PowerUpXtalOptions::xtal, powerUpXoFrequency);
+    PowerUp();
 
     // GPIO Pin Cfg
     SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
@@ -641,6 +623,7 @@ auto SetTxType(TxType txType) -> void
     auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
 
+    // TODO: Use serialize/deserialize
     SetProperties(
         PropertyGroup::modem,
         0x00_b,
@@ -659,15 +642,11 @@ auto InitializeGpioAndSpi() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
-
     nirqGpioPin.Direction(hal::PinDirection::in);
-
     sdnGpioPin.Direction(hal::PinDirection::out);
     sdnGpioPin.Set();
-
     gpio0GpioPin.Direction(hal::PinDirection::out);
     gpio0GpioPin.Reset();
-
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
     watchdogResetGpioPin.Reset();
     AT(NOW() + watchDogResetPinDelay);
@@ -685,18 +664,21 @@ auto InitializeGpioAndSpi() -> void
 }
 
 
-auto PowerUp(PowerUpBootOptions bootOptions,
-             PowerUpXtalOptions xtalOptions,
-             std::uint32_t xoFrequency) -> void
+auto PowerUp() -> void
 {
+    constexpr auto bootOption = 0x01_b;
+    constexpr auto xtalOption = 0x00_b;
+    constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
+
+    // TODO: Use serialize/deserialize
     SendCommand(
         Span({cmdPowerUp,
-              static_cast<Byte>(bootOptions),
-              static_cast<Byte>(xtalOptions),
-              static_cast<Byte>(xoFrequency >> (CHAR_BIT * 3)),  // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(xoFrequency >> (CHAR_BIT * 2)),  // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(xoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
-              static_cast<Byte>(xoFrequency)}));
+              bootOption,
+              xtalOption,
+              static_cast<Byte>(powerUpXoFrequency >> (CHAR_BIT * 3)),  // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(powerUpXoFrequency >> (CHAR_BIT * 2)),  // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(powerUpXoFrequency >> (CHAR_BIT)),      // NOLINT(hicpp-signed-bitwise)
+              static_cast<Byte>(powerUpXoFrequency)}));
 }
 
 
