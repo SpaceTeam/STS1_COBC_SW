@@ -734,7 +734,7 @@ auto SetProperties(PropertyGroup propertyGroup,
                    std::span<Byte const> propertyValues) -> void
 {
     auto setPropertiesBuffer = std::array<Byte, setPropertiesHeaderSize + maxNProperties>{};
-    auto nProperties = std::size(propertyValues);
+    auto nProperties = propertyValues.size();
     auto bytesToSend = setPropertiesHeaderSize + nProperties;
 
     setPropertiesBuffer[0] = cmdSetProperty;
