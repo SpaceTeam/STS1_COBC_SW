@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -95,6 +96,9 @@ auto adc6CsGpioPin = hal::GpioPin(hal::epsAdc6CsPin);
 auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
 auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
+auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void;
+
+auto ReadAdc(hal::GpioPin * adcCsPin, std::span<Byte, adcDataLength> adcData) -> void;
 
 // --- Public function definitions ---
 
@@ -114,6 +118,23 @@ auto Initialize() -> void
     ConfigureSetupRegister(&adc4CsGpioPin);
     ConfigureSetupRegister(&adc5CsGpioPin);
     ConfigureSetupRegister(&adc6CsGpioPin);
+
+    // Set averaging mode
+    ConfigureAveragingRegister(&adc4CsGpioPin);
+    ConfigureAveragingRegister(&adc5CsGpioPin);
+    ConfigureAveragingRegister(&adc6CsGpioPin);
+}
+
+
+auto Read() -> std::array<Byte, adcDataLength * nAdcs>
+{
+    auto sensorData = std::array<Byte, adcDataLength * nAdcs>{};
+
+    ReadAdc(&adc4CsGpioPin, Span(&sensorData).subspan<0, adcDataLength>());
+    ReadAdc(&adc5CsGpioPin, Span(&sensorData).subspan<adcDataLength, adcDataLength>());
+    ReadAdc(&adc6CsGpioPin, Span(&sensorData).subspan<2 * adcDataLength, adcDataLength>());
+
+    return sensorData;
 }
 
 
@@ -140,15 +161,15 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
     // Setup register values
     // [7:6]: Register selection bits = 0b01
     // [5:4]: Clock mode and CNVST configuration
-    //      Don't use CNVST modes, we use the analog configuration for the CNVST pin
-    //      Therefore clock mode = 0b10 << 4: No CNVST, internal clock
     // [3:2]: Reference mode configuration
-    //      Reference off after scan; need wake-up delay: 0b00
-    //      Reference always on; no wake-up delay: 0b10
     // [1:0]: Don't care
 
     constexpr auto setupRegister = 0b01_b;
+    // Don't use CNVST modes, we use the analog configuration for the CNVST pin
+    // Therefore clock mode = 0b10 << 4: No CNVST, internal clock
     constexpr auto clockMode = 0b10_b;
+    // Reference off after scan; need wake-up delay: 0b00
+    // Reference always on; no wake-up delay: 0b10
     constexpr auto referenceMode = 0b00_b;
     constexpr auto setupData = (setupRegister << 6) | (clockMode << 4) | (referenceMode << 2);
 
@@ -158,6 +179,68 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
 
     adcCsPin->Reset();
     hal::WriteTo(&framEpsSpi, Span(setupData), spiTimeout);
+    adcCsPin->Set();
+}
+
+
+auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
+{
+    // Averaging register values
+    // [7:5]: Register selection bits = 0b001
+    // [4]: Averaging on/off
+    // [3:2]: Number of conversions used
+    // [1:0]: Single-channel scan count (scan mode 0b10 in conversion only)
+
+    constexpr auto averagingRegister = 0b001_b;
+    // Averaging off for now
+    constexpr auto enableAveraging = 0b0_b;
+    // Only relevant with averaging on, average 4 conversions
+    constexpr auto nAverages = 0b00_b;
+    // Probably not relevant, leave on 4 results
+    constexpr auto nSingleScans = 0b00_b;
+    constexpr auto averagingData =
+        (averagingRegister << 5) | (enableAveraging << 4) | (nAverages << 2) | nSingleScans;
+
+    adcCsPin->Reset();
+    hal::WriteTo(&spi, Span(averagingData));
+    adcCsPin->Set();
+}
+
+
+auto ReadAdc(hal::GpioPin * adcCsPin, std::span<Byte, adcDataLength> adcData) -> void
+{
+    // Send conversion byte
+
+    // Conversion register values
+    // [7]: Register selection bit = 0b1
+    // [6:3]: Channel select
+    // [2:1]: Scan mode
+    // [1]: Don't care
+
+    constexpr auto readDelay = 3 * RODOS::MILLISECONDS;
+    constexpr auto conversionRegister = 0b1_b;
+    // Select highest channel, since we scan through all of them every time
+    constexpr auto channel = 0b1111_b;
+    // Scan through channel 0 to N (set in channel select)
+    // -> All channels in our case
+    constexpr auto scanMode = 0b00_b;
+    constexpr auto conversionData = (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
+
+    adcCsPin->Reset();
+    hal::WriteTo(&spi, Span(conversionData));
+    adcCsPin->Set();
+
+    // Leave enough time for max. 514 conversions
+    // t_acq = 0.6 us
+    // t_conv = 3.5 us
+    // 514 * (t_acq + t_conv) = 2107.4 us
+    // TODO: This delay can be brought down if we fix the number of averages
+    RODOS::AT(RODOS::NOW() + readDelay);
+
+    // Resolution is 12 bit, sent like this:
+    // 0 0 0 0 MSB x x x, x x x x x x x LSB
+    adcCsPin->Reset();
+    hal::ReadFrom(&spi, adcData);
     adcCsPin->Set();
 }
 
