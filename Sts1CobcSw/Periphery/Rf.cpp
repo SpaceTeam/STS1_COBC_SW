@@ -620,7 +620,7 @@ auto SetTxType(TxType txType) -> void
     constexpr auto modemModType2Gfsk = 0x03_b;
     constexpr auto nProperties = 6;
     constexpr auto startIndex = 0x00_b;
-    // Inconsistend naming pattern due to strict adherence to datasheet
+    // Inconsistent naming pattern due to strict adherence to datasheet
     constexpr auto modemMapControl = 0x00_b;
     constexpr auto modemDsmCtrl = 0x07_b;
 
