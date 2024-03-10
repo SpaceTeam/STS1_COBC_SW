@@ -233,7 +233,7 @@ auto ReadAdc(hal::GpioPin * adcCsPin, std::span<Byte, adcDataLength> adcData) ->
     // Leave enough time for max. 514 conversions
     // t_acq = 0.6 us
     // t_conv = 3.5 us
-    // 514 * (t_acq + t_conv) = 2107.4 us
+    // 514 * (t_acq + t_conv) + wakeup = 2172.4 us
     // TODO: This delay can be brought down if we fix the number of averages
     RODOS::AT(RODOS::NOW() + readDelay);
 
