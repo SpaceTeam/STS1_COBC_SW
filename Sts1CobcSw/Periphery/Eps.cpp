@@ -191,6 +191,7 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
     // [3:2]: Number of conversions used
     // [1:0]: Single-channel scan count (scan mode 0b10 in conversion only)
 
+    // TODO: discuss and chose averaging values
     constexpr auto averagingRegister = 0b001_b;
     // Averaging off for now
     constexpr auto enableAveraging = 0b0_b;
