@@ -6,8 +6,8 @@ macro(default name)
     endif()
 endmacro()
 
-default(FORMAT_COMMAND clang-format)
-default(
+set(FORMAT_COMMAND clang-format)
+set(
     PATTERNS
     Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp Sts1CobcSw/*.ipp
     Tests/*.cpp Tests/*.hpp Tests/*.ipp
