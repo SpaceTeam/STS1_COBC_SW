@@ -7,7 +7,7 @@ macro(default name)
 endmacro()
 
 default(FORMAT_COMMAND clang-format)
-default(
+set(
     PATTERNS
     Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp Sts1CobcSw/*.ipp
     Tests/*.cpp Tests/*.hpp Tests/*.ipp
