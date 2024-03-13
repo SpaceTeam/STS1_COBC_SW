@@ -10,8 +10,8 @@ add_custom_target(
 add_custom_target(
     format-fix
     COMMAND "${CMAKE_COMMAND}"
-    -P "${PROJECT_SOURCE_DIR}/cmake/format.cmake"
     -D FIX=YES
+    -P "${PROJECT_SOURCE_DIR}/cmake/format.cmake"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Fixing code format"
     VERBATIM
