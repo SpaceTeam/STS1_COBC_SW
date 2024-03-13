@@ -7,11 +7,7 @@ macro(default name)
 endmacro()
 
 set(FORMAT_COMMAND clang-format)
-set(
-    PATTERNS
-    Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp Sts1CobcSw/*.ipp
-    Tests/*.cpp Tests/*.hpp Tests/*.ipp
-)
+set(PATTERNS Sts1CobcSw/*.cpp Sts1CobcSw/*.hpp Sts1CobcSw/*.ipp Tests/*.cpp Tests/*.hpp Tests/*.ipp)
 default(FIX NO)
 
 set(flag --output-replacements-xml)
@@ -30,8 +26,7 @@ foreach(file IN LISTS files)
     execute_process(
         COMMAND "${FORMAT_COMMAND}" --style=file "${flag}" "${file}"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        RESULT_VARIABLE result
-        ${args}
+        RESULT_VARIABLE result ${args}
     )
     if(NOT result EQUAL "0")
         message(FATAL_ERROR "'${file}': formatter returned with ${result}")
