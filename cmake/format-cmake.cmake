@@ -7,38 +7,35 @@ macro(default name)
 endmacro()
 
 default(FIX NO)
-
-set(flag "")
-set(args OUTPUT_VARIABLE output)
 if(FIX)
     set(flag -i)
-    set(args "")
+else()
+    set(flag --check)
 endif()
 
-file(
-    GLOB_RECURSE
-    files
-    cmake/*.cmake
-    CMakeLists.txt
-)
+# GLOB_RECURSE needs a directory so we have to manually add the top-level CMakeLists.txt
+file(GLOB_RECURSE files cmake/*.cmake Sts1CobcSw/CMakeLists.txt Tests/CMakeLists.txt)
+file(GLOB top_level_cml_file CMakeLists.txt)
+list(APPEND files "${top_level_cml_file}")
 set(badly_formatted "")
 set(output "")
 string(LENGTH "${CMAKE_SOURCE_DIR}/" path_prefix_length)
 
 foreach(file IN LISTS files)
     execute_process(
-        COMMAND cmake-format -c /.cmake-format.py "${flag}" "${file}"
+        COMMAND cmake-format "${flag}" "${file}"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        RESULT_VARIABLE result ${args}
+        RESULT_VARIABLE result ERROR_VARIABLE error_output
     )
-    if(NOT result EQUAL "0")
+    if(NOT FIX AND NOT(result EQUAL "0" OR result EQUAL "1"))
+        message("${error_output}")
         message(FATAL_ERROR "'${file}': formatter returned with ${result}")
     endif()
-    if(NOT FIX AND output MATCHES "\n<replacement offset")
+    if(NOT FIX AND result EQUAL "1")
         string(SUBSTRING "${file}" "${path_prefix_length}" -1 relative_file)
         list(APPEND badly_formatted "${relative_file}")
     endif()
-    set(output "")
+    set(error_output "")
 endforeach()
 
 if(NOT badly_formatted STREQUAL "")
