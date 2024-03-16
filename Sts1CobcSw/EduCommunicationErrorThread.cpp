@@ -39,6 +39,7 @@ private:
 
             RODOS::PRINTF("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU
+
             edu::TurnOff();
             RODOS::AT(RODOS::NOW() + eduShutDownDelay);
             edu::TurnOn();

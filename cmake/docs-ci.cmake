@@ -14,8 +14,7 @@ set(mcss_SOURCE_DIR "${bin}/docs/.ci")
 if(NOT IS_DIRECTORY "${mcss_SOURCE_DIR}")
     file(MAKE_DIRECTORY "${mcss_SOURCE_DIR}")
     file(
-        DOWNLOAD
-        https://github.com/friendlyanon/m.css/releases/download/release-1/mcss.zip
+        DOWNLOAD https://github.com/friendlyanon/m.css/releases/download/release-1/mcss.zip
         "${mcss_SOURCE_DIR}/mcss.zip"
         STATUS status
         EXPECTED_MD5 00cd2757ebafb9bcba7f5d399b3bec7f
@@ -64,23 +63,38 @@ endmacro()
 
 function(docs_project name)
     cmake_parse_arguments(PARSE_ARGV 1 "" "" "VERSION;DESCRIPTION;HOMEPAGE_URL" LANGUAGES)
-    set(PROJECT_NAME "${name}" PARENT_SCOPE)
+    set(PROJECT_NAME
+        "${name}"
+        PARENT_SCOPE
+    )
     if(DEFINED _VERSION)
-        set(PROJECT_VERSION "${_VERSION}" PARENT_SCOPE)
+        set(PROJECT_VERSION
+            "${_VERSION}"
+            PARENT_SCOPE
+        )
         string(REGEX MATCH "^[0-9]+(\\.[0-9]+)*" versions "${_VERSION}")
         string(REPLACE . ";" versions "${versions}")
         set(suffixes MAJOR MINOR PATCH TWEAK)
         while(NOT versions STREQUAL "" AND NOT suffixes STREQUAL "")
             list_pop_front(versions version)
             list_pop_front(suffixes suffix)
-            set("PROJECT_VERSION_${suffix}" "${version}" PARENT_SCOPE)
+            set("PROJECT_VERSION_${suffix}"
+                "${version}"
+                PARENT_SCOPE
+            )
         endwhile()
     endif()
     if(DEFINED _DESCRIPTION)
-        set(PROJECT_DESCRIPTION "${_DESCRIPTION}" PARENT_SCOPE)
+        set(PROJECT_DESCRIPTION
+            "${_DESCRIPTION}"
+            PARENT_SCOPE
+        )
     endif()
     if(DEFINED _HOMEPAGE_URL)
-        set(PROJECT_HOMEPAGE_URL "${_HOMEPAGE_URL}" PARENT_SCOPE)
+        set(PROJECT_HOMEPAGE_URL
+            "${_HOMEPAGE_URL}"
+            PARENT_SCOPE
+        )
     endif()
 endfunction()
 

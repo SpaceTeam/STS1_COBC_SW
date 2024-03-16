@@ -25,9 +25,10 @@ foreach(file IN LISTS files)
     execute_process(
         COMMAND cmake-format "${flag}" "${file}"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        RESULT_VARIABLE result ERROR_VARIABLE error_output
+        RESULT_VARIABLE result
+        ERROR_VARIABLE error_output
     )
-    if(NOT FIX AND NOT(result EQUAL "0" OR result EQUAL "1"))
+    if(NOT FIX AND NOT (result EQUAL "0" OR result EQUAL "1"))
         message("${error_output}")
         message(FATAL_ERROR "'${file}': formatter returned with ${result}")
     endif()

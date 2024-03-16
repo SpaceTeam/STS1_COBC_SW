@@ -11,13 +11,7 @@ add_golden_test(
 
 add_golden_test(TESTFILE "HelloDummy.test.cpp" LIB rodos::rodos Sts1CobcSw_Dummy)
 
-add_golden_test(
-    TESTFILE
-    "UpdateRingBuffer.test.cpp"
-    LIB
-    rodos::rodos
-    Sts1CobcSw_Edu
-)
+add_golden_test(TESTFILE "UpdateRingBuffer.test.cpp" LIB rodos::rodos Sts1CobcSw_Edu)
 
 add_golden_test(
     TESTFILE
