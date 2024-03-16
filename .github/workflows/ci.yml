@@ -33,7 +33,7 @@ jobs:
         python-version: "3.8"
 
     - name: Format check
-      run: cmake -D FORMAT_COMMAND=clang-format -P cmake/format.cmake
+      run: cmake -P cmake/format.cmake
 
     - name: Spell check
       if: always()
