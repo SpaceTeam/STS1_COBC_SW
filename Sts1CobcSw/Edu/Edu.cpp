@@ -50,6 +50,8 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 
 // --- Private function declarations ---
 
+[[nodiscard]] auto ProcessResponse() -> Result<void>;
+
 [[nodiscard]] auto ReceiveAndParseStatusData() -> Result<Status>;
 [[nodiscard]] auto ParseStatusData() -> Result<Status>;
 
@@ -109,6 +111,27 @@ auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std:
 }
 
 
+auto ProcessResponse() -> Result<void>
+{
+    OUTCOME_TRY(auto answer, Receive<Byte>());
+    switch(answer)
+    {
+        case cepAck:
+        {
+            return outcome_v2::success();
+        }
+        case cepNack:
+        {
+            return ErrorCode::nack;
+        }
+        default:
+        {
+            return ErrorCode::invalidAnswer;
+        }
+    }
+}
+
+
 //! @brief Issues a command to execute a student program on the EDU.
 //!
 //! Execute Program (COBC <-> EDU):
@@ -131,22 +154,7 @@ auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std:
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
-    OUTCOME_TRY(auto answer, Receive<Byte>());
-    switch(answer)
-    {
-        case cepAck:
-        {
-            return outcome_v2::success();
-        }
-        case cepNack:
-        {
-            return ErrorCode::nack;
-        }
-        default:
-        {
-            return ErrorCode::invalidAnswer;
-        }
-    }
+    return ProcessResponse();
 }
 
 
@@ -161,18 +169,8 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 //! @returns A relevant error code
 auto StopProgram() -> Result<void>
 {
-    return outcome_v2::success();
-    // std::array<std::uint8_t, 3> dataBuf = {stopProgram};
-    // auto errorCode = SendData(dataBuf);
-
-    // if(errorCode != EduErrorCode::success)
-    // {
-    //     return errorCode;
-    // }
-
-    // // Receive second N/ACK to see if program is successfully stopped
-    // std::array<std::uint8_t, 1> recvBuf = {};
-    // return UartReceive(recvBuf, 1);
+    OUTCOME_TRY(SendDataPacket(Serialize(StopProgramData())));
+    return ProcessResponse();
 }
 
 
@@ -298,22 +296,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
-    OUTCOME_TRY(auto answer, Receive<Byte>());
-    switch(answer)
-    {
-        case cepAck:
-        {
-            return outcome_v2::success();
-        }
-        case cepNack:
-        {
-            return ErrorCode::nack;
-        }
-        default:
-        {
-            return ErrorCode::invalidAnswer;
-        }
-    }
+    return ProcessResponse();
 }
 
 
