@@ -58,6 +58,8 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 [[nodiscard]] auto SendCommand(Byte commandId) -> Result<void>;
 [[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
 
+[[nodiscard]] auto WaitForAck() -> Result<void>;
+
 [[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
 template<typename T>
 [[nodiscard]] auto Receive() -> Result<T>;
@@ -131,22 +133,7 @@ auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std:
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
-    OUTCOME_TRY(auto answer, Receive<Byte>());
-    switch(answer)
-    {
-        case cepAck:
-        {
-            return outcome_v2::success();
-        }
-        case cepNack:
-        {
-            return ErrorCode::nack;
-        }
-        default:
-        {
-            return ErrorCode::invalidAnswer;
-        }
-    }
+    return WaitForAck();
 }
 
 
@@ -161,18 +148,8 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 //! @returns A relevant error code
 auto StopProgram() -> Result<void>
 {
-    return outcome_v2::success();
-    // std::array<std::uint8_t, 3> dataBuf = {stopProgram};
-    // auto errorCode = SendData(dataBuf);
-
-    // if(errorCode != EduErrorCode::success)
-    // {
-    //     return errorCode;
-    // }
-
-    // // Receive second N/ACK to see if program is successfully stopped
-    // std::array<std::uint8_t, 1> recvBuf = {};
-    // return UartReceive(recvBuf, 1);
+    OUTCOME_TRY(SendDataPacket(Serialize(StopProgramData())));
+    return WaitForAck();
 }
 
 
@@ -298,22 +275,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
-    OUTCOME_TRY(auto answer, Receive<Byte>());
-    switch(answer)
-    {
-        case cepAck:
-        {
-            return outcome_v2::success();
-        }
-        case cepNack:
-        {
-            return ErrorCode::nack;
-        }
-        default:
-        {
-            return ErrorCode::invalidAnswer;
-        }
-    }
+    return WaitForAck();
 }
 
 
@@ -377,6 +339,27 @@ auto Send(std::span<Byte const> data) -> Result<void>
         return ErrorCode::timeout;
     }
     return outcome_v2::success();
+}
+
+
+auto WaitForAck() -> Result<void>
+{
+    OUTCOME_TRY(auto answer, Receive<Byte>());
+    switch(answer)
+    {
+        case cepAck:
+        {
+            return outcome_v2::success();
+        }
+        case cepNack:
+        {
+            return ErrorCode::nack;
+        }
+        default:
+        {
+            return ErrorCode::invalidAnswer;
+        }
+    }
 }
 
 
