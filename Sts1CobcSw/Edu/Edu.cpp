@@ -50,8 +50,6 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 
 // --- Private function declarations ---
 
-[[nodiscard]] auto ProcessResponse() -> Result<void>;
-
 [[nodiscard]] auto ReceiveAndParseStatusData() -> Result<Status>;
 [[nodiscard]] auto ParseStatusData() -> Result<Status>;
 
@@ -59,6 +57,8 @@ auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRx
 // TODO: Rework -> Send(CepCommand command) -> void;
 [[nodiscard]] auto SendCommand(Byte commandId) -> Result<void>;
 [[nodiscard]] auto Send(std::span<Byte const> data) -> Result<void>;
+
+[[nodiscard]] auto WaitForAck() -> Result<void>;
 
 [[nodiscard]] auto ReceiveDataPacket() -> Result<void>;
 template<typename T>
@@ -111,27 +111,6 @@ auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std:
 }
 
 
-auto ProcessResponse() -> Result<void>
-{
-    OUTCOME_TRY(auto answer, Receive<Byte>());
-    switch(answer)
-    {
-        case cepAck:
-        {
-            return outcome_v2::success();
-        }
-        case cepNack:
-        {
-            return ErrorCode::nack;
-        }
-        default:
-        {
-            return ErrorCode::invalidAnswer;
-        }
-    }
-}
-
-
 //! @brief Issues a command to execute a student program on the EDU.
 //!
 //! Execute Program (COBC <-> EDU):
@@ -154,7 +133,7 @@ auto ProcessResponse() -> Result<void>
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
-    return ProcessResponse();
+    return WaitForAck();
 }
 
 
@@ -170,7 +149,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 auto StopProgram() -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(StopProgramData())));
-    return ProcessResponse();
+    return WaitForAck();
 }
 
 
@@ -296,7 +275,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
-    return ProcessResponse();
+    return WaitForAck();
 }
 
 
@@ -360,6 +339,27 @@ auto Send(std::span<Byte const> data) -> Result<void>
         return ErrorCode::timeout;
     }
     return outcome_v2::success();
+}
+
+
+auto WaitForAck() -> Result<void>
+{
+    OUTCOME_TRY(auto answer, Receive<Byte>());
+    switch(answer)
+    {
+        case cepAck:
+        {
+            return outcome_v2::success();
+        }
+        case cepNack:
+        {
+            return ErrorCode::nack;
+        }
+        default:
+        {
+            return ErrorCode::invalidAnswer;
+        }
+    }
 }
 
 
