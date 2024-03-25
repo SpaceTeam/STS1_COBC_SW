@@ -220,7 +220,6 @@ auto DisableWriting() -> void
 }
 
 
-// TODO:: Maybe this is one level of indirection too much?
 template<std::size_t extent>
 inline auto Write(std::span<Byte const, extent> data) -> void
 {
