@@ -1,5 +1,3 @@
-# TODO: Is this not redundant with the top level cmake that does not build libarrie depending on
-# target system
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_subdirectory(Periphery)
     add_subdirectory(FileSystem)
