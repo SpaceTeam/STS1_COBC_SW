@@ -60,11 +60,11 @@
   { include: ["\"Sts1CobcSw/Serial/Byte.hpp\"",           "public", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.hpp\"",         "public", "<Sts1CobcwSw/Serial/Serial.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",          "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/FlatArray.hpp\"",     "public", "<Sts1CobcSw/Utility/FlatArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Edu/Structs.hpp\"",           "public", "<Sts1CobcSw/Edu/Structs.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Uart.hpp\"",              "public", "<Sts1CobcSw/Hal/Uart.hpp>", "public"] },
 
   # Fixing iwyu bug where <tuple> is required to be include for array symbol
   # unfortunately, the `symbol` directive does not work
   { include: ["<tuple>", "public", "<array>", "public"] },
-
 ]
