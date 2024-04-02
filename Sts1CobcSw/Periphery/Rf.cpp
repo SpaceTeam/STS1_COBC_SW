@@ -1,9 +1,16 @@
+//! @file
+//! @brief  Driver for the RF module Si4463.
+//!
+//! See "AN625: Si446x API Descriptions" for more information.
+
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -93,11 +100,9 @@ constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 // --- Private function declarations ---
 
 auto InitializeGpioAndSpi() -> void;
-
 auto PowerUp() -> void;
 
 auto SendCommand(std::span<Byte const> data) -> void;
-
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 
@@ -119,70 +124,67 @@ auto Initialize(TxType txType) -> void
     // enable the TX)
 
     InitializeGpioAndSpi();
-
     PowerUp();
-
-    // GPIO Pin Cfg
     SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
-    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-    // Global XO Tune 2
-    SetProperties(PropertyGroup::global,
-                  0x00_b,
-                  Span({
-                      0x52_b,  // GLOBAL_XO_TUNE
-                      0x00_b   // GLOBAL_CLK_CFG
-                  }));
+    // Crystal oscillator frequency and clock configuration
+    static constexpr auto iGlobalXoTune = 0x00_b;
+    static constexpr auto globalXoTune = 0x52_b;
+    static constexpr auto globalClkCfg = 0x00_b;
+    SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTune, globalClkCfg}));
 
-    // RF Global Config 1
-    SetProperties(PropertyGroup::global,
-                  0x03_b,
-                  Span({
-                      0x60_b  // GLOBAL_CONFIG: High performance mode,
-                              // Generic packet format, Split FiFo mode, Fast sequencer mode
-                  }));
+    // Global config
+    static constexpr auto iGlobalConfig = 0x03_b;
+    // High performance mode, generic packet format, split FIFO mode, fast sequencer mode
+    static constexpr auto globalConfig = 0x60_b;
+    SetProperties(PropertyGroup::global, iGlobalConfig, Span(globalConfig));
 
-    // RF Int Ctl Enable
-    SetProperties(PropertyGroup::intCtl,
-                  0x00_b,
-                  Span({
-                      0x01_b  // INT_CTL: Enable packet handler interrupts
-                  }));
+    // Interrupt
+    static constexpr auto iIntCtlEnable = 0x00_b;
+    static constexpr auto intCtlEnable = 0x01_b;
+    SetProperties(PropertyGroup::intCtl, iIntCtlEnable, Span(intCtlEnable));
 
-    // TX Preamble Length
+    // Preamble
+    static constexpr auto iPreambleTxLength = 0x00_b;
+    // 0 bytes preamble
+    static constexpr auto preambleTxLength = 0x00_b;
+    // Normal sync timeout, 14-bit preamble RX threshold
+    static constexpr auto preambleConfigStd1 = 0x14_b;
+    // No non-standard preamble pattern
+    // TODO: Maybe we can detect RS+CC encoded preamble this way and be CCSDS compliant on uplink
+    // too? Problem: Max pattern length is 32 bit
+    static constexpr auto preambleConfigNstd = 0x00_b;
+    // No extended RX preamble timeout, 0x0F nibbles timeout until detected preamble is discarded as
+    // invalid
+    static constexpr auto preambleConfigStd2 = 0x0F_b;
+    // First transmitted preamble bit is 1, unit of preamble TX length is in bytes
+    static constexpr auto preambleConfig = 0x31_b;
+    // Non-standard pattern
+    static constexpr auto preamblePattern = std::array<Byte, 4>{};
     SetProperties(PropertyGroup::preamble,
-                  0x00_b,
-                  Span({
-                      0x00_b,  // PREAMBLE_TX_LENGTH: 0 bytes preamble
-                      0x14_b,  // PREAMBLE_CONFIG_STD_1: Normal sync timeout,
-                               // 14 bit preamble RX threshold
-                      0x00_b,  // PREAMBLE_CONFIG_NSTD: No non-standard preamble pattern TODO: Maybe
-                               // we can detect RS+CC encoded preamble this way and be CCSDS
-                               // compliant on uplink too? Problem: Max pattern length is 32 bit
-                      0x0F_b,  // PREAMBLE_CONFIG_STD_2: No extended RX preamble timeout, 0x0f
-                               // nibbles timeout until detected preamble is discarded as invalid
-                      0x31_b,  // PREAMBLE_CONFIG: First transmitted preamble bit is 1, unit of
-                               // preampreamble TX length is in bytes
-                      0x00_b,  // PREAMBLE_PATTERN: Non-standard pattern
-                      0x00_b,  // Non-standard pattern
-                      0x00_b,  // Non-standard pattern
-                      0x00_b,  // Non-standard pattern
-                  }));
+                  iPreambleTxLength,
+                  Span(FlatArray(preambleTxLength,    // PREAMBLE_TX_LENGTH:
+                                 preambleConfigStd1,  // PREAMBLE_CONFIG_STD_1:
+                                 preambleConfigNstd,  // PREAMBLE_CONFIG_NSTD:
+                                 preambleConfigStd2,  // PREAMBLE_CONFIG_STD_2:
+                                 preambleConfig,      // PREAMBLE_CONFIG:
+                                 preamblePattern)));
 
     // Sync word config
-    SetProperties(PropertyGroup::sync,
-                  0x00_b,
-                  Span({
-                      0x43_b,        // SYNC_CONFIG: Allow 4 bit sync word errors, 4 byte sync word
-                      0b01011000_b,  // SYNC_BITS: Valid CCSDS TM sync word for
-                                     // Reed-Solomon or convolutional coding
-                      0b11110011_b,  // Be careful: Send order is MSB-first but Little endian so the
-                                     // lowest bit of the
-                      0b00111111_b,  // highest byte is transmitted first,
-                                     // which is different to how the CCSDS spec
-                      0b10111000_b   // annotates those bit patterns!
-                  }));
+    static constexpr auto iSyncConfig = 0x00_b;
+    // Allow 4-bit sync word errors, 4-byte sync word
+    static constexpr auto syncConfig = 0x43_b;
+    // Valid CCSDS TM sync word for Reed-Solomon or convolutional coding. Be careful: Send order is
+    // MSB-first but little endian so the lowest bit of the highest byte is transmitted first, which
+    // is different to how the CCSDS spec annotates those bit patterns!
+    //
     // TODO: Check that pattern!
+    //
+    // TODO: The application note says the exact opposite: LSB first, big endian. Also, instead of
+    // specifying the 4 bytes manually we should, serialize a 32-bit number.
+    static constexpr auto syncBits =
+        std::array{0b01011000_b, 0b11110011_b, 0b00111111_b, 0b10111000_b};
+    SetProperties(PropertyGroup::sync, iSyncConfig, Span(FlatArray(syncConfig, syncBits)));
 
     // CRC Config
     SetProperties(PropertyGroup::pkt,
@@ -592,8 +594,6 @@ auto Initialize(TxType txType) -> void
                       0x40_b  // GLOBAL_CONFIG: Split FIFO and guaranteed sequencer mode
                   }));
 
-    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-
     paEnablePin.Direction(hal::PinDirection::out);
     paEnablePin.Set();
 }
@@ -735,7 +735,7 @@ auto SetProperties(PropertyGroup propertyGroup,
 {
     auto setPropertiesBuffer = std::array<Byte, setPropertiesHeaderSize + maxNProperties>{};
     auto nProperties = propertyValues.size();
-    auto bytesToSend = setPropertiesHeaderSize + nProperties;
+    auto nBytesToSend = setPropertiesHeaderSize + nProperties;
 
     setPropertiesBuffer[0] = cmdSetProperty;
     setPropertiesBuffer[1] = static_cast<Byte>(propertyGroup);
@@ -746,6 +746,6 @@ auto SetProperties(PropertyGroup propertyGroup,
               std::end(propertyValues),
               std::begin(setPropertiesBuffer) + setPropertiesHeaderSize);
 
-    SendCommand(Span(setPropertiesBuffer).first(bytesToSend));
+    SendCommand(Span(setPropertiesBuffer).first(nBytesToSend));
 }
 }
