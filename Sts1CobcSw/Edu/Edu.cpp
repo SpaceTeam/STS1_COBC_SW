@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
@@ -14,6 +15,7 @@
 #include <etl/vector.h>
 
 #include <array>
+#include <cstdint>
 #include <span>
 
 
@@ -104,10 +106,51 @@ auto TurnOff() -> void
 }
 
 
-// TODO: Implement this
-auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<std::int32_t>
+auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    return 0;
+    auto errorCode = fs::OpenProgramFile(data.programId, /* flags=*/0);
+    RODOS::PRINTF("Pretending to open the file ...\n");
+    if(errorCode != 0)
+    {
+        return ErrorCode::fileSystemError;
+    }
+
+    // Check if programFile is not too large
+
+    errorCode = fs::ReadProgramFile(&cepDataBuffer);
+    RODOS::PRINTF("Pretending to read %d bytes from the file system ...\n",
+                  static_cast<int>(cepDataBuffer.size()));
+    if(errorCode != 0)
+    {
+        fs::CloseProgramFile();
+        return ErrorCode::fileSystemError;
+    }
+
+    while(not cepDataBuffer.empty())
+    {
+        auto sendDataPacketResult = SendDataPacket(Span(cepDataBuffer));
+        if(sendDataPacketResult != outcome_v2::success())
+        {
+            fs::CloseProgramFile();
+            return ErrorCode::nack;
+        }
+        errorCode = fs::ReadProgramFile(&cepDataBuffer);
+        RODOS::PRINTF("Pretending to read %d bytes from the file system ...\n",
+                      static_cast<int>(cepDataBuffer.size()));
+        if(errorCode != 0 and not cepDataBuffer.empty())
+        {
+            fs::CloseProgramFile();
+            return ErrorCode::fileSystemError;
+        }
+    }
+
+    errorCode = fs::CloseProgramFile();
+    RODOS::PRINTF("Pretending to close the file ...\n");
+    if(errorCode != 0)
+    {
+        return ErrorCode::fileSystemError;
+    }
+    return WaitForAck();
 }
 
 

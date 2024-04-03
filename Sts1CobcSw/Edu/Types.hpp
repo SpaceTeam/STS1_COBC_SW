@@ -25,7 +25,8 @@ enum class ErrorCode
     dataPacketTooLong,
     invalidStatusType,
     invalidLength,
-    tooManyDataPackets
+    tooManyDataPackets,
+    fileSystemError
 };
 
 
