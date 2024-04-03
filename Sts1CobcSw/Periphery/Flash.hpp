@@ -1,3 +1,6 @@
+//! @file
+//! @brief  Driver for the flash memory W25Q01JV.
+
 #pragma once
 
 
