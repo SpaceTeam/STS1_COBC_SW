@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <array>
@@ -11,6 +12,23 @@
 
 namespace sts1cobcsw::flash
 {
+struct JedecId
+{
+    std::uint8_t manufacturerId = 0;
+    std::uint16_t deviceId = 0;
+};
+
+
+enum class ErrorCode
+{
+    timeout = 1
+};
+
+
+template<typename T>
+using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolicy>;
+
+
 [[maybe_unused]] constexpr std::size_t pageSize = 256;                 // bytes
 [[maybe_unused]] constexpr std::size_t sectorSize = 4 * 1024;          // bytes
 [[maybe_unused]] constexpr std::size_t smallBlockSize = 32 * 1024;     // bytes
@@ -25,13 +43,6 @@ using Page = std::array<Byte, pageSize>;
 using PageSpan = std::span<Byte const, pageSize>;
 
 
-struct JedecId
-{
-    std::uint8_t manufacturerId = 0;
-    std::uint16_t deviceId = 0;
-};
-
-
 // TODO: Proper error handling/return type
 auto Initialize() -> void;
 [[nodiscard]] auto ReadJedecId() -> JedecId;
@@ -40,6 +51,6 @@ auto Initialize() -> void;
 [[nodiscard]] auto ReadPage(std::uint32_t address) -> Page;
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
 auto EraseSector(std::uint32_t address) -> void;
-auto WaitWhileBusy() -> void;
+[[nodiscard]] auto WaitWhileBusy(std::int64_t timeout) -> Result<void>;
 auto ActualBaudRate() -> int32_t;
 }

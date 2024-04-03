@@ -62,6 +62,7 @@ auto spi = RODOS::HAL_SPI(hal::flashSpiIndex,
 auto Enter4ByteAdressMode() -> void;
 auto EnableWriting() -> void;
 auto DisableWriting() -> void;
+auto IsBusy() -> bool;
 
 template<std::size_t extent>
 auto Write(std::span<Byte const, extent> data) -> void;
@@ -175,16 +176,19 @@ auto EraseSector(std::uint32_t address) -> void
 }
 
 
-auto WaitWhileBusy() -> void
+auto WaitWhileBusy(std::int64_t timeout) -> Result<void>
 {
-    auto pollingCycleTime = 1 * RODOS::MILLISECONDS;
-    auto busyBitMask = 0x01_b;
-    auto isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
-    while(isBusy)
+    auto const pollingCycleTime = 1 * RODOS::MILLISECONDS;
+    auto const reactivationTime = RODOS::NOW() + timeout;
+    while(IsBusy())
     {
+        if(RODOS::NOW() >= reactivationTime)
+        {
+            return ErrorCode::timeout;
+        }
         RODOS::AT(RODOS::NOW() + pollingCycleTime);
-        isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
     }
+    return outcome_v2::success();
 }
 
 
@@ -218,6 +222,13 @@ auto DisableWriting() -> void
     SendInstruction<writeDisable>();
     csGpioPin.Set();
 }
+
+
+auto IsBusy() -> bool
+{
+    auto const busyBitMask = 0x01_b;
+    return (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
+};
 
 
 template<std::size_t extent>
