@@ -62,6 +62,7 @@ auto spi = RODOS::HAL_SPI(hal::flashSpiIndex,
 auto Enter4ByteAdressMode() -> void;
 auto EnableWriting() -> void;
 auto DisableWriting() -> void;
+auto IsBusy() -> bool;
 
 template<std::size_t extent>
 auto Write(std::span<Byte const, extent> data) -> void;
@@ -89,13 +90,11 @@ template<std::endian endianness>
 auto Initialize() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
-    writeProtectionGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
+    writeProtectionGpioPin.Direction(hal::PinDirection::out);
     writeProtectionGpioPin.Set();
-
-    constexpr auto baudRate = 48'000'000;
+    auto const baudRate = 48'000'000;
     hal::Initialize(&spi, baudRate);
-
     Enter4ByteAdressMode();
 }
 
@@ -109,10 +108,10 @@ auto ReadJedecId() -> JedecId
 }
 
 
+// TODO: Only read status register 1
 auto ReadStatusRegister(int8_t registerNo) -> Byte
 {
-    auto statusRegister = 0xFF_b;  // NOLINT
-
+    auto statusRegister = 0xFF_b;  // NOLINT(*magic-numbers*)
     csGpioPin.Reset();
     if(registerNo == 1)
     {
@@ -127,7 +126,6 @@ auto ReadStatusRegister(int8_t registerNo) -> Byte
         statusRegister = SendInstruction<readStatusRegister3>()[0];
     }
     csGpioPin.Set();
-
     return statusRegister;
 }
 
@@ -139,21 +137,17 @@ auto ReadPage(std::uint32_t address) -> Page
     Write(Span(Serialize<endianness>(address)));
     auto page = Read<pageSize>();
     csGpioPin.Set();
-
     return page;
 }
 
 
-// TODO: Maybe check BUSY flag before writing or something
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
     EnableWriting();
     csGpioPin.Reset();
-
     Write(Span(pageProgram4ByteAddress));
     Write(Span(Serialize<endianness>(address)));
     Write(data);
-
     csGpioPin.Set();
     DisableWriting();
 }
@@ -161,30 +155,30 @@ auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 
 auto EraseSector(std::uint32_t address) -> void
 {
-    // Round address down to the nearest sector address
+    // Round address down to the nearest sector address.
     address = (address / sectorSize) * sectorSize;
-
     EnableWriting();
     csGpioPin.Reset();
-
     Write(Span(sectorErase4ByteAddress));
     Write(Span(Serialize<endianness>(address)));
-
     csGpioPin.Set();
     DisableWriting();
 }
 
 
-auto WaitWhileBusy() -> void
+auto WaitWhileBusy(std::int64_t timeout) -> Result<void>
 {
-    auto pollingCycleTime = 1 * RODOS::MILLISECONDS;
-    auto busyBitMask = 0x01_b;
-    auto isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
-    while(isBusy)
+    auto const pollingCycleTime = 1 * RODOS::MILLISECONDS;
+    auto const reactivationTime = RODOS::NOW() + timeout;
+    while(IsBusy())
     {
+        if(RODOS::NOW() >= reactivationTime)
+        {
+            return ErrorCode::timeout;
+        }
         RODOS::AT(RODOS::NOW() + pollingCycleTime);
-        isBusy = (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
     }
+    return outcome_v2::success();
 }
 
 
@@ -218,6 +212,13 @@ auto DisableWriting() -> void
     SendInstruction<writeDisable>();
     csGpioPin.Set();
 }
+
+
+auto IsBusy() -> bool
+{
+    auto const busyBitMask = 0x01_b;
+    return (ReadStatusRegister(1) & busyBitMask) == busyBitMask;
+};
 
 
 template<std::size_t extent>

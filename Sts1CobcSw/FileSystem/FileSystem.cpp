@@ -12,9 +12,6 @@
 
 namespace sts1cobcsw::fs
 {
-using flash::pageSize;
-
-
 // --- Private function declarations ---
 
 // Before globals because lfsConfig needs the declarations
@@ -34,9 +31,9 @@ auto Sync(lfs_config const * config) -> int;
 
 // --- Globals ---
 
-auto readBuffer = std::array<Byte, pageSize>{};
-auto programBuffer = std::array<Byte, pageSize>{};
-auto lookaheadBuffer = std::array<Byte, pageSize>{};
+auto readBuffer = flash::Page{};
+auto programBuffer = flash::Page{};
+auto lookaheadBuffer = flash::Page{};
 
 lfs_t lfs{};
 lfs_file_t lfsFile{};
@@ -49,13 +46,13 @@ lfs_config const lfsConfig{.context = nullptr,
                            .erase = &Erase,
                            .sync = &Sync,
 
-                           .read_size = pageSize,
-                           .prog_size = pageSize,
+                           .read_size = flash::pageSize,
+                           .prog_size = flash::pageSize,
                            .block_size = flash::sectorSize,
                            .block_count = flash::nSectors,
                            .block_cycles = 200,
-                           .cache_size = pageSize,
-                           .lookahead_size = pageSize,
+                           .cache_size = flash::pageSize,
+                           .lookahead_size = flash::pageSize,
 
                            .read_buffer = data(readBuffer),
                            .prog_buffer = data(programBuffer),
@@ -65,6 +62,12 @@ lfs_config const lfsConfig{.context = nullptr,
                            .file_max = LFS_FILE_MAX,
                            .attr_max = LFS_ATTR_MAX,
                            .metadata_max = flash::sectorSize};
+
+// TODO: Test with real HW
+// max. 3.5 ms acc. W25Q01JV datasheet
+constexpr auto pageProgramTimeout = 5 * RODOS::MILLISECONDS;
+// max. 400 ms acc. W25Q01JV datasheet (lfs_config.block_size = flash::sectorSize)
+constexpr auto blockEraseTimeout = 500 * RODOS::MILLISECONDS;
 
 
 // --- Public function definitions ---
@@ -199,7 +202,6 @@ auto Read(lfs_config const * config,
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         std::copy(begin(page), end(page), (static_cast<Byte *>(buffer) + i));
     }
-
     return 0;
 }
 
@@ -218,7 +220,11 @@ auto Program(lfs_config const * config,
                   (static_cast<Byte const *>(buffer) + i + config->prog_size),  // NOLINT
                   begin(page));
         flash::ProgramPage(startAddress + i, std::span(page));
-        flash::WaitWhileBusy();
+        auto waitWhileBusyResult = flash::WaitWhileBusy(pageProgramTimeout);
+        if(waitWhileBusyResult.has_error())
+        {
+            return LFS_ERR_IO;
+        }
     }
     return 0;
 }
@@ -227,14 +233,22 @@ auto Program(lfs_config const * config,
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 {
     flash::EraseSector(blockNo * config->block_size);
-    flash::WaitWhileBusy();
+    auto waitWhileBusyResult = flash::WaitWhileBusy(blockEraseTimeout);
+    if(waitWhileBusyResult.has_error())
+    {
+        return LFS_ERR_IO;
+    }
     return 0;
 }
 
 
 auto Sync([[maybe_unused]] lfs_config const * config) -> int
 {
-    flash::WaitWhileBusy();
+    auto waitWhileBusyResult = flash::WaitWhileBusy(pageProgramTimeout);
+    if(waitWhileBusyResult.has_error())
+    {
+        return LFS_ERR_IO;
+    }
     return 0;
 }
 }
