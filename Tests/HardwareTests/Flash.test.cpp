@@ -81,12 +81,21 @@ private:
         flash::ProgramPage(pageAddress, page);
         auto endPage = RODOS::NOW();
 
-        flash::WaitWhileBusy();
+        auto const programPageTimeout = 10 * RODOS::MILLISECONDS;
+        auto waitWhileBusyResult = flash::WaitWhileBusy(programPageTimeout);
         auto end = RODOS::NOW();
         PRINTF("ProgrammPage took %d us\n",
                static_cast<int>((endPage - begin) / RODOS::MICROSECONDS));
-        PRINTF("WaitWhileBusy took %d us\n",
-               static_cast<int>((end - endPage) / RODOS::MICROSECONDS));
+        if(waitWhileBusyResult.has_error())
+        {
+            PRINTF("WaitWhileBusy failed because it didn't finish in %d us\n",
+                   static_cast<int>(programPageTimeout / RODOS::MICROSECONDS));
+        }
+        else
+        {
+            PRINTF("WaitWhileBusy took %d us\n",
+                   static_cast<int>((end - endPage) / RODOS::MICROSECONDS));
+        }
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
@@ -98,11 +107,20 @@ private:
                static_cast<unsigned int>(pageAddress));
         flash::EraseSector(pageAddress);
 
+        auto const eraseSectorTimeout = 500 * RODOS::MILLISECONDS;
         begin = RODOS::NOW();
-        flash::WaitWhileBusy();
+        waitWhileBusyResult = flash::WaitWhileBusy(eraseSectorTimeout);
         end = RODOS::NOW();
-        PRINTF("Erasing sector took %d us\n",
-               static_cast<int>((end - begin) / RODOS::MICROSECONDS));
+        if(waitWhileBusyResult.has_error())
+        {
+            PRINTF("WaitWhileBusy failed because it didn't finish in %d us\n",
+                   static_cast<int>(eraseSectorTimeout / RODOS::MICROSECONDS));
+        }
+        else
+        {
+            PRINTF("WaitWhileBusy took %d us\n",
+                   static_cast<int>((end - begin) / RODOS::MICROSECONDS));
+        }
 
         PRINTF("\n");
         PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
