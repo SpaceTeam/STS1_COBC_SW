@@ -99,6 +99,18 @@ auto Unmount() -> int
 }
 
 
+auto OpenProgramFile(std::uint16_t programId, int flags) -> int
+{
+    return 0;
+}
+
+
+auto CloseProgramFile() -> int
+{
+    return 0;
+}
+
+
 auto OpenFile(char const * path, int flags) -> int
 {
     return lfs_file_open(&lfs, &lfsFile, path, flags);

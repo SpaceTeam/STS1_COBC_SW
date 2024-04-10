@@ -41,11 +41,11 @@ auto TurnOff() -> void
 }
 
 
-auto StoreProgram(StoreProgramData const & data) -> Result<std::int32_t>
+auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
     PRINTF("Call to StoreProgram(programId = %d)\n", data.programId);
-    return 0;
+    return outcome_v2::success();
 }
 
 

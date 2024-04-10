@@ -1,7 +1,14 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Serial/Byte.hpp>
+
 #include <littlefs/lfs.h>
+
+#include <etl/vector.h>
+
+#include <cstddef>
+#include <cstdint>
 
 
 namespace sts1cobcsw::fs
@@ -18,6 +25,11 @@ auto Mount() -> int;
 auto Unmount() -> int;
 
 // File stuff
+auto OpenProgramFile(std::uint16_t programId, int flags) -> int;
+auto CloseProgramFile() -> int;
+template<std::size_t size>
+auto ReadProgramFile(etl::vector<Byte, size> * buffer) -> int;
+
 auto OpenFile(char const * path, int flags) -> int;
 auto CloseFile() -> int;
 auto FileSize() -> int;

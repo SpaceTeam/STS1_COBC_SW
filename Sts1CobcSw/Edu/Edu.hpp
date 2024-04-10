@@ -4,8 +4,6 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 
-#include <cstdint>
-
 
 namespace sts1cobcsw::edu
 {
@@ -17,7 +15,7 @@ auto TurnOn() -> void;
 auto TurnOff() -> void;
 
 // TODO: Why does this return a std::int32_t?
-[[nodiscard]] auto StoreProgram(StoreProgramData const & data) -> Result<std::int32_t>;
+[[nodiscard]] auto StoreProgram(StoreProgramData const & data) -> Result<void>;
 [[nodiscard]] auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>;
 [[nodiscard]] auto StopProgram() -> Result<void>;
 // TODO: Find better name (or maybe even mechanism) for GetStatus
