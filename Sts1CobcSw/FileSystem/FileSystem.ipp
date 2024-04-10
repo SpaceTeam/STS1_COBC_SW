@@ -10,7 +10,7 @@ template<std::size_t size>
 auto ReadProgramFile(etl::vector<Byte, size> * buffer) -> int
 {
     buffer->clear();
-    for(int i = 1; i <= 10; ++i)
+    for(int i = 1; i <= 10; ++i)  // NOLINT(*magic-numbers)
     {
         buffer->push_back(static_cast<Byte>(i));
     }

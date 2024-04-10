@@ -116,7 +116,6 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
     }
 
     // Check if programFile is not too large
-
     errorCode = fs::ReadProgramFile(&cepDataBuffer);
     RODOS::PRINTF("Pretending to read %d bytes from the file system ...\n",
                   static_cast<int>(cepDataBuffer.size()));
