@@ -115,31 +115,26 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         return ErrorCode::fileSystemError;
     }
 
-    // Check if programFile is not too large
-    errorCode = fs::ReadProgramFile(&cepDataBuffer);
-    RODOS::PRINTF("Pretending to read %d bytes from the file system ...\n",
-                  static_cast<int>(cepDataBuffer.size()));
-    if(errorCode != 0)
+    // TODO: Check if program file is not too large
+    while(true)
     {
-        fs::CloseProgramFile();
-        return ErrorCode::fileSystemError;
-    }
-
-    while(not cepDataBuffer.empty())
-    {
-        auto sendDataPacketResult = SendDataPacket(Span(cepDataBuffer));
-        if(sendDataPacketResult != outcome_v2::success())
-        {
-            fs::CloseProgramFile();
-            return ErrorCode::nack;
-        }
         errorCode = fs::ReadProgramFile(&cepDataBuffer);
         RODOS::PRINTF("Pretending to read %d bytes from the file system ...\n",
                       static_cast<int>(cepDataBuffer.size()));
-        if(errorCode != 0 and not cepDataBuffer.empty())
+        if(errorCode != 0)
         {
             fs::CloseProgramFile();
             return ErrorCode::fileSystemError;
+        }
+        if(cepDataBuffer.empty())
+        {
+            break;
+        }
+        auto sendDataPacketResult = SendDataPacket(Span(cepDataBuffer));
+        if(sendDataPacketResult.has_error())
+        {
+            fs::CloseProgramFile();
+            return ErrorCode::nack;
         }
     }
 
