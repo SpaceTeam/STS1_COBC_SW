@@ -62,6 +62,7 @@ constexpr auto cmdGpioPinCfg = 0x13_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // Command answer lengths
+//
 // TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
 // this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
 // instead.
@@ -83,17 +84,11 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
-// Pause values for watchdog reset pin and PoR
-// Jakob: Pause times are VERY generously overestimated
-// TODO: Patrick: Are those delays really necessary? I have never seen something like that for SPI
-// communication
-// TODO: Do not use trailing comments since they cause line breaks
-
-// Pause time to wait for Power on Reset to finish
+// Delay to wait for power on reset to finish
 constexpr auto porRunningDelay = 20 * MILLISECONDS;
 // Time until PoR circuit settles after applying power
 constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
-// Pause time for the sequence reset -> pause -> set -> pause -> reset in initialization
+// Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
 constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 
 
@@ -115,8 +110,6 @@ auto SetProperties(PropertyGroup propertyGroup,
 
 // --- Public function definitions ---
 
-// TODO: Get rid of all the magic numbers
-
 auto Initialize(TxType txType) -> void
 {
     // TODO: Don't forget that WDT_Clear has to be triggered regularely for the TX to work! (even
@@ -127,7 +120,9 @@ auto Initialize(TxType txType) -> void
     PowerUp();
     SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
-    // Crystal oscillator frequency and clock configuration
+    // Set all the properties! (The one command at the end configures the GPIOs)
+
+    // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
     static constexpr auto globalXoTune = 0x52_b;
     static constexpr auto globalClkCfg = 0x00_b;
@@ -151,6 +146,7 @@ auto Initialize(TxType txType) -> void
     // Normal sync timeout, 14-bit preamble RX threshold
     static constexpr auto preambleConfigStd1 = 0x14_b;
     // No non-standard preamble pattern
+    //
     // TODO: Maybe we can detect RS+CC encoded preamble this way and be CCSDS compliant on uplink
     // too? Problem: Max pattern length is 32 bit
     static constexpr auto preambleConfigNstd = 0x00_b;
@@ -170,7 +166,7 @@ auto Initialize(TxType txType) -> void
                                  preambleConfig,
                                  preamblePattern)));
 
-    // Sync word config
+    // Sync word
     static constexpr auto iSyncConfig = 0x00_b;
     // Allow 4-bit sync word errors, 4-byte sync word
     static constexpr auto syncConfig = 0x43_b;
@@ -186,30 +182,30 @@ auto Initialize(TxType txType) -> void
         std::array{0b01011000_b, 0b11110011_b, 0b00111111_b, 0b10111000_b};
     SetProperties(PropertyGroup::sync, iSyncConfig, Span(FlatArray(syncConfig, syncBits)));
 
-    // CRC Config
+    // CRC
     static constexpr auto iPktCrcConfig = 0x00_b;
     // No CRC
     static constexpr auto pktCrcConfig = 0x00_b;
     SetProperties(PropertyGroup::pkt, iPktCrcConfig, Span({pktCrcConfig}));
 
-    // Whitening and Packet Parameters
+    // Whitening and packet parameters
     static constexpr auto iPktWhtBitNum = 0x05_b;
     // Disable whitening
     static constexpr auto pktWhtBitNum = 0x00_b;
     // Don't split RX and TX field information (length, ...), enable RX packet handler, use normal
-    // (2)FSK, no Manchester coding, no CRC, data transmission with MSB first.
+    // (2)FSK, no Manchester coding, no CRC, data transmission with MSB first
     static constexpr auto pktConfig1 = 0x01_b;
     SetProperties(PropertyGroup::pkt, iPktWhtBitNum, Span({pktWhtBitNum, pktConfig1}));
 
-    // Pkt Length part 1
+    // Packet length part 1
     static constexpr auto iPktLen = 0x08_b;
     // Infinite receive, big endian (MSB first)
     static constexpr auto pktLen = 0x60_b;
     static constexpr auto pktLenFieldSource = 0x00_b;
     static constexpr auto pktLenAdjust = 0x00_b;
-    // Trigger TX FiFo almost empty interrupt when 0x30 bytes in FiFo (size 0x40) are empty
+    // Trigger TX FIFO almost empty interrupt when 0x30 bytes in FIFO (size 0x40) are empty
     static constexpr auto pktTxThreshold = 0x30_b;
-    // Trigger RX FiFo almost full interrupt when 0x30 bytes in FiFo (size 0x40) are full
+    // Trigger RX FIFO almost full interrupt when 0x30 bytes in FIFO (size 0x40) are full
     static constexpr auto pktRxThreshold = 0x30_b;
     static constexpr auto pktField1Length = std::array{0x00_b, 0x00_b};
     static constexpr auto pktField1Config = 0x04_b;
@@ -229,7 +225,7 @@ auto Initialize(TxType txType) -> void
                                  pktField2Length,
                                  pktField2Config)));
 
-    // Pkt Length part 2
+    // Packet length part 2
     static constexpr auto iPktField2CrcConfig = 0x14_b;
     static constexpr auto pktField2CrcConfig = 0x00_b;
     static constexpr auto pktField3Length = std::array{0x00_b, 0x00_b};
@@ -252,7 +248,7 @@ auto Initialize(TxType txType) -> void
                                  pktField5Length,
                                  pktField5Config)));
 
-    // Pkt Length part 3
+    // Packet length part 3
     static constexpr auto iPktField5CrcConfig = 0x20_b;
     static constexpr auto pktField5CrcConfig = 0x00_b;
     static constexpr auto pktRxField1Length = std::array{0x00_b, 0x00_b};
@@ -275,7 +271,7 @@ auto Initialize(TxType txType) -> void
                                  pktRxField3Length,
                                  pktRxField3Config)));
 
-    // Pkt Length part 4
+    // Packet length part 4
     static constexpr auto iPktRxField3CrcConfig = 0x2C_b;
     static constexpr auto pktRxField3CrcConfig = 0x00_b;
     static constexpr auto pktRxField4Length = std::array{0x00_b, 0x00_b};
@@ -294,30 +290,30 @@ auto Initialize(TxType txType) -> void
                                  pktRxField5Config,
                                  pktRxField5CrcConfig)));
 
-    // RF Modem Mod Type
+    // RF modem mod type
     SetTxType(txType);
     // SetTxType sets modem properties from 0x00 to 0x05
     static constexpr auto iModemTxNcoMode = 0x06_b;
-    // TXOSR=x10=0, NCOMOD=F_XTAL/10=2600000=0x027ac40
+    // TXOSR = x10 = 0, NCOMOD = F_XTAL / 10 = 2600000 = 0x027ac40
     static constexpr auto modemTxNcoMode = std::array{0x00_b, 0x27_b, 0xAC_b, 0x40_b};
-    // (2^19 * outdiv * deviation_Hz)/(N_presc * F_xo) = (2^19 * 8 * 9600/4)/(2 * 26000000) = 194
-    // = 0x0000C2
+    // (2^19 * outdiv * deviation_Hz) / (N_presc * F_xo) = (2^19 * 8 * 9600 / 4) / (2 * 26000000) =
+    // 194 = 0x0000C2
     static constexpr auto modemFreqDeviation = std::array{0x00_b, 0x00_b, 0xC2_b};
     SetProperties(
         PropertyGroup::modem, iModemTxNcoMode, Span(FlatArray(modemTxNcoMode, modemFreqDeviation)));
 
-
-    // RF Modem TX Ramp Delay, Modem MDM Ctrl, Modem IF Ctrl, Modem IF Freq & Modem Decimation
-    // Cfg
+    // RF modem TX ramp delay, modem MDM control, modem IF control, modem IF frequency & modem
+    // decimation
     static constexpr auto iModemTxRampDelay = 0x18_b;
-    // Ramp Delay 1
+    // Ramp delay 1
     static constexpr auto modemTxRampDelay = 0x01_b;
     // Slicer phase source from detector's output
     static constexpr auto modemMdmCtrl = 0x80_b;
     // No ETSI mode, fixed IF mode, normal IF mode (nonzero IF)
     static constexpr auto modemIfControl = 0x08_b;
-    // IF = (2^19 * outdiv * IF_Freq_Hz)/(npresc * freq_xo) = (2^19 * 8 * xxx)/(2 * 26000000)
-    // = 0x03C000 (default value)
+    // IF = (2^19 * outdiv * IF_Freq_Hz) / (npresc * freq_xo) = (2^19 * 8 * xxx) / (2 * 26000000) =
+    // 0x03C000 (default value)
+    //
     // TODO: Is it important what we chose here?
     static constexpr auto modemIfFreq = std::array{0x03_b, 0xC0_b, 0x00_b};
     // Decimation NDEC0 = 0, NDEC1 = decimation by 8, NDEC2 = decimation by 2
@@ -335,36 +331,36 @@ auto Initialize(TxType txType) -> void
                                  modemDecimationCfg1,
                                  modemDecimationCfg0)));
 
-    // RF Modem BCR Oversampling Rate, Modem BCR NCO Offset, Modem BCR Gain, Modem BCR Gear &
-    // Modem BCR Misc
+    // RF modem BCR vversampling rate, modem BCR NCO offset, modem BCR gain, modem BCR gear & modem
+    // BCR misc
+    //
     // TODO: What values to use here?
     static constexpr auto iModemBcrOsr = 0x22_b;
-    // RX symbol oversampling rate of 0x30D/8 = 781/8
-    // = 97.625 (According to the datasheet usual values are in the range
-    // of 8 to 12 where this value seems to be odd?)
+    // RX symbol oversampling rate of 0x30D / 8 = 781 / 8 = 97.625 (According to the datasheet usual
+    // values are in the range of 8 to 12 where this value seems to be odd?)
     static constexpr auto modemBcrOsr = std::array{0x03_b, 0x0D_b};
-    // BCR NCO offset of 0x00A7C6/64 = 42950/64 = 671.09375
+    // BCR NCO offset of 0x00A7C6 / 64 = 42950 / 64 = 671.09375
     static constexpr auto modemBcrNcoOffset = std::array{0x00_b, 0xA7_b, 0xC6_b};
     // BCR gain 0x054 = 84
     static constexpr auto modemBcrGain = std::array{0x00_b, 0x54_b};
-    // BCR loop gear control. CRSLOW=2, CRFAST=0
+    // BCR loop gear control, CRSLOW=2, CRFAST=0
     static constexpr auto modemBcrGear = 0x02_b;
-    // Stop NCO for one sample clock in BCR mid-point phase
-    // sampling condition to escape, disable NCO resetting in case of
-    // mid-point phase sampling condition, don't double BCR loop gain, BCR
-    // NCO compensation is sampled upon detection of the preamble end,
-    // disable NCO frequency compensation, bypass compensation term feedback
-    // to slicer, bypass compensation term feedback to BCR tracking loop
+    // Stop NCO for one sample clock in BCR mid-point phase sampling condition to escape, disable
+    // NCO resetting in case of mid-point phase sampling condition, don't double BCR loop gain, BCR
+    // NCO compensation is sampled upon detection of the preamble end, disable NCO frequency
+    // compensation, bypass compensation term feedback to slicer, bypass compensation term feedback
+    // to BCR tracking loop
     static constexpr auto modemBcrMisc1 = 0xC2_b;
     SetProperties(
         PropertyGroup::modem,
         iModemBcrOsr,
         Span(FlatArray(modemBcrOsr, modemBcrNcoOffset, modemBcrGain, modemBcrGear, modemBcrMisc1)));
 
-    // RF Modem AFC Gear, Modem AFC Wait, Modem AFC Gain, Modem AFC Limiter & Modem AFC Misc
+    // RF modem AFC gear, modem AFC wait, modem AFC gain, modem AFC limiter & modem AFC misc
+    //
     // TODO: What values to use here?
     static constexpr auto iModemAfcGear = 0x2C_b;
-    // AFC_SLOW gain 4, AFC_FAST gain 0, Switch gear after detection of preamble
+    // AFC_SLOW gain 4, AFC_FAST gain 0, switch gear after detection of preamble
     static constexpr auto modemAfcGear = 0x04_b;
     // LGWAIT = 6, SHWAIT = 3
     static constexpr auto modemAfcWait = 0x36_b;
@@ -373,31 +369,31 @@ auto Initialize(TxType txType) -> void
     static constexpr auto modemAfcGain = std::array{0x80_b, 0x03_b};
     // 0x30AF
     static constexpr auto modemAfcLimiter = std::array{0x30_b, 0xAF_b};
-    // Expected freq error is less then 12*symbol rate, AFC
-    // correction of PLL will be frozen if a consecutive string of 1s or 0s that
-    // exceed the search period is encountered, don't switch clock source for
-    // frequency estimator, don't freeze AFC at preamble end, AFC correction uses
-    // freq estimation by moving average or minmax detector in async demod,disable
-    // AFC value feedback to PLL, freeze AFC after gear switching
+    // Expected frequency error is less then 12 * symbol rate, AFC correction of PLL will be frozen
+    // if a consecutive string of 1 s or 0 s that exceed the search period is encountered, don't
+    // switch clock source for frequency estimator, don't freeze AFC at preamble end, AFC correction
+    // uses frequency estimation by moving average or minmax detector in async demod, disable AFC
+    // value feedback to PLL, freeze AFC after gear switching
     static constexpr auto modemAfcMisc = 0x80_b;
     SetProperties(
         PropertyGroup::modem,
         iModemAfcGear,
         Span(FlatArray(modemAfcGear, modemAfcWait, modemAfcGain, modemAfcLimiter, modemAfcMisc)));
 
-    // RF Modem AGC Control
+    // RF modem AGC control
+    //
     // TODO: What values to use here?
     static constexpr auto iModemAgcControl = 0x35_b;
-    // Reset peak detectors only on change of gain
-    // indicated by peak detector output, reduce ADC gain when AGC gain is at
-    // minimum, normal AGC speed, don't increase AGC gain during signal
-    // reductions in ant diversity mode, always perform gain decreases in 3dB
-    // steps instead of 6dB steps, AGC is enabled over whole packet length
+    // Reset peak detectors only on change of gain indicated by peak detector output, reduce ADC
+    // gain when AGC gain is at minimum, normal AGC speed, don't increase AGC gain during signal
+    // reductions in ant diversity mode, always perform gain decreases in 3 dB steps instead of 6 dB
+    // steps, AGC is enabled over whole packet length
     static constexpr auto modemAgcControl = 0xE2_b;
     SetProperties(PropertyGroup::modem, iModemAgcControl, Span({modemAgcControl}));
 
-    // RF Modem AGC Window Size, AGC RF Peak Detector Decay, AGC IF Peak Detector Decay, 4FSK
-    // Gain, 4FSK Slicer Threshold, 4FSK SYmbol Mapping Code, OOK Attack/Decay Times
+    // RF modem AGC window size, AGC RF peak detector decay, AGC IF peak detector decay, 4FSK gain,
+    // 4FSK slicer threshold, 4FSK symbol mapping code, OOK attack/decay times
+    //
     // TODO: What values to use here?
     static constexpr auto iModemAgcWindowSize = 0x38_b;
     // AGC gain settling window size = 1, AGC signal level measurement window = 1
@@ -427,17 +423,15 @@ auto Initialize(TxType txType) -> void
                                  modemFsk4Map,
                                  modemOokPdtc)));
 
-    // RF Modem OOK Control, OOK Misc, RAW Search, RAW Control, RAW Eye, Antenna Diversity Mode,
-    // Antenna Diversity Control, RSSI Threshold
+    // RF modem OOK control, OOK misc, RAW search, RAW control, RAW eye, Antenna diversity mode,
+    // antenna diversity control, RSSI threshold
     static constexpr auto iModemOokCnt1 = 0x42_b;
-    // OOK Squelch off, OOK slicer output de-glitching by bit
-    // clock, raw output is synced to clock, MA_FREQUDOWN=0, AGC and OOK movign
-    // average detector threshold will be frozen after preamble detection,
-    // S2P_MAP=2
+    // OOK squelch off, OOK slicer output de-glitching by bit clock, raw output is synced to clock,
+    // MA_FREQUDOWN = 0, AGC and OOK moving average detector threshold will be frozen after preamble
+    // detection, S2P_MAP = 2
     static constexpr auto modemOokCnt1 = 0xA4_b;
-    // OOK uses moving average detector, OOK peak detector
-    // discharge does not affect decay rate, disable OOK squelch, always
-    // discharge peak detector, normal moving average window
+    // OOK uses moving average detector, OOK peak detector discharge does not affect decay rate,
+    // disable OOK squelch, always discharge peak detector, normal moving average window
     static constexpr auto modemOokMisc = 0x02_b;
     static constexpr auto modemRawControl = 0x83_b;
     // RAW eye open detector threshold
@@ -454,6 +448,7 @@ auto Initialize(TxType txType) -> void
         Span(FlatArray(
             modemOokCnt1,
             modemOokMisc,
+            // NOLINTNEXTLINE(*magic-numbers)
             0xD6_b,  // TODO: index 0x44 is not described in the API, what does this value do?
             modemRawControl,
             modemRawEye,
@@ -461,28 +456,31 @@ auto Initialize(TxType txType) -> void
             modemAntDivControl,
             modemRssiThresh)));
 
-    // RF Modem RSSI Control
+    // RF modem RSSI control
     static constexpr auto iModemRssiControl = 0x4C_b;
-    // Disable RSSI latch, RSSI value is avg over last 4*Tb bit periods, disable RSSI threshold
+    // Disable RSSI latch, RSSI value is avg over last 4 * Tb bit periods, disable RSSI threshold
     // check after latch
     static constexpr auto modemRssiControl = 0x00_b;
     SetProperties(PropertyGroup::modem, iModemRssiControl, Span({modemRssiControl}));
 
-    // RF Modem RSSI Compensation
+    // RF modem RSSI compensation
+    //
     // TODO: Measure this
     static constexpr auto iModemRssiComp = 0x4E_b;
     // Compensation/offset of measured RSSI value
     static constexpr auto modemRssiComp = 0x40_b;
     SetProperties(PropertyGroup::modem, iModemRssiComp, Span({modemRssiComp}));
 
-    // RF Modem Clock generation Band
+    // RF modem clock generation band
     static constexpr auto iModemClkgenBand = 0x51_b;
     // Band = FVCO_DIV_8, high performance mode fixed prescaler div2, force recalibration
     static constexpr auto modemClkgenBand = 0x0A_b;
     SetProperties(PropertyGroup::modem, iModemClkgenBand, Span({modemClkgenBand}));
 
-    // RX Filter Coefficients
+    // RX filter coefficients
+    //
     // TODO: What values to use here?
+    //
     // Block 1
     static constexpr auto iRxFilterCoefficientsBlock1 = 0x00_b;
     static constexpr auto rxFilterCoefficientsBlock1 = std::array{
@@ -546,37 +544,38 @@ auto Initialize(TxType txType) -> void
     SetProperties(
         PropertyGroup::modemChflt, iRxFilterCoefficientsBlock3, Span(rxFilterCoefficientsBlock3));
 
-    // RF PA Mode
+    // RF PA mode
     static constexpr auto iPaMode = 0x00_b;
     // PA switching amp mode, PA_SEL = HP_COARSE, disable power sequencing, disable external TX ramp
     // signal
     static constexpr auto paMode = 0x08_b;
-    // Enabled PA fingers (sets output power but not linearly; 10µA bias current per enabled finger,
-    // complementary drive signal with 50% duty cycle)
+    // Enabled PA fingers (sets output power but not linearly; 10 µA bias current per enabled finger,
+    // complementary drive signal with 50 % duty cycle)
     static constexpr auto paPwrLvl = 0x18_b;
     static constexpr auto paBiasClkduty = 0x00_b;
-    // Ramping time constant = 0x1B (~10us to full-0.5dB), FSK modulation delay 10µs
+    // Ramping time constant = 0x1B (~10 µs to full - 0.5 dB), FSK modulation delay 10 µs
     static constexpr auto paTc = 0x91_b;
     SetProperties(PropertyGroup::pa, iPaMode, Span({paMode, paPwrLvl, paBiasClkduty, paTc}));
 
-    // RF Synth Feed Forward Charge Pump Current, Integrated Charge Pump Current, VCO Gain
-    // Scaling Factor, FF Loop Filter Values
+    // RF synth feed forward charge pump current, integrated charge pump current, VCO gain scaling
+    // factor, FF loop filter values
+    //
     // TODO: What values to use here?
     static constexpr auto iSynthPfdcpCpff = 0x00_b;
-    // FF charge pump current = 60µA
+    // FF charge pump current = 60 µA
     static constexpr auto synthPfdcpCpff = 0x2C_b;
-    // SYNTH_PFDCP_CPINT: Int charge pump current = 30µA
+    // SYNTH_PFDCP_CPINT: Int charge pump current = 30 µA
     static constexpr auto synthPfdcpCpint = 0x0E_b;
-    // SYNTH_VCO_KV: Set VCO scaling factor to maximum value, set tuning
-    // varactor gain to maximum value
+    // SYNTH_VCO_KV: set VCO scaling factor to maximum value, set tuning varactor gain to maximum
+    // value
     static constexpr auto synthVcoKv = 0x0B_b;
-    // SYNTH_LPFILT3: R2 value 90kOhm
+    // SYNTH_LPFILT3: R2 value 90 kOhm
     static constexpr auto synthLpfilt3 = 0x04_b;
-    // SYNTH_LPFILT2: C2 value 11.25pF
+    // SYNTH_LPFILT2: C2 value 11.25 pF
     static constexpr auto synthLpfilt2 = 0x0C_b;
-    // SYNTH_LPFILT1: C3 value 12pF, C1 offset 0pF, C1 value 7.21pF
+    // SYNTH_LPFILT1: C3 value 12 pF, C1 offset 0 pF, C1 value 7.21 pF
     static constexpr auto synthLpfilt1 = 0x73_b;
-    // SYNTH_LPFILT0: FF amp bias current 100µA
+    // SYNTH_LPFILT0: FF amp bias current 100 µA
     static constexpr auto synthLpfilt0 = 0x03_b;
     SetProperties(PropertyGroup::synth,
                   iSynthPfdcpCpff,
@@ -588,7 +587,7 @@ auto Initialize(TxType txType) -> void
                         synthLpfilt1,
                         synthLpfilt0}));
 
-    // RF Match Mask
+    // RF match mask
     static constexpr auto iMatchValue1 = 0x00_b;
     static constexpr auto matchValue1 = 0x00_b;
     static constexpr auto matchMask1 = 0x00_b;
@@ -617,13 +616,12 @@ auto Initialize(TxType txType) -> void
                         matchMask4,
                         matchCtrl4}));
 
-    // Frequency Control
+    // Frequency control
     static constexpr auto iFreqControlInte = 0x00_b;
     // FC_inte = 0x41
     static constexpr auto freqControlInte = 0x41_b;
-    // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5
-    // N_presc = 2, outdiv = 8, F_xo = 26MHz
-    // RF_channel_Hz = (FC_inte + FC_frac/2^19)*((N_presc*F_xo)/outdiv) = 433.5000048MHz MHz
+    // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5, N_presc = 2, outdiv = 8, F_xo = 26 MHz,
+    // RF_channel_Hz = (FC_inte + FC_frac / 2^19) * ((N_presc * F_xo) / outdiv) = 433.5000048MHz MHz
     static constexpr auto freqControlFrac = std::array{0x0E_b, 0xC4_b, 0xEC_b};
     // Channel step size = 0x4444
     static constexpr auto freqControlChannelStepSize = std::array{0x44_b, 0x44_b};
@@ -631,7 +629,6 @@ auto Initialize(TxType txType) -> void
     static constexpr auto freqControlWSize = 0x20_b;
     // Adjust target mode for VCO calibration in RX mode = 0xFE int8_t
     static constexpr auto freqControlVcontRxAdj = 0xFE_b;
-
     SetProperties(PropertyGroup::freqControl,
                   iFreqControlInte,
                   Span(FlatArray(freqControlInte,
@@ -640,7 +637,7 @@ auto Initialize(TxType txType) -> void
                                  freqControlWSize,
                                  freqControlVcontRxAdj)));
 
-    // Set RF4463 Module Antenna Switch
+    // Set RF4463 module antenna switch
     // Don't change
     static constexpr auto gpio0Config = 0x00_b;
     // Don't change
@@ -661,17 +658,19 @@ auto Initialize(TxType txType) -> void
                       nirqConfig,
                       sdoConfig}));
 
-    // Frequency Adjust (stolen from Arduino demo code)
+    // Frequency adjust (stolen from Arduino demo code)
     static constexpr auto globalXoTuneUpdated = 0x62_b;
     SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTuneUpdated}));
 
     // Change sequencer mode to guaranteed
-    // TODO: Why? And figure out name for new global config constexpr so it does not clash with
-    // previous one
+    //
+    // TODO: Why?
+    //
     // Split FIFO and guaranteed sequencer mode
-    static constexpr auto globalConfigUpdated = 0x40_b;
-    SetProperties(PropertyGroup::global, iGlobalConfig, Span({globalConfigUpdated}));
+    static constexpr auto newGlobalConfig = 0x40_b;
+    SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
 
+    // TODO: Why is this one not set with all the other GPIO pins in InitializeGpioAndSpi()?
     paEnablePin.Direction(hal::PinDirection::out);
     paEnablePin.Set();
 }
@@ -687,10 +686,10 @@ auto ReadPartNumber() -> std::uint16_t
 auto SetTxType(TxType txType) -> void
 {
     // Constants for setting the TX type (morse, 2GFSK)
-    // MODEM_DATA_RATE: unused, 20k Baud
+    // MODEM_DATA_RATE: unused, 20 kBaud
     constexpr uint32_t dataRateMorse = 20'000U;
-    // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR)/F_XTAL_Hz = (9600 *
-    // 2600000 * 10)/26000000 = 9600 = 0x002580
+    // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600
+    // * 2600000 * 10) / 26000000 = 9600 = 0x002580
     constexpr uint32_t dataRate2Gfsk = 9'600U;
     // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
     constexpr auto modemModTypeMorse = 0x09_b;
@@ -807,6 +806,7 @@ auto WaitForCts() -> void
 }
 
 
+// TODO: Ensure (at compile time) that not more than the max. number of properties are sent at once
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const> propertyValues) -> void
