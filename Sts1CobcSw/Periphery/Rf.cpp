@@ -96,6 +96,7 @@ constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 
 auto InitializeGpioAndSpi() -> void;
 auto PowerUp() -> void;
+auto Configure(TxType txType) -> void;
 
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
@@ -115,12 +116,94 @@ auto Initialize(TxType txType) -> void
     // TODO: Don't forget that WDT_Clear has to be triggered regularely for the TX to work! (even
     // without the watchdog timer on the PCB it needs to be triggered at least once after boot to
     // enable the TX)
-
     InitializeGpioAndSpi();
     PowerUp();
-    SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
+    Configure(txType);
+    // TODO: Why is this one not set with all the other GPIO pins in InitializeGpioAndSpi()?
+    paEnablePin.Direction(hal::PinDirection::out);
+    paEnablePin.Set();
+}
 
-    // Set all the properties! (The one command at the end configures the GPIOs)
+
+auto ReadPartNumber() -> std::uint16_t
+{
+    auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
+    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+}
+
+
+auto SetTxType(TxType txType) -> void
+{
+    // Constants for setting the TX type (morse, 2GFSK)
+    // MODEM_DATA_RATE: unused, 20 kBaud
+    static constexpr uint32_t dataRateMorse = 20'000U;
+    // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600
+    // * 2600000 * 10) / 26000000 = 9600 = 0x002580
+    static constexpr uint32_t dataRate2Gfsk = 9'600U;
+    // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
+    static constexpr auto modemModTypeMorse = 0x09_b;
+    // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
+    static constexpr auto modemModType2Gfsk = 0x03_b;
+    // Inconsistent naming pattern due to strict adherence to datasheet
+    static constexpr auto modemMapControl = 0x00_b;
+    static constexpr auto modemDsmCtrl = 0x07_b;
+    static constexpr auto startIndex = 0x00_b;
+    auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
+    auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
+    SetProperties(
+        PropertyGroup::modem,
+        startIndex,
+        FlatArray(modemModType,
+                  modemMapControl,
+                  modemDsmCtrl,
+                  // The data rate property is only 3 bytes wide, so drop the first byte
+                  Span(Serialize<std::endian::big, std::uint32_t>(dataRate)).subspan<1>()));
+}
+
+
+// --- Private function definitions ---
+
+auto InitializeGpioAndSpi() -> void
+{
+    csGpioPin.Direction(hal::PinDirection::out);
+    csGpioPin.Set();
+    nirqGpioPin.Direction(hal::PinDirection::in);
+    sdnGpioPin.Direction(hal::PinDirection::out);
+    sdnGpioPin.Set();
+    gpio0GpioPin.Direction(hal::PinDirection::out);
+    gpio0GpioPin.Reset();
+    watchdogResetGpioPin.Direction(hal::PinDirection::out);
+    watchdogResetGpioPin.Reset();
+    AT(NOW() + watchDogResetPinDelay);
+    watchdogResetGpioPin.Set();
+    AT(NOW() + watchDogResetPinDelay);
+    watchdogResetGpioPin.Reset();
+
+    constexpr auto baudrate = 6'000'000;
+    hal::Initialize(&spi, baudrate);
+
+    // Enable Si4463 and wait for PoR to finish
+    AT(NOW() + porCircuitSettleDelay);
+    sdnGpioPin.Reset();
+    AT(NOW() + porRunningDelay);
+}
+
+
+auto PowerUp() -> void
+{
+    static constexpr auto bootOption = 0x01_b;
+    static constexpr auto xtalOption = 0x00_b;
+    static constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
+    SendCommand(FlatArray(cmdPowerUp,
+                          bootOption,
+                          xtalOption,
+                          Serialize<std::endian::big, std::uint32_t>(powerUpXoFrequency)));
+}
+
+
+auto Configure(TxType txType) -> void
+{
+    SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
@@ -669,86 +752,6 @@ auto Initialize(TxType txType) -> void
     // Split FIFO and guaranteed sequencer mode
     static constexpr auto newGlobalConfig = 0x40_b;
     SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
-
-    // TODO: Why is this one not set with all the other GPIO pins in InitializeGpioAndSpi()?
-    paEnablePin.Direction(hal::PinDirection::out);
-    paEnablePin.Set();
-}
-
-
-auto ReadPartNumber() -> std::uint16_t
-{
-    auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
-    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
-}
-
-
-auto SetTxType(TxType txType) -> void
-{
-    // Constants for setting the TX type (morse, 2GFSK)
-    // MODEM_DATA_RATE: unused, 20 kBaud
-    static constexpr uint32_t dataRateMorse = 20'000U;
-    // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600
-    // * 2600000 * 10) / 26000000 = 9600 = 0x002580
-    static constexpr uint32_t dataRate2Gfsk = 9'600U;
-    // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
-    static constexpr auto modemModTypeMorse = 0x09_b;
-    // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
-    static constexpr auto modemModType2Gfsk = 0x03_b;
-    // Inconsistent naming pattern due to strict adherence to datasheet
-    static constexpr auto modemMapControl = 0x00_b;
-    static constexpr auto modemDsmCtrl = 0x07_b;
-    static constexpr auto startIndex = 0x00_b;
-    auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
-    auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
-    SetProperties(
-        PropertyGroup::modem,
-        startIndex,
-        FlatArray(modemModType,
-                  modemMapControl,
-                  modemDsmCtrl,
-                  // The data rate property is only 3 bytes wide, so drop the first byte
-                  Span(Serialize<std::endian::big, std::uint32_t>(dataRate)).subspan<1>()));
-}
-
-
-// --- Private function definitions ---
-
-auto InitializeGpioAndSpi() -> void
-{
-    csGpioPin.Direction(hal::PinDirection::out);
-    csGpioPin.Set();
-    nirqGpioPin.Direction(hal::PinDirection::in);
-    sdnGpioPin.Direction(hal::PinDirection::out);
-    sdnGpioPin.Set();
-    gpio0GpioPin.Direction(hal::PinDirection::out);
-    gpio0GpioPin.Reset();
-    watchdogResetGpioPin.Direction(hal::PinDirection::out);
-    watchdogResetGpioPin.Reset();
-    AT(NOW() + watchDogResetPinDelay);
-    watchdogResetGpioPin.Set();
-    AT(NOW() + watchDogResetPinDelay);
-    watchdogResetGpioPin.Reset();
-
-    constexpr auto baudrate = 6'000'000;
-    hal::Initialize(&spi, baudrate);
-
-    // Enable Si4463 and wait for PoR to finish
-    AT(NOW() + porCircuitSettleDelay);
-    sdnGpioPin.Reset();
-    AT(NOW() + porRunningDelay);
-}
-
-
-auto PowerUp() -> void
-{
-    static constexpr auto bootOption = 0x01_b;
-    static constexpr auto xtalOption = 0x00_b;
-    static constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
-    SendCommand(FlatArray(cmdPowerUp,
-                          bootOption,
-                          xtalOption,
-                          Serialize<std::endian::big, std::uint32_t>(powerUpXoFrequency)));
 }
 
 
