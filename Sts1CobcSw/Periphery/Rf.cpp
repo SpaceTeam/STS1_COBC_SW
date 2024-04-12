@@ -549,8 +549,8 @@ auto Initialize(TxType txType) -> void
     // PA switching amp mode, PA_SEL = HP_COARSE, disable power sequencing, disable external TX ramp
     // signal
     static constexpr auto paMode = 0x08_b;
-    // Enabled PA fingers (sets output power but not linearly; 10 µA bias current per enabled finger,
-    // complementary drive signal with 50 % duty cycle)
+    // Enabled PA fingers (sets output power but not linearly; 10 µA bias current per enabled
+    // finger, complementary drive signal with 50 % duty cycle)
     static constexpr auto paPwrLvl = 0x18_b;
     static constexpr auto paBiasClkduty = 0x00_b;
     // Ramping time constant = 0x1B (~10 µs to full - 0.5 dB), FSK modulation delay 10 µs
@@ -687,33 +687,28 @@ auto SetTxType(TxType txType) -> void
 {
     // Constants for setting the TX type (morse, 2GFSK)
     // MODEM_DATA_RATE: unused, 20 kBaud
-    constexpr uint32_t dataRateMorse = 20'000U;
+    static constexpr uint32_t dataRateMorse = 20'000U;
     // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600
     // * 2600000 * 10) / 26000000 = 9600 = 0x002580
-    constexpr uint32_t dataRate2Gfsk = 9'600U;
+    static constexpr uint32_t dataRate2Gfsk = 9'600U;
     // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
-    constexpr auto modemModTypeMorse = 0x09_b;
+    static constexpr auto modemModTypeMorse = 0x09_b;
     // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
-    constexpr auto modemModType2Gfsk = 0x03_b;
-    constexpr auto nProperties = 6;
-    constexpr auto startIndex = 0x00_b;
+    static constexpr auto modemModType2Gfsk = 0x03_b;
     // Inconsistent naming pattern due to strict adherence to datasheet
-    constexpr auto modemMapControl = 0x00_b;
-    constexpr auto modemDsmCtrl = 0x07_b;
-
+    static constexpr auto modemMapControl = 0x00_b;
+    static constexpr auto modemDsmCtrl = 0x07_b;
+    static constexpr auto startIndex = 0x00_b;
     auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
-
-    auto propertyValues = std::array<Byte, nProperties>{};
-    propertyValues[0] = modemModType;
-    propertyValues[1] = modemMapControl;
-    propertyValues[2] = modemDsmCtrl;
-    auto dataRateBytes = Serialize<std::endian::big, std::uint32_t>(dataRate);
-
-    // Ignore first byte, data rate is 3 bytes wide
-    std::copy(
-        std::begin(dataRateBytes) + 1, std::end(dataRateBytes), std::begin(propertyValues) + 3);
-    SetProperties(PropertyGroup::modem, startIndex, propertyValues);
+    SetProperties(
+        PropertyGroup::modem,
+        startIndex,
+        FlatArray(modemModType,
+                  modemMapControl,
+                  modemDsmCtrl,
+                  // The data rate property is only 3 bytes wide, so drop the first byte
+                  Span(Serialize<std::endian::big, std::uint32_t>(dataRate)).subspan<1>()));
 }
 
 
@@ -747,20 +742,13 @@ auto InitializeGpioAndSpi() -> void
 
 auto PowerUp() -> void
 {
-    constexpr auto bootOption = 0x01_b;
-    constexpr auto xtalOption = 0x00_b;
-    constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
-    constexpr auto commandLength = 7;
-
-    auto commandBuffer = std::array<Byte, commandLength>{};
-    commandBuffer[0] = cmdPowerUp;
-    commandBuffer[1] = bootOption;
-    commandBuffer[2] = xtalOption;
-    auto xoFrequencyBytes = Serialize<std::endian::big, std::uint32_t>(powerUpXoFrequency);
-    std::copy(
-        std::begin(xoFrequencyBytes), std::end(xoFrequencyBytes), std::begin(commandBuffer) + 3);
-
-    SendCommand(commandBuffer);
+    static constexpr auto bootOption = 0x01_b;
+    static constexpr auto xtalOption = 0x00_b;
+    static constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
+    SendCommand(FlatArray(cmdPowerUp,
+                          bootOption,
+                          xtalOption,
+                          Serialize<std::endian::big, std::uint32_t>(powerUpXoFrequency)));
 }
 
 
