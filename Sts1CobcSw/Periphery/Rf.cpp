@@ -94,7 +94,7 @@ constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 
 // --- Private function declarations ---
 
-auto InitializeGpioAndSpi() -> void;
+auto InitializeGpiosAndSpi() -> void;
 auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
 
@@ -116,10 +116,10 @@ auto Initialize(TxType txType) -> void
     // TODO: Don't forget that WDT_Clear has to be triggered regularely for the TX to work! (even
     // without the watchdog timer on the PCB it needs to be triggered at least once after boot to
     // enable the TX)
-    InitializeGpioAndSpi();
+    InitializeGpiosAndSpi();
     PowerUp();
     Configure(txType);
-    // TODO: Why is this one not set with all the other GPIO pins in InitializeGpioAndSpi()?
+    // TODO: Why is this one not set with all the other GPIO pins in InitializeGpiosAndSpi()?
     paEnablePin.Direction(hal::PinDirection::out);
     paEnablePin.Set();
 }
@@ -163,7 +163,7 @@ auto SetTxType(TxType txType) -> void
 
 // --- Private function definitions ---
 
-auto InitializeGpioAndSpi() -> void
+auto InitializeGpiosAndSpi() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
     csGpioPin.Set();
