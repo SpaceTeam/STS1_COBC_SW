@@ -47,7 +47,7 @@ private:
             auto measuredVoltage = value * (referenceVoltage / resolution);
             auto adc = static_cast<int>(i / eps::nChannels) + adcIdOffset;
             auto channel = static_cast<int>(i % eps::nChannels);
-            RODOS::PRINTF("ADC %i Channel %i:\n\tDigital reading = %u\n\tMeasured voltage = %f\n",
+            RODOS::PRINTF("ADC %i Channel %i:\n  Digital reading = %u\n  Measured voltage = %f\n",
                           adc,
                           channel,
                           value,
