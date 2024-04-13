@@ -111,7 +111,7 @@ auto Initialize() -> void
     adc6CsGpioPin.Direction(hal::PinDirection::out);
     adc6CsGpioPin.Set();
 
-    constexpr auto baudrate = 6'000'000;
+    static constexpr auto baudrate = 6'000'000;
     Initialize(&framEpsSpi, baudrate);
 
     // Setup ADCs
@@ -164,14 +164,15 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
     // [3:2]: Reference mode configuration
     // [1:0]: Don't care
 
-    constexpr auto setupRegister = 0b01_b;
+    static constexpr auto setupRegister = 0b01_b;
     // Don't use CNVST modes, we use the analog configuration for the CNVST pin
     // Therefore clock mode = 0b10 << 4: No CNVST, internal clock
-    constexpr auto clockMode = 0b10_b;
+    static constexpr auto clockMode = 0b10_b;
     // Reference off after scan; need wake-up delay: 0b00
     // Reference always on; no wake-up delay: 0b10
-    constexpr auto referenceMode = 0b00_b;
-    constexpr auto setupData = (setupRegister << 6) | (clockMode << 4) | (referenceMode << 2);
+    static constexpr auto referenceMode = 0b00_b;
+    static constexpr auto setupData =
+        (setupRegister << 6) | (clockMode << 4) | (referenceMode << 2);
 
     // Changing to CNVST mode could be bad (analog input in digital pin)
     // So statically check that bit 5 is set to 1
@@ -192,14 +193,14 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
     // [1:0]: Single-channel scan count (scan mode 0b10 in conversion only)
 
     // TODO: discuss and chose averaging values
-    constexpr auto averagingRegister = 0b001_b;
+    static constexpr auto averagingRegister = 0b001_b;
     // Averaging off for now
-    constexpr auto enableAveraging = 0b0_b;
+    static constexpr auto enableAveraging = 0b0_b;
     // Only relevant with averaging on, average 4 conversions
-    constexpr auto nAverages = 0b00_b;
+    static constexpr auto nAverages = 0b00_b;
     // Probably not relevant, leave on 4 results
-    constexpr auto nSingleScans = 0b00_b;
-    constexpr auto averagingData =
+    static constexpr auto nSingleScans = 0b00_b;
+    static constexpr auto averagingData =
         (averagingRegister << 5) | (enableAveraging << 4) | (nAverages << 2) | nSingleScans;
 
     adcCsPin->Reset();
@@ -218,14 +219,15 @@ auto ReadAdc(hal::GpioPin * adcCsPin, std::span<Byte, adcDataLength> adcData) ->
     // [2:1]: Scan mode
     // [1]: Don't care
 
-    constexpr auto readDelay = 3 * RODOS::MILLISECONDS;
-    constexpr auto conversionRegister = 0b1_b;
+    static constexpr auto readDelay = 3 * RODOS::MILLISECONDS;
+    static constexpr auto conversionRegister = 0b1_b;
     // Select highest channel, since we scan through all of them every time
-    constexpr auto channel = 0b1111_b;
+    static constexpr auto channel = 0b1111_b;
     // Scan through channel 0 to N (set in channel select)
     // -> All channels in our case
-    constexpr auto scanMode = 0b00_b;
-    constexpr auto conversionData = (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
+    static constexpr auto scanMode = 0b00_b;
+    static constexpr auto conversionData =
+        (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
 
     adcCsPin->Reset();
     hal::WriteTo(&spi, Span(conversionData));
