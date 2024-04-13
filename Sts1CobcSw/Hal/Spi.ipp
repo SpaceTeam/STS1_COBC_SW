@@ -25,7 +25,7 @@ auto ReadFrom(Spi * spiClass, std::span<T const, extent> data, std::int64_t time
     // spi.write() only returns -1 or the given buffer length. It only returns -1 if the SPI is not
     // initialized, which we can check/ensure statically. Therefore, we do not need to check the
     // return value at runtime.
-    //spiClass->spi.write(data.data(), data.size_bytes());
+    // spiClass->spi.write(data.data(), data.size_bytes());
     spiClass->transferEnd.put(RODOS::NOW() + timeout);
     spiClass->spi.read(data.data(), data.size_bytes());
     spiClass->transferEnd.put(RODOS::END_OF_TIME);
