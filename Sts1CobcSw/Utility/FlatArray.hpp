@@ -48,6 +48,7 @@ constexpr auto FlatArray(Args const &... args)
     // NOLINTNEXTLINE(readability-identifier-naming)
     auto Data = []<typename T>(T const & arrayOrValue)
     {
+        // TODO: Use .data() instead of std::data()
         constexpr bool hasData = requires(T t) { std::data(t); };
         if constexpr(hasData)
         {
@@ -59,8 +60,10 @@ constexpr auto FlatArray(Args const &... args)
         }
     };
     using T = std::remove_cvref_t<decltype(*(Data(args), ...))>;
+    // TODO: Turn this into a constraint if possible because than we can test it in the same way as
+    // Span()
     static_assert((std::same_as<T, std::remove_cvref_t<decltype(*(Data(args)))>> && ...),
-                  "All arguments of FlatArray() must all be of type T or array-of-T");
+                  "All arguments of FlatArray() must all be of type T, array-of-T, or span-of-T");
 
     auto result = std::array<T, (0U + ... + flatArraySize<Args>)>{};
     if constexpr(result.size() != 0)
