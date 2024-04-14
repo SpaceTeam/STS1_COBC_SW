@@ -4,7 +4,6 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <array>
 #include <cstddef>
 
 

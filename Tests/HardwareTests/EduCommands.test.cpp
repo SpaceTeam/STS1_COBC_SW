@@ -3,14 +3,14 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <array>
 #include <charconv>
 #include <cinttypes>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 
@@ -84,17 +84,17 @@ private:
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
                     std::uint16_t programId = 0;
-                    std::from_chars(begin(userInput), end(userInput), programId);
+                    std::from_chars(userInput.begin(), userInput.end(), programId);
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
                     std::int32_t startTime = 0;
-                    std::from_chars(begin(userInput), end(userInput), startTime);
+                    std::from_chars(userInput.begin(), userInput.end(), startTime);
 
                     PRINTF("Please enter a timeout (1 character)\n");
                     userInput = ReadCharacters<1>();
                     std::int16_t timeout = 0;
-                    std::from_chars(begin(userInput), end(userInput), timeout);
+                    std::from_chars(userInput.begin(), userInput.end(), timeout);
 
                     PRINTF("\n");
                     PRINTF("Sending ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
@@ -138,12 +138,12 @@ private:
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
                     std::uint16_t programId = 0;
-                    std::from_chars(begin(userInput), end(userInput), programId);
+                    std::from_chars(userInput.begin(), userInput.end(), programId);
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
                     std::int32_t startTime = 0;
-                    std::from_chars(begin(userInput), end(userInput), startTime);
+                    std::from_chars(userInput.begin(), userInput.end(), startTime);
 
                     PRINTF("\n");
                     PRINTF("Sending ReturnResult(programId = %" PRIu16 ", startTime = %" PRIi32

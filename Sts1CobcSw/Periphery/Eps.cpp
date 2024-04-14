@@ -7,6 +7,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <cstddef>
+
 
 namespace sts1cobcsw::eps
 {

@@ -1,4 +1,3 @@
-#include <Sts1CobcSw/Dummy.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 
 // clang-format off

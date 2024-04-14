@@ -31,8 +31,10 @@
 #include <rodos_no_using_namespace.h>
 
 #include <array>
-#include <cinttypes>
+#include <cstddef>
+#include <cstdint>
 #include <span>
+#include <type_traits>
 
 
 namespace sts1cobcsw

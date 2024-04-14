@@ -7,8 +7,8 @@
 
 #include <algorithm>
 #include <cinttypes>
+#include <cstddef>
 #include <cstdint>
-#include <string_view>
 
 
 namespace sts1cobcsw
@@ -74,7 +74,7 @@ private:
         Print(page);
 
         PRINTF("\n");
-        std::fill(begin(page), end(page), 0x00_b);
+        std::fill(page.begin(), page.end(), 0x00_b);
         PRINTF("Programming page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
         Print(page);
         auto begin = RODOS::NOW();

@@ -8,7 +8,7 @@
     #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
 #endif
 
-#include <outcome-experimental.hpp>
+#include <outcome-experimental.hpp>  // IWYU pragma: export
 
 
 struct RebootPolicy : outcome_v2::experimental::policy::base

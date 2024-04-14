@@ -2,12 +2,8 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
-#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <rodos_no_using_namespace.h>
-
-#include <charconv>
-#include <cstdint>
 
 
 namespace sts1cobcsw
