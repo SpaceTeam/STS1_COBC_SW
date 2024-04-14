@@ -2,6 +2,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <etl/string.h>
+
 
 TEST_CASE("Always passes")
 {

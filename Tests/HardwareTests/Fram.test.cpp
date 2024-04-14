@@ -8,8 +8,11 @@
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
+#include <array>
 #include <cinttypes>
+#include <cstddef>
 #include <cstdint>
+#include <span>
 
 
 namespace sts1cobcsw
@@ -18,7 +21,7 @@ using RODOS::PRINTF;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
-const size_t testDataSize = 11 * 1024;  // 11 KiB
+const std::size_t testDataSize = 11 * 1024;  // 11 KiB
 auto testData = std::array<Byte, testDataSize>{};
 auto readData = std::array<Byte, testDataSize>{};
 

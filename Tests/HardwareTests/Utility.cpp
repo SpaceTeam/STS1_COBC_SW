@@ -9,11 +9,11 @@ auto Check(bool condition, std::string_view failMessage, std::string_view succes
 {
     if(condition)
     {
-        RODOS::PRINTF("%s", data(successMessage));
+        RODOS::PRINTF("%s", successMessage.data());
     }
     else
     {
-        RODOS::PRINTF("%s", data(failMessage));
+        RODOS::PRINTF("%s", failMessage.data());
     }
 }
 }

@@ -1,5 +1,8 @@
-#include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/Edu/Edu.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <rodos_no_using_namespace.h>
 
 #include <cinttypes>
 

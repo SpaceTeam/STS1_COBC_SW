@@ -7,6 +7,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <type_traits>
 
 using sts1cobcsw::Byte;

@@ -2,6 +2,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/string.h>
+
 #include <cstdint>
 
 
