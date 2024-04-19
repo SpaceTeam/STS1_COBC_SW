@@ -26,8 +26,9 @@ public:
     auto TransferEnd() const;
 
 private:
-    RODOS::HAL_SPI spi;
-    RODOS::CommBuffer<std::int64_t> transferEnd;
+    RODOS::HAL_SPI spi_;
+    // TODO: Make mutable because get() is not const
+    RODOS::CommBuffer<std::int64_t> transferEnd_;
 };
 
 

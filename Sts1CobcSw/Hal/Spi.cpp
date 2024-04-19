@@ -9,14 +9,14 @@ auto Initialize(Spi * spiClass, std::uint32_t baudRate) -> void
 {
     // spi.init() only returns -1 if the SPI_IDX is out of range. Since we can check that statically
     // we do not need to report that error at runtime.
-    spiClass->spi.init(baudRate, /*slave=*/false, /*tiMode=*/false);
-    spiClass->transferEnd.put(RODOS::END_OF_TIME);
+    spiClass->spi_.init(baudRate, /*slave=*/false, /*tiMode=*/false);
+    spiClass->transferEnd_.put(RODOS::END_OF_TIME);
 }
 
 
 auto Spi::TransferEnd() const
 {
-    return this->transferEnd;
+    return this->transferEnd_.get();
 }
 
 
