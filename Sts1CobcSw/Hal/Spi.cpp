@@ -5,12 +5,12 @@
 
 namespace sts1cobcsw::hal
 {
-auto Initialize(Spi * spiClass, std::uint32_t baudRate) -> void
+auto Initialize(Spi * spi, std::uint32_t baudRate) -> void
 {
     // spi.init() only returns -1 if the SPI_IDX is out of range. Since we can check that statically
     // we do not need to report that error at runtime.
-    spiClass->spi_.init(baudRate, /*slave=*/false, /*tiMode=*/false);
-    spiClass->transferEnd_.put(RODOS::END_OF_TIME);
+    spi->spi_.init(baudRate, /*slave=*/false, /*tiMode=*/false);
+    spi->transferEnd_.put(RODOS::END_OF_TIME);
 }
 
 

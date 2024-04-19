@@ -14,16 +14,17 @@ class Spi
 {
 public:
     // TODO: Add constructor
-    friend auto Initialize(Spi * spiClass, std::uint32_t baudRate) -> void;
+    friend auto Initialize(Spi * spi, std::uint32_t baudRate) -> void;
 
     template<typename T, std::size_t extent>
-    friend auto ReadFrom(Spi * spiClass, std::span<T, extent> data, std::int64_t timeout) -> void;
-
-    template<typename T, std::size_t extent>
-    friend auto WriteTo(Spi * spiClass, std::span<T const, extent> data, std::int64_t timeout)
+    friend auto WriteTo(Spi * spi, std::span<T const, extent> data, std::int64_t timeout)
         -> void;
 
+    template<typename T, std::size_t extent>
+    friend auto ReadFrom(Spi * spi, std::span<T, extent> data, std::int64_t timeout) -> void;
+
     auto TransferEnd() const;
+
 
 private:
     RODOS::HAL_SPI spi_;
