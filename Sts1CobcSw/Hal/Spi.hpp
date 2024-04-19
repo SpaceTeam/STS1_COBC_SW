@@ -23,13 +23,12 @@ public:
     template<typename T, std::size_t extent>
     friend auto ReadFrom(Spi * spi, std::span<T, extent> data, std::int64_t timeout) -> void;
 
-    auto TransferEnd() const;
+    auto TransferEnd() const -> std::int64_t;
 
 
 private:
     RODOS::HAL_SPI spi_;
-    // TODO: Make mutable because get() is not const
-    RODOS::CommBuffer<std::int64_t> transferEnd_;
+    mutable RODOS::CommBuffer<std::int64_t> transferEnd_;
 };
 
 

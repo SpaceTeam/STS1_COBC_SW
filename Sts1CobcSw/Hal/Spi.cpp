@@ -14,9 +14,11 @@ auto Initialize(Spi * spi, std::uint32_t baudRate) -> void
 }
 
 
-auto Spi::TransferEnd() const
+auto Spi::TransferEnd() const -> std::int64_t
 {
-    return this->transferEnd_.get();
+    std::int64_t transferEnd = 0;
+    this->transferEnd_.get(transferEnd);
+    return transferEnd;
 }
 
 
