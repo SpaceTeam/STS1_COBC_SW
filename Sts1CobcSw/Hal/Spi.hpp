@@ -13,12 +13,16 @@ namespace sts1cobcsw::hal
 class Spi
 {
 public:
-    // TODO: Add constructor
+    Spi() = delete;
+    Spi(RODOS::SPI_IDX spiIndex,
+        RODOS::GPIO_PIN sckPin,
+        RODOS::GPIO_PIN misoPin,
+        RODOS::GPIO_PIN mosiPin);
+
     friend auto Initialize(Spi * spi, std::uint32_t baudRate) -> void;
 
     template<typename T, std::size_t extent>
-    friend auto WriteTo(Spi * spi, std::span<T const, extent> data, std::int64_t timeout)
-        -> void;
+    friend auto WriteTo(Spi * spi, std::span<T const, extent> data, std::int64_t timeout) -> void;
 
     template<typename T, std::size_t extent>
     friend auto ReadFrom(Spi * spi, std::span<T, extent> data, std::int64_t timeout) -> void;
