@@ -1,0 +1,2 @@
+add_subdirectory(Sts1CobcSw/ProgramId/NamedType)
+target_link_libraries(Sts1CobcSw_ProgramId NamedType::NamedType)

@@ -16,7 +16,7 @@ std::uint16_t queueIndex = 0;
 template<std::endian endianness>
 auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *
 {
-    source = DeserializeFrom<endianness>(source, &(data->programId));
+    source = DeserializeFrom<endianness>(source, &(data->programId.get()));
     source = DeserializeFrom<endianness>(source, &(data->startTime));
     source = DeserializeFrom<endianness>(source, &(data->timeout));
     return source;
@@ -30,7 +30,7 @@ template auto DeserializeFrom<std::endian::little>(void const *, QueueEntry *) -
 template<std::endian endianness>
 auto SerializeTo(void * destination, QueueEntry const & data) -> void *
 {
-    destination = SerializeTo<endianness>(destination, data.programId);
+    destination = SerializeTo<endianness>(destination, data.programId.get());
     destination = SerializeTo<endianness>(destination, data.startTime);
     destination = SerializeTo<endianness>(destination, data.timeout);
     return destination;

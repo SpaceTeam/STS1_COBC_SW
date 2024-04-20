@@ -125,9 +125,9 @@ private:
             auto programId = edu::programQueue[edu::queueIndex].programId;
             auto timeout = edu::programQueue[edu::queueIndex].timeout;
 
-            DEBUG_PRINT("Executing program %d\n", programId);
+            DEBUG_PRINT("Executing program %d\n", programId.get());
             auto executeProgramData = edu::ExecuteProgramData{
-                .programId = programId, .startTime = startTime, .timeout = timeout};
+                .programId = programId.get(), .startTime = startTime, .timeout = timeout};
             // Start Process
             auto executeProgramResult = edu::ExecuteProgram(executeProgramData);
             // errorCode = edu::ErrorCode::success;
@@ -142,7 +142,7 @@ private:
             else
             {
                 edu::programStatusHistory.put(
-                    edu::ProgramStatusHistoryEntry{.programId = programId,
+                    edu::ProgramStatusHistoryEntry{.programId = programId.get(),
                                                    .startTime = startTime,
                                                    .status = edu::ProgramStatus::programRunning});
 
