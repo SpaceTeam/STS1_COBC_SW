@@ -195,7 +195,7 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
     // TODO: discuss and chose averaging values
     static constexpr auto averagingRegister = 0b001_b;
     // Averaging off for now
-    static constexpr auto enableAveraging = 0b0_b;
+    static constexpr auto enableAveraging = 0b1_b;
     // Only relevant with averaging on, average 4 conversions
     static constexpr auto nAverages = 0b00_b;
     // Probably not relevant, leave on 4 results
