@@ -1,9 +1,10 @@
 #pragma once
 
 
-#include <littlefs/lfs.h>
+#include <Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>
 
 
 namespace sts1cobcsw::fs
 {
+[[nodiscard]] auto Mount() -> Result<void>;
 }
