@@ -5,12 +5,14 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 #include <algorithm>
+#include <span>
 
 
 namespace sts1cobcsw::fs
 {
-// Before globals because lfsConfig needs the declarations
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
           lfs_off_t offset,
@@ -74,7 +76,7 @@ auto Read(lfs_config const * config,
     {
         auto page = flash::ReadPage(startAddress + i);
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        std::copy(begin(page), end(page), (static_cast<Byte *>(buffer) + i));
+        std::copy(page.begin(), page.end(), (static_cast<Byte *>(buffer) + i));
     }
     return 0;
 }
@@ -92,7 +94,7 @@ auto Program(lfs_config const * config,
         auto page = flash::Page{};
         std::copy((static_cast<Byte const *>(buffer) + i),                      // NOLINT
                   (static_cast<Byte const *>(buffer) + i + config->prog_size),  // NOLINT
-                  begin(page));
+                  page.begin());
         flash::ProgramPage(startAddress + i, std::span(page));
         auto waitWhileBusyResult = flash::WaitWhileBusy(pageProgramTimeout);
         if(waitWhileBusyResult.has_error())
