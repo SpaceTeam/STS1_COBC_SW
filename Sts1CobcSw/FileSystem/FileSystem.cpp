@@ -9,7 +9,7 @@
 #include <span>
 
 
-namespace sts1cobcsw::fs
+namespace sts1cobcsw::fs::deprecated
 {
 // --- Private function declarations ---
 

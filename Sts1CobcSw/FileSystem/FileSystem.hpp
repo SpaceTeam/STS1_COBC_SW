@@ -11,7 +11,7 @@
 #include <cstdint>
 
 
-namespace sts1cobcsw::fs
+namespace sts1cobcsw::fs::deprecated
 {
 extern lfs_t lfs;
 extern lfs_file_t lfsFile;

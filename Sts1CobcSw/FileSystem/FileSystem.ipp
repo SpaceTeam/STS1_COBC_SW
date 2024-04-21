@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 
 
-namespace sts1cobcsw::fs
+namespace sts1cobcsw::fs::deprecated
 {
 template<std::size_t size>
 auto ReadProgramFile(etl::vector<Byte, size> * buffer) -> int
