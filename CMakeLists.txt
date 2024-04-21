@@ -19,14 +19,13 @@ include(cmake/clang-tidy-cache.cmake)
 
 find_package_and_notify(etl)
 find_rodos()
-if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    find_package_and_notify(littlefs)
-endif()
+find_package_and_notify(littlefs)
 
 # ---- Declare targets ----
 
 add_library(Sts1CobcSw_Dummy STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
+add_library(Sts1CobcSw_FileSystem STATIC)
 add_library(Sts1CobcSw_Outcome INTERFACE)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility STATIC)
@@ -34,7 +33,6 @@ add_program(HelloDummy)
 # add_program(Heartbeat)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    add_library(Sts1CobcSw_FileSystem STATIC)
     add_library(Sts1CobcSw_Periphery STATIC)
     add_library(Sts1CobcSw_Hal STATIC)
     add_program(CobcSw)

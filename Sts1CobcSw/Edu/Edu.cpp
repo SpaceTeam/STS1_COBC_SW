@@ -108,7 +108,7 @@ auto TurnOff() -> void
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    auto errorCode = fs::OpenProgramFile(data.programId, /* flags=*/0);
+    auto errorCode = fs::deprecated::OpenProgramFile(data.programId, /* flags=*/0);
     RODOS::PRINTF("Pretending to open the file ...\n");
     if(errorCode != 0)
     {
@@ -118,12 +118,12 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
     // TODO: Check if program file is not too large
     while(true)
     {
-        errorCode = fs::ReadProgramFile(&cepDataBuffer);
+        errorCode = fs::deprecated::ReadProgramFile(&cepDataBuffer);
         RODOS::PRINTF("Pretending to read %d bytes from the file system ...\n",
                       static_cast<int>(cepDataBuffer.size()));
         if(errorCode != 0)
         {
-            fs::CloseProgramFile();
+            fs::deprecated::CloseProgramFile();
             return ErrorCode::fileSystemError;
         }
         if(cepDataBuffer.empty())
@@ -133,12 +133,12 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         auto sendDataPacketResult = SendDataPacket(Span(cepDataBuffer));
         if(sendDataPacketResult.has_error())
         {
-            fs::CloseProgramFile();
+            fs::deprecated::CloseProgramFile();
             return ErrorCode::nack;
         }
     }
 
-    errorCode = fs::CloseProgramFile();
+    errorCode = fs::deprecated::CloseProgramFile();
     RODOS::PRINTF("Pretending to close the file ...\n");
     if(errorCode != 0)
     {
