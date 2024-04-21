@@ -57,6 +57,8 @@ constexpr auto cmdPartInfo = 0x01_b;
 constexpr auto cmdPowerUp = 0x02_b;
 constexpr auto cmdSetProperty = 0x11_b;
 constexpr auto cmdGpioPinCfg = 0x13_b;
+constexpr auto cmdFifoInfo = 0x15_b;
+constexpr auto cmdGetIntStatus = 0x20_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // Command answer lengths
@@ -107,6 +109,12 @@ template<std::size_t extent>
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const, extent> propertyValues) -> void;
+
+auto ClearTxFifo() -> void;
+
+auto ClearRxFifo() -> void;
+
+auto ClearFifos() -> void;
 
 
 // --- Public function definitions ---
@@ -827,5 +835,33 @@ inline auto SetProperties(PropertyGroup propertyGroup,
                           static_cast<Byte>(extent),
                           startIndex,
                           propertyValues));
+}
+
+
+auto ClearTxFifo() -> void
+{
+    static constexpr auto resetTxFifo = 0b01_b;
+    SendCommand(Span({cmdFifoInfo, resetTxFifo}));
+}
+
+
+auto ClearRxFifo() -> void
+{
+    static constexpr auto resetRxFifo = 0b10_b;
+    SendCommand(Span({cmdFifoInfo, resetRxFifo}));
+}
+
+
+auto ClearFifos() -> void
+{
+    ClearTxFifo();
+    ClearRxFifo();
+}
+
+
+auto ClearInterrupts() -> void
+{
+    // Clears ALL pending interrupts
+    SendCommand(Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
 }
 }
