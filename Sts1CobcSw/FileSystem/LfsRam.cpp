@@ -13,7 +13,6 @@
 
 namespace sts1cobcsw::fs
 {
-// Before globals because lfsConfig needs the declarations
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
           lfs_off_t offset,
@@ -26,6 +25,9 @@ auto Program(lfs_config const * config,
              lfs_size_t size) -> int;
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int;
 auto Sync(lfs_config const * config) -> int;
+// TODO: Implement Lock() and Unlock()
+auto Lock(const struct lfs_config * config) -> int;
+auto Unlock(const struct lfs_config * config) -> int;
 
 
 constexpr auto pageSize = 256;
@@ -42,6 +44,8 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .prog = &Program,
                                         .erase = &Erase,
                                         .sync = &Sync,
+                                        .lock = &Lock,
+                                        .unlock = &Unlock,
                                         .read_size = pageSize,
                                         .prog_size = pageSize,
                                         .block_size = sectorSize,
@@ -96,6 +100,19 @@ auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 
 
 auto Sync([[maybe_unused]] lfs_config const * config) -> int
+{
+    return 0;
+}
+
+
+auto Lock(const struct lfs_config * config) -> int
+{
+    return 0;
+
+}
+
+
+auto Unlock(const struct lfs_config * config) -> int
 {
     return 0;
 }

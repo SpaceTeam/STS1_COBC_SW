@@ -25,6 +25,9 @@ auto Program(lfs_config const * config,
              lfs_size_t size) -> int;
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int;
 auto Sync(lfs_config const * config) -> int;
+// TODO: Implement Lock() and Unlock()
+auto Lock(const struct lfs_config * config) -> int;
+auto Unlock(const struct lfs_config * config) -> int;
 
 
 auto readBuffer = flash::Page{};
@@ -36,6 +39,8 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .prog = &Program,
                                         .erase = &Erase,
                                         .sync = &Sync,
+                                        .lock = &Lock,
+                                        .unlock = &Unlock,
                                         .read_size = flash::pageSize,
                                         .prog_size = flash::pageSize,
                                         .block_size = flash::sectorSize,
@@ -125,6 +130,19 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
     {
         return LFS_ERR_IO;
     }
+    return 0;
+}
+
+
+auto Lock(const struct lfs_config * config) -> int
+{
+    return 0;
+
+}
+
+
+auto Unlock(const struct lfs_config * config) -> int
+{
     return 0;
 }
 }
