@@ -58,6 +58,8 @@ constexpr auto cmdSetProperty = 0x11_b;
 constexpr auto cmdGpioPinCfg = 0x13_b;
 constexpr auto cmdFifoInfo = 0x15_b;
 constexpr auto cmdGetIntStatus = 0x20_b;
+constexpr auto cmdStartTx = 0x31_b;
+constexpr auto cmdChangeState = 0x34_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
 // Command answer lengths
@@ -108,12 +110,13 @@ template<std::size_t extent>
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const, extent> propertyValues) -> void;
-
 auto ClearTxFifo() -> void;
-
 auto ClearRxFifo() -> void;
-
 auto ClearFifos() -> void;
+auto ClearInterrupts() -> void;
+auto EnterStandby() -> void;
+auto WriteFifo(std::uint8_t const * data, std::size_t length) -> void;
+auto StartTx() -> void;
 
 
 // --- Public function definitions ---
@@ -164,6 +167,82 @@ auto SetTxType(TxType txType) -> void
                        modemDsmCtrl,
                        // The data rate property is only 3 bytes wide, so drop the first byte
                        Span(Serialize<std::endian::big>(dataRate)).subspan<1>())));
+}
+
+
+// TODO: Do we need to clear all FIFOs here, should be just TX FIFO
+// TODO: Refactor (issue #226)
+auto Send(std::uint8_t const * data, std::size_t length) -> void
+{
+    auto dataIndex = 0;
+    ClearFifos();
+
+    // Set TX Data Length
+    // TODO: Check if we can just set the length in START_TX
+    // TODO: Use Deserialize() for length bytes, but length should then be uint16_t
+    static constexpr auto iPktField1Length = 0x0D_b;
+    auto lengthUpperBits = static_cast<Byte>(length >> 8);
+    auto lengthLowerBits = static_cast<Byte>(length);
+    SetProperties(PropertyGroup::pkt, iPktField1Length, Span({lengthUpperBits, lengthLowerBits}));
+
+    // Fill the TX FIFO with 60 bytes each "round"
+    static constexpr auto nFillBytes = 60;
+    auto almostEmptyInterruptEnabled = false;
+
+    // Property index for packet handler interrupts
+    static constexpr auto iIntCtlPhEnable = 0x01_b;
+
+    // While the packet is longer than a single fill round, wait for the almost empty interrupt,
+    // afterwards for the packet sent interrupt
+    while(length - dataIndex > nFillBytes)
+    {
+        // Enable the almost empty interrupt in the first round
+        if(not almostEmptyInterruptEnabled)
+        {
+            // TODO: Setting interrupts could be put in a function
+            static constexpr auto txFifoAlmostEmptyInterrupt = 0b00000010_b;
+            SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(txFifoAlmostEmptyInterrupt));
+            almostEmptyInterruptEnabled = true;
+        }
+
+        // Write nFillBytes bytes to the TX FIFO
+        WriteFifo(data + dataIndex, nFillBytes);
+        dataIndex += nFillBytes;
+        ClearInterrupts();
+        StartTx();
+        // Wait for TX FIFO almost empty interrupt
+        while(nirqGpioPin.Read() == hal::PinState::set)
+        {
+            // TODO: Add timeout
+            RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+        }
+    }
+
+    // Enable packet sent interrupt
+    static constexpr auto packetSentInterrupt = 0b00100000_b;
+    SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(packetSentInterrupt));
+
+    ClearInterrupts();
+
+    // Write the rest of the data
+    WriteFifo(data + dataIndex, length - dataIndex);
+
+    StartTx();
+
+    auto startTime = RODOS::NOW();
+
+    // Wait for Packet Sent Interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        // TODO: Set timeout constant
+        if(RODOS::NOW() - startTime > 1 * RODOS::SECONDS)
+        {
+            break;
+        }
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
+
+    EnterStandby();
 }
 
 
@@ -862,5 +941,54 @@ auto ClearInterrupts() -> void
 {
     // Clears ALL pending interrupts
     SendCommand(Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
+}
+
+
+auto EnterStandby() -> void
+{
+    static constexpr auto standbyMode = 0x01_b;
+    SendCommand(Span({cmdChangeState, standbyMode}));
+}
+
+
+// TODO: Refactor (issue #226)
+auto WriteFifo(std::uint8_t const * data, std::size_t length) -> void
+{
+    csGpioPin.Reset();
+    AT(NOW() + 20 * MICROSECONDS);
+    auto buf = std::to_array<std::uint8_t>({0x66});
+    spi.write(std::data(buf), std::size(buf));
+    spi.write(data, length);
+    AT(NOW() + 2 * MICROSECONDS);
+    csGpioPin.Set();
+
+    auto cts = std::to_array<std::uint8_t>({0x00, 0x00});
+    auto req = std::to_array<std::uint8_t>({0x44, 0x00});
+    do
+    {
+        AT(NOW() + 20 * MICROSECONDS);
+        csGpioPin.Reset();
+        AT(NOW() + 20 * MICROSECONDS);
+        spi.writeRead(std::data(req), std::size(req), std::data(cts), std::size(cts));
+        AT(NOW() + 2 * MICROSECONDS);
+        csGpioPin.Set();
+    } while(cts[1] != 0xFF);
+}
+
+
+auto StartTx() -> void
+{
+    static constexpr auto channel = 0x00_b;
+    // [7:4]: TXCOMPLETE_STATE: 0b0011 -> READY state
+    // [3]: UPDATE: 0b0 -> Use TX parameters to enter TX mode
+    // [2]: RETRANSMIT: 0b0 -> Send from TX FIFO, not last packet
+    // [1:0]: START: 0b0 -> Start TX immediately
+    static constexpr auto condition = 0x30_b;
+    // Length is set in Send() via SetProperty, not in StartTx
+    // TODO: Decide on either approach, and use Deserialize()
+    static constexpr auto txLen = std::array{0x00_b, 0x00_b};
+    static constexpr auto txDelay = 0x00_b;
+    static constexpr auto numRepeat = 0x00_b;
+    SendCommand(Span(FlatArray(cmdStartTx, channel, condition, txLen, txDelay, numRepeat)));
 }
 }
