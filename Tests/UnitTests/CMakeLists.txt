@@ -12,6 +12,11 @@ target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1
 add_program(Outcome Outcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
 
+add_program(Fram Fram.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Fram PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery Sts1CobcSw_Serial
+)
+
 # TODO: Fix the problem with two main()s, one from Rodos one from Catch, somehow
 if(FALSE)
     add_program(PersistentState PersistentState.test.cpp)

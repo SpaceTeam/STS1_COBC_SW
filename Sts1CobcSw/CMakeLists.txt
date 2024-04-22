@@ -1,7 +1,7 @@
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    add_subdirectory(Periphery)
     add_subdirectory(Hal)
 endif()
+add_subdirectory(Periphery)
 add_subdirectory(Edu)
 add_subdirectory(FileSystem)
 add_subdirectory(Outcome)
