@@ -6,6 +6,12 @@
 #include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#ifdef NO_RODOS
+    #include <mutex>
+#else
+    #include <rodos-semaphore.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -38,6 +44,12 @@ auto memory = std::vector<Byte>();
 auto readBuffer = std::array<Byte, pageSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, pageSize>{};
+
+#ifdef NO_RODOS
+auto mutex = std::mutex();
+#else
+auto mutex = RODOS::Semaphore();
+#endif
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
@@ -107,13 +119,22 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 
 auto Lock(const struct lfs_config * config) -> int
 {
+#ifdef NO_RODOS
     return 0;
-
+#else
+    mutex.enter();
+    return 0;
+#endif
 }
 
 
 auto Unlock(const struct lfs_config * config) -> int
 {
+#ifdef NO_RODOS
     return 0;
+#else
+    mutex.leave();
+    return 0;
+#endif
 }
 }

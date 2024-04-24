@@ -38,6 +38,8 @@ add_program(HelloDummy)
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_library(Sts1CobcSw_Hal STATIC)
     add_program(CobcSw)
+else()
+    add_library(Sts1CobcSw_FileSystem_NoRodos STATIC)
 endif()
 
 # All targets must only add the top level project directory as PUBLIC include directory
