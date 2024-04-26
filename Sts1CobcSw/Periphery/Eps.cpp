@@ -73,6 +73,13 @@ namespace sts1cobcsw::eps
 // AIN15 | GND
 
 
+enum class ResetType
+{
+    registers,
+    fifo
+};
+
+
 // --- Private globals ---
 
 // Pins and SPI
@@ -87,6 +94,7 @@ auto spi = RODOS::HAL_SPI(
 // --- Private function declarations ---
 
 auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
+auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
 
 // --- Public function definitions ---
@@ -107,6 +115,22 @@ auto Initialize() -> void
     ConfigureSetupRegister(&adc4CsGpioPin);
     ConfigureSetupRegister(&adc5CsGpioPin);
     ConfigureSetupRegister(&adc6CsGpioPin);
+}
+
+
+auto ResetAdcRegisters() -> void
+{
+    Reset(&adc4CsGpioPin, ResetType::registers);
+    Reset(&adc5CsGpioPin, ResetType::registers);
+    Reset(&adc6CsGpioPin, ResetType::registers);
+}
+
+
+auto ClearFifos() -> void
+{
+    Reset(&adc4CsGpioPin, ResetType::fifo);
+    Reset(&adc5CsGpioPin, ResetType::fifo);
+    Reset(&adc6CsGpioPin, ResetType::fifo);
 }
 
 
@@ -135,6 +159,21 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
 
     adcCsPin->Reset();
     hal::WriteTo(&spi, Span(setupData));
+    adcCsPin->Set();
+}
+
+
+// Reset either ADC registers to power-up configuration or clear the FIFO
+auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void
+{
+    // Reset register values
+    // [7:4]: Register selection bits = 0b0001
+    //   [3]: Reset bit: 0 -> registers, 1 -> FIFO
+    // [2:0]: Don't care
+    auto data = 0b0001_b << 4;
+    data = resetType == ResetType::fifo ? data | 1_b << 3 : data;
+    adcCsPin->Reset();
+    hal::WriteTo(&spi, Span(data));
     adcCsPin->Set();
 }
 }
