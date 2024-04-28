@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -38,28 +39,28 @@ private:
     {
         TIME_LOOP(0, timeLoopPeriod)
         {
-            // RODOS::PRINTF("[EduListenerThread] Start of TimeLoop Iteration\n");
+            // DEBUG_PRINT("[EduListenerThread] Start of TimeLoop Iteration\n");
             auto eduHasUpdate = (eduUpdateGpioPin.Read() == hal::PinState::set);
 
             auto eduIsAlive = false;
             eduIsAliveBufferForListener.get(eduIsAlive);
-            // RODOS::PRINTF("[EduListenerThread] Read eduHasUpdate pin\n");
+            // DEBUG_PRINT("[EduListenerThread] Read eduHasUpdate pin\n");
 
             // TODO: Check if EDU is alive
             if(eduIsAlive and eduHasUpdate)
             {
-                // RODOS::PRINTF("[EduListenerThread] Edu is alive and has an update\n");
+                // DEBUG_PRINT("[EduListenerThread] Edu is alive and has an update\n");
                 // Communicate with EDU
 
                 auto getStatusResult = edu::GetStatus();
-                // RODOS::PRINTF("EduStatus : %d, EduErrorcode %d\n", status.statusType,
+                // DEBUG_PRINT("EduStatus : %d, EduErrorcode %d\n", status.statusType,
                 // status.errorCode);
 
                 if(getStatusResult.has_error())
                 {
-                    // RODOS::PRINTF("[EduListenerThread] GetStatus() error code : %d.\n",
+                    // DEBUG_PRINT("[EduListenerThread] GetStatus() error code : %d.\n",
                     // status.errorCode);
-                    // RODOS::PRINTF(
+                    // DEBUG_PRINT(
                     //   "[EduListenerThread] Edu communication error after call to
                     //   GetStatus().\n");
                     ResumeEduCommunicationErrorThread();
@@ -67,7 +68,7 @@ private:
 
                 if(getStatusResult.has_value())
                 {
-                    // RODOS::PRINTF("[EduListenerThread] Call to GetStatus() resulted in
+                    // DEBUG_PRINT("[EduListenerThread] Call to GetStatus() resulted in
                     // success.\n");
                     auto status = getStatusResult.value();
                     switch(status.statusType)
@@ -104,10 +105,10 @@ private:
                             if(returnResultResult.has_error())
                             {
                                 /*
-                                RODOS::PRINTF(
+                                DEBUG_PRINT(
                                     "[EduListenerThread] Error Code From ReturnResult() : %d.\n",
                                     errorCode);
-                                RODOS::PRINTF(
+                                DEBUG_PRINT(
                                     "[EduListenerThread] Communication error after call to "
                                     "ReturnResult().\n");
                                     */
@@ -115,7 +116,7 @@ private:
                             }
                             else
                             {
-                                // RODOS::PRINTF(
+                                // DEBUG_PRINT(
                                 //    "[EduListenerThread] Call to ReturnResults() resulted in "
                                 //    "success.\n");
                             }
@@ -135,7 +136,7 @@ private:
                     }
                 }
             }
-            // RODOS::PRINTF("[EduListenerThread] Edu Has no uppdate\n");
+            // DEBUG_PRINT("[EduListenerThread] Edu Has no uppdate\n");
         }
     }
 } eduListenerThread;

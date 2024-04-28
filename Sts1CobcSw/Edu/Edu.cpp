@@ -8,6 +8,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -109,7 +110,7 @@ auto TurnOff() -> void
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
     auto errorCode = fs::deprecated::OpenProgramFile(data.programId, /* flags=*/0);
-    RODOS::PRINTF("Pretending to open the file ...\n");
+    DEBUG_PRINT("Pretending to open the file ...\n");
     if(errorCode != 0)
     {
         return ErrorCode::fileSystemError;
@@ -119,8 +120,8 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
     while(true)
     {
         errorCode = fs::deprecated::ReadProgramFile(&cepDataBuffer);
-        RODOS::PRINTF("Pretending to read %d bytes from the file system ...\n",
-                      static_cast<int>(cepDataBuffer.size()));
+        DEBUG_PRINT("Pretending to read %d bytes from the file system ...\n",
+                    static_cast<int>(cepDataBuffer.size()));
         if(errorCode != 0)
         {
             fs::deprecated::CloseProgramFile();
@@ -139,7 +140,7 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
     }
 
     errorCode = fs::deprecated::CloseProgramFile();
-    RODOS::PRINTF("Pretending to close the file ...\n");
+    DEBUG_PRINT("Pretending to close the file ...\n");
     if(errorCode != 0)
     {
         return ErrorCode::fileSystemError;
@@ -280,13 +281,13 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
             OUTCOME_TRY(SendCommand(cepAck));
             // TODO: Not sure if we actually have a CRC32 over the whole file that needs to be
             // checked here, but we need to send two ACKs anyway
-            RODOS::PRINTF("Pretending to check the whole file's CRC32 ...\n");
+            DEBUG_PRINT("Pretending to check the whole file's CRC32 ...\n");
             OUTCOME_TRY(SendCommand(cepAck));
             return outcome_v2::success();
         }
         // TODO: Actually store the result in the COBC file system
-        RODOS::PRINTF("Pretending to write %d bytes to the file system ...\n",
-                      static_cast<int>(cepDataBuffer.size()));
+        DEBUG_PRINT("Pretending to write %d bytes to the file system ...\n",
+                    static_cast<int>(cepDataBuffer.size()));
         RODOS::AT(RODOS::NOW() + 3 * RODOS::MILLISECONDS);
         OUTCOME_TRY(SendCommand(cepAck));
     }

@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Dummy.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -26,6 +27,7 @@ class HelloDummy : public RODOS::StaticThread<>
         TIME_LOOP(0, 500 * RODOS::MILLISECONDS)
         {
             RODOS::PRINTF("Hello %s!\n", dummy.name.data());
+            DEBUG_PRINT("Debug printing ! printfMask = %d\n", printfMask);
         }
     }
 } helloDummy;

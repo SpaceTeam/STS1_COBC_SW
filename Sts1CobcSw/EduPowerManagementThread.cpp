@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -47,7 +48,7 @@ private:
     {
         TIME_LOOP(0, eduPowerManagementThreadPeriod)
         {
-            // RODOS::PRINTF("[EduPowerManagementThread] Start of Loop\n");
+            // DEBUG_PRINT("[EduPowerManagementThread] Start of Loop\n");
             std::int64_t startDelay = 0;
             nextProgramStartDelayBuffer.get(startDelay);
 
@@ -65,7 +66,7 @@ private:
                     // TODO: also perform a check about EDU programs on cobc
                     if((not eduHasUpdate) and (startDelay >= startDelayLimit))
                     {
-                        RODOS::PRINTF("Turning Edu off\n");
+                        DEBUG_PRINT("Turning Edu off\n");
                         edu::TurnOff();
                     }
                 }
@@ -73,7 +74,7 @@ private:
                 {
                     if(startDelay < (eduBootTime + eduBootTimeMargin))
                     {
-                        RODOS::PRINTF("Turning Edu on\n");
+                        DEBUG_PRINT("Turning Edu on\n");
                         edu::TurnOn();
                     }
                 }
