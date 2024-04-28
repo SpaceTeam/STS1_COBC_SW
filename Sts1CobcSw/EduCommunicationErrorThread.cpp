@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -33,11 +34,10 @@ private:
         while(true)
         {
             RODOS::AT(RODOS::END_OF_TIME);
-            // RODOS::PRINTF("EduCommunicationThread resumed in main loop\n");
 
             eduCommunicationErrorCounter++;
 
-            RODOS::PRINTF("[EduCommunicationErrorThread] Resetting the Edu\n");
+            DEBUG_PRINT("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU
 
             edu::TurnOff();
@@ -48,14 +48,14 @@ private:
             [[maybe_unused]] auto status = edu::GetStatus();
 
             // Busy wait
-            RODOS::PRINTF("[EduCommunicationErrorThread] Entering busy wait\n");
+            DEBUG_PRINT("[EduCommunicationErrorThread] Entering busy wait\n");
             auto eduIsAlive = false;
             while(not eduIsAlive)
             {
                 yield();  // Force recalculation of scheduling!
                 eduIsAliveBufferForCommunicationError.get(eduIsAlive);
             }
-            RODOS::PRINTF("[EduCommunicationErrorThread] Leaving busy wait\n");
+            DEBUG_PRINT("[EduCommunicationErrorThread] Leaving busy wait\n");
         }
     }
 } eduCommunicationErrorThread;
@@ -64,6 +64,6 @@ private:
 auto ResumeEduCommunicationErrorThread() -> void
 {
     eduCommunicationErrorThread.resume();
-    RODOS::PRINTF("[EduCommunicationErrorThread] EduCommunicationErrorThread resumed\n");
+    DEBUG_PRINT("[EduCommunicationErrorThread] EduCommunicationErrorThread resumed\n");
 }
 }

@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -50,9 +51,9 @@ private:
         //
         //            auto type = EduIsAlive();
         //            if(type) {
-        //                RODOS::PRINTF("Edu is alive\n");
+        //                DEBUG_PRINT("Edu is alive\n");
         //            } else {
-        //                RODOS::PRINTF("Edu is dead\n");
+        //                DEBUG_PRINT("Edu is dead\n");
         //            }
         //            eduIsAliveTopic.publish(type);
         //
@@ -69,7 +70,7 @@ private:
         auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0;
 
-        RODOS::PRINTF("Sampling period : %" PRIi64 "\n", samplingPeriod / MILLISECONDS);
+        DEBUG_PRINT("Sampling period : %" PRIi64 "\n", samplingPeriod / MILLISECONDS);
         auto toggle = true;
         TIME_LOOP(0, samplingPeriod)
         {
@@ -93,13 +94,13 @@ private:
             if(heartbeatIsConstant and (heartbeat != oldHeartbeat))
             {
                 heartbeatIsConstant = false;
-                // RODOS::PRINTF("Detected an edge \n");
+                // DEBUG_PRINT("Detected an edge \n");
                 edgeCounter++;
             }
 
             if(edgeCounter == edgeCounterThreshold)
             {
-                // RODOS::PRINTF("Edu is alive published to true\n");
+                // DEBUG_PRINT("Edu is alive published to true\n");
                 eduIsAliveTopic.publish(true);
                 edgeCounter = 0;
             }
@@ -115,7 +116,7 @@ private:
                 if(heartbeatIsConstant)
                 {
                     edgeCounter = 0;
-                    // RODOS::PRINTF("Edu is alive published to false\n");
+                    // DEBUG_PRINT("Edu is alive published to false\n");
                     eduIsAliveTopic.publish(false);
                 }
                 heartbeatIsConstant = true;
@@ -148,8 +149,8 @@ auto EduIsAlive() -> bool
     }
 
     auto executionTime = RODOS::NOW() - begin;
-    RODOS::PRINTF("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", executionTime);
-    RODOS::PRINTF("Execution Time of EduIsAlive (ms) : %" PRIi64 "\n",
+    DEBUG_PRINT("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", executionTime);
+    DEBUG_PRINT("Execution Time of EduIsAlive (ms) : %" PRIi64 "\n",
                   executionTime / RODOS::MILLISECONDS);
     return false;
 }
@@ -174,7 +175,7 @@ private:
         edu.TurnOn();
         RODOS::AT(RODOS::NOW() + 25 * RODOS::SECONDS);
 
-        RODOS::PRINTF("Hello From DummyThread Timeloop\n");
+        DEBUG_PRINT("Hello From DummyThread Timeloop\n");
         auto programId = 0_u16;
         auto timestamp = 5_u16;
         auto timeout = 10_i16;

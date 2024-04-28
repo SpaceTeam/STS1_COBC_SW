@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -18,11 +19,10 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
     auto gsCommandHeader =
         Deserialize<GsCommandHeader>(std::span(command).first<serialSize<GsCommandHeader>>());
 
-    // TODO: Debug print, to be removed
-    RODOS::PRINTF("Header start character : %c\n", gsCommandHeader.startCharacter);
-    RODOS::PRINTF("Header commandID       : %" PRIi8 "\n", gsCommandHeader.commandId);
-    RODOS::PRINTF("Header utc             : %" PRIi32 "\n", gsCommandHeader.utc);
-    RODOS::PRINTF("Header length          : %" PRIi16 "\n", gsCommandHeader.length);
+    DEBUG_PRINT("Header start character : %c\n", gsCommandHeader.startCharacter);
+    DEBUG_PRINT("Header commandID       : %" PRIi8 "\n", gsCommandHeader.commandId);
+    DEBUG_PRINT("Header utc             : %" PRIi32 "\n", gsCommandHeader.utc);
+    DEBUG_PRINT("Header length          : %" PRIi16 "\n", gsCommandHeader.length);
 
     // TODO: Move this somewhere else
     RODOS::sysTime.setUTC(utility::UnixToRodosTime(gsCommandHeader.utc));
@@ -50,26 +50,26 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
             }
             default:
             {
-                RODOS::PRINTF("*Error, invalid command*\n");
+                DEBUG_PRINT("*Error, invalid command*\n");
                 return;
             }
         }
     }
 
-    RODOS::PRINTF("Not implemented yet.\n");
+    DEBUG_PRINT("Not implemented yet.\n");
 }
 
 
 auto BuildEduQueue(std::span<Byte const> commandData) -> void
 {
-    RODOS::PRINTF("Entering build queue command parsing\n");
+    DEBUG_PRINT("Entering build queue command parsing\n");
 
     edu::programQueue.clear();
     ParseAndAddQueueEntries(commandData);
     edu::queueIndex = 0;
 
-    RODOS::PRINTF("Queue index reset. Current size of EDU program queue is %d.\n",
-                  static_cast<int>(edu::programQueue.size()));
+    DEBUG_PRINT("Queue index reset. Current size of EDU program queue is %d.\n",
+                static_cast<int>(edu::programQueue.size()));
 
     ResumeEduProgramQueueThread();
 }
@@ -81,16 +81,16 @@ auto BuildEduQueue(std::span<Byte const> commandData) -> void
 //! and adds them to the global EDU program queue.
 auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
 {
-    RODOS::PRINTF("Printing and parsing\n");
+    DEBUG_PRINT("Printing and parsing\n");
 
     while(queueEntries.size() >= serialSize<edu::QueueEntry> and (not edu::programQueue.full()))
     {
         auto entry =
             Deserialize<edu::QueueEntry>(queueEntries.first<serialSize<edu::QueueEntry>>());
 
-        RODOS::PRINTF("Prog ID      : %" PRIu16 "\n", entry.programId);
-        RODOS::PRINTF("Start Time   : %" PRIi32 "\n", entry.startTime);
-        RODOS::PRINTF("Timeout      : %" PRIi16 "\n", entry.timeout);
+        DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", entry.programId);
+        DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime);
+        DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
         edu::programQueue.push_back(entry);
         queueEntries = queueEntries.subspan<serialSize<edu::QueueEntry>>();

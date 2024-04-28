@@ -54,7 +54,6 @@ private:
                 continue;
             }
 
-            // RODOS::PRINTF("Read a character : %c\n", readCharacter);
             if(readCharacter == startCharacter)
             {
                 startWasDetected = true;
