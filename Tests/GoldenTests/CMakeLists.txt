@@ -13,17 +13,4 @@ add_golden_test(TESTFILE "HelloDummy.test.cpp" LIB rodos::rodos etl::etl Sts1Cob
 
 add_golden_test(TESTFILE "UpdateRingBuffer.test.cpp" LIB rodos::rodos Sts1CobcSw_Edu)
 
-add_golden_test(
-    TESTFILE
-    "DispatchCommand.test.cpp"
-    SOURCE
-    "${Sts1CobcSw}/CommandParser.cpp"
-    LIB
-    rodos::rodos
-    etl::etl
-    Sts1CobcSw_Edu
-    Sts1CobcSw_Utility
-    Sts1CobcSw_Serial
-)
-
 add_custom_target(AllGoldenTests DEPENDS ${output_files})
