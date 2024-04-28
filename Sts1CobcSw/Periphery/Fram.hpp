@@ -3,6 +3,8 @@
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -18,7 +20,7 @@ using Address = std::uint32_t;
 
 
 auto Initialize() -> void;
-[[nodiscard]] auto ReadDeviceId() -> DeviceId;
+[[nodiscard]] auto ReadDeviceId(std::int64_t timeout = RODOS::END_OF_TIME) -> DeviceId;
 auto ActualBaudRate() -> int32_t;
 
 template<std::size_t extent>
@@ -35,8 +37,14 @@ template<std::size_t size>
 // declarations here are necessary because of templates.
 namespace internal
 {
-auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void;
-auto ReadFrom(Address address, void * data, std::size_t nBytes) -> void;
+auto WriteTo(Address address,
+             void const * data,
+             std::size_t nBytes,
+             std::int64_t timeout = RODOS::END_OF_TIME) -> void;
+auto ReadFrom(Address address,
+              void * data,
+              std::size_t nBytes,
+              std::int64_t timeout = RODOS::END_OF_TIME) -> void;
 }
 }
 

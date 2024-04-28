@@ -67,8 +67,7 @@ constexpr auto partInfoAnswerLength = 8U;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
-auto spi = RODOS::HAL_SPI(
-    hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
+auto spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
@@ -93,11 +92,12 @@ auto InitializeGpiosAndSpi() -> void;
 auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
 
-auto SendCommand(std::span<Byte const> data) -> void;
+auto SendCommand(std::span<Byte const> data, std::int64_t timeout = RODOS::END_OF_TIME) -> void;
 template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
+auto SendCommand(std::span<Byte const> data, std::int64_t timeout = RODOS::END_OF_TIME)
+    -> std::array<Byte, answerLength>;
 
-auto WaitForCts() -> void;
+auto WaitForCts(std::int64_t timeout = RODOS::END_OF_TIME) -> void;
 
 template<std::size_t extent>
     requires(extent <= maxNProperties)
@@ -177,7 +177,7 @@ auto InitializeGpiosAndSpi() -> void
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 6'000'000;
-    hal::Initialize(&spi, baudrate);
+    Initialize(&spi, baudrate);
 
     // Enable Si4463 and wait for PoR to finish
     AT(NOW() + porCircuitSettleDelay);
@@ -752,37 +752,37 @@ auto Configure(TxType txType) -> void
 }
 
 
-auto SendCommand(std::span<Byte const> data) -> void
+auto SendCommand(std::span<Byte const> data, std::int64_t timeout) -> void
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, data);
+    hal::WriteTo(&spi, data, timeout);
     csGpioPin.Set();
     WaitForCts();
 }
 
 
 template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
+auto SendCommand(std::span<Byte const> data, std::int64_t timeout) -> std::array<Byte, answerLength>
 {
-    SendCommand(data);
+    SendCommand(data, timeout);
     auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
-    hal::ReadFrom(&spi, Span(&answer));
+    hal::ReadFrom(&spi, Span(&answer), timeout);
     csGpioPin.Set();
     return answer;
 }
 
 
 //! @brief Polls the CTS byte until 0xFF is received (i.e. Si4463 is ready for command).
-auto WaitForCts() -> void
+auto WaitForCts(std::int64_t timeout) -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
     do
     {
         csGpioPin.Reset();
-        hal::WriteTo(&spi, Span(cmdReadCmdBuff));
+        hal::WriteTo(&spi, Span(cmdReadCmdBuff), timeout);
         auto cts = 0x00_b;
-        hal::ReadFrom(&spi, Span(&cts));
+        hal::ReadFrom(&spi, Span(&cts), timeout);
         csGpioPin.Set();
         if(cts == dataIsReadyValue)
         {

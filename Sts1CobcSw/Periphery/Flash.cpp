@@ -50,11 +50,8 @@ constexpr auto sectorErase4ByteAddress = 0x21_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
-auto spi = RODOS::HAL_SPI(hal::flashSpiIndex,
-                          hal::flashSpiSckPin,
-                          hal::flashSpiMisoPin,
-                          hal::flashSpiMosiPin,
-                          hal::spiNssDummyPin);
+auto spi =
+    hal::Spi(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
 
 
 // --- Private function declarations ---
@@ -65,13 +62,13 @@ auto DisableWriting() -> void;
 auto IsBusy() -> bool;
 
 template<std::size_t extent>
-auto Write(std::span<Byte const, extent> data) -> void;
+auto Write(std::span<Byte const, extent> data, std::int64_t timeout = RODOS::END_OF_TIME) -> void;
 
 template<std::size_t extent>
-auto Read(std::span<Byte, extent> data) -> void;
+auto Read(std::span<Byte, extent> data, std::int64_t timeout = RODOS::END_OF_TIME) -> void;
 
 template<std::size_t size>
-auto Read() -> std::array<Byte, size>;
+auto Read(std::int64_t timeout = RODOS::END_OF_TIME) -> std::array<Byte, size>;
 
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
@@ -94,7 +91,7 @@ auto Initialize() -> void
     writeProtectionGpioPin.Direction(hal::PinDirection::out);
     writeProtectionGpioPin.Set();
     auto const baudRate = 48'000'000;
-    hal::Initialize(&spi, baudRate);
+    Initialize(&spi, baudRate);
     Enter4ByteAdressMode();
 }
 
@@ -184,7 +181,7 @@ auto WaitWhileBusy(std::int64_t timeout) -> Result<void>
 
 auto ActualBaudRate() -> int32_t
 {
-    return spi.status(RODOS::SPI_STATUS_BAUDRATE);
+    return spi.Status();
 }
 
 
@@ -222,24 +219,24 @@ auto IsBusy() -> bool
 
 
 template<std::size_t extent>
-inline auto Write(std::span<Byte const, extent> data) -> void
+inline auto Write(std::span<Byte const, extent> data, std::int64_t timeout) -> void
 {
-    hal::WriteTo(&spi, data);
+    hal::WriteTo(&spi, data, timeout);
 }
 
 
 template<std::size_t extent>
-inline auto Read(std::span<Byte, extent> data) -> void
+inline auto Read(std::span<Byte, extent> data, std::int64_t timeout) -> void
 {
-    hal::ReadFrom(&spi, data);
+    hal::ReadFrom(&spi, data, timeout);
 }
 
 
 template<std::size_t size>
-inline auto Read() -> std::array<Byte, size>
+inline auto Read(std::int64_t timeout) -> std::array<Byte, size>
 {
     auto answer = std::array<Byte, size>{};
-    hal::ReadFrom(&spi, Span(&answer));
+    hal::ReadFrom(&spi, Span(&answer), timeout);
     return answer;
 }
 
