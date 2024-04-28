@@ -151,7 +151,7 @@ auto EduIsAlive() -> bool
     auto executionTime = RODOS::NOW() - begin;
     DEBUG_PRINT("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", executionTime);
     DEBUG_PRINT("Execution Time of EduIsAlive (ms) : %" PRIi64 "\n",
-                  executionTime / RODOS::MILLISECONDS);
+                executionTime / RODOS::MILLISECONDS);
     return false;
 }
 /*

@@ -287,7 +287,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
         }
         // TODO: Actually store the result in the COBC file system
         DEBUG_PRINT("Pretending to write %d bytes to the file system ...\n",
-                      static_cast<int>(cepDataBuffer.size()));
+                    static_cast<int>(cepDataBuffer.size()));
         RODOS::AT(RODOS::NOW() + 3 * RODOS::MILLISECONDS);
         OUTCOME_TRY(SendCommand(cepAck));
     }

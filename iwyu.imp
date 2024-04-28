@@ -79,6 +79,7 @@
   { include: ["\"Sts1CobcSw/Serial/Byte.hpp\"",                 "public", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.hpp\"",               "public", "<Sts1CobcwSw/Serial/Serial.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Crc32.hpp\"",               "public", "<Sts1CobcSw/Utility/Crc32.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/Debug.hpp\"",               "public", "<Sts1CobcSw/Utility/Debug.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/FlatArray.hpp\"",           "public", "<Sts1CobcSw/Utility/FlatArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Time.hpp\"",                "public", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
