@@ -33,6 +33,12 @@ auto Spi::TransferEnd() const -> std::int64_t
 }
 
 
+auto Spi::Status() -> int32_t
+{
+    return this->spi_.status(RODOS::SPI_STATUS_BAUDRATE);
+}
+
+
 auto Initialize(RODOS::HAL_SPI * spi, std::uint32_t baudRate) -> void
 {
     // spi.init() only returns -1 if the SPI_IDX is out of range. Since we can check that statically
