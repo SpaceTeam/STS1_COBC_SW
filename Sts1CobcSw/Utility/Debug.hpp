@@ -1,9 +1,8 @@
 #pragma once
 
 #ifdef DEBUG
-    // NOLINTNEXTLINE(readability-identifier-naming, cppcoreguidelines-macro-usage,
-    // clang-diagnostic-gnu-zero-variadic-macro-arguments)
-    #define DebugPrint(fmt, ...) RODOS::PRINTF(fmt, ##__VA_ARGS__)
+    // NOLINTNEXTLINE(cppcoreguidelines-macro-usage, *variadic-macro-arguments)
+    #define DEBUG_PRINT(fmt, ...) RODOS::PRINTF(fmt, ##__VA_ARGS__)
 #else
-    #define DebugPrint(fmt, ...)
+    #define DEBUG_PRINT(fmt, ...)
 #endif

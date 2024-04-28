@@ -27,7 +27,7 @@ class HelloDummy : public RODOS::StaticThread<>
         TIME_LOOP(0, 500 * RODOS::MILLISECONDS)
         {
             RODOS::PRINTF("Hello %s!\n", dummy.name.data());
-            DebugPrint("Debug printing ! printfMask = %d\n", printfMask);
+            DEBUG_PRINT("Debug printing ! printfMask = %d\n", printfMask);
         }
     }
 } helloDummy;
