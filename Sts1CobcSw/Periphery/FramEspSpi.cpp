@@ -5,6 +5,6 @@
 
 namespace sts1cobcsw
 {
-hal::Spi spi = hal::Spi(
+hal::Spi framEpsSpi = hal::Spi(
     hal::framEpsSpiIndex, hal::framEpsSpiSckPin, hal::framEpsSpiMisoPin, hal::framEpsSpiMosiPin);
 }

@@ -46,16 +46,16 @@ auto Initialize() -> void
     csGpioPin.Set();
 
     auto const baudRate = 6'000'000;
-    Initialize(&spi, baudRate);
+    Initialize(&framEpsSpi, baudRate);
 }
 
 
 auto ReadDeviceId(std::int64_t timeout) -> DeviceId
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, Span(opcode::readDeviceId), timeout);
+    hal::WriteTo(&framEpsSpi, Span(opcode::readDeviceId), timeout);
     auto deviceId = DeviceId{};
-    hal::ReadFrom(&spi, Span(&deviceId), timeout);
+    hal::ReadFrom(&framEpsSpi, Span(&deviceId), timeout);
     csGpioPin.Set();
     return deviceId;
 }
@@ -63,7 +63,7 @@ auto ReadDeviceId(std::int64_t timeout) -> DeviceId
 
 auto ActualBaudRate() -> int32_t
 {
-    return spi.Status();
+    return framEpsSpi.Status();
 }
 
 
@@ -73,10 +73,10 @@ auto WriteTo(Address address, void const * data, std::size_t nBytes, std::int64_
 {
     SetWriteEnableLatch();
     csGpioPin.Reset();
-    hal::WriteTo(&spi, Span(opcode::writeData), timeout);
+    hal::WriteTo(&framEpsSpi, Span(opcode::writeData), timeout);
     // FRAM expects 3-byte address in big endian
-    hal::WriteTo(&spi, Span(Serialize<endianness>(address)).subspan<1, 3>(), timeout);
-    hal::WriteTo(&spi, std::span(static_cast<Byte const *>(data), nBytes), timeout);
+    hal::WriteTo(&framEpsSpi, Span(Serialize<endianness>(address)).subspan<1, 3>(), timeout);
+    hal::WriteTo(&framEpsSpi, std::span(static_cast<Byte const *>(data), nBytes), timeout);
     csGpioPin.Set();
 }
 
@@ -84,10 +84,10 @@ auto WriteTo(Address address, void const * data, std::size_t nBytes, std::int64_
 auto ReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t timeout) -> void
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, Span(opcode::readData), timeout);
+    hal::WriteTo(&framEpsSpi, Span(opcode::readData), timeout);
     // FRAM expects 3-byte address in big endian
-    hal::WriteTo(&spi, Span(Serialize<endianness>(address)).subspan<1, 3>(), timeout);
-    hal::ReadFrom(&spi, std::span(static_cast<Byte *>(data), nBytes), timeout);
+    hal::WriteTo(&framEpsSpi, Span(Serialize<endianness>(address)).subspan<1, 3>(), timeout);
+    hal::ReadFrom(&framEpsSpi, std::span(static_cast<Byte *>(data), nBytes), timeout);
     csGpioPin.Set();
 }
 }
@@ -98,7 +98,7 @@ auto ReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t tim
 auto SetWriteEnableLatch(std::int64_t timeout) -> void
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, Span(opcode::setWriteEnableLatch), timeout);
+    hal::WriteTo(&framEpsSpi, Span(opcode::setWriteEnableLatch), timeout);
     csGpioPin.Set();
 }
 }

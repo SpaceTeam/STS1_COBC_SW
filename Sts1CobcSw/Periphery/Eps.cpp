@@ -92,8 +92,7 @@ constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
 // --- Private function declarations ---
 
-auto ConfigureSetupRegister(hal::GpioPin * adcCsPin)
-    -> void;
+auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
 auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
 
@@ -109,7 +108,7 @@ auto Initialize() -> void
     adc6CsGpioPin.Set();
 
     constexpr auto baudrate = 6'000'000;
-    Initialize(&spi, baudrate);
+    Initialize(&framEpsSpi, baudrate);
 
     // Setup ADCs
     ConfigureSetupRegister(&adc4CsGpioPin);
@@ -158,7 +157,7 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
     static_assert((setupData & (1_b << 5)) > 0_b);  // NOLINT(*magic-numbers*)
 
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(setupData), spiTimeout);
+    hal::WriteTo(&framEpsSpi, Span(setupData), spiTimeout);
     adcCsPin->Set();
 }
 
@@ -173,7 +172,7 @@ auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void
     auto data = 0b0001_b << 4;
     data = resetType == ResetType::fifo ? data | 1_b << 3 : data;
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(data), spiTimeout);
+    WriteTo(&framEpsSpi, Span(data), spiTimeout);
     adcCsPin->Set();
 }
 }
