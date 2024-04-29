@@ -83,16 +83,16 @@ enum class ResetType
 
 // --- Private globals ---
 
-// Pins and SPI
-
 auto adc4CsGpioPin = hal::GpioPin(hal::epsAdc4CsPin);
 auto adc5CsGpioPin = hal::GpioPin(hal::epsAdc5CsPin);
 auto adc6CsGpioPin = hal::GpioPin(hal::epsAdc6CsPin);
 
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+
 
 // --- Private function declarations ---
 
-auto ConfigureSetupRegister(hal::GpioPin * adcCsPin, std::int64_t timeout = RODOS::END_OF_TIME)
+auto ConfigureSetupRegister(hal::GpioPin * adcCsPin)
     -> void;
 auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
@@ -136,7 +136,7 @@ auto ClearFifos() -> void
 
 // --- Private function definitions ---
 
-auto ConfigureSetupRegister(hal::GpioPin * adcCsPin, std::int64_t timeout) -> void
+auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
 {
     // Setup register values
     // [7:6]: Register selection bits = 0b01
@@ -158,7 +158,7 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin, std::int64_t timeout) -> vo
     static_assert((setupData & (1_b << 5)) > 0_b);  // NOLINT(*magic-numbers*)
 
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(setupData), timeout);
+    hal::WriteTo(&spi, Span(setupData), spiTimeout);
     adcCsPin->Set();
 }
 
@@ -173,7 +173,7 @@ auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void
     auto data = 0b0001_b << 4;
     data = resetType == ResetType::fifo ? data | 1_b << 3 : data;
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(data));
+    hal::WriteTo(&spi, Span(data), spiTimeout);
     adcCsPin->Set();
 }
 }
