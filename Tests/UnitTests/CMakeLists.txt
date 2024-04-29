@@ -6,12 +6,12 @@ add_program(FlatArray FlatArray.test.cpp)
 target_link_libraries(Sts1CobcSwTests_FlatArray PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
 
 # TODO: Enable again once problem with segmentation violation on CI is fixed
-if(FALSE)
+#if(FALSE)
     add_program(LfsRam LfsRam.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem
     )
-endif()
+#endif()
 
 add_program(Outcome Outcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
