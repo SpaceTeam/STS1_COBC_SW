@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
-#include <Sts1CobcSw/Periphery/FramEspSpi.hpp>
+#include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 
 
 namespace sts1cobcsw

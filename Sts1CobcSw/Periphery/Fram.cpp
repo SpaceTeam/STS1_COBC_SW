@@ -5,7 +5,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/FramEspSpi.hpp>
+#include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -35,7 +35,9 @@ auto csGpioPin = hal::GpioPin(hal::framCsPin);
 
 // --- Private function declarations ---
 
-auto SetWriteEnableLatch(std::int64_t timeout = RODOS::END_OF_TIME) -> void;
+auto SetWriteEnableLatch() -> void;
+
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
 
 // --- Public function definitions ---
@@ -50,12 +52,12 @@ auto Initialize() -> void
 }
 
 
-auto ReadDeviceId(std::int64_t timeout) -> DeviceId
+auto ReadDeviceId() -> DeviceId
 {
     csGpioPin.Reset();
-    hal::WriteTo(&framEpsSpi, Span(opcode::readDeviceId), timeout);
+    hal::WriteTo(&framEpsSpi, Span(opcode::readDeviceId), spiTimeout);
     auto deviceId = DeviceId{};
-    hal::ReadFrom(&framEpsSpi, Span(&deviceId), timeout);
+    hal::ReadFrom(&framEpsSpi, Span(&deviceId), spiTimeout);
     csGpioPin.Set();
     return deviceId;
 }
@@ -95,10 +97,10 @@ auto ReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t tim
 
 // --- Private function definitions ---
 
-auto SetWriteEnableLatch(std::int64_t timeout) -> void
+auto SetWriteEnableLatch() -> void
 {
     csGpioPin.Reset();
-    hal::WriteTo(&framEpsSpi, Span(opcode::setWriteEnableLatch), timeout);
+    hal::WriteTo(&framEpsSpi, Span(opcode::setWriteEnableLatch), spiTimeout);
     csGpioPin.Set();
 }
 }

@@ -75,6 +75,8 @@ auto gpio0GpioPin = hal::GpioPin(hal::rfGpio0Pin);
 auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
@@ -92,12 +94,12 @@ auto InitializeGpiosAndSpi() -> void;
 auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
 
-auto SendCommand(std::span<Byte const> data, std::int64_t timeout = RODOS::END_OF_TIME) -> void;
+auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data, std::int64_t timeout = RODOS::END_OF_TIME)
     -> std::array<Byte, answerLength>;
 
-auto WaitForCts(std::int64_t timeout = RODOS::END_OF_TIME) -> void;
+auto WaitForCts() -> void;
 
 template<std::size_t extent>
     requires(extent <= maxNProperties)
@@ -752,10 +754,10 @@ auto Configure(TxType txType) -> void
 }
 
 
-auto SendCommand(std::span<Byte const> data, std::int64_t timeout) -> void
+auto SendCommand(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, data, timeout);
+    hal::WriteTo(&spi, data, spiTimeout);
     csGpioPin.Set();
     WaitForCts();
 }
@@ -764,7 +766,7 @@ auto SendCommand(std::span<Byte const> data, std::int64_t timeout) -> void
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data, std::int64_t timeout) -> std::array<Byte, answerLength>
 {
-    SendCommand(data, timeout);
+    SendCommand(data);
     auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
     hal::ReadFrom(&spi, Span(&answer), timeout);
@@ -774,15 +776,15 @@ auto SendCommand(std::span<Byte const> data, std::int64_t timeout) -> std::array
 
 
 //! @brief Polls the CTS byte until 0xFF is received (i.e. Si4463 is ready for command).
-auto WaitForCts(std::int64_t timeout) -> void
+auto WaitForCts() -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
     do
     {
         csGpioPin.Reset();
-        hal::WriteTo(&spi, Span(cmdReadCmdBuff), timeout);
+        hal::WriteTo(&spi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
-        hal::ReadFrom(&spi, Span(&cts), timeout);
+        hal::ReadFrom(&spi, Span(&cts), spiTimeout);
         csGpioPin.Set();
         if(cts == dataIsReadyValue)
         {

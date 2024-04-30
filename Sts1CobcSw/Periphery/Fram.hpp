@@ -20,7 +20,7 @@ using Address = std::uint32_t;
 
 
 auto Initialize() -> void;
-[[nodiscard]] auto ReadDeviceId(std::int64_t timeout = RODOS::END_OF_TIME) -> DeviceId;
+[[nodiscard]] auto ReadDeviceId() -> DeviceId;
 auto ActualBaudRate() -> int32_t;
 
 template<std::size_t extent>
