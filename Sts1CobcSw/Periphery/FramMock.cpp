@@ -1,16 +1,16 @@
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 
+#include <array>
 #include <cstring>
-#include <fstream>
-#include <ios>
+#include <fstream>  // IWYU pragma: keep
 #include <iostream>
-#include <vector>
 
 
 namespace sts1cobcsw::fram
 {
 
-auto ramSimulation = std::array<uint8_t, 1048576>{};
+constexpr auto framSize = (1U << 20U);
+auto ramSimulation = std::array<uint8_t, framSize>{};
 MockMode mockDevice = MockMode::ram;
 constexpr auto mockFilename = "FramMock.bin";
 
@@ -91,7 +91,7 @@ auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void
     }
     else
     {
-        // FIXME: Fix pointer arithmetic
+        // FIXME: Fix pointer arithmetic and out of bounds access
         std::memcpy(ramSimulation.data() + address, data, nBytes);
     }
 }

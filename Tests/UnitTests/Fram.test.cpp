@@ -43,8 +43,6 @@ TEST_CASE("Fram mock using ram")
     std::generate(
         testData.begin(), testData.end(), [&]() { return static_cast<std::byte>(randomEngine()); });
     WriteAndReadTestData(address);
-<<<<<<< HEAD
-=======
 
     auto deviceId = fram::ReadDeviceId();
     constexpr auto correctDeviceId =
@@ -53,7 +51,6 @@ TEST_CASE("Fram mock using ram")
     fram::SetDoReadDeviceId(ReadCorrectDeviceId);
     deviceId = fram::ReadDeviceId();
     REQUIRE(deviceId == correctDeviceId);
->>>>>>> 465f578 (Fix more stuff)
 }
 
 TEST_CASE("Fram mock using file")
@@ -78,14 +75,10 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
                 static_cast<int>(testDataSize),
                 static_cast<unsigned int>(address));
     fram::WriteTo(address, Span(testData));
-<<<<<<< HEAD
-    std::printf("Reading n bytes from address ...\n");
-=======
 
     std::printf("Reading %d bytes from address 0x%08x ...\n",
                 static_cast<int>(testDataSize),
                 static_cast<unsigned int>(address));
->>>>>>> 465f578 (Fix more stuff)
     fram::ReadFrom(address, Span(&readData));
 
     std::printf("Comparing first %d written and read bytes:\n", nBytesToPrint);

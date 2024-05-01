@@ -3,6 +3,8 @@
 
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 
+#include <cstdint>
+
 
 namespace sts1cobcsw::fram
 {
