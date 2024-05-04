@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -74,6 +75,8 @@ namespace sts1cobcsw::eps
 // AIN14 | GND
 // AIN15 | GND
 
+using AdcValues = std::array<AdcValue, nChannels>;
+
 
 enum class ResetType
 {
@@ -94,11 +97,10 @@ auto adc6CsGpioPin = hal::GpioPin(hal::epsAdc6CsPin);
 // --- Private function declarations ---
 
 auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
+auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void;
+auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues;
 auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
-auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void;
-
-auto ReadAdc(hal::GpioPin * adcCsPin, std::span<Byte, adcDataLength> adcData) -> void;
 
 // --- Public function definitions ---
 
@@ -126,15 +128,12 @@ auto Initialize() -> void
 }
 
 
-auto Read() -> std::array<Byte, adcDataLength * nAdcs>
+auto Read() -> SensorValues
 {
-    auto sensorData = std::array<Byte, adcDataLength * nAdcs>{};
-
-    ReadAdc(&adc4CsGpioPin, Span(&sensorData).subspan<0, adcDataLength>());
-    ReadAdc(&adc5CsGpioPin, Span(&sensorData).subspan<adcDataLength, adcDataLength>());
-    ReadAdc(&adc6CsGpioPin, Span(&sensorData).subspan<2 * adcDataLength, adcDataLength>());
-
-    return sensorData;
+    auto adc4Values = ReadAdc(&adc4CsGpioPin);
+    auto adc5Values = ReadAdc(&adc5CsGpioPin);
+    auto adc6Values = ReadAdc(&adc6CsGpioPin);
+    return FlatArray(adc4Values, adc5Values, adc6Values);
 }
 
 
@@ -209,22 +208,17 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
 }
 
 
-auto ReadAdc(hal::GpioPin * adcCsPin, std::span<Byte, adcDataLength> adcData) -> void
+auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
 {
-    // Send conversion byte
-
     // Conversion register values
     // [7]: Register selection bit = 0b1
     // [6:3]: Channel select
     // [2:1]: Scan mode
     // [1]: Don't care
-
-    static constexpr auto readDelay = 3 * RODOS::MILLISECONDS;
     static constexpr auto conversionRegister = 0b1_b;
     // Select highest channel, since we scan through all of them every time
     static constexpr auto channel = 0b1111_b;
-    // Scan through channel 0 to N (set in channel select)
-    // -> All channels in our case
+    // Scan through channel 0 to N (set in channel select) -> All channels in our case
     static constexpr auto scanMode = 0b00_b;
     static constexpr auto conversionData =
         (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
@@ -238,13 +232,15 @@ auto ReadAdc(hal::GpioPin * adcCsPin, std::span<Byte, adcDataLength> adcData) ->
     // t_conv = 3.5 us
     // 514 * (t_acq + t_conv) + wakeup = 2172.4 us
     // TODO: This delay can be brought down if we fix the number of averages
+    static constexpr auto readDelay = 3 * RODOS::MILLISECONDS;
     RODOS::AT(RODOS::NOW() + readDelay);
 
-    // Resolution is 12 bit, sent like this:
-    // 0 0 0 0 MSB x x x, x x x x x x x LSB
+    // Resolution is 12 bit, sent like this: 0 0 0 0 MSB x x x, x x x x x x x LSB
+    auto adcData = Buffer<AdcValues>{};
     adcCsPin->Reset();
-    hal::ReadFrom(&spi, adcData);
+    hal::ReadFrom(&spi, Span(&adcData));
     adcCsPin->Set();
+    return Deserialize<AdcValues>(Span(adcData));
 }
 
 

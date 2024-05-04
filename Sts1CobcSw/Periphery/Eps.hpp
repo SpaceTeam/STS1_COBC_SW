@@ -1,19 +1,18 @@
 #pragma once
 
-#include <Sts1CobcSw/Serial/Byte.hpp>
-
 #include <array>
+#include <cstdint>
 
 
 namespace sts1cobcsw::eps
 {
-constexpr auto nChannels = 16U;
-constexpr auto adcDataLength = 2 * nChannels;
-constexpr auto nAdcs = 3U;
-constexpr auto sensorDataLength = nAdcs * adcDataLength;
+inline constexpr auto nAdcs = 3U;
+inline constexpr auto nChannels = 16U;
+using AdcValue = std::uint16_t;
+using SensorValues = std::array<AdcValue, nChannels * nAdcs>;
 
 auto Initialize() -> void;
-auto Read() -> std::array<Byte, sensorDataLength>;
+auto Read() -> SensorValues;
 auto ResetAdcRegisters() -> void;
 auto ClearFifos() -> void;
 }

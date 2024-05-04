@@ -1,7 +1,8 @@
 #include <Sts1CobcSw/Periphery/Eps.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <cstddef>
 
 
 namespace sts1cobcsw
@@ -26,34 +27,27 @@ private:
     void run() override
     {
         PRINTF("\nEPS test\n\n");
+
+        PRINTF("\n");
         eps::Initialize();
         PRINTF("EPS ADCs initialized\n");
+
         PRINTF("\n");
-        static constexpr auto nSensorValues = eps::nChannels * eps::nAdcs;
-        static constexpr auto referenceVoltage = 4.096;
-        static constexpr auto resolution = 4096;
-
-        // ADCs 1-3 belong to EDU, COBC has 4-6
-        static constexpr auto adcIdOffset = 4;
-
-        RODOS::PRINTF("Reading...\n");
-        auto sensorData = eps::Read();
-        void const * dataPointer = sensorData.data();
-        RODOS::PRINTF("Result:\n");
-        for(size_t i = 0; i < nSensorValues; i++)
+        RODOS::PRINTF("Reading sensor values ...\n");
+        auto const referenceVoltage = 4.096;
+        auto const resolution = 4096;
+        auto const voltsPerBit = referenceVoltage / resolution;
+        auto sensorValues = eps::Read();
+        for(std::size_t i = 0; i < sensorValues.size(); ++i)
         {
-            std::uint16_t value = 0U;
-            dataPointer = DeserializeFrom<std::endian::big>(dataPointer, &value);
-            auto measuredVoltage = value * (referenceVoltage / resolution);
-            auto adc = static_cast<int>(i / eps::nChannels) + adcIdOffset;
-            auto channel = static_cast<int>(i % eps::nChannels);
-            RODOS::PRINTF("ADC %i Channel %i:\n  Digital reading = %u\n  Measured voltage = %f\n",
-                          adc,
-                          channel,
-                          value,
-                          measuredVoltage);
+            auto iAdc = static_cast<int>(i / eps::nChannels + 4);
+            auto iChannel = static_cast<int>(i % eps::nChannels);
+            RODOS::PRINTF("ADC %i channel %i:\n  Digital reading = %u\n  Measured voltage = %f V\n",
+                          iAdc,
+                          iChannel,
+                          sensorValues[i],
+                          sensorValues[i] * voltsPerBit);
         }
-        RODOS::PRINTF("\n");
     }
 } epsTest;
 }
