@@ -45,6 +45,9 @@ inline constexpr std::size_t serialSize = 0;
 template<TriviallySerializable T>
 inline constexpr std::size_t serialSize<T> = sizeof(T);
 
+template<typename T, std::size_t size>
+inline constexpr std::size_t serialSize<std::array<T, size>> = serialSize<T> * size;
+
 template<typename... Ts>
 inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
@@ -77,9 +80,16 @@ template<std::endian endianness, std::default_initializable T>
 template<std::endian endianness, TriviallySerializable T>
 [[nodiscard]] auto SerializeTo(void * destination, T const & t) -> void *;
 
+template<std::endian endianness, typename T, std::size_t size>
+[[nodiscard]] auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *;
+
 // Must be overloaded for user-defined types to be deserializable
 template<std::endian endianness, TriviallySerializable T>
 [[nodiscard]] auto DeserializeFrom(void const * source, T * t) -> void const *;
+
+template<std::endian endianness, typename T, std::size_t size>
+[[nodiscard]] auto DeserializeFrom(void const * source, std::array<T, size> * array)
+    -> void const *;
 
 template<HasEndianness T>
 [[nodiscard]] constexpr auto ReverseBytes(T t) -> T;

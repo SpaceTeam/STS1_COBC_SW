@@ -55,6 +55,17 @@ inline auto SerializeTo(void * destination, T const & t) -> void *
 }
 
 
+template<std::endian endianness, typename T, std::size_t size>
+auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *
+{
+    for(auto const & element : array)
+    {
+        destination = SerializeTo<endianness>(destination, element);
+    }
+    return destination;
+}
+
+
 template<std::endian endianness, TriviallySerializable T>
 inline auto DeserializeFrom(void const * source, T * t) -> void const *
 {
@@ -65,6 +76,17 @@ inline auto DeserializeFrom(void const * source, T * t) -> void const *
     }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return static_cast<Byte const *>(source) + serialSize<T>;
+}
+
+
+template<std::endian endianness, typename T, std::size_t size>
+auto DeserializeFrom(void const * source, std::array<T, size> * array) -> void const *
+{
+    for(auto & element : *array)
+    {
+        source = DeserializeFrom<endianness>(source, &element);
+    }
+    return source;
 }
 
 
