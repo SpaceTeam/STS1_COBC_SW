@@ -33,6 +33,9 @@ struct SimpleInstruction
 
 // --- Private globals ---
 
+// Baud rate = 48 MHz, largest data transfer = 1 page = 256 bytes -> spiTimeout = 1 ms is enough for
+// all transfers
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 constexpr auto endianness = std::endian::big;
 
 // Instructions according to section 7.3 in W25Q01JV datasheet
@@ -62,13 +65,13 @@ auto DisableWriting() -> void;
 auto IsBusy() -> bool;
 
 template<std::size_t extent>
-auto Write(std::span<Byte const, extent> data, std::int64_t timeout = RODOS::END_OF_TIME) -> void;
+auto Write(std::span<Byte const, extent> data, std::int64_t timeout) -> void;
 
 template<std::size_t extent>
-auto Read(std::span<Byte, extent> data, std::int64_t timeout = RODOS::END_OF_TIME) -> void;
+auto Read(std::span<Byte, extent> data, std::int64_t timeout) -> void;
 
 template<std::size_t size>
-auto Read(std::int64_t timeout = RODOS::END_OF_TIME) -> std::array<Byte, size>;
+auto Read(std::int64_t timeout) -> std::array<Byte, size>;
 
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
@@ -130,9 +133,9 @@ auto ReadStatusRegister(int8_t registerNo) -> Byte
 auto ReadPage(std::uint32_t address) -> Page
 {
     csGpioPin.Reset();
-    Write(Span(readData4ByteAddress));
-    Write(Span(Serialize<endianness>(address)));
-    auto page = Read<pageSize>();
+    Write(Span(readData4ByteAddress), spiTimeout);
+    Write(Span(Serialize<endianness>(address)), spiTimeout);
+    auto page = Read<pageSize>(spiTimeout);
     csGpioPin.Set();
     return page;
 }
@@ -142,9 +145,9 @@ auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
     EnableWriting();
     csGpioPin.Reset();
-    Write(Span(pageProgram4ByteAddress));
-    Write(Span(Serialize<endianness>(address)));
-    Write(data);
+    Write(Span(pageProgram4ByteAddress), spiTimeout);
+    Write(Span(Serialize<endianness>(address)), spiTimeout);
+    Write(data, spiTimeout);
     csGpioPin.Set();
     DisableWriting();
 }
@@ -156,8 +159,8 @@ auto EraseSector(std::uint32_t address) -> void
     address = (address / sectorSize) * sectorSize;
     EnableWriting();
     csGpioPin.Reset();
-    Write(Span(sectorErase4ByteAddress));
-    Write(Span(Serialize<endianness>(address)));
+    Write(Span(sectorErase4ByteAddress), spiTimeout);
+    Write(Span(Serialize<endianness>(address)), spiTimeout);
     csGpioPin.Set();
     DisableWriting();
 }
@@ -245,8 +248,8 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
 auto SendInstruction() -> std::array<Byte, instruction.answerLength>
 {
-    Write(Span(instruction.id));
-    return Read<instruction.answerLength>();
+    Write(Span(instruction.id), spiTimeout);
+    return Read<instruction.answerLength>(spiTimeout);
 }
 
 
@@ -254,7 +257,7 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
 inline auto SendInstruction() -> void
 {
-    Write(Span(instruction.id));
+    Write(Span(instruction.id), spiTimeout);
 }
 
 
