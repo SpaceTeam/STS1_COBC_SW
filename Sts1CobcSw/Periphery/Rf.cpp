@@ -63,9 +63,17 @@ constexpr auto cmdReadCmdBuff = 0x44_b;
 // this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
 // instead.
 constexpr auto partInfoAnswerLength = 8U;
-
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
+
+// Delay to wait for power on reset to finish
+constexpr auto porRunningDelay = 20 * MILLISECONDS;
+// Time until PoR circuit settles after applying power
+constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
+// Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
+constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
+// TODO: Check this and write a good comment
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
 auto spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
@@ -75,17 +83,8 @@ auto gpio0GpioPin = hal::GpioPin(hal::rfGpio0Pin);
 auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
-
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
-
-// Delay to wait for power on reset to finish
-constexpr auto porRunningDelay = 20 * MILLISECONDS;
-// Time until PoR circuit settles after applying power
-constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
-// Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
-constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 
 
 // --- Private function declarations ---

@@ -83,11 +83,11 @@ enum class ResetType
 
 // --- Private globals ---
 
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+
 auto adc4CsGpioPin = hal::GpioPin(hal::epsAdc4CsPin);
 auto adc5CsGpioPin = hal::GpioPin(hal::epsAdc5CsPin);
 auto adc6CsGpioPin = hal::GpioPin(hal::epsAdc6CsPin);
-
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
 
 // --- Private function declarations ---
