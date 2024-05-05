@@ -96,8 +96,7 @@ auto Configure(TxType txType) -> void;
 
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data, std::int64_t timeout = RODOS::END_OF_TIME)
-    -> std::array<Byte, answerLength>;
+auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 
 auto WaitForCts() -> void;
 
@@ -764,12 +763,12 @@ auto SendCommand(std::span<Byte const> data) -> void
 
 
 template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data, std::int64_t timeout) -> std::array<Byte, answerLength>
+auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
     SendCommand(data);
     auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
-    hal::ReadFrom(&spi, Span(&answer), timeout);
+    hal::ReadFrom(&spi, Span(&answer), spiTimeout);
     csGpioPin.Set();
     return answer;
 }
