@@ -181,7 +181,7 @@ auto WaitWhileBusy(std::int64_t timeout) -> Result<void>
 
 auto ActualBaudRate() -> int32_t
 {
-    return spi.Status();
+    return spi.BaudRate();
 }
 
 

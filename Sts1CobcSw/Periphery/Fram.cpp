@@ -65,7 +65,7 @@ auto ReadDeviceId() -> DeviceId
 
 auto ActualBaudRate() -> int32_t
 {
-    return framEpsSpi.Status();
+    return framEpsSpi.BaudRate();
 }
 
 
