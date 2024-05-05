@@ -18,6 +18,7 @@ namespace sts1cobcsw::fram
 {
 // --- Private globals ---
 
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 constexpr auto endianness = std::endian::big;
 
 // Command opcodes according to section 4.1 in CY15B108QN-40SXI datasheet. I couldn't use an enum
@@ -36,8 +37,6 @@ auto csGpioPin = hal::GpioPin(hal::framCsPin);
 // --- Private function declarations ---
 
 auto SetWriteEnableLatch() -> void;
-
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
 
 // --- Public function definitions ---
@@ -63,7 +62,7 @@ auto ReadDeviceId() -> DeviceId
 }
 
 
-auto ActualBaudRate() -> int32_t
+auto ActualBaudRate() -> std::int32_t
 {
     return framEpsSpi.BaudRate();
 }
