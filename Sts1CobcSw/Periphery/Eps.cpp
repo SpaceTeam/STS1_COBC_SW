@@ -187,21 +187,17 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
 {
     // Averaging register values
     // [7:5]: Register selection bits = 0b001
-    // [4]: Averaging on/off
+    // [4]:   Averaging on/off
     // [3:2]: Number of conversions used
     // [1:0]: Single-channel scan count (scan mode 0b10 in conversion only)
-
-    // TODO: discuss and chose averaging values
     static constexpr auto averagingRegister = 0b001_b;
-    // Averaging off for now
     static constexpr auto enableAveraging = 0b1_b;
-    // Only relevant with averaging on, average 4 conversions
-    static constexpr auto nAverages = 0b00_b;
+    // Use max. number of averages (32)
+    static constexpr auto nAverages = 0b11_b;
     // Probably not relevant, leave on 4 results
     static constexpr auto nSingleScans = 0b00_b;
     static constexpr auto averagingData =
         (averagingRegister << 5) | (enableAveraging << 4) | (nAverages << 2) | nSingleScans;
-
     adcCsPin->Reset();
     hal::WriteTo(&spi, Span(averagingData));
     adcCsPin->Set();
@@ -211,10 +207,10 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
 auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
 {
     // Conversion register values
-    // [7]: Register selection bit = 0b1
+    // [7]:   Register selection bit = 0b1
     // [6:3]: Channel select
     // [2:1]: Scan mode
-    // [1]: Don't care
+    // [1]:   Don't care
     static constexpr auto conversionRegister = 0b1_b;
     // Select highest channel, since we scan through all of them every time
     static constexpr auto channel = 0b1111_b;
@@ -222,7 +218,6 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     static constexpr auto scanMode = 0b00_b;
     static constexpr auto conversionCommand =
         (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
-
     adcCsPin->Reset();
     hal::WriteTo(&spi, Span(conversionCommand));
     adcCsPin->Set();
@@ -230,8 +225,6 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     // According to the datasheet at most 514 conversions are done after a conversion command
     // (depends on averaging and channels). This takes 514 * (t_acq + t_conv) + wakeup = 514 * (0.6
     // + 3.5) us + 65 us = 2172.4 us.
-    //
-    // TODO: This delay can be brought down if we fix the number of averages
     static constexpr auto conversionTime = 3 * RODOS::MILLISECONDS;
     RODOS::AT(RODOS::NOW() + conversionTime);
 
