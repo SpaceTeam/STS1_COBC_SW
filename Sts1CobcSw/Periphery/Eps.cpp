@@ -235,12 +235,12 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     static constexpr auto readDelay = 3 * RODOS::MILLISECONDS;
     RODOS::AT(RODOS::NOW() + readDelay);
 
-    // Resolution is 12 bit, sent like this: 0 0 0 0 MSB x x x, x x x x x x x LSB
+    // Resolution is 12 bit, sent like this: [0 0 0 0 MSB x x x], [x x x x x x x LSB]
     auto adcData = Buffer<AdcValues>{};
     adcCsPin->Reset();
     hal::ReadFrom(&spi, Span(&adcData));
     adcCsPin->Set();
-    return Deserialize<AdcValues>(Span(adcData));
+    return Deserialize<std::endian::big, AdcValues>(Span(adcData));
 }
 
 
