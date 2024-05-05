@@ -220,20 +220,20 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     static constexpr auto channel = 0b1111_b;
     // Scan through channel 0 to N (set in channel select) -> All channels in our case
     static constexpr auto scanMode = 0b00_b;
-    static constexpr auto conversionData =
+    static constexpr auto conversionCommand =
         (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
 
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(conversionData));
+    hal::WriteTo(&spi, Span(conversionCommand));
     adcCsPin->Set();
 
-    // Leave enough time for max. 514 conversions
-    // t_acq = 0.6 us
-    // t_conv = 3.5 us
-    // 514 * (t_acq + t_conv) + wakeup = 2172.4 us
+    // According to the datasheet at most 514 conversions are done after a conversion command
+    // (depends on averaging and channels). This takes 514 * (t_acq + t_conv) + wakeup = 514 * (0.6
+    // + 3.5) us + 65 us = 2172.4 us.
+    //
     // TODO: This delay can be brought down if we fix the number of averages
-    static constexpr auto readDelay = 3 * RODOS::MILLISECONDS;
-    RODOS::AT(RODOS::NOW() + readDelay);
+    static constexpr auto conversionTime = 3 * RODOS::MILLISECONDS;
+    RODOS::AT(RODOS::NOW() + conversionTime);
 
     // Resolution is 12 bit, sent like this: [0 0 0 0 MSB x x x], [x x x x x x x LSB]
     auto adcData = Buffer<AdcValues>{};
