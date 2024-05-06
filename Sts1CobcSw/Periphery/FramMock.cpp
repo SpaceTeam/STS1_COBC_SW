@@ -8,63 +8,29 @@
 
 namespace sts1cobcsw::fram
 {
-
 constexpr auto framSize = (1U << 20U);
 auto ramSimulation = std::array<uint8_t, framSize>{};
 MockMode mockDevice = MockMode::ram;
 constexpr auto mockFilename = "FramMock.bin";
-
-auto FramMockMode(MockMode mockMode) -> void
-{
-    mockDevice = mockMode;
-}
-
-// Default do functions, doing nothing
-auto DoInitializeDefault() -> void
-{
-}
-
-auto DoReadDeviceIdDefault() -> DeviceId
-{
-    return DeviceId{};
-}
-
-auto DoActualBaudRateDefault() -> int32_t
-{
-    return 0;
-}
-
 
 auto doInitialize = DoInitializeDefault;
 auto doReadDeviceId = DoReadDeviceIdDefault;
 auto doActualBaudRate = DoActualBaudRateDefault;
 
 
-auto SetDoInitialize(void (*doInitializeFunction)()) -> void
-{
-    doInitialize = doInitializeFunction;
-}
-
-auto SetDoReadDeviceId(DeviceId (*doReadDeviceIdFunction)()) -> void
-{
-    doReadDeviceId = doReadDeviceIdFunction;
-}
-
-void SetDoActualBaudRate(int32_t (*doActualBaudRateFunction)())
-{
-    doActualBaudRate = doActualBaudRateFunction;
-}
-
+// --- Mocked functions ---
 
 auto Initialize() -> void
 {
     return doInitialize();
 }
 
+
 auto ReadDeviceId() -> DeviceId
 {
     return doReadDeviceId();
 }
+
 
 auto ActualBaudRate() -> int32_t
 {
@@ -72,8 +38,54 @@ auto ActualBaudRate() -> int32_t
 }
 
 
+// --- Set functions ---
+
+auto SetDoInitialize(void (*doInitializeFunction)()) -> void
+{
+    doInitialize = doInitializeFunction;
+}
+
+
+auto SetDoReadDeviceId(DeviceId (*doReadDeviceIdFunction)()) -> void
+{
+    doReadDeviceId = doReadDeviceIdFunction;
+}
+
+
+void SetDoActualBaudRate(int32_t (*doActualBaudRateFunction)())
+{
+    doActualBaudRate = doActualBaudRateFunction;
+}
+
+
+// --- Default do functions, doing nothing ---
+
+auto DoInitializeDefault() -> void
+{
+}
+
+
+auto DoReadDeviceIdDefault() -> DeviceId
+{
+    return DeviceId{};
+}
+
+
+auto DoActualBaudRateDefault() -> int32_t
+{
+    return 0;
+}
+
+
+auto FramMockMode(MockMode mockMode) -> void
+{
+    mockDevice = mockMode;
+}
+
+
 namespace internal
 {
+// TODO: This must also forward to a do function which can be set with a SetDoWriteTo function
 auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void
 {
     if(mockDevice == MockMode::file)
@@ -96,6 +108,8 @@ auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void
     }
 }
 
+
+// TODO: This must also forward to a do function which can be set with a SetDoReadFrom function
 auto ReadFrom(Address address, void * data, std::size_t nBytes) -> void
 {
     if(mockDevice == MockMode::file)
