@@ -21,9 +21,12 @@ using RODOS::PRINTF;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
-const std::size_t testDataSize = 11 * 1024;  // 11 KiB
+constexpr std::size_t testDataSize = 11 * 1024;  // 11 KiB
 auto testData = std::array<Byte, testDataSize>{};
 auto readData = std::array<Byte, testDataSize>{};
+// Baud rate = 6 MHz, largest data transfer = 11 KiB -> spiTimeout = 30 ms is enough for all
+// transfers
+constexpr auto spiTimeout = 30 * RODOS::MILLISECONDS;
 
 
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
@@ -105,7 +108,7 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
            static_cast<int>(testDataSize),
            static_cast<unsigned int>(address));
     auto begin = RODOS::NOW();
-    fram::WriteTo(address, Span(testData));
+    fram::WriteTo(address, Span(testData), spiTimeout);
     auto end = RODOS::NOW();
     PRINTF("  took %d us\n", static_cast<int>((end - begin) / RODOS::MICROSECONDS));
 
@@ -113,7 +116,7 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
            static_cast<int>(testDataSize),
            static_cast<unsigned int>(address));
     begin = RODOS::NOW();
-    fram::ReadFrom(address, Span(&readData));
+    fram::ReadFrom(address, Span(&readData), spiTimeout);
     end = RODOS::NOW();
     PRINTF("  took %d us\n", static_cast<int>((end - begin) / RODOS::MICROSECONDS));
 

@@ -63,12 +63,19 @@ constexpr auto cmdReadCmdBuff = 0x44_b;
 // this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
 // instead.
 constexpr auto partInfoAnswerLength = 8U;
-
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
-auto spi = RODOS::HAL_SPI(
-    hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin, hal::spiNssDummyPin);
+// Delay to wait for power on reset to finish
+constexpr auto porRunningDelay = 20 * MILLISECONDS;
+// Time until PoR circuit settles after applying power
+constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
+// Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
+constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
+// TODO: Check this and write a good comment
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+
+auto spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
@@ -78,13 +85,6 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
-
-// Delay to wait for power on reset to finish
-constexpr auto porRunningDelay = 20 * MILLISECONDS;
-// Time until PoR circuit settles after applying power
-constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
-// Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
-constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 
 
 // --- Private function declarations ---
@@ -177,7 +177,7 @@ auto InitializeGpiosAndSpi() -> void
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 6'000'000;
-    hal::Initialize(&spi, baudrate);
+    Initialize(&spi, baudrate);
 
     // Enable Si4463 and wait for PoR to finish
     AT(NOW() + porCircuitSettleDelay);
@@ -755,7 +755,7 @@ auto Configure(TxType txType) -> void
 auto SendCommand(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, data);
+    hal::WriteTo(&spi, data, spiTimeout);
     csGpioPin.Set();
     WaitForCts();
 }
@@ -767,7 +767,7 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
     SendCommand(data);
     auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
-    hal::ReadFrom(&spi, Span(&answer));
+    hal::ReadFrom(&spi, Span(&answer), spiTimeout);
     csGpioPin.Set();
     return answer;
 }
@@ -780,9 +780,9 @@ auto WaitForCts() -> void
     do
     {
         csGpioPin.Reset();
-        hal::WriteTo(&spi, Span(cmdReadCmdBuff));
+        hal::WriteTo(&spi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
-        hal::ReadFrom(&spi, Span(&cts));
+        hal::ReadFrom(&spi, Span(&cts), spiTimeout);
         csGpioPin.Set();
         if(cts == dataIsReadyValue)
         {

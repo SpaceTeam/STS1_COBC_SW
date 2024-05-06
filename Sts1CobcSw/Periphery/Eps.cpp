@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
+#include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -82,13 +83,11 @@ enum class ResetType
 
 // --- Private globals ---
 
-// Pins and SPI
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
 auto adc4CsGpioPin = hal::GpioPin(hal::epsAdc4CsPin);
 auto adc5CsGpioPin = hal::GpioPin(hal::epsAdc5CsPin);
 auto adc6CsGpioPin = hal::GpioPin(hal::epsAdc6CsPin);
-auto spi = RODOS::HAL_SPI(
-    hal::framEpsSpiIndex, hal::framEpsSpiSckPin, hal::framEpsSpiMisoPin, hal::framEpsSpiMosiPin);
 
 
 // --- Private function declarations ---
@@ -109,7 +108,7 @@ auto Initialize() -> void
     adc6CsGpioPin.Set();
 
     constexpr auto baudrate = 6'000'000;
-    hal::Initialize(&spi, baudrate);
+    Initialize(&framEpsSpi, baudrate);
 
     // Setup ADCs
     ConfigureSetupRegister(&adc4CsGpioPin);
@@ -158,7 +157,7 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
     static_assert((setupData & (1_b << 5)) > 0_b);  // NOLINT(*magic-numbers*)
 
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(setupData));
+    hal::WriteTo(&framEpsSpi, Span(setupData), spiTimeout);
     adcCsPin->Set();
 }
 
@@ -173,7 +172,7 @@ auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void
     auto data = 0b0001_b << 4;
     data = resetType == ResetType::fifo ? data | 1_b << 3 : data;
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(data));
+    WriteTo(&framEpsSpi, Span(data), spiTimeout);
     adcCsPin->Set();
 }
 }

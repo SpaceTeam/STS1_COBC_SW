@@ -33,6 +33,9 @@ struct SimpleInstruction
 
 // --- Private globals ---
 
+// Baud rate = 48 MHz, largest data transfer = 1 page = 256 bytes -> spiTimeout = 1 ms is enough for
+// all transfers
+constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 constexpr auto endianness = std::endian::big;
 
 // Instructions according to section 7.3 in W25Q01JV datasheet
@@ -50,11 +53,8 @@ constexpr auto sectorErase4ByteAddress = 0x21_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
-auto spi = RODOS::HAL_SPI(hal::flashSpiIndex,
-                          hal::flashSpiSckPin,
-                          hal::flashSpiMisoPin,
-                          hal::flashSpiMosiPin,
-                          hal::spiNssDummyPin);
+auto spi =
+    hal::Spi(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
 
 
 // --- Private function declarations ---
@@ -65,13 +65,13 @@ auto DisableWriting() -> void;
 auto IsBusy() -> bool;
 
 template<std::size_t extent>
-auto Write(std::span<Byte const, extent> data) -> void;
+auto Write(std::span<Byte const, extent> data, std::int64_t timeout) -> void;
 
 template<std::size_t extent>
-auto Read(std::span<Byte, extent> data) -> void;
+auto Read(std::span<Byte, extent> data, std::int64_t timeout) -> void;
 
 template<std::size_t size>
-auto Read() -> std::array<Byte, size>;
+auto Read(std::int64_t timeout) -> std::array<Byte, size>;
 
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
@@ -94,7 +94,7 @@ auto Initialize() -> void
     writeProtectionGpioPin.Direction(hal::PinDirection::out);
     writeProtectionGpioPin.Set();
     auto const baudRate = 48'000'000;
-    hal::Initialize(&spi, baudRate);
+    Initialize(&spi, baudRate);
     Enter4ByteAdressMode();
 }
 
@@ -133,9 +133,9 @@ auto ReadStatusRegister(int8_t registerNo) -> Byte
 auto ReadPage(std::uint32_t address) -> Page
 {
     csGpioPin.Reset();
-    Write(Span(readData4ByteAddress));
-    Write(Span(Serialize<endianness>(address)));
-    auto page = Read<pageSize>();
+    Write(Span(readData4ByteAddress), spiTimeout);
+    Write(Span(Serialize<endianness>(address)), spiTimeout);
+    auto page = Read<pageSize>(spiTimeout);
     csGpioPin.Set();
     return page;
 }
@@ -145,9 +145,9 @@ auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
     EnableWriting();
     csGpioPin.Reset();
-    Write(Span(pageProgram4ByteAddress));
-    Write(Span(Serialize<endianness>(address)));
-    Write(data);
+    Write(Span(pageProgram4ByteAddress), spiTimeout);
+    Write(Span(Serialize<endianness>(address)), spiTimeout);
+    Write(data, spiTimeout);
     csGpioPin.Set();
     DisableWriting();
 }
@@ -159,8 +159,8 @@ auto EraseSector(std::uint32_t address) -> void
     address = (address / sectorSize) * sectorSize;
     EnableWriting();
     csGpioPin.Reset();
-    Write(Span(sectorErase4ByteAddress));
-    Write(Span(Serialize<endianness>(address)));
+    Write(Span(sectorErase4ByteAddress), spiTimeout);
+    Write(Span(Serialize<endianness>(address)), spiTimeout);
     csGpioPin.Set();
     DisableWriting();
 }
@@ -184,7 +184,7 @@ auto WaitWhileBusy(std::int64_t timeout) -> Result<void>
 
 auto ActualBaudRate() -> int32_t
 {
-    return spi.status(RODOS::SPI_STATUS_BAUDRATE);
+    return spi.BaudRate();
 }
 
 
@@ -222,24 +222,24 @@ auto IsBusy() -> bool
 
 
 template<std::size_t extent>
-inline auto Write(std::span<Byte const, extent> data) -> void
+inline auto Write(std::span<Byte const, extent> data, std::int64_t timeout) -> void
 {
-    hal::WriteTo(&spi, data);
+    hal::WriteTo(&spi, data, timeout);
 }
 
 
 template<std::size_t extent>
-inline auto Read(std::span<Byte, extent> data) -> void
+inline auto Read(std::span<Byte, extent> data, std::int64_t timeout) -> void
 {
-    hal::ReadFrom(&spi, data);
+    hal::ReadFrom(&spi, data, timeout);
 }
 
 
 template<std::size_t size>
-inline auto Read() -> std::array<Byte, size>
+inline auto Read(std::int64_t timeout) -> std::array<Byte, size>
 {
     auto answer = std::array<Byte, size>{};
-    hal::ReadFrom(&spi, Span(&answer));
+    hal::ReadFrom(&spi, Span(&answer), timeout);
     return answer;
 }
 
@@ -248,8 +248,8 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
 auto SendInstruction() -> std::array<Byte, instruction.answerLength>
 {
-    Write(Span(instruction.id));
-    return Read<instruction.answerLength>();
+    Write(Span(instruction.id), spiTimeout);
+    return Read<instruction.answerLength>(spiTimeout);
 }
 
 
@@ -257,7 +257,7 @@ template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
 inline auto SendInstruction() -> void
 {
-    Write(Span(instruction.id));
+    Write(Span(instruction.id), spiTimeout);
 }
 
 
