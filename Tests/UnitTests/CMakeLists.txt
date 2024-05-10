@@ -5,17 +5,18 @@ target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1C
 add_program(FlatArray FlatArray.test.cpp)
 target_link_libraries(Sts1CobcSwTests_FlatArray PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
 
+add_program(Fram Fram.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Fram PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery Sts1CobcSw_Serial
+                                 Sts1CobcSw_Utility
+)
+
 # TODO: Enable again once problem with segmentation violation on CI is fixed
 add_program(LfsRam LfsRam.test.cpp)
 target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
 
 add_program(Outcome Outcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
-
-add_program(Fram Fram.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_Fram PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery Sts1CobcSw_Serial
-)
 
 # TODO: Fix the problem with two main()s, one from Rodos one from Catch, somehow
 if(FALSE)
