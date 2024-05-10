@@ -38,7 +38,7 @@ TEST_CASE("Fram mock using ram")
     fram::FramMockMode(fram::MockMode::ram);
 
     std::mt19937 randomEngine(std::random_device{}());
-    std::uniform_int_distribution<uint32_t> gen(0, (1U << nAddressBits) - 1);
+    std::uniform_int_distribution<std::uint32_t> gen(0, (1U << nAddressBits) - 1);
     fram::Address const address = gen(randomEngine);
 
     WriteAndReadTestData(address);

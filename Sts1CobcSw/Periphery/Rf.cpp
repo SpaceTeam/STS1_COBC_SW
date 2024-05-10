@@ -133,10 +133,10 @@ auto SetTxType(TxType txType) -> void
 {
     // Constants for setting the TX type (morse, 2GFSK)
     // MODEM_DATA_RATE: unused, 20 kBaud
-    static constexpr uint32_t dataRateMorse = 20'000U;
+    static constexpr std::uint32_t dataRateMorse = 20'000U;
     // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600
     // * 2600000 * 10) / 26000000 = 9600 = 0x002580
-    static constexpr uint32_t dataRate2Gfsk = 9'600U;
+    static constexpr std::uint32_t dataRate2Gfsk = 9'600U;
     // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
     static constexpr auto modemModTypeMorse = 0x09_b;
     // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK

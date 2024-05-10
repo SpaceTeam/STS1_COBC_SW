@@ -28,7 +28,7 @@ public:
     friend auto ReadFrom(Spi * spi, std::span<T, extent> data, std::int64_t timeout) -> void;
 
     auto TransferEnd() const -> std::int64_t;
-    auto BaudRate() -> int32_t;
+    auto BaudRate() -> std::int32_t;
 
 
 private:

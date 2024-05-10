@@ -33,7 +33,7 @@ auto Spi::TransferEnd() const -> std::int64_t
 }
 
 
-auto Spi::BaudRate() -> int32_t
+auto Spi::BaudRate() -> std::int32_t
 {
     return this->spi_.status(RODOS::SPI_STATUS_BAUDRATE);
 }

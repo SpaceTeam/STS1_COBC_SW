@@ -32,7 +32,7 @@ auto ReadDeviceId() -> DeviceId
 }
 
 
-auto ActualBaudRate() -> int32_t
+auto ActualBaudRate() -> std::int32_t
 {
     return doActualBaudRate();
 }
@@ -52,7 +52,7 @@ auto SetDoReadDeviceId(DeviceId (*doReadDeviceIdFunction)()) -> void
 }
 
 
-void SetDoActualBaudRate(int32_t (*doActualBaudRateFunction)())
+void SetDoActualBaudRate(std::int32_t (*doActualBaudRateFunction)())
 {
     doActualBaudRate = doActualBaudRateFunction;
 }
@@ -73,7 +73,7 @@ auto DoReadDeviceId() -> DeviceId
 }
 
 
-auto DoActualBaudRate() -> int32_t
+auto DoActualBaudRate() -> std::int32_t
 {
     return 0;
 }
