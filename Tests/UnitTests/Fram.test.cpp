@@ -35,8 +35,6 @@ auto ReadCorrectDeviceId() -> fram::DeviceId;
 
 TEST_CASE("Fram mock using ram")
 {
-    fram::FramMockMode(fram::MockMode::ram);
-
     std::mt19937 randomEngine(std::random_device{}());
     std::uniform_int_distribution<std::uint32_t> gen(0, (1U << nAddressBits) - 1);
     fram::Address const address = gen(randomEngine);
@@ -53,21 +51,6 @@ TEST_CASE("Fram mock using ram")
     fram::SetDoReadDeviceId(ReadCorrectDeviceId);
     deviceId = fram::ReadDeviceId();
     REQUIRE(deviceId == correctDeviceId);
-}
-
-
-TEST_CASE("Fram mock using file")
-{
-    fram::FramMockMode(fram::MockMode::file);
-
-    std::mt19937 randomEngine(std::random_device{}());
-    std::uniform_int_distribution<std::uint32_t> addressGenerator(0, ((1U << nAddressBits) - 1));
-    fram::Address const address = addressGenerator(randomEngine);
-
-    WriteAndReadTestData(address);
-    std::generate(
-        testData.begin(), testData.end(), [&]() { return static_cast<std::byte>(randomEngine()); });
-    WriteAndReadTestData(address);
 }
 
 

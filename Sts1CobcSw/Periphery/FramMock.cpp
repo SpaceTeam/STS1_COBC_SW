@@ -10,12 +10,12 @@ namespace sts1cobcsw::fram
 {
 constexpr auto framSize = (1U << 20U);
 auto ramSimulation = std::array<uint8_t, framSize>{};
-MockMode mockDevice = MockMode::ram;
-constexpr auto mockFilename = "FramMock.bin";
 
 auto doInitialize = empty::DoInitialize;
 auto doReadDeviceId = empty::DoReadDeviceId;
 auto doActualBaudRate = empty::DoActualBaudRate;
+auto doWriteTo = empty::DoWriteTo;
+auto doReadFrom = empty::DoReadFrom;
 
 
 // --- Mocked functions ---
@@ -35,6 +35,21 @@ auto ReadDeviceId() -> DeviceId
 auto ActualBaudRate() -> std::int32_t
 {
     return doActualBaudRate();
+}
+
+
+namespace internal
+{
+auto WriteTo(Address address, void const * data, std::size_t nBytes, std::int64_t timeout) -> void
+{
+    return doWriteTo(address, data, nBytes, timeout);
+}
+
+
+auto ReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t timeout) -> void
+{
+    return doReadFrom(address, data, nBytes, timeout);
+}
 }
 
 
@@ -58,6 +73,20 @@ void SetDoActualBaudRate(std::int32_t (*doActualBaudRateFunction)())
 }
 
 
+auto SetDoWriteTo(void (*doWriteToFunction)(
+    Address address, void const * data, std::size_t nBytes, std::int64_t timeout)) -> void
+{
+    doWriteTo = doWriteToFunction;
+}
+
+
+auto SetDoReadFrom(void (*doReadFromFunction)(
+    Address address, void * data, std::size_t nBytes, std::int64_t timeout)) -> void
+{
+    doReadFrom = doReadFromFunction;
+}
+
+
 // --- Predefined do functions ---
 
 namespace empty
@@ -77,69 +106,21 @@ auto DoActualBaudRate() -> std::int32_t
 {
     return 0;
 }
+
+
+auto DoWriteTo([[maybe_unused]] Address address,
+               [[maybe_unused]] void const * data,
+               [[maybe_unused]] std::size_t nBytes,
+               [[maybe_unused]] std::int64_t timeout) -> void
+{
 }
 
 
-auto FramMockMode(MockMode mockMode) -> void
+auto DoReadFrom([[maybe_unused]] Address address,
+                [[maybe_unused]] void * data,
+                [[maybe_unused]] std::size_t nBytes,
+                [[maybe_unused]] std::int64_t timeout) -> void
 {
-    mockDevice = mockMode;
-}
-
-
-
-namespace internal
-{
-// TODO: This must also forward to a do function which can be set with a SetDoWriteTo function
-auto WriteTo(Address address,
-             void const * data,
-             std::size_t nBytes,
-             [[maybe_unused]] std::int64_t timeout) -> void
-{
-    if(mockDevice == MockMode::file)
-    {
-        std::ofstream file(mockFilename, std::ios::binary | std::ios_base::ate);
-        if(not file)
-        {
-            std::cerr << "Failed to open file " << mockFilename << " for writing." << '\n';
-            return;
-        }
-
-        file.seekp(address);
-        file.write(static_cast<char const *>(data), static_cast<std::streamsize>(nBytes));
-        file.close();
-    }
-    else
-    {
-        // FIXME: Fix pointer arithmetic and out of bounds access
-        std::memcpy(ramSimulation.data() + address, data, nBytes);
-    }
-}
-
-
-// TODO: This must also forward to a do function which can be set with a SetDoReadFrom function
-auto ReadFrom(Address address,
-              void * data,
-              std::size_t nBytes,
-              [[maybe_unused]] std::int64_t timeout) -> void
-{
-    if(mockDevice == MockMode::file)
-    {
-        std::ifstream file(mockFilename, std::ios::binary);
-        if(not file)
-        {
-            std::cerr << "Failed to open file " << mockFilename << " for reading." << '\n';
-            return;
-        }
-
-        file.clear();
-        file.seekg(address);
-        file.read(static_cast<char *>(data), static_cast<std::streamsize>(nBytes));
-        file.close();
-    }
-    else
-    {
-        std::memcpy(data, ramSimulation.data() + address, nBytes);
-    }
 }
 }
 }
