@@ -20,11 +20,13 @@ auto SetDoInitialize(void (*doInitializeFunction)()) -> void;
 auto SetDoReadDeviceId(DeviceId (*doReadDeviceIdFunction)()) -> void;
 auto SetDoActualBaudRate(std::int32_t (*doActualBaudRateFunction)()) -> void;
 
-// TODO: Move to namespace "default"
-// Default "do" functions that do nothing, used to initialized function pointers
-auto DoInitializeDefault() -> void;
-auto DoReadDeviceIdDefault() -> DeviceId;
-auto DoActualBaudRateDefault() -> std::int32_t;
+namespace empty
+{
+    // Empty do functions that do nothing, used to initialized function pointers
+    auto DoInitialize()->void;
+    auto DoReadDeviceId()->DeviceId;
+    auto DoActualBaudRate()->std::int32_t;
+}
 
 // TODO: Remove this
 auto FramMockMode(MockMode mockMode) -> void;

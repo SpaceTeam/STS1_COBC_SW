@@ -13,9 +13,9 @@ auto ramSimulation = std::array<uint8_t, framSize>{};
 MockMode mockDevice = MockMode::ram;
 constexpr auto mockFilename = "FramMock.bin";
 
-auto doInitialize = DoInitializeDefault;
-auto doReadDeviceId = DoReadDeviceIdDefault;
-auto doActualBaudRate = DoActualBaudRateDefault;
+auto doInitialize = empty::DoInitialize;
+auto doReadDeviceId = empty::DoReadDeviceId;
+auto doActualBaudRate = empty::DoActualBaudRate;
 
 
 // --- Mocked functions ---
@@ -58,22 +58,25 @@ void SetDoActualBaudRate(int32_t (*doActualBaudRateFunction)())
 }
 
 
-// --- Default do functions, doing nothing ---
+// --- Predefined do functions ---
 
-auto DoInitializeDefault() -> void
+namespace empty
+{
+auto DoInitialize() -> void
 {
 }
 
 
-auto DoReadDeviceIdDefault() -> DeviceId
+auto DoReadDeviceId() -> DeviceId
 {
     return DeviceId{};
 }
 
 
-auto DoActualBaudRateDefault() -> int32_t
+auto DoActualBaudRate() -> int32_t
 {
     return 0;
+}
 }
 
 
@@ -81,6 +84,7 @@ auto FramMockMode(MockMode mockMode) -> void
 {
     mockDevice = mockMode;
 }
+
 
 
 namespace internal
