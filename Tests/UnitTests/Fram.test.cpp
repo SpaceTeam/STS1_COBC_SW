@@ -22,6 +22,7 @@ using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
+constexpr auto spiTimeout = 1;  // in ms
 constexpr auto nAddressBits = 20U;
 size_t const testDataSize = 11 * 1024;  // 11 KiB
 auto testData = std::array<Byte, testDataSize>{};
@@ -30,6 +31,7 @@ auto readData = std::array<Byte, testDataSize>{};
 
 auto WriteAndReadTestData(sts1cobcsw::fram::Address const & address) -> void;
 auto ReadCorrectDeviceId() -> fram::DeviceId;
+
 
 TEST_CASE("Fram mock using ram")
 {
@@ -53,6 +55,7 @@ TEST_CASE("Fram mock using ram")
     REQUIRE(deviceId == correctDeviceId);
 }
 
+
 TEST_CASE("Fram mock using file")
 {
     fram::FramMockMode(fram::MockMode::file);
@@ -67,6 +70,7 @@ TEST_CASE("Fram mock using file")
     WriteAndReadTestData(address);
 }
 
+
 auto WriteAndReadTestData(fram::Address const & address) -> void
 {
     auto nBytesToPrint = 10U;
@@ -74,12 +78,12 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
     std::printf("Writing %d bytes to address   0x%08x ...\n",
                 static_cast<int>(testDataSize),
                 static_cast<unsigned int>(address));
-    fram::WriteTo(address, Span(testData));
+    fram::WriteTo(address, Span(testData), spiTimeout);
 
     std::printf("Reading %d bytes from address 0x%08x ...\n",
                 static_cast<int>(testDataSize),
                 static_cast<unsigned int>(address));
-    fram::ReadFrom(address, Span(&readData));
+    fram::ReadFrom(address, Span(&readData), spiTimeout);
 
     std::printf("Comparing first %d written and read bytes:\n", nBytesToPrint);
     std::printf("  ");
@@ -96,6 +100,7 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
 
     REQUIRE(readData == testData);
 }
+
 
 auto ReadCorrectDeviceId() -> fram::DeviceId
 {

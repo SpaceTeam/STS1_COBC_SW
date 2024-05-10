@@ -90,7 +90,10 @@ auto FramMockMode(MockMode mockMode) -> void
 namespace internal
 {
 // TODO: This must also forward to a do function which can be set with a SetDoWriteTo function
-auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void
+auto WriteTo(Address address,
+             void const * data,
+             std::size_t nBytes,
+             [[maybe_unused]] std::int64_t timeout) -> void
 {
     if(mockDevice == MockMode::file)
     {
@@ -114,7 +117,10 @@ auto WriteTo(Address address, void const * data, std::size_t nBytes) -> void
 
 
 // TODO: This must also forward to a do function which can be set with a SetDoReadFrom function
-auto ReadFrom(Address address, void * data, std::size_t nBytes) -> void
+auto ReadFrom(Address address,
+              void * data,
+              std::size_t nBytes,
+              [[maybe_unused]] std::int64_t timeout) -> void
 {
     if(mockDevice == MockMode::file)
     {
