@@ -23,6 +23,8 @@ auto SetDoReadFrom(void (*doReadFromFunction)(
 // Empty do functions that do nothing; used to initialized function pointers
 namespace empty
 {
+auto SetAllDoFunctions() -> void;
+
 auto DoInitialize() -> void;
 auto DoReadDeviceId() -> DeviceId;
 auto DoActualBaudRate() -> std::int32_t;
@@ -38,6 +40,8 @@ namespace ram
 constexpr auto storageSize = (1U << 20U);
 extern std::array<Byte, storageSize> storage;
 
+
+auto SetAllDoFunctions() -> void;
 
 auto DoInitialize() -> void;
 auto DoReadDeviceId() -> DeviceId;

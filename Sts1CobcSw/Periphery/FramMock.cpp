@@ -85,6 +85,16 @@ auto SetDoReadFrom(void (*doReadFromFunction)(
 
 namespace empty
 {
+auto SetAllDoFunctions() -> void
+{
+    SetDoInitialize(DoInitialize);
+    SetDoReadDeviceId(DoReadDeviceId);
+    SetDoActualBaudRate(DoActualBaudRate);
+    SetDoWriteTo(DoWriteTo);
+    SetDoReadFrom(DoReadFrom);
+}
+
+
 auto DoInitialize() -> void
 {
 }
@@ -122,6 +132,16 @@ auto DoReadFrom([[maybe_unused]] Address address,
 namespace ram
 {
 std::array<Byte, storageSize> storage{};
+
+
+auto SetAllDoFunctions() -> void
+{
+    SetDoInitialize(DoInitialize);
+    SetDoReadDeviceId(DoReadDeviceId);
+    SetDoActualBaudRate(DoActualBaudRate);
+    SetDoWriteTo(DoWriteTo);
+    SetDoReadFrom(DoReadFrom);
+}
 
 
 auto DoInitialize() -> void
