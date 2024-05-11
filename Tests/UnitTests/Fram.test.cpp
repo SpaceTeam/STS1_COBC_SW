@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -8,6 +9,7 @@
 #include <catch2/generators/catch_generators_random.hpp>
 
 #include <array>
+#include <string>
 
 
 namespace fram = sts1cobcsw::fram;
@@ -45,4 +47,35 @@ TEST_CASE("Mocked functions do nothing by default")
         readData = fram::ReadFrom<writeData.size()>(address, 0);
         CHECK(readData == decltype(readData){});
     }
+}
+
+
+TEST_CASE("Mocking FRAM in RAM")
+{
+    fram::ram::SetAllDoFunctions();
+    fram::ram::storage.fill(0x00_b);
+
+    fram::Initialize();
+    auto const correctDeviceId =
+        std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
+    auto deviceId = fram::ReadDeviceId();
+    CHECK(deviceId == correctDeviceId);
+    auto actualBaudRate = fram::ActualBaudRate();
+    CHECK(actualBaudRate == 6'000'000);
+
+    auto address = GENERATE(take(1, random(0U, fram::ram::storageSize - 10)));
+
+    auto readData = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
+    fram::ReadFrom(address, Span(&readData), 0);
+    CHECK(readData == decltype(readData){});
+
+    auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
+    fram::WriteTo(address, Span(writeData), 0);
+    CHECK(fram::ram::storage[address] == writeData[0]);
+    CHECK(fram::ram::storage[address + 1] == writeData[1]);
+    CHECK(fram::ram::storage[address + 2] == writeData[2]);
+    CHECK(fram::ram::storage[address + 3] == writeData[3]);
+
+    readData = fram::ReadFrom<writeData.size()>(address, 0);
+    CHECK(readData == writeData);
 }
