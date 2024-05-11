@@ -9,41 +9,41 @@ namespace sts1cobcsw::fs
 {
 auto lfs = lfs_t{};
 
-auto open(char const * path, int flag) -> Result<File>
+
+auto Open(std::string_view path, int flag) -> Result<File>
 {
-    lfs_file_t lfsFile;
-    auto error = lfs_file_open(&lfs, &lfsFile, path, flag);
+    File file = File();
+    auto error = lfs_file_open(&lfs, &file.lfsFile_, path.data(), flag);
     if(error == 0)
     {
-        return File(lfsFile);
+        return file;
     }
     return static_cast<ErrorCode>(error);
 }
 
+
 File::~File()
 {
-    (void)close();
+    (void)Close();
 }
 
-File::File(lfs_file_t & lfsFile) : m_lfsFile(lfsFile)
-{
-}
 
 template<typename T>
-auto File::read(T * t) -> Result<int>
+auto File::Read(T * t) -> Result<int>
 {
-    auto value = lfs_file_read(&lfs, &m_lfsFile, t, sizeof(T));
+    auto value = lfs_file_read(&lfs, &lfsFile_, t, sizeof(T));
     if(value >= 0)
     {
         return value;
     }
     return static_cast<ErrorCode>(value);
 }
+
 
 template<typename T>
-auto File::write(T const & t) -> Result<int>
+auto File::Write(T const & t) -> Result<int>
 {
-    auto value = lfs_file_write(&lfs, &m_lfsFile, &t, sizeof(T));
+    auto value = lfs_file_write(&lfs, &lfsFile_, &t, sizeof(T));
     if(value >= 0)
     {
         return value;
@@ -51,9 +51,10 @@ auto File::write(T const & t) -> Result<int>
     return static_cast<ErrorCode>(value);
 }
 
-auto File::FileSize() -> Result<int>
+
+auto File::Size() -> Result<int>
 {
-    auto value = lfs_file_size(&lfs, &m_lfsFile);
+    auto value = lfs_file_size(&lfs, &lfsFile_);
     if(value >= 0)
     {
         return value;
@@ -61,15 +62,17 @@ auto File::FileSize() -> Result<int>
     return static_cast<ErrorCode>(value);
 }
 
-[[nodiscard]] auto File::close() -> Result<void>
+
+[[nodiscard]] auto File::Close() -> Result<void>
 {
-    auto error = lfs_file_close(&lfs, &m_lfsFile);
+    auto error = lfs_file_close(&lfs, &lfsFile_);
     if(error == 0)
     {
         return outcome_v2::success();
     }
     return static_cast<ErrorCode>(error);
 }
+
 
 [[nodiscard]] auto Mount() -> Result<void>
 {

@@ -1,37 +1,45 @@
 #pragma once
 
-
 #include <Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>
+
+#include <littlefs/lfs.h>
+
+#include <string_view>
 
 
 namespace sts1cobcsw::fs
 {
+class File;
+
 
 [[nodiscard]] auto Mount() -> Result<void>;
+
+
+[[nodiscard]] auto Open(std::string_view path, int flag) -> Result<File>;
+
 
 class File
 {
 public:
-    // only allow creation of File class throu open friend function
-    File() = delete;
+    // only allow creation of File class throu Open friend function
     File(File const &) = delete;
     File(File &&) = default;
-
+    auto operator=(File const &) -> File & = delete;
+    auto operator=(File &&) -> File & = delete;
     ~File();
 
-    [[nodiscard]] auto close() -> Result<void>;
+    [[nodiscard]] auto Close() -> Result<void>;
     template<typename T>
-    auto read(T * t) -> Result<int>;
+    [[nodiscard]] auto Read(T * t) -> Result<int>;
     template<typename T>
-    auto write(T const & t) -> Result<int>;
-    auto FileSize() -> Result<int>;
+    [[nodiscard]] auto Write(T const & t) -> Result<int>;
+    [[nodiscard]] auto Size() -> Result<int>;
 
-    friend auto open(char const * path, int flag) -> Result<File>;
+    friend auto Open(std::string_view path, int flag) -> Result<File>;
 
 private:
-    File(lfs_file_t & lfsFile);
+    File() = default;
 
-    lfs_file_t & m_lfsFile;
+    lfs_file_t lfsFile_;
 };
-
 }
