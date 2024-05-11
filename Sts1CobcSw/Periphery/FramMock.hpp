@@ -2,7 +2,10 @@
 
 
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 
 
@@ -29,12 +32,18 @@ auto DoReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t t
 }
 
 
-// TODO: Implement ram::do functions
-// Do functions
+// Do functions that simulate the FRAM in RAM
 namespace ram
 {
+constexpr auto storageSize = (1U << 20U);
+extern std::array<Byte, storageSize> storage;
+
+
 auto DoInitialize() -> void;
 auto DoReadDeviceId() -> DeviceId;
 auto DoActualBaudRate() -> std::int32_t;
+auto DoWriteTo(Address address, void const * data, std::size_t nBytes, std::int64_t timeout)
+    -> void;
+auto DoReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t timeout) -> void;
 }
 }

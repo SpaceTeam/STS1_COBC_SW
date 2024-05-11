@@ -1,16 +1,10 @@
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 
-#include <array>
 #include <cstring>
-#include <fstream>  // IWYU pragma: keep
-#include <iostream>
 
 
 namespace sts1cobcsw::fram
 {
-constexpr auto framSize = (1U << 20U);
-auto ramSimulation = std::array<uint8_t, framSize>{};
-
 auto doInitialize = empty::DoInitialize;
 auto doReadDeviceId = empty::DoReadDeviceId;
 auto doActualBaudRate = empty::DoActualBaudRate;
@@ -121,6 +115,49 @@ auto DoReadFrom([[maybe_unused]] Address address,
                 [[maybe_unused]] std::size_t nBytes,
                 [[maybe_unused]] std::int64_t timeout) -> void
 {
+}
+}
+
+
+namespace ram
+{
+std::array<Byte, storageSize> storage{};
+
+
+auto DoInitialize() -> void
+{
+}
+
+
+auto DoReadDeviceId() -> DeviceId
+{
+    static constexpr auto deviceId =
+        std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
+    return deviceId;
+}
+
+
+auto DoActualBaudRate() -> std::int32_t
+{
+    return 6'000'000;  // NOLINT(*magic-numbers*)
+}
+
+
+auto DoWriteTo(Address address,
+               void const * data,
+               std::size_t nBytes,
+               [[maybe_unused]] std::int64_t timeout) -> void
+{
+    std::memcpy(storage.data() + address, data, nBytes);
+}
+
+
+auto DoReadFrom(Address address,
+                void * data,
+                std::size_t nBytes,
+                [[maybe_unused]] std::int64_t timeout) -> void
+{
+    std::memcpy(data, storage.data() + address, nBytes);
 }
 }
 }
