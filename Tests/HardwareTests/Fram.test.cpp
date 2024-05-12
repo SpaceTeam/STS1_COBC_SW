@@ -67,7 +67,7 @@ private:
         Check(deviceId == correctDeviceId);
 
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
-        constexpr uint32_t nAdressBits = 20U;
+        constexpr std::uint32_t nAdressBits = 20U;
         auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
 
         PRINTF("\n");

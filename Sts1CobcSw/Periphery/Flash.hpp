@@ -55,5 +55,5 @@ auto Initialize() -> void;
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
 auto EraseSector(std::uint32_t address) -> void;
 [[nodiscard]] auto WaitWhileBusy(std::int64_t timeout) -> Result<void>;
-auto ActualBaudRate() -> int32_t;
+auto ActualBaudRate() -> std::int32_t;
 }

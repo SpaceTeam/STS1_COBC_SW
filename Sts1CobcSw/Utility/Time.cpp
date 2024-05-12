@@ -8,11 +8,11 @@ namespace sts1cobcsw::utility
 //! @brief Print UTC system time in human readable format
 void PrintFormattedSystemUtc()
 {
-    int32_t year = 0;
-    int32_t month = 0;
-    int32_t day = 0;
-    int32_t hour = 0;
-    int32_t min = 0;
+    std::int32_t year = 0;
+    std::int32_t month = 0;
+    std::int32_t day = 0;
+    std::int32_t hour = 0;
+    std::int32_t min = 0;
     double sec = 0;
 
     auto sysUtc = RODOS::sysTime.getUTC();
