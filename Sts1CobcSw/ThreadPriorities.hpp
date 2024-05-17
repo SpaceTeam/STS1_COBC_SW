@@ -9,4 +9,5 @@ inline constexpr auto eduProgramQueueThreadPriority = 300;
 inline constexpr auto eduListenerThreadPriority = 100;
 inline constexpr auto eduHeartbeatThreadPriority = 600;
 inline constexpr auto commandParserThreadPriority = 100;
+inline constexpr auto watchdogClearThreadPriority = 600;
 }
