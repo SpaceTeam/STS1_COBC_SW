@@ -33,9 +33,7 @@ add_program(Span Span.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
 
 get_property(
-    all_unit_test_targets
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    PROPERTY BUILDSYSTEM_TARGETS
+    all_unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS
 )
 add_custom_target(AllUnitTests) # Must be defined after getting all unit test targets
 add_dependencies(AllUnitTests ${all_unit_test_targets})

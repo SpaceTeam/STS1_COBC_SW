@@ -27,8 +27,7 @@ macro(add_golden_test)
         add_custom_command(
             OUTPUT "${test_filename}.output"
             COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/Scripts/TestRunner.sh"
-                    $<TARGET_FILE:${target_name}>
-            DEPENDS ${target_name} Scripts/TestRunner.sh
+                    $<TARGET_FILE:${target_name}> DEPENDS ${target_name} Scripts/TestRunner.sh
         )
         add_test(NAME ${test_filename}_Test
                  COMMAND diff "${test_filename}.output"

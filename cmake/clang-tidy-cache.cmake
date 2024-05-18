@@ -3,8 +3,7 @@ if(CMAKE_CXX_CLANG_TIDY)
     if(CLANG_TIDY_CACHE_PATH)
         message("Found clang-tidy-cache")
         message("clang-tidy-cache directory : $ENV{CTCACHE_DIR}")
-        set(CLANG_TIDY_PATH
-            "${CLANG_TIDY_CACHE_PATH};${CMAKE_CXX_CLANG_TIDY}"
+        set(CLANG_TIDY_PATH "${CLANG_TIDY_CACHE_PATH};${CMAKE_CXX_CLANG_TIDY}"
             CACHE STRING "A combined command to run clang-tidy with caching wrapper"
         )
         set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PATH}")

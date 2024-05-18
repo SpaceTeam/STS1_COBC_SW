@@ -20,8 +20,7 @@ find_package(Python3 3.6 REQUIRED)
 
 # ---- Declare documentation target ----
 
-set(DOXYGEN_OUTPUT_DIRECTORY
-    "${PROJECT_BINARY_DIR}/docs"
+set(DOXYGEN_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/docs"
     CACHE PATH "Path for the generated Doxygen documentation"
 )
 

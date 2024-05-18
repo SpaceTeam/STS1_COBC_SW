@@ -2,16 +2,10 @@
 # propagated upwards, i.e., as soon as the function ends CMAKE_MODULE_PATH would be unset again.
 macro(find_package_and_notify package_name)
     get_property(
-        imported_targets_before
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        PROPERTY IMPORTED_TARGETS
+        imported_targets_before DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY IMPORTED_TARGETS
     )
     find_package(${package_name} REQUIRED)
-    get_property(
-        imported_targets
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        PROPERTY IMPORTED_TARGETS
-    )
+    get_property(imported_targets DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY IMPORTED_TARGETS)
     list(REMOVE_ITEM imported_targets ${imported_targets_before})
     foreach(target IN LISTS imported_targets)
         get_target_property(include_dirs ${target} INTERFACE_INCLUDE_DIRECTORIES)
@@ -20,8 +14,7 @@ macro(find_package_and_notify package_name)
 endmacro()
 
 function(find_rodos)
-    set(RODOS_PACKAGE_NAME
-        "rodos"
+    set(RODOS_PACKAGE_NAME "rodos"
         CACHE STRING "Name of the Rodos package used when calling find_package()"
     )
     find_package(${RODOS_PACKAGE_NAME} REQUIRED ${ARGN})
@@ -63,11 +56,7 @@ function(objcopy_target target_name)
 endfunction()
 
 function(all_targets_include_directories include_directories)
-    get_property(
-        target_names
-        DIRECTORY ${PROJECT_SOURCE_DIR}
-        PROPERTY BUILDSYSTEM_TARGETS
-    )
+    get_property(target_names DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
     message("Setting include directory to ${include_directories} for targets:")
     foreach(target IN LISTS target_names)
         message("- ${target}")
