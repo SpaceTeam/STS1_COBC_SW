@@ -199,7 +199,7 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
     static constexpr auto averagingData =
         (averagingRegister << 5) | (enableAveraging << 4) | (nAverages << 2) | nSingleScans;
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(averagingData));
+    hal::WriteTo(&framEpsSpi, Span(averagingData), spiTimeout);
     adcCsPin->Set();
 }
 
@@ -219,7 +219,7 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     static constexpr auto conversionCommand =
         (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
     adcCsPin->Reset();
-    hal::WriteTo(&spi, Span(conversionCommand));
+    hal::WriteTo(&framEpsSpi, Span(conversionCommand), spiTimeout);
     adcCsPin->Set();
 
     // According to the datasheet at most 514 conversions are done after a conversion command
@@ -231,7 +231,7 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     // Resolution is 12 bit, sent like this: [0 0 0 0 MSB x x x], [x x x x x x x LSB]
     auto adcData = Buffer<AdcValues>{};
     adcCsPin->Reset();
-    hal::ReadFrom(&spi, Span(&adcData));
+    hal::ReadFrom(&framEpsSpi, Span(&adcData), spiTimeout);
     adcCsPin->Set();
     return Deserialize<std::endian::big, AdcValues>(Span(adcData));
 }
