@@ -1,9 +1,16 @@
-namespace sts1cobcsw::rf
+#include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/ThreadPriorities.hpp>
+
+
+namespace sts1cobcsw
 {
+constexpr auto stackSize = 100U;
+
+
 class RfStartupTestThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    RfStartupTestThread() : StaticThread("RfStartupTestThread", RfStartupTestThreadPriority)
+    RfStartupTestThread() : StaticThread("RfStartupTestThread", rfStartupTestThreadPriority)
     {
     }
 
@@ -19,11 +26,11 @@ private:
         RODOS::AT(RODOS::END_OF_TIME);
 
         // Initialize device and read its ID
-        Initialize(TxType::morse);
-        auto partNumber = ReadPartNumber();
+        rf::Initialize(TxType::packet);
+        auto partNumber = rf::ReadPartNumber();
         if(partNumber != 0x4463)
         {
-            rfIsWorking = false;
+            rf::rfIsWorking = false;
         }
 
         // Wake up SPI startup test and supervisor thread
