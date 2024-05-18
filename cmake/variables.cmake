@@ -22,3 +22,5 @@ if(NOT PROJECT_IS_TOP_LEVEL)
         set(warning_guard SYSTEM)
     endif()
 endif()
+
+set(HW_VERSION 27 CACHE STRING "Hardware version")
