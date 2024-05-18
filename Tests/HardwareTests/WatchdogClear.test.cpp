@@ -1,6 +1,5 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -14,7 +13,7 @@ static auto watchdogClearGpio = hal::GpioPin(hal::watchdogClearPin);
 class WatchdogClearTest : public RODOS::StaticThread<>
 {
 public:
-    WatchdogClearTest() : StaticThread("WatchdogClearTest", watchdogClearThreadPriority)
+    WatchdogClearTest() : StaticThread("WatchdogClearTest", 600)
     {
     }
 
