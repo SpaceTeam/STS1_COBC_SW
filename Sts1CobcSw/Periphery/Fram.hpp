@@ -17,6 +17,9 @@ using DeviceId = std::array<Byte, 9>;
 using Address = std::uint32_t;
 
 
+extern bool framIsWorking;
+
+
 auto Initialize() -> void;
 [[nodiscard]] auto ReadDeviceId() -> DeviceId;
 auto ActualBaudRate() -> std::int32_t;

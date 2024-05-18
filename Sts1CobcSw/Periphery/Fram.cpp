@@ -24,6 +24,9 @@ constexpr auto endianness = std::endian::big;
 // Command opcodes according to section 4.1 in CY15B108QN-40SXI datasheet. I couldn't use an enum
 // class because std::byte is already an enum class so it cannot be used as the underlying type of
 // another enum.
+bool framIsWorking = true;
+
+
 namespace opcode
 {
 constexpr auto writeData = 0x02_b;
