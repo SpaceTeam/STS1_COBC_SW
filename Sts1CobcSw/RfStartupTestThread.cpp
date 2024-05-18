@@ -15,21 +15,21 @@ private:
 
     void run() override
     {
-        //Suspend until EOT
+        // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
 
-        //Initialize device and read its ID
+        // Initialize device and read its ID
         Initialize(TxType::morse);
-        auto partNumber = ReadPartNumber(); 
-        if(partNumber != 0x4463){
+        auto partNumber = ReadPartNumber();
+        if(partNumber != 0x4463)
+        {
             rfIsWorking = false;
         }
 
-        //Wake up SPI startup test and supervisor thread
+        // Wake up SPI startup test and supervisor thread
 
-        //Suspend until EOT
+        // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
-
     }
 } RfStartupTestThread;
 }
