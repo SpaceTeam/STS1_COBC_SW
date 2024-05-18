@@ -1,9 +1,9 @@
-namespace sts1cobcsw::flash
+namespace sts1cobcsw::rf
 {
-class FlashStartupTestThread : public RODOS::StaticThread<stackSize>
+class RfStartupTestThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    FlashStartupTestThread() : StaticThread("FlashStartupTestThread", FlashStartupTestThreadPriority)
+    RfStartupTestThread() : StaticThread("RfStartupTestThread", RfStartupTestThreadPriority)
     {
     }
 
@@ -19,10 +19,10 @@ private:
         RODOS::AT(RODOS::END_OF_TIME);
 
         //Initialize device and read its ID
-        Initialize();
-        auto jedecId = ReadJedecId(); 
-        if((jedecId.manufacturerId != 0xEF)||(jedecId.deviceId == 0x4021)){
-            flashIsWorking = false;
+        Initialize(TxType::morse);
+        auto partNumber = ReadPartNumber(); 
+        if(partNumber != 0x4463){
+            rfIsWorking = false;
         }
 
         //Wake up SPI startup test and supervisor thread
@@ -31,5 +31,5 @@ private:
         RODOS::AT(RODOS::END_OF_TIME);
 
     }
-} FlashStartupTestThread;
+} RfStartupTestThread;
 }
