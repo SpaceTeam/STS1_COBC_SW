@@ -11,7 +11,12 @@ namespace sts1cobcsw::hal
 inline constexpr auto led1Pin = pb12;
 inline constexpr auto led2Pin = pb15;
 
+#if HW_VERSION >= 27
+inline constexpr auto watchdogClearPin = pb9;
+inline constexpr auto dosiEnablePin = pb10;
+#else
 inline constexpr auto watchdogClearPin = pa9;
+#endif
 
 inline constexpr auto epsBatteryGoodPin = pc15;
 inline constexpr auto epsChargingPin = pc14;
@@ -32,7 +37,11 @@ inline constexpr auto flashSpiIndex = RODOS::SPI_IDX1;
 inline constexpr auto flashSpiSckPin = pa5;
 inline constexpr auto flashSpiMisoPin = pa6;
 inline constexpr auto flashSpiMosiPin = pa7;
+#if HW_VERSION >= 27
+inline constexpr auto flashCsPin = pa4;
+#else
 inline constexpr auto flashCsPin = pb9;
+#endif
 inline constexpr auto flashWriteProtectionPin = pc4;
 
 inline constexpr auto framEpsSpiIndex = RODOS::SPI_IDX3;
@@ -54,8 +63,12 @@ inline constexpr auto rfSdnPin = pb14;
 inline constexpr auto rfGpio0Pin = pc6;
 inline constexpr auto rfGpio1Pin = pc8;
 inline constexpr auto rfPaEnablePin = pc9;
+#if HW_VERSION >= 27
+inline constexpr auto rfTmpPin = pc0;
+inline constexpr auto rfLatchupPin = pa0;
+#endif
 
 // We don't need/use NSS pins but due to a bug in Rodos we must specify one so we choose this
 // unconnected pin.
-inline constexpr auto spiNssDummyPin = pa0;
+inline constexpr auto spiNssDummyPin = pa1;
 }

@@ -61,7 +61,8 @@ Docker image, the file should look something like the following:
         "cacheVariables": {
           "CMAKE_BUILD_TYPE": "Debug",
           "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-          "BUILD_MCSS_DOCS": "ON"
+          "BUILD_MCSS_DOCS": "ON",
+          "HW_VERSION": "27"
         }
       },
       {
