@@ -158,6 +158,45 @@ TEST_CASE("Serialize TriviallySerializable types (big endian)")
 }
 
 
+TEST_CASE("Serialize std::array (default endian)")
+{
+    auto uint16Buffer = Serialize(std::array<std::uint16_t, 3>{0x0001, 0x0203, 0x0405});
+    auto int32Buffer = Serialize(std::array<std::int32_t, 2>{0x0809'0A0B, 0x0C0D'0E0F});
+    auto uint64Buffer = Serialize(std::array<std::uint64_t, 1>{0x1011'1213'1415'1617});
+
+    CHECK(std::is_same_v<decltype(uint16Buffer), std::array<Byte, 3 * sizeof(std::uint16_t)>>);
+    CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, 2 * sizeof(std::int32_t)>>);
+    CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
+
+    CHECK(uint16Buffer == std::array{0x01_b, 0x00_b, 0x03_b, 0x02_b, 0x05_b, 0x04_b});
+    CHECK(int32Buffer
+          == std::array{0x0B_b, 0x0A_b, 0x09_b, 0x08_b, 0x0F_b, 0x0E_b, 0x0D_b, 0x0C_b});
+    CHECK(uint64Buffer
+          == std::array{0x17_b, 0x16_b, 0x15_b, 0x14_b, 0x13_b, 0x12_b, 0x11_b, 0x10_b});
+}
+
+
+TEST_CASE("Serialize std::array (big endian)")
+{
+    auto uint16Buffer =
+        Serialize<std::endian::big>(std::array<std::uint16_t, 3>{0xABCD, 0x1234, 0xFFEE});
+    auto int32Buffer =
+        Serialize<std::endian::big>(std::array<std::int32_t, 2>{0x0907'0503, 0x2244'6688});
+    auto uint64Buffer =
+        Serialize<std::endian::big>(std::array<std::uint64_t, 1>{0xFEDC'BA98'7654'3210});
+
+    CHECK(std::is_same_v<decltype(uint16Buffer), std::array<Byte, 3 * sizeof(std::uint16_t)>>);
+    CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, 2 * sizeof(std::int32_t)>>);
+    CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
+
+    CHECK(uint16Buffer == std::array{0xAB_b, 0xCD_b, 0x12_b, 0x34_b, 0xFF_b, 0xEE_b});
+    CHECK(int32Buffer
+          == std::array{0x09_b, 0x07_b, 0x05_b, 0x03_b, 0x22_b, 0x44_b, 0x66_b, 0x88_b});
+    CHECK(uint64Buffer
+          == std::array{0xFE_b, 0xDC_b, 0xBA_b, 0x98_b, 0x76_b, 0x54_b, 0x32_b, 0x10_b});
+}
+
+
 TEST_CASE("Deserialize TriviallySerializable types (default endian)")
 {
     auto buffer = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
@@ -183,6 +222,44 @@ TEST_CASE("Deserialize TriviallySerializable types (big endian)")
     REQUIRE(int32 == (1U << 24U) + (2U << 16U) + (3U << 8U) + 4U);
     REQUIRE(uint16 == (1U << 8U) + 2);
     REQUIRE(int8 == 3);
+}
+
+
+TEST_CASE("Deserialize std::array (default endian)")
+{
+    auto buffer = std::array{0x05_b, 0x00_b, 0x07_b, 0x00_b, 0x09_b, 0x00_b, 0xFF_b, 0xFF_b};
+
+    auto int16Array = Deserialize<std::array<std::int16_t, 4>>(buffer);
+    CHECK(int16Array[0] == 5);
+    CHECK(int16Array[1] == 7);
+    CHECK(int16Array[2] == 9);
+    CHECK(int16Array[3] == -1);
+
+    auto uint32Array = Deserialize<std::array<std::uint32_t, 2>>(buffer);
+    CHECK(uint32Array[0] == 0x00070005U);
+    CHECK(uint32Array[1] == 0xFFFF0009U);
+
+    auto uint64Array = Deserialize<std::array<std::uint64_t, 1>>(buffer);
+    CHECK(uint64Array[0] == 0xFFFF000900070005U);
+}
+
+
+TEST_CASE("Deserialize std::array (big endian)")
+{
+    auto buffer = std::array{0x00_b, 0x02_b, 0x00_b, 0x04_b, 0x00_b, 0x06_b, 0xFF_b, 0xFE_b};
+
+    auto int16Array = Deserialize<std::endian::big, std::array<std::int16_t, 4>>(buffer);
+    CHECK(int16Array[0] == 2);
+    CHECK(int16Array[1] == 4);
+    CHECK(int16Array[2] == 6);
+    CHECK(int16Array[3] == -2);
+
+    auto uint32Array = Deserialize<std::endian::big, std::array<std::uint32_t, 2>>(buffer);
+    CHECK(uint32Array[0] == 0x00020004U);
+    CHECK(uint32Array[1] == 0x0006FFFEU);
+
+    auto uint64Array = Deserialize<std::endian::big, std::array<std::uint64_t, 1>>(buffer);
+    CHECK(uint64Array[0] == 0x000200040006FFFEU);
 }
 
 
@@ -312,4 +389,44 @@ TEST_CASE("(De-)Serialize user-defined types (big endian)")
     auto s = Deserialize<std::endian::big, S>(sBuffer);
     REQUIRE(s.u16 == 0xABCD);
     REQUIRE(s.i32 == 0x12345678);
+}
+
+
+TEST_CASE("(De-)Serialize std::array of user-defined types (default endian)")
+{
+    auto sBuffer = Serialize(std::array{
+        S{.u16 = 0xDEAD, .i32 = 0x4433'2211},
+        S{.u16 = 0xBEEF, .i32 = 0x1234'5678}
+    });
+    CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 * (2 + 4)>>);
+    // clang-format off
+    CHECK(sBuffer == std::array{0xAD_b, 0xDE_b, 0x11_b, 0x22_b, 0x33_b, 0x44_b,
+                                0xEF_b, 0xBE_b, 0x78_b, 0x56_b, 0x34_b, 0x12_b});
+    // clang-format on
+
+    auto sArray = Deserialize<std::array<S, 2>>(sBuffer);
+    CHECK(sArray[0].u16 == 0xDEAD);
+    CHECK(sArray[0].i32 == 0x4433'2211);
+    CHECK(sArray[1].u16 == 0xBEEF);
+    CHECK(sArray[1].i32 == 0x1234'5678);
+}
+
+
+TEST_CASE("(De-)Serialize std::array of user-defined types (big endian)")
+{
+    auto sBuffer = Serialize<std::endian::big>(std::array{
+        S{.u16 = 0xDEAD, .i32 = 0x4433'2211},
+        S{.u16 = 0xBEEF, .i32 = 0x1234'5678}
+    });
+    CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 * (2 + 4)>>);
+    // clang-format off
+    CHECK(sBuffer == std::array{0xDE_b, 0xAD_b, 0x44_b, 0x33_b, 0x22_b, 0x11_b,
+                                0xBE_b, 0xEF_b, 0x12_b, 0x34_b, 0x56_b, 0x78_b});
+    // clang-format on
+
+    auto sArray = Deserialize<std::endian::big, std::array<S, 2>>(sBuffer);
+    CHECK(sArray[0].u16 == 0xDEAD);
+    CHECK(sArray[0].i32 == 0x4433'2211);
+    CHECK(sArray[1].u16 == 0xBEEF);
+    CHECK(sArray[1].i32 == 0x1234'5678);
 }
