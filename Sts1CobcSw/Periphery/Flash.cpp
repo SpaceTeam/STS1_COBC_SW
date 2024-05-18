@@ -55,6 +55,7 @@ auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
 auto spi =
     hal::Spi(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
+bool flashIsWorking = true;
 
 
 // --- Private function declarations ---

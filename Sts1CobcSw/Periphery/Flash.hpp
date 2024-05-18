@@ -46,6 +46,9 @@ using Page = std::array<Byte, pageSize>;
 using PageSpan = std::span<Byte const, pageSize>;
 
 
+extern bool flashIsWorking;
+
+
 // TODO: Proper error handling/return type
 auto Initialize() -> void;
 [[nodiscard]] auto ReadJedecId() -> JedecId;
