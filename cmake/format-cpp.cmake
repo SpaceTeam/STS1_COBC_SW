@@ -32,8 +32,7 @@ string(LENGTH "${CMAKE_SOURCE_DIR}/" path_prefix_length)
 foreach(file IN LISTS files)
     execute_process(
         COMMAND clang-format --style=file "${flag}" "${file}"
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        RESULT_VARIABLE result ${args}
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}" RESULT_VARIABLE result ${args}
     )
     if(NOT result EQUAL "0")
         message(FATAL_ERROR "'${file}': formatter returned with ${result}")

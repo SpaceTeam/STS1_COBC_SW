@@ -12,6 +12,13 @@ static auto watchdogClearGpio = hal::GpioPin(hal::watchdogClearPin);
 
 class WatchdogClearTest : public RODOS::StaticThread<>
 {
+public:
+    WatchdogClearTest() : StaticThread("WatchdogClearTest", MAX_THREAD_PRIORITY)
+    {
+    }
+
+
+private:
     void init() override
     {
         led2Gpio.Direction(hal::PinDirection::out);

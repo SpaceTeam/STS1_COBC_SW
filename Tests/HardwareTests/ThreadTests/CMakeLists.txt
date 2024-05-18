@@ -10,11 +10,7 @@ target_link_libraries(
     Sts1CobcSwTests_EduPowerManagement PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Edu
 )
 
-get_property(
-    thread_test_targets
-    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    PROPERTY BUILDSYSTEM_TARGETS
-)
+get_property(thread_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 
 # Add the top level project directory as include directory for all thread tests
 foreach(target IN LISTS thread_test_targets)
