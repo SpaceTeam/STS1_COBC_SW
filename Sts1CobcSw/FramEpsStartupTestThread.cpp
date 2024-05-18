@@ -39,10 +39,10 @@ private:
 
         eps::Initialize();
         eps::Read()
-        // Wake up SPI startup test and supervisor thread
+            // Wake up SPI startup test and supervisor thread
 
-        // Suspend until EOT
-        RODOS::AT(RODOS::END_OF_TIME);
+            // Suspend until EOT
+            RODOS::AT(RODOS::END_OF_TIME);
     }
 } FramEpsStartupTestThread;
 }
