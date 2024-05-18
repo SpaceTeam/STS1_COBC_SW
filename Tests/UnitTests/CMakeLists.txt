@@ -42,3 +42,5 @@ include(Catch)
 foreach(target IN LISTS all_unit_test_targets)
     catch_discover_tests(${target})
 endforeach()
+
+add_subdirectory(NoCatch2)
