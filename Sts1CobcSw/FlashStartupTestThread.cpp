@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
 
@@ -35,6 +36,7 @@ private:
         }
 
         // Wake up SPI startup test and supervisor thread
+        ResumeSpiStartupTestAndSupervisorThread();
 
         // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
