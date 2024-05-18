@@ -13,7 +13,7 @@ static auto watchdogClearGpio = hal::GpioPin(hal::watchdogClearPin);
 class WatchdogClearTest : public RODOS::StaticThread<>
 {
 public:
-    WatchdogClearTest() : StaticThread("WatchdogClearTest", 600)
+    WatchdogClearTest() : StaticThread("WatchdogClearTest", MAX_THREAD_PRIORITY)
     {
     }
 
