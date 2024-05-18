@@ -13,6 +13,9 @@ enum class TxType
 };
 
 
+extern bool rfIsWorking;
+
+
 auto Initialize(TxType txType) -> void;
 auto ReadPartNumber() -> std::uint16_t;
 auto SetTxType(TxType txType) -> void;
