@@ -6,7 +6,7 @@ namespace sts1cobcsw::edu
 RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
-auto UpdateProgramStatusHistory(std::uint16_t programId,
+auto UpdateProgramStatusHistory(ProgramId programId,
                                 std::int32_t startTime,
                                 ProgramStatus newStatus) -> void
 {

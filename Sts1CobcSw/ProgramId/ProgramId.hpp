@@ -2,4 +2,4 @@
 
 #include <cstdint>
 
-using ProgramId = fluent::NamedType<std::uint16_t, struct ProgramIdTag>;
+using ProgramId = fluent::NamedType<std::uint16_t, struct ProgramIdTag, fluent::Callable>;

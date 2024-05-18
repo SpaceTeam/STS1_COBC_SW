@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <littlefs/lfs.h>
@@ -25,7 +26,7 @@ auto Mount() -> int;
 auto Unmount() -> int;
 
 // File stuff
-auto OpenProgramFile(std::uint16_t programId, int flags) -> int;
+auto OpenProgramFile(ProgramId programId, int flags) -> int;
 auto CloseProgramFile() -> int;
 template<std::size_t size>
 auto ReadProgramFile(etl::vector<Byte, size> * buffer) -> int;

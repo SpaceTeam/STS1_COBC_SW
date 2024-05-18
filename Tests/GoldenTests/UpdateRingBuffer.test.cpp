@@ -38,7 +38,7 @@ void PrintBuffer()
     {
         RODOS::PRINTF("Vals[%d] = .id(%d), .status(%s)\n",
                       i,
-                      edu::programStatusHistory.vals[i].programId,
+                      edu::programStatusHistory.vals[i].programId.get(),
                       ToString(edu::programStatusHistory.vals[i].status).data());
     }
 }
@@ -50,14 +50,22 @@ class UpdateRingBufferTest : public RODOS::StaticThread<>
     {
         printfMask = 1;
 
-        edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 1, .startTime = 1, .status = edu::ProgramStatus::programExecutionFailed});
-        edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 2, .startTime = 1, .status = edu::ProgramStatus::programRunning});
-        edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 3, .startTime = 1, .status = edu::ProgramStatus::programRunning});
-        edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 4, .startTime = 1, .status = edu::ProgramStatus::programRunning});
+        edu::programStatusHistory.put(
+            edu::ProgramStatusHistoryEntry{.programId = ProgramId(1),
+                                           .startTime = 1,
+                                           .status = edu::ProgramStatus::programExecutionFailed});
+        edu::programStatusHistory.put(
+            edu::ProgramStatusHistoryEntry{.programId = ProgramId(2),
+                                           .startTime = 1,
+                                           .status = edu::ProgramStatus::programRunning});
+        edu::programStatusHistory.put(
+            edu::ProgramStatusHistoryEntry{.programId = ProgramId(3),
+                                           .startTime = 1,
+                                           .status = edu::ProgramStatus::programRunning});
+        edu::programStatusHistory.put(
+            edu::ProgramStatusHistoryEntry{.programId = ProgramId(4),
+                                           .startTime = 1,
+                                           .status = edu::ProgramStatus::programRunning});
 
 
         auto readCnt = edu::programStatusHistory.readCnt;
@@ -66,11 +74,16 @@ class UpdateRingBufferTest : public RODOS::StaticThread<>
 
         PrintBuffer();
 
-        edu::UpdateProgramStatusHistory(2, 1, edu::ProgramStatus::programExecutionSucceeded);
-        edu::UpdateProgramStatusHistory(4, 1, edu::ProgramStatus::programExecutionFailed);
-        edu::programStatusHistory.put(edu::ProgramStatusHistoryEntry{
-            .programId = 5, .startTime = 1, .status = edu::ProgramStatus::programRunning});
-        edu::UpdateProgramStatusHistory(5, 1, edu::ProgramStatus::programExecutionSucceeded);
+        edu::UpdateProgramStatusHistory(
+            ProgramId(2), 1, edu::ProgramStatus::programExecutionSucceeded);
+        edu::UpdateProgramStatusHistory(
+            ProgramId(4), 1, edu::ProgramStatus::programExecutionFailed);
+        edu::programStatusHistory.put(
+            edu::ProgramStatusHistoryEntry{.programId = ProgramId(5),
+                                           .startTime = 1,
+                                           .status = edu::ProgramStatus::programRunning});
+        edu::UpdateProgramStatusHistory(
+            ProgramId(5), 1, edu::ProgramStatus::programExecutionSucceeded);
 
         // 1, because we did not read anything
         RODOS::PRINTF("readCnt unchanged     : %d\n",

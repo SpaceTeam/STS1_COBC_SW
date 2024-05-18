@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -83,8 +84,8 @@ private:
                 {
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
-                    std::uint16_t programId = 0;
-                    std::from_chars(userInput.begin(), userInput.end(), programId);
+                    ProgramId programId = ProgramId(0);
+                    std::from_chars(userInput.begin(), userInput.end(), programId.get());
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
@@ -99,7 +100,7 @@ private:
                     PRINTF("\n");
                     PRINTF("Sending ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
                            ", timeout = %" PRIi16 ")\n",
-                           programId,
+                           programId.get(),
                            startTime,
                            timeout);
                     auto executeProgramResult = edu::ExecuteProgram(
@@ -137,8 +138,8 @@ private:
                 {
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
-                    std::uint16_t programId = 0;
-                    std::from_chars(userInput.begin(), userInput.end(), programId);
+                    ProgramId programId = ProgramId(0);
+                    std::from_chars(userInput.begin(), userInput.end(), programId.get());
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
@@ -148,7 +149,7 @@ private:
                     PRINTF("\n");
                     PRINTF("Sending ReturnResult(programId = %" PRIu16 ", startTime = %" PRIi32
                            ")\n",
-                           programId,
+                           programId.get(),
                            startTime);
                     auto returnResultResult = edu::ReturnResult(
                         edu::ReturnResultData{.programId = programId, .startTime = startTime});

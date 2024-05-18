@@ -17,7 +17,7 @@ namespace edu
 {
 struct QueueEntry
 {
-    ProgramId programId = ProgramId{0};
+    ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
     std::int16_t timeout = 0;
 };
