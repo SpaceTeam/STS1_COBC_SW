@@ -9,7 +9,9 @@
 #ifdef NO_RODOS
     #include <mutex>
 #else
-    #include <rodos-semaphore.h>
+    #include <Sts1CobcSw/Utility/LinuxSemaphore.hpp>
+
+    #include <rodos_no_using_namespace.h>
 #endif
 
 #include <algorithm>
@@ -48,7 +50,7 @@ auto lookaheadBuffer = std::array<Byte, pageSize>{};
 #ifdef NO_RODOS
 auto mutex = std::mutex();
 #else
-auto mutex = RODOS::Semaphore();
+auto mutex = utility::LinuxSemaphore();
 #endif
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
@@ -117,23 +119,36 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 }
 
 
-auto Lock(const struct lfs_config * config) -> int
+auto Lock([[maybe_unused]] lfs_config const * config) -> int
 {
+    static constexpr auto mutexUnavailableError = -99;
+    // TODO: Check if there is an appropriate error code
 #ifdef NO_RODOS
-    return 0;
+    if(mutex.try_lock())
+    {
+        return 0;
+    }
+    return mutexUnavailableError;
 #else
-    mutex.enter();
-    return 0;
+    if(mutex.TryEnter())
+    {
+        // For testing: wait some time to check concurrent locking
+        static constexpr auto lockDelay = 200 * RODOS::MILLISECONDS;
+        RODOS::AT(RODOS::NOW() + lockDelay);
+        return 0;
+    }
+    return mutexUnavailableError;
 #endif
 }
 
 
-auto Unlock(const struct lfs_config * config) -> int
+auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
 #ifdef NO_RODOS
+    mutex.unlock();
     return 0;
 #else
-    mutex.leave();
+    mutex.Leave();
     return 0;
 #endif
 }
