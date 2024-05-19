@@ -16,6 +16,7 @@
 #include <rodos/support/support-libs/ringbuffer.h>
 // clang-format on
 
+#include <bit>
 #include <cstddef>
 
 
@@ -64,5 +65,12 @@ extern RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void;
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramStatusHistoryEntry * data)
+    -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, ProgramStatusHistoryEntry const & data)
+    -> void *;
 }
 }
