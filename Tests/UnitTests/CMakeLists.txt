@@ -11,6 +11,12 @@ target_link_libraries(
                                  Sts1CobcSw_Utility
 )
 
+add_program(FramRingBuffer FramRingBuffer.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_FramRingBuffer PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
+                                           Sts1CobcSw_Serial Sts1CobcSw_Edu
+)
+
 # TODO: Enable again once problem with segmentation violation on CI is fixed
 add_program(LfsRam LfsRam.test.cpp)
 target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
