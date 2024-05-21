@@ -30,7 +30,8 @@ private:
         // Initialize device and read its ID
         flash::Initialize();
         auto jedecId = flash::ReadJedecId();
-        if((jedecId.manufacturerId != 0xEF) || (jedecId.deviceId != 0x4021))
+        if(jedecId.deviceId != flash::correctJedecId.deviceId
+           || jedecId.manufacturerId != flash::correctJedecId.manufacturerId)
         {
             flash::flashIsWorking = false;
         }

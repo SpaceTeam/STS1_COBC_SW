@@ -13,6 +13,8 @@ enum class TxType
 };
 
 
+inline constexpr auto correctPartNumber = 0x4463;
+
 extern bool rfIsWorking;
 
 

@@ -29,7 +29,7 @@ private:
         // Initialize device and read its ID
         rf::Initialize(TxType::packet);
         auto partNumber = rf::ReadPartNumber();
-        if(partNumber != 0x4463)
+        if(partNumber != rf::correctPartNumber)
         {
             rf::rfIsWorking = false;
         }

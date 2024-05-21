@@ -46,6 +46,8 @@ using Page = std::array<Byte, pageSize>;
 using PageSpan = std::span<Byte const, pageSize>;
 
 
+inline constexpr auto correctJedecId = JedecId{.manufacturerId = 0xEF, .deviceId = 0x4021};
+
 extern bool flashIsWorking;
 
 

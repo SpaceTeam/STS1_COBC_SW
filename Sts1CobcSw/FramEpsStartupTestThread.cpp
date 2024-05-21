@@ -31,9 +31,7 @@ private:
         // Initialize devices and read its ID
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
-        auto correctDeviceId =
-            std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
-        if(deviceID != correctDeviceId)
+        if(deviceId != fram::correctDeviceId)
         {
             fram::framIsWorking = false;
         }

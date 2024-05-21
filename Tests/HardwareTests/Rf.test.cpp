@@ -32,10 +32,9 @@ private:
         PRINTF("RF module initialized\n");
 
         PRINTF("\n");
-        auto correctPartNumber = 0x4463;
         auto partNumber = rf::ReadPartNumber();
-        PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, correctPartNumber);
-        Check(partNumber == correctPartNumber);
+        PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, rf::correctPartNumber);
+        Check(partNumber == rf::correctPartNumber);
 
         // Here comes the rest of the RF test
     }
