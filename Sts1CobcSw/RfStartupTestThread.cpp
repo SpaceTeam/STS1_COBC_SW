@@ -15,6 +15,7 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
@@ -23,21 +24,14 @@ private:
 
     void run() override
     {
-        // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
-
-        // Initialize device and read its ID
-        rf::Initialize(TxType::packet);
+        rf::Initialize(rf::TxType::packet);
         auto partNumber = rf::ReadPartNumber();
         if(partNumber != rf::correctPartNumber)
         {
             rf::rfIsWorking = false;
         }
-
-        // Wake up SPI startup test and supervisor thread
         ResumeSpiStartupTestAndSupervisorThread();
-
-        // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
     }
 } rfStartupTestThread;

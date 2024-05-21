@@ -16,6 +16,7 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
@@ -24,10 +25,7 @@ private:
 
     void run() override
     {
-        // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
-
-        // Initialize device and read its ID
         flash::Initialize();
         auto jedecId = flash::ReadJedecId();
         if(jedecId.deviceId != flash::correctJedecId.deviceId
@@ -35,11 +33,7 @@ private:
         {
             flash::flashIsWorking = false;
         }
-
-        // Wake up SPI startup test and supervisor thread
         ResumeSpiStartupTestAndSupervisorThread();
-
-        // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
     }
 } flashStartupTestThread;

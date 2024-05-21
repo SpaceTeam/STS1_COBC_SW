@@ -17,6 +17,7 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
@@ -25,24 +26,16 @@ private:
 
     void run() override
     {
-        // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
-
-        // Initialize devices and read its ID
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
         if(deviceId != fram::correctDeviceId)
         {
             fram::framIsWorking = false;
         }
-
         eps::Initialize();
         (void)eps::Read();
-
-            // Wake up SPI startup test and supervisor thread
-            ResumeSpiStartupTestAndSupervisorThread();
-
-        // Suspend until EOT
+        ResumeSpiStartupTestAndSupervisorThread();
         RODOS::AT(RODOS::END_OF_TIME);
     }
 } framEpsStartupTestThread;
