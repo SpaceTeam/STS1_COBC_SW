@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
+
 namespace sts1cobcsw
 {
 constexpr auto stackSize = 100U;
@@ -24,11 +25,11 @@ private:
     void run() override
     {
     }
-} SpiStartupTestAndSupervisorThread;
+} spiStartupTestAndSupervisorThread;
 
 
 auto ResumeSpiStartupTestAndSupervisorThread() -> void
 {
-    SpiStartupTestAndSupervisorThread.resume();
+    spiStartupTestAndSupervisorThread.resume();
 }
 }

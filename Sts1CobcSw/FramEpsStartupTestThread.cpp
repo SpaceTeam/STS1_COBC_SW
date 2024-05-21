@@ -47,5 +47,5 @@ private:
         // Suspend until EOT
         RODOS::AT(RODOS::END_OF_TIME);
     }
-} FramEpsStartupTestThread;
+} framEpsStartupTestThread;
 }
