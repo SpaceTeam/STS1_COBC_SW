@@ -37,7 +37,7 @@ private:
         }
 
         eps::Initialize();
-        eps::Read()
+        (void)eps::Read();
 
             // Wake up SPI startup test and supervisor thread
             ResumeSpiStartupTestAndSupervisorThread();

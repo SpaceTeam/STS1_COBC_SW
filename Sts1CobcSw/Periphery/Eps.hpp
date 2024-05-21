@@ -12,7 +12,7 @@ using AdcValue = std::uint16_t;
 using SensorValues = std::array<AdcValue, nChannels * nAdcs>;
 
 auto Initialize() -> void;
-auto Read() -> SensorValues;
+[[nodiscard]] auto Read() -> SensorValues;
 auto ResetAdcRegisters() -> void;
 auto ClearFifos() -> void;
 }
