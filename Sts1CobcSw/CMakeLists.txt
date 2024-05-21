@@ -35,7 +35,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 TopicsAndSubscribers.cpp
     )
     target_link_libraries(
-        Sts1CobcSw_CobcSw PRIVATE etl::etl rodos::rodos Sts1CobcSw_Edu Sts1CobcSw_Hal
-                                  Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+        Sts1CobcSw_CobcSw
+        PRIVATE etl::etl
+                rodos::rodos
+                Sts1CobcSw_Edu
+                Sts1CobcSw_Hal
+                Sts1CobcSw_Periphery
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Utility
     )
 endif()
