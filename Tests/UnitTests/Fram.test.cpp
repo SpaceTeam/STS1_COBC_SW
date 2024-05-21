@@ -56,10 +56,8 @@ TEST_CASE("Mocking FRAM in RAM")
     fram::ram::storage.fill(0x00_b);
 
     fram::Initialize();
-    auto const correctDeviceId =
-        std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
     auto deviceId = fram::ReadDeviceId();
-    CHECK(deviceId == correctDeviceId);
+    CHECK(deviceId == fram::correctDeviceId);
     auto actualBaudRate = fram::ActualBaudRate();
     CHECK(actualBaudRate == 6'000'000);
 

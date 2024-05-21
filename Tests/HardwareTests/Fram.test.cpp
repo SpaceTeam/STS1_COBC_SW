@@ -61,10 +61,9 @@ private:
         PRINTF("Device ID: ");
         PrintDeviceId(deviceId);
         PRINTF(" ==\n");
-        PRINTF("           0x7F'7F7F'7F7F'7FC2'2E03\n");
-        auto correctDeviceId =
-            std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
-        Check(deviceId == correctDeviceId);
+        PRINTF("           ");
+        PrintDeviceId(fram::correctDeviceId);
+        Check(deviceId == fram::correctDeviceId);
 
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr std::uint32_t nAdressBits = 20U;

@@ -47,11 +47,14 @@ private:
 
         PRINTF("\n");
         auto jedecId = flash::ReadJedecId();
-        PRINTF("Manufacturer ID: 0x%02x == 0xEF\n",
-               static_cast<unsigned int>(jedecId.manufacturerId));
-        Check(jedecId.manufacturerId == 0xEF);
-        PRINTF("Device ID: 0x%04x == 0x4021\n", static_cast<unsigned int>(jedecId.deviceId));
-        Check(jedecId.deviceId == 0x4021);
+        PRINTF("Manufacturer ID: 0x%02x == 0x%02x\n",
+               static_cast<unsigned int>(jedecId.manufacturerId),
+               static_cast<unsigned int>(flash::correctJedecId.manufacturerId));
+        Check(jedecId.manufacturerId == flash::correctJedecId.manufacturerId);
+        PRINTF("Device ID: 0x%04x == 0x%04x\n",
+               static_cast<unsigned int>(jedecId.deviceId),
+               static_cast<unsigned int>(flash::correctJedecId.deviceId));
+        Check(jedecId.deviceId == flash::correctJedecId.deviceId);
 
         PRINTF("\n");
         auto statusRegister = flash::ReadStatusRegister(1);

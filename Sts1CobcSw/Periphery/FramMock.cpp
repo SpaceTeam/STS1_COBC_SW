@@ -151,9 +151,7 @@ auto DoInitialize() -> void
 
 auto DoReadDeviceId() -> DeviceId
 {
-    static constexpr auto deviceId =
-        std::to_array({0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b});
-    return deviceId;
+    return fram::correctDeviceId;
 }
 
 
