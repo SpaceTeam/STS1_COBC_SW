@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
 
 
 // TODO: Change namespace here too, or move it back to Sts1CobSw/

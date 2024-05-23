@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 

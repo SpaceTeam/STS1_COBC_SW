@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>

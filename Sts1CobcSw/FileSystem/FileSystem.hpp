@@ -9,7 +9,6 @@
 #include <etl/vector.h>
 
 #include <cstddef>
-#include <cstdint>
 
 
 namespace sts1cobcsw::fs::deprecated
