@@ -1,1 +1,1 @@
-target_link_libraries(Sts1CobcSw_ProgramId NamedType::NamedType)
+target_link_libraries(Sts1CobcSw_ProgramId INTERFACE NamedType::NamedType)
