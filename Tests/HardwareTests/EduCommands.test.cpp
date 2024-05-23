@@ -84,7 +84,7 @@ private:
                 {
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
-                    ProgramId programId = ProgramId(0);
+                    auto programId = ProgramId(0);
                     std::from_chars(userInput.begin(), userInput.end(), programId.get());
 
                     PRINTF("Please enter a start time (1 character)\n");
@@ -138,7 +138,7 @@ private:
                 {
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
-                    ProgramId programId = ProgramId(0);
+                    auto programId = ProgramId(0);
                     std::from_chars(userInput.begin(), userInput.end(), programId.get());
 
                     PRINTF("Please enter a start time (1 character)\n");

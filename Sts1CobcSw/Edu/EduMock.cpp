@@ -76,10 +76,7 @@ auto GetStatus() -> Result<Status>
 {
     PrintFormattedSystemUtc();
     DEBUG_PRINT("Call to GetStatus()\n");
-    return Status{.statusType = StatusType::invalid,
-                  .programId = ProgramId(0),
-                  .startTime = 0,
-                  .exitCode = 0};
+    return Status();
 }
 
 

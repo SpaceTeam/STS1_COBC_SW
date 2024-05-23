@@ -14,7 +14,7 @@ template<std::endian endianness>
 auto SerializeTo(void * destination, StoreProgramData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, StoreProgramData::id);
-    destination = SerializeTo<endianness>(destination, data.programId);
+    destination = SerializeTo<endianness>(destination, data.programId.get());
     return destination;
 }
 
