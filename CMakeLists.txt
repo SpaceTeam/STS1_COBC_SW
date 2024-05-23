@@ -20,6 +20,7 @@ include(cmake/clang-tidy-cache.cmake)
 find_package_and_notify(etl)
 find_rodos()
 find_package_and_notify(littlefs)
+find_package_and_notify(NamedType)
 
 # ---- Declare targets ----
 
@@ -27,6 +28,7 @@ add_library(Sts1CobcSw_Dummy STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
 add_library(Sts1CobcSw_Outcome INTERFACE)
+add_library(Sts1CobcSw_ProgramId INTERFACE)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility STATIC)
 add_library(Sts1CobcSw_Periphery STATIC)

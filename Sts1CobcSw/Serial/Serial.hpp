@@ -48,6 +48,7 @@ template<typename T, std::size_t size>
 inline constexpr std::size_t serialSize<std::array<T, size>> = serialSize<T> * size;
 
 template<typename... Ts>
+    requires((serialSize<Ts> != 0) and ...)
 inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
 
 inline constexpr auto defaultEndianness = std::endian::little;

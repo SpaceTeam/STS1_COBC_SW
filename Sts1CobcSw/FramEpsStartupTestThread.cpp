@@ -3,6 +3,10 @@
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
+#include <rodos_no_using_namespace.h>
+
+#include <array>
+
 
 namespace sts1cobcsw
 {

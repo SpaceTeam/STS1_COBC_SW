@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
+
 // clang-format off
 #include <cstdint>
 // ringbuffer.h does not include <cstdint> even though it requires it
@@ -25,7 +27,7 @@ enum class ProgramStatus : std::uint8_t
 
 struct ProgramStatusHistoryEntry
 {
-    std::uint16_t programId = 0;
+    ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
     ProgramStatus status = ProgramStatus::programRunning;
 };
@@ -35,7 +37,7 @@ inline constexpr auto programStatusHistorySize = 20;
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
-auto UpdateProgramStatusHistory(std::uint16_t programId,
+auto UpdateProgramStatusHistory(ProgramId programId,
                                 std::int32_t startTime,
                                 ProgramStatus newStatus) -> void;
 }

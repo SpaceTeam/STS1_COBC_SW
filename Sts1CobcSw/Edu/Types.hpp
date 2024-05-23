@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
@@ -42,14 +43,14 @@ enum class StatusType
 struct StoreProgramData
 {
     static constexpr auto id = 0x01_b;
-    std::uint16_t programId = 0;
+    ProgramId programId = ProgramId(0);
 };
 
 
 struct ExecuteProgramData
 {
     static constexpr auto id = 0x02_b;
-    std::uint16_t programId = 0;
+    ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
     std::int16_t timeout = 0;
 };
@@ -70,7 +71,7 @@ struct GetStatusData
 struct ReturnResultData
 {
     static constexpr auto id = 0x05_b;
-    std::uint16_t programId = 0;
+    ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
 };
 
@@ -85,7 +86,7 @@ struct UpdateTimeData
 struct Status
 {
     StatusType statusType = StatusType::invalid;
-    std::uint16_t programId = 0;
+    ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
     std::uint8_t exitCode = 0;
 };
@@ -100,7 +101,7 @@ struct NoEventData
 struct ProgramFinishedData
 {
     static constexpr auto id = 0x01_b;
-    std::uint16_t programId = 0;
+    ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
     std::uint8_t exitCode = 0;
 };
@@ -109,7 +110,7 @@ struct ProgramFinishedData
 struct ResultsReadyData
 {
     static constexpr auto id = 0x02_b;
-    std::uint16_t programId = 0;
+    ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
 };
 

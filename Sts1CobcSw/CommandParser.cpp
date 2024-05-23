@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -88,7 +89,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
         auto entry =
             Deserialize<edu::QueueEntry>(queueEntries.first<serialSize<edu::QueueEntry>>());
 
-        DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", entry.programId);
+        DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", entry.programId.get());
         DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime);
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 

@@ -1,0 +1,1 @@
+target_link_libraries(Sts1CobcSw_ProgramId INTERFACE NamedType::NamedType Sts1CobcSw_Serial)

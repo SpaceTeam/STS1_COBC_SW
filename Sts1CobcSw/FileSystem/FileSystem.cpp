@@ -98,7 +98,7 @@ auto Unmount() -> int
 }
 
 
-auto OpenProgramFile(std::uint16_t programId, int flags) -> int
+auto OpenProgramFile(ProgramId programId, int flags) -> int
 {
     return 0;
 }

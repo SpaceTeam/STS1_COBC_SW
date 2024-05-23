@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
@@ -125,7 +126,7 @@ private:
             auto programId = edu::programQueue[edu::queueIndex].programId;
             auto timeout = edu::programQueue[edu::queueIndex].timeout;
 
-            DEBUG_PRINT("Executing program %d\n", programId);
+            DEBUG_PRINT("Executing program %" PRIu16 "\n", programId.get());
             auto executeProgramData = edu::ExecuteProgramData{
                 .programId = programId, .startTime = startTime, .timeout = timeout};
             // Start Process
