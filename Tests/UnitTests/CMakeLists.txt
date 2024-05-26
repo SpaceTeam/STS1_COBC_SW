@@ -15,6 +15,9 @@ target_link_libraries(
 add_program(LfsRam LfsRam.test.cpp)
 target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
 
+add_program(LfsWrapper LfsWrapper.test.cpp)
+target_link_libraries(Sts1CobcSwTests_LfsWrapper PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
+
 add_program(Outcome Outcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
 
