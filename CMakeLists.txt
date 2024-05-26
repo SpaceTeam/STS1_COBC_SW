@@ -26,6 +26,7 @@ find_package_and_notify(strong_type)
 
 # ---- Declare targets ----
 
+#add_compile_definitions(USE_NO_RODOS)
 add_library(Sts1CobcSw_Dummy STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
