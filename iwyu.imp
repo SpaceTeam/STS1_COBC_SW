@@ -88,6 +88,7 @@
   { include: ["\"Sts1CobcSw/Utility/Crc32.hpp\"",                     "public", "<Sts1CobcSw/Utility/Crc32.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Debug.hpp\"",                     "public", "<Sts1CobcSw/Utility/Debug.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/FlatArray.hpp\"",                 "public", "<Sts1CobcSw/Utility/FlatArray.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/LinuxSemaphore.hpp\"",            "public", "<Sts1CobcSw/Utility/LinuxSemaphore.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                      "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Time.hpp\"",                      "public", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/CommandParser.hpp\"",                     "public", "<Sts1CobcSw/CommandParser.hpp>", "public"] },

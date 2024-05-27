@@ -13,7 +13,7 @@ using RODOS::PRINTF;
 class LockingThread : public RODOS::StaticThread<>
 {
 public:
-    explicit LockingThread(const char * threadName) : StaticThread(threadName)
+    explicit LockingThread(char const * threadName) : StaticThread(threadName)
     {
     }
 

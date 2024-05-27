@@ -86,6 +86,7 @@ auto Read(lfs_config const * config,
     return 0;
 }
 
+
 auto Program(lfs_config const * config,
              lfs_block_t blockNo,
              lfs_off_t offset,
@@ -137,7 +138,6 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 auto Lock(const struct lfs_config * config) -> int
 {
     return 0;
-
 }
 
 
