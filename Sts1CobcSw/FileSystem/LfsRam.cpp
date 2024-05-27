@@ -121,14 +121,14 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 
 auto Lock([[maybe_unused]] lfs_config const * config) -> int
 {
-    static constexpr auto mutexUnavailableError = -99;
+    static constexpr int lockBusyError = -99;
     // TODO: Check if there is an appropriate error code
 #ifdef NO_RODOS
     if(mutex.try_lock())
     {
         return 0;
     }
-    return mutexUnavailableError;
+    return lockBusyError;
 #else
     if(mutex.TryEnter())
     {
@@ -137,7 +137,11 @@ auto Lock([[maybe_unused]] lfs_config const * config) -> int
         RODOS::AT(RODOS::NOW() + lockDelay);
         return 0;
     }
-    return mutexUnavailableError;
+    return lockBusyError;
+    // mutex.Enter();
+    // static constexpr auto lockDelay = 100 * RODOS::MILLISECONDS;
+    // RODOS::AT(RODOS::NOW() + lockDelay);
+    // return 0;
 #endif
 }
 
