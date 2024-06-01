@@ -7,6 +7,9 @@
 namespace sts1cobcsw
 {
 static auto led1Gpio = hal::GpioPin(hal::led1Pin);
+#if HW_VERSION >= 27
+auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
+#endif
 
 
 class WatchdogTest : public RODOS::StaticThread<>
@@ -19,6 +22,9 @@ class WatchdogTest : public RODOS::StaticThread<>
 
     void run() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
         led1Gpio.Reset();
         RODOS::AT(RODOS::NOW() + 800 * RODOS::MILLISECONDS);
         led1Gpio.Set();

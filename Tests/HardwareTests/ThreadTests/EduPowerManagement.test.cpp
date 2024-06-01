@@ -13,6 +13,9 @@ using RODOS::PRINTF;
 
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+#if HW_VERSION >= 27
+auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
+#endif
 
 constexpr auto stackSize = 2'000U;
 
@@ -37,6 +40,10 @@ private:
     {
         PRINTF("\n");
         PRINTF("EDU power management test\n");
+
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
 
         // std::int64_t startDelay = 0;
 

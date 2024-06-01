@@ -13,6 +13,9 @@ namespace sts1cobcsw
 // therefore a reset of the COBC when used in this test. The LED pin has to work for this test
 // though.
 auto pinsToTest = std::to_array<hal::GpioPin>({hal::led1Pin, hal::led2Pin});
+#if HW_VERSION >= 27
+auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
+#endif
 
 
 class GpioTest : public RODOS::StaticThread<>
@@ -28,6 +31,10 @@ class GpioTest : public RODOS::StaticThread<>
 
     void run() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
+
         auto toggle = true;
 
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)

@@ -1,4 +1,6 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 
 #include <littlefs/lfs.h>
 
@@ -11,6 +13,10 @@ namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 
+
+#if HW_VERSION >= 27
+auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
+#endif
 
 constexpr std::size_t stackSize = 5'000;
 
@@ -34,6 +40,9 @@ private:
         PRINTF("\n");
         PRINTF("File system test\n");
 
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
 
         auto errorCode = fs::deprecated::Mount();
         if(errorCode < 0)

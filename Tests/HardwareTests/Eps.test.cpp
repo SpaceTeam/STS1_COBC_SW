@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -8,6 +10,11 @@
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
+
+
+#if HW_VERSION >= 27
+auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
+#endif
 
 
 class EpsTest : public RODOS::StaticThread<>
@@ -27,6 +34,10 @@ private:
     void run() override
     {
         PRINTF("\nEPS test\n\n");
+
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
 
         PRINTF("\n");
         eps::Initialize();

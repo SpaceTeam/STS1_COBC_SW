@@ -6,6 +6,7 @@
 //!
 //! After flashing the COBC just follow the instructions on the screen.
 
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -23,6 +24,9 @@ namespace sts1cobcsw
 {
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+#if HW_VERSION >= 27
+auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
+#endif
 
 
 template<std::size_t nDigits = 1>
@@ -50,6 +54,10 @@ class UartTest : public RODOS::StaticThread<>
         using RODOS::MILLISECONDS;
         using RODOS::NOW;
         using RODOS::PRINTF;
+
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
 
         PRINTF("\n");
         PRINTF("Is an EDU connected to test the non-blocking UART functions? (y/n)\n");
