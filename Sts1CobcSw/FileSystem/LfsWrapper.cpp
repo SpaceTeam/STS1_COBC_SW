@@ -17,14 +17,24 @@ auto lfs = lfs_t{};
     {
         return outcome_v2::success();
     }
+    error = lfs_format(&lfs, &lfsConfig);
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    error = lfs_mount(&lfs, &lfsConfig);
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
     return static_cast<ErrorCode>(error);
 }
 
 
-auto Open(std::string_view path, int flag) -> Result<File>
+auto Open(std::string_view path, int flags) -> Result<File>
 {
     File file = File();
-    auto error = lfs_file_open(&lfs, &file.lfsFile_, path.data(), flag);
+    auto error = lfs_file_open(&lfs, &file.lfsFile_, path.data(), flags);
     if(error == 0)
     {
         return file;

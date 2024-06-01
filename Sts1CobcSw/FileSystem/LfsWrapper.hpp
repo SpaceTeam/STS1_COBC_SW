@@ -14,7 +14,7 @@ class File;
 
 
 [[nodiscard]] auto Mount() -> Result<void>;
-[[nodiscard]] auto Open(std::string_view path, int flag) -> Result<File>;
+[[nodiscard]] auto Open(std::string_view path, int flags) -> Result<File>;
 
 
 class File
@@ -33,7 +33,7 @@ public:
     [[nodiscard]] auto Size() -> Result<int>;
     [[nodiscard]] auto Close() -> Result<void>;
 
-    friend auto Open(std::string_view path, int flag) -> Result<File>;
+    friend auto Open(std::string_view path, int flags) -> Result<File>;
 
 private:
     // Only allow creation of File class through friend function Open()
