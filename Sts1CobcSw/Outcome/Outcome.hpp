@@ -1,16 +1,18 @@
 #pragma once
 
 #ifndef USE_NO_RODOS
-#include <rodos_no_using_namespace.h>
+    #include <rodos_no_using_namespace.h>
+#else
+    #include <iostream>
 #endif
 
 
 #if defined(SYSTEM_ERROR2_NOT_POSIX)
     // NOLINTNEXTLINE(*macro-usage)
     #ifdef USE_NO_RODOS
-    #define SYSTEM_ERROR2_FATAL(msg)
+        #define SYSTEM_ERROR2_FATAL(msg)
     #else
-    #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
+        #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
     #endif
 #endif
 
@@ -26,6 +28,8 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
     {
         if(!base::_has_value(std::forward<Impl>(self)))
         {
+            std::cout << "Error in wide_value_check(): _has_value() returned false. "
+                      << "Calling std::abort().\n ";
             std::abort();
         }
     }
@@ -36,6 +40,8 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
     {
         if(!base::_has_error(std::forward<Impl>(self)))
         {
+            std::cout << "Error in wide_error_check(): _has_error() returned false. "
+                      << "Calling std::abort().\n ";
             std::abort();
         }
     }
@@ -46,6 +52,8 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
     {
         if(!base::_has_exception(std::forward<Impl>(self)))
         {
+            std::cout << "Error in wide_exception_check(): _has_exception() returned false. "
+                      << "Calling std::abort().\n ";
             std::abort();
         }
     }
@@ -61,11 +69,11 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         //! contain a value
         if(!base::_has_value(std::forward<Impl>(self)))
         {
-            #ifndef USE_NO_RODOS    
+    #ifndef USE_NO_RODOS
             RODOS::PRINTF(
                 "Error: The value is not present. Performing hardware reset and reboot.\n");
             RODOS::hwResetAndReboot();
-            #endif
+    #endif
         }
     }
 
@@ -77,11 +85,11 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         //! contain an error
         if(!base::_has_error(std::forward<Impl>(self)))
         {
-            #ifndef USE_NO_RODOS    
+    #ifndef USE_NO_RODOS
             RODOS::PRINTF(
                 "Error: The error is not present. Performing hardware reset and reboot.\n");
             RODOS::hwResetAndReboot();
-            #endif
+    #endif
         }
     }
 
@@ -91,11 +99,11 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
     {
         if(!base::_has_exception(std::forward<Impl>(self)))
         {
-            #ifndef USE_NO_RODOS    
+    #ifndef USE_NO_RODOS
             RODOS::PRINTF(
                 "Error: The exception is not present. Performing hardware reset and reboot.\n");
             RODOS::hwResetAndReboot();
-            #endif
+    #endif
         }
     }
 };
