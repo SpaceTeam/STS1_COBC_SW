@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
+#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -17,12 +18,13 @@ using RODOS::PRINTF;
 auto pinsToTest = std::to_array<hal::GpioPin>({hal::led1Pin, hal::led2Pin});
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
+constexpr auto uartTimeout = 100 * RODOS::MILLISECONDS;
 
 
-class PowerTestLed : public RODOS::StaticThread<>
+class PowerTestLedThread : public RODOS::StaticThread<>
 {
 public:
-    PowerTestLed() : StaticThread("PowerTestLed")
+    PowerTestLedThread() : StaticThread("PowerTestLedThread")
     {
     }
 
@@ -51,13 +53,13 @@ private:
             toggle = not toggle;
         }
     }
-};
+} powerTestLedThread;
 
 
-class PowerTestUart : public RODOS::StaticThread<>
+class PowerTestUartThread : public RODOS::StaticThread<>
 {
 public:
-    PowerTestUart() : StaticThread("PowerTestUart")
+    PowerTestUartThread() : StaticThread("PowerTestUartThread")
     {
     }
 
@@ -90,20 +92,23 @@ private:
 
         while(true)
         {
-            // generate random 12byte message
-            // ToDo fill message
+            // generate random message content
+            for(auto & i : message)
+            {
+                i = static_cast<Byte>(RODOS::uint32Rand() % (1U << sizeof(Byte)));
+            }
 
             PRINTF("Send random message to edu over UART\n");
-            hal::WriteTo(&eduUart, Span(message));  // use non blocking call
+            (void)hal::WriteTo(&eduUart, Span(message), uartTimeout);  // use non blocking call
         }
     }
-};
+} powerTestUartThread;
 
 
-class PowerTestCustome : public RODOS::StaticThread<>
+class PowerTestCustomeThread : public RODOS::StaticThread<>
 {
 public:
-    PowerTestCustome() : StaticThread("PowerTestCustome")
+    PowerTestCustomeThread() : StaticThread("PowerTestCustomeThread")
     {
     }
 
@@ -132,17 +137,35 @@ private:
         {
             case '1':
             {
-                // ToDo start SPI
+                // SPI communication
+                fram::Initialize();
+                PRINTF("Start SPI communication\n");
+                while(true)
+                {
+                    (void)fram::ReadDeviceId();
+                }
                 break;
             }
             case '2':
             {
-                // ToDo start SPI
+                // integer calculation to simulate load
+                uint32_t number = 3;
+                PRINTF("Start integer calculation\n");
+                while(true)
+                {
+                    number *= number;
+                }
                 break;
             }
             case '3':
             {
-                // ToDo start SPI
+                // floating point calculation to simulate load
+                float number = 1.5;
+                PRINTF("Start floating point calculation\n");
+                while(true)
+                {
+                    number *= number;
+                }
                 break;
             }
             case '4':
@@ -158,10 +181,5 @@ private:
             }
         }
     }
-};
-
-
-static PowerTestLed powerTestLed;
-static PowerTestUart powerTestUart;
-static PowerTestCustome powerTestCustome;
+} powerTestCustomeThread;
 }
