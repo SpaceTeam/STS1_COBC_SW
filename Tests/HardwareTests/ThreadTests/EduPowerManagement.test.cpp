@@ -3,6 +3,8 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 
@@ -13,11 +15,9 @@ using RODOS::PRINTF;
 
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
-#if HW_VERSION >= 27
-auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
-#endif
 
 constexpr auto stackSize = 2'000U;
+
 
 class EduPowerManagementTest : public RODOS::StaticThread<stackSize>
 {
@@ -38,12 +38,12 @@ private:
 
     void run() override
     {
-        PRINTF("\n");
-        PRINTF("EDU power management test\n");
-
 #if HW_VERSION >= 27
         rfLatchupDisableGpioPin.Reset();
 #endif
+
+        PRINTF("\n");
+        PRINTF("EDU power management test\n");
 
         // std::int64_t startDelay = 0;
 

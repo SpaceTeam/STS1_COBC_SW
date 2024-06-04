@@ -1,15 +1,14 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw
 {
 static auto led1Gpio = hal::GpioPin(hal::led1Pin);
-#if HW_VERSION >= 27
-auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
-#endif
 
 
 class WatchdogTest : public RODOS::StaticThread<>

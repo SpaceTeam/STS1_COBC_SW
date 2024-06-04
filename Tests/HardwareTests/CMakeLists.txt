@@ -16,62 +16,88 @@ target_include_directories(
     Sts1CobcSwTests_Utility PUBLIC ${warning_guard} "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
 )
 
+add_library(Sts1CobcSwTests_RfLatchupDisablePin STATIC RfLatchupDisablePin.cpp)
+target_link_libraries(Sts1CobcSwTests_RfLatchupDisablePin PUBLIC Sts1CobcSw_Hal)
+target_include_directories(
+    Sts1CobcSwTests_RfLatchupDisablePin PUBLIC ${warning_guard}
+                                               "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
+)
+
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSwTests_Utility
+                                  Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(Crc32)
 
 add_program(EduCommands EduCommands.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_EduCommands PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial
-                                        Sts1CobcSw_Hal Sts1CobcSw_Edu
+    Sts1CobcSwTests_EduCommands
+    PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSw_Serial Sts1CobcSw_Hal Sts1CobcSw_Edu
+            Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(EduCommands)
 
 add_program(Eps Eps.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+target_link_libraries(
+    Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Periphery
+                                Sts1CobcSwTests_RfLatchupDisablePin
+)
 add_watchdog_version_of(Eps)
 
 add_program(FileSystem FileSystem.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_FileSystem PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
+                                       Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(FileSystem)
 
 add_program(Flash Flash.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Flash PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
-                                  Sts1CobcSwTests_Utility
+                                  Sts1CobcSwTests_Utility Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(Flash)
 
 add_program(Fram Fram.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_Fram PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
-                                 Sts1CobcSw_Utility Sts1CobcSwTests_Utility
+    Sts1CobcSwTests_Fram
+    PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+            Sts1CobcSwTests_Utility Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(Fram)
 
 add_program(Gpio Gpio.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Gpio PRIVATE rodos::rodos Sts1CobcSw_Hal)
+target_link_libraries(
+    Sts1CobcSwTests_Gpio PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSwTests_RfLatchupDisablePin
+)
 add_watchdog_version_of(Gpio)
 
 add_program(Rf Rf.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSwTests_Utility
+                               Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(Rf)
 
 add_program(Uart Uart.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Utility)
+target_link_libraries(
+    Sts1CobcSwTests_Uart PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Utility
+                                 Sts1CobcSwTests_RfLatchupDisablePin
+)
 add_watchdog_version_of(Uart)
 
 add_program(Watchdog Watchdog.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Watchdog PRIVATE rodos::rodos Sts1CobcSw_Hal)
+target_link_libraries(
+    Sts1CobcSwTests_Watchdog PRIVATE rodos::rodos Sts1CobcSw_Hal
+                                     Sts1CobcSwTests_RfLatchupDisablePin
+)
 
 add_program(WatchdogClear Watchdog.test.cpp WatchdogClear.test.cpp)
-target_link_libraries(Sts1CobcSwTests_WatchdogClear PRIVATE rodos::rodos Sts1CobcSw_Hal)
+target_link_libraries(
+    Sts1CobcSwTests_WatchdogClear PRIVATE rodos::rodos Sts1CobcSw_Hal
+                                          Sts1CobcSwTests_RfLatchupDisablePin
+)
 
 get_property(
     top_level_hw_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS

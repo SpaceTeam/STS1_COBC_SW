@@ -12,6 +12,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>
@@ -24,9 +26,6 @@ namespace sts1cobcsw
 {
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
-#if HW_VERSION >= 27
-auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
-#endif
 
 
 template<std::size_t nDigits = 1>

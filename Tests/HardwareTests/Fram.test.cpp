@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
 
 #include <rodos/support/support-libs/random.h>
@@ -22,10 +23,6 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
-
-#if HW_VERSION >= 27
-auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
-#endif
 
 constexpr std::size_t testDataSize = 11 * 1024;  // 11 KiB
 auto testData = std::array<Byte, testDataSize>{};
@@ -56,11 +53,11 @@ private:
 
     void run() override
     {
-        PRINTF("\nFRAM test\n\n");
-
 #if HW_VERSION >= 27
         rfLatchupDisableGpioPin.Reset();
 #endif
+
+        PRINTF("\nFRAM test\n\n");
 
         PRINTF("\n");
         auto actualBaudRate = fram::ActualBaudRate();

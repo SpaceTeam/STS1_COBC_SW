@@ -28,6 +28,7 @@
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -43,10 +44,6 @@ namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 
-
-#if HW_VERSION >= 27
-auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
-#endif
 
 auto const byteData = std::to_array<Byte>(
     {0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b, 0xAB_b, 0xFF_b, 0x10_b});
@@ -73,11 +70,11 @@ private:
 
     void run() override
     {
-        PRINTF("\nCRC32 test\n\n");
-
 #if HW_VERSION >= 27
         rfLatchupDisableGpioPin.Reset();
 #endif
+
+        PRINTF("\nCRC32 test\n\n");
 
         utility::InitializeCrc32Hardware();
         static_assert(byteData.size() > sizeof(std::uint32_t));

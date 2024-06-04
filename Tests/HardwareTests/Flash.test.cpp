@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -17,10 +18,6 @@ namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 
-
-#if HW_VERSION >= 27
-auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
-#endif
 
 constexpr std::size_t stackSize = 5'000;
 
@@ -45,11 +42,11 @@ private:
 
     void run() override
     {
-        PRINTF("\nFlash test\n\n");
-
 #if HW_VERSION >= 27
         rfLatchupDisableGpioPin.Reset();
 #endif
+
+        PRINTF("\nFlash test\n\n");
 
         PRINTF("\n");
         auto actualBaudRate = flash::ActualBaudRate();

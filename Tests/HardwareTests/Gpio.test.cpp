@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>
@@ -13,9 +15,6 @@ namespace sts1cobcsw
 // therefore a reset of the COBC when used in this test. The LED pin has to work for this test
 // though.
 auto pinsToTest = std::to_array<hal::GpioPin>({hal::led1Pin, hal::led2Pin});
-#if HW_VERSION >= 27
-auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
-#endif
 
 
 class GpioTest : public RODOS::StaticThread<>
