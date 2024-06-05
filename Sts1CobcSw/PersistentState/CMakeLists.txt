@@ -1,0 +1,2 @@
+target_sources(Sts1CobcSw_PersistentState PRIVATE PersistentVariable.cpp)
+target_link_libraries(Sts1CobcSw_PersistentState PRIVATE Sts1CobcSw_Periphery)

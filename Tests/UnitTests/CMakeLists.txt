@@ -26,6 +26,11 @@ if(FALSE)
     )
 endif()
 
+add_program(PersistentVariable PersistentVariable.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_PersistentVariable PRIVATE Catch2::Catch2WithMain Sts1CobcSw_PersistentState
+)
+
 add_program(Serial Serial.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
 
