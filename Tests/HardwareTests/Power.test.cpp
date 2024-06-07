@@ -105,10 +105,10 @@ private:
 } powerTestUartThread;
 
 
-class PowerTestCustomeThread : public RODOS::StaticThread<>
+class PowerTestCustomThread : public RODOS::StaticThread<>
 {
 public:
-    PowerTestCustomeThread() : StaticThread("PowerTestCustomeThread")
+    PowerTestCustomThread() : StaticThread("PowerTestCustomThread")
     {
     }
 
@@ -123,7 +123,7 @@ private:
 
     void run() override
     {
-        PRINTF("\nPOWER test custome thread\n\n");
+        PRINTF("\nPOWER test custom thread\n\n");
         PRINTF("Select operation to perform:\n");
         PRINTF("[1 - SPI Com]\n");
         PRINTF("[2 - integer  calculation]\n");
@@ -181,5 +181,5 @@ private:
             }
         }
     }
-} powerTestCustomeThread;
+} powerTestCustomThread;
 }

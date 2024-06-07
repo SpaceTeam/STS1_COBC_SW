@@ -77,7 +77,7 @@ add_watchdog_version_of(Fram)
 add_program(Power Power.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Power PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
-                                 Sts1CobcSw_Utility Sts1CobcSwTests_Utility
+                                  Sts1CobcSw_Utility Sts1CobcSwTests_Utility
 )
 add_watchdog_version_of(Power)
 
