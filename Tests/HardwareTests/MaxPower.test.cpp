@@ -25,6 +25,9 @@ auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUar
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
+auto IsPrime(std::int32_t number) -> bool;
+
+
 class MaxPowerTestLedThread : public RODOS::StaticThread<>
 {
 public:
@@ -106,62 +109,91 @@ private:
 
     void run() override
     {
-        PRINTF("\nMax. power test main thread\n\n");
-        PRINTF("Which operation would you like to perform?\n");
-        PRINTF("  1: SPI communication\n");
-        PRINTF("  2: integer calculations\n");
-        PRINTF("  3: floating point calculations\n");
-        PRINTF("  4: ADC conversions\n");
-
-        auto answer = std::array<Byte, 1>{};
-        hal::ReadFrom(&uciUart, Span(&answer));
-        PRINTF("\n");
-        switch(static_cast<char>(answer[0]))
+        while(true)
         {
-            case '1':
+            PRINTF("\nMax. power test main thread\n\n");
+            PRINTF("Which operation would you like to perform?\n");
+            PRINTF("  1: SPI communication\n");
+            PRINTF("  2: Searching for large prime numbers\n");
+            PRINTF("  3: Computing pi\n");
+            PRINTF("  4: ADC conversions\n");
+
+            auto answer = std::array<Byte, 1>{};
+            hal::ReadFrom(&uciUart, Span(&answer));
+            PRINTF("\n");
+            switch(static_cast<char>(answer[0]))
             {
-                fram::Initialize();
-                PRINTF("Starting SPI communication\n");
-                while(true)
+                case '1':
                 {
-                    (void)fram::ReadDeviceId();
+                    fram::Initialize();
+                    PRINTF("Starting SPI communication\n");
+                    while(true)
+                    {
+                        (void)fram::ReadDeviceId();
+                    }
+                    break;
                 }
-                break;
-            }
-            case '2':
-            {
-                std::uint32_t number = 3;
-                PRINTF("Starting integer calculation\n");
-                // FIXME: This infinite loop has no side effects which causes undefined behavior
-                while(true)
+                case '2':
                 {
-                    number *= number + 1;
+                    PRINTF("Searching for large prime numbers ...");
+                    auto const max = INT32_MAX;
+                    std::int32_t largestPrime = 0;
+                    for(std::int32_t i = 0; i <= max; ++i)
+                    {
+                        if(IsPrime(i))
+                        {
+                            largestPrime = i;
+                        }
+                    }
+                    PRINTF(" done\n");
+                    PRINTF(
+                        "The largest prime number smaller than %d is %d.\n\n", max, largestPrime);
+                    break;
                 }
-                break;
-            }
-            case '3':
-            {
-                float number = 1.5;
-                PRINTF("Starting floating point calculation\n");
-                // FIXME: This infinite loop has no side effects which causes undefined behavior
-                while(true)
+                case '3':
                 {
-                    number *= number;
+                    PRINTF("Starting to compute pi ...");
+                    float k = 0.0F;
+                    float pi = 0.0F;
+                    for(std::int32_t i = 0; i < INT32_MAX; ++i)
+                    {
+                        pi += std::pow(-1.0F, k) / (2.0F * k + 1.0F);
+                    }
+                    pi *= 4.0F;
+                    PRINTF(" done\n");
+                    PRINTF("Pi is approximately %f\n\n", static_cast<double>(pi));
+                    break;
                 }
-                break;
-            }
-            case '4':
-            {
-                // TODO: Implement ADC conversions
-                PRINTF("ADC conversions are not implemented yet!\n");
-                break;
-            }
-            default:
-            {
-                PRINTF("Unknown command\n");
-                break;
+                case '4':
+                {
+                    // TODO: Implement ADC conversions
+                    PRINTF("ADC conversions are not implemented yet!\n\n");
+                    break;
+                }
+                default:
+                {
+                    PRINTF("Unknown command\n\n");
+                    break;
+                }
             }
         }
     }
 } maxPowerTestMainThread;
+
+
+auto IsPrime(std::int32_t number) -> bool
+{
+    if(number <= 1)
+    {
+        return false;
+    }
+    for(std::int32_t i = 2; i * i <= number; ++i)
+    {
+        if(number % i == 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
 }
