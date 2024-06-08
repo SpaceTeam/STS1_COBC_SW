@@ -15,10 +15,13 @@
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
+
+
+constexpr auto uartTimeout = 100 * RODOS::MILLISECONDS;
+
 auto pinsToTest = std::to_array<hal::GpioPin>({hal::led1Pin, hal::led2Pin});
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
-constexpr auto uartTimeout = 100 * RODOS::MILLISECONDS;
 
 
 class MaxPowerTestLedThread : public RODOS::StaticThread<>
@@ -105,10 +108,10 @@ private:
 } maxPowerTestUartThread;
 
 
-class MaxPowerTestCustomThread : public RODOS::StaticThread<>
+class MaxPowerTestMainThread : public RODOS::StaticThread<>
 {
 public:
-    MaxPowerTestCustomThread() : StaticThread("MaxPowerTestCustomThread")
+    MaxPowerTestMainThread() : StaticThread("MaxPowerTestMainThread")
     {
     }
 
@@ -123,7 +126,7 @@ private:
 
     void run() override
     {
-        PRINTF("\nMax. power test custom thread\n\n");
+        PRINTF("\nMax. power test main thread\n\n");
         PRINTF("Select operation to perform:\n");
         PRINTF("[1 - SPI Com]\n");
         PRINTF("[2 - integer  calculation]\n");
@@ -181,5 +184,5 @@ private:
             }
         }
     }
-} maxPowerTestCustomThread;
+} maxPowerTestMainThread;
 }
