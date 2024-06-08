@@ -41,6 +41,9 @@ class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
+#endif
         auto uartBaudRate = 115'200U;
         hal::Initialize(&eduUart, uartBaudRate);
         hal::Initialize(&uciUart, uartBaudRate);

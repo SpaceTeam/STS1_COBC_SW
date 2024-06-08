@@ -21,6 +21,9 @@ class GpioTest : public RODOS::StaticThread<>
 {
     void init() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
+#endif
         for(auto & pin : pinsToTest)
         {
             pin.Direction(hal::PinDirection::out);

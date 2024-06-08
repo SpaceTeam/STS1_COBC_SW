@@ -23,6 +23,9 @@ public:
 private:
     void init() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
+#endif
         led2Gpio.Direction(hal::PinDirection::out);
         watchdogClearGpio.Direction(hal::PinDirection::out);
     }

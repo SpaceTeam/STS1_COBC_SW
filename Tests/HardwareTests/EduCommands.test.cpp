@@ -41,6 +41,9 @@ public:
 private:
     void init() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
+#endif
         edu::Initialize();
         auto const baudRate = 115'200;
         hal::Initialize(&uciUart, baudRate);
