@@ -17,6 +17,10 @@ auto txIsOn = true;
 auto eduShouldBePowered = false;
 std::int32_t utcOffset = 0;  // NOLINT(cert-err58-cpp)
 
+auto flashErrorCounter = 0;
+auto rfErrorCounter = 0;
+auto framEpsIsActive = true;
+auto flashIsActive = true;
 // TODO: Add thresholds
 
 
@@ -69,6 +73,30 @@ auto UtcOffset() -> std::int32_t
 }
 
 
+auto FlashErrorCounter() -> std::uint16_t
+{
+    return flashErrorCounter;
+}
+
+
+auto RfErrorCounter() -> std::uint16_t
+{
+    return rfErrorCounter;
+}
+
+
+auto FramEpsIsActive() -> bool
+{
+    return framEpsIsActive;
+}
+
+
+auto FlashIsActive() -> bool
+{
+    return flashIsActive;
+}
+
+
 // Setters
 auto NotOkCounter(std::int8_t value) -> void
 {
@@ -109,5 +137,29 @@ auto EduShouldBePowered(bool value) -> void
 auto UtcOffset(std::int32_t value) -> void
 {
     utcOffset = value;
+}
+
+
+auto FlashErrorCounter(std::uint16_t value) -> std::uint16_t
+{
+    flashErrorCounter = value;
+}
+
+
+auto RfErrorCounter(std::uint16_t value) -> std::uint16_t
+{
+    rfErrorCounter = value;
+}
+
+
+auto FramEpsIsActive(bool value) -> bool
+{
+    framEpsIsActive = value;
+}
+
+
+auto FlashIsActive(bool value) -> bool
+{
+    flashIsActive = value;
 }
 }
