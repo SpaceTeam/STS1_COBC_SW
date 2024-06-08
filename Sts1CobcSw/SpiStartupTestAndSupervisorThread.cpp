@@ -71,7 +71,7 @@ private:
             RODOS::hwResetAndReboot();
         }
 
-        // watch ower SPI
+        // watch over SPI
         while(RODOS::NOW() <= framEpsSpi.TransferEnd() && RODOS::NOW() <= flash::spi.TransferEnd()
               && RODOS::NOW() <= rf::spi.TransferEnd())
         {
