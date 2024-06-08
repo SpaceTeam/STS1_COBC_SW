@@ -67,38 +67,22 @@ private:
     void init() override
     {
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
-        auto uartBaudRate = 115'200U;
-        hal::Initialize(&eduUart, uartBaudRate);
+        auto baudRate = 115'200U;
+        hal::Initialize(&eduUart, baudRate);
     }
 
 
     void run() override
     {
         PRINTF("\nMax. power test UART thread\n\n");
-
-        auto message = std::to_array<Byte>({0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b,
-                                            0x00_b});
-
+        auto message = std::array<Byte, 100>{};
         while(true)
         {
-            // generate random message content
             for(auto & i : message)
             {
                 i = static_cast<Byte>(RODOS::uint32Rand() % (1U << sizeof(Byte)));
             }
-
-            PRINTF("Send random message to edu over UART\n");
-            (void)hal::WriteTo(&eduUart, Span(message), uartTimeout);  // use non blocking call
+            (void)hal::WriteTo(&eduUart, Span(message), uartTimeout);
         }
     }
 } maxPowerTestUartThread;
@@ -123,22 +107,21 @@ private:
     void run() override
     {
         PRINTF("\nMax. power test main thread\n\n");
-        PRINTF("Select operation to perform:\n");
-        PRINTF("[1 - SPI Com]\n");
-        PRINTF("[2 - integer  calculation]\n");
-        PRINTF("[3 - floating calculation]\n");
-        PRINTF("[4 - ADC]\n");
+        PRINTF("Which operation would you like to perform?\n");
+        PRINTF("  1: SPI communication\n");
+        PRINTF("  2: integer calculations\n");
+        PRINTF("  3: floating point calculations\n");
+        PRINTF("  4: ADC conversions\n");
 
-        auto command = std::array<Byte, 1>{};
-        hal::ReadFrom(&uciUart, Span(&command));
+        auto answer = std::array<Byte, 1>{};
+        hal::ReadFrom(&uciUart, Span(&answer));
         PRINTF("\n");
-        switch(static_cast<char>(command[0]))
+        switch(static_cast<char>(answer[0]))
         {
             case '1':
             {
-                // SPI communication
                 fram::Initialize();
-                PRINTF("Start SPI communication\n");
+                PRINTF("Starting SPI communication\n");
                 while(true)
                 {
                     (void)fram::ReadDeviceId();
@@ -147,20 +130,20 @@ private:
             }
             case '2':
             {
-                // integer calculation to simulate load
-                uint32_t number = 3;
-                PRINTF("Start integer calculation\n");
+                std::uint32_t number = 3;
+                PRINTF("Starting integer calculation\n");
+                // FIXME: This infinite loop has no side effects which causes undefined behavior
                 while(true)
                 {
-                    number *= number;
+                    number *= number + 1;
                 }
                 break;
             }
             case '3':
             {
-                // floating point calculation to simulate load
                 float number = 1.5;
-                PRINTF("Start floating point calculation\n");
+                PRINTF("Starting floating point calculation\n");
+                // FIXME: This infinite loop has no side effects which causes undefined behavior
                 while(true)
                 {
                     number *= number;
@@ -169,8 +152,8 @@ private:
             }
             case '4':
             {
-                // ToDo add ADC
-                PRINTF("ADC not supported!\n");
+                // TODO: Implement ADC conversions
+                PRINTF("ADC conversions are not implemented yet!\n");
                 break;
             }
             default:
