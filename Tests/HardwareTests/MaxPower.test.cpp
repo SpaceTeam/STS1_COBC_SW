@@ -21,10 +21,10 @@ auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUar
 constexpr auto uartTimeout = 100 * RODOS::MILLISECONDS;
 
 
-class PowerTestLedThread : public RODOS::StaticThread<>
+class MaxPowerTestLedThread : public RODOS::StaticThread<>
 {
 public:
-    PowerTestLedThread() : StaticThread("PowerTestLedThread")
+    MaxPowerTestLedThread() : StaticThread("MaxPowerTestLedThread")
     {
     }
 
@@ -41,7 +41,7 @@ private:
 
     void run() override
     {
-        PRINTF("\nPOWER test LED thread\n\n");
+        PRINTF("\nMax. power test LED thread\n\n");
         auto toggle = true;
 
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
@@ -53,13 +53,13 @@ private:
             toggle = not toggle;
         }
     }
-} powerTestLedThread;
+} maxPowerTestLedThread;
 
 
-class PowerTestUartThread : public RODOS::StaticThread<>
+class MaxPowerTestUartThread : public RODOS::StaticThread<>
 {
 public:
-    PowerTestUartThread() : StaticThread("PowerTestUartThread")
+    MaxPowerTestUartThread() : StaticThread("MaxPowerTestUartThread")
     {
     }
 
@@ -75,7 +75,7 @@ private:
 
     void run() override
     {
-        PRINTF("\nPOWER test UART thread\n\n");
+        PRINTF("\nMax. power test UART thread\n\n");
 
         auto message = std::to_array<Byte>({0x00_b,
                                             0x00_b,
@@ -102,13 +102,13 @@ private:
             (void)hal::WriteTo(&eduUart, Span(message), uartTimeout);  // use non blocking call
         }
     }
-} powerTestUartThread;
+} maxPowerTestUartThread;
 
 
-class PowerTestCustomThread : public RODOS::StaticThread<>
+class MaxPowerTestCustomThread : public RODOS::StaticThread<>
 {
 public:
-    PowerTestCustomThread() : StaticThread("PowerTestCustomThread")
+    MaxPowerTestCustomThread() : StaticThread("MaxPowerTestCustomThread")
     {
     }
 
@@ -123,7 +123,7 @@ private:
 
     void run() override
     {
-        PRINTF("\nPOWER test custom thread\n\n");
+        PRINTF("\nMax. power test custom thread\n\n");
         PRINTF("Select operation to perform:\n");
         PRINTF("[1 - SPI Com]\n");
         PRINTF("[2 - integer  calculation]\n");
@@ -181,5 +181,5 @@ private:
             }
         }
     }
-} powerTestCustomThread;
+} maxPowerTestCustomThread;
 }
