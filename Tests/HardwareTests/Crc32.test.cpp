@@ -23,7 +23,6 @@
 
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
-#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>

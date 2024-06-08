@@ -1,6 +1,5 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
-#include <Sts1CobcSw/Hal/IoNames.hpp>
 
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 

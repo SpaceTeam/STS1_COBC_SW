@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
-#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
