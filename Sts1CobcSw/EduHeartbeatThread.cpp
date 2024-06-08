@@ -6,7 +6,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <cinttypes>
+#include <cinttypes>  // IWYU pragma: keep
 
 
 namespace sts1cobcsw

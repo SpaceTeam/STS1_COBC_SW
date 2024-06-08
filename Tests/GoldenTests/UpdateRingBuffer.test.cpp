@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
+#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 
 // clang-format off
 #include <cstdint>
