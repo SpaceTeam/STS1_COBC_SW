@@ -3,12 +3,14 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
 #include <type_traits>
+
 
 using sts1cobcsw::Byte;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
