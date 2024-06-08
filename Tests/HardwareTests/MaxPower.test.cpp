@@ -5,6 +5,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
 
@@ -111,6 +113,10 @@ private:
 
     void run() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
+
         while(true)
         {
             PRINTF("\nMax. power test main thread\n\n");

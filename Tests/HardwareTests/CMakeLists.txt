@@ -76,8 +76,9 @@ add_watchdog_version_of(Fram)
 
 add_program(MaxPower MaxPower.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_MaxPower PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
-                                     Sts1CobcSw_Utility Sts1CobcSwTests_Utility
+    Sts1CobcSwTests_MaxPower
+    PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+            Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(MaxPower)
 
