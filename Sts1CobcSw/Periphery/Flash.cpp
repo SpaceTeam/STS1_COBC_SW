@@ -53,7 +53,11 @@ constexpr auto sectorErase4ByteAddress = 0x21_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
-auto spi =
+
+
+// --- Public globals ---
+
+hal::Spi spi =
     hal::Spi(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
 bool flashIsWorking = true;
 

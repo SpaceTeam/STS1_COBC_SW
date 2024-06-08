@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/FramEpsStartupTestThread.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
@@ -43,4 +44,10 @@ private:
         RODOS::AT(RODOS::END_OF_TIME);
     }
 } framEpsStartupTestThread;
+
+
+auto ResumeFramEpsStartupTestThread() -> void
+{
+    framEpsStartupTestThread.resume();
+}
 }

@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/RfStartupTestThread.hpp>
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
@@ -37,4 +38,10 @@ private:
         RODOS::AT(RODOS::END_OF_TIME);
     }
 } rfStartupTestThread;
+
+
+auto ResumeRfStartupTestThread() -> void
+{
+    rfStartupTestThread.resume();
+}
 }
