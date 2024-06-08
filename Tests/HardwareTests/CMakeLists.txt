@@ -30,6 +30,13 @@ target_link_libraries(
 )
 add_watchdog_version_of(Crc32)
 
+add_program(DisableRfLatchupProtection DisableRfLatchupProtection.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_DisableRfLatchupProtection PRIVATE rodos::rodos Sts1CobcSw_Hal
+                                                       Sts1CobcSwTests_RfLatchupDisablePin
+)
+add_watchdog_version_of(DisableRfLatchupProtection)
+
 add_program(EduCommands EduCommands.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_EduCommands
