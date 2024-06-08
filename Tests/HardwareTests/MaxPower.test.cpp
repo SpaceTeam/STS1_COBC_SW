@@ -9,6 +9,8 @@
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <cinttypes>
+#include <cmath>
 #include <cstdint>
 
 
@@ -146,8 +148,9 @@ private:
                         }
                     }
                     PRINTF(" done\n");
-                    PRINTF(
-                        "The largest prime number smaller than %d is %d.\n\n", max, largestPrime);
+                    PRINTF("The largest prime number smaller than %" PRIi32 " is %" PRIi32 ".\n\n",
+                           max,
+                           largestPrime);
                     break;
                 }
                 case '3':
