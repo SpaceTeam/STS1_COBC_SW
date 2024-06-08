@@ -19,7 +19,8 @@ using RODOS::PRINTF;
 
 constexpr auto uartTimeout = 100 * RODOS::MILLISECONDS;
 
-auto pinsToTest = std::to_array<hal::GpioPin>({hal::led1Pin, hal::led2Pin});
+auto led1GpioPin = hal::GpioPin(hal::led1Pin);
+auto led2GpioPin = hal::GpioPin(hal::led2Pin);
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
@@ -35,10 +36,8 @@ public:
 private:
     void init() override
     {
-        for(auto & pin : pinsToTest)
-        {
-            pin.Direction(hal::PinDirection::out);
-        }
+        led1GpioPin.Direction(hal::PinDirection::out);
+        led2GpioPin.Direction(hal::PinDirection::out);
     }
 
 
@@ -46,13 +45,10 @@ private:
     {
         PRINTF("\nMax. power test LED thread\n\n");
         auto toggle = true;
-
-        TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
+        led1GpioPin.Set();
+        TIME_LOOP(0, 100 * RODOS::MILLISECONDS)
         {
-            for(auto & pin : pinsToTest)
-            {
-                toggle ? pin.Set() : pin.Reset();
-            }
+            toggle ? led2GpioPin.Set() : led2GpioPin.Reset();
             toggle = not toggle;
         }
     }
