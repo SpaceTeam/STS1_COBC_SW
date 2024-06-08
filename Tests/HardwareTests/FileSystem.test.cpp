@@ -1,4 +1,7 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <littlefs/lfs.h>
 
@@ -31,9 +34,12 @@ private:
 
     void run() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
+
         PRINTF("\n");
         PRINTF("File system test\n");
-
 
         auto errorCode = fs::deprecated::Mount();
         if(errorCode < 0)

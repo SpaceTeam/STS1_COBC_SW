@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>
@@ -28,6 +30,10 @@ class GpioTest : public RODOS::StaticThread<>
 
     void run() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
+
         auto toggle = true;
 
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
