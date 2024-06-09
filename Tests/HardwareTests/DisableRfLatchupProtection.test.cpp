@@ -11,6 +11,9 @@ class DisableRfLatchupProtectionTest : public RODOS::StaticThread<>
 {
     void init() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
+#endif
     }
 
 
