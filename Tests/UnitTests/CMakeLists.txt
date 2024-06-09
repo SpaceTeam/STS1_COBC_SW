@@ -15,7 +15,6 @@ target_link_libraries(
 add_program(LfsRam LfsRam.test.cpp)
 target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
 
-
 add_program(NewOutcome NewOutcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_NewOutcome PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Outcome)
 
@@ -46,3 +45,6 @@ include(Catch)
 foreach(target IN LISTS all_unit_test_targets)
     catch_discover_tests(${target})
 endforeach()
+
+add_program(LfsWrapper LfsWrapper.test.cpp)
+target_link_libraries(Sts1CobcSwTests_LfsWrapper PRIVATE Sts1CobcSw_FileSystem)

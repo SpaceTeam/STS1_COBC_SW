@@ -21,9 +21,9 @@ class File
 {
 public:
     File(File const &) = delete;
-    File(File &&) = default;
+    File(File && other) noexcept ;
     auto operator=(File const &) -> File & = delete;
-    auto operator=(File &&) -> File & = default;
+    auto operator=(File && other)  noexcept -> File &;
     ~File();
 
     template<typename T>
@@ -39,6 +39,6 @@ private:
     // Only allow creation of File class through friend function Open()
     File() = default;
 
-    lfs_file_t lfsFile_;
+    lfs_file_t lfsFile_ = {};
 };
 }
