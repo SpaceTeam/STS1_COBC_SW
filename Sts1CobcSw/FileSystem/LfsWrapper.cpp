@@ -4,6 +4,8 @@
 
 #include <littlefs/lfs.h>
 
+#include <iostream>
+
 
 namespace sts1cobcsw::fs
 {
@@ -43,9 +45,35 @@ auto Open(std::string_view path, int flags) -> Result<File>
 }
 
 
+File::File(File && other) noexcept : lfsFile_(other.lfsFile_)
+{
+    other.lfsFile_ = {};
+}
+
+
+auto File::operator=(File && other) noexcept -> File &
+{
+    if(this != &other)
+    {
+        lfsFile_ = other.lfsFile_;
+        other.lfsFile_ = {};
+    }
+    return *this;
+}
+
+
 File::~File()
 {
-    (void)Close();
+    // Only close the file if it is not in a moved-from state (i.e. lfsFile_ is not default
+    // constructed)
+    if(lfsFile_.id != 0 || lfsFile_.type != 0 || lfsFile_.flags != 0)
+    {
+        auto closeResult = Close();
+        if(closeResult.has_error())
+        {
+            std::cout << "Error closing file\n";
+        }
+    }
 }
 
 
