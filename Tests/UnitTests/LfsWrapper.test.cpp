@@ -23,30 +23,6 @@ auto main() -> int
     // CHECK(openResult.has_value());
     std::cout << "openResult.has_error() =  " << openResult.has_error() << "\n";
 
-    // TODO: Continue here! Why does closing the file segfault?
-    auto closeResult = openResult.value().Close();
-    std::cout << "closeResult.has_error() =  " << closeResult.has_error() << "\n";
-
-    // sts1cobcsw::fs::Initialize();
-    // auto lfs = lfs_t{};
-    // auto errorCode = lfs_format(&lfs, &sts1cobcsw::fs::lfsConfig);
-    // std::cout << "lfs_format(): errorCode = " << errorCode << "\n";
-    // errorCode = lfs_mount(&lfs, &sts1cobcsw::fs::lfsConfig);
-    // std::cout << "lfs_mount(): errorCode = " << errorCode << "\n";
-    // auto const * filePath = "/MyFile";
-    // auto file = lfs_file_t{};
-    // errorCode = lfs_file_open(&lfs, &file, filePath, LFS_O_WRONLY | LFS_O_CREAT);
-    // std::cout << "lfs_file_open(): errorCode = " << errorCode << "\n";
-    // // auto file2 = file;
-    // auto file2 = lfs_file_t{};
-    // errorCode = lfs_file_open(&lfs, &file2, filePath, LFS_O_WRONLY | LFS_O_CREAT);
-    // std::cout << "lfs_file_open(): errorCode = " << errorCode << "\n";
-    // errorCode = lfs_file_close(&lfs, &file);
-    // std::cout << "lfs_file_close(): errorCode = " << errorCode << "\n";
-    // errorCode = lfs_file_close(&lfs, &file2);
-    // std::cout << "lfs_file_close(): errorCode = " << errorCode << "\n";
-
-
     // std::cout << "File opened\n";
 
     // auto lfs = lfs_t{};

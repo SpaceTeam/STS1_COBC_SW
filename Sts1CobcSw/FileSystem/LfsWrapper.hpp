@@ -45,6 +45,7 @@ private:
 
     Path path_ = "";
     int openFlags_ = 0;
+    bool isOpen_ = false;
     lfs_file_t lfsFile_ = {};
 };
 }
