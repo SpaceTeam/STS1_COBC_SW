@@ -36,11 +36,13 @@ auto lfs = lfs_t{};
 auto Open(std::string_view path, int flags) -> Result<File>
 {
     auto file = File();
+    // TODO: Use lfs_file_opencfg() instead
     auto error = lfs_file_open(&lfs, &file.lfsFile_, path.data(), flags);
     if(error == 0)
     {
         file.path_ = Path(path.data(), path.size());
         file.openFlags_ = flags;
+        file.isOpen_ = true;
         return file;
     }
     return static_cast<ErrorCode>(error);
@@ -53,11 +55,13 @@ File::File(File && other) noexcept
     {
         return;
     }
+    // TODO: Use lfs_file_opencfg() instead
     auto error = lfs_file_open(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_);
     if(error == 0)
     {
         path_ = other.path_;
         openFlags_ = other.openFlags_;
+        isOpen_ = true;
     }
     (void)other.Close();
     other.path_ = "";
@@ -68,14 +72,16 @@ File::File(File && other) noexcept
 
 auto File::operator=(File && other) noexcept -> File &
 {
+    // TODO: Use copy and swap idiom to prevent code duplication
     if(this != &other and not other.path_.empty())
     {
-        // TODO: Use copy and swap idiom to prevent code duplication
+        // TODO: Use lfs_file_opencfg() instead
         auto error = lfs_file_open(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_);
         if(error == 0)
         {
             path_ = other.path_;
             openFlags_ = other.openFlags_;
+            isOpen_ = true;
         }
         (void)other.Close();
         other.path_ = "";
@@ -103,6 +109,11 @@ File::~File()
 template<typename T>
 auto File::Read(T * t) -> Result<int>
 {
+    // TODO: Also check openFlags_ for read permission
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
     auto nReadBytes = lfs_file_read(&lfs, &lfsFile_, t, sizeof(T));
     if(nReadBytes >= 0)
     {
@@ -115,6 +126,11 @@ auto File::Read(T * t) -> Result<int>
 template<typename T>
 auto File::Write(T const & t) -> Result<int>
 {
+    // TODO: Also check openFlags_ for write permission
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
     auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, &t, sizeof(T));
     if(nWrittenBytes >= 0)
     {
@@ -126,6 +142,10 @@ auto File::Write(T const & t) -> Result<int>
 
 auto File::Size() -> Result<int>
 {
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
     auto size = lfs_file_size(&lfs, &lfsFile_);
     if(size >= 0)
     {
@@ -137,11 +157,16 @@ auto File::Size() -> Result<int>
 
 [[nodiscard]] auto File::Close() -> Result<void>
 {
-    auto error = lfs_file_close(&lfs, &lfsFile_);
-    if(error == 0)
+    if(not isOpen_)
     {
         return outcome_v2::success();
     }
-    return static_cast<ErrorCode>(error);
+    auto error = lfs_file_close(&lfs, &lfsFile_);
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    isOpen_ = false;
+    return outcome_v2::success();
 }
 }
