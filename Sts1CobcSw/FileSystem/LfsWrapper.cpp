@@ -35,27 +35,51 @@ auto lfs = lfs_t{};
 
 auto Open(std::string_view path, int flags) -> Result<File>
 {
-    File file = File();
+    auto file = File();
     auto error = lfs_file_open(&lfs, &file.lfsFile_, path.data(), flags);
     if(error == 0)
     {
+        file.path_ = Path(path.data(), path.size());
+        file.openFlags_ = flags;
         return file;
     }
     return static_cast<ErrorCode>(error);
 }
 
 
-File::File(File && other) noexcept : lfsFile_(other.lfsFile_)
+File::File(File && other) noexcept
 {
+    if(other.path_.empty())
+    {
+        return;
+    }
+    auto error = lfs_file_open(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_);
+    if(error == 0)
+    {
+        path_ = other.path_;
+        openFlags_ = other.openFlags_;
+    }
+    (void)other.Close();
+    other.path_ = "";
+    other.openFlags_ = 0;
     other.lfsFile_ = {};
 }
 
 
 auto File::operator=(File && other) noexcept -> File &
 {
-    if(this != &other)
+    if(this != &other and not other.path_.empty())
     {
-        lfsFile_ = other.lfsFile_;
+        // TODO: Use copy and swap idiom to prevent code duplication
+        auto error = lfs_file_open(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_);
+        if(error == 0)
+        {
+            path_ = other.path_;
+            openFlags_ = other.openFlags_;
+        }
+        (void)other.Close();
+        other.path_ = "";
+        other.openFlags_ = 0;
         other.lfsFile_ = {};
     }
     return *this;
@@ -64,9 +88,8 @@ auto File::operator=(File && other) noexcept -> File &
 
 File::~File()
 {
-    // Only close the file if it is not in a moved-from state (i.e. lfsFile_ is not default
-    // constructed)
-    if(lfsFile_.id != 0 || lfsFile_.type != 0 || lfsFile_.flags != 0)
+    // Only close the file if it is not in a default initialized or moved-from state
+    if(not path_.empty())
     {
         auto closeResult = Close();
         if(closeResult.has_error())
