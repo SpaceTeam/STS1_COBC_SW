@@ -35,6 +35,11 @@ target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1
 add_program(Span Span.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
 
+add_program(LfsWrapper LfsWrapper.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_LfsWrapper PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem
+)
+
 get_property(
     all_unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS
 )
@@ -42,9 +47,10 @@ add_custom_target(AllUnitTests) # Must be defined after getting all unit test ta
 add_dependencies(AllUnitTests ${all_unit_test_targets})
 
 include(Catch)
+
 foreach(target IN LISTS all_unit_test_targets)
     catch_discover_tests(${target})
 endforeach()
 
-add_program(LfsWrapper LfsWrapper.test.cpp)
-target_link_libraries(Sts1CobcSwTests_LfsWrapper PRIVATE Sts1CobcSw_FileSystem)
+add_program(LfsWrapperExecutable LfsWrapperExecutable.test.cpp)
+target_link_libraries(Sts1CobcSwTests_LfsWrapperExecutable PRIVATE Sts1CobcSw_FileSystem)

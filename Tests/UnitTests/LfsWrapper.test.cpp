@@ -2,84 +2,60 @@
 #include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>
 #include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
 
-// #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <littlefs/lfs.h>
 
-#include <iostream>
+#include <Sts1CobcSw/FileSystem/LfsWrapper.ipp>
 
 
-// TEST_CASE("LfsWrapper")
-auto main() -> int
+TEST_CASE("LfsWrapper")
 {
-    // CHECK(true);
+    CHECK(true);
     sts1cobcsw::fs::Initialize();
     auto mountResult = sts1cobcsw::fs::Mount();
-    // CHECK(not mountResult.has_error());
-    std::cout << "mountResult.has_error() = " << mountResult.has_error() << "\n";
+    CHECK(not mountResult.has_error());
 
     auto const * filePath = "/MyFile";
     auto openResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
-    // CHECK(openResult.has_value());
-    std::cout << "openResult.has_error() =  " << openResult.has_error() << "\n";
+    CHECK(openResult.has_value());
 
-    // std::cout << "File opened\n";
+    sts1cobcsw::fs::File & writeableFile = openResult.value();
 
-    // auto lfs = lfs_t{};
-    // auto errorCode = lfs_format(&lfs, &sts1cobcsw::fs::lfsConfig);
-    // CHECK(errorCode == 0);
+    int const number = 123;
+    auto writeResult = writeableFile.Write(number);
+    CHECK(writeResult.has_value());
+    CHECK(writeResult.value() == sizeof(number));
 
-    // auto result = sts1cobcsw::fs::Mount();
-    // CHECK(result);
+    int readNumber = 0;
+    // TODO: Add should-fail case when lfs assertion uses outcome lib
+    // auto readResult = writeableFile.Read(&readNumber);
+    // CHECK(readResult.has_error());  // read file should fail as LFS_O_WRONLY flag used
 
-    // auto const * filePath = "MyFile";
-    // auto resultFileOpen = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
-    // CHECK(resultFileOpen);
-    // sts1cobcsw::fs::File & file = resultFileOpen.value();
-    // result = file.Close();
-    // CHECK(result);
+    auto closeResult = writeableFile.Close();
+    CHECK(not closeResult.has_error());
 
-    // int number = 123;
-    // auto resultWrite = file.Write(number);
-    // CHECK(resultWrite);
+    openResult = sts1cobcsw::fs::Open(filePath, LFS_O_RDONLY | LFS_O_CREAT);
+    CHECK(openResult.has_value());
 
-    // auto resultSize = file.Size();
-    // CHECK(resultSize);
+    sts1cobcsw::fs::File & readableFile = openResult.value();
 
-    // auto lfs = lfs_t{};
-    // auto errorCode = lfs_format(&lfs, &sts1cobcsw::fs::lfsConfig);
-    // REQUIRE(errorCode == 0);
-    // errorCode = lfs_mount(&lfs, &sts1cobcsw::fs::lfsConfig);
-    // REQUIRE(errorCode == 0);
+    auto sizeResult = readableFile.Size();
+    CHECK(sizeResult.has_value());
+    CHECK(sizeResult.value() == sizeof(int));
 
-    // auto const * directoryPath = "MyFolder";
-    // errorCode = lfs_mkdir(&lfs, directoryPath);
-    // REQUIRE(errorCode == 0);
+    auto readResult = readableFile.Read(&readNumber);
+    CHECK(readResult.has_value());
+    CHECK(readResult.value() == sizeof(number));
+    CHECK(readNumber == number);
 
-    // // auto const * filePath = "MyFolder/MyFile";
-    // auto file = lfs_file_t{};
-    // errorCode = lfs_file_open(&lfs, &file, filePath, LFS_O_WRONLY | LFS_O_CREAT);
-    // REQUIRE(errorCode == 0);
+    // TODO: Add should-fail case when lfs assertion uses outcome lib
+    // writeResult = readableFile.Write(number);
+    // CHECK(writeResult.has_error());  // write file should fail as LFS_O_RDONLY flag used
 
-    // int number = 123;
-    // errorCode = lfs_file_write(&lfs, &file, &number, sizeof(number));
-    // REQUIRE(errorCode == sizeof(number));
+    closeResult = readableFile.Close();
+    CHECK(not closeResult.has_error());
 
-    // errorCode = lfs_file_close(&lfs, &file);
-    // REQUIRE(errorCode == 0);
-    // errorCode = lfs_unmount(&lfs);
-    // REQUIRE(errorCode == 0);
-
-    // errorCode = lfs_mount(&lfs, &sts1cobcsw::fs::lfsConfig);
-    // REQUIRE(errorCode == 0);
-    // errorCode = lfs_file_open(&lfs, &file, filePath, LFS_O_RDONLY);
-    // REQUIRE(errorCode == 0);
-
-    // int readNumber = 0;
-    // errorCode = lfs_file_read(&lfs, &file, &readNumber, sizeof(number));
-    // REQUIRE(errorCode == sizeof(number));
-    // REQUIRE(readNumber == number);
-
-    // errorCode = lfs_file_close(&lfs, &file);
-    // REQUIRE(errorCode == 0);
+    auto unmountResult = sts1cobcsw::fs::Unmount();
+    CHECK(not unmountResult.has_error());
 }
