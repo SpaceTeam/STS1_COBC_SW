@@ -17,6 +17,11 @@ target_link_libraries(
 add_program(LfsRam LfsRam.test.cpp)
 target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
 
+add_program(LfsWrapper LfsWrapper.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_LfsWrapper PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem
+)
+
 add_program(NewOutcome NewOutcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_NewOutcome PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Outcome)
 
@@ -95,8 +100,8 @@ target_link_libraries(
 )
 add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
-add_program(LfsWrapper LfsWrapper.test.cpp)
-target_link_libraries(Sts1CobcSwTests_LfsWrapper PRIVATE Sts1CobcSw_FileSystem)
+add_program(LfsWrapperExecutable LfsWrapperExecutable.test.cpp)
+target_link_libraries(Sts1CobcSwTests_LfsWrapperExecutable PRIVATE Sts1CobcSw_FileSystem)
 
 # --- All unit tests ---
 
