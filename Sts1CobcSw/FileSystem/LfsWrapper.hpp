@@ -15,9 +15,12 @@ namespace sts1cobcsw::fs
 using Path = etl::string<LFS_NAME_MAX>;
 
 
+extern lfs_t lfs;
+
 class File;
 
 [[nodiscard]] auto Mount() -> Result<void>;
+[[nodiscard]] auto Unmount() -> Result<void>;
 [[nodiscard]] auto Open(std::string_view path, int flags) -> Result<File>;
 
 
@@ -49,3 +52,6 @@ private:
     lfs_file_t lfsFile_ = {};
 };
 }
+
+
+#include <Sts1CobcSw/FileSystem/LfsWrapper.ipp>  // IWYU pragma: keep
