@@ -9,7 +9,7 @@
 
 namespace sts1cobcsw::fs
 {
-auto lfs = lfs_t{};
+lfs_t lfs{};
 
 
 [[nodiscard]] auto Mount() -> Result<void>
@@ -30,6 +30,17 @@ auto lfs = lfs_t{};
         return outcome_v2::success();
     }
     return static_cast<ErrorCode>(error);
+}
+
+
+[[nodiscard]] auto Unmount() -> Result<void>
+{
+    auto error = lfs_unmount(&lfs);
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    return outcome_v2::success();
 }
 
 
@@ -103,40 +114,6 @@ File::~File()
             std::cout << "Error closing file\n";
         }
     }
-}
-
-
-template<typename T>
-auto File::Read(T * t) -> Result<int>
-{
-    // TODO: Also check openFlags_ for read permission
-    if(not isOpen_)
-    {
-        return ErrorCode::fileNotOpen;
-    }
-    auto nReadBytes = lfs_file_read(&lfs, &lfsFile_, t, sizeof(T));
-    if(nReadBytes >= 0)
-    {
-        return nReadBytes;
-    }
-    return static_cast<ErrorCode>(nReadBytes);
-}
-
-
-template<typename T>
-auto File::Write(T const & t) -> Result<int>
-{
-    // TODO: Also check openFlags_ for write permission
-    if(not isOpen_)
-    {
-        return ErrorCode::fileNotOpen;
-    }
-    auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, &t, sizeof(T));
-    if(nWrittenBytes >= 0)
-    {
-        return nWrittenBytes;
-    }
-    return static_cast<ErrorCode>(nWrittenBytes);
 }
 
 
