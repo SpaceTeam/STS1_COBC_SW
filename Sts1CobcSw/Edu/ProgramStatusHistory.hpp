@@ -33,7 +33,7 @@ struct ProgramStatusHistoryEntry
 };
 
 
-inline constexpr auto programStatusHistorySize = 20;  // TODO: replace with framelayout equivalent
+inline constexpr auto programStatusHistorySize = 20;  // TODO: replace with FRAM layout equivalent
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
