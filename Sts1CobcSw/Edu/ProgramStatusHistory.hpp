@@ -33,11 +33,20 @@ struct ProgramStatusHistoryEntry
 };
 
 
-inline constexpr auto programStatusHistorySize = 20;
+inline constexpr auto programStatusHistorySize = 20;  // TODO: replace with framelayout equivalent
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId,
                                 std::int32_t startTime,
                                 ProgramStatus newStatus) -> void;
+}
+
+namespace sts1cobcsw
+{
+
+template<>
+inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
+    sizeof(edu::ProgramStatusHistoryEntry);
+
 }
