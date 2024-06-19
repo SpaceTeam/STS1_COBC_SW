@@ -4,16 +4,21 @@
 
 #include <littlefs/lfs.h>
 
+#include "Sts1CobcSw/FileSystem/ErrorsAndResult.hpp"
+
 
 namespace sts1cobcsw::fs
 {
 template<typename T>
 auto File::Read(T * t) -> Result<int>
 {
-    // TODO: Also check openFlags_ for read permission
     if(not isOpen_)
     {
         return ErrorCode::fileNotOpen;
+    }
+    if(not(static_cast<uint>(openFlags_) & LFS_O_RDONLY))
+    {
+        return ErrorCode::invalidParameter;
     }
     auto nReadBytes = lfs_file_read(&lfs, &lfsFile_, t, sizeof(T));
     if(nReadBytes >= 0)
@@ -27,10 +32,13 @@ auto File::Read(T * t) -> Result<int>
 template<typename T>
 auto File::Write(T const & t) -> Result<int>
 {
-    // TODO: Also check openFlags_ for write permission
     if(not isOpen_)
     {
         return ErrorCode::fileNotOpen;
+    }
+    if(not(static_cast<uint>(openFlags_) & LFS_O_WRONLY))
+    {
+        return ErrorCode::invalidParameter;
     }
     auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, &t, sizeof(T));
     if(nWrittenBytes >= 0)
