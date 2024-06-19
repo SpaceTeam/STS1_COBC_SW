@@ -28,9 +28,8 @@ TEST_CASE("LfsWrapper")
     CHECK(writeResult.value() == sizeof(number));
 
     int readNumber = 0;
-    // TODO: Add should-fail case when lfs assertion uses outcome lib
-    // auto readResult = writeableFile.Read(&readNumber);
-    // CHECK(readResult.has_error());  // read file should fail as LFS_O_WRONLY flag used
+    auto readResult = writeableFile.Read(&readNumber);
+    CHECK(readResult.has_error());  // read file should fail as LFS_O_WRONLY flag used
 
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());
@@ -44,14 +43,13 @@ TEST_CASE("LfsWrapper")
     CHECK(sizeResult.has_value());
     CHECK(sizeResult.value() == sizeof(int));
 
-    auto readResult = readableFile.Read(&readNumber);
+    readResult = readableFile.Read(&readNumber);
     CHECK(readResult.has_value());
     CHECK(readResult.value() == sizeof(number));
     CHECK(readNumber == number);
 
-    // TODO: Add should-fail case when lfs assertion uses outcome lib
-    // writeResult = readableFile.Write(number);
-    // CHECK(writeResult.has_error());  // write file should fail as LFS_O_RDONLY flag used
+    writeResult = readableFile.Write(number);
+    CHECK(writeResult.has_error());  // write file should fail as LFS_O_RDONLY flag used
 
     closeResult = readableFile.Close();
     CHECK(not closeResult.has_error());
