@@ -71,8 +71,9 @@
         "W_NULL": "-Wnull-dereference -Wzero-as-null-pointer-constant -Wstrict-null-sentinel",
         "W_CLASS": "-Wsuggest-override -Woverloaded-virtual",
         "W_COND": "-Wduplicated-branches -Wduplicated-cond",
-        "W_REST": "-Wimplicit-fallthrough=5 -Wshadow -Wlogical-op -Wformat=2 -Wundef -Wno-long-long",
-        "WARNINGS": "$env{W_BASIC} $env{W_CONVERSION} $env{W_CAST} $env{W_NULL} $env{W_CLASS} $env{W_COND} $env{W_REST}"
+        "W_NO": "-Wno-missing-field-initializers -Wno-long-long",
+        "W_REST": "-Wimplicit-fallthrough=5 -Wshadow -Wlogical-op -Wformat=2 -Wundef",
+        "WARNINGS": "$env{W_BASIC} $env{W_CONVERSION} $env{W_CAST} $env{W_NULL} $env{W_CLASS} $env{W_COND} $env{W_NO} $env{W_REST}"
       }
     },
     {
