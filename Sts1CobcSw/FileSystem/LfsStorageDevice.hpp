@@ -5,6 +5,7 @@
 
 namespace sts1cobcsw::fs
 {
+inline constexpr auto lfsCacheSize = 256;
 extern lfs_config const lfsConfig;
 
 

@@ -35,9 +35,14 @@ constexpr auto sectorSize = 4 * 1024;
 constexpr auto memorySize = 128 * 1024 * 1024;
 
 auto memory = std::vector<Byte>();
-auto readBuffer = std::array<Byte, pageSize>{};
+auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
-auto lookaheadBuffer = std::array<Byte, pageSize>{};
+auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
+
+// littlefs requires the lookaheadBuffer size to be a multiple of 8
+static_assert(lookaheadBuffer.size() % 8 == 0);  // NOLINT(*magic-numbers)
+// littlefs requires the cacheSize to be a multiple of the read_size and prog_size, i.e., pageSize
+static_assert(lfsCacheSize % pageSize == 0);
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
