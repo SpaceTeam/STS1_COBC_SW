@@ -1,4 +1,3 @@
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>
 #include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 
@@ -12,6 +11,8 @@ namespace sts1cobcsw::fs
 lfs_t lfs{};
 
 
+// FIXME: For some reason this allocates 1024 bytes on the heap. With LFS_NO_MALLOC defined, it
+// crashes with a SEGFAULT.
 [[nodiscard]] auto Mount() -> Result<void>
 {
     auto error = lfs_mount(&lfs, &lfsConfig);
@@ -47,8 +48,7 @@ lfs_t lfs{};
 auto Open(std::string_view path, int flags) -> Result<File>
 {
     auto file = File();
-    // TODO: Use lfs_file_opencfg() instead
-    auto error = lfs_file_open(&lfs, &file.lfsFile_, path.data(), flags);
+    auto error = lfs_file_opencfg(&lfs, &file.lfsFile_, path.data(), flags, &file.lfsFileConfig_);
     if(error == 0)
     {
         file.path_ = Path(path.data(), path.size());
@@ -66,8 +66,8 @@ File::File(File && other) noexcept
     {
         return;
     }
-    // TODO: Use lfs_file_opencfg() instead
-    auto error = lfs_file_open(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_);
+    auto error =
+        lfs_file_opencfg(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_, &lfsFileConfig_);
     if(error == 0)
     {
         path_ = other.path_;
@@ -86,8 +86,8 @@ auto File::operator=(File && other) noexcept -> File &
     // TODO: Use copy and swap idiom to prevent code duplication
     if(this != &other and not other.path_.empty())
     {
-        // TODO: Use lfs_file_opencfg() instead
-        auto error = lfs_file_open(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_);
+        auto error = lfs_file_opencfg(
+            &lfs, &lfsFile_, other.path_.c_str(), other.openFlags_, &lfsFileConfig_);
         if(error == 0)
         {
             path_ = other.path_;
