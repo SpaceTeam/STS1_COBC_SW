@@ -30,6 +30,7 @@ class File;
 [[nodiscard]] auto Open(std::string_view path, int flags) -> Result<File>;
 
 
+// FIXME: Make File const-correct (only Write() should be non-const)
 // TODO: Consider moving this class to a separate file
 class File
 {
