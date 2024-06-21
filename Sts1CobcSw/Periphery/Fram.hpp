@@ -17,6 +17,7 @@ using DeviceId = std::array<Byte, 9>;
 using Address = std::uint32_t;
 
 
+inline constexpr std::uint32_t memorySize = 1024 * 1024;
 inline constexpr auto correctDeviceId =
     DeviceId{0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b};
 

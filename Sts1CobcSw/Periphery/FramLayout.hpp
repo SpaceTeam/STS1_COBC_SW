@@ -8,10 +8,6 @@
 
 namespace sts1cobcsw::fram
 {
-// Total storage capacity of the FRAM in bytes
-inline constexpr auto framSize = 1024 * 1024;
-
-
 // ---- Persistent Variables ----
 
 // Maximum size of a single copy of the persistent variables
