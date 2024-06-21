@@ -13,7 +13,7 @@ lfs_t lfs{};
 
 // FIXME: For some reason this allocates 1024 bytes on the heap. With LFS_NO_MALLOC defined, it
 // crashes with a SEGFAULT.
-[[nodiscard]] auto Mount() -> Result<void>
+auto Mount() -> Result<void>
 {
     auto error = lfs_mount(&lfs, &lfsConfig);
     if(error == 0)
@@ -34,7 +34,7 @@ lfs_t lfs{};
 }
 
 
-[[nodiscard]] auto Unmount() -> Result<void>
+auto Unmount() -> Result<void>
 {
     auto error = lfs_unmount(&lfs);
     if(error != 0)
@@ -132,7 +132,7 @@ auto File::Size() -> Result<int>
 }
 
 
-[[nodiscard]] auto File::Close() -> Result<void>
+auto File::Close() -> Result<void>
 {
     if(not isOpen_)
     {
