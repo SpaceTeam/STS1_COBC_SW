@@ -15,6 +15,7 @@ namespace sts1cobcsw
 {
 namespace edu
 {
+// TODO: Rename to ProgramQueueEntry
 struct QueueEntry
 {
     ProgramId programId = ProgramId(0);
