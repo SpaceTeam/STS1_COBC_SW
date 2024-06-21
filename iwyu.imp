@@ -76,6 +76,7 @@
   { include: ["\"Sts1CobcSw/Periphery/Flash.hpp\"",                   "public", "<Sts1CobcSw/Periphery/Flash.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/Fram.hpp\"",                    "public", "<Sts1CobcSw/Periphery/Fram.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/FramEpsSpi.hpp\"",              "public", "<Sts1CobcSw/Periphery/FramEpsSpi.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Periphery/FramLayout.hpp\"",              "public", "<Sts1CobcSw/Periphery/FramLayout.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/FramMock.hpp\"",                "public", "<Sts1CobcSw/Periphery/FramMock.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/PersistentState.hpp\"",         "public", "<Sts1CobcSw/Periphery/PersistentState.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/Rf.hpp\"",                      "public", "<Sts1CobcSw/Periphery/Rf.hpp>", "public"] },
