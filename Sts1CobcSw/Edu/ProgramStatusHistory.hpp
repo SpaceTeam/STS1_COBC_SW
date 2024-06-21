@@ -42,11 +42,13 @@ auto UpdateProgramStatusHistory(ProgramId programId,
                                 ProgramStatus newStatus) -> void;
 }
 
+
 namespace sts1cobcsw
 {
-
 template<>
 inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
-    sizeof(edu::ProgramStatusHistoryEntry);
+    totalSerialSize<decltype(edu::ProgramStatusHistoryEntry::programId),
+                    decltype(edu::ProgramStatusHistoryEntry::startTime),
+                    decltype(edu::ProgramStatusHistoryEntry::status)>;
 
 }
