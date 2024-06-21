@@ -83,7 +83,7 @@ File::File(File && other) noexcept
 
 auto File::operator=(File && other) noexcept -> File &
 {
-    // TODO: Use copy and swap idiom to prevent code duplication
+    // TODO: Use copy and swap idiom to prevent code duplication from move constructor
     if(this != &other and not other.path_.empty())
     {
         auto error = lfs_file_opencfg(

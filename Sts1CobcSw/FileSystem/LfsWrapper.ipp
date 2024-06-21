@@ -18,7 +18,7 @@ auto File::Read(T * t) -> Result<int>
     }
     if(not(static_cast<uint>(openFlags_) & LFS_O_RDONLY))
     {
-        return ErrorCode::invalidParameter;
+        return ErrorCode::unsupportedOperation;
     }
     auto nReadBytes = lfs_file_read(&lfs, &lfsFile_, t, sizeof(T));
     if(nReadBytes >= 0)
@@ -38,7 +38,7 @@ auto File::Write(T const & t) -> Result<int>
     }
     if(not(static_cast<uint>(openFlags_) & LFS_O_WRONLY))
     {
-        return ErrorCode::invalidParameter;
+        return ErrorCode::unsupportedOperation;
     }
     auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, &t, sizeof(T));
     if(nWrittenBytes >= 0)

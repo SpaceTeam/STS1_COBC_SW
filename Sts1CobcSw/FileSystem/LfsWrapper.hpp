@@ -30,6 +30,7 @@ class File;
 [[nodiscard]] auto Open(std::string_view path, int flags) -> Result<File>;
 
 
+// TODO: Consider moving this class to a separate file
 class File
 {
 public:
