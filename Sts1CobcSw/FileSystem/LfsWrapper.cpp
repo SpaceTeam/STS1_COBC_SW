@@ -45,10 +45,11 @@ auto Unmount() -> Result<void>
 }
 
 
-auto Open(std::string_view path, int flags) -> Result<File>
+auto Open(std::string_view path, unsigned int flags) -> Result<File>
 {
     auto file = File();
-    auto error = lfs_file_opencfg(&lfs, &file.lfsFile_, path.data(), flags, &file.lfsFileConfig_);
+    auto error = lfs_file_opencfg(
+        &lfs, &file.lfsFile_, path.data(), static_cast<int>(flags), &file.lfsFileConfig_);
     if(error == 0)
     {
         file.path_ = Path(path.data(), path.size());
@@ -66,8 +67,8 @@ File::File(File && other) noexcept
     {
         return;
     }
-    auto error =
-        lfs_file_opencfg(&lfs, &lfsFile_, other.path_.c_str(), other.openFlags_, &lfsFileConfig_);
+    auto error = lfs_file_opencfg(
+        &lfs, &lfsFile_, other.path_.c_str(), static_cast<int>(other.openFlags_), &lfsFileConfig_);
     if(error == 0)
     {
         path_ = other.path_;
@@ -86,8 +87,11 @@ auto File::operator=(File && other) noexcept -> File &
     // TODO: Use copy and swap idiom to prevent code duplication from move constructor
     if(this != &other and not other.path_.empty())
     {
-        auto error = lfs_file_opencfg(
-            &lfs, &lfsFile_, other.path_.c_str(), other.openFlags_, &lfsFileConfig_);
+        auto error = lfs_file_opencfg(&lfs,
+                                      &lfsFile_,
+                                      other.path_.c_str(),
+                                      static_cast<int>(other.openFlags_),
+                                      &lfsFileConfig_);
         if(error == 0)
         {
             path_ = other.path_;

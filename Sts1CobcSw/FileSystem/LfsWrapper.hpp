@@ -27,7 +27,7 @@ class File;
 
 [[nodiscard]] auto Mount() -> Result<void>;
 [[nodiscard]] auto Unmount() -> Result<void>;
-[[nodiscard]] auto Open(std::string_view path, int flags) -> Result<File>;
+[[nodiscard]] auto Open(std::string_view path, unsigned int flags) -> Result<File>;
 
 
 // FIXME: Make File const-correct (only Write() should be non-const)
@@ -51,15 +51,15 @@ public:
     [[nodiscard]] auto Size() -> Result<int>;
     [[nodiscard]] auto Close() -> Result<void>;
 
-    friend auto Open(std::string_view path, int flags) -> Result<File>;
+    friend auto Open(std::string_view path, unsigned int flags) -> Result<File>;
 
 private:
     // Only allow creation of File class through friend function Open()
     File() = default;
 
     Path path_ = "";
-    int openFlags_ = 0;
     bool isOpen_ = false;
+    unsigned int openFlags_ = 0;
     std::array<Byte, lfsCacheSize> buffer_ = {};
     lfs_file_t lfsFile_ = {};
     lfs_file_config lfsFileConfig_ = {.buffer = buffer_.data()};

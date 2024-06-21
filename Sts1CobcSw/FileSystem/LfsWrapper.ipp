@@ -16,7 +16,7 @@ auto File::Read(T * t) -> Result<int>
     {
         return ErrorCode::fileNotOpen;
     }
-    if(not(static_cast<uint>(openFlags_) & LFS_O_RDONLY))
+    if(not(openFlags_ & LFS_O_RDONLY))
     {
         return ErrorCode::unsupportedOperation;
     }
@@ -36,7 +36,7 @@ auto File::Write(T const & t) -> Result<int>
     {
         return ErrorCode::fileNotOpen;
     }
-    if(not(static_cast<uint>(openFlags_) & LFS_O_WRONLY))
+    if(not(openFlags_ & LFS_O_WRONLY))
     {
         return ErrorCode::unsupportedOperation;
     }
