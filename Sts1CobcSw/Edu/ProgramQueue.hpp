@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Periphery/FramLayout.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
@@ -35,6 +36,8 @@ inline constexpr std::size_t serialSize<edu::QueueEntry> =
 namespace edu
 {
 inline constexpr auto programQueueSize = 20;
+static_assert(programQueueSize * totalSerialSize<QueueEntry> <= fram::EduProgramQueue::size,
+              "Size of EDU program queue exceeds size of FRAM section");
 
 extern std::uint16_t queueIndex;
 extern etl::vector<QueueEntry, programQueueSize> programQueue;
