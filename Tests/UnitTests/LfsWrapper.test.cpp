@@ -20,7 +20,7 @@ TEST_CASE("LfsWrapper")
     auto openResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
     CHECK(openResult.has_value());
 
-    sts1cobcsw::fs::File & writeableFile = openResult.value();
+    auto & writeableFile = openResult.value();
 
     int const number = 123;
     auto writeResult = writeableFile.Write(number);
@@ -37,7 +37,7 @@ TEST_CASE("LfsWrapper")
     openResult = sts1cobcsw::fs::Open(filePath, LFS_O_RDONLY | LFS_O_CREAT);
     CHECK(openResult.has_value());
 
-    sts1cobcsw::fs::File & readableFile = openResult.value();
+    auto & readableFile = openResult.value();
 
     auto sizeResult = readableFile.Size();
     CHECK(sizeResult.has_value());
