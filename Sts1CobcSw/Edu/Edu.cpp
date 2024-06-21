@@ -234,7 +234,7 @@ auto ParseStatusData() -> Result<Status>
     auto statusId = cepDataBuffer[0];
     if(statusId == NoEventData::id)
     {
-        if(cepDataBuffer.size() != serialSize<NoEventData>)
+        if(cepDataBuffer.size() != totalSerialSize<NoEventData>)
         {
             return ErrorCode::invalidLength;
         }
@@ -242,12 +242,12 @@ auto ParseStatusData() -> Result<Status>
     }
     if(statusId == ProgramFinishedData::id)
     {
-        if(cepDataBuffer.size() != serialSize<ProgramFinishedData>)
+        if(cepDataBuffer.size() != totalSerialSize<ProgramFinishedData>)
         {
             return ErrorCode::invalidLength;
         }
         auto programFinishedData = Deserialize<ProgramFinishedData>(
-            Span(cepDataBuffer).first<serialSize<ProgramFinishedData>>());
+            Span(cepDataBuffer).first<totalSerialSize<ProgramFinishedData>>());
         return Status{.statusType = StatusType::programFinished,
                       .programId = programFinishedData.programId,
                       .startTime = programFinishedData.startTime,
@@ -255,12 +255,12 @@ auto ParseStatusData() -> Result<Status>
     }
     if(statusId == ResultsReadyData::id)
     {
-        if(cepDataBuffer.size() != serialSize<ResultsReadyData>)
+        if(cepDataBuffer.size() != totalSerialSize<ResultsReadyData>)
         {
             return ErrorCode::invalidLength;
         }
         auto resultsReadyData = Deserialize<ResultsReadyData>(
-            Span(cepDataBuffer).first<serialSize<ResultsReadyData>>());
+            Span(cepDataBuffer).first<totalSerialSize<ResultsReadyData>>());
         return Status{.statusType = StatusType::resultsReady,
                       .programId = resultsReadyData.programId,
                       .startTime = resultsReadyData.startTime};

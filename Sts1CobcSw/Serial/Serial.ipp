@@ -44,14 +44,14 @@ inline auto SerializeTo(void * destination, T const & t) -> void *
     if constexpr(HasEndianness<T> and endianness != std::endian::native)
     {
         auto data = ReverseBytes(t);
-        std::memcpy(destination, &data, serialSize<T>);
+        std::memcpy(destination, &data, totalSerialSize<T>);
     }
     else
     {
-        std::memcpy(destination, &t, serialSize<T>);
+        std::memcpy(destination, &t, totalSerialSize<T>);
     }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    return static_cast<Byte *>(destination) + serialSize<T>;
+    return static_cast<Byte *>(destination) + totalSerialSize<T>;
 }
 
 
@@ -69,13 +69,13 @@ auto SerializeTo(void * destination, std::array<T, size> const & array) -> void 
 template<std::endian endianness, TriviallySerializable T>
 inline auto DeserializeFrom(void const * source, T * t) -> void const *
 {
-    std::memcpy(t, source, serialSize<T>);
+    std::memcpy(t, source, totalSerialSize<T>);
     if constexpr(HasEndianness<T> and endianness != std::endian::native)
     {
         *t = ReverseBytes(*t);
     }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    return static_cast<Byte const *>(source) + serialSize<T>;
+    return static_cast<Byte const *>(source) + totalSerialSize<T>;
 }
 
 

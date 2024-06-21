@@ -17,7 +17,7 @@ namespace sts1cobcsw
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
 {
     auto gsCommandHeader =
-        Deserialize<GsCommandHeader>(std::span(command).first<serialSize<GsCommandHeader>>());
+        Deserialize<GsCommandHeader>(std::span(command).first<totalSerialSize<GsCommandHeader>>());
 
     DEBUG_PRINT("Header start character : %c\n", gsCommandHeader.startCharacter);
     DEBUG_PRINT("Header commandID       : %" PRIi8 "\n", gsCommandHeader.commandId);
@@ -45,7 +45,7 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
             }
             case CommandId::buildQueue:
             {
-                BuildEduQueue(std::span(command).subspan<serialSize<GsCommandHeader>>());
+                BuildEduQueue(std::span(command).subspan<totalSerialSize<GsCommandHeader>>());
                 return;
             }
             default:
@@ -83,17 +83,17 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
 {
     DEBUG_PRINT("Printing and parsing\n");
 
-    while(queueEntries.size() >= serialSize<edu::QueueEntry> and (not edu::programQueue.full()))
+    while(queueEntries.size() >= totalSerialSize<edu::QueueEntry> and (not edu::programQueue.full()))
     {
         auto entry =
-            Deserialize<edu::QueueEntry>(queueEntries.first<serialSize<edu::QueueEntry>>());
+            Deserialize<edu::QueueEntry>(queueEntries.first<totalSerialSize<edu::QueueEntry>>());
 
         DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", entry.programId.get());
         DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime);
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
         edu::programQueue.push_back(entry);
-        queueEntries = queueEntries.subspan<serialSize<edu::QueueEntry>>();
+        queueEntries = queueEntries.subspan<totalSerialSize<edu::QueueEntry>>();
     }
 }
 
