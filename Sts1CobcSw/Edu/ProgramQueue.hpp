@@ -16,8 +16,7 @@ namespace sts1cobcsw
 {
 namespace edu
 {
-// TODO: Rename to ProgramQueueEntry
-struct QueueEntry
+struct ProgramQueueEntry
 {
     ProgramId programId = ProgramId(0);
     std::int32_t startTime = 0;
@@ -27,25 +26,25 @@ struct QueueEntry
 
 
 template<>
-inline constexpr std::size_t serialSize<edu::QueueEntry> =
-    totalSerialSize<decltype(edu::QueueEntry::programId),
-                    decltype(edu::QueueEntry::startTime),
-                    decltype(edu::QueueEntry::timeout)>;
+inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
+    totalSerialSize<decltype(edu::ProgramQueueEntry::programId),
+                    decltype(edu::ProgramQueueEntry::startTime),
+                    decltype(edu::ProgramQueueEntry::timeout)>;
 
 
 namespace edu
 {
 inline constexpr auto programQueueSize = 20;
-static_assert(programQueueSize * totalSerialSize<QueueEntry> <= fram::EduProgramQueue::size,
+static_assert(programQueueSize * totalSerialSize<ProgramQueueEntry> <= fram::EduProgramQueue::size,
               "Size of EDU program queue exceeds size of FRAM section");
 
 extern std::uint16_t queueIndex;
-extern etl::vector<QueueEntry, programQueueSize> programQueue;
+extern etl::vector<ProgramQueueEntry, programQueueSize> programQueue;
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramQueueEntry * data) -> void const *;
 template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, QueueEntry const & data) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, ProgramQueueEntry const & data) -> void *;
 }
 }

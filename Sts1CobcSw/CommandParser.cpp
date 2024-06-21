@@ -83,18 +83,18 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
 {
     DEBUG_PRINT("Printing and parsing\n");
 
-    while(queueEntries.size() >= totalSerialSize<edu::QueueEntry>
+    while(queueEntries.size() >= totalSerialSize<edu::ProgramQueueEntry>
           and (not edu::programQueue.full()))
     {
-        auto entry =
-            Deserialize<edu::QueueEntry>(queueEntries.first<totalSerialSize<edu::QueueEntry>>());
+        auto entry = Deserialize<edu::ProgramQueueEntry>(
+            queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());
 
         DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", entry.programId.get());
         DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime);
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
         edu::programQueue.push_back(entry);
-        queueEntries = queueEntries.subspan<totalSerialSize<edu::QueueEntry>>();
+        queueEntries = queueEntries.subspan<totalSerialSize<edu::ProgramQueueEntry>>();
     }
 }
 
