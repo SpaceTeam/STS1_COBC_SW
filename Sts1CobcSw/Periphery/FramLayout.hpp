@@ -18,4 +18,13 @@ inline constexpr auto eduProgramStatusHistory = NextSection<50 * 7>(eduProgramQu
 inline constexpr auto testMemory =              NextSection<1000>(eduProgramStatusHistory);
 inline constexpr auto telemetry =               LastSection(testMemory);
 // clang-format on
+
+// Convenient type aliases for easy access to static members of Section<> (begin, end, size)
+using PersistentVariables0 = decltype(persistentVariables0);
+using PersistentVariables1 = decltype(persistentVariables1);
+using PersistentVariables2 = decltype(persistentVariables2);
+using EduProgramQueue = decltype(eduProgramQueue);
+using EduProgramStatusHistory = decltype(eduProgramStatusHistory);
+using TestMemory = decltype(testMemory);
+using Telemetry = decltype(telemetry);
 }
