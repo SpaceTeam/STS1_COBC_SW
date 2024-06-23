@@ -1,4 +1,6 @@
+#include <Sts1CobcSw/FlashStartupTestThread.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
@@ -33,10 +35,16 @@ private:
         if(jedecId.deviceId != flash::correctJedecId.deviceId
            || jedecId.manufacturerId != flash::correctJedecId.manufacturerId)
         {
-            flash::flashIsWorking = false;
+            persistentstate::FlashIsWorking(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         RODOS::AT(RODOS::END_OF_TIME);
     }
 } flashStartupTestThread;
+
+
+auto ResumeFlashStartupTestThread() -> void
+{
+    flashStartupTestThread.resume();
+}
 }

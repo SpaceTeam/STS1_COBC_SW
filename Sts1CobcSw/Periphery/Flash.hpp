@@ -4,6 +4,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
@@ -48,7 +49,7 @@ using PageSpan = std::span<Byte const, pageSize>;
 
 inline constexpr auto correctJedecId = JedecId{.manufacturerId = 0xEF, .deviceId = 0x4021};
 
-extern bool flashIsWorking;
+extern hal::Spi spi;
 
 
 // TODO: Proper error handling/return type

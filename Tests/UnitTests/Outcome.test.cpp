@@ -152,12 +152,12 @@ auto Write(bool shouldSucceed) -> Result<int>
 TEST_CASE("TRY macro")
 {
     // Test failure
-    auto result1 = Write(/*shouldSucceed=*/false);
+    auto result1 = Write(false);
     REQUIRE(result1.has_error());
     REQUIRE(result1.error() == ConversionErrc::emptyString);
 
     // Test success
-    auto result2 = Write(/*shouldSucceed=*/true);
+    auto result2 = Write(true);
     REQUIRE(result2.has_value());
     REQUIRE(result2);
     REQUIRE(result2.value() == 1);

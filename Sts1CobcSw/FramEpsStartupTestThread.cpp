@@ -1,5 +1,7 @@
+#include <Sts1CobcSw/FramEpsStartupTestThread.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
 
@@ -35,7 +37,7 @@ private:
         auto deviceId = fram::ReadDeviceId();
         if(deviceId != fram::correctDeviceId)
         {
-            fram::framIsWorking = false;
+            persistentstate::FramIsWorking(false);
         }
         eps::Initialize();
         (void)eps::Read();
@@ -43,4 +45,10 @@ private:
         RODOS::AT(RODOS::END_OF_TIME);
     }
 } framEpsStartupTestThread;
+
+
+auto ResumeFramEpsStartupTestThread() -> void
+{
+    framEpsStartupTestThread.resume();
+}
 }

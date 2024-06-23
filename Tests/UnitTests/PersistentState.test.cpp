@@ -24,17 +24,17 @@ TEST_CASE("Persistent state getters and setters")
     ps::BackupFirmwareImage(9);
     REQUIRE(ps::BackupFirmwareImage() == 9);
 
-    ps::AntennasShouldBeDeployed(/*value=*/false);
+    ps::AntennasShouldBeDeployed(false);
     REQUIRE(ps::AntennasShouldBeDeployed() == false);
 
-    ps::TxIsOn(/*value=*/false);
+    ps::TxIsOn(false);
     REQUIRE(ps::TxIsOn() == false);
-    ps::TxIsOn(/*value=*/true);
+    ps::TxIsOn(true);
     REQUIRE(ps::TxIsOn() == true);
 
-    ps::EduShouldBePowered(/*value=*/true);
+    ps::EduShouldBePowered(true);
     REQUIRE(ps::EduShouldBePowered() == true);
-    ps::EduShouldBePowered(/*value=*/false);
+    ps::EduShouldBePowered(false);
     REQUIRE(ps::EduShouldBePowered() == false);
 
     ps::UtcOffset(13579);

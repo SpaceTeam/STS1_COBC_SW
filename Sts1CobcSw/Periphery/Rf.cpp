@@ -6,7 +6,6 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -48,6 +47,12 @@ enum class PropertyGroup : std::uint8_t
 };
 
 
+// --- Public globals ---
+
+hal::Spi spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+bool rfIsWorking = true;
+
+
 // --- Private globals ---
 
 // Si4463 commands
@@ -75,7 +80,6 @@ constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 // TODO: Check this and write a good comment
 constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
-auto spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
@@ -86,7 +90,6 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
-bool rfIsWorking = true;
 
 // --- Private function declarations ---
 

@@ -17,6 +17,16 @@ auto txIsOn = true;
 auto eduShouldBePowered = false;
 std::int32_t utcOffset = 0;  // NOLINT(cert-err58-cpp)
 
+// Error counters
+std::uint16_t flashErrorCounter = 0;
+std::uint16_t rfErrorCounter = 0;
+
+// Periphery state
+auto framIsWorking = true;
+auto epsIsWorking = true;
+auto flashIsWorking = true;
+auto rfIsWorking = true;
+
 // TODO: Add thresholds
 
 
@@ -69,6 +79,42 @@ auto UtcOffset() -> std::int32_t
 }
 
 
+auto FlashErrorCounter() -> std::uint16_t
+{
+    return flashErrorCounter;
+}
+
+
+auto RfErrorCounter() -> std::uint16_t
+{
+    return rfErrorCounter;
+}
+
+
+auto EpsIsWorking() -> bool
+{
+    return epsIsWorking;
+}
+
+
+auto FlashIsWorking() -> bool
+{
+    return flashIsWorking;
+}
+
+
+auto FramIsWorking() -> bool
+{
+    return framIsWorking;
+}
+
+
+auto RfIsWorking() -> bool
+{
+    return rfIsWorking;
+}
+
+
 // Setters
 auto NotOkCounter(std::int8_t value) -> void
 {
@@ -109,5 +155,41 @@ auto EduShouldBePowered(bool value) -> void
 auto UtcOffset(std::int32_t value) -> void
 {
     utcOffset = value;
+}
+
+
+auto FlashErrorCounter(std::uint16_t value) -> void
+{
+    flashErrorCounter = value;
+}
+
+
+auto RfErrorCounter(std::uint16_t value) -> void
+{
+    rfErrorCounter = value;
+}
+
+
+auto EpsIsWorking(bool value) -> void
+{
+    epsIsWorking = value;
+}
+
+
+auto FlashIsWorking(bool value) -> void
+{
+    flashIsWorking = value;
+}
+
+
+auto FramIsWorking(bool value) -> void
+{
+    framIsWorking = value;
+}
+
+
+auto RfIsWorking(bool value) -> void
+{
+    rfIsWorking = value;
 }
 }
