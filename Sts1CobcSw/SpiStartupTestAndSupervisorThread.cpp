@@ -15,6 +15,10 @@
 namespace sts1cobcsw
 {
 constexpr auto stackSize = 100U;
+// TODO: Measure how long the startup tests really take to determine the correct timeout
+constexpr auto startupTestTimeout = 100 * RODOS::MILLISECONDS;
+// TODO: Think about how often the supervision should run
+constexpr auto supervisionPeriod = 1 * RODOS::SECONDS;
 
 
 class SpiStartupTestAndSupervisorThread : public RODOS::StaticThread<stackSize>
@@ -34,62 +38,61 @@ private:
 
     void run() override
     {
-        // Wake up startup test threads
-        ResumeFramEpsStartupTestThread();
-        ResumeFlashStartupTestThread();
-        ResumeRfStartupTestThread();
-        while(RODOS::NOW() <= framEpsSpi.TransferEnd() && RODOS::NOW() <= flash::spi.TransferEnd()
-              && RODOS::NOW() <= rf::spi.TransferEnd())
-        {
-        }
+        using RODOS::AT;
+        using RODOS::NOW;
 
-        // Is FRAM/EPS ok?
-        if(RODOS::NOW() > framEpsSpi.TransferEnd())
+        // TODO: Test if this works
+        auto testEnd = NOW() + startupTestTimeout;
+        ResumeFramEpsStartupTestThread();
+        AT(testEnd);
+        if(NOW() >= testEnd)
         {
             persistentstate::FramIsWorking(false);
+            persistentstate::EpsIsWorking(false);
         }
 
-        // Is FLASH ok?
-        if(RODOS::NOW() > flash::spi.TransferEnd())
+        testEnd = NOW() + startupTestTimeout;
+        ResumeFlashStartupTestThread();
+        AT(testEnd);
+        if(NOW() >= testEnd)
         {
-            if(persistentstate::FramIsWorking())
+            persistentstate::FlashIsWorking(false);
+            persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
+        }
+
+        testEnd = NOW() + startupTestTimeout;
+        ResumeRfStartupTestThread();
+        AT(testEnd);
+        if(NOW() >= testEnd)
+        {
+            persistentstate::RfIsWorking(false);
+            persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
+            AT(NOW() + 2 * RODOS::SECONDS);
+            RODOS::hwResetAndReboot();
+        }
+
+        TIME_LOOP(0, supervisionPeriod)
+        {
+            auto timeoutHappened = false;
+            if(NOW() > framEpsSpi.TransferEnd())
             {
+                timeoutHappened = true;
+            }
+            if(NOW() > flash::spi.TransferEnd())
+            {
+                timeoutHappened = true;
                 persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
             }
-            persistentstate::FlashIsWorking(false);
-        }
-
-        // Is RF working?
-        if(RODOS::NOW() > rf::spi.TransferEnd())
-        {
-            if(persistentstate::FramIsWorking())
+            if(NOW() > rf::spi.TransferEnd())
             {
+                timeoutHappened = true;
                 persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
             }
-            RODOS::AT(RODOS::NOW() + 2 * RODOS::SECONDS);
-            RODOS::hwResetAndReboot();
+            if(timeoutHappened)
+            {
+                RODOS::hwResetAndReboot();
+            }
         }
-
-        // Watch over SPI
-        while(RODOS::NOW() <= framEpsSpi.TransferEnd() && RODOS::NOW() <= flash::spi.TransferEnd()
-              && RODOS::NOW() <= rf::spi.TransferEnd())
-        {
-        }
-        if(RODOS::NOW() > framEpsSpi.TransferEnd())
-        {
-            RODOS::hwResetAndReboot();
-        }
-        else if(RODOS::NOW() > flash::spi.TransferEnd())
-        {
-            persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
-            RODOS::hwResetAndReboot();
-        }
-        else if(RODOS::NOW() > rf::spi.TransferEnd())
-        {
-            persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
-            RODOS::hwResetAndReboot();
-        }
-        RODOS::hwResetAndReboot();
     }
 } spiStartupTestAndSupervisorThread;
 
