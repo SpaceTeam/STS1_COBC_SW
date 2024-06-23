@@ -6,7 +6,6 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -48,6 +47,12 @@ enum class PropertyGroup : std::uint8_t
 };
 
 
+// --- Public globals ---
+
+hal::Spi spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+bool rfIsWorking = true;
+
+
 // --- Private globals ---
 
 // Si4463 commands
@@ -84,12 +89,6 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
-
-
-// --- Public globals ---
-
-hal::Spi spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
-bool rfIsWorking = true;
 
 
 // --- Private function declarations ---

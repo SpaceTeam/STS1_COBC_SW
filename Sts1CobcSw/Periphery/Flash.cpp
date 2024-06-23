@@ -1,6 +1,5 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -31,6 +30,12 @@ struct SimpleInstruction
 };
 
 
+// --- Public globals ---
+
+hal::Spi spi =
+    hal::Spi(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
+
+
 // --- Private globals ---
 
 // Baud rate = 48 MHz, largest data transfer = 1 page = 256 bytes -> spiTimeout = 1 ms is enough for
@@ -53,13 +58,6 @@ constexpr auto sectorErase4ByteAddress = 0x21_b;
 
 auto csGpioPin = hal::GpioPin(hal::flashCsPin);
 auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
-
-
-// --- Public globals ---
-
-hal::Spi spi =
-    hal::Spi(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
-bool flashIsWorking = true;
 
 
 // --- Private function declarations ---

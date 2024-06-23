@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/RfStartupTestThread.hpp>
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
@@ -32,7 +33,7 @@ private:
         auto partNumber = rf::ReadPartNumber();
         if(partNumber != rf::correctPartNumber)
         {
-            rf::rfIsWorking = false;
+            persistentstate::RfIsWorking(/*value=*/false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         RODOS::AT(RODOS::END_OF_TIME);

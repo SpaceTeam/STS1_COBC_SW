@@ -50,7 +50,6 @@ using PageSpan = std::span<Byte const, pageSize>;
 inline constexpr auto correctJedecId = JedecId{.manufacturerId = 0xEF, .deviceId = 0x4021};
 
 extern hal::Spi spi;
-extern bool flashIsWorking;
 
 
 // TODO: Proper error handling/return type

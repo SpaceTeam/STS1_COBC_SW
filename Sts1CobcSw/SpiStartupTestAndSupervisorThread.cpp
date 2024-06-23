@@ -34,36 +34,35 @@ private:
 
     void run() override
     {
-        // wake up startup test threads
+        // Wake up startup test threads
         ResumeFramEpsStartupTestThread();
         ResumeFlashStartupTestThread();
         ResumeRfStartupTestThread();
         while(RODOS::NOW() <= framEpsSpi.TransferEnd() && RODOS::NOW() <= flash::spi.TransferEnd()
               && RODOS::NOW() <= rf::spi.TransferEnd())
         {
-            ;
         }
 
-        // is FRAM/EPS ok?
-        if(!fram::framIsWorking || RODOS::NOW() > framEpsSpi.TransferEnd())
+        // Is FRAM/EPS ok?
+        if(RODOS::NOW() > framEpsSpi.TransferEnd())
         {
-            persistentstate::FramEpsIsActive(false);
+            persistentstate::FramIsWorking(false);
         }
 
-        // is FLASH ok?
-        if(!flash::flashIsWorking || RODOS::NOW() > flash::spi.TransferEnd())
+        // Is FLASH ok?
+        if(RODOS::NOW() > flash::spi.TransferEnd())
         {
-            if(persistentstate::FramEpsIsActive())
+            if(persistentstate::FramIsWorking())
             {
                 persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
             }
-            persistentstate::FlashIsActive(false);
+            persistentstate::FlashIsWorking(false);
         }
 
-        // is RF working?
-        if(!rf::rfIsWorking || RODOS::NOW() > rf::spi.TransferEnd())
+        // Is RF working?
+        if(RODOS::NOW() > rf::spi.TransferEnd())
         {
-            if(persistentstate::FramEpsIsActive())
+            if(persistentstate::FramIsWorking())
             {
                 persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
             }
@@ -71,11 +70,10 @@ private:
             RODOS::hwResetAndReboot();
         }
 
-        // watch over SPI
+        // Watch over SPI
         while(RODOS::NOW() <= framEpsSpi.TransferEnd() && RODOS::NOW() <= flash::spi.TransferEnd()
               && RODOS::NOW() <= rf::spi.TransferEnd())
         {
-            ;
         }
         if(RODOS::NOW() > framEpsSpi.TransferEnd())
         {

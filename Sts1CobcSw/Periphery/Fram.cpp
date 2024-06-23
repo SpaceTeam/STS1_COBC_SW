@@ -34,8 +34,6 @@ constexpr auto readDeviceId = 0x9F_b;
 
 auto csGpioPin = hal::GpioPin(hal::framCsPin);
 
-bool framIsWorking = true;
-
 
 // --- Private function declarations ---
 
