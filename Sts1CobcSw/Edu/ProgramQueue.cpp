@@ -8,12 +8,12 @@ using sts1cobcsw::DeserializeFrom;
 using sts1cobcsw::SerializeTo;
 
 
-etl::vector<QueueEntry, programQueueSize> programQueue{};
+etl::vector<ProgramQueueEntry, programQueueSize> programQueue{};
 std::uint16_t queueIndex = 0;
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *
+auto DeserializeFrom(void const * source, ProgramQueueEntry * data) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &(data->programId));
     source = DeserializeFrom<endianness>(source, &(data->startTime));
@@ -22,12 +22,13 @@ auto DeserializeFrom(void const * source, QueueEntry * data) -> void const *
 }
 
 // Explicit template specializations to keep everything in .cpp file
-template auto DeserializeFrom<std::endian::big>(void const *, QueueEntry *) -> void const *;
-template auto DeserializeFrom<std::endian::little>(void const *, QueueEntry *) -> void const *;
+template auto DeserializeFrom<std::endian::big>(void const *, ProgramQueueEntry *) -> void const *;
+template auto DeserializeFrom<std::endian::little>(void const *, ProgramQueueEntry *)
+    -> void const *;
 
 
 template<std::endian endianness>
-auto SerializeTo(void * destination, QueueEntry const & data) -> void *
+auto SerializeTo(void * destination, ProgramQueueEntry const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, data.programId);
     destination = SerializeTo<endianness>(destination, data.startTime);
@@ -36,6 +37,6 @@ auto SerializeTo(void * destination, QueueEntry const & data) -> void *
 }
 
 // Explicit template specializations to keep everything in .cpp file
-template auto SerializeTo<std::endian::big>(void *, QueueEntry const &) -> void *;
-template auto SerializeTo<std::endian::little>(void *, QueueEntry const &) -> void *;
+template auto SerializeTo<std::endian::big>(void *, ProgramQueueEntry const &) -> void *;
+template auto SerializeTo<std::endian::little>(void *, ProgramQueueEntry const &) -> void *;
 }

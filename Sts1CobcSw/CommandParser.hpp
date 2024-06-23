@@ -40,7 +40,7 @@ inline constexpr std::size_t serialSize<GsCommandHeader> =
 // TODO: Choose a proper value for the commandSize. Right now this is just size required by the
 // DispatchCommand() test.
 inline constexpr std::size_t commandSize =
-    serialSize<GsCommandHeader> + 2 * serialSize<edu::QueueEntry>;
+    totalSerialSize<GsCommandHeader> + 2 * totalSerialSize<edu::ProgramQueueEntry>;
 
 
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void;

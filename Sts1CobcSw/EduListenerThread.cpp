@@ -75,7 +75,7 @@ private:
                         case edu::StatusType::programFinished:
                         {
                             // Program has finished
-                            // Find the correspongind queueEntry and update it, then resume edu
+                            // Find the correspongind queue entry and update it, then resume EDU
                             // queue thread
                             if(status.exitCode == 0)
                             {

@@ -131,7 +131,7 @@ auto DoReadFrom([[maybe_unused]] Address address,
 
 namespace ram
 {
-std::array<Byte, storageSize> storage{};
+std::array<Byte, memorySize> memory{};
 
 
 auto SetAllDoFunctions() -> void
@@ -166,7 +166,7 @@ auto DoWriteTo(Address address,
                std::size_t nBytes,
                [[maybe_unused]] std::int64_t timeout) -> void
 {
-    std::memcpy(storage.data() + address, data, nBytes);
+    std::memcpy(memory.data() + address, data, nBytes);
 }
 
 
@@ -175,7 +175,7 @@ auto DoReadFrom(Address address,
                 std::size_t nBytes,
                 [[maybe_unused]] std::int64_t timeout) -> void
 {
-    std::memcpy(data, storage.data() + address, nBytes);
+    std::memcpy(data, memory.data() + address, nBytes);
 }
 }
 }

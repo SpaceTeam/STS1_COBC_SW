@@ -45,8 +45,11 @@ template<TriviallySerializable T>
 inline constexpr std::size_t serialSize<T> = sizeof(T);
 
 template<typename T, std::size_t size>
+    requires(serialSize<T> != 0)
 inline constexpr std::size_t serialSize<std::array<T, size>> = serialSize<T> * size;
 
+// Prefer using totalSerialSize<> over serialSize<> whenever possible since it ensures that the size
+// is not 0
 template<typename... Ts>
     requires((serialSize<Ts> != 0) and ...)
 inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
