@@ -42,7 +42,7 @@ CheckOptions:
     value: 'true'
 # Prefer using enum classes with 2 values for parameters instead of bools
   - key: 'bugprone-argument-comment.CommentBoolLiterals'
-    value: 'true'
+    value: 'false'
   - key: 'bugprone-misplaced-widening-cast.CheckImplicitCasts'
     value: 'true'
   - key: 'bugprone-sizeof-expression.WarnOnSizeOfIntegerExpression'

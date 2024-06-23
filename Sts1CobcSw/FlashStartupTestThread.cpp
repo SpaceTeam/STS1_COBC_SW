@@ -35,7 +35,7 @@ private:
         if(jedecId.deviceId != flash::correctJedecId.deviceId
            || jedecId.manufacturerId != flash::correctJedecId.manufacturerId)
         {
-            persistentstate::FlashIsWorking(/*value=*/false);
+            persistentstate::FlashIsWorking(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         RODOS::AT(RODOS::END_OF_TIME);

@@ -37,7 +37,7 @@ private:
         auto deviceId = fram::ReadDeviceId();
         if(deviceId != fram::correctDeviceId)
         {
-            persistentstate::FramIsWorking(/*value=*/false);
+            persistentstate::FramIsWorking(false);
         }
         eps::Initialize();
         (void)eps::Read();

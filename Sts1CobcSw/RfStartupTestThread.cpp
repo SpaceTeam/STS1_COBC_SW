@@ -33,7 +33,7 @@ private:
         auto partNumber = rf::ReadPartNumber();
         if(partNumber != rf::correctPartNumber)
         {
-            persistentstate::RfIsWorking(/*value=*/false);
+            persistentstate::RfIsWorking(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         RODOS::AT(RODOS::END_OF_TIME);

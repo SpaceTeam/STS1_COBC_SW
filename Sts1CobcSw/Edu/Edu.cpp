@@ -90,7 +90,7 @@ auto Initialize() -> void
 
 auto TurnOn() -> void
 {
-    persistentstate::EduShouldBePowered(/*value=*/true);
+    persistentstate::EduShouldBePowered(true);
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
@@ -101,7 +101,7 @@ auto TurnOn() -> void
 
 auto TurnOff() -> void
 {
-    persistentstate::EduShouldBePowered(/*value=*/false);
+    persistentstate::EduShouldBePowered(false);
     eduEnableGpioPin.Reset();
     hal::Deinitialize(&uart);
 }
@@ -109,7 +109,7 @@ auto TurnOff() -> void
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    auto errorCode = fs::deprecated::OpenProgramFile(data.programId, /* flags=*/0);
+    auto errorCode = fs::deprecated::OpenProgramFile(data.programId, 0);
     DEBUG_PRINT("Pretending to open the file ...\n");
     if(errorCode != 0)
     {
