@@ -21,6 +21,9 @@ constexpr auto startupTestTimeout = 100 * RODOS::MILLISECONDS;
 constexpr auto supervisionPeriod = 1 * RODOS::SECONDS;
 
 
+auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool;
+
+
 class SpiStartupTestAndSupervisorThread : public RODOS::StaticThread<stackSize>
 {
 public:
@@ -42,28 +45,20 @@ private:
         using RODOS::NOW;
 
         // TODO: Test if this works
-        auto testEnd = NOW() + startupTestTimeout;
-        ResumeFramEpsStartupTestThread();
-        AT(testEnd);
-        if(NOW() >= testEnd)
+        auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
+        if(not testWasSuccessful)
         {
             persistentstate::FramIsWorking(false);
             persistentstate::EpsIsWorking(false);
         }
-
-        testEnd = NOW() + startupTestTimeout;
-        ResumeFlashStartupTestThread();
-        AT(testEnd);
-        if(NOW() >= testEnd)
+        testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
+        if(not testWasSuccessful)
         {
             persistentstate::FlashIsWorking(false);
             persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
         }
-
-        testEnd = NOW() + startupTestTimeout;
-        ResumeRfStartupTestThread();
-        AT(testEnd);
-        if(NOW() >= testEnd)
+        testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
+        if(not testWasSuccessful)
         {
             persistentstate::RfIsWorking(false);
             persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
@@ -100,5 +95,14 @@ private:
 auto ResumeSpiStartupTestAndSupervisorThread() -> void
 {
     spiStartupTestAndSupervisorThread.resume();
+}
+
+
+auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool
+{
+    auto testEnd = RODOS::NOW() + startupTestTimeout;
+    startupTestThreadResumeFuntion();
+    RODOS::AT(testEnd);
+    return RODOS::NOW() <= testEnd;
 }
 }
