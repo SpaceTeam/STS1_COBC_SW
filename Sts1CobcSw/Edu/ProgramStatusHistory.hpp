@@ -3,12 +3,15 @@
 
 #include <Sts1CobcSw/Periphery/FramLayout.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
 // clang-format off
 #include <cstdint>
 // ringbuffer.h does not include <cstdint> even though it requires it
 #include <rodos/support/support-libs/ringbuffer.h>
 // clang-format on
+
+#include <cstddef>
 
 
 namespace sts1cobcsw

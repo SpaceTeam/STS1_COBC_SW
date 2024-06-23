@@ -16,7 +16,7 @@ inline constexpr auto FirstSection() -> Section<0, size>
 
 template<Size newSize, Address begin, Size size>
 inline constexpr auto NextSection(Section<begin, size> previousSection)
-    -> Section<previousSection.end, newSize>
+    -> Section<decltype(previousSection)::end, newSize>
 {
     static_assert(newSize <= memorySize, "Section does not fit in memory");
     static_assert(previousSection.end <= memorySize - newSize, "Section does not fit in memory");
@@ -26,7 +26,7 @@ inline constexpr auto NextSection(Section<begin, size> previousSection)
 
 template<Address begin, Size size>
 inline constexpr auto LastSection(Section<begin, size> previousSection)
-    -> Section<previousSection.end, memorySize - previousSection.end>
+    -> Section<decltype(previousSection)::end, memorySize - decltype(previousSection)::end>
 {
     static_assert(previousSection.end < memorySize, "No space left for last section");
     return {};
