@@ -30,9 +30,9 @@ auto Sync(lfs_config const * config) -> int;
 
 constexpr auto pageSize = 256;
 constexpr auto sectorSize = 4 * 1024;
-constexpr auto storageSize = 128 * 1024 * 1024;
+constexpr auto memorySize = 128 * 1024 * 1024;
 
-auto storage = std::vector<Byte>();
+auto memory = std::vector<Byte>();
 auto readBuffer = std::array<Byte, pageSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, pageSize>{};
@@ -45,7 +45,7 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read_size = pageSize,
                                         .prog_size = pageSize,
                                         .block_size = sectorSize,
-                                        .block_count = storageSize / sectorSize,
+                                        .block_count = memorySize / sectorSize,
                                         .block_cycles = 200,
                                         .cache_size = readBuffer.size(),
                                         .lookahead_size = lookaheadBuffer.size(),
@@ -60,7 +60,7 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
 
 auto Initialize() -> void
 {
-    storage.resize(storageSize, 0xFF_b);  // NOLINT(*magic-numbers*)
+    memory.resize(memorySize, 0xFF_b);  // NOLINT(*magic-numbers*)
 }
 
 
@@ -71,7 +71,7 @@ auto Read(lfs_config const * config,
           lfs_size_t size) -> int
 {
     auto start = static_cast<int>(blockNo * config->block_size + offset);
-    std::copy_n(storage.begin() + start, size, static_cast<Byte *>(buffer));
+    std::copy_n(memory.begin() + start, size, static_cast<Byte *>(buffer));
     return 0;
 }
 
@@ -82,7 +82,7 @@ auto Program(lfs_config const * config,
              lfs_size_t size) -> int
 {
     auto start = static_cast<int>(blockNo * config->block_size + offset);
-    std::copy_n(static_cast<Byte const *>(buffer), size, storage.begin() + start);
+    std::copy_n(static_cast<Byte const *>(buffer), size, memory.begin() + start);
     return 0;
 }
 
@@ -90,7 +90,7 @@ auto Program(lfs_config const * config,
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 {
     auto start = static_cast<int>(blockNo * config->block_size);
-    std::fill_n(storage.begin() + start, config->block_size, 0xFF_b);  // NOLINT(*magic-numbers*)
+    std::fill_n(memory.begin() + start, config->block_size, 0xFF_b);  // NOLINT(*magic-numbers*)
     return 0;
 }
 

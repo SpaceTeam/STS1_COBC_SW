@@ -53,7 +53,7 @@ TEST_CASE("Mocked functions do nothing by default")
 TEST_CASE("Mocking FRAM in RAM")
 {
     fram::ram::SetAllDoFunctions();
-    fram::ram::storage.fill(0x00_b);
+    fram::ram::memory.fill(0x00_b);
 
     fram::Initialize();
     auto deviceId = fram::ReadDeviceId();
@@ -61,7 +61,7 @@ TEST_CASE("Mocking FRAM in RAM")
     auto actualBaudRate = fram::ActualBaudRate();
     CHECK(actualBaudRate == 6'000'000);
 
-    auto address = GENERATE(take(1, random(0U, fram::ram::storageSize - 10)));
+    auto address = GENERATE(take(1, random(0U, fram::ram::memorySize - 10)));
 
     auto readData = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
     fram::ReadFrom(address, Span(&readData), 0);
@@ -69,10 +69,10 @@ TEST_CASE("Mocking FRAM in RAM")
 
     auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
     fram::WriteTo(address, Span(writeData), 0);
-    CHECK(fram::ram::storage[address] == writeData[0]);
-    CHECK(fram::ram::storage[address + 1] == writeData[1]);
-    CHECK(fram::ram::storage[address + 2] == writeData[2]);
-    CHECK(fram::ram::storage[address + 3] == writeData[3]);
+    CHECK(fram::ram::memory[address] == writeData[0]);
+    CHECK(fram::ram::memory[address + 1] == writeData[1]);
+    CHECK(fram::ram::memory[address + 2] == writeData[2]);
+    CHECK(fram::ram::memory[address + 3] == writeData[3]);
 
     readData = fram::ReadFrom<writeData.size()>(address, 0);
     CHECK(readData == writeData);
