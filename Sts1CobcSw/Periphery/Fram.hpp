@@ -13,11 +13,12 @@ namespace sts1cobcsw::fram
 {
 // NOLINTNEXTLINE(*magic-numbers)
 using DeviceId = std::array<Byte, 9>;
-// TODO: Use a strong typedef or create class that ensures, that the address is only 20 bits long
+// TODO: Use a strong typedef
 using Address = std::uint32_t;
+using Size = std::uint32_t;
 
 
-inline constexpr std::uint32_t memorySize = 1024 * 1024;
+inline constexpr Size memorySize = 1024 * 1024;
 inline constexpr auto correctDeviceId =
     DeviceId{0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b};
 
