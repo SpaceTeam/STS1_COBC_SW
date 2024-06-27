@@ -45,6 +45,16 @@ private:
         PRINTF("Device state: 0x%02x 0x%02x\n", deviceState[0], deviceState[1]);
 
         PRINTF("\n");
+        auto functionInfo = rf::ReadFunctionInfo();
+        PRINTF("Function info: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+               functionInfo[0],
+               functionInfo[1],
+               functionInfo[2],
+               functionInfo[3],
+               functionInfo[4],
+               functionInfo[5]);
+
+        PRINTF("\n");
         auto partNumber = rf::ReadPartNumber();
         PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, rf::correctPartNumber);
         Check(partNumber == rf::correctPartNumber);
