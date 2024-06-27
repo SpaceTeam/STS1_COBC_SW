@@ -16,6 +16,7 @@
 
 #include <array>
 #include <bit>
+#include <cinttypes>
 #include <cstddef>
 
 
@@ -329,6 +330,8 @@ auto InitializeGpiosAndSpi() -> void
 
     constexpr auto baudrate = 6'000'000;
     Initialize(&spi, baudrate);
+    auto actualBaudrate = spi.BaudRate();
+    DEBUG_PRINT("Actual baudrate = %" PRIi32 "\n", actualBaudrate);
 
     // Enable Si4463 and wait for PoR to finish
     AT(NOW() + porCircuitSettleDelay);
