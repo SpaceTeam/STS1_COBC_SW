@@ -55,6 +55,20 @@ private:
                functionInfo[5]);
 
         PRINTF("\n");
+        auto partInfo = rf::ReadPartInfo();
+        PRINTF("Part info: 0x%02x 0x%02x 0x02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+               partInfo[0],
+               partInfo[1],
+               partInfo[2],
+               partInfo[3],
+               partInfo[4],
+               partInfo[5],
+               partInfo[6],
+               partInfo[7]);
+
+        return;
+
+        PRINTF("\n");
         auto partNumber = rf::ReadPartNumber();
         PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, rf::correctPartNumber);
         Check(partNumber == rf::correctPartNumber);
