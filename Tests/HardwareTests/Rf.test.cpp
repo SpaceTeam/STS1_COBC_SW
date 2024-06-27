@@ -37,13 +37,18 @@ private:
 
         PRINTF("\nRF test\n\n");
 
-        rf::Initialize(rf::TxType::morse);
+        rf::Initialize(rf::TxType::packet);
         PRINTF("RF module initialized\n");
 
         PRINTF("\n");
         auto partNumber = rf::ReadPartNumber();
         PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, rf::correctPartNumber);
         Check(partNumber == rf::correctPartNumber);
+
+        PRINTF("\n");
+        PRINTF("Send 'Hello, world!'\n");
+        auto message = std::array{"Hello, world!"};
+        rf::Send(message.data(), message.size());
 
         // Here comes the rest of the RF test
     }
