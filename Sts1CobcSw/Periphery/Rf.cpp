@@ -19,6 +19,7 @@
 
 #include <array>
 #include <bit>
+#include <cinttypes>
 #include <cstddef>
 
 
