@@ -144,6 +144,12 @@ auto ReadPartNumber() -> std::uint16_t
 }
 
 
+auto ReadPartInfo() -> std::array<Byte, 8>
+{
+    return SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
+}
+
+
 auto ReadFunctionInfo() -> std::array<Byte, 6>
 {
     return SendCommand<6>(Span(cmdFuncInfo));
