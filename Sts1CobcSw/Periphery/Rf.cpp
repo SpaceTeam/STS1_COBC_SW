@@ -172,9 +172,10 @@ auto SetTxType(TxType txType) -> void
 
 // TODO: Do we need to clear all FIFOs here, should be just TX FIFO
 // TODO: Refactor (issue #226)
+// TODO: Replace std::uint8_t const * with void const *
 auto Send(std::uint8_t const * data, std::size_t length) -> void
 {
-    auto dataIndex = 0;
+    // TODO: Acc. the datasheet "fifo hardware does not need to be reset prior to use".
     ClearFifos();
 
     // Set TX Data Length
@@ -188,19 +189,19 @@ auto Send(std::uint8_t const * data, std::size_t length) -> void
     // Fill the TX FIFO with 60 bytes each "round"
     static constexpr auto nFillBytes = 60;
     auto almostEmptyInterruptEnabled = false;
-
     // Property index for packet handler interrupts
     static constexpr auto iIntCtlPhEnable = 0x01_b;
 
     // While the packet is longer than a single fill round, wait for the almost empty interrupt,
     // afterwards for the packet sent interrupt
+    auto dataIndex = 0U;
     while(length - dataIndex > nFillBytes)
     {
         // Enable the almost empty interrupt in the first round
         if(not almostEmptyInterruptEnabled)
         {
             // TODO: Setting interrupts could be put in a function
-            static constexpr auto txFifoAlmostEmptyInterrupt = 0b00000010_b;
+            static constexpr auto txFifoAlmostEmptyInterrupt = 0b0000'0010_b;
             SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(txFifoAlmostEmptyInterrupt));
             almostEmptyInterruptEnabled = true;
         }
@@ -219,7 +220,7 @@ auto Send(std::uint8_t const * data, std::size_t length) -> void
     }
 
     // Enable packet sent interrupt
-    static constexpr auto packetSentInterrupt = 0b00100000_b;
+    static constexpr auto packetSentInterrupt = 0b0010'0000_b;
     SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(packetSentInterrupt));
 
     ClearInterrupts();
@@ -919,6 +920,7 @@ inline auto SetProperties(PropertyGroup propertyGroup,
 auto ClearTxFifo() -> void
 {
     static constexpr auto resetTxFifo = 0b01_b;
+    // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
     SendCommand(Span({cmdFifoInfo, resetTxFifo}));
 }
 
@@ -926,6 +928,7 @@ auto ClearTxFifo() -> void
 auto ClearRxFifo() -> void
 {
     static constexpr auto resetRxFifo = 0b10_b;
+    // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
     SendCommand(Span({cmdFifoInfo, resetRxFifo}));
 }
 
@@ -937,9 +940,10 @@ auto ClearFifos() -> void
 }
 
 
+// Clear all pending interrupts
 auto ClearInterrupts() -> void
 {
-    // Clears ALL pending interrupts
+    // FIXME: Acc. the datasheet this command has a 9-byte answer. Why does this work?
     SendCommand(Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
 }
 
@@ -989,6 +993,7 @@ auto StartTx() -> void
     static constexpr auto txLen = std::array{0x00_b, 0x00_b};
     static constexpr auto txDelay = 0x00_b;
     static constexpr auto numRepeat = 0x00_b;
+    // FIXME: Acc. the datasheet this command consists of only 5 bytes. Why does this work?
     SendCommand(Span(FlatArray(cmdStartTx, channel, condition, txLen, txDelay, numRepeat)));
 }
 }
