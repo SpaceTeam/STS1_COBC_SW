@@ -965,6 +965,7 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
         hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
     }
     csGpioPin.Set();
+    DEBUG_PRINT("End of SendCommand<>();\n");
     return answer;
 }
 
