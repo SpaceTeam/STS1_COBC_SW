@@ -980,6 +980,7 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 auto WaitForCts() -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
+    auto const pollingDelay = 50 * MICROSECONDS;
     do
     {
         csGpioPin.Reset();
@@ -991,6 +992,7 @@ auto WaitForCts() -> void
         {
             break;
         }
+        AT(NOW() + pollingDelay);
     } while(true);
     // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
     // RF code
