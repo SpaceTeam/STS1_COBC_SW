@@ -116,7 +116,7 @@ auto ClearRxFifo() -> void;
 auto ClearFifos() -> void;
 auto ClearInterrupts() -> void;
 auto EnterStandby() -> void;
-auto WriteFifo(std::uint8_t const * data, std::size_t length) -> void;
+auto WriteFifo(void const * data, std::size_t nBytes) -> void;
 auto StartTx() -> void;
 
 
@@ -173,18 +173,17 @@ auto SetTxType(TxType txType) -> void
 
 // TODO: Do we need to clear all FIFOs here, should be just TX FIFO
 // TODO: Refactor (issue #226)
-// TODO: Replace std::uint8_t const * with void const *
-auto Send(std::uint8_t const * data, std::size_t length) -> void
+auto Send(void const * data, std::size_t nBytes) -> void
 {
     // TODO: Acc. the datasheet "fifo hardware does not need to be reset prior to use".
     ClearFifos();
 
     // Set TX Data Length
     // TODO: Check if we can just set the length in START_TX
-    // TODO: Use Deserialize() for length bytes, but length should then be uint16_t
+    // TODO: Use Deserialize(), but length should then be uint16_t
     static constexpr auto iPktField1Length = 0x0D_b;
-    auto lengthUpperBits = static_cast<Byte>(length >> 8);
-    auto lengthLowerBits = static_cast<Byte>(length);
+    auto lengthUpperBits = static_cast<Byte>(nBytes >> CHAR_BIT);
+    auto lengthLowerBits = static_cast<Byte>(nBytes);
     SetProperties(PropertyGroup::pkt, iPktField1Length, Span({lengthUpperBits, lengthLowerBits}));
 
     // Fill the TX FIFO with 60 bytes each "round"
@@ -196,7 +195,7 @@ auto Send(std::uint8_t const * data, std::size_t length) -> void
     // While the packet is longer than a single fill round, wait for the almost empty interrupt,
     // afterwards for the packet sent interrupt
     auto dataIndex = 0U;
-    while(length - dataIndex > nFillBytes)
+    while(nBytes - dataIndex > nFillBytes)
     {
         // Enable the almost empty interrupt in the first round
         if(not almostEmptyInterruptEnabled)
@@ -208,7 +207,8 @@ auto Send(std::uint8_t const * data, std::size_t length) -> void
         }
 
         // Write nFillBytes bytes to the TX FIFO
-        WriteFifo(data + dataIndex, nFillBytes);
+        // NOLINTNEXTLINE(*pointer-arithmetic)
+        WriteFifo(static_cast<Byte const *>(data) + dataIndex, nFillBytes);
         dataIndex += nFillBytes;
         ClearInterrupts();
         StartTx();
@@ -227,7 +227,8 @@ auto Send(std::uint8_t const * data, std::size_t length) -> void
     ClearInterrupts();
 
     // Write the rest of the data
-    WriteFifo(data + dataIndex, length - dataIndex);
+    // NOLINTNEXTLINE(*pointer-arithmetic)
+    WriteFifo(static_cast<Byte const *>(data) + dataIndex, nBytes - dataIndex);
 
     StartTx();
 
@@ -957,13 +958,13 @@ auto EnterStandby() -> void
 
 
 // TODO: Refactor (issue #226)
-auto WriteFifo(std::uint8_t const * data, std::size_t length) -> void
+auto WriteFifo(void const * data, std::size_t nBytes) -> void
 {
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
     auto buf = std::to_array<std::uint8_t>({0x66});
     spi.write(std::data(buf), std::size(buf));
-    spi.write(data, length);
+    spi.write(data, nBytes);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
 
