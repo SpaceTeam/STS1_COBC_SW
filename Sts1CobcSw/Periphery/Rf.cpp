@@ -386,7 +386,16 @@ auto PowerUp() -> void
 
 auto Configure(TxType txType) -> void
 {
-    SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
+    auto answer = SendCommand<7>(
+        Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
+    DEBUG_PRINT("answer = %02x %02x %02x %02x %02x %02x %02x\n",
+                answer[0],
+                answer[1],
+                answer[2],
+                answer[3],
+                answer[4],
+                answer[5],
+                answer[6]);
 
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
@@ -916,13 +925,21 @@ auto Configure(TxType txType) -> void
     static constexpr auto nirqConfig = 0x27_b;
     // SDO is still used as SDO
     static constexpr auto sdoConfig = 0x0B_b;
-    SendCommand(Span({cmdGpioPinCfg,
-                      gpio0Config,
-                      gpio1Config,
-                      gpio2Config,
-                      gpio3Config,
-                      nirqConfig,
-                      sdoConfig}));
+    answer = SendCommand<7>(Span({cmdGpioPinCfg,
+                                  gpio0Config,
+                                  gpio1Config,
+                                  gpio2Config,
+                                  gpio3Config,
+                                  nirqConfig,
+                                  sdoConfig}));
+    DEBUG_PRINT("answer = %02x %02x %02x %02x %02x %02x %02x\n",
+                answer[0],
+                answer[1],
+                answer[2],
+                answer[3],
+                answer[4],
+                answer[5],
+                answer[6]);
 
     // Frequency adjust (stolen from Arduino demo code)
     static constexpr auto globalXoTuneUpdated = 0x62_b;
