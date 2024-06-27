@@ -114,7 +114,7 @@ auto ClearRxFifo() -> void;
 auto ClearFifos() -> void;
 auto ClearInterrupts() -> void;
 auto EnterStandby() -> void;
-auto WriteFifo(void const * data, std::size_t nBytes) -> void;
+auto WriteToFifo(std::span<Byte const> data) -> void;
 auto StartTx() -> void;
 
 
@@ -194,6 +194,7 @@ auto Send(void const * data, std::size_t nBytes) -> void
     // While the packet is longer than a single fill round, wait for the almost empty interrupt,
     // afterwards for the packet sent interrupt
     auto dataIndex = 0U;
+    auto dataSpan = std::span(static_cast<Byte const *>(data), nBytes);
     while(nBytes - dataIndex > nFillBytes)
     {
         // Enable the almost empty interrupt in the first round
@@ -207,7 +208,7 @@ auto Send(void const * data, std::size_t nBytes) -> void
 
         // Write nFillBytes bytes to the TX FIFO
         // NOLINTNEXTLINE(*pointer-arithmetic)
-        WriteFifo(static_cast<Byte const *>(data) + dataIndex, nFillBytes);
+        WriteToFifo(dataSpan.subspan(dataIndex, nFillBytes));
         dataIndex += nFillBytes;
         ClearInterrupts();
         StartTx();
@@ -227,7 +228,7 @@ auto Send(void const * data, std::size_t nBytes) -> void
 
     // Write the rest of the data
     // NOLINTNEXTLINE(*pointer-arithmetic)
-    WriteFifo(static_cast<Byte const *>(data) + dataIndex, nBytes - dataIndex);
+    WriteToFifo(dataSpan.subspan(dataIndex));
 
     StartTx();
 
@@ -937,27 +938,28 @@ auto EnterStandby() -> void
 
 
 // TODO: Refactor (issue #226)
-auto WriteFifo(void const * data, std::size_t nBytes) -> void
+auto WriteToFifo(std::span<Byte const> data) -> void
 {
+    // TODO: Choose proper timeout value
+    static constexpr auto timeout = 10 * RODOS::MILLISECONDS;
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
-    auto buf = std::to_array<std::uint8_t>({0x66});
-    spi.write(std::data(buf), std::size(buf));
-    spi.write(data, nBytes);
+    WriteTo(&spi, Span(0x66), timeout);
+    WriteTo(&spi, data, timeout);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
 
-    auto cts = std::to_array<std::uint8_t>({0x00, 0x00});
-    auto req = std::to_array<std::uint8_t>({0x44, 0x00});
+    auto cts = 0x00_b;
     do
     {
         AT(NOW() + 20 * MICROSECONDS);
         csGpioPin.Reset();
         AT(NOW() + 20 * MICROSECONDS);
-        spi.writeRead(std::data(req), std::size(req), std::data(cts), std::size(cts));
+        WriteTo(&spi, Span(0x44), timeout);
+        hal::ReadFrom(&spi, Span(&cts), spiTimeout);
         AT(NOW() + 2 * MICROSECONDS);
         csGpioPin.Set();
-    } while(cts[1] != 0xFF);
+    } while(cts != 0xFF_b);
 }
 
 
