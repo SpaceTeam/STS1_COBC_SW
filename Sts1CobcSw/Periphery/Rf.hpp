@@ -26,6 +26,7 @@ extern bool rfIsWorking;
 
 auto Initialize(TxType txType) -> void;
 auto ReadPartNumber() -> std::uint16_t;
+auto ReadFunctionInfo() -> std::array<Byte, 6>;
 auto ReadDeviceState() -> std::array<Byte, 2>;
 auto SetTxType(TxType txType) -> void;
 auto Send(void const * data, std::size_t nBytes) -> void;
