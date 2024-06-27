@@ -7,17 +7,16 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
 #include <bit>
 #include <cstddef>
-#include <span>
 
 
 namespace sts1cobcsw::rf
@@ -115,6 +114,7 @@ auto ClearFifos() -> void;
 auto ClearInterrupts() -> void;
 auto EnterStandby() -> void;
 auto WriteToFifo(std::span<Byte const> data) -> void;
+auto ReadFromFifo(std::span<Byte> data) -> void;
 auto StartTx() -> void;
 
 
@@ -246,6 +246,66 @@ auto Send(void const * data, std::size_t nBytes) -> void
     }
 
     EnterStandby();
+}
+
+
+auto RecieveTestData() -> std::array<Byte, maxRxBytes>
+{
+    // auto sendBuffer = std::array<std::uint8_t, 32>{};
+
+    ClearFifos();
+
+    // Enable RX FiFo Almost Full Interrupt
+    // sendBuffer[0] = 0x11;
+    // sendBuffer[1] = 0x01;
+    // sendBuffer[2] = 0x01;
+    // sendBuffer[3] = 0x01;
+    // sendBuffer[4] = 0b0000'0001;
+    SendCommand(Span({0x11_b, 0x01_b, 0x01_b, 0x01_b, 0b0000'0001_b}));
+
+    ClearInterrupts();
+
+    // Enter RX Mode
+    // sendBuffer[0] = 0x32;
+    // sendBuffer[1] = 0x00;  // "Channel 0"
+    // sendBuffer[2] = 0x00;  // Start RX now
+    // sendBuffer[3] = 0x00;  // RX Length = 0
+    // sendBuffer[4] = 0x00;
+    // sendBuffer[5] = 0x00;  // Remain in RX state on preamble detection timeout
+    // sendBuffer[6] = 0x00;  // Do nothing on RX packet valid (we'll never enter this state)
+    // sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
+    SendCommand(Span({0x32_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
+
+    // Wait for RX FIFO Almost Full Interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
+
+    DEBUG_PRINT("Got RX FIFO Almost Full Interrupt\n");
+
+    auto rxBuffer = std::array<Byte, maxRxBytes>{};
+    static constexpr auto chunkSize = 48;
+    ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
+
+    RODOS::PRINTF("Retrieved first %d Byte from FIFO\n", chunkSize);
+
+    ClearInterrupts();
+
+    // Wait for RX FIFO Almost Full Interrupt
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+    }
+
+    RODOS::PRINTF("Got RX FIFO Almost Full Interrupt\n");
+
+    ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
+
+    EnterStandby();
+    ClearInterrupts();
+
+    return rxBuffer;
 }
 
 
@@ -940,12 +1000,10 @@ auto EnterStandby() -> void
 // TODO: Refactor (issue #226)
 auto WriteToFifo(std::span<Byte const> data) -> void
 {
-    // TODO: Choose proper timeout value
-    static constexpr auto timeout = 10 * RODOS::MILLISECONDS;
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
-    WriteTo(&spi, Span(0x66), timeout);
-    WriteTo(&spi, data, timeout);
+    WriteTo(&spi, Span(0x66), spiTimeout);
+    WriteTo(&spi, data, spiTimeout);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
 
@@ -955,11 +1013,25 @@ auto WriteToFifo(std::span<Byte const> data) -> void
         AT(NOW() + 20 * MICROSECONDS);
         csGpioPin.Reset();
         AT(NOW() + 20 * MICROSECONDS);
-        WriteTo(&spi, Span(0x44), timeout);
+        WriteTo(&spi, Span(0x44), spiTimeout);
         hal::ReadFrom(&spi, Span(&cts), spiTimeout);
         AT(NOW() + 2 * MICROSECONDS);
         csGpioPin.Set();
     } while(cts != 0xFF_b);
+}
+
+
+auto ReadFromFifo(std::span<Byte> data) -> void
+{
+    csGpioPin.Reset();
+    AT(NOW() + 20 * MICROSECONDS);
+    // auto buf = std::to_array<std::uint8_t>({0x77});
+    // spi.write(std::data(buf), std::size(buf));
+    WriteTo(&spi, Span(0x77_b), spiTimeout);
+    // spi.read(data, length);
+    ReadFrom(&spi, data, spiTimeout);
+    AT(NOW() + 2 * MICROSECONDS);
+    csGpioPin.Set();
 }
 
 
