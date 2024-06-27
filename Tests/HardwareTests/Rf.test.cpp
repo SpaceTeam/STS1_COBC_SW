@@ -41,14 +41,19 @@ private:
         PRINTF("RF module initialized\n");
 
         PRINTF("\n");
+        auto deviceState = rf::ReadDeviceState();
+        PRINTF("Device state: 0x%02x 0x%02x\n", deviceState[0], deviceState[1]);
+
+        PRINTF("\n");
         auto partNumber = rf::ReadPartNumber();
         PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, rf::correctPartNumber);
         Check(partNumber == rf::correctPartNumber);
 
         PRINTF("\n");
-        PRINTF("Send 'Hello, world!'\n");
+        PRINTF("Sending 'Hello, world!'...\n");
         auto message = std::array{"Hello, world!"};
         rf::Send(message.data(), message.size());
+        PRINTF("  done\n");
 
         // Here comes the rest of the RF test
     }
