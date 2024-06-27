@@ -1027,18 +1027,7 @@ auto WriteToFifo(std::span<Byte const> data) -> void
     WriteTo(&rfSpi, data, spiTimeout);
     RODOS::AT(RODOS::NOW() + 2 * RODOS::MICROSECONDS);
     csGpioPin.Set();
-
-    auto cts = 0x00_b;
-    do
-    {
-        RODOS::AT(RODOS::NOW() + 20 * RODOS::MICROSECONDS);
-        csGpioPin.Reset();
-        RODOS::AT(RODOS::NOW() + 20 * RODOS::MICROSECONDS);
-        WriteTo(&rfSpi, Span(0x44), spiTimeout);
-        hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
-        RODOS::AT(RODOS::NOW() + 2 * RODOS::MICROSECONDS);
-        csGpioPin.Set();
-    } while(cts != 0xFF_b);
+    WaitForCts();
 }
 
 
