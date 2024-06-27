@@ -1026,18 +1026,7 @@ auto WriteToFifo(std::span<Byte const> data) -> void
     WriteTo(&spi, data, spiTimeout);
     AT(NOW() + 2 * MICROSECONDS);
     csGpioPin.Set();
-
-    auto cts = 0x00_b;
-    do
-    {
-        AT(NOW() + 20 * MICROSECONDS);
-        csGpioPin.Reset();
-        AT(NOW() + 20 * MICROSECONDS);
-        WriteTo(&spi, Span(0x44), spiTimeout);
-        hal::ReadFrom(&spi, Span(&cts), spiTimeout);
-        AT(NOW() + 2 * MICROSECONDS);
-        csGpioPin.Set();
-    } while(cts != 0xFF_b);
+    WaitForCts();
 }
 
 
