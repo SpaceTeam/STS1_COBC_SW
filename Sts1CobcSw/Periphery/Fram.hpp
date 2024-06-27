@@ -27,6 +27,7 @@ auto Initialize() -> void;
 [[nodiscard]] auto ReadDeviceId() -> DeviceId;
 auto ActualBaudRate() -> std::int32_t;
 
+// TODO: This should also work without extent and thereby without any template parameters
 template<std::size_t extent>
 auto WriteTo(Address address, std::span<Byte const, extent> data, std::int64_t timeout) -> void;
 
