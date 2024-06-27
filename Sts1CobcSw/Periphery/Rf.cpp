@@ -958,20 +958,26 @@ auto Configure(TxType txType) -> void
 auto SendCommand(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
+    DEBUG_PRINT("hal::WriteTo(&spi, data, spiTimeout);\n");
     hal::WriteTo(&spi, data, spiTimeout);
     csGpioPin.Set();
+    DEBUG_PRINT("WaitForCts();\n");
     WaitForCts();
+    DEBUG_PRINT("End of SendCommand()\n");
 }
 
 
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
+    DEBUG_PRINT("SendCommand(data);\n");
     SendCommand(data);
     auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
+    DEBUG_PRINT("ReadFrom(&spi, Span(&answer), spiTimeout);\n");
     hal::ReadFrom(&spi, Span(&answer), spiTimeout);
     csGpioPin.Set();
+    DEBUG_PRINT("End of SendCommand<>();\n");
     return answer;
 }
 
