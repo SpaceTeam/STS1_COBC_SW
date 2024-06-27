@@ -54,6 +54,7 @@ bool rfIsWorking = true;
 // Si4463 commands
 constexpr auto cmdPartInfo = 0x01_b;
 constexpr auto cmdPowerUp = 0x02_b;
+constexpr auto cmdFuncInfo = 0x11_b;
 constexpr auto cmdSetProperty = 0x11_b;
 constexpr auto cmdGpioPinCfg = 0x13_b;
 constexpr auto cmdFifoInfo = 0x15_b;
@@ -140,6 +141,12 @@ auto ReadPartNumber() -> std::uint16_t
 {
     auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
     return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+}
+
+
+auto ReadFunctionInfo() -> std::array<Byte, 6>
+{
+    return SendCommand<6>(Span(cmdFuncInfo));
 }
 
 
