@@ -59,6 +59,7 @@ constexpr auto cmdGpioPinCfg = 0x13_b;
 constexpr auto cmdFifoInfo = 0x15_b;
 constexpr auto cmdGetIntStatus = 0x20_b;
 constexpr auto cmdStartTx = 0x31_b;
+constexpr auto cmdRequestDeviceState = 0x33_b;
 constexpr auto cmdChangeState = 0x34_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 
@@ -139,6 +140,12 @@ auto ReadPartNumber() -> std::uint16_t
 {
     auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
     return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+}
+
+
+auto ReadDeviceState() -> std::array<Byte, 2>
+{
+    return SendCommand<2>(Span(cmdRequestDeviceState));
 }
 
 
