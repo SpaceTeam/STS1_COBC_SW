@@ -21,5 +21,5 @@ extern bool rfIsWorking;
 auto Initialize(TxType txType) -> void;
 auto ReadPartNumber() -> std::uint16_t;
 auto SetTxType(TxType txType) -> void;
-auto Send(std::uint8_t const * data, std::size_t length) -> void;
+auto Send(void const * data, std::size_t nBytes) -> void;
 }
