@@ -66,8 +66,6 @@ private:
         auto deviceState = rf::ReadDeviceState();
         PRINTF("Device state: 0x%02x 0x%02x\n", deviceState[0], deviceState[1]);
 
-        return;
-
         PRINTF("\n");
         auto partNumber = rf::ReadPartNumber();
         PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, rf::correctPartNumber);
