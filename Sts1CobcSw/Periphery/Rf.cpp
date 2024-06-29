@@ -67,6 +67,7 @@ constexpr auto cmdStartTx = 0x31_b;
 constexpr auto cmdRequestDeviceState = 0x33_b;
 constexpr auto cmdChangeState = 0x34_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
+constexpr auto cmdWriteTxFifo = 0x66_b;
 
 // Command answer lengths
 //
@@ -990,32 +991,34 @@ auto Configure(TxType txType) -> void
 
 auto SendCommand(std::span<Byte const> data) -> void
 {
-    csGpioPin.Reset();
-    DEBUG_PRINT("hal::WriteTo(&spi, data, spiTimeout);\n");
-    hal::WriteTo(&spi, data, spiTimeout);
-    csGpioPin.Set();
-    DEBUG_PRINT("WaitForCts();\n");
-    WaitForCts();
-    DEBUG_PRINT("End of SendCommand()\n");
+    (void)SendCommand<0>(data);
 }
 
 
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
-    DEBUG_PRINT("SendCommand(data);\n");
-    SendCommand(data);
-    auto answer = std::array<Byte, answerLength>{};
+    DEBUG_PRINT("SendCommand<%zu>()\n", answerLength);
     csGpioPin.Reset();
-    DEBUG_PRINT("ReadFrom(&spi, Span(&answer), spiTimeout);\n");
-    hal::ReadFrom(&spi, Span(&answer), spiTimeout);
+    hal::WriteTo(&spi, data, spiTimeout);
     csGpioPin.Set();
-    DEBUG_PRINT("End of SendCommand<>();\n");
+    WaitForCts();
+    auto answer = std::array<Byte, answerLength>{};
+    if constexpr(answerLength != 0)
+    {
+        hal::ReadFrom(&spi, Span(&answer), spiTimeout);
+    }
+    csGpioPin.Set();
     return answer;
 }
 
 
-//! @brief Polls the CTS byte until 0xFF is received (i.e. Si4463 is ready for command).
+//! @brief Polls the CTS byte until the Si4463 chip is ready for a new command.
+//!
+//! @note This function keeps the CS pin low when it returns.
+// TODO: Refactor the whole waiting for CTS so that the caller of this function does not need to
+// remember to pull the CS pin high afterwards. Maybe rework it into something like
+// WaitForResponse/Answer<answerLength>().
 auto WaitForCts() -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
@@ -1026,11 +1029,11 @@ auto WaitForCts() -> void
         hal::WriteTo(&spi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
         hal::ReadFrom(&spi, Span(&cts), spiTimeout);
-        csGpioPin.Set();
         if(cts == dataIsReadyValue)
         {
             break;
         }
+        csGpioPin.Set();
         AT(NOW() + pollingDelay);
     } while(true);
     // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
@@ -1096,8 +1099,8 @@ auto WriteToFifo(std::span<Byte const> data) -> void
     DEBUG_PRINT("csGpioPin.Reset()\n");
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
-    DEBUG_PRINT("WriteTo(&spi, Span(0x66), %lld);\n", spiTimeout);
-    WriteTo(&spi, Span(0x66), spiTimeout);
+    DEBUG_PRINT("WriteTo(&spi, Span(cmdWriteTxFifo), %lld);\n", spiTimeout);
+    WriteTo(&spi, Span(cmdWriteTxFifo), spiTimeout);
     DEBUG_PRINT("WriteTo(&spi, data, %lld);\n", spiTimeout);
     WriteTo(&spi, data, spiTimeout);
     AT(NOW() + 2 * MICROSECONDS);
@@ -1105,6 +1108,7 @@ auto WriteToFifo(std::span<Byte const> data) -> void
     csGpioPin.Set();
     DEBUG_PRINT("WaitForCts();\n");
     WaitForCts();
+    csGpioPin.Set();
 }
 
 
