@@ -384,8 +384,40 @@ auto PowerUp() -> void
 
 auto Configure(TxType txType) -> void
 {
-    auto answer = SendCommand<7>(
-        Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
+    // auto answer = SendCommand<7>(
+    //     Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x0B_b, 0x00_b}));
+    // DEBUG_PRINT("answer = %02x %02x %02x %02x %02x %02x %02x\n",
+    //             answer[0],
+    //             answer[1],
+    //             answer[2],
+    //             answer[3],
+    //             answer[4],
+    //             answer[5],
+    //             answer[6]);
+
+    // Configure GPIO pins, NIRQ, and SDO
+    // Don't change
+    static constexpr auto gpio0Config = 0x41_b;
+    // Don't change
+    static constexpr auto gpio1Config = 0x41_b;
+    // GPIO2 active in RX state
+    static constexpr auto gpio2Config = 0x21_b;
+    // GPIO3 active in TX state
+    static constexpr auto gpio3Config = 0x20_b;
+    // NIRQ is still used as NIRQ
+    static constexpr auto nirqConfig = 0x27_b;
+    // SDO is still used as SDO
+    static constexpr auto sdoConfig = 0x4B_b;
+    // GPIOs configured as outputs will have highest drive strength
+    static constexpr auto genConfig = 0x00_b;
+    auto answer = SendCommand<7>(Span({cmdGpioPinCfg,
+                                       gpio0Config,
+                                       gpio1Config,
+                                       gpio2Config,
+                                       gpio3Config,
+                                       nirqConfig,
+                                       sdoConfig,
+                                       genConfig}));
     DEBUG_PRINT("answer = %02x %02x %02x %02x %02x %02x %02x\n",
                 answer[0],
                 answer[1],
@@ -910,34 +942,37 @@ auto Configure(TxType txType) -> void
                                  freqControlWSize,
                                  freqControlVcontRxAdj)));
 
-    // Set RF4463 module antenna switch
-    // Don't change
-    static constexpr auto gpio0Config = 0x00_b;
-    // Don't change
-    static constexpr auto gpio1Config = 0x00_b;
-    // GPIO2 active in RX state
-    static constexpr auto gpio2Config = 0x21_b;
-    // GPIO3 active in TX state
-    static constexpr auto gpio3Config = 0x20_b;
-    // NIRQ is still used as NIRQ
-    static constexpr auto nirqConfig = 0x27_b;
-    // SDO is still used as SDO
-    static constexpr auto sdoConfig = 0x0B_b;
-    answer = SendCommand<7>(Span({cmdGpioPinCfg,
-                                  gpio0Config,
-                                  gpio1Config,
-                                  gpio2Config,
-                                  gpio3Config,
-                                  nirqConfig,
-                                  sdoConfig}));
-    DEBUG_PRINT("answer = %02x %02x %02x %02x %02x %02x %02x\n",
-                answer[0],
-                answer[1],
-                answer[2],
-                answer[3],
-                answer[4],
-                answer[5],
-                answer[6]);
+    // // Set RF4463 module antenna switch
+    // // Don't change
+    // static constexpr auto gpio0Config = 0x00_b;
+    // // Don't change
+    // static constexpr auto gpio1Config = 0x00_b;
+    // // GPIO2 active in RX state
+    // static constexpr auto gpio2Config = 0x21_b;
+    // // GPIO3 active in TX state
+    // static constexpr auto gpio3Config = 0x20_b;
+    // // NIRQ is still used as NIRQ
+    // static constexpr auto nirqConfig = 0x27_b;
+    // // SDO is still used as SDO
+    // static constexpr auto sdoConfig = 0x0B_b;
+    // // GPIOs configured as outputs will have highest drive strength
+    // static constexpr auto genConfig = 0x00_b;
+    // answer = SendCommand<7>(Span({cmdGpioPinCfg,
+    //                               gpio0Config,
+    //                               gpio1Config,
+    //                               gpio2Config,
+    //                               gpio3Config,
+    //                               nirqConfig,
+    //                               sdoConfig,
+    //                               genConfig}));
+    // DEBUG_PRINT("answer = %02x %02x %02x %02x %02x %02x %02x\n",
+    //             answer[0],
+    //             answer[1],
+    //             answer[2],
+    //             answer[3],
+    //             answer[4],
+    //             answer[5],
+    //             answer[6]);
 
     // Frequency adjust (stolen from Arduino demo code)
     static constexpr auto globalXoTuneUpdated = 0x62_b;
