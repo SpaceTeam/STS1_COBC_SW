@@ -42,7 +42,7 @@ private:
 
         PRINTF("\n");
         auto partInfo = rf::ReadPartInfo();
-        PRINTF("Part info: 0x%02x 0x%02x 0x02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+        PRINTF("Part info: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
                partInfo[0],
                partInfo[1],
                partInfo[2],
