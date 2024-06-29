@@ -374,13 +374,11 @@ auto InitializeGpiosAndSpi() -> void
 
 auto PowerUp() -> void
 {
-    static constexpr auto bootOption = 0x01_b;
-    static constexpr auto xtalOption = 0x00_b;
-    static constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
-    SendCommand(FlatArray(cmdPowerUp,
-                          bootOption,
-                          xtalOption,
-                          Serialize<std::endian::big, std::uint32_t>(powerUpXoFrequency)));
+    static constexpr auto bootOptions = 0x01_b;
+    static constexpr auto xtalOptions = 0x00_b;
+    static constexpr std::uint32_t xoFreq = 26'000'000;  // 26 MHz
+    SendCommand(FlatArray(
+        cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
 }
 
 
