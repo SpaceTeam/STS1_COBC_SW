@@ -72,9 +72,13 @@ private:
         Check(partNumber == rf::correctPartNumber);
 
         PRINTF("\n");
-        PRINTF("Sending 'Hello, world!'...\n");
+        auto n = 20;
+        PRINTF("Sending 'Hello, world!' %i times\n", n);
         auto message = std::array{"Hello, world!"};
-        rf::Send(message.data(), message.size());
+        for(int i = 0; i < n; ++i)
+        {
+            rf::Send(message.data(), message.size());
+        }
         PRINTF("  done\n");
 
         // Here comes the rest of the RF test
