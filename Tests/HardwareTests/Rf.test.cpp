@@ -41,8 +41,16 @@ private:
         PRINTF("RF module initialized\n");
 
         PRINTF("\n");
-        auto deviceState = rf::ReadDeviceState();
-        PRINTF("Device state: 0x%02x 0x%02x\n", deviceState[0], deviceState[1]);
+        auto partInfo = rf::ReadPartInfo();
+        PRINTF("Part info: 0x%02x 0x%02x 0x02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+               partInfo[0],
+               partInfo[1],
+               partInfo[2],
+               partInfo[3],
+               partInfo[4],
+               partInfo[5],
+               partInfo[6],
+               partInfo[7]);
 
         PRINTF("\n");
         auto functionInfo = rf::ReadFunctionInfo();
@@ -55,16 +63,8 @@ private:
                functionInfo[5]);
 
         PRINTF("\n");
-        auto partInfo = rf::ReadPartInfo();
-        PRINTF("Part info: 0x%02x 0x%02x 0x02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
-               partInfo[0],
-               partInfo[1],
-               partInfo[2],
-               partInfo[3],
-               partInfo[4],
-               partInfo[5],
-               partInfo[6],
-               partInfo[7]);
+        auto deviceState = rf::ReadDeviceState();
+        PRINTF("Device state: 0x%02x 0x%02x\n", deviceState[0], deviceState[1]);
 
         return;
 
