@@ -62,6 +62,7 @@ constexpr auto cmdStartTx = 0x31_b;
 constexpr auto cmdRequestDeviceState = 0x33_b;
 constexpr auto cmdChangeState = 0x34_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
+constexpr auto cmdWriteTxFifo = 0x66_b;
 
 // Command answer lengths
 //
@@ -965,7 +966,6 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
         hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
     }
     csGpioPin.Set();
-    DEBUG_PRINT("End of SendCommand<>();\n");
     return answer;
 }
 
@@ -1056,8 +1056,8 @@ auto WriteToFifo(std::span<Byte const> data) -> void
     DEBUG_PRINT("csGpioPin.Reset()\n");
     csGpioPin.Reset();
     AT(NOW() + 20 * MICROSECONDS);
-    DEBUG_PRINT("WriteTo(&spi, Span(0x66), %lld);\n", spiTimeout);
-    WriteTo(&spi, Span(0x66), spiTimeout);
+    DEBUG_PRINT("WriteTo(&spi, Span(cmdWriteTxFifo), %lld);\n", spiTimeout);
+    WriteTo(&spi, Span(cmdWriteTxFifo), spiTimeout);
     DEBUG_PRINT("WriteTo(&spi, data, %lld);\n", spiTimeout);
     WriteTo(&spi, data, spiTimeout);
     AT(NOW() + 2 * MICROSECONDS);
@@ -1065,6 +1065,7 @@ auto WriteToFifo(std::span<Byte const> data) -> void
     csGpioPin.Set();
     DEBUG_PRINT("WaitForCts();\n");
     WaitForCts();
+    csGpioPin.Set();
 }
 
 
