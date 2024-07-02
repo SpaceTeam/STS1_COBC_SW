@@ -132,8 +132,7 @@ auto Initialize(TxType txType) -> void
     InitializeGpiosAndSpi();
     PowerUp();
     Configure(txType);
-    // TODO: Why is this one not set with all the other GPIO pins in InitializeGpiosAndSpi()?
-    paEnablePin.Direction(hal::PinDirection::out);
+    // Power amplifier should only be turned on after the configuration is done
     paEnablePin.Set();
 }
 
@@ -354,7 +353,10 @@ auto InitializeGpiosAndSpi() -> void
     sdnGpioPin.Set();
     gpio0GpioPin.Direction(hal::PinDirection::out);
     gpio0GpioPin.Reset();
+    paEnablePin.Direction(hal::PinDirection::out);
+    paEnablePin.Reset();
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
+    // The watchdog must be reset at least once to enable the RF module
     watchdogResetGpioPin.Reset();
     AT(NOW() + watchDogResetPinDelay);
     watchdogResetGpioPin.Set();
@@ -998,7 +1000,7 @@ auto SendCommand(std::span<Byte const> data) -> void
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
-    DEBUG_PRINT("SendCommand<%zu>()\n", answerLength);
+    DEBUG_PRINT("SendCommand<%i>()\n", answerLength);
     csGpioPin.Reset();
     hal::WriteTo(&spi, data, spiTimeout);
     csGpioPin.Set();
