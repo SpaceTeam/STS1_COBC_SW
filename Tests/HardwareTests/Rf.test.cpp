@@ -7,6 +7,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <string_view>
+
 
 namespace sts1cobcsw
 {
@@ -78,9 +80,11 @@ private:
         Check(partNumber == rf::correctPartNumber);
 
         PRINTF("\n");
-        auto n = 20;
+        auto n = 1;
         PRINTF("Sending 'Hello, world!' %i times\n", n);
-        auto message = std::array{"Hello, world!"};
+        auto message = std::string_view(
+            "123456789,123456789,123456789,123456789,123456789,123456789,123456789,123456789,"
+            "123456789,123456789");
         for(int i = 0; i < n; ++i)
         {
             led1GpioPin.Set();
