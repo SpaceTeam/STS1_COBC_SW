@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
@@ -10,6 +11,9 @@
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
+
+
+auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
 
 class RfTest : public RODOS::StaticThread<>
@@ -34,6 +38,8 @@ private:
 #if HW_VERSION >= 27
         rfLatchupDisableGpioPin.Reset();
 #endif
+        led1GpioPin.Direction(hal::PinDirection::out);
+        led1GpioPin.Reset();
 
         PRINTF("\nRF test\n\n");
 
@@ -77,7 +83,9 @@ private:
         auto message = std::array{"Hello, world!"};
         for(int i = 0; i < n; ++i)
         {
+            led1GpioPin.Set();
             rf::Send(message.data(), message.size());
+            led1GpioPin.Reset();
         }
         PRINTF("  done\n");
 
