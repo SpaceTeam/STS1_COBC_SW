@@ -197,7 +197,6 @@ auto SetTxType(TxType txType) -> void
 auto Send(void const * data, std::size_t nBytes) -> void
 {
     // TODO: Acc. the datasheet "fifo hardware does not need to be reset prior to use".
-    DEBUG_PRINT("ClearFifos()\n");
     ClearFifos();
 
     // Set TX Data Length
@@ -206,7 +205,6 @@ auto Send(void const * data, std::size_t nBytes) -> void
     static constexpr auto iPktField1Length = 0x0D_b;
     auto lengthUpperBits = static_cast<Byte>(nBytes >> CHAR_BIT);
     auto lengthLowerBits = static_cast<Byte>(nBytes);
-    DEBUG_PRINT("SetProperties(iPktField1Length)\n");
     SetProperties(PropertyGroup::pkt, iPktField1Length, Span({lengthUpperBits, lengthLowerBits}));
 
     // Fill the TX FIFO with 60 bytes each "round"
@@ -219,7 +217,6 @@ auto Send(void const * data, std::size_t nBytes) -> void
     // afterwards for the packet sent interrupt
     auto dataIndex = 0U;
     auto dataSpan = std::span(static_cast<Byte const *>(data), nBytes);
-    DEBUG_PRINT("while(nBytes - dataIndex > nFillBytes)\n");
     while(nBytes - dataIndex > nFillBytes)
     {
         // Enable the almost empty interrupt in the first round
@@ -227,22 +224,17 @@ auto Send(void const * data, std::size_t nBytes) -> void
         {
             // TODO: Setting interrupts could be put in a function
             static constexpr auto txFifoAlmostEmptyInterrupt = 0b0000'0010_b;
-            DEBUG_PRINT("Enable almostEmptyInterrupt\n");
             SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(txFifoAlmostEmptyInterrupt));
             almostEmptyInterruptEnabled = true;
         }
 
         // Write nFillBytes bytes to the TX FIFO
         // NOLINTNEXTLINE(*pointer-arithmetic)
-        DEBUG_PRINT("WriteToFifo()\n");
         WriteToFifo(dataSpan.subspan(dataIndex, nFillBytes));
         dataIndex += nFillBytes;
-        DEBUG_PRINT("ClearInterrupts()\n");
         ClearInterrupts();
-        DEBUG_PRINT("StartTx()\n");
         StartTx();
         // Wait for TX FIFO almost empty interrupt
-        DEBUG_PRINT("Wait for TX FIFO almost empty interrupt\n");
         while(nirqGpioPin.Read() == hal::PinState::set)
         {
             // TODO: Add timeout
@@ -252,23 +244,18 @@ auto Send(void const * data, std::size_t nBytes) -> void
 
     // Enable packet sent interrupt
     static constexpr auto packetSentInterrupt = 0b0010'0000_b;
-    DEBUG_PRINT("Enable packet sent interrupt\n");
     SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(packetSentInterrupt));
 
-    DEBUG_PRINT("ClearInterrupts()\n");
     ClearInterrupts();
 
     // Write the rest of the data
     // NOLINTNEXTLINE(*pointer-arithmetic)
-    DEBUG_PRINT("WriteToFifo(rest of data)\n");
     WriteToFifo(dataSpan.subspan(dataIndex));
-    DEBUG_PRINT("StartTx()\n");
     StartTx();
 
     auto startTime = RODOS::NOW();
 
     // Wait for Packet Sent Interrupt
-    DEBUG_PRINT("Wait for Packet Sent Interrupt()\n");
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
         // TODO: Set timeout constant
@@ -278,7 +265,6 @@ auto Send(void const * data, std::size_t nBytes) -> void
         }
         RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
     }
-    DEBUG_PRINT("EnterStandby()\n");
     EnterStandby();
 }
 
@@ -1054,17 +1040,12 @@ auto EnterStandby() -> void
 // TODO: Refactor (issue #226)
 auto WriteToFifo(std::span<Byte const> data) -> void
 {
-    DEBUG_PRINT("csGpioPin.Reset()\n");
     csGpioPin.Reset();
     RODOS::AT(RODOS::NOW() + 20 * RODOS::MICROSECONDS);
-    DEBUG_PRINT("WriteTo(&spi, Span(cmdWriteTxFifo), %lld);\n", spiTimeout);
     WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
-    DEBUG_PRINT("WriteTo(&spi, data, %lld);\n", spiTimeout);
     WriteTo(&rfSpi, data, spiTimeout);
     RODOS::AT(RODOS::NOW() + 2 * RODOS::MICROSECONDS);
-    DEBUG_PRINT("csGpioPin.Set();\n");
     csGpioPin.Set();
-    DEBUG_PRINT("WaitForCts();\n");
     WaitForCts();
     csGpioPin.Set();
 }
