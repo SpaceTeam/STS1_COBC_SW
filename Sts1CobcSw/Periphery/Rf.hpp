@@ -29,5 +29,5 @@ auto ReadFunctionInfo() -> std::array<Byte, 6>;
 auto ReadDeviceState() -> std::array<Byte, 2>;
 auto SetTxType(TxType txType) -> void;
 auto Send(void const * data, std::size_t nBytes) -> void;
-auto RecieveTestData() -> std::array<Byte, maxRxBytes>;
+auto ReceiveTestData() -> std::array<Byte, maxRxBytes>;
 }

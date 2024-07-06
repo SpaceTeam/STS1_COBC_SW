@@ -269,7 +269,7 @@ auto Send(void const * data, std::size_t nBytes) -> void
 }
 
 
-auto RecieveTestData() -> std::array<Byte, maxRxBytes>
+auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
 {
     // auto sendBuffer = std::array<std::uint8_t, 32>{};
 
@@ -302,13 +302,11 @@ auto RecieveTestData() -> std::array<Byte, maxRxBytes>
         RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
     }
 
-    DEBUG_PRINT("Got RX FIFO Almost Full Interrupt\n");
-
     auto rxBuffer = std::array<Byte, maxRxBytes>{};
     static constexpr auto chunkSize = 48;
     ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
 
-    RODOS::PRINTF("Retrieved first %d Byte from FIFO\n", chunkSize);
+    DEBUG_PRINT("Retrieved first %d Byte from FIFO\n", chunkSize);
 
     ClearInterrupts();
 
@@ -317,8 +315,6 @@ auto RecieveTestData() -> std::array<Byte, maxRxBytes>
     {
         RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
     }
-
-    RODOS::PRINTF("Got RX FIFO Almost Full Interrupt\n");
 
     ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
 
