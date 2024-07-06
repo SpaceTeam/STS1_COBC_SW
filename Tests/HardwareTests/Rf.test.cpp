@@ -81,10 +81,10 @@ private:
 
         PRINTF("\n");
         auto n = 1;
-        PRINTF("Sending 'Hello, world!' %i times\n", n);
         auto message = std::string_view(
             "123456789,123456789,123456789,123456789,123456789,123456789,123456789,123456789,"
             "123456789,123456789");
+        PRINTF("Sending a %i bytes long test message %i time(s)\n", message.size(), n);
         for(int i = 0; i < n; ++i)
         {
             led1GpioPin.Set();
@@ -93,7 +93,15 @@ private:
         }
         PRINTF("  done\n");
 
-        // Here comes the rest of the RF test
+        PRINTF("\n");
+        PRINTF("Waiting to receive test data\n");
+        auto receivedData = rf::ReceiveTestData();
+        PRINTF("Received data: ");
+        for(auto byte : receivedData)
+        {
+            PRINTF("0x%02x ", static_cast<unsigned int>(byte));
+        }
+        PRINTF("  done\n");
     }
 } rfTest;
 }
