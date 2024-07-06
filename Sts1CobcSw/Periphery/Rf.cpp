@@ -88,6 +88,11 @@ constexpr auto txFifoThreshold = 32_b;
 // Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
 constexpr auto rxFifoThreshold = 48_b;
 
+// Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
+constexpr auto txFifoThreshold = 32_b;
+// Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
+constexpr auto rxFifoThreshold = 48_b;
+
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
@@ -207,8 +212,8 @@ auto Send(void const * data, std::size_t nBytes) -> void
     auto lengthLowerBits = static_cast<Byte>(nBytes);
     SetProperties(PropertyGroup::pkt, iPktField1Length, Span({lengthUpperBits, lengthLowerBits}));
 
-    // Fill the TX FIFO with 60 bytes each "round"
-    static constexpr auto nFillBytes = 60;
+    // Fill the TX FIFO with chunkSize bytes each round
+    static constexpr auto chunkSize = static_cast<unsigned int>(txFifoThreshold);
     auto almostEmptyInterruptEnabled = false;
     // Property index for packet handler interrupts
     static constexpr auto iIntCtlPhEnable = 0x01_b;
@@ -217,7 +222,7 @@ auto Send(void const * data, std::size_t nBytes) -> void
     // afterwards for the packet sent interrupt
     auto dataIndex = 0U;
     auto dataSpan = std::span(static_cast<Byte const *>(data), nBytes);
-    while(nBytes - dataIndex > nFillBytes)
+    while(dataIndex + chunkSize < nBytes)
     {
         // Enable the almost empty interrupt in the first round
         if(not almostEmptyInterruptEnabled)
@@ -228,16 +233,19 @@ auto Send(void const * data, std::size_t nBytes) -> void
             almostEmptyInterruptEnabled = true;
         }
 
-        // Write nFillBytes bytes to the TX FIFO
-        // NOLINTNEXTLINE(*pointer-arithmetic)
-        WriteToFifo(dataSpan.subspan(dataIndex, nFillBytes));
-        dataIndex += nFillBytes;
+        // Write chunkSize bytes to the TX FIFO
+        WriteToFifo(dataSpan.subspan(dataIndex, chunkSize));
+        dataIndex += chunkSize;
         ClearInterrupts();
         StartTx();
         // Wait for TX FIFO almost empty interrupt
+        //
+        // TODO: Wait more intelligently by computing the estimated time t_0 it takes to send
+        // chunkSize bytes: t_0 = chunkSize * 10 / baudRate (maybe even chunkSize + 1). Then wait
+        // for the time, t_1 = 10 / baudRate, it takes to send a single byte in a loop. Also add a
+        // timeout to not wait indefinitely.
         while(nirqGpioPin.Read() == hal::PinState::set)
         {
-            // TODO: Add timeout
             RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
         }
     }
@@ -303,10 +311,10 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
     }
 
     auto rxBuffer = std::array<Byte, maxRxBytes>{};
-    static constexpr auto chunkSize = 48;
+    static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
     ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
 
-    DEBUG_PRINT("Retrieved first %d Byte from FIFO\n", chunkSize);
+    DEBUG_PRINT("Retrieved first %d bytes from FIFO\n", chunkSize);
 
     ClearInterrupts();
 
