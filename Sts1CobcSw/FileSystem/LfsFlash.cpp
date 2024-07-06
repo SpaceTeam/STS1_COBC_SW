@@ -34,6 +34,8 @@ auto readBuffer = flash::Page{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = flash::Page{};
 
+auto mutex = RODOS::Semaphore();
+
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
                                         .prog = &Program,
@@ -137,12 +139,16 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 
 auto Lock(const struct lfs_config * config) -> int
 {
-    return 0;
+    if (mutex.tryEnter()){
+        return 0;
+    }
+    return -99;
 }
 
 
 auto Unlock(const struct lfs_config * config) -> int
 {
+    mutex.leave();
     return 0;
 }
 }
