@@ -6,6 +6,14 @@
 #include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#ifdef NO_RODOS
+    #include <mutex>
+#else
+    #include <Sts1CobcSw/Utility/LinuxSemaphore.hpp>
+
+    #include <rodos_no_using_namespace.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -13,7 +21,6 @@
 
 namespace sts1cobcsw::fs
 {
-// Before globals because lfsConfig needs the declarations
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
           lfs_off_t offset,
@@ -26,6 +33,9 @@ auto Program(lfs_config const * config,
              lfs_size_t size) -> int;
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int;
 auto Sync(lfs_config const * config) -> int;
+// TODO: Implement Lock() and Unlock()
+auto Lock(const struct lfs_config * config) -> int;
+auto Unlock(const struct lfs_config * config) -> int;
 
 
 constexpr auto pageSize = 256;
@@ -37,11 +47,19 @@ auto readBuffer = std::array<Byte, pageSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, pageSize>{};
 
+#ifdef NO_RODOS
+auto mutex = std::mutex();
+#else
+auto mutex = utility::LinuxSemaphore();
+#endif
+
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
                                         .prog = &Program,
                                         .erase = &Erase,
                                         .sync = &Sync,
+                                        .lock = &Lock,
+                                        .unlock = &Unlock,
                                         .read_size = pageSize,
                                         .prog_size = pageSize,
                                         .block_size = sectorSize,
@@ -98,5 +116,44 @@ auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 auto Sync([[maybe_unused]] lfs_config const * config) -> int
 {
     return 0;
+}
+
+
+auto Lock([[maybe_unused]] lfs_config const * config) -> int
+{
+    static constexpr int lockBusyError = -99;
+    // TODO: Check if there is an appropriate error code
+#ifdef NO_RODOS
+    if(mutex.try_lock())
+    {
+        return 0;
+    }
+    return lockBusyError;
+#else
+    if(mutex.TryEnter())
+    {
+        // For testing: wait some time to check concurrent locking
+        static constexpr auto lockDelay = 200 * RODOS::MILLISECONDS;
+        RODOS::AT(RODOS::NOW() + lockDelay);
+        return 0;
+    }
+    return lockBusyError;
+    // mutex.Enter();
+    // static constexpr auto lockDelay = 100 * RODOS::MILLISECONDS;
+    // RODOS::AT(RODOS::NOW() + lockDelay);
+    // return 0;
+#endif
+}
+
+
+auto Unlock([[maybe_unused]] lfs_config const * config) -> int
+{
+#ifdef NO_RODOS
+    mutex.unlock();
+    return 0;
+#else
+    mutex.Leave();
+    return 0;
+#endif
 }
 }

@@ -88,6 +88,12 @@ target_link_libraries(
 )
 add_watchdog_version_of(Gpio)
 
+add_program(LockCollisionHw LockCollisionHw.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_LockCollisionHw PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
+)
+add_watchdog_version_of(LockCollisionHw)
+
 add_program(Rf Rf.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSwTests_Utility
