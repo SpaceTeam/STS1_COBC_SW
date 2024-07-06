@@ -2,7 +2,7 @@
 
 
 #include <Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <littlefs/lfs.h>
