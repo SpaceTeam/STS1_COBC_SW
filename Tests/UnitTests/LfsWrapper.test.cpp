@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
 
 #include <catch2/catch_test_macros.hpp>

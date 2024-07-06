@@ -1,7 +1,7 @@
 //! @file
-//! @brief  Implement a flash storage device for littlefs.
+//! @brief  Implement a flash memory device for littlefs.
 
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 

@@ -1,9 +1,9 @@
 //! @file
-//! @brief Simulate a storage device for littlefs in RAM.
+//! @brief Simulate a memory device for littlefs in RAM.
 //!
 //! This is useful for testing the file system without using a real flash memory.
 
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <algorithm>

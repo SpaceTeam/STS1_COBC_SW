@@ -1,11 +1,11 @@
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <littlefs/lfs.h>
 
 
-TEST_CASE("RAM storage device")
+TEST_CASE("RAM memory device")
 {
     sts1cobcsw::fs::Initialize();
     auto lfs = lfs_t{};
