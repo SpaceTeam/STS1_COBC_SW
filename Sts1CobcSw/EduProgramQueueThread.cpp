@@ -126,7 +126,7 @@ private:
             auto programId = edu::programQueue[edu::queueIndex].programId;
             auto timeout = edu::programQueue[edu::queueIndex].timeout;
 
-            DEBUG_PRINT("Executing program %" PRIu16 "\n", programId.get());
+            DEBUG_PRINT("Executing program %" PRIu16 "\n", value_of(programId));
             auto executeProgramData = edu::ExecuteProgramData{
                 .programId = programId, .startTime = startTime, .timeout = timeout};
             // Start Process

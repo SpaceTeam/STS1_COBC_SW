@@ -39,7 +39,7 @@ void PrintBuffer()
     {
         RODOS::PRINTF("Vals[%d] = .id(%d), .status(%s)\n",
                       i,
-                      edu::programStatusHistory.vals[i].programId.get(),
+                      value_of(edu::programStatusHistory.vals[i].programId),
                       ToString(edu::programStatusHistory.vals[i].status).data());
     }
 }

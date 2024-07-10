@@ -14,7 +14,7 @@ template<std::endian endianness>
 auto SerializeTo(void * destination, StoreProgramData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, StoreProgramData::id);
-    destination = SerializeTo<endianness>(destination, data.programId);
+    destination = SerializeTo<endianness>(destination, value_of(data.programId));
     return destination;
 }
 
@@ -23,7 +23,7 @@ template<std::endian endianness>
 auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, ExecuteProgramData::id);
-    destination = SerializeTo<endianness>(destination, data.programId);
+    destination = SerializeTo<endianness>(destination, value_of(data.programId));
     destination = SerializeTo<endianness>(destination, data.startTime);
     destination = SerializeTo<endianness>(destination, data.timeout);
     return destination;
@@ -50,7 +50,7 @@ template<std::endian endianness>
 auto SerializeTo(void * destination, ReturnResultData const & data) -> void *
 {
     destination = SerializeTo<endianness>(destination, ReturnResultData::id);
-    destination = SerializeTo<endianness>(destination, data.programId);
+    destination = SerializeTo<endianness>(destination, value_of(data.programId));
     destination = SerializeTo<endianness>(destination, data.startTime);
     return destination;
 }
@@ -79,7 +79,9 @@ auto DeserializeFrom(void const * source, ProgramFinishedData * data) -> void co
 {
     auto dummy = ProgramFinishedData::id;
     source = DeserializeFrom<endianness>(source, &dummy);
-    source = DeserializeFrom<endianness>(source, &(data->programId));
+    std::uint16_t underlyingValue;
+    source = DeserializeFrom<endianness>(source, &underlyingValue);
+    data->programId = ProgramId(underlyingValue);
     source = DeserializeFrom<endianness>(source, &(data->startTime));
     source = DeserializeFrom<endianness>(source, &(data->exitCode));
     return source;
@@ -91,7 +93,9 @@ auto DeserializeFrom(void const * source, ResultsReadyData * data) -> void const
 {
     auto dummy = ResultsReadyData::id;
     source = DeserializeFrom<endianness>(source, &dummy);
-    source = DeserializeFrom<endianness>(source, &(data->programId));
+    std::uint16_t underlyingValue;
+    source = DeserializeFrom<endianness>(source, &underlyingValue);
+    data->programId = ProgramId(underlyingValue);
     source = DeserializeFrom<endianness>(source, &(data->startTime));
     return source;
 }

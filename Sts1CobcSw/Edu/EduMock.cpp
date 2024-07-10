@@ -45,7 +45,7 @@ auto TurnOff() -> void
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
-    DEBUG_PRINT("Call to StoreProgram(programId = %" PRIu16 ")\n", data.programId.get());
+    DEBUG_PRINT("Call to StoreProgram(programId = %" PRIu16 ")\n", value_of(data.programId));
     return outcome_v2::success();
 }
 
@@ -55,7 +55,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
     PrintFormattedSystemUtc();
     DEBUG_PRINT("Call to ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
                 ", timeout = %d)\n",
-                data.programId.get(),
+                value_of(data.programId),
                 data.startTime,
                 data.timeout);
     return outcome_v2::success();

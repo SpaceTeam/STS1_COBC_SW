@@ -9,13 +9,16 @@ namespace sts1cobcsw
 template<std::endian endianness>
 inline auto SerializeTo(void * destination, ProgramId const & data) -> void *
 {
-    return SerializeTo<endianness>(destination, data.get());
+    return SerializeTo<endianness>(destination, value_of(data));
 }
 
 
 template<std::endian endianness>
 inline auto DeserializeFrom(void const * source, ProgramId * data) -> void const *
 {
-    return DeserializeFrom<endianness>(source, &(data->get()));
+    std::uint16_t underlyingValue;
+    source = DeserializeFrom<endianness>(source, &underlyingValue);
+    *data = ProgramId(underlyingValue);
+    return source;
 }
 }
