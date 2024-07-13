@@ -235,9 +235,12 @@ auto Send(void const * data, std::size_t nBytes) -> void
 
         // Write chunkSize bytes to the TX FIFO
         WriteToFifo(dataSpan.subspan(dataIndex, chunkSize));
-        dataIndex += chunkSize;
         ClearInterrupts();
-        StartTx();
+        if(dataIndex == 0)
+        {
+            StartTx();
+        }
+        dataIndex += chunkSize;
         // Wait for TX FIFO almost empty interrupt
         //
         // TODO: Wait more intelligently by computing the estimated time t_0 it takes to send
@@ -259,7 +262,6 @@ auto Send(void const * data, std::size_t nBytes) -> void
     // Write the rest of the data
     // NOLINTNEXTLINE(*pointer-arithmetic)
     WriteToFifo(dataSpan.subspan(dataIndex));
-    StartTx();
 
     auto startTime = RODOS::NOW();
 
