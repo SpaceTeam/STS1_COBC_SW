@@ -63,6 +63,7 @@ constexpr auto cmdSetProperty = 0x11_b;
 constexpr auto cmdGpioPinCfg = 0x13_b;
 constexpr auto cmdFifoInfo = 0x15_b;
 constexpr auto cmdGetIntStatus = 0x20_b;
+constexpr auto cmdGetModemStatus = 0x22_b;
 constexpr auto cmdStartTx = 0x31_b;
 constexpr auto cmdRequestDeviceState = 0x33_b;
 constexpr auto cmdChangeState = 0x34_b;
@@ -161,6 +162,12 @@ auto ReadFunctionInfo() -> std::array<Byte, 6>
 }
 
 
+auto ReadModemStatus() -> std::array<Byte, 8>
+{
+    return SendCommand<8>(Span(cmdGetModemStatus));
+}
+
+
 auto ReadDeviceState() -> std::array<Byte, 2>
 {
     return SendCommand<2>(Span(cmdRequestDeviceState));
@@ -198,6 +205,7 @@ auto SetTxType(TxType txType) -> void
 
 // TODO: Do we need to clear all FIFOs here, should be just TX FIFO
 // TODO: Refactor (issue #226)
+// TODO: Pull rfLatchupDisableGpioPin high while sending
 auto Send(void const * data, std::size_t nBytes) -> void
 {
     // TODO: Acc. the datasheet "fifo hardware does not need to be reset prior to use".
@@ -294,7 +302,7 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
 
     ClearInterrupts();
 
-    // Enter RX Mode
+    // Enter RX mode
     // sendBuffer[0] = 0x32;
     // sendBuffer[1] = 0x00;  // "Channel 0"
     // sendBuffer[2] = 0x00;  // Start RX now
@@ -305,11 +313,35 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
     // sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
     SendCommand(Span({0x32_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
-    // Wait for RX FIFO Almost Full Interrupt
+    auto i = 0U;
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
-        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+        if(i % 200 == 0)
+        {
+            auto modemStatus = ReadModemStatus();
+            DEBUG_PRINT("Modem status: %02x %02x %d %d %d %d %d\n",
+                        static_cast<int>(modemStatus[0]),
+                        static_cast<int>(modemStatus[1]),
+                        static_cast<int>(modemStatus[2]),
+                        static_cast<int>(modemStatus[3]),
+                        static_cast<int>(modemStatus[4]),
+                        static_cast<int>(modemStatus[5]),
+                        (static_cast<unsigned>(modemStatus[6]) << 8U)
+                            + static_cast<unsigned>(modemStatus[7]));
+        }
+        RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
+        i++;
     }
+    auto modemStatus = ReadModemStatus();
+    DEBUG_PRINT(
+        "Modem status: %02x %02x %d %d %d %d %d\n",
+        static_cast<int>(modemStatus[0]),
+        static_cast<int>(modemStatus[1]),
+        static_cast<int>(modemStatus[2]),
+        static_cast<int>(modemStatus[3]),
+        static_cast<int>(modemStatus[4]),
+        static_cast<int>(modemStatus[5]),
+        (static_cast<unsigned>(modemStatus[6]) << 8U) + static_cast<unsigned>(modemStatus[7]));
 
     auto rxBuffer = std::array<Byte, maxRxBytes>{};
     static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
@@ -443,7 +475,7 @@ auto Configure(TxType txType) -> void
     static constexpr auto iPreambleTxLength = 0x00_b;
     // 0 bytes preamble
     static constexpr auto preambleTxLength = 0x08_b;
-    // Normal sync timeout, 14-bit preamble RX threshold
+    // Normal sync timeout, 0x14 = 20 preamble bits must be valid to detect a preamble
     static constexpr auto preambleConfigStd1 = 0x14_b;
     // No non-standard preamble pattern
     //
@@ -992,7 +1024,6 @@ auto SendCommand(std::span<Byte const> data) -> void
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
-    DEBUG_PRINT("SendCommand<%i>()\n", answerLength);
     csGpioPin.Reset();
     hal::WriteTo(&spi, data, spiTimeout);
     csGpioPin.Set();
