@@ -65,12 +65,16 @@ constexpr auto cmdChangeState = 0x34_b;
 constexpr auto cmdReadCmdBuff = 0x44_b;
 constexpr auto cmdWriteTxFifo = 0x66_b;
 
+// Si4463 property indexes
+constexpr auto iIntCtlPhEnable = 0x01_b;
+
 // Command answer lengths
 //
 // TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
 // this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
 // instead.
 constexpr auto partInfoAnswerLength = 8U;
+constexpr auto interruptStatusAnswerLength = 8U;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
@@ -121,7 +125,7 @@ auto SetProperties(PropertyGroup propertyGroup,
 auto ClearTxFifo() -> void;
 auto ClearRxFifo() -> void;
 auto ClearFifos() -> void;
-auto ClearInterrupts() -> void;
+auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
 auto EnterStandby() -> void;
 auto WriteToFifo(std::span<Byte const> data) -> void;
 auto ReadFromFifo(std::span<Byte> data) -> void;
@@ -222,8 +226,6 @@ auto Send(void const * data, std::size_t nBytes) -> void
     // Fill the TX FIFO with chunkSize bytes each round
     static constexpr auto chunkSize = static_cast<unsigned int>(txFifoThreshold);
     auto almostEmptyInterruptEnabled = false;
-    // Property index for packet handler interrupts
-    static constexpr auto iIntCtlPhEnable = 0x01_b;
 
     // While the packet is longer than a single fill round, wait for the almost empty interrupt,
     // afterwards for the packet sent interrupt
@@ -242,7 +244,7 @@ auto Send(void const * data, std::size_t nBytes) -> void
 
         // Write chunkSize bytes to the TX FIFO
         WriteToFifo(dataSpan.subspan(dataIndex, chunkSize));
-        ClearInterrupts();
+        ReadAndClearInterruptStatus();
         if(dataIndex == 0)
         {
             StartTx();
@@ -264,7 +266,7 @@ auto Send(void const * data, std::size_t nBytes) -> void
     static constexpr auto packetSentInterrupt = 0b0010'0000_b;
     SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(packetSentInterrupt));
 
-    ClearInterrupts();
+    ReadAndClearInterruptStatus();
 
     // Write the rest of the data
     // NOLINTNEXTLINE(*pointer-arithmetic)
@@ -292,15 +294,14 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
 
     ClearFifos();
 
-    // Enable RX FiFo Almost Full Interrupt
-    // sendBuffer[0] = 0x11;
-    // sendBuffer[1] = 0x01;
-    // sendBuffer[2] = 0x01;
-    // sendBuffer[3] = 0x01;
-    // sendBuffer[4] = 0b0000'0001;
-    SendCommand(Span({0x11_b, 0x01_b, 0x01_b, 0x01_b, 0b0000'0001_b}));
+    // Enable RX FIFO almost full interrupt as well as preamble and sync detect interrupts
+    static constexpr auto rxFifoAlmostFullInterrupt = 0b0000'0001_b;
+    static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0011_b;
+    SetProperties(PropertyGroup::intCtl,
+                  iIntCtlPhEnable,
+                  Span(FlatArray(rxFifoAlmostFullInterrupt, preambleAndSyncDetectInterrupt)));
 
-    ClearInterrupts();
+    ReadAndClearInterruptStatus();
 
     // Enter RX mode
     // sendBuffer[0] = 0x32;
@@ -313,9 +314,33 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
     // sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
     SendCommand(Span({0x32_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
+    // Wait for interrupts
     auto i = 0U;
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
+        // if(nirqGpioPin.Read() == hal::PinState::reset)
+        // {
+        //     auto interruptStatus = ReadAndClearInterrupts();
+        //     auto preambleOrSyncWasDetected = (interruptStatus[4] & 0b11_b) != 0_b;
+        //     if(preambleOrSyncWasDetected)
+        //     {
+        //         auto modemStatus = ReadModemStatus();
+        //         DEBUG_PRINT("Modem status: %02x %02x %d %d %d %d %d\n",
+        //                     static_cast<int>(modemStatus[0]),
+        //                     static_cast<int>(modemStatus[1]),
+        //                     static_cast<int>(modemStatus[2]),
+        //                     static_cast<int>(modemStatus[3]),
+        //                     static_cast<int>(modemStatus[4]),
+        //                     static_cast<int>(modemStatus[5]),
+        //                     (static_cast<unsigned>(modemStatus[6]) << 8U)
+        //                         + static_cast<unsigned>(modemStatus[7]));
+        //     }
+        //     auto rxFifoIsAlmostFull = (interruptStatus[2] & 1_b) != 0_b;
+        //     if(rxFifoIsAlmostFull)
+        //     {
+        //         break;
+        //     }
+        // }
         if(i % 200 == 0)
         {
             auto modemStatus = ReadModemStatus();
@@ -349,7 +374,7 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
 
     DEBUG_PRINT("Retrieved first %d bytes from FIFO\n", chunkSize);
 
-    ClearInterrupts();
+    ReadAndClearInterruptStatus();
 
     // Wait for RX FIFO Almost Full Interrupt
     while(nirqGpioPin.Read() == hal::PinState::set)
@@ -360,7 +385,7 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
     ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
 
     EnterStandby();
-    ClearInterrupts();
+    ReadAndClearInterruptStatus();
 
     return rxBuffer;
 }
@@ -1059,11 +1084,11 @@ auto ClearFifos() -> void
 }
 
 
-// Clear all pending interrupts
-auto ClearInterrupts() -> void
+// Read and clear all pending interrupts
+auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>
 {
-    // FIXME: Acc. the datasheet this command has a 9-byte answer. Why does this work?
-    SendCommand(Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
+    return SendCommand<interruptStatusAnswerLength>(
+        Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
 }
 
 
