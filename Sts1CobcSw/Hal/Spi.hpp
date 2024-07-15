@@ -39,6 +39,8 @@ private:
 
 auto Initialize(RODOS::HAL_SPI * spi, std::uint32_t baudRate) -> void;
 
+// TODO: Why are these functions still here? I think they can and should be removed.
+
 // TODO: Maybe remove extent to reduce code bloat, or probably build time since it is just a single
 // call to the Rodos function, which is trivial to inline.
 template<typename T, std::size_t extent>
