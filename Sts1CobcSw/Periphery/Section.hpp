@@ -16,7 +16,7 @@ struct Section
 
 
 template<Size size>
-inline constexpr auto FirstSection() -> Section<0, size>;
+inline constexpr auto FirstSection() -> Section<Address(0), size>;
 
 template<Size newSize, Address begin, Size size>
 inline constexpr auto NextSection(Section<begin, size> previousSection)

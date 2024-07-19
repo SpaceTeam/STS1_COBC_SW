@@ -7,7 +7,7 @@
 namespace sts1cobcsw::fram
 {
 // clang-format off
-inline constexpr auto persistentVariablesSize = 100;
+inline constexpr auto persistentVariablesSize = Size(100);
 inline constexpr auto persistentVariables0 =    FirstSection<persistentVariablesSize>();
 inline constexpr auto persistentVariables1 =
     NextSection<persistentVariablesSize>(persistentVariables0);

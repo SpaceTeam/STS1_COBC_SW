@@ -166,7 +166,7 @@ auto DoWriteTo(Address address,
                std::size_t nBytes,
                [[maybe_unused]] std::int64_t timeout) -> void
 {
-    std::memcpy(memory.data() + address, data, nBytes);
+    std::memcpy(memory.data() + value_of(address), data, nBytes);
 }
 
 
@@ -175,7 +175,7 @@ auto DoReadFrom(Address address,
                 std::size_t nBytes,
                 [[maybe_unused]] std::int64_t timeout) -> void
 {
-    std::memcpy(data, memory.data() + address, nBytes);
+    std::memcpy(data, memory.data() + value_of(address), nBytes);
 }
 }
 }

@@ -114,7 +114,7 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
     PRINTF("\n");
     PRINTF("Writing %d bytes to address   0x%08x ...\n",
            static_cast<int>(testDataSize),
-           static_cast<unsigned int>(address));
+           static_cast<unsigned int>(value_of(address)));
     auto begin = RODOS::NOW();
     fram::WriteTo(address, Span(testData), spiTimeout);
     auto end = RODOS::NOW();
@@ -122,7 +122,7 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
 
     PRINTF("Reading %d bytes from address 0x%08x ...\n",
            static_cast<int>(testDataSize),
-           static_cast<unsigned int>(address));
+           static_cast<unsigned int>(value_of(address)));
     begin = RODOS::NOW();
     fram::ReadFrom(address, Span(&readData), spiTimeout);
     end = RODOS::NOW();
