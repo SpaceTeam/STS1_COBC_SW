@@ -18,8 +18,10 @@ namespace sts1cobcsw::fram
 {
 // NOLINTNEXTLINE(*magic-numbers)
 using DeviceId = std::array<Byte, 9>;
-using Size = strong::type<std::uint32_t, struct SizeTag, strong::strongly_ordered, strong::arithmetic>;
-using Address = strong::type<std::uint32_t, struct AddressTag, strong::affine_point<Size>, strong::strongly_ordered>;
+using Size =
+    strong::type<std::uint32_t, struct SizeTag, strong::arithmetic, strong::strongly_ordered>;
+using Address =
+    strong::type<std::uint32_t, struct AddressTag, strong::affine_point<Size>, strong::strongly_ordered>;
 
 
 inline constexpr Size memorySize(1024 * 1024);

@@ -13,9 +13,9 @@ inline constexpr auto persistentVariables1 =
     NextSection<persistentVariablesSize>(persistentVariables0);
 inline constexpr auto persistentVariables2 =
     NextSection<persistentVariablesSize>(persistentVariables1);
-inline constexpr auto eduProgramQueue =         NextSection<20 * 10>(persistentVariables2);
-inline constexpr auto eduProgramStatusHistory = NextSection<50 * 7>(eduProgramQueue);
-inline constexpr auto testMemory =              NextSection<1000>(eduProgramStatusHistory);
+inline constexpr auto eduProgramQueue =         NextSection<Size(20 * 10)>(persistentVariables2);
+inline constexpr auto eduProgramStatusHistory = NextSection<Size(50 * 7)>(eduProgramQueue);
+inline constexpr auto testMemory =              NextSection<Size(1000)>(eduProgramStatusHistory);
 inline constexpr auto telemetry =               LastSection(testMemory);
 // clang-format on
 
