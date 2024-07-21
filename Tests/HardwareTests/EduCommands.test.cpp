@@ -7,9 +7,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <strong_type/type.hpp>
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -140,7 +139,8 @@ private:
                     {
                         auto status = getStatusResult.value();
                         PRINTF("  Status type = %d\n", static_cast<int>(status.statusType));
-                        PRINTF("  Program ID  = %d\n", static_cast<int>(value_of(status.programId)));
+                        PRINTF("  Program ID  = %d\n",
+                               static_cast<int>(value_of(status.programId)));
                         PRINTF("  Start time  = %d\n", static_cast<int>(status.startTime));
                         PRINTF("  Exit code   = %d\n", static_cast<int>(status.exitCode));
                     }
