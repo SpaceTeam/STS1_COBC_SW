@@ -25,6 +25,8 @@ auto Program(lfs_config const * config,
              lfs_size_t size) -> int;
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int;
 auto Sync(lfs_config const * config) -> int;
+auto Lock(lfs_config const * config) -> int;
+auto Unlock(lfs_config const * config) -> int;
 
 
 auto readBuffer = flash::Page{};
@@ -36,6 +38,8 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .prog = &Program,
                                         .erase = &Erase,
                                         .sync = &Sync,
+                                        .lock = &Lock,
+                                        .unlock = &Unlock,
                                         .read_size = flash::pageSize,
                                         .prog_size = flash::pageSize,
                                         .block_size = flash::sectorSize,
@@ -43,13 +47,15 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .block_cycles = 200,
                                         .cache_size = readBuffer.size(),
                                         .lookahead_size = lookaheadBuffer.size(),
+                                        .compact_thresh = 0,
                                         .read_buffer = readBuffer.data(),
                                         .prog_buffer = programBuffer.data(),
                                         .lookahead_buffer = lookaheadBuffer.data(),
                                         .name_max = LFS_NAME_MAX,
                                         .file_max = LFS_FILE_MAX,
                                         .attr_max = LFS_ATTR_MAX,
-                                        .metadata_max = flash::sectorSize};
+                                        .metadata_max = flash::sectorSize,
+                                        .inline_max = 0};
 
 // TODO: Test with real HW
 // max. 3.5 ms acc. W25Q01JV datasheet
@@ -125,6 +131,20 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
     {
         return LFS_ERR_IO;
     }
+    return 0;
+}
+
+
+// TODO: Add a proper implementation
+auto Lock([[maybe_unused]] lfs_config const * config) -> int
+{
+    return 0;
+}
+
+
+// TODO: Add a proper implementation
+auto Unlock([[maybe_unused]] lfs_config const * config) -> int
+{
     return 0;
 }
 }

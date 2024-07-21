@@ -26,6 +26,8 @@ auto Program(lfs_config const * config,
              lfs_size_t size) -> int;
 auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int;
 auto Sync(lfs_config const * config) -> int;
+auto Lock(lfs_config const * config) -> int;
+auto Unlock(lfs_config const * config) -> int;
 
 
 constexpr auto pageSize = 256;
@@ -42,6 +44,8 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .prog = &Program,
                                         .erase = &Erase,
                                         .sync = &Sync,
+                                        .lock = &Lock,
+                                        .unlock = &Unlock,
                                         .read_size = pageSize,
                                         .prog_size = pageSize,
                                         .block_size = sectorSize,
@@ -49,13 +53,15 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .block_cycles = 200,
                                         .cache_size = readBuffer.size(),
                                         .lookahead_size = lookaheadBuffer.size(),
+                                        .compact_thresh = 0,
                                         .read_buffer = readBuffer.data(),
                                         .prog_buffer = programBuffer.data(),
                                         .lookahead_buffer = lookaheadBuffer.data(),
                                         .name_max = LFS_NAME_MAX,
                                         .file_max = LFS_FILE_MAX,
                                         .attr_max = LFS_ATTR_MAX,
-                                        .metadata_max = sectorSize};
+                                        .metadata_max = sectorSize,
+                                        .inline_max = 0};
 
 
 auto Initialize() -> void
@@ -96,6 +102,20 @@ auto Erase(lfs_config const * config, lfs_block_t blockNo) -> int
 
 
 auto Sync([[maybe_unused]] lfs_config const * config) -> int
+{
+    return 0;
+}
+
+
+// TODO: Add a proper implementation
+auto Lock([[maybe_unused]] lfs_config const * config) -> int
+{
+    return 0;
+}
+
+
+// TODO: Add a proper implementation
+auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
     return 0;
 }
