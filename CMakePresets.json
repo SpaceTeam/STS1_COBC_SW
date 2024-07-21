@@ -67,7 +67,7 @@
       "environment": {
         "W_BASIC": "-Wall -Wextra -Wpedantic",
         "W_CONVERSION": "-Wconversion -Wsign-conversion -Wdouble-promotion",
-        "W_CAST": "-Wcast-qual -Wold-style-cast -Wuseless-cast",
+        "W_CAST": "-Wcast-qual -Wold-style-cast",
         "W_NULL": "-Wnull-dereference -Wzero-as-null-pointer-constant -Wstrict-null-sentinel",
         "W_CLASS": "-Wsuggest-override -Woverloaded-virtual",
         "W_COND": "-Wduplicated-branches -Wduplicated-cond",
