@@ -14,6 +14,7 @@ include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 include(cmake/custom-commands.cmake)
 include(cmake/clang-tidy-cache.cmake)
+include(cmake/ccache.cmake)
 
 # ---- Find dependencies ----
 
