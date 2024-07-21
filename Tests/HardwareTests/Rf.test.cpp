@@ -1,8 +1,8 @@
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
-#include <Sts1CobcSw/Periphery/Rf.hpp>
-
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
+
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Periphery/Rf.hpp>
 
 #include <rodos_no_using_namespace.h>
 

@@ -1,3 +1,5 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -8,7 +10,6 @@
 #include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/type.hpp>
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <rodos_no_using_namespace.h>
 

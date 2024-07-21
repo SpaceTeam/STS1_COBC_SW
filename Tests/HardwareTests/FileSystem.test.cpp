@@ -1,7 +1,7 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
-
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <littlefs/lfs.h>
 

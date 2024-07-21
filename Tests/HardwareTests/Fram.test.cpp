@@ -1,11 +1,12 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+#include <Tests/HardwareTests/Utility.hpp>
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <strong_type/type.hpp>
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-#include <Tests/HardwareTests/Utility.hpp>
 
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>

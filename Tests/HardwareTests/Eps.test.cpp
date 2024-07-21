@@ -1,7 +1,7 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
-
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <rodos_no_using_namespace.h>
 

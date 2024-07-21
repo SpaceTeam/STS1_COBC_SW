@@ -1,6 +1,6 @@
-#include <Sts1CobcSw/Hal/IoNames.hpp>
-
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 
 
 namespace sts1cobcsw

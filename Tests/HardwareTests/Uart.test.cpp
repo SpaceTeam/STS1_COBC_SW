@@ -6,13 +6,13 @@
 //!
 //! After flashing the COBC just follow the instructions on the screen.
 
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <rodos_no_using_namespace.h>
 
