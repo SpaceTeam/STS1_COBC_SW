@@ -4,9 +4,9 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <strong_type/affine_point.hpp>
-#include <strong_type/arithmetic.hpp>
 #include <strong_type/ordered.hpp>
-#include <strong_type/strong_type.hpp>
+#include <strong_type/ordered_with.hpp>
+#include <strong_type/type.hpp>
 
 #include <array>
 #include <cstddef>

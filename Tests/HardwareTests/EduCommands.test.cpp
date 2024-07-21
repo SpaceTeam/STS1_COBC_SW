@@ -9,6 +9,8 @@
 
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>

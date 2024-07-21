@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 
+#include <strong_type/type.hpp>
+
 // clang-format off
 #include <cstdint>
 // ringbuffer.h does not include <cstdint> even though it requires it

@@ -1,5 +1,7 @@
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <cstring>
 
 
