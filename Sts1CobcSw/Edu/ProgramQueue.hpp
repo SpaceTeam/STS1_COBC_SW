@@ -5,6 +5,8 @@
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
+#include <strong_type/ordered_with.hpp>
+
 #include <etl/vector.h>
 
 #include <bit>

@@ -2,8 +2,11 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -89,7 +92,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
         auto entry = Deserialize<edu::ProgramQueueEntry>(
             queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());
 
-        DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", entry.programId.get());
+        DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", value_of(entry.programId));
         DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime);
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 

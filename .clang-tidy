@@ -2,7 +2,9 @@
 # Enable ALL the things! Except not really. We don't use the abseil library, OpenCL (the altera
 # stuff), android, darwin (an Apple OS apparently), MPI or OpenMP. The fuchsia checks are just too
 # restrictive, we don't write Objective-C and don't develop the Linux kernel or LLVM-libc.
-# misc-non-private-member-variables-in-classes: the options don't do anything
+# misc-non-private-member-variables-in-classes: the options don't do anything.
+# misc-const-correctness is not about const-correctness, but about const-ness of local variables and
+# we are not jumping on that bandwagon.
 Checks: "*,\
   -*avoid-c-arrays,\
   -abseil-*,\
@@ -27,10 +29,11 @@ Checks: "*,\
   -llvm-header-guard,\
   -llvm-namespace-comment,\
   -llvmlibc-*,\
-  -misc-non-private-member-variables-in-classes,\
+  -misc-const-correctness,\
+  -misc-non-private-member-variables-in-classes,
+  -misc-unused-using-decls,\
   -mpi-*,\
   -openmp-*,\
-  -misc-unused-using-decls,\
   -clang-diagnostic-unused-command-line-argument,\
   -bugprone-implicit-widening-of-multiplication-result"
 WarningsAsErrors: ''

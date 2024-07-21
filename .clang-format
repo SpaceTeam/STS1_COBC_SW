@@ -83,25 +83,28 @@ IncludeCategories:
   # The main header for a source file is automatically assigned priority 0.
   # C stdandard library
   - Regex: '^<(assert|complex|ctype|ctype|fenv|float|inttypes|iso646|limits|locale|math|setjmp|signal|stdalign|stdarg|stdatomic|stdatomic|stddef|stdint|stdio|stdlib|stdnoreturn|string|tgmath|threads|time|uchar|wchar|wctype)\.h>'
-    Priority: 7
+    Priority: 8
   # C++ stdandard library: <*> without a dot
   - Regex: '^<[a-z_]+>'
-    Priority: 6
+    Priority: 7
   # ETL
   - Regex: '^<etl\/[a-z_]+\.h>'
-    Priority: 5
+    Priority: 6
   # Rodos: <rodos*.h>, <rodos_no_using_namespace.h>, or a Rodos support lib
   - Regex: '^<rodos[a-z_-]*(\/[a-z_-]+)*\.h>'
-    Priority: 4
+    Priority: 5
+  # Test header files <Tests/*.hpp> without underscores
+  - Regex: '^<Tests(\/[A-Za-z0-9]+)+\.hpp>'
+    Priority: 1
   # Sts1CobcSw header files <Sts1CobcSw/*.hpp> without underscores
   - Regex: '^<Sts1CobcSw(\/[A-Za-z0-9]+)+\.hpp>'
-    Priority: 1
+    Priority: 2
   # C headers from external libraries: <**/*.h>
   - Regex: '^<([A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.h>'
-    Priority: 3
+    Priority: 4
   # C++ headers from external libraries: <**/*.hh> or <**/*.hpp> or <**/*.h++>
   - Regex: '^<([A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.h(h|pp|\+\+)>'
-    Priority: 2
+    Priority: 3
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
 IndentAccessModifiers: false

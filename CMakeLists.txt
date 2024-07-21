@@ -20,7 +20,7 @@ include(cmake/clang-tidy-cache.cmake)
 find_package_and_notify(etl)
 find_rodos()
 find_package_and_notify(littlefs)
-find_package_and_notify(NamedType)
+find_package_and_notify(strong_type)
 
 # ---- Declare targets ----
 

@@ -1,9 +1,9 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
-
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <rodos_no_using_namespace.h>
 

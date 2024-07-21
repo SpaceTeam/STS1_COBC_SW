@@ -3,6 +3,11 @@
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <strong_type/affine_point.hpp>
+#include <strong_type/ordered.hpp>
+#include <strong_type/ordered_with.hpp>
+#include <strong_type/type.hpp>
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -13,12 +18,17 @@ namespace sts1cobcsw::fram
 {
 // NOLINTNEXTLINE(*magic-numbers)
 using DeviceId = std::array<Byte, 9>;
-// TODO: Use a strong typedef
-using Address = std::uint32_t;
-using Size = std::uint32_t;
+using Size =
+    strong::type<std::uint32_t, struct SizeTag, strong::ordered, strong::ordered_with<std::size_t>>;
+using Address =
+    strong::type<std::uint32_t, struct AddressTag, strong::affine_point<Size>, strong::ordered>;
 
 
-inline constexpr Size memorySize = 1024 * 1024;
+// TODO: Consider renaming Section to AddressRange, using it here, and moving the
+// First/Next/LastSection<>() functions to a separate file.
+inline constexpr auto memoryBegin = Address(0);
+inline constexpr auto memorySize = Size(1024 * 1024);
+inline constexpr auto memoryEnd = memoryBegin + memorySize;
 inline constexpr auto correctDeviceId =
     DeviceId{0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b};
 

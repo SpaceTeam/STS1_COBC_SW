@@ -1,5 +1,7 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 
+#include <strong_type/equality.hpp>
+
 
 namespace sts1cobcsw::edu
 {

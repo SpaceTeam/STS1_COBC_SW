@@ -1,10 +1,12 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+#include <Tests/HardwareTests/Utility.hpp>
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-#include <Tests/HardwareTests/Utility.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
@@ -32,7 +34,7 @@ constexpr auto spiTimeout = 30 * RODOS::MILLISECONDS;
 
 
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
-auto WriteAndReadTestData(fram::Address const & address) -> void;
+auto WriteAndReadTestData(fram::Address address) -> void;
 
 
 class FramTest : public RODOS::StaticThread<>
@@ -76,7 +78,7 @@ private:
 
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr std::uint32_t nAdressBits = 20U;
-        auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
+        auto address = fram::Address(RODOS::uint32Rand() % (1U << nAdressBits));
 
         PRINTF("\n");
         WriteAndReadTestData(address);
@@ -107,14 +109,14 @@ auto PrintDeviceId(fram::DeviceId const & deviceId) -> void
 }
 
 
-auto WriteAndReadTestData(fram::Address const & address) -> void
+auto WriteAndReadTestData(fram::Address address) -> void
 {
     auto nBytesToPrint = 10U;
 
     PRINTF("\n");
     PRINTF("Writing %d bytes to address   0x%08x ...\n",
            static_cast<int>(testDataSize),
-           static_cast<unsigned int>(address));
+           static_cast<unsigned int>(value_of(address)));
     auto begin = RODOS::NOW();
     fram::WriteTo(address, Span(testData), spiTimeout);
     auto end = RODOS::NOW();
@@ -122,7 +124,7 @@ auto WriteAndReadTestData(fram::Address const & address) -> void
 
     PRINTF("Reading %d bytes from address 0x%08x ...\n",
            static_cast<int>(testDataSize),
-           static_cast<unsigned int>(address));
+           static_cast<unsigned int>(value_of(address)));
     begin = RODOS::NOW();
     fram::ReadFrom(address, Span(&readData), spiTimeout);
     end = RODOS::NOW();

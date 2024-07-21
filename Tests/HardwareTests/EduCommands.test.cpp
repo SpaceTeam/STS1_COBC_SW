@@ -1,3 +1,5 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -7,7 +9,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -95,7 +97,7 @@ private:
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
                     auto programId = ProgramId(0);
-                    std::from_chars(userInput.begin(), userInput.end(), programId.get());
+                    std::from_chars(userInput.begin(), userInput.end(), value_of(programId));
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
@@ -110,7 +112,7 @@ private:
                     PRINTF("\n");
                     PRINTF("Sending ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
                            ", timeout = %" PRIi16 ")\n",
-                           programId.get(),
+                           value_of(programId),
                            startTime,
                            timeout);
                     auto executeProgramResult = edu::ExecuteProgram(
@@ -138,7 +140,8 @@ private:
                     {
                         auto status = getStatusResult.value();
                         PRINTF("  Status type = %d\n", static_cast<int>(status.statusType));
-                        PRINTF("  Program ID  = %d\n", static_cast<int>(status.programId));
+                        PRINTF("  Program ID  = %d\n",
+                               static_cast<int>(value_of(status.programId)));
                         PRINTF("  Start time  = %d\n", static_cast<int>(status.startTime));
                         PRINTF("  Exit code   = %d\n", static_cast<int>(status.exitCode));
                     }
@@ -149,7 +152,7 @@ private:
                     PRINTF("Please enter a program ID (1 character)\n");
                     auto userInput = ReadCharacters<1>();
                     auto programId = ProgramId(0);
-                    std::from_chars(userInput.begin(), userInput.end(), programId.get());
+                    std::from_chars(userInput.begin(), userInput.end(), value_of(programId));
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
@@ -159,7 +162,7 @@ private:
                     PRINTF("\n");
                     PRINTF("Sending ReturnResult(programId = %" PRIu16 ", startTime = %" PRIi32
                            ")\n",
-                           programId.get(),
+                           value_of(programId),
                            startTime);
                     auto returnResultResult = edu::ReturnResult(
                         edu::ReturnResultData{.programId = programId, .startTime = startTime});

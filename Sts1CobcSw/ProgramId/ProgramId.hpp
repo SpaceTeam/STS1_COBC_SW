@@ -3,18 +3,20 @@
 
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
-#include <NamedType/named_type.hpp>
+#include <strong_type/strong_type.hpp>
 
 #include <cstdint>
 
 
 namespace sts1cobcsw
 {
-using ProgramId = fluent::NamedType<std::uint16_t, struct ProgramIdTag, fluent::Callable>;
+using ProgramId =
+    strong::type<std::uint16_t, struct ProgramIdTag, strong::invocable, strong::equality>;
 
-// TODO: Maybe make ProgramId completely serializable, i.e., overload (De-)Serialize() as well
+
 template<>
-inline constexpr std::size_t serialSize<ProgramId> = totalSerialSize<ProgramId::UnderlyingType>;
+inline constexpr std::size_t serialSize<ProgramId> =
+    totalSerialSize<strong::underlying_type_t<ProgramId>>;
 
 
 template<std::endian endianness>
