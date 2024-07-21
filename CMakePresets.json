@@ -94,7 +94,8 @@
         "cpp-std"
       ],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_CCACHE": "OFF"
       }
     },
     {
