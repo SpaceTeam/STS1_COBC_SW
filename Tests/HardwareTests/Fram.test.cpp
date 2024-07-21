@@ -33,7 +33,7 @@ constexpr auto spiTimeout = 30 * RODOS::MILLISECONDS;
 
 
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;
-auto WriteAndReadTestData(fram::Address const & address) -> void;
+auto WriteAndReadTestData(fram::Address address) -> void;
 
 
 class FramTest : public RODOS::StaticThread<>
@@ -77,7 +77,7 @@ private:
 
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
         constexpr std::uint32_t nAdressBits = 20U;
-        auto address = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
+        auto address = fram::Address(RODOS::uint32Rand() % (1U << nAdressBits));
 
         PRINTF("\n");
         WriteAndReadTestData(address);
@@ -108,7 +108,7 @@ auto PrintDeviceId(fram::DeviceId const & deviceId) -> void
 }
 
 
-auto WriteAndReadTestData(fram::Address const & address) -> void
+auto WriteAndReadTestData(fram::Address address) -> void
 {
     auto nBytesToPrint = 10U;
 

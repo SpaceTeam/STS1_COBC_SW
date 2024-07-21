@@ -7,6 +7,7 @@
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <catch2/generators/catch_generators_random.hpp>
+#include <strong_type/type.hpp>
 
 #include <array>
 #include <string>
@@ -19,7 +20,7 @@ using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
-auto WriteAndReadTestData(sts1cobcsw::fram::Address const & address) -> void;
+auto WriteAndReadTestData(sts1cobcsw::fram::Address address) -> void;
 auto ReadCorrectDeviceId() -> fram::DeviceId;
 
 
@@ -34,7 +35,8 @@ TEST_CASE("Mocked functions do nothing by default")
         CHECK(actualBaudRate == 0);
     }
 
-    auto address = GENERATE(take(10, random(0U, 1U << 20U)));
+    // NOLINTNEXTLINE(google-build-using-namespace)
+    auto address = fram::Address(GENERATE(take(10, random(0U, 1U << 20U))));
 
     SECTION("WriteTo() and ReadFrom()")
     {
@@ -61,7 +63,8 @@ TEST_CASE("Mocking FRAM in RAM")
     auto actualBaudRate = fram::ActualBaudRate();
     CHECK(actualBaudRate == 6'000'000);
 
-    auto address = GENERATE(take(1, random(0U, fram::ram::memorySize - 10)));
+    // NOLINTNEXTLINE(google-build-using-namespace)
+    auto address = fram::Address(GENERATE(take(1, random(0U, fram::ram::memorySize - 10))));
 
     auto readData = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
     fram::ReadFrom(address, Span(&readData), 0);
@@ -69,10 +72,10 @@ TEST_CASE("Mocking FRAM in RAM")
 
     auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
     fram::WriteTo(address, Span(writeData), 0);
-    CHECK(fram::ram::memory[address] == writeData[0]);
-    CHECK(fram::ram::memory[address + 1] == writeData[1]);
-    CHECK(fram::ram::memory[address + 2] == writeData[2]);
-    CHECK(fram::ram::memory[address + 3] == writeData[3]);
+    CHECK(fram::ram::memory[value_of(address)] == writeData[0]);
+    CHECK(fram::ram::memory[value_of(address) + 1] == writeData[1]);
+    CHECK(fram::ram::memory[value_of(address) + 2] == writeData[2]);
+    CHECK(fram::ram::memory[value_of(address) + 3] == writeData[3]);
 
     readData = fram::ReadFrom<writeData.size()>(address, 0);
     CHECK(readData == writeData);

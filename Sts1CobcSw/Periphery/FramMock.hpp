@@ -37,7 +37,7 @@ auto DoReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t t
 // Do functions that simulate the FRAM in RAM
 namespace ram
 {
-constexpr auto memorySize = (1U << 20U);
+constexpr auto memorySize = 1U << 20U;
 extern std::array<Byte, memorySize> memory;
 
 
