@@ -10,11 +10,13 @@
 
 namespace sts1cobcsw
 {
-using ProgramId = strong::type<std::uint16_t, struct ProgramIdTag, strong::invocable, strong::equality>;
+using ProgramId =
+    strong::type<std::uint16_t, struct ProgramIdTag, strong::invocable, strong::equality>;
 
-// TODO: Maybe make ProgramId completely serializable, i.e., overload (De-)Serialize() as well
+
 template<>
-inline constexpr std::size_t serialSize<ProgramId> = totalSerialSize<strong::underlying_type_t<ProgramId>>;
+inline constexpr std::size_t serialSize<ProgramId> =
+    totalSerialSize<strong::underlying_type_t<ProgramId>>;
 
 
 template<std::endian endianness>
