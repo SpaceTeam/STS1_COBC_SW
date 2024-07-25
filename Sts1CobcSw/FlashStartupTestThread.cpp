@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -29,6 +30,7 @@ private:
 
     void run() override
     {
+        DEBUG_PRINT("FlashStartupTest ...");
         RODOS::AT(RODOS::END_OF_TIME);
         flash::Initialize();
         auto jedecId = flash::ReadJedecId();
