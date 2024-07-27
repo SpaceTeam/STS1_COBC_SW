@@ -96,7 +96,7 @@
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "ENABLE_CCACHE": "OFF"
+        "USE_CCACHE": "OFF"
       }
     },
     {
