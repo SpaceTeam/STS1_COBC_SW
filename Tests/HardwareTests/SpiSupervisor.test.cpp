@@ -1,3 +1,5 @@
+#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
@@ -24,12 +26,19 @@ public:
 private:
     void init() override
     {
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
+#endif
     }
 
 
     void run() override
     {
         using RODOS::PRINTF;
+
+#if HW_VERSION >= 27
+        rfLatchupDisableGpioPin.Reset();
+#endif
 
         std::uint32_t const flashAddress = 0x00'01'00'00U;
 
