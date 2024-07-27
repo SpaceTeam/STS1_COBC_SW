@@ -1,12 +1,16 @@
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
+
+#include <array>
+#include <cstdint>
 
 
 namespace sts1cobcsw
