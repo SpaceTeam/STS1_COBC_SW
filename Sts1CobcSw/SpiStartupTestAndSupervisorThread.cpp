@@ -45,33 +45,40 @@ private:
         using RODOS::AT;
         using RODOS::NOW;
 
-        // TODO: Test if this works
+        static constexpr auto errorMessage = " failed to complete in time\n";
+        static constexpr auto successMessage = " completed in time\n";
+
         auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
+        DEBUG_PRINT(persistentstate::FramIsWorking() ? "\n" : " and");
         if(not testWasSuccessful)
         {
-            DEBUG_PRINT("FramEpsStartupTest was not completed in time");
+            DEBUG_PRINT("%s", errorMessage);
             persistentstate::FramIsWorking(false);
             persistentstate::EpsIsWorking(false);
         }
         else
         {
-            DEBUG_PRINT("FramEpsStartupTest completed in time");
+            DEBUG_PRINT("%s", successMessage);
         }
+
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
+        DEBUG_PRINT(persistentstate::FlashIsWorking() ? "\n" : " and");
         if(not testWasSuccessful)
         {
-            DEBUG_PRINT("FlashStartupTest was not completed in time");
+            DEBUG_PRINT("%s", errorMessage);
             persistentstate::FlashIsWorking(false);
             persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
         }
         else
         {
-            DEBUG_PRINT("FlashStartupTest completed in time");
+            DEBUG_PRINT("%s", successMessage);
         }
+
         testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
+        DEBUG_PRINT(persistentstate::RfIsWorking() ? "\n" : " and");
         if(not testWasSuccessful)
         {
-            DEBUG_PRINT("RfStartupTest was not completed in time");
+            DEBUG_PRINT("%s", errorMessage);
             persistentstate::RfIsWorking(false);
             persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
             AT(NOW() + 2 * RODOS::SECONDS);
@@ -79,7 +86,7 @@ private:
         }
         else
         {
-            DEBUG_PRINT("RfStartupTest completed in time");
+            DEBUG_PRINT("%s", successMessage);
         }
 
         TIME_LOOP(0, supervisionPeriod)
@@ -87,18 +94,18 @@ private:
             auto timeoutHappened = false;
             if(NOW() > framEpsSpi.TransferEnd())
             {
-                DEBUG_PRINT("FramEps timeout occurred");
+                DEBUG_PRINT("FRAM/EPS SPI timeout occurred\n");
                 timeoutHappened = true;
             }
             if(NOW() > flash::spi.TransferEnd())
             {
-                DEBUG_PRINT("Flash timeout occurred");
+                DEBUG_PRINT("Flash SPI timeout occurred\n");
                 timeoutHappened = true;
                 persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
             }
             if(NOW() > rf::spi.TransferEnd())
             {
-                DEBUG_PRINT("Rf timeout occurred");
+                DEBUG_PRINT("RF timeout occurred\n");
                 timeoutHappened = true;
                 persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
             }

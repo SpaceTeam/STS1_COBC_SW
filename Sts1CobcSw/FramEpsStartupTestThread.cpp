@@ -33,12 +33,13 @@ private:
 
     void run() override
     {
-        DEBUG_PRINT("FramEpsStartupTest ...");
+        DEBUG_PRINT("FRAM/EPS start-up test ...");
         RODOS::AT(RODOS::END_OF_TIME);
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
         if(deviceId != fram::correctDeviceId)
         {
+            DEBUG_PRINT(" failed to read correct FRAM device ID");
             persistentstate::FramIsWorking(false);
         }
         eps::Initialize();

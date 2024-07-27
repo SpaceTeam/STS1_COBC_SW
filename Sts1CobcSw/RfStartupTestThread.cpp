@@ -29,12 +29,13 @@ private:
 
     void run() override
     {
-        DEBUG_PRINT("RfStartupTest ...");
+        DEBUG_PRINT("RF start-up test ...");
         RODOS::AT(RODOS::END_OF_TIME);
         rf::Initialize(rf::TxType::packet);
         auto partNumber = rf::ReadPartNumber();
         if(partNumber != rf::correctPartNumber)
         {
+            DEBUG_PRINT(" failed to read correct RF part number");
             persistentstate::RfIsWorking(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
