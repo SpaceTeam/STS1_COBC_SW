@@ -13,10 +13,10 @@ namespace sts1cobcsw
 
 auto delay = 1 * RODOS::SECONDS;
 
-class PeripherySupervisionTest : public RODOS::StaticThread<>
+class SpiSupervisorTest : public RODOS::StaticThread<>
 {
 public:
-    PeripherySupervisionTest() : StaticThread("PeripherySupervisionTest")
+    SpiSupervisorTest() : StaticThread("SpiSupervisorTest")
     {
     }
 
@@ -53,5 +53,5 @@ private:
         fram::WriteTo(framAddress, Span(framTestData), spiTimeout);
     }
 
-} peripherySupervisionTest;
+} spiSupervisorTest;
 }
