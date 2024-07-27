@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/RfStartupTestThread.hpp>
 #include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -28,11 +29,13 @@ private:
 
     void run() override
     {
+        DEBUG_PRINT("RF start-up test ...");
         RODOS::AT(RODOS::END_OF_TIME);
         rf::Initialize(rf::TxType::packet);
         auto partNumber = rf::ReadPartNumber();
         if(partNumber != rf::correctPartNumber)
         {
+            DEBUG_PRINT(" failed to read correct RF part number");
             persistentstate::RfIsWorking(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
