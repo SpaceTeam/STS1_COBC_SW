@@ -9,9 +9,8 @@ namespace sts1cobcsw::fram
 template<typename T, std::size_t size, Address startAddress>
 void RingBuffer<T, size, startAddress>::Push(T const & newData)
 {
-    auto const address = startAddress + nextWriteIndex_ * serialSize<T>;
-    fram::WriteTo(address, Span(Serialize(newData)), 0);
-
+    auto const rawaddress = value_of(startAddress) + (nextWriteIndex_ * serialSize<T>);
+    fram::WriteTo(fram::Address(rawaddress), Span(Serialize(newData)), 0);
 
     ++nextWriteIndex_;
     if(nextWriteIndex_ == bufferSize_)
@@ -33,8 +32,8 @@ void RingBuffer<T, size, startAddress>::Push(T const & newData)
 template<typename T, std::size_t size, Address startAddress>
 auto RingBuffer<T, size, startAddress>::Front() -> T
 {
-    auto const address = startAddress + nextReadIndex_ * serialSize<T>;
-    auto readData = fram::ReadFrom<serialSize<T>>(address, 0);
+    auto const rawAddress = value_of(startAddress) + (nextReadIndex_ * serialSize<T>);
+    auto readData = fram::ReadFrom<serialSize<T>>(fram::Address(rawAddress), 0);
     auto fromRing = Deserialize<T>(std::span(readData));
 
     return fromRing;
@@ -54,8 +53,8 @@ auto RingBuffer<T, size, startAddress>::Back() -> T
         readIndex = nextWriteIndex_ - 1;
     }
 
-    auto const address = startAddress + readIndex * serialSize<T>;
-    auto readData = fram::ReadFrom<serialSize<T>>(address, 0);
+    auto const rawaddress = value_of(startAddress) + readIndex * serialSize<T>;
+    auto readData = fram::ReadFrom<serialSize<T>>(fram::Address(rawaddress), 0);
     auto fromRing = Deserialize<T>(std::span(readData));
 
     return fromRing;
@@ -65,8 +64,9 @@ auto RingBuffer<T, size, startAddress>::Back() -> T
 template<typename T, std::size_t size, Address startAddress>
 auto RingBuffer<T, size, startAddress>::operator[](std::size_t index) -> T
 {
-    auto const address = startAddress + ((nextReadIndex_ + index) % bufferSize_) * serialSize<T>;
-    auto readData = fram::ReadFrom<serialSize<T>>(address, 0);
+    auto const rawaddress =
+        value_of(startAddress) + ((nextReadIndex_ + index) % bufferSize_) * serialSize<T>;
+    auto readData = fram::ReadFrom<serialSize<T>>(fram::Address(rawaddress), 0);
     return Deserialize<T>(std::span(readData));
 }
 
