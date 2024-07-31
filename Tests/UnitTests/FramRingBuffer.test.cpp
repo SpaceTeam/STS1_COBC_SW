@@ -40,19 +40,24 @@ TEST_CASE("FramRingBuffer Push function")
 TEMPLATE_TEST_CASE_SIG("FramRingBuffer Front Address",
                        "",
                        ((typename T, size_t S, fram::Address A), T, S, A),
-                       (int, 10, fram::Address{0}),
-                       (int, 10, fram::Address{31415}))
+                       (int, 10U, fram::Address{0}),
+                       (int, 10U, fram::Address{31415}))
 {
     fram::ram::SetAllDoFunctions();
-    fram::ram::storage.fill(0x00_b);
+    fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
     fram::RingBuffer<T, S, A> buffer;
 
+    // FIXME: [] not working
     buffer.Push(10);
-    buffer.Push(20);
-    buffer.Push(30);
+    REQUIRE(buffer[0] == 10);
 
+    buffer.Push(20);
+    REQUIRE(buffer[0] == 10);
+    REQUIRE(buffer[1] == 20);
+
+    buffer.Push(30);
     REQUIRE(buffer[0] == 10);
     REQUIRE(buffer[1] == 20);
     REQUIRE(buffer[2] == 30);
@@ -61,10 +66,10 @@ TEMPLATE_TEST_CASE_SIG("FramRingBuffer Front Address",
 TEST_CASE("FramRingBuffer Back() and Front() methods")
 {
     fram::ram::SetAllDoFunctions();
-    fram::ram::storage.fill(0x00_b);
+    fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    fram::RingBuffer<int, 5U, 0U> buffer;
+    auto buffer = fram::RingBuffer<int, 5, fram::Address{0}>();
     etl::circular_buffer<int, 5U> etlBuffer;
 
     // NOLINTNEXTLINE (readability-container-size-empty)
@@ -74,21 +79,22 @@ TEST_CASE("FramRingBuffer Back() and Front() methods")
 
     buffer.Push(1);
     buffer.Push(2);
+    REQUIRE(buffer.Front() == 1);
     buffer.Push(3);
 
     etlBuffer.push(1);
     etlBuffer.push(2);
     etlBuffer.push(3);
 
-    REQUIRE(etlBuffer.front() == 1);
-    REQUIRE(etlBuffer.back() == 3);
     REQUIRE(etlBuffer.size() == 3);
     REQUIRE(etlBuffer.capacity() == 5);
+    REQUIRE(etlBuffer.back() == 3);
+    REQUIRE(etlBuffer.front() == 1);
 
-    REQUIRE(buffer.Front() == 1);
-    REQUIRE(buffer.Back() == 3);
     REQUIRE(buffer.Size() == 3);
     REQUIRE(buffer.Capacity() == 5);
+    REQUIRE(buffer.Back() == 3);
+    REQUIRE(buffer.Front() == 1);
 
     etlBuffer.push(4);
     etlBuffer.push(5);
@@ -118,10 +124,10 @@ TEST_CASE("FramRingBuffer Back() and Front() methods")
 TEST_CASE("FramRingBuffer Full and Empty conditions")
 {
     fram::ram::SetAllDoFunctions();
-    fram::ram::storage.fill(0x00_b);
+    fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    fram::RingBuffer<int, 3, 0U> buffer;
+    auto buffer = fram::RingBuffer<int, 3, fram::Address(0)>{};
 
     REQUIRE(buffer.Size() == 0);
     REQUIRE(buffer.Capacity() == 3);
@@ -150,10 +156,10 @@ TEST_CASE("FramRingBuffer Full and Empty conditions")
 TEST_CASE("FramRingBuffer and ETL Circular Buffer")
 {
     fram::ram::SetAllDoFunctions();
-    fram::ram::storage.fill(0x00_b);
+    fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    fram::RingBuffer<int, 5U, 0U> framBuffer;
+    fram::RingBuffer<int, 5U, fram::Address{0}> framBuffer{};
     etl::circular_buffer<int, 5U> etlBuffer;
 
     for(int i = 0; i < 5; ++i)
@@ -178,10 +184,10 @@ TEST_CASE("FramRingBuffer and ETL Circular Buffer")
 TEST_CASE("FramRingBuffer Stress Test")
 {
     fram::ram::SetAllDoFunctions();
-    fram::ram::storage.fill(0x00_b);
+    fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    fram::RingBuffer<int, 10000, 0U> buffer;
+    auto buffer = fram::RingBuffer<int, 10000, fram::Address{0}>();
 
     for(int i = 0; i < 10000; ++i)
     {
@@ -199,11 +205,11 @@ TEST_CASE("FramRingBuffer Stress Test")
 TEST_CASE("Custom Type")
 {
     fram::ram::SetAllDoFunctions();
-    fram::ram::storage.fill(0x00_b);
+    fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
 
-    fram::RingBuffer<sts1cobcsw::edu::ProgramStatusHistoryEntry, 10U, 0U> buffer;
+    fram::RingBuffer<sts1cobcsw::edu::ProgramStatusHistoryEntry, 10U, fram::Address{0}> buffer;
 
     auto pshEntry = sts1cobcsw::edu::ProgramStatusHistoryEntry{
         .programId = sts1cobcsw::ProgramId(0),

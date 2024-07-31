@@ -36,6 +36,7 @@ public:
     //! @brief Returns the capacity of the ringbuffer
     auto Capacity() -> std::size_t;
 
+
 private:
     std::uint32_t nextWriteIndex_ = 0;
     std::uint32_t nextReadIndex_ = 0;
