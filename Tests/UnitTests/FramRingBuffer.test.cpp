@@ -23,7 +23,7 @@ TEST_CASE("Initial State ringbuffer")
     fram::RingBuffer<int, 10, fram::Address{0}> buffer;
 
     REQUIRE(buffer.Size() == 0);
-    REQUIRE(buffer.Capacity() == 10); // Fixed from 0 to 10 to reflect actual buffer capacity
+    REQUIRE(buffer.Capacity() == 10);  // Fixed from 0 to 10 to reflect actual buffer capacity
 }
 
 TEST_CASE("FramRingBuffer Push function")
@@ -156,14 +156,14 @@ TEST_CASE("FramRingBuffer and ETL Circular Buffer")
     fram::RingBuffer<int, 5U, 0U> framBuffer;
     etl::circular_buffer<int, 5U> etlBuffer;
 
-    for (int i = 0; i < 5; ++i)
+    for(int i = 0; i < 5; ++i)
     {
         framBuffer.Push(i);
         etlBuffer.push(i);
     }
 
     REQUIRE(framBuffer.Size() == etlBuffer.size());
-    for (size_t i = 0; i < framBuffer.Size(); ++i)
+    for(size_t i = 0; i < framBuffer.Size(); ++i)
     {
         REQUIRE(framBuffer[i] == etlBuffer[i]);
     }
@@ -183,14 +183,14 @@ TEST_CASE("FramRingBuffer Stress Test")
 
     fram::RingBuffer<int, 10000, 0U> buffer;
 
-    for (int i = 0; i < 10000; ++i)
+    for(int i = 0; i < 10000; ++i)
     {
         buffer.Push(i);
     }
 
     REQUIRE(buffer.Size() == 10000);
 
-    for (size_t i = 0; i < 10000; ++i)
+    for(size_t i = 0; i < 10000; ++i)
     {
         REQUIRE(buffer[i] == static_cast<int>(i));
     }
@@ -203,8 +203,7 @@ TEST_CASE("Custom Type")
     fram::Initialize();
 
 
-    fram::RingBuffer<sts1cobcsw::edu::ProgramStatusHistoryEntry,
-        10U, 0U> buffer;
+    fram::RingBuffer<sts1cobcsw::edu::ProgramStatusHistoryEntry, 10U, 0U> buffer;
 
     auto pshEntry = sts1cobcsw::edu::ProgramStatusHistoryEntry{
         .programId = sts1cobcsw::ProgramId(0),
