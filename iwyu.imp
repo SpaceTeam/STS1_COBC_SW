@@ -57,6 +57,7 @@
   { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",         "private", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",          "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Time.ipp\"",          "private", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Periphery/FramRingBuffer.ipp\"", "private", "<Sts1CobcSw/Periphery/FramRingBuffer.hpp>", "public"] },
 
   # Include all our headers with <> instead of ""
   { include: ["\"Sts1CobcSw/Edu/Edu.hpp\"",                           "public", "<Sts1CobcSw/Edu/Edu.hpp>", "public"] },

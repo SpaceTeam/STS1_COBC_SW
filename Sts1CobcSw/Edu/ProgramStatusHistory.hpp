@@ -13,12 +13,14 @@
 #include <rodos/support/support-libs/ringbuffer.h>
 // clang-format on
 
+#include <bit>
 #include <cstddef>
 
 
-namespace sts1cobcsw
-{
-namespace edu
+using sts1cobcsw::ProgramId;
+
+
+namespace sts1cobcsw::edu
 {
 enum class ProgramStatus : std::uint8_t
 {
@@ -41,20 +43,29 @@ struct ProgramStatusHistoryEntry
 };
 }
 
-
+namespace sts1cobcsw
+{
 template<>
 inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
     totalSerialSize<decltype(edu::ProgramStatusHistoryEntry::programId),
                     decltype(edu::ProgramStatusHistoryEntry::startTime),
                     decltype(edu::ProgramStatusHistoryEntry::status)>;
+}
 
-
-namespace edu
+namespace sts1cobcsw::edu
 {
 inline constexpr auto programStatusHistorySize = 20;
+
 static_assert(programStatusHistorySize * totalSerialSize<ProgramStatusHistoryEntry>
                   <= fram::EduProgramStatusHistory::size,
               "Size of EDU program status history exceeds size of FRAM section");
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramStatusHistoryEntry * data)
+    -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, ProgramStatusHistoryEntry const & data)
+    -> void *;
 
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
@@ -62,5 +73,4 @@ extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> pr
 auto UpdateProgramStatusHistory(ProgramId programId,
                                 std::int32_t startTime,
                                 ProgramStatus newStatus) -> void;
-}
 }
