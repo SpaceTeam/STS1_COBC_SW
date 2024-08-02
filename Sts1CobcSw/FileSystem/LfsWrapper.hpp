@@ -56,6 +56,7 @@ public:
 private:
     // Only allow creation of File class through friend function Open()
     File() = default;
+    auto Move(File& other) noexcept -> void;
 
     Path path_ = "";
     bool isOpen_ = false;

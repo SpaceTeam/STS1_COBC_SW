@@ -60,13 +60,8 @@ auto Open(std::string_view path, unsigned int flags) -> Result<File>
     return static_cast<ErrorCode>(error);
 }
 
-
-File::File(File && other) noexcept
+auto File::Move(File & other) noexcept -> void
 {
-    if(other.path_.empty())
-    {
-        return;
-    }
     auto error = lfs_file_opencfg(
         &lfs, &lfsFile_, other.path_.c_str(), static_cast<int>(other.openFlags_), &lfsFileConfig_);
     if(error == 0)
@@ -81,27 +76,23 @@ File::File(File && other) noexcept
     other.lfsFile_ = {};
 }
 
+File::File(File && other) noexcept
+{
+    if(other.path_.empty())
+    {
+        return;
+    }
+
+    Move(other);
+}
+
 
 auto File::operator=(File && other) noexcept -> File &
 {
     // TODO: Use copy and swap idiom to prevent code duplication from move constructor
     if(this != &other and not other.path_.empty())
     {
-        auto error = lfs_file_opencfg(&lfs,
-                                      &lfsFile_,
-                                      other.path_.c_str(),
-                                      static_cast<int>(other.openFlags_),
-                                      &lfsFileConfig_);
-        if(error == 0)
-        {
-            path_ = other.path_;
-            openFlags_ = other.openFlags_;
-            isOpen_ = true;
-        }
-        (void)other.Close();
-        other.path_ = "";
-        other.openFlags_ = 0;
-        other.lfsFile_ = {};
+        Move(other);
     }
     return *this;
 }
