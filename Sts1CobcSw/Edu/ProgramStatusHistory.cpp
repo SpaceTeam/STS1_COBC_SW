@@ -5,7 +5,7 @@
 
 namespace sts1cobcsw::edu
 {
-RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
+RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries> programStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)

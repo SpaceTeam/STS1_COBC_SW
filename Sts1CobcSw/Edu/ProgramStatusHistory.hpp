@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <strong_type/ordered_with.hpp>
+#include <strong_type/type.hpp>
 
 // clang-format off
 #include <cstdint>
@@ -52,13 +52,12 @@ inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
 
 namespace edu
 {
-// TODO: Compute programQueueSize from framSections.template Get<"eduProgramQueue">().size instead
-inline constexpr auto programStatusHistorySize = 50;
-static_assert(programStatusHistorySize * totalSerialSize<ProgramStatusHistoryEntry>
-                  <= framSections.template Get<"eduProgramStatusHistory">().size,
-              "Size of EDU program status history exceeds size of FRAM section");
+inline constexpr auto nProgramStatusHistoryEntries =
+    value_of(framSections.template Get<"eduProgramStatusHistory">().size)
+    / serialSize<ProgramStatusHistoryEntry>;
 
-extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
+extern RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries>
+    programStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
