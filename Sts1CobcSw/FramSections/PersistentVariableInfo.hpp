@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/SubsectionInfo.hpp>
+#include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 

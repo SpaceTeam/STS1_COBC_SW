@@ -1,7 +1,7 @@
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/Section.hpp>
-#include <Sts1CobcSw/Periphery/SubsectionInfo.hpp>
-#include <Sts1CobcSw/Periphery/Subsections.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
 #include <catch2/catch_test_macros.hpp>

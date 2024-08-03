@@ -34,12 +34,16 @@ target_link_libraries(
 
 add_program(PersistentVariableInfo PersistentVariableInfo.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_PersistentVariableInfo PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-                                                   Sts1CobcSw_Serial Sts1CobcSw_Utility
+    Sts1CobcSwTests_PersistentVariableInfo
+    PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections Sts1CobcSw_Periphery Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
 )
 
 add_program(Section Section.test.cpp)
-target_link_libraries(Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery)
+target_link_libraries(
+    Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
+                                    Sts1CobcSw_Periphery
+)
 
 add_program(Serial Serial.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
@@ -54,14 +58,14 @@ target_link_libraries(
 
 add_program(SubsectionInfo SubsectionInfo.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_SubsectionInfo PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-                                           Sts1CobcSw_Utility
+    Sts1CobcSwTests_SubsectionInfo PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
+                                           Sts1CobcSw_Periphery Sts1CobcSw_Utility
 )
 
 add_program(Subsections Subsections.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_Subsections PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-                                        Sts1CobcSw_Utility
+    Sts1CobcSwTests_Subsections PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
+                                        Sts1CobcSw_Periphery Sts1CobcSw_Utility
 )
 
 get_property(

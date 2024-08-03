@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/Section.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
 
 
 namespace sts1cobcsw::fram

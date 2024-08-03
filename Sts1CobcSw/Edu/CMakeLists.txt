@@ -1,6 +1,7 @@
 target_sources(Sts1CobcSw_Edu PRIVATE ProgramQueue.cpp ProgramStatusHistory.cpp)
 target_link_libraries(
-    Sts1CobcSw_Edu PUBLIC rodos::rodos etl::etl Sts1CobcSw_Serial Sts1CobcSw_Outcome
+    Sts1CobcSw_Edu PUBLIC rodos::rodos etl::etl Sts1CobcSw_FramSections Sts1CobcSw_Serial
+                          Sts1CobcSw_Outcome
 )
 target_link_libraries(Sts1CobcSw_Edu PRIVATE Sts1CobcSw_Utility)
 
