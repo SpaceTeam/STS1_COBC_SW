@@ -37,6 +37,11 @@ target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1
 add_program(Span Span.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
 
+add_program(StringLiteral StringLiteral.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_StringLiteral PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
+)
+
 get_property(
     all_unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS
 )
