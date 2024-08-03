@@ -7,6 +7,7 @@
 namespace sts1cobcsw::fram
 {
 template<Address sectionBegin, Size sectionSize>
+    requires(sectionSize > 0)
 struct Section
 {
     static constexpr auto begin = sectionBegin;
@@ -15,15 +16,29 @@ struct Section
 };
 
 
+namespace internal
+{
+template<typename T>
+inline constexpr bool isASectionHelper = false;
+
+template<Address sectionBegin, Size sectionSize>
+inline constexpr bool isASectionHelper<Section<sectionBegin, sectionSize>> = true;
+}
+
+
+template<typename T>
+inline constexpr bool isASection = internal::isASectionHelper<std::remove_cvref_t<T>>;
+
+
 template<Size size>
-inline constexpr auto FirstSection() -> Section<memoryBegin, size>;
+[[nodiscard]] constexpr auto FirstSection() -> Section<memoryBegin, size>;
 
 template<Size newSize, Address begin, Size size>
-inline constexpr auto NextSection(Section<begin, size> previousSection)
+[[nodiscard]] constexpr auto NextSection(Section<begin, size> previousSection)
     -> Section<decltype(previousSection)::end, newSize>;
 
 template<Address begin, Size size>
-inline constexpr auto LastSection(Section<begin, size> previousSection)
+[[nodiscard]] constexpr auto LastSection(Section<begin, size> previousSection)
     -> Section<decltype(previousSection)::end, memoryEnd - decltype(previousSection)::end>;
 }
 
