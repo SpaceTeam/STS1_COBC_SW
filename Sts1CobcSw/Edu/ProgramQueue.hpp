@@ -37,8 +37,10 @@ inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
 
 namespace edu
 {
+// TODO: Compute programQueueSize from framSections.template Get<"eduProgramQueue">().size instead
 inline constexpr auto programQueueSize = 20;
-static_assert(programQueueSize * totalSerialSize<ProgramQueueEntry> <= fram::EduProgramQueue::size,
+static_assert(programQueueSize * totalSerialSize<ProgramQueueEntry>
+                  <= framSections.template Get<"eduProgramQueue">().size,
               "Size of EDU program queue exceeds size of FRAM section");
 
 extern std::uint16_t queueIndex;

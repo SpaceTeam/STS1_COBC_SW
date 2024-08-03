@@ -47,7 +47,6 @@
   # Instead of all our .ipp files include the .hpp ones
   { include: ["\"Sts1CobcSw/Edu/Types.ipp\"",                          "private", "<Sts1CobcSw/Edu/Types.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FileSystem/FileSystem.ipp\"",              "private", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/FramSections/Section.ipp\"",               "private", "<Sts1CobcSw/FramSections/Section.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/Subsections.ipp\"",           "private", "<Sts1CobcSw/FramSections/Subsections.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/GpioPin.ipp\"",                        "private", "<Sts1CobcSw/Hal/GpioPin.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Spi.ipp\"",                            "private", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },

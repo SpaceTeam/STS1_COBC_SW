@@ -52,9 +52,10 @@ inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
 
 namespace edu
 {
-inline constexpr auto programStatusHistorySize = 20;
+// TODO: Compute programQueueSize from framSections.template Get<"eduProgramQueue">().size instead
+inline constexpr auto programStatusHistorySize = 50;
 static_assert(programStatusHistorySize * totalSerialSize<ProgramStatusHistoryEntry>
-                  <= fram::EduProgramStatusHistory::size,
+                  <= framSections.template Get<"eduProgramStatusHistory">().size,
               "Size of EDU program status history exceeds size of FRAM section");
 
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;

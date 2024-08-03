@@ -2,29 +2,23 @@
 
 
 #include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
+#include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
 
-namespace sts1cobcsw::fram
+namespace sts1cobcsw
 {
-// clang-format off
-inline constexpr auto persistentVariablesSize = Size(100);
-inline constexpr auto persistentVariables0 =    FirstSection<persistentVariablesSize>();
-inline constexpr auto persistentVariables1 =
-    NextSection<persistentVariablesSize>(persistentVariables0);
-inline constexpr auto persistentVariables2 =
-    NextSection<persistentVariablesSize>(persistentVariables1);
-inline constexpr auto eduProgramQueue =         NextSection<Size(20 * 10)>(persistentVariables2);
-inline constexpr auto eduProgramStatusHistory = NextSection<Size(50 * 7)>(eduProgramQueue);
-inline constexpr auto testMemory =              NextSection<Size(1000)>(eduProgramStatusHistory);
-inline constexpr auto telemetry =               LastSection(testMemory);
-// clang-format on
-
-// Convenient type aliases for easy access to static members of Section<> (begin, end, size)
-using PersistentVariables0 = decltype(persistentVariables0);
-using PersistentVariables1 = decltype(persistentVariables1);
-using PersistentVariables2 = decltype(persistentVariables2);
-using EduProgramQueue = decltype(eduProgramQueue);
-using EduProgramStatusHistory = decltype(eduProgramStatusHistory);
-using TestMemory = decltype(testMemory);
-using Telemetry = decltype(telemetry);
+inline constexpr auto framMemory = fram::Section<fram::Address(0), fram::memorySize>();
+inline constexpr auto persistentVariablesSize = fram::Size(100);
+inline constexpr auto framSections =
+    fram::Subsections<framMemory,
+                      fram::SubsectionInfo<"persistentVariables0", persistentVariablesSize>,
+                      fram::SubsectionInfo<"persistentVariables1", persistentVariablesSize>,
+                      fram::SubsectionInfo<"persistentVariables2", persistentVariablesSize>,
+                      fram::SubsectionInfo<"eduProgramQueue", fram::Size(20 * 8)>,
+                      fram::SubsectionInfo<"eduProgramStatusHistory", fram::Size(50 * 7)>,
+                      fram::SubsectionInfo<"testMemory", fram::Size(1000)>,
+                      fram::SubsectionInfo<"telemetry", fram::Size(26'168 * 40)>>();
 }
