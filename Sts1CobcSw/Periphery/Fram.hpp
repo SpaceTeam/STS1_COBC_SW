@@ -33,8 +33,7 @@ using Address = strong::type<std::uint32_t,
                              strong::ordered>;
 
 
-// TODO: Consider renaming Section to AddressRange, using it here, and moving the
-// First/Next/LastSection<>() functions to a separate file.
+// TODO: Set correct values
 inline constexpr auto memoryBegin = Address(0);
 inline constexpr auto memorySize = Size(1024 * 1024);
 inline constexpr auto memoryEnd = memoryBegin + memorySize;
