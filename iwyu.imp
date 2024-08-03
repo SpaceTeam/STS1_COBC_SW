@@ -83,6 +83,7 @@
   { include: ["\"Sts1CobcSw/Periphery/PersistentState.hpp\"",         "public", "<Sts1CobcSw/Periphery/PersistentState.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/Rf.hpp\"",                      "public", "<Sts1CobcSw/Periphery/Rf.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/Section.hpp\"",                 "public", "<Sts1CobcSw/Periphery/Section.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Periphery/SubsectionInfo.hpp\"",          "public", "<Sts1CobcSw/Periphery/SubsectionInfo.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/ProgramId/ProgramId.hpp\"",               "public", "<Sts1CobcSw/ProgramId/ProgramId.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Byte.hpp\"",                       "public", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.hpp\"",                     "public", "<Sts1CobcwSw/Serial/Serial.hpp>", "public"] },
