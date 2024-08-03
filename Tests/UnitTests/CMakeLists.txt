@@ -31,6 +31,11 @@ target_link_libraries(
     Sts1CobcSwTests_PersistentVariable PRIVATE Catch2::Catch2WithMain Sts1CobcSw_PersistentState
 )
 
+add_program(Section Section.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
+)
+
 add_program(Serial Serial.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
 
