@@ -1,13 +1,13 @@
-#include <Sts1CobcSw/FlashStartupTestThread.hpp>
-#include <Sts1CobcSw/FramEpsStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSw/FlashStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSw/FramEpsStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSw/RfStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSw/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
-#include <Sts1CobcSw/RfStartupTestThread.hpp>
-#include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <rodos_no_using_namespace.h>
 

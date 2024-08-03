@@ -1,12 +1,12 @@
+#include <Sts1CobcSw/CobcSw/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/CobcSw/EduListenerThread.hpp>
+#include <Sts1CobcSw/CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/EduListenerThread.hpp>
-#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
-#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 
 #include <rodos_no_using_namespace.h>
 

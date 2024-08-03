@@ -1,7 +1,7 @@
+#include <Sts1CobcSw/CobcSw/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
-#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -12,6 +12,9 @@ namespace sts1cobcsw
 constexpr auto stackSize = 2'000U;
 constexpr auto eduShutDownDelay = 2 * RODOS::SECONDS;
 std::int32_t eduCommunicationErrorCounter = 0;
+auto ResumeRfStartupTestThread() -> void
+{
+}
 
 
 class EduCommunicationErrorThread : public RODOS::StaticThread<stackSize>
