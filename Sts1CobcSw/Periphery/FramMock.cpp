@@ -133,7 +133,7 @@ auto DoReadFrom([[maybe_unused]] Address address,
 
 namespace ram
 {
-std::array<Byte, memorySize> memory{};
+std::array<Byte, value_of(memorySize)> memory{};
 
 
 auto SetAllDoFunctions() -> void

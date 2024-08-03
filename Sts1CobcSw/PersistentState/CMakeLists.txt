@@ -1,0 +1,1 @@
+target_link_libraries(Sts1CobcSw_PersistentState INTERFACE Sts1CobcSw_Periphery)
