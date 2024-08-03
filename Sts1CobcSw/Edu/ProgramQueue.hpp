@@ -5,7 +5,7 @@
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
-#include <strong_type/ordered_with.hpp>
+#include <strong_type/type.hpp>
 
 #include <etl/vector.h>
 
@@ -36,14 +36,13 @@ inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
 
 namespace edu
 {
-// TODO: Compute programQueueSize from framSections.template Get<"eduProgramQueue">().size instead
-inline constexpr auto programQueueSize = 20;
-static_assert(programQueueSize * totalSerialSize<ProgramQueueEntry>
-                  <= framSections.template Get<"eduProgramQueue">().size,
-              "Size of EDU program queue exceeds size of FRAM section");
+inline constexpr auto nProgramQueueEntries =
+    value_of(framSections.template Get<"eduProgramQueue">().size)
+    / totalSerialSize<ProgramQueueEntry>;
+
 
 extern std::uint16_t queueIndex;
-extern etl::vector<ProgramQueueEntry, programQueueSize> programQueue;
+extern etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue;
 
 
 template<std::endian endianness>
