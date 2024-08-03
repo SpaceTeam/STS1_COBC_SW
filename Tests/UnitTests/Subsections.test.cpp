@@ -23,11 +23,6 @@ TEST_CASE("All static_asserts passed")
 
 
 constexpr auto memory = Section<Address(0), Size(1200)>();
-// TODO: Move to separate Section.test.cpp
-static_assert(memory.size == Size(1200));
-static_assert(decltype(memory)::end == Address(1200));
-
-
 constexpr auto sections = Subsections<memory,
                                       SubsectionInfo<"PersistentVariables0", Size(100)>,
                                       SubsectionInfo<"PersistentVariables1", Size(100)>,
