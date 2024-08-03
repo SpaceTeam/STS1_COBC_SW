@@ -1,4 +1,14 @@
 {
     "name": "STS1 COBC Full",
-    "image": "tuwienspaceteam/sts1-cobc:1.8.0"
+    "image": "tuwienspaceteam/sts1-cobc:1.8.0",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "xaver.clang-format",
+                "mhutchie.git-graph"
+            ]
+        }
+    }
 }
