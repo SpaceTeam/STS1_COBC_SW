@@ -4,7 +4,8 @@
 # restrictive, we don't write Objective-C and don't develop the Linux kernel or LLVM-libc.
 # misc-non-private-member-variables-in-classes: the options don't do anything.
 # misc-const-correctness is not about const-correctness, but about const-ness of local variables and
-# we are not jumping on that bandwagon.
+# we are not jumping on that bandwagon. Accessing static members through instances is way to
+# convenient for classes like Section<> or Subsections<>.
 Checks: "*,\
   -*avoid-c-arrays,\
   -abseil-*,\
@@ -14,6 +15,8 @@ Checks: "*,\
   -altera-struct-pack-align,\
   -altera-unroll-loops,\
   -android-*,\
+  -bugprone-implicit-widening-of-multiplication-result,\
+  -clang-diagnostic-unused-command-line-argument,\
   -cppcoreguidelines-avoid-non-const-global-variables,\
   -cppcoreguidelines-pro-bounds-constant-array-index,\
   -cppcoreguidelines-pro-type-vararg,\
@@ -34,8 +37,8 @@ Checks: "*,\
   -misc-unused-using-decls,\
   -mpi-*,\
   -openmp-*,\
-  -clang-diagnostic-unused-command-line-argument,\
-  -bugprone-implicit-widening-of-multiplication-result"
+  -readability-static-accessed-through-instance,\
+  "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
@@ -74,9 +77,9 @@ CheckOptions:
     value: 'true'
   - key: 'readability-redundant-access-specifiers.CheckFirstDeclaration'
     value: 'true'
-# For variables of generic type T and variables called id
+# For variables of generic type T and variables called id, or i
   - key: 'readability-identifier-length.IgnoredVariableNames'
-    value: '^(t|id)$'
+    value: '^(t|id|i)$'
   - key: 'readability-identifier-length.IgnoredParameterNames'
     value: '^t$'
 # These seem to be the most common identifier styles
