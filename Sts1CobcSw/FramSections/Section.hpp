@@ -6,6 +6,7 @@
 
 namespace sts1cobcsw::fram
 {
+// TODO: Consider renaming Section to AddressRange, Subsection to AddressSubrange, ...
 template<Address sectionBegin, Size sectionSize>
     requires(sectionSize > 0)
 struct Section

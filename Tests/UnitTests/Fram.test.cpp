@@ -64,7 +64,7 @@ TEST_CASE("Mocking FRAM in RAM")
     CHECK(actualBaudRate == 6'000'000);
 
     // NOLINTNEXTLINE(google-build-using-namespace)
-    auto address = fram::Address(GENERATE(take(1, random(0U, fram::ram::memorySize - 10))));
+    auto address = fram::Address(GENERATE(take(1, random(0U, value_of(fram::memorySize) - 10))));
 
     auto readData = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
     fram::ReadFrom(address, Span(&readData), 0);
