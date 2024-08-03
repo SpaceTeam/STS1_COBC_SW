@@ -6,9 +6,8 @@
 
 namespace sts1cobcsw::fram
 {
-template<auto parentSection, SubsectionInfoLike... SubsectionInfos>
-    requires(isASection<decltype(parentSection)> and sizeof...(SubsectionInfos) > 0
-             and containsNoDuplicateNames<SubsectionInfos...>)
+template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
+    requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
 template<StringLiteral subsectionName>
 constexpr auto Subsections<parentSection, SubsectionInfos...>::Index() -> std::size_t
 {
@@ -20,9 +19,8 @@ constexpr auto Subsections<parentSection, SubsectionInfos...>::Index() -> std::s
 }
 
 
-template<auto parentSection, SubsectionInfoLike... SubsectionInfos>
-    requires(isASection<decltype(parentSection)> and sizeof...(SubsectionInfos) > 0
-             and containsNoDuplicateNames<SubsectionInfos...>)
+template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
+    requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
 constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeBegins()
     -> std::array<Address, sizeof...(SubsectionInfos)>
 {
@@ -35,9 +33,8 @@ constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeBegins()
 }
 
 
-template<auto parentSection, SubsectionInfoLike... SubsectionInfos>
-    requires(isASection<decltype(parentSection)> and sizeof...(SubsectionInfos) > 0
-             and containsNoDuplicateNames<SubsectionInfos...>)
+template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
+    requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
 constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeEnds()
     -> std::array<Address, sizeof...(SubsectionInfos)>
 {
