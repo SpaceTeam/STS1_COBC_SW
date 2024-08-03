@@ -4,10 +4,10 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 
 
-namespace sts1cobcsw::fram
+namespace sts1cobcsw
 {
 // TODO: Consider renaming Section to AddressRange, Subsection to AddressSubrange, ...
-template<Address sectionBegin, Size sectionSize>
+template<fram::Address sectionBegin, fram::Size sectionSize>
     requires(sectionSize > 0)
 struct Section
 {

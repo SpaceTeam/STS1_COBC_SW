@@ -6,11 +6,11 @@
 #include <strong_type/type.hpp>
 
 
-using sts1cobcsw::fram::containsNoDuplicateNames;
-using sts1cobcsw::fram::nameAppearsOnce;
+using sts1cobcsw::containsNoDuplicateNames;
+using sts1cobcsw::nameAppearsOnce;
+using sts1cobcsw::SubsectionInfo;
+using sts1cobcsw::SubsectionInfoLike;
 using sts1cobcsw::fram::Size;
-using sts1cobcsw::fram::SubsectionInfo;
-using sts1cobcsw::fram::SubsectionInfoLike;
 
 
 TEST_CASE("All static_asserts passed")

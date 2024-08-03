@@ -10,7 +10,7 @@
 #include <numeric>
 
 
-namespace sts1cobcsw::fram
+namespace sts1cobcsw
 {
 template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
     requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
@@ -34,9 +34,9 @@ public:
 
 private:
     [[nodiscard]] static constexpr auto ComputeBegins()
-        -> std::array<Address, sizeof...(SubsectionInfos)>;
+        -> std::array<fram::Address, sizeof...(SubsectionInfos)>;
     [[nodiscard]] static constexpr auto ComputeEnds()
-        -> std::array<Address, sizeof...(SubsectionInfos)>;
+        -> std::array<fram::Address, sizeof...(SubsectionInfos)>;
 
     // NOLINTBEGIN(readability-identifier-naming): clang-tidy doesn't recognize these as private
     // members but as constexpr variables
