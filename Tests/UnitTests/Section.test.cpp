@@ -1,5 +1,5 @@
+#include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/Section.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <strong_type/affine_point.hpp>

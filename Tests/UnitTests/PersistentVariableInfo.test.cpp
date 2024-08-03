@@ -1,6 +1,6 @@
+#include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
+#include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/PersistentVariableInfo.hpp>
-#include <Sts1CobcSw/Periphery/SubsectionInfo.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 

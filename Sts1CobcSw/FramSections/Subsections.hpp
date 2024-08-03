@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/Section.hpp>
-#include <Sts1CobcSw/Periphery/SubsectionInfo.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 
 #include <algorithm>
 #include <array>
@@ -50,4 +50,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/Periphery/Subsections.ipp>
+#include <Sts1CobcSw/FramSections/Subsections.ipp>

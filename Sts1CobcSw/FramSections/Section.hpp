@@ -43,4 +43,4 @@ template<Address begin, Size size>
 }
 
 
-#include <Sts1CobcSw/Periphery/Section.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FramSections/Section.ipp>  // IWYU pragma: keep
