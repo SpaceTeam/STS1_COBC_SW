@@ -45,6 +45,12 @@ target_link_libraries(
 add_program(SubsectionInfo SubsectionInfo.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_SubsectionInfo PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
+                                           Sts1CobcSw_Utility
+)
+
+add_program(Subsections Subsections.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Subsections PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
 )
 
 get_property(
