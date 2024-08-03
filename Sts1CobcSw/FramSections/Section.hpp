@@ -29,19 +29,4 @@ inline constexpr bool isASectionHelper<Section<sectionBegin, sectionSize>> = tru
 
 template<typename T>
 inline constexpr bool isASection = internal::isASectionHelper<std::remove_cvref_t<T>>;
-
-
-template<Size size>
-[[nodiscard]] constexpr auto FirstSection() -> Section<memoryBegin, size>;
-
-template<Size newSize, Address begin, Size size>
-[[nodiscard]] constexpr auto NextSection(Section<begin, size> previousSection)
-    -> Section<decltype(previousSection)::end, newSize>;
-
-template<Address begin, Size size>
-[[nodiscard]] constexpr auto LastSection(Section<begin, size> previousSection)
-    -> Section<decltype(previousSection)::end, memoryEnd - decltype(previousSection)::end>;
 }
-
-
-#include <Sts1CobcSw/FramSections/Section.ipp>  // IWYU pragma: keep
