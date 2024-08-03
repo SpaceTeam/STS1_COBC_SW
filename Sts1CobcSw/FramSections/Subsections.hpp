@@ -12,10 +12,8 @@
 
 namespace sts1cobcsw::fram
 {
-// TODO: Test if Section parentSection, also works
-template<auto parentSection, SubsectionInfoLike... SubsectionInfos>
-    requires(isASection<decltype(parentSection)> and sizeof...(SubsectionInfos) > 0
-             and containsNoDuplicateNames<SubsectionInfos...>)
+template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
+    requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
 class Subsections
 {
 public:
