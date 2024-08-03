@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 
 
-namespace sts1cobcsw::fram
+namespace sts1cobcsw
 {
 template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
     requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
@@ -22,9 +22,10 @@ constexpr auto Subsections<parentSection, SubsectionInfos...>::Index() -> std::s
 template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
     requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
 constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeBegins()
-    -> std::array<Address, sizeof...(SubsectionInfos)>
+    -> std::array<fram::Address, sizeof...(SubsectionInfos)>
 {
-    auto begins = std::array<Address, sizeof...(SubsectionInfos)>{};
+    // TODO: Test decltype(begins_){} again
+    auto begins = std::array<fram::Address, sizeof...(SubsectionInfos)>{};
     for(std::size_t i = 0; i < sizeof...(SubsectionInfos); ++i)
     {
         begins[i] = std::accumulate(sizes_.begin(), sizes_.begin() + i, parentSection.begin);
@@ -36,12 +37,13 @@ constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeBegins()
 template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
     requires(sizeof...(SubsectionInfos) > 0 and containsNoDuplicateNames<SubsectionInfos...>)
 constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeEnds()
-    -> std::array<Address, sizeof...(SubsectionInfos)>
+    -> std::array<fram::Address, sizeof...(SubsectionInfos)>
 {
     {
         constexpr auto ends = []()
         {
-            auto addresses = std::array<Address, sizeof...(SubsectionInfos)>{};
+            // TODO: Test decltype(begins_){} again
+            auto addresses = std::array<fram::Address, sizeof...(SubsectionInfos)>{};
             for(std::size_t i = 0; i < sizeof...(SubsectionInfos); ++i)
             {
                 addresses[i] = begins_[i] + sizes_[i];

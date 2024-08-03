@@ -7,8 +7,8 @@
 #include <strong_type/type.hpp>
 
 
+using sts1cobcsw::Section;
 using sts1cobcsw::fram::Address;
-using sts1cobcsw::fram::Section;
 using sts1cobcsw::fram::Size;
 
 

@@ -9,11 +9,11 @@
 #include <strong_type/type.hpp>
 
 
+using sts1cobcsw::Section;
+using sts1cobcsw::SubsectionInfo;
+using sts1cobcsw::Subsections;
 using sts1cobcsw::fram::Address;
-using sts1cobcsw::fram::Section;
 using sts1cobcsw::fram::Size;
-using sts1cobcsw::fram::SubsectionInfo;
-using sts1cobcsw::fram::Subsections;
 
 
 TEST_CASE("All static_asserts passed")

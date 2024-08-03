@@ -7,12 +7,12 @@
 #include <catch2/catch_test_macros.hpp>
 
 
+using sts1cobcsw::APersistentVariableInfo;
+using sts1cobcsw::isAPersistentVariableInfo;
+using sts1cobcsw::PersistentVariableInfo;
+using sts1cobcsw::SubsectionInfoLike;
 using sts1cobcsw::fram::Address;
-using sts1cobcsw::fram::APersistentVariableInfo;
-using sts1cobcsw::fram::isAPersistentVariableInfo;
-using sts1cobcsw::fram::PersistentVariableInfo;
 using sts1cobcsw::fram::Size;
-using sts1cobcsw::fram::SubsectionInfoLike;
 
 
 TEST_CASE("All static_asserts passed")

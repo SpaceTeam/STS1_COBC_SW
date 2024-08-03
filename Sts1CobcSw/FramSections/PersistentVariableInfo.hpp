@@ -6,11 +6,11 @@
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
 
-namespace sts1cobcsw::fram
+namespace sts1cobcsw
 {
 template<StringLiteral variableName, typename T>
     requires(serialSize<T> > 0)
-struct PersistentVariableInfo : SubsectionInfo<variableName, Size(serialSize<T>)>
+struct PersistentVariableInfo : SubsectionInfo<variableName, fram::Size(serialSize<T>)>
 {
     using ValueType = T;
 };

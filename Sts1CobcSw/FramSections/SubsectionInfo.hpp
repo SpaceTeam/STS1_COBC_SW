@@ -5,14 +5,14 @@
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
 
-namespace sts1cobcsw::fram
+namespace sts1cobcsw
 {
-template<StringLiteral subsectionName, Size subsectionSize>
+template<StringLiteral subsectionName, fram::Size subsectionSize>
     requires(subsectionSize > 0)
 struct SubsectionInfo
 {
     static constexpr auto name = subsectionName;
-    static constexpr Size size = subsectionSize;
+    static constexpr auto size = subsectionSize;
 };
 
 
