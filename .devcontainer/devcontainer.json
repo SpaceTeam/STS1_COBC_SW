@@ -4,10 +4,21 @@
     "customizations": {
         "vscode": {
             "extensions": [
+                "ms-dotnettools.vscode-dotnet-runtime",
                 "ms-vscode.cpptools",
-                "ms-vscode.cmake-tools",
+                "matepek.vscode-catch2-test-adapter",
                 "xaver.clang-format",
-                "mhutchie.git-graph"
+                "llvm-vs-code-extensions.vscode-clangd",
+                "twxs.cmake",
+                "josetr.cmake-language-support-vscode",
+                "ms-vscode.cmake-tools",
+                "cheshirekow.cmake-format",
+                "mhutchie.git-graph",
+                "eamodio.gitlens",
+                "LAK132.indent-to-bracket",
+                "valentjn.vscode-ltex",
+                "ionutvmi.path-autocomplete",
+                "Gruntfuggly.todo-tree"
             ]
         }
     }
