@@ -6,6 +6,14 @@
 #include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#ifdef NO_RODOS
+    #include <mutex>
+#else
+    #include <Sts1CobcSw/Utility/LinuxSemaphore.hpp>
+
+    #include <rodos_no_using_namespace.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -38,6 +46,12 @@ auto memory = std::vector<Byte>();
 auto readBuffer = std::array<Byte, pageSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, pageSize>{};
+
+#ifdef NO_RODOS
+auto mutex = std::mutex();
+#else
+auto mutex = utility::LinuxSemaphore();
+#endif
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
@@ -107,16 +121,35 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 }
 
 
-// TODO: Add a proper implementation
 auto Lock([[maybe_unused]] lfs_config const * config) -> int
 {
-    return 0;
+#ifdef NO_RODOS
+    if(mutex.try_lock())
+    {
+        return 0;
+    }
+    return lockBusyError;
+#else
+    if(mutex.TryEnter())
+    {
+        // For testing: wait some time to check concurrent locking
+        // static constexpr auto lockDelay = 200 * RODOS::MILLISECONDS;
+        // RODOS::AT(RODOS::NOW() + lockDelay);
+        return 0;
+    }
+    return lockBusyError;
+#endif
 }
 
 
-// TODO: Add a proper implementation
 auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
+#ifdef NO_RODOS
+    mutex.unlock();
     return 0;
+#else
+    mutex.Leave();
+    return 0;
+#endif
 }
 }
