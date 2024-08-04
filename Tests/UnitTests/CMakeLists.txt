@@ -13,7 +13,7 @@ target_link_libraries(
 
 # TODO: Enable again once problem with segmentation violation on CI is fixed
 add_program(LfsRam LfsRam.test.cpp)
-target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
+target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem_NoRodos)
 
 add_program(Outcome Outcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
@@ -42,3 +42,5 @@ include(Catch)
 foreach(target IN LISTS all_unit_test_targets)
     catch_discover_tests(${target})
 endforeach()
+
+add_subdirectory(NoCatch2)
