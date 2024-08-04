@@ -1,4 +1,25 @@
 {
-    "name": "STS1 COBC Full",
-    "image": "tuwienspaceteam/sts1-cobc:1.8.0"
+    "name": "STS1 COBC",
+    "image": "tuwienspaceteam/sts1-cobc:1.8.0",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.vscode-dotnet-runtime",
+                "ms-vscode.cpptools",
+                "matepek.vscode-catch2-test-adapter",
+                "xaver.clang-format",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "twxs.cmake",
+                "josetr.cmake-language-support-vscode",
+                "ms-vscode.cmake-tools",
+                "cheshirekow.cmake-format",
+                "mhutchie.git-graph",
+                "eamodio.gitlens",
+                "LAK132.indent-to-bracket",
+                "valentjn.vscode-ltex",
+                "ionutvmi.path-autocomplete",
+                "Gruntfuggly.todo-tree"
+            ]
+        }
+    }
 }
