@@ -1,8 +1,8 @@
-#include <Sts1CobcSw/CobcSw/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/CobcSw/EduListenerThread.hpp>
-#include <Sts1CobcSw/CobcSw/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
-#include <Sts1CobcSw/CobcSw/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/EduListenerThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>

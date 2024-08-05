@@ -1,5 +1,5 @@
-#include <Sts1CobcSw/CobcSw/CommandParser.hpp>
-#include <Sts1CobcSw/CobcSw/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/CommandParser.hpp>
+#include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>

@@ -1,8 +1,8 @@
-#include <Sts1CobcSw/CobcSw/FlashStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSw/FramEpsStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSw/RfStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSw/SpiStartupTestAndSupervisorThread.hpp>
-#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/RfStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>

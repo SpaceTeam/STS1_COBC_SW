@@ -1,6 +1,6 @@
-#include <Sts1CobcSw/CobcSw/FlashStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSw/SpiStartupTestAndSupervisorThread.hpp>
-#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 
