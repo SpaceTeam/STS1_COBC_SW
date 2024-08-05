@@ -28,6 +28,7 @@ class File;
 [[nodiscard]] auto Mount() -> Result<void>;
 [[nodiscard]] auto Unmount() -> Result<void>;
 [[nodiscard]] auto Open(std::string_view path, unsigned int flags) -> Result<File>;
+auto Swap(File & lhs, File & rhs) -> void;
 
 
 // FIXME: Make File const-correct (only Write() should be non-const)
@@ -52,11 +53,11 @@ public:
     [[nodiscard]] auto Close() -> Result<void>;
 
     friend auto Open(std::string_view path, unsigned int flags) -> Result<File>;
+    friend auto Swap(File & lhs, File & rhs) -> void;
 
 private:
     // Only allow creation of File class through friend function Open()
     File() = default;
-    auto Move(File& other) noexcept -> void;
 
     Path path_ = "";
     bool isOpen_ = false;
