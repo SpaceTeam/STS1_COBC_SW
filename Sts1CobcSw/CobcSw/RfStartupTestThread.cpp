@@ -1,8 +1,8 @@
+#include <Sts1CobcSw/CobcSw/RfStartupTestThread.hpp>
+#include <Sts1CobcSw/CobcSw/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
-#include <Sts1CobcSw/RfStartupTestThread.hpp>
-#include <Sts1CobcSw/SpiStartupTestAndSupervisorThread.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <rodos_no_using_namespace.h>
 

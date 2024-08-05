@@ -1,7 +1,7 @@
+#include <Sts1CobcSw/CobcSw/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
-#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>

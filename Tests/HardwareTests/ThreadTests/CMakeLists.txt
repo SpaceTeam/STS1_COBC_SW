@@ -3,8 +3,8 @@ set(source_directory ${CMAKE_SOURCE_DIR}/Sts1CobcSw)
 add_program(EduPowerManagement)
 target_sources(
     Sts1CobcSwTests_EduPowerManagement
-    PRIVATE EduPowerManagement.test.cpp ${source_directory}/EduPowerManagementThread.cpp
-            ${source_directory}/EduHeartbeatThread.cpp ${source_directory}/TopicsAndSubscribers.cpp
+    PRIVATE EduPowerManagement.test.cpp "${source_directory}/CobcSw/EduPowerManagementThread.cpp"
+            "${source_directory}/CobcSw/EduHeartbeatThread.cpp" "${source_directory}/CobcSw/TopicsAndSubscribers.cpp"
 )
 target_link_libraries(
     Sts1CobcSwTests_EduPowerManagement PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Edu
