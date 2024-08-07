@@ -1,7 +1,7 @@
+#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
-#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 
 #include <rodos_no_using_namespace.h>

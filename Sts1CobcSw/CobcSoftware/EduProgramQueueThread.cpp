@@ -1,12 +1,12 @@
+#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
-#include <Sts1CobcSw/ThreadPriorities.hpp>
-#include <Sts1CobcSw/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 

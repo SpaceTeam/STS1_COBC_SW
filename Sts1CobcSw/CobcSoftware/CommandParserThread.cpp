@@ -1,6 +1,6 @@
-#include <Sts1CobcSw/CommandParser.hpp>
+#include <Sts1CobcSw/CobcSoftware/CommandParser.hpp>
+#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/ThreadPriorities.hpp>
 
 #include <rodos_no_using_namespace.h>
 

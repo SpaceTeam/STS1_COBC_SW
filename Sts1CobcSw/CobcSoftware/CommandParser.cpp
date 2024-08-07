@@ -1,7 +1,7 @@
-#include <Sts1CobcSw/CommandParser.hpp>
+#include <Sts1CobcSw/CobcSoftware/CommandParser.hpp>
+#include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
-#include <Sts1CobcSw/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
