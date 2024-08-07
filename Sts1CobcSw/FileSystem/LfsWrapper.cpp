@@ -3,8 +3,6 @@
 
 #include <littlefs/lfs.h>
 
-#include <iostream>
-
 
 namespace sts1cobcsw::fs
 {
@@ -60,39 +58,18 @@ auto Open(std::string_view path, unsigned int flags) -> Result<File>
     return static_cast<ErrorCode>(error);
 }
 
-auto File::Move(File & other) noexcept -> void
-{
-    auto error = lfs_file_opencfg(
-        &lfs, &lfsFile_, other.path_.c_str(), static_cast<int>(other.openFlags_), &lfsFileConfig_);
-    if(error == 0)
-    {
-        path_ = other.path_;
-        openFlags_ = other.openFlags_;
-        isOpen_ = true;
-    }
-    (void)other.Close();
-    other.path_ = "";
-    other.openFlags_ = 0;
-    other.lfsFile_ = {};
-}
 
 File::File(File && other) noexcept
 {
-    if(other.path_.empty())
-    {
-        return;
-    }
-
-    Move(other);
+    MoveConstructFrom(&other);
 }
 
 
 auto File::operator=(File && other) noexcept -> File &
 {
-    // TODO: Use copy and swap idiom to prevent code duplication from move constructor
-    if(this != &other and not other.path_.empty())
+    if(this != &other)
     {
-        Move(other);
+        MoveConstructFrom(&other);
     }
     return *this;
 }
@@ -103,16 +80,12 @@ File::~File()
     // Only close the file if it is not in a default initialized or moved-from state
     if(not path_.empty())
     {
-        auto closeResult = Close();
-        if(closeResult.has_error())
-        {
-            std::cout << "Error closing file\n";
-        }
+        (void)Close();
     }
 }
 
 
-auto File::Size() -> Result<int>
+auto File::Size() const -> Result<int>
 {
     if(not isOpen_)
     {
@@ -140,5 +113,32 @@ auto File::Close() -> Result<void>
     }
     isOpen_ = false;
     return outcome_v2::success();
+}
+
+
+// This function handles the weird way in which lfs_file_t objects are moved. It is more efficient
+// than using the usual copy-and-swap idiom, because the latter would require to open and close the
+// file more often.
+auto File::MoveConstructFrom(File * other) noexcept -> void
+{
+    if(other->path_.empty())
+    {
+        return;
+    }
+    auto error = lfs_file_opencfg(&lfs,
+                                  &lfsFile_,
+                                  other->path_.c_str(),
+                                  static_cast<int>(other->openFlags_),
+                                  &lfsFileConfig_);
+    if(error == 0)
+    {
+        path_ = other->path_;
+        openFlags_ = other->openFlags_;
+        isOpen_ = true;
+    }
+    (void)other->Close();
+    other->path_ = "";
+    other->openFlags_ = 0;
+    other->lfsFile_ = {};
 }
 }
