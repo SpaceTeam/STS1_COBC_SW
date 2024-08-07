@@ -41,28 +41,29 @@ public:
     auto operator=(File && other) noexcept -> File &;
     ~File();
 
+    friend auto Open(std::string_view path, unsigned int flags) -> Result<File>;
+
     // TODO: Read() and Write() should be implemented like ReadFrom() and WriteTo() in Fram.hpp,
     // including forwarding to functions in an internal namespace. This way we can move lfs back
     // into the .cpp file.
     template<typename T>
-    [[nodiscard]] auto Read(T * t) -> Result<int>;
+    [[nodiscard]] auto Read(T * t) const -> Result<int>;
     template<typename T>
     [[nodiscard]] auto Write(T const & t) -> Result<int>;
-    [[nodiscard]] auto Size() -> Result<int>;
+    [[nodiscard]] auto Size() const -> Result<int>;
     [[nodiscard]] auto Close() -> Result<void>;
 
-    friend auto Open(std::string_view path, unsigned int flags) -> Result<File>;
 
 private:
     // Only allow creation of File class through friend function Open()
     File() = default;
-    auto Move(File& other) noexcept -> void;
+    auto MoveConstructFrom(File * other) noexcept -> void;
 
     Path path_ = "";
-    bool isOpen_ = false;
     unsigned int openFlags_ = 0;
+    mutable lfs_file_t lfsFile_ = {};
+    bool isOpen_ = false;
     std::array<Byte, lfsCacheSize> buffer_ = {};
-    lfs_file_t lfsFile_ = {};
     lfs_file_config lfsFileConfig_ = {.buffer = buffer_.data()};
 };
 }
