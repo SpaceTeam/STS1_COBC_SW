@@ -60,60 +60,20 @@ auto Open(std::string_view path, unsigned int flags) -> Result<File>
     return static_cast<ErrorCode>(error);
 }
 
-auto Swap(File & lhs, File & rhs) -> void
+auto File::Move(File & other) noexcept -> void
 {
-    if(&lhs == &rhs)
+    auto error = lfs_file_opencfg(
+        &lfs, &lfsFile_, other.path_.c_str(), static_cast<int>(other.openFlags_), &lfsFileConfig_);
+    if(error == 0)
     {
-        return;
+        path_ = other.path_;
+        openFlags_ = other.openFlags_;
+        isOpen_ = true;
     }
-
-    using std::swap;
-    if(lhs.isOpen_)
-    {
-        auto error = lfs_file_close(&lfs, &lhs.lfsFile_);
-        if(error != 0)
-        {
-            lhs.isOpen_ = false;  // close?
-        }
-    }
-    if(rhs.isOpen_)
-    {
-        auto error = lfs_file_close(&lfs, &rhs.lfsFile_);
-        if(error != 0)
-        {
-            rhs.isOpen_ = false;  // close?
-        }
-    }
-
-    swap(lhs.path_, rhs.path_);
-    swap(lhs.isOpen_, rhs.isOpen_);
-    swap(lhs.buffer_, rhs.buffer_);
-    swap(lhs.openFlags_, rhs.openFlags_);
-
-    if(lhs.isOpen_ && not lhs.path_.empty())
-    {
-        auto error = lfs_file_opencfg(&lfs,
-                                      &lhs.lfsFile_,
-                                      lhs.path_.data(),
-                                      static_cast<int>(lhs.openFlags_),
-                                      &lhs.lfsFileConfig_);
-        if(error != 0)
-        {
-            lhs.isOpen_ = false;  // close?
-        }
-    }
-    if(rhs.isOpen_ && not rhs.path_.empty())
-    {
-        auto error = lfs_file_opencfg(&lfs,
-                                      &rhs.lfsFile_,
-                                      rhs.path_.data(),
-                                      static_cast<int>(rhs.openFlags_),
-                                      &rhs.lfsFileConfig_);
-        if(error != 0)
-        {
-            lhs.isOpen_ = false;  // close?
-        }
-    }
+    (void)other.Close();
+    other.path_ = "";
+    other.openFlags_ = 0;
+    other.lfsFile_ = {};
 }
 
 File::File(File && other) noexcept
@@ -123,17 +83,16 @@ File::File(File && other) noexcept
         return;
     }
 
-    Swap(*this, other);
-    (void)other.Close();
+    Move(other);
 }
 
 
 auto File::operator=(File && other) noexcept -> File &
 {
+    // TODO: Use copy and swap idiom to prevent code duplication from move constructor
     if(this != &other and not other.path_.empty())
     {
-        auto temporary = File(std::move(other));
-        Swap(*this, temporary);
+        Move(other);
     }
     return *this;
 }

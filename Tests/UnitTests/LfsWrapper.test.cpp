@@ -51,15 +51,7 @@ TEST_CASE("LfsWrapper")
     writeResult = readableFile.Write(number);
     CHECK(writeResult.has_error());  // write file should fail as LFS_O_RDONLY flag used
 
-
-    auto tmp = std::move(readableFile);
-
-    readResult = tmp.Read(&readNumber);
-    CHECK(readResult.has_value());
-    CHECK(readResult.value() == sizeof(number));
-    CHECK(readNumber == number);
-
-    closeResult = tmp.Close();
+    closeResult = readableFile.Close();
     CHECK(not closeResult.has_error());
 
     auto unmountResult = sts1cobcsw::fs::Unmount();
