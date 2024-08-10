@@ -10,7 +10,7 @@
 namespace sts1cobcsw::fs
 {
 template<typename T>
-auto File::Read(T * t) -> Result<int>
+auto File::Read(T * t) const -> Result<int>
 {
     if(not isOpen_)
     {
