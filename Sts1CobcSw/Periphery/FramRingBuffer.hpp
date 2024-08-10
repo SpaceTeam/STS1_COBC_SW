@@ -7,6 +7,8 @@
 
 #include <rodos-debug.h>
 
+#include <etl/cyclic_value.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -18,10 +20,11 @@ template<typename T, std::size_t size, Address startAddress>
 class RingBuffer
 {
 public:
-    RingBuffer()
-        : bufferSize_(size + 1U){
-
-        };
+    RingBuffer() : bufferSize_(size + 1U)
+    {
+        nextWriteIndex_.set(0);
+        nextReadIndex_.set(0);
+    };
 
     auto Push(T const & newData) -> void;
 
@@ -38,9 +41,9 @@ public:
 
 
 private:
-    std::uint32_t nextWriteIndex_ = 0;
-    std::uint32_t nextReadIndex_ = 0;
     std::size_t bufferSize_;
+    etl::cyclic_value<std::size_t, 0, size> nextWriteIndex_;
+    etl::cyclic_value<std::size_t, 0, size> nextReadIndex_;
 };
 }
 
