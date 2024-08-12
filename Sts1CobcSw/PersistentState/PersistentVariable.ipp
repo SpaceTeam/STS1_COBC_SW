@@ -50,7 +50,7 @@ auto PersistentVariable<T, address, offset>::Load() -> T
     //     {
     //         t3_ = result;
     //     }
-        // return result;
+    //     return result;
     // }
     auto result = MajorityVote(t1, t2, t3);
     if(t1 != result)
