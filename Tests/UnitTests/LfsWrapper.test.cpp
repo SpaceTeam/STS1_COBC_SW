@@ -6,12 +6,9 @@
 
 #include <littlefs/lfs.h>
 
-#include <Sts1CobcSw/FileSystem/LfsWrapper.ipp>
-
 
 TEST_CASE("LfsWrapper")
 {
-    CHECK(true);
     sts1cobcsw::fs::Initialize();
     auto mountResult = sts1cobcsw::fs::Mount();
     CHECK(not mountResult.has_error());
