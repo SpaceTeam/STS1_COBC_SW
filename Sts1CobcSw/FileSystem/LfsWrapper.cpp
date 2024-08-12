@@ -6,7 +6,7 @@
 
 namespace sts1cobcsw::fs
 {
-lfs_t lfs{};
+auto lfs = lfs_t{};
 
 
 // FIXME: For some reason this allocates 1024 bytes on the heap. With LFS_NO_MALLOC defined, it
@@ -140,5 +140,43 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
     other->path_ = "";
     other->openFlags_ = 0;
     other->lfsFile_ = {};
+}
+
+
+auto File::WriteInternal(void const * buffer, std::size_t size) -> Result<int>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_WRONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, buffer, size);
+    if(nWrittenBytes >= 0)
+    {
+        return nWrittenBytes;
+    }
+    return static_cast<ErrorCode>(nWrittenBytes);
+}
+
+
+auto File::ReadInternal(void * buffer, std::size_t size) const -> Result<int>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_RDONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto nReadBytes = lfs_file_read(&lfs, &lfsFile_, buffer, size);
+    if(nReadBytes >= 0)
+    {
+        return nReadBytes;
+    }
+    return static_cast<ErrorCode>(nReadBytes);
 }
 }

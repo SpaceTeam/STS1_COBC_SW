@@ -10,6 +10,7 @@
 #include <etl/string.h>
 
 #include <array>
+#include <cstddef>
 #include <string_view>
 
 
@@ -17,10 +18,6 @@ namespace sts1cobcsw::fs
 {
 // TODO: Consider reducing this to a bit more than 20 = strlen("/programs/65536.zip") to save RAM
 using Path = etl::string<LFS_NAME_MAX>;
-
-
-// TODO: Get rid of this global variable or at least hide it in an internal namespace
-extern lfs_t lfs;
 
 
 class File;
@@ -43,9 +40,6 @@ public:
 
     friend auto Open(std::string_view path, unsigned int flags) -> Result<File>;
 
-    // TODO: Read() and Write() should be implemented like ReadFrom() and WriteTo() in Fram.hpp,
-    // including forwarding to functions in an internal namespace. This way we can move lfs back
-    // into the .cpp file.
     template<typename T>
     [[nodiscard]] auto Read(T * t) const -> Result<int>;
     template<typename T>
@@ -58,6 +52,8 @@ private:
     // Only allow creation of File class through friend function Open()
     File() = default;
     auto MoveConstructFrom(File * other) noexcept -> void;
+    [[nodiscard]] auto WriteInternal(void const * buffer, std::size_t size) -> Result<int>;
+    [[nodiscard]] auto ReadInternal(void * buffer, std::size_t size) const -> Result<int>;
 
     Path path_ = "";
     unsigned int openFlags_ = 0;
