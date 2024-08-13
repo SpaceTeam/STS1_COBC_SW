@@ -18,9 +18,7 @@ constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 using Duration = strong::type<std::int64_t, struct DurationTag>;
 using RodosTime = strong::type<std::int64_t, struct RodosTimeTag, strong::affine_point<Duration>>;
 
-using RealTimeDuration = strong::type<std::int32_t, struct RealTimeDurationTag>;
-using RealTime =
-    strong::type<std::int32_t, struct RealTimeTag, strong::affine_point<RealTimeDuration>>;
+using RealTime = strong::type<std::int32_t, struct RealTimeTag, strong::affine_point<Duration>>;
 
 // Todo: Change name
 //! @brief Print UTC system time in human readable format.
