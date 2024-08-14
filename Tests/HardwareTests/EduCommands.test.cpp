@@ -79,9 +79,9 @@ private:
             {
                 case 'u':
                 {
-                    auto currentTime = utility::GetUnixUtc();
+                    auto currentTime = GetUnixUtc();
                     PRINTF("Sending UpdateTime(currentTime = %d)\n", static_cast<int>(currentTime));
-                    auto updateTimeResult = edu::UpdateTime({.currentTime = currentTime});
+                    auto updateTimeResult = edu::UpdateTime({.currentTime = RealTime(currentTime)});
                     if(updateTimeResult.has_error())
                     {
                         PRINTF("  Error code: %d\n", static_cast<int>(updateTimeResult.error()));
@@ -101,8 +101,8 @@ private:
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
-                    std::int32_t startTime = 0;
-                    std::from_chars(userInput.begin(), userInput.end(), startTime);
+                    RealTime startTime = RealTime(0);
+                    std::from_chars(userInput.begin(), userInput.end(), startTime.value_of());
 
                     PRINTF("Please enter a timeout (1 character)\n");
                     userInput = ReadCharacters<1>();
@@ -113,10 +113,12 @@ private:
                     PRINTF("Sending ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
                            ", timeout = %" PRIi16 ")\n",
                            value_of(programId),
-                           startTime,
+                           value_of(startTime),
                            timeout);
-                    auto executeProgramResult = edu::ExecuteProgram(
-                        {.programId = programId, .startTime = startTime, .timeout = timeout});
+                    auto executeProgramResult =
+                        edu::ExecuteProgram({.programId = programId,
+                                             .startTime = startTime,
+                                             .timeout = timeout});
                     if(executeProgramResult.has_error())
                     {
                         PRINTF("  Error code: %d\n",
@@ -142,7 +144,8 @@ private:
                         PRINTF("  Status type = %d\n", static_cast<int>(status.statusType));
                         PRINTF("  Program ID  = %d\n",
                                static_cast<int>(value_of(status.programId)));
-                        PRINTF("  Start time  = %d\n", static_cast<int>(status.startTime));
+                        PRINTF("  Start time  = %d\n",
+                               static_cast<int>(value_of(status.startTime)));
                         PRINTF("  Exit code   = %d\n", static_cast<int>(status.exitCode));
                     }
                     break;
@@ -156,16 +159,16 @@ private:
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
-                    std::int32_t startTime = 0;
-                    std::from_chars(userInput.begin(), userInput.end(), startTime);
+                    RealTime startTime = RealTime(0);
+                    std::from_chars(userInput.begin(), userInput.end(), startTime.value_of());
 
                     PRINTF("\n");
                     PRINTF("Sending ReturnResult(programId = %" PRIu16 ", startTime = %" PRIi32
                            ")\n",
                            value_of(programId),
-                           startTime);
-                    auto returnResultResult = edu::ReturnResult(
-                        edu::ReturnResultData{.programId = programId, .startTime = startTime});
+                           value_of(startTime));
+                    auto returnResultResult = edu::ReturnResult(edu::ReturnResultData{
+                        .programId = programId, .startTime = startTime});
                     if(returnResultResult.has_error())
                     {
                         PRINTF("  Error code: %d\n", static_cast<int>(returnResultResult.error()));
