@@ -66,7 +66,7 @@ private:
     {
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
         DEBUG_PRINT("Entering EduProgramQueueThread\n");
-        utility::PrintFormattedSystemUtc();
+        PrintFormattedSystemUtc();
         while(true)
         {
             if(edu::programQueue.empty())
@@ -96,10 +96,10 @@ private:
             // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             DEBUG_PRINT("Resuming here after first wait.\n");
-            utility::PrintFormattedSystemUtc();
+            PrintFormattedSystemUtc();
 
             auto updateTimeResult =
-                edu::UpdateTime(edu::UpdateTimeData{.currentTime = utility::GetUnixUtc()});
+                edu::UpdateTime(edu::UpdateTimeData{.currentTime = RealTime(GetUnixUtc())});
             if(updateTimeResult.has_error())
             {
                 DEBUG_PRINT("UpdateTime error code : %d\n",
@@ -146,7 +146,7 @@ private:
             {
                 edu::programStatusHistory.put(
                     edu::ProgramStatusHistoryEntry{.programId = programId,
-                                                   .startTime = startTime,
+                                                   .startTime = startTime.value_of(),
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
@@ -154,7 +154,7 @@ private:
                 DEBUG_PRINT("Suspending for execution time\n");
                 AT(NOW() + executionTime);
                 DEBUG_PRINT("Resuming from execution time\n");
-                utility::PrintFormattedSystemUtc();
+                PrintFormattedSystemUtc();
 
                 // Set current Queue ID to next
                 edu::queueIndex++;
@@ -168,7 +168,7 @@ private:
 auto ComputeStartDelay() -> std::int64_t
 {
     auto nextProgramStartTime =
-        edu::programQueue[edu::queueIndex].startTime - (utility::rodosUnixOffset / SECONDS);
+        edu::programQueue[edu::queueIndex].startTime.value_of() - (rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
     std::int64_t const startDelay =
         std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);

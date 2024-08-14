@@ -10,8 +10,6 @@
 
 namespace sts1cobcsw
 {
-using utility::PrintFormattedSystemUtc;
-
 
 // TODO: Move this to EduProgramQueueThreadMock.cpp or something
 auto ResumeEduProgramQueueThread() -> void
@@ -58,7 +56,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
     DEBUG_PRINT("Call to ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
                 ", timeout = %d)\n",
                 value_of(data.programId),
-                data.startTime,
+                value_of(data.startTime),
                 data.timeout);
     return outcome_v2::success();
 }
@@ -83,7 +81,7 @@ auto GetStatus() -> Result<Status>
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
-    DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime);
+    DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime.value_of());
     return outcome_v2::success();
 }
 }

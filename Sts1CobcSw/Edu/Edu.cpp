@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -32,10 +33,10 @@ constexpr auto cepData = 0x8b_b;  //! Data packet format is used (not a command 
 
 // The max. data length is 11 KiB. At 115'200 baud, this takes about 1 second to transmit. We use
 // 1.5 s just to be sure.
-constexpr auto sendTimeout = 1500 * RODOS::MILLISECONDS;
-constexpr auto receiveTimeout = 1500 * RODOS::MILLISECONDS;
+constexpr auto sendTimeout = Duration(1500 * RODOS::MILLISECONDS);
+constexpr auto receiveTimeout = Duration(1500 * RODOS::MILLISECONDS);
 // TODO: Can we choose a smaller value?
-constexpr auto flushReceiveBufferTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto flushReceiveBufferTimeout = Duration(1 * RODOS::MILLISECONDS);
 
 // TODO: Choose proper values
 // Max. number of send retries after receiving NACK
@@ -371,7 +372,7 @@ auto SendCommand(Byte commandId) -> Result<void>
 // a timeout.
 auto Send(std::span<Byte const> data) -> Result<void>
 {
-    auto writeToResult = hal::WriteTo(&uart, data, sendTimeout);
+    auto writeToResult = hal::WriteTo(&uart, data, sendTimeout.value_of());
     if(writeToResult.has_error())
     {
         return ErrorCode::timeout;
@@ -451,7 +452,7 @@ auto Receive(std::span<Byte> data) -> Result<void>
     {
         return ErrorCode::dataPacketTooLong;
     }
-    auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout);
+    auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout.value_of());
     if(readFromResult.has_error())
     {
         return ErrorCode::timeout;
@@ -505,7 +506,8 @@ auto FlushUartReceiveBuffer() -> void
     auto garbageBuffer = std::array<Byte, 32>{};  // NOLINT(*magic-numbers)
     while(true)
     {
-        auto readFromResult = hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout);
+        auto readFromResult =
+            hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout.value_of());
         if(readFromResult.has_error())
         {
             break;

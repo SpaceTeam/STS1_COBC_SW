@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -51,7 +52,7 @@ struct ExecuteProgramData
 {
     static constexpr auto id = 0x02_b;
     ProgramId programId = ProgramId(0);
-    std::int32_t startTime = 0;
+    RealTime startTime = RealTime(0);
     std::int16_t timeout = 0;
 };
 
@@ -72,14 +73,14 @@ struct ReturnResultData
 {
     static constexpr auto id = 0x05_b;
     ProgramId programId = ProgramId(0);
-    std::int32_t startTime = 0;
+    RealTime startTime = RealTime(0);
 };
 
 
 struct UpdateTimeData
 {
     static constexpr auto id = 0x06_b;
-    std::int32_t currentTime = 0;
+    RealTime currentTime = RealTime(0);
 };
 
 
@@ -87,7 +88,7 @@ struct Status
 {
     StatusType statusType = StatusType::invalid;
     ProgramId programId = ProgramId(0);
-    std::int32_t startTime = 0;
+    RealTime startTime = RealTime(0);
     std::uint8_t exitCode = 0;
 };
 
@@ -102,7 +103,7 @@ struct ProgramFinishedData
 {
     static constexpr auto id = 0x01_b;
     ProgramId programId = ProgramId(0);
-    std::int32_t startTime = 0;
+    RealTime startTime = RealTime(0);
     std::uint8_t exitCode = 0;
 };
 
@@ -111,7 +112,7 @@ struct ResultsReadyData
 {
     static constexpr auto id = 0x02_b;
     ProgramId programId = ProgramId(0);
-    std::int32_t startTime = 0;
+    RealTime startTime = RealTime(0);
 };
 
 

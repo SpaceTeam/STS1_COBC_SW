@@ -28,8 +28,8 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
     DEBUG_PRINT("Header length          : %" PRIi16 "\n", gsCommandHeader.length);
 
     // TODO: Move this somewhere else
-    RODOS::sysTime.setUTC(utility::UnixToRodosTime(gsCommandHeader.utc));
-    utility::PrintFormattedSystemUtc();
+    RODOS::sysTime.setUTC(UnixToRodosTime(gsCommandHeader.utc));
+    PrintFormattedSystemUtc();
 
     auto targetIsCobc = true;
     if(targetIsCobc)
@@ -93,7 +93,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
             queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());
 
         DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", value_of(entry.programId));
-        DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime);
+        DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime.value_of());
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
         edu::programQueue.push_back(entry);
