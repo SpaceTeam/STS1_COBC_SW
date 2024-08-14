@@ -115,10 +115,8 @@ private:
                            value_of(programId),
                            value_of(startTime),
                            timeout);
-                    auto executeProgramResult =
-                        edu::ExecuteProgram({.programId = programId,
-                                             .startTime = startTime,
-                                             .timeout = timeout});
+                    auto executeProgramResult = edu::ExecuteProgram(
+                        {.programId = programId, .startTime = startTime, .timeout = timeout});
                     if(executeProgramResult.has_error())
                     {
                         PRINTF("  Error code: %d\n",
@@ -167,8 +165,8 @@ private:
                            ")\n",
                            value_of(programId),
                            value_of(startTime));
-                    auto returnResultResult = edu::ReturnResult(edu::ReturnResultData{
-                        .programId = programId, .startTime = startTime});
+                    auto returnResultResult = edu::ReturnResult(
+                        edu::ReturnResultData{.programId = programId, .startTime = startTime});
                     if(returnResultResult.has_error())
                     {
                         PRINTF("  Error code: %d\n", static_cast<int>(returnResultResult.error()));

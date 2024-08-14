@@ -8,9 +8,8 @@ namespace sts1cobcsw::edu
 RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
-auto UpdateProgramStatusHistory(ProgramId programId,
-                                RealTime startTime,
-                                ProgramStatus newStatus) -> void
+auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
+    -> void
 {
     // TODO: Check that there is only one entry matching program/queue ID, or should it be the case
     // by construction ?

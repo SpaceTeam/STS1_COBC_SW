@@ -60,8 +60,7 @@ static_assert(programStatusHistorySize * totalSerialSize<ProgramStatusHistoryEnt
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
 
 
-auto UpdateProgramStatusHistory(ProgramId programId,
-                                RealTime startTime,
-                                ProgramStatus newStatus) -> void;
+auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
+    -> void;
 }
 }
