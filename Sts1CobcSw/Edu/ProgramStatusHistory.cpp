@@ -9,14 +9,14 @@ RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programSt
 
 
 auto UpdateProgramStatusHistory(ProgramId programId,
-                                std::int32_t startTime,
+                                RealTime startTime,
                                 ProgramStatus newStatus) -> void
 {
     // TODO: Check that there is only one entry matching program/queue ID, or should it be the case
     // by construction ?
     for(std::uint32_t i = 0; i < programStatusHistory.occupiedCnt; ++i)
     {
-        if(programStatusHistory.vals[i].startTime == startTime
+        if(programStatusHistory.vals[i].startTime.value_of() == startTime.value_of()
            and programStatusHistory.vals[i].programId == programId)
         {
             programStatusHistory.vals[i].status = newStatus;

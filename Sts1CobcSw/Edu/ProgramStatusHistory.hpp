@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Periphery/FramLayout.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/ordered_with.hpp>
 
@@ -36,7 +37,7 @@ enum class ProgramStatus : std::uint8_t
 struct ProgramStatusHistoryEntry
 {
     ProgramId programId = ProgramId(0);
-    std::int32_t startTime = 0;
+    RealTime startTime = RealTime(0);
     ProgramStatus status = ProgramStatus::programRunning;
 };
 }
@@ -60,7 +61,7 @@ extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> pr
 
 
 auto UpdateProgramStatusHistory(ProgramId programId,
-                                std::int32_t startTime,
+                                RealTime startTime,
                                 ProgramStatus newStatus) -> void;
 }
 }
