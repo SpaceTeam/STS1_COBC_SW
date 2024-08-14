@@ -146,7 +146,7 @@ private:
             {
                 edu::programStatusHistory.put(
                     edu::ProgramStatusHistoryEntry{.programId = programId,
-                                                   .startTime = startTime.value_of(),
+                                                   .startTime = startTime,
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
