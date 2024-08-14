@@ -3,7 +3,7 @@
 #include <cinttypes>
 
 
-namespace sts1cobcsw::utility
+namespace sts1cobcsw
 {
 //! @brief Print UTC system time in human readable format
 void PrintFormattedSystemUtc()
