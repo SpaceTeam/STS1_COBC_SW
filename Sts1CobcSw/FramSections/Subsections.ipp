@@ -24,7 +24,6 @@ template<Section parentSection, SubsectionInfoLike... SubsectionInfos>
 constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeBegins()
     -> std::array<fram::Address, sizeof...(SubsectionInfos)>
 {
-    // TODO: Test decltype(begins_){} again
     auto begins = std::array<fram::Address, sizeof...(SubsectionInfos)>{};
     for(std::size_t i = 0; i < sizeof...(SubsectionInfos); ++i)
     {
@@ -42,8 +41,7 @@ constexpr auto Subsections<parentSection, SubsectionInfos...>::ComputeEnds()
     {
         constexpr auto ends = []()
         {
-            // TODO: Test decltype(begins_){} again
-            auto addresses = std::array<fram::Address, sizeof...(SubsectionInfos)>{};
+            auto addresses = decltype(begins_){};
             for(std::size_t i = 0; i < sizeof...(SubsectionInfos); ++i)
             {
                 addresses[i] = begins_[i] + sizes_[i];

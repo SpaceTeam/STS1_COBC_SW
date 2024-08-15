@@ -7,6 +7,9 @@
 
 namespace sts1cobcsw::fram
 {
+bool framIsWorking = true;
+
+
 auto doInitialize = empty::DoInitialize;
 auto doReadDeviceId = empty::DoReadDeviceId;
 auto doActualBaudRate = empty::DoActualBaudRate;

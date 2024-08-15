@@ -39,6 +39,13 @@ target_link_libraries(
             Sts1CobcSw_Utility
 )
 
+add_program(PersistentVariables PersistentVariables.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_PersistentVariables
+    PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections Sts1CobcSw_Periphery Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
+)
+
 add_program(Section Section.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
