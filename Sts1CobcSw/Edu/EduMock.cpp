@@ -81,7 +81,7 @@ auto GetStatus() -> Result<Status>
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     PrintFormattedSystemUtc();
-    DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime.value_of());
+    DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", value_of(data.currentTime));
     return outcome_v2::success();
 }
 }

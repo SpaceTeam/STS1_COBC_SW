@@ -93,7 +93,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
             queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());
 
         DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", value_of(entry.programId));
-        DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime.value_of());
+        DEBUG_PRINT("Start Time   : %" PRIi32 "\n", value_of(entry.startTime));
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
         edu::programQueue.push_back(entry);

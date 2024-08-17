@@ -13,13 +13,6 @@ inline auto UnixToRodosTime(std::int32_t unixTimeSeconds) -> std::int64_t
 }
 
 
-inline auto GetUnixUtc() -> std::int32_t
-{
-    auto unixUtc = (RODOS::sysTime.getUTC() + rodosUnixOffset) / RODOS::SECONDS;
-    return static_cast<std::int32_t>(unixUtc);
-}
-
-
 template<std::endian endianness>
 inline auto SerializeTo(void * destination, RealTime const & data) -> void *
 {

@@ -99,7 +99,7 @@ private:
             PrintFormattedSystemUtc();
 
             auto updateTimeResult =
-                edu::UpdateTime(edu::UpdateTimeData{.currentTime = RealTime(GetUnixUtc())});
+                edu::UpdateTime(edu::UpdateTimeData{.currentTime = CurrentRealTime()});
             if(updateTimeResult.has_error())
             {
                 DEBUG_PRINT("UpdateTime error code : %d\n",
@@ -168,7 +168,7 @@ private:
 auto ComputeStartDelay() -> std::int64_t
 {
     auto nextProgramStartTime =
-        edu::programQueue[edu::queueIndex].startTime.value_of() - (rodosUnixOffset / SECONDS);
+        value_of(edu::programQueue[edu::queueIndex].startTime) - (rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
     std::int64_t const startDelay =
         std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);

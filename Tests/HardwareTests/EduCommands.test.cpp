@@ -79,8 +79,9 @@ private:
             {
                 case 'u':
                 {
-                    auto currentTime = GetUnixUtc();
-                    PRINTF("Sending UpdateTime(currentTime = %d)\n", static_cast<int>(currentTime));
+                    auto currentTime = CurrentRealTime();
+                    PRINTF("Sending UpdateTime(currentTime = %d)\n",
+                           static_cast<int>(value_of(currentTime)));
                     auto updateTimeResult = edu::UpdateTime({.currentTime = RealTime(currentTime)});
                     if(updateTimeResult.has_error())
                     {
@@ -102,7 +103,7 @@ private:
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
                     RealTime startTime = RealTime(0);
-                    std::from_chars(userInput.begin(), userInput.end(), startTime.value_of());
+                    std::from_chars(userInput.begin(), userInput.end(), value_of(startTime));
 
                     PRINTF("Please enter a timeout (1 character)\n");
                     userInput = ReadCharacters<1>();
@@ -158,7 +159,7 @@ private:
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
                     RealTime startTime = RealTime(0);
-                    std::from_chars(userInput.begin(), userInput.end(), startTime.value_of());
+                    std::from_chars(userInput.begin(), userInput.end(), value_of(startTime));
 
                     PRINTF("\n");
                     PRINTF("Sending ReturnResult(programId = %" PRIu16 ", startTime = %" PRIi32

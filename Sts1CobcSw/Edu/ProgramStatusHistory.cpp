@@ -15,7 +15,7 @@ auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, Program
     // by construction ?
     for(std::uint32_t i = 0; i < programStatusHistory.occupiedCnt; ++i)
     {
-        if(programStatusHistory.vals[i].startTime.value_of() == startTime.value_of()
+        if(programStatusHistory.vals[i].startTime == startTime
            and programStatusHistory.vals[i].programId == programId)
         {
             programStatusHistory.vals[i].status = newStatus;

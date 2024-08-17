@@ -372,7 +372,7 @@ auto SendCommand(Byte commandId) -> Result<void>
 // a timeout.
 auto Send(std::span<Byte const> data) -> Result<void>
 {
-    auto writeToResult = hal::WriteTo(&uart, data, sendTimeout.value_of());
+    auto writeToResult = hal::WriteTo(&uart, data, sendTimeout);
     if(writeToResult.has_error())
     {
         return ErrorCode::timeout;
@@ -452,7 +452,7 @@ auto Receive(std::span<Byte> data) -> Result<void>
     {
         return ErrorCode::dataPacketTooLong;
     }
-    auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout.value_of());
+    auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout);
     if(readFromResult.has_error())
     {
         return ErrorCode::timeout;
@@ -507,7 +507,7 @@ auto FlushUartReceiveBuffer() -> void
     while(true)
     {
         auto readFromResult =
-            hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout.value_of());
+            hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout);
         if(readFromResult.has_error())
         {
             break;
