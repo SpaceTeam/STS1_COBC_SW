@@ -72,8 +72,7 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
 
 
 template<typename T, std::size_t extent>
-auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, Duration timeout)
-    -> Result<void>
+auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, Duration timeout) -> Result<void>
 {
     auto bytes = std::as_writable_bytes(data);
     std::size_t nReadBytes = 0;

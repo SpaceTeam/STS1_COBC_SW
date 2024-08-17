@@ -506,8 +506,7 @@ auto FlushUartReceiveBuffer() -> void
     auto garbageBuffer = std::array<Byte, 32>{};  // NOLINT(*magic-numbers)
     while(true)
     {
-        auto readFromResult =
-            hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout);
+        auto readFromResult = hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout);
         if(readFromResult.has_error())
         {
             break;
