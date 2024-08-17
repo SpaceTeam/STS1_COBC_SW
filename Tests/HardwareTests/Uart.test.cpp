@@ -13,6 +13,7 @@
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -85,13 +86,13 @@ class UartTest : public RODOS::StaticThread<>
             PRINTF("message.size() = %i\n", static_cast<int>(message.size()));
 
             auto tWrite0 = NOW();
-            auto writeToResult1 = hal::WriteTo(&eduUart, Span(message), 100 * MILLISECONDS);
+            auto writeToResult1 = hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
             auto tWrite1 = NOW();
 
             auto answer1 = std::array<char, 1>{};
 
             auto tRead0 = NOW();
-            auto readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), 100 * MILLISECONDS);
+            auto readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), Duration(100 * MILLISECONDS));
             auto tRead1 = NOW();
 
             PRINTF("\n");
@@ -105,9 +106,9 @@ class UartTest : public RODOS::StaticThread<>
 
             PRINTF("\n");
             PRINTF("Sending the message again.");
-            auto writeTimeout = 500 * MICROSECONDS;
+            auto writeTimeout = Duration(500 * MICROSECONDS);
             PRINTF(" This time with a write timeout of %" PRIi64 " us which is too short.\n",
-                   writeTimeout / MICROSECONDS);
+                   value_of(writeTimeout) / MICROSECONDS);
 
             tWrite0 = NOW();
             writeToResult1 = hal::WriteTo(&eduUart, Span(message), writeTimeout);
@@ -116,7 +117,7 @@ class UartTest : public RODOS::StaticThread<>
             answer1[0] = 0x00;
 
             tRead0 = NOW();
-            readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), 100 * MILLISECONDS);
+            readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), Duration(100 * MILLISECONDS));
             tRead1 = NOW();
 
             PRINTF("\n");
@@ -130,14 +131,14 @@ class UartTest : public RODOS::StaticThread<>
 
             PRINTF("\n");
             PRINTF("Sending the message twice.");
-            auto readTimeout = 1500 * MICROSECONDS;
+            auto readTimeout = Duration(1500 * MICROSECONDS);
             PRINTF(" The first time with a read timeout of %" PRIi64 " us which is too short.\n",
-                   readTimeout / MICROSECONDS);
+                   value_of(readTimeout) / MICROSECONDS);
 
             tWrite0 = NOW();
-            writeToResult1 = hal::WriteTo(&eduUart, Span(message), 100 * MILLISECONDS);
+            writeToResult1 = hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
             tWrite1 = NOW();
-            auto writeToResult2 = hal::WriteTo(&eduUart, Span(message), 100 * MILLISECONDS);
+            auto writeToResult2 = hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
             auto tWrite2 = NOW();
 
             auto answer2 = std::array<char, 1>{};
@@ -145,7 +146,7 @@ class UartTest : public RODOS::StaticThread<>
             tRead0 = NOW();
             readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), readTimeout);
             tRead1 = NOW();
-            auto readFromResult2 = hal::ReadFrom(&eduUart, Span(&answer2), 100 * MILLISECONDS);
+            auto readFromResult2 = hal::ReadFrom(&eduUart, Span(&answer2), Duration(100 * MILLISECONDS));
             auto tRead2 = NOW();
 
             PRINTF("\n");
