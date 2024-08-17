@@ -6,6 +6,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
@@ -21,7 +22,7 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
-constexpr auto uartTimeout = 100 * RODOS::MILLISECONDS;
+constexpr auto uartTimeout = Duration(100 * RODOS::MILLISECONDS);
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 auto led2GpioPin = hal::GpioPin(hal::led2Pin);
