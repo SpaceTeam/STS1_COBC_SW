@@ -20,18 +20,14 @@ auto PersistentVariables<parentSection0,
                          PersistentVariableInfos...>::Load() -> ValueType<name>
 {
     // TODO: Load() must be atomic
-    auto [value0, value1, value2] = ReadFromFram<name>();
+    auto [value0, value1, value2] =
+        fram::framIsWorking ? ReadFromFram<name>() : ReadFromCache<name>();
     auto voteResult = ComputeMajorityVote(value0, value1, value2);
     auto value = voteResult.value_or(value0);
-    if(not voteResult.has_value())
-    {
-        // TODO: There was no majority. Maybe increment a counter or something.
-    }
     auto allVotesAreEqual = (value0 == value1) && (value1 == value2);
     if(not allVotesAreEqual)
     {
         WriteToFram<name>(value);
-        // TODO: Maybe increment a counter or something
     }
     WriteToCache<name>(value);
     return value;
@@ -51,7 +47,10 @@ auto PersistentVariables<parentSection0,
                          PersistentVariableInfos...>::Store(ValueType<name> const & value)
 {
     // TODO: Store() must be atomic
-    WriteToFram<name>(value);
+    if(fram::framIsWorking)
+    {
+        WriteToFram<name>(value);
+    }
     WriteToCache<name>(value);
 }
 

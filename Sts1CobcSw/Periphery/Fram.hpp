@@ -39,7 +39,7 @@ inline constexpr auto correctDeviceId =
     DeviceId{0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b};
 
 // TODO: This needs to be implemented as an EDAC variable. Maybe it should also be moved to
-// somewhere else then :thinking_face:
+// somewhere else then :man-shrugging:
 extern bool framIsWorking;
 
 

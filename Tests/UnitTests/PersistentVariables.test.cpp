@@ -12,6 +12,7 @@
 #include <array>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <type_traits>
 
 
@@ -73,79 +74,125 @@ TEST_CASE("Majority vote")
 }
 
 
-TEST_CASE("Load and store")
+TEST_CASE("Load() and Store()")
 {
-    namespace fram = sts1cobcsw::fram;
-    using fram::Address;
-    using fram::ram::memory;
+    using sts1cobcsw::fram::Address;
+    using sts1cobcsw::fram::framIsWorking;
+    using sts1cobcsw::fram::ram::memory;
     using sts1cobcsw::operator""_b;
-
-    fram::ram::SetAllDoFunctions();
-    memory.fill(0x00_b);
-
-    auto nResets = pvs.Load<"nResets">();
-    auto activeFwImage = pvs.Load<"activeFwImage">();
-    auto somethingElse = pvs.Load<"somethingElse">();
-
-    CHECK(nResets == 0);
-    CHECK(activeFwImage == 0);
-    CHECK(somethingElse == 0);
-
-    pvs.Store<"nResets">(0x12345678);
-    pvs.Store<"activeFwImage">(42);
-    pvs.Store<"somethingElse">(-2);
-
-    nResets = pvs.Load<"nResets">();
-    activeFwImage = pvs.Load<"activeFwImage">();
-    somethingElse = pvs.Load<"somethingElse">();
-
-    CHECK(nResets == 0x12345678);
-    CHECK(activeFwImage == 42);
-    CHECK(somethingElse == -2);
 
     constexpr auto nResetsAddress0 = 0;
     constexpr auto activeFwImageAddress0 = 4;
     constexpr auto somethingElseAddress0 = 5;
-    constexpr auto nResetsAddress1 = nResetsAddress0 + 100;
-    constexpr auto nResetsAddress2 = nResetsAddress1 + 100;
+    constexpr auto activeFwImageAddress1 = activeFwImageAddress0 + 100;
+    constexpr auto activeFwImageAddress2 = activeFwImageAddress1 + 100;
 
-    CHECK(memory[nResetsAddress0] == 0x78_b);
-    CHECK(memory[nResetsAddress0 + 1] == 0x56_b);
-    CHECK(memory[nResetsAddress0 + 2] == 0x34_b);
-    CHECK(memory[nResetsAddress0 + 3] == 0x12_b);
-    CHECK(memory[activeFwImageAddress0] == 42_b);
-    CHECK(memory[somethingElseAddress0] == 0xFE_b);
-    CHECK(memory[somethingElseAddress0 + 1] == 0xFF_b);
+    sts1cobcsw::fram::ram::SetAllDoFunctions();
 
-    memory[nResetsAddress0 + 3] = 0x00_b;
-    memory[activeFwImageAddress0] = 0x00_b;
-    memory[somethingElseAddress0 + 1] = 0x00_b;
+    SECTION("FRAM is working")
+    {
+        memory.fill(0x00_b);
+        framIsWorking = true;
 
-    nResets = pvs.Load<"nResets">();
-    activeFwImage = pvs.Load<"activeFwImage">();
-    somethingElse = pvs.Load<"somethingElse">();
+        SECTION("You load what you store")
+        {
+            pvs.Store<"nResets">(0x12345678);
+            pvs.Store<"activeFwImage">(42);
+            pvs.Store<"somethingElse">(-2);
+            CHECK(pvs.Load<"nResets">() == 0x12345678);
+            CHECK(pvs.Load<"activeFwImage">() == 42);
+            CHECK(pvs.Load<"somethingElse">() == -2);
+        }
 
-    CHECK(nResets == 0x12345678);
-    CHECK(activeFwImage == 42);
-    CHECK(somethingElse == -2);
+        SECTION("Store() writes to memory")
+        {
+            pvs.Store<"nResets">(0x12345678);
+            pvs.Store<"activeFwImage">(42);
+            pvs.Store<"somethingElse">(-2);
+            CHECK(memory[nResetsAddress0] == 0x78_b);
+            CHECK(memory[nResetsAddress0 + 1] == 0x56_b);
+            CHECK(memory[nResetsAddress0 + 2] == 0x34_b);
+            CHECK(memory[nResetsAddress0 + 3] == 0x12_b);
+            CHECK(memory[activeFwImageAddress0] == 42_b);
+            CHECK(memory[somethingElseAddress0] == 0xFE_b);
+            CHECK(memory[somethingElseAddress0 + 1] == 0xFF_b);
+        }
 
-    CHECK(memory[nResetsAddress0] == 0x78_b);
-    CHECK(memory[nResetsAddress0 + 1] == 0x56_b);
-    CHECK(memory[nResetsAddress0 + 2] == 0x34_b);
-    CHECK(memory[nResetsAddress0 + 3] == 0x12_b);
-    CHECK(memory[activeFwImageAddress0] == 42_b);
-    CHECK(memory[somethingElseAddress0] == 0xFE_b);
-    CHECK(memory[somethingElseAddress0 + 1] == 0xFF_b);
+        SECTION("Load() reads from memory")
+        {
+            memory[activeFwImageAddress0] = 17_b;
+            memory[activeFwImageAddress1] = 17_b;
+            memory[activeFwImageAddress2] = 17_b;
+            CHECK(pvs.Load<"activeFwImage">() == 17);
+        }
 
-    memory[nResetsAddress1 + 1] = 0x00_b;
-    nResets = pvs.Load<"nResets">();
-    CHECK(nResets == 0x12345678);
-    CHECK(memory[nResetsAddress0] == 0x78_b);
+        SECTION("Load() returns majority and repairs memory")
+        {
+            memory[activeFwImageAddress0] = 42_b;
+            memory[activeFwImageAddress1] = 17_b;
+            memory[activeFwImageAddress2] = 17_b;
+            CHECK(pvs.Load<"activeFwImage">() == 17);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
 
-    memory[nResetsAddress2 + 2] = 0x00_b;
-    nResets = pvs.Load<"nResets">();
-    CHECK(nResets == 0x12345678);
-    CHECK(memory[nResetsAddress0] == 0x78_b);
+            memory[activeFwImageAddress1] = 42_b;
+            CHECK(pvs.Load<"activeFwImage">() == 17);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
 
-    // TODO: Add more tests, especially for the case when the values are not equal
+            memory[activeFwImageAddress2] = 42_b;
+            CHECK(pvs.Load<"activeFwImage">() == 17);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
+
+            memory[activeFwImageAddress0] = 42_b;
+            memory[activeFwImageAddress2] = 42_b;
+            CHECK(pvs.Load<"activeFwImage">() == 42);
+            CHECK(memory[activeFwImageAddress0] == 42_b);
+            CHECK(memory[activeFwImageAddress1] == 42_b);
+            CHECK(memory[activeFwImageAddress2] == 42_b);
+        }
+    }
+
+    SECTION("FRAM is not working")
+    {
+        memory.fill(0x00_b);
+        framIsWorking = false;
+
+        SECTION("You load what you store")
+        {
+            pvs.Store<"nResets">(0xABCDABCD);
+            pvs.Store<"activeFwImage">(111);
+            pvs.Store<"somethingElse">(-55);
+            CHECK(pvs.Load<"nResets">() == 0xABCDABCD);
+            CHECK(pvs.Load<"activeFwImage">() == 111);
+            CHECK(pvs.Load<"somethingElse">() == -55);
+        }
+
+        SECTION("Store() does not write to memory")
+        {
+            pvs.Store<"nResets">(0xABCDABCD);
+            pvs.Store<"activeFwImage">(111);
+            pvs.Store<"somethingElse">(-55);
+            CHECK(memory[nResetsAddress0] == 0x00_b);
+            CHECK(memory[nResetsAddress0 + 1] == 0x00_b);
+            CHECK(memory[nResetsAddress0 + 2] == 0x00_b);
+            CHECK(memory[nResetsAddress0 + 3] == 0x00_b);
+            CHECK(memory[activeFwImageAddress0] == 00_b);
+            CHECK(memory[somethingElseAddress0] == 0x00_b);
+            CHECK(memory[somethingElseAddress0 + 1] == 0x00_b);
+        }
+
+        SECTION("Load() does not read from memory")
+        {
+            pvs.Store<"activeFwImage">(0);
+            memory[activeFwImageAddress0] = 17_b;
+            memory[activeFwImageAddress1] = 17_b;
+            memory[activeFwImageAddress2] = 17_b;
+            CHECK(pvs.Load<"activeFwImage">() == 0);
+        }
+    }
 }
