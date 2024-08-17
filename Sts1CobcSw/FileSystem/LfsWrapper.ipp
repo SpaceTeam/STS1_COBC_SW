@@ -5,16 +5,16 @@
 
 namespace sts1cobcsw::fs
 {
-template<typename T>
-auto File::Read(T * t) const -> Result<int>
+template<std::size_t extent>
+auto File::Read(std::span<Byte, extent> data) const -> Result<int>
 {
-    return ReadInternal(t, sizeof(T));
+    return Read(data.data(), data.size());
 }
 
 
-template<typename T>
-auto File::Write(T const & t) -> Result<int>
+template<std::size_t extent>
+auto File::Write(std::span<const Byte, extent> data) -> Result<int>
 {
-    return WriteInternal(&t, sizeof(T));
+    return Write(data.data(), data.size());
 }
 }

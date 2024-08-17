@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cstddef>
+#include <span>
 #include <string_view>
 
 
@@ -40,10 +41,10 @@ public:
 
     friend auto Open(std::string_view path, unsigned int flags) -> Result<File>;
 
-    template<typename T>
-    [[nodiscard]] auto Read(T * t) const -> Result<int>;
-    template<typename T>
-    [[nodiscard]] auto Write(T const & t) -> Result<int>;
+    template<std::size_t extent>
+    [[nodiscard]] auto Read(std::span<Byte, extent> data) const -> Result<int>;
+    template<std::size_t extent>
+    [[nodiscard]] auto Write(std::span<const Byte, extent> data) -> Result<int>;
     [[nodiscard]] auto Size() const -> Result<int>;
     [[nodiscard]] auto Close() -> Result<void>;
 
@@ -52,8 +53,8 @@ private:
     // Only allow creation of File class through friend function Open()
     File() = default;
     auto MoveConstructFrom(File * other) noexcept -> void;
-    [[nodiscard]] auto WriteInternal(void const * buffer, std::size_t size) -> Result<int>;
-    [[nodiscard]] auto ReadInternal(void * buffer, std::size_t size) const -> Result<int>;
+    [[nodiscard]] auto Read(void * buffer, std::size_t size) const -> Result<int>;
+    [[nodiscard]] auto Write(void const * buffer, std::size_t size) -> Result<int>;
 
     Path path_ = "";
     unsigned int openFlags_ = 0;

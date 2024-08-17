@@ -143,26 +143,7 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
 }
 
 
-auto File::WriteInternal(void const * buffer, std::size_t size) -> Result<int>
-{
-    if(not isOpen_)
-    {
-        return ErrorCode::fileNotOpen;
-    }
-    if((openFlags_ & LFS_O_WRONLY) == 0U)
-    {
-        return ErrorCode::unsupportedOperation;
-    }
-    auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, buffer, size);
-    if(nWrittenBytes >= 0)
-    {
-        return nWrittenBytes;
-    }
-    return static_cast<ErrorCode>(nWrittenBytes);
-}
-
-
-auto File::ReadInternal(void * buffer, std::size_t size) const -> Result<int>
+auto File::Read(void * buffer, std::size_t size) const -> Result<int>
 {
     if(not isOpen_)
     {
@@ -178,5 +159,24 @@ auto File::ReadInternal(void * buffer, std::size_t size) const -> Result<int>
         return nReadBytes;
     }
     return static_cast<ErrorCode>(nReadBytes);
+}
+
+
+auto File::Write(void const * buffer, std::size_t size) -> Result<int>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_WRONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, buffer, size);
+    if(nWrittenBytes >= 0)
+    {
+        return nWrittenBytes;
+    }
+    return static_cast<ErrorCode>(nWrittenBytes);
 }
 }
