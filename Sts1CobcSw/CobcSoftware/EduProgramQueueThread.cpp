@@ -34,7 +34,7 @@ using RODOS::SECONDS;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 8'000U;
-constexpr auto eduCommunicationDelay = 2 * SECONDS;
+constexpr auto eduCommunicationDelay = Duration(2 * SECONDS);
 
 
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
@@ -91,8 +91,8 @@ private:
 
             // Suspend until delay time - 2 seconds
             DEBUG_PRINT("Suspending for the first time for      : %" PRIi64 " s\n",
-                        (startDelay - eduCommunicationDelay) / RODOS::SECONDS);
-            AT(NOW() + startDelay - eduCommunicationDelay);
+                        (startDelay - value_of(eduCommunicationDelay)) / RODOS::SECONDS);
+            AT(NOW() + startDelay - value_of(eduCommunicationDelay));
             // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             DEBUG_PRINT("Resuming here after first wait.\n");
@@ -150,9 +150,9 @@ private:
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
-                auto const executionTime = timeout + eduCommunicationDelay;
+                auto const executionTime = Duration(timeout) + eduCommunicationDelay;
                 DEBUG_PRINT("Suspending for execution time\n");
-                AT(NOW() + executionTime);
+                AT(NOW() + value_of(executionTime));
                 DEBUG_PRINT("Resuming from execution time\n");
                 PrintFormattedSystemUtc();
 

@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -63,16 +64,16 @@ private:
 
         auto const heartbeatFrequency = 10;                     // Hz
         auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
-        auto const samplingPeriod = 1'000 * MILLISECONDS / samplingFrequency;
+        auto const samplingPeriod = Duration(1'000 * MILLISECONDS / samplingFrequency);
 
         auto samplingCount = 0;
         auto heartbeatIsConstant = true;
         auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0;
 
-        DEBUG_PRINT("Sampling period : %" PRIi64 "\n", samplingPeriod / MILLISECONDS);
+        DEBUG_PRINT("Sampling period : %" PRIi64 "\n", value_of(samplingPeriod) / MILLISECONDS);
         auto toggle = true;
-        TIME_LOOP(0, samplingPeriod)
+        TIME_LOOP(0, value_of(samplingPeriod))
         {
             // Read current heartbeat value
 

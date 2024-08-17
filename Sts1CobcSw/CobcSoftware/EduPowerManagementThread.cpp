@@ -8,6 +8,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -19,10 +20,10 @@ namespace sts1cobcsw
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
-constexpr auto eduBootTime = 20 * RODOS::SECONDS;  // Measured ~19 s
-constexpr auto eduPowerManagementThreadPeriod = 2 * RODOS::SECONDS;
-constexpr auto eduBootTimeMargin = 5 * RODOS::SECONDS;
-constexpr auto startDelayLimit = 60 * RODOS::SECONDS;
+constexpr auto eduBootTime = RealTime(20 * RODOS::SECONDS);  // Measured ~19 s
+constexpr auto eduPowerManagementThreadPeriod = Duration(2 * RODOS::SECONDS);
+constexpr auto eduBootTimeMargin = Duration(5 * RODOS::SECONDS);
+constexpr auto startDelayLimit = Duration(60 * RODOS::SECONDS);
 
 // TODO: There should be an Eps.hpp/.cpp for this
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
@@ -46,11 +47,11 @@ private:
 
     void run() override
     {
-        TIME_LOOP(0, eduPowerManagementThreadPeriod)
+        TIME_LOOP(0, value_of(eduPowerManagementThreadPeriod))
         {
             // DEBUG_PRINT("[EduPowerManagementThread] Start of Loop\n");
-            std::int64_t startDelay = 0;
-            nextProgramStartDelayBuffer.get(startDelay);
+            Duration startDelay = Duration(0);
+            nextProgramStartDelayBuffer.get(value_of(startDelay));
 
             auto const epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
             auto const eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
@@ -72,7 +73,7 @@ private:
                 }
                 else
                 {
-                    if(startDelay < (eduBootTime + eduBootTimeMargin))
+                    if(startDelay < (Duration(value_of(eduBootTime)) + eduBootTimeMargin))
                     {
                         DEBUG_PRINT("Turning Edu on\n");
                         edu::TurnOn();
