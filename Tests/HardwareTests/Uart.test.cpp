@@ -86,13 +86,15 @@ class UartTest : public RODOS::StaticThread<>
             PRINTF("message.size() = %i\n", static_cast<int>(message.size()));
 
             auto tWrite0 = NOW();
-            auto writeToResult1 = hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
+            auto writeToResult1 =
+                hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
             auto tWrite1 = NOW();
 
             auto answer1 = std::array<char, 1>{};
 
             auto tRead0 = NOW();
-            auto readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), Duration(100 * MILLISECONDS));
+            auto readFromResult1 =
+                hal::ReadFrom(&eduUart, Span(&answer1), Duration(100 * MILLISECONDS));
             auto tRead1 = NOW();
 
             PRINTF("\n");
@@ -138,7 +140,8 @@ class UartTest : public RODOS::StaticThread<>
             tWrite0 = NOW();
             writeToResult1 = hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
             tWrite1 = NOW();
-            auto writeToResult2 = hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
+            auto writeToResult2 =
+                hal::WriteTo(&eduUart, Span(message), Duration(100 * MILLISECONDS));
             auto tWrite2 = NOW();
 
             auto answer2 = std::array<char, 1>{};
@@ -146,7 +149,8 @@ class UartTest : public RODOS::StaticThread<>
             tRead0 = NOW();
             readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), readTimeout);
             tRead1 = NOW();
-            auto readFromResult2 = hal::ReadFrom(&eduUart, Span(&answer2), Duration(100 * MILLISECONDS));
+            auto readFromResult2 =
+                hal::ReadFrom(&eduUart, Span(&answer2), Duration(100 * MILLISECONDS));
             auto tRead2 = NOW();
 
             PRINTF("\n");
