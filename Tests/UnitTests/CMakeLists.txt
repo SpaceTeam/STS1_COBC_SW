@@ -22,7 +22,6 @@ target_link_libraries(
     Sts1CobcSwTests_LfsWrapper PRIVATE Catch2::Catch2WithMain littlefs::littlefs
                                        Sts1CobcSw_FileSystem
 )
-target_compile_definitions(Sts1CobcSwTests_LfsWrapper PRIVATE -DUSE_NO_RODOS)
 
 add_program(MajorityVote MajorityVote.test.cpp)
 target_link_libraries(
