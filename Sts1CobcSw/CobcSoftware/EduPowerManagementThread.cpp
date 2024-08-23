@@ -52,7 +52,7 @@ private:
         {
             // DEBUG_PRINT("[EduPowerManagementThread] Start of Loop\n");
             auto startDelay = Duration(0);
-            nextProgramStartDelayBuffer.get(value_of(startDelay));
+            nextProgramStartDelayBuffer.get(startDelay);
 
             auto const epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
             auto const eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;

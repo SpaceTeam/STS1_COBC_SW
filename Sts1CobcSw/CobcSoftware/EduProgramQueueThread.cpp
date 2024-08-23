@@ -29,7 +29,7 @@ using RODOS::NOW;
 using RODOS::SECONDS;
 
 
-[[nodiscard]] auto ComputeStartDelay() -> std::int64_t;
+[[nodiscard]] auto ComputeStartDelay() -> Duration;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
@@ -83,17 +83,17 @@ private:
             // All variables in this thread whose name is of the form *Time are in Rodos Time
             // seconds (n of seconds since 1st January 2000).
             auto startDelay = ComputeStartDelay();
-            nextProgramStartDelayTopic.publish(startDelay / RODOS::SECONDS);
+            nextProgramStartDelayTopic.publish(startDelay);
 
             DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
                         edu::queueIndex,
-                        startDelay / RODOS::SECONDS);
+                        value_of(startDelay) / SECONDS);
 
             // Suspend until delay time - 2 seconds
             DEBUG_PRINT("Suspending for the first time for      : %" PRIi64 " s\n",
-                        (startDelay - value_of(eduCommunicationDelay)) / RODOS::SECONDS);
-            AT(NOW() + startDelay - value_of(eduCommunicationDelay));
-            // RODOS::AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
+                        value_of(startDelay - eduCommunicationDelay) / SECONDS);
+            AT(NOW() + value_of(startDelay - eduCommunicationDelay));
+            // AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             DEBUG_PRINT("Resuming here after first wait.\n");
             PrintFormattedSystemUtc();
@@ -110,16 +110,16 @@ private:
             }
 
             auto startDelay2 = ComputeStartDelay();
-            nextProgramStartDelayTopic.publish(startDelay2 / RODOS::SECONDS);
+            nextProgramStartDelayTopic.publish(startDelay2);
 
             DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
                         edu::queueIndex,
-                        startDelay2 / RODOS::SECONDS);
+                        value_of(startDelay2) / SECONDS);
 
             // Suspend for delay a second time
             DEBUG_PRINT("Suspending for the second time for     : %" PRIi64 " s\n",
-                        startDelay2 / SECONDS);
-            RODOS::AT(NOW() + startDelay2);
+                        value_of(startDelay2) / SECONDS);
+            AT(NOW() + value_of(startDelay2));
 
             // Never reached
             DEBUG_PRINT("Done suspending for the second time\n");
@@ -129,10 +129,9 @@ private:
             auto timeout = edu::programQueue[edu::queueIndex].timeout;
 
             DEBUG_PRINT("Executing program %" PRIu16 "\n", value_of(programId));
-            auto executeProgramData = edu::ExecuteProgramData{
-                .programId = programId, .startTime = startTime, .timeout = timeout};
             // Start Process
-            auto executeProgramResult = edu::ExecuteProgram(executeProgramData);
+            auto executeProgramResult = edu::ExecuteProgram(edu::ExecuteProgramData{
+                .programId = programId, .startTime = startTime, .timeout = timeout});
             // errorCode = edu::ErrorCode::success;
 
             if(executeProgramResult.has_error())
@@ -150,7 +149,7 @@ private:
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
-                auto const executionTime = Duration(timeout) + eduCommunicationDelay;
+                auto const executionTime = Duration(timeout * SECONDS) + eduCommunicationDelay;
                 DEBUG_PRINT("Suspending for execution time\n");
                 AT(NOW() + value_of(executionTime));
                 DEBUG_PRINT("Resuming from execution time\n");
@@ -164,17 +163,20 @@ private:
 } eduProgramQueueThread;
 
 
+// TODO: This should be replaceable with conversion function from real time to Rodos time and using
+// time points instead of delays in the thread.
 //! Compute the delay in nanoseconds before the start of program at current queue index
-auto ComputeStartDelay() -> std::int64_t
+auto ComputeStartDelay() -> Duration
 {
     auto nextProgramStartTime =
         value_of(edu::programQueue[edu::queueIndex].startTime) - (rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-    std::int64_t const startDelay =
-        std::max((nextProgramStartTime - currentUtcTime) * SECONDS, 0 * SECONDS);
-
-    return startDelay;
+    return Duration(std::max((nextProgramStartTime - currentUtcTime), 0LL) * SECONDS);
+    // FIXME: I think the above lines should just be
+    // auto delay = ToRodosTime(edu::programQueue[edu::queueIndex].startTime) - CurrentRodosTime();
+    // return delay < 0 ? Duration(0) : delay;
 }
+
 
 auto ResumeEduProgramQueueThread() -> void
 {

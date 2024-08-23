@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Utility/Time.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <cstdint>
@@ -14,6 +16,6 @@ extern RODOS::Topic<bool> eduIsAliveTopic;
 extern RODOS::CommBuffer<bool> eduIsAliveBufferForListener;
 extern RODOS::CommBuffer<bool> eduIsAliveBufferForPowerManagement;
 extern RODOS::CommBuffer<bool> eduIsAliveBufferForCommunicationError;
-extern RODOS::Topic<std::int64_t> nextProgramStartDelayTopic;
-extern RODOS::CommBuffer<std::int64_t> nextProgramStartDelayBuffer;
+extern RODOS::Topic<Duration> nextProgramStartDelayTopic;
+extern RODOS::CommBuffer<Duration> nextProgramStartDelayBuffer;
 }

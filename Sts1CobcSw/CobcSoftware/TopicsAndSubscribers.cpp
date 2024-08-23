@@ -20,8 +20,8 @@ RODOS::Subscriber eduIsAliveSubscriberForListener(eduIsAliveTopic,
                                                   eduIsAliveBufferForListener,
                                                   "eduIsAliveSubscriber");
 
-RODOS::Topic<std::int64_t> nextProgramStartDelayTopic(-1, "nextProgramStartDelayTopic");
-RODOS::CommBuffer<std::int64_t> nextProgramStartDelayBuffer{};
+RODOS::Topic<Duration> nextProgramStartDelayTopic(-1, "nextProgramStartDelayTopic");
+RODOS::CommBuffer<Duration> nextProgramStartDelayBuffer{};
 RODOS::Subscriber nextProgramStartDelaySubscriber(nextProgramStartDelayTopic,
                                                   nextProgramStartDelayBuffer,
                                                   "nextProgramStartDelaySubscriber");

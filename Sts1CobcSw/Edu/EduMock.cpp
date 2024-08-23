@@ -10,7 +10,6 @@
 
 namespace sts1cobcsw
 {
-
 // TODO: Move this to EduProgramQueueThreadMock.cpp or something
 auto ResumeEduProgramQueueThread() -> void
 {
