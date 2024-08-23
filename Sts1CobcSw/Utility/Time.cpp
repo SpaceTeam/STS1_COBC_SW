@@ -5,8 +5,8 @@
 
 namespace sts1cobcsw
 {
+auto realTimeOffset = Duration(0);
 
-Duration realTimeOffset = Duration(0);
 
 //! @brief Print UTC system time in human readable format
 void PrintFormattedSystemUtc()
@@ -30,10 +30,13 @@ void PrintFormattedSystemUtc()
                   sec);
 }
 
+
 auto CurrentRealTime() -> RealTime
 {
-    return RealTime((value_of(CurrentRodosTime()) + value_of(realTimeOffset)) / RODOS::SECONDS);
+    return RealTime(value_of(CurrentRodosTime() + realTimeOffset) / RODOS::SECONDS);
 }
+
+
 auto CurrentRodosTime() -> RodosTime
 {
     return RodosTime(RODOS::NOW());

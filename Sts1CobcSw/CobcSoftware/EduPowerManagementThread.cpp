@@ -20,9 +20,9 @@ namespace sts1cobcsw
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
-constexpr auto eduBootTime = RealTime(20 * RODOS::SECONDS);  // Measured ~19 s
-constexpr auto eduPowerManagementThreadPeriod = Duration(2 * RODOS::SECONDS);
+constexpr auto eduBootTime = Duration(20 * RODOS::SECONDS);  // Measured ~19 s
 constexpr auto eduBootTimeMargin = Duration(5 * RODOS::SECONDS);
+constexpr auto eduPowerManagementThreadPeriod = Duration(2 * RODOS::SECONDS);
 constexpr auto startDelayLimit = Duration(60 * RODOS::SECONDS);
 
 // TODO: There should be an Eps.hpp/.cpp for this
@@ -37,6 +37,7 @@ public:
     {
     }
 
+
 private:
     void init() override
     {
@@ -50,7 +51,7 @@ private:
         TIME_LOOP(0, value_of(eduPowerManagementThreadPeriod))
         {
             // DEBUG_PRINT("[EduPowerManagementThread] Start of Loop\n");
-            Duration startDelay = Duration(0);
+            auto startDelay = Duration(0);
             nextProgramStartDelayBuffer.get(value_of(startDelay));
 
             auto const epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
@@ -58,7 +59,6 @@ private:
 
             auto eduIsAlive = false;
             eduIsAliveBufferForPowerManagement.get(eduIsAlive);
-
 
             if(epsBatteryIsGood)
             {
@@ -73,7 +73,7 @@ private:
                 }
                 else
                 {
-                    if(startDelay < (Duration(value_of(eduBootTime)) + eduBootTimeMargin))
+                    if(startDelay < (eduBootTime + eduBootTimeMargin))
                     {
                         DEBUG_PRINT("Turning Edu on\n");
                         edu::TurnOn();

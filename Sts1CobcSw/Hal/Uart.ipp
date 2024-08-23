@@ -2,7 +2,7 @@
 
 
 #include <Sts1CobcSw/Hal/Uart.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+
 
 namespace sts1cobcsw::hal
 {
@@ -36,7 +36,7 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, Duration t
 {
     auto bytes = std::as_bytes(data);
     std::size_t nWrittenBytes = 0;
-    auto reactivationTime = RealTime(RODOS::NOW() + value_of(timeout));
+    auto reactivationTime = CurrentRodosTime() + timeout;
     while(nWrittenBytes < bytes.size())
     {
         // uart.write() writes at most RODOS::UART_BUF_SIZE bytes and returns how many it has
@@ -46,7 +46,7 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, Duration t
         // about that though.
         nWrittenBytes += uart->write(bytes.data() + nWrittenBytes, bytes.size() - nWrittenBytes);
         uart->suspendUntilWriteFinished(value_of(reactivationTime));
-        if(RealTime(RODOS::NOW()) >= reactivationTime)
+        if(CurrentRodosTime() >= reactivationTime)
         {
             return ErrorCode::timeout;
         }

@@ -82,7 +82,7 @@ private:
                     auto currentTime = CurrentRealTime();
                     PRINTF("Sending UpdateTime(currentTime = %d)\n",
                            static_cast<int>(value_of(currentTime)));
-                    auto updateTimeResult = edu::UpdateTime({.currentTime = RealTime(currentTime)});
+                    auto updateTimeResult = edu::UpdateTime({.currentTime = currentTime});
                     if(updateTimeResult.has_error())
                     {
                         PRINTF("  Error code: %d\n", static_cast<int>(updateTimeResult.error()));
@@ -102,7 +102,7 @@ private:
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
-                    RealTime startTime = RealTime(0);
+                    auto startTime = RealTime(0);
                     std::from_chars(userInput.begin(), userInput.end(), value_of(startTime));
 
                     PRINTF("Please enter a timeout (1 character)\n");
@@ -158,7 +158,7 @@ private:
 
                     PRINTF("Please enter a start time (1 character)\n");
                     userInput = ReadCharacters<1>();
-                    RealTime startTime = RealTime(0);
+                    auto startTime = RealTime(0);
                     std::from_chars(userInput.begin(), userInput.end(), value_of(startTime));
 
                     PRINTF("\n");

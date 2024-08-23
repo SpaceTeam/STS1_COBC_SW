@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -31,13 +32,13 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void;
 template<typename T, std::size_t extent>
 [[nodiscard]] auto WriteTo(RODOS::HAL_UART * uart,
                            std::span<T const, extent> data,
-                           std::int64_t timeout) -> Result<void>;
+                           Duration timeout) -> Result<void>;
 
 template<typename T, std::size_t extent>
 auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void;
 
 template<typename T, std::size_t extent>
-[[nodiscard]] auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t timeout)
+[[nodiscard]] auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, Duration timeout)
     -> Result<void>;
 }
 
