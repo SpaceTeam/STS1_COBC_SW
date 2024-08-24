@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos/support/support-libs/ringbuffer.h>
@@ -17,9 +18,7 @@
 
 #include <etl/vector.h>
 
-#include <algorithm>
 #include <cinttypes>  // IWYU pragma: keep
-#include <cstdint>
 
 
 namespace sts1cobcsw
@@ -171,7 +170,8 @@ auto ComputeStartDelay() -> Duration
     auto nextProgramStartTime =
         value_of(edu::programQueue[edu::queueIndex].startTime) - (rodosUnixOffset / SECONDS);
     auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-    return Duration(std::max((nextProgramStartTime - currentUtcTime), 0LL) * SECONDS);
+    auto delay = (nextProgramStartTime - currentUtcTime) * SECONDS;
+    return delay < 0 ? Duration(0) : Duration(delay);
     // FIXME: I think the above lines should just be
     // auto delay = ToRodosTime(edu::programQueue[edu::queueIndex].startTime) - CurrentRodosTime();
     // return delay < 0 ? Duration(0) : delay;

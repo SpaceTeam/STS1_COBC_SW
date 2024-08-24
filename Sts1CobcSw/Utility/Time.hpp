@@ -1,17 +1,18 @@
 #pragma once
 
 
-// TODO: Just including timemodel.h might be better here because then Utility should be able to be
-// combined with Catch2 without defining two main()s.
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <strong_type/affine_point.hpp>
-#include <strong_type/arithmetic.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/equality.hpp>
 #include <strong_type/ordered.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <bit>
+#include <cstddef>
 #include <cstdint>
 
 
@@ -19,9 +20,8 @@ namespace sts1cobcsw
 {
 using Duration = strong::type<std::int64_t,
                               struct DurationTag,
-                              strong::equality,
-                              strong::strongly_ordered,
-                              strong::arithmetic>;
+                              strong::default_constructible,  // For RODOS::CommBuffer
+                              strong::difference>;
 using RodosTime = strong::type<std::int64_t,
                                struct RodosTimeTag,
                                strong::affine_point<Duration>,

@@ -76,11 +76,11 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, Duration timeou
 {
     auto bytes = std::as_writable_bytes(data);
     std::size_t nReadBytes = 0;
-    auto reactivationTime = RealTime(RODOS::NOW() + value_of(timeout));
+    auto reactivationTime = CurrentRodosTime() + timeout;
     while(nReadBytes < bytes.size())
     {
         uart->suspendUntilDataReady(value_of(reactivationTime));
-        if(RealTime(RODOS::NOW()) >= reactivationTime)
+        if(CurrentRodosTime() >= reactivationTime)
         {
             return ErrorCode::timeout;
         }
