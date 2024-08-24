@@ -28,7 +28,7 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
     DEBUG_PRINT("Header length          : %" PRIi16 "\n", gsCommandHeader.length);
 
     // TODO: Move this somewhere else
-    RODOS::sysTime.setUTC(UnixToRodosTime(gsCommandHeader.utc));
+    // TODO: Compute real time offset from command UTC
     DEBUG_PRINT_REAL_TIME();
 
     auto targetIsCobc = true;

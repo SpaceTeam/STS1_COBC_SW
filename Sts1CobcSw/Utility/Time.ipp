@@ -6,13 +6,6 @@
 
 namespace sts1cobcsw
 {
-//! @brief Given a time in seconds since 01.01.1970, return a time in nanoseconds since 01.01.2000.
-inline auto UnixToRodosTime(std::int32_t unixTimeSeconds) -> std::int64_t
-{
-    return static_cast<std::int64_t>(unixTimeSeconds) * RODOS::SECONDS - rodosUnixOffset;
-}
-
-
 template<std::endian endianness>
 inline auto SerializeTo(void * destination, RealTime const & data) -> void *
 {

@@ -162,19 +162,13 @@ private:
 } eduProgramQueueThread;
 
 
-// TODO: This should be replaceable with conversion function from real time to Rodos time and using
-// time points instead of delays in the thread.
+// TODO: We should just use time points instead of delays in the thread. Then we won't need this
+// function.
 //! Compute the delay in nanoseconds before the start of program at current queue index
 auto ComputeStartDelay() -> Duration
 {
-    auto nextProgramStartTime =
-        value_of(edu::programQueue[edu::queueIndex].startTime) - (rodosUnixOffset / SECONDS);
-    auto currentUtcTime = RODOS::sysTime.getUTC() / SECONDS;
-    auto delay = (nextProgramStartTime - currentUtcTime) * SECONDS;
-    return delay < 0 ? Duration(0) : Duration(delay);
-    // FIXME: I think the above lines should just be
-    // auto delay = ToRodosTime(edu::programQueue[edu::queueIndex].startTime) - CurrentRodosTime();
-    // return delay < 0 ? Duration(0) : delay;
+    auto delay = ToRodosTime(edu::programQueue[edu::queueIndex].startTime) - CurrentRodosTime();
+    return delay < Duration(0) ? Duration(0) : delay;
 }
 
 
