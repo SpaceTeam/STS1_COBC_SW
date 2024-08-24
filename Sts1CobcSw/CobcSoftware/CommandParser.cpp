@@ -4,11 +4,8 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/type.hpp>
-
-#include <rodos_no_using_namespace.h>
 
 #include <cinttypes>  // IWYU pragma: keep
 

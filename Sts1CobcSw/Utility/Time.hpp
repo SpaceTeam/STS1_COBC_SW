@@ -9,8 +9,6 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
-#include <rodos_no_using_namespace.h>
-
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -45,6 +43,13 @@ template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, RealTime const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, RealTime * data) -> void const *;
+
+
+// TODO: Replace this with a persistent variable
+namespace internal
+{
+extern Duration realTimeOffset;
+}
 }
 
 
