@@ -222,3 +222,24 @@ TEST_CASE("Custom Type")
     REQUIRE(buffer.Size() == 1);
     REQUIRE(buffer.Front().status == sts1cobcsw::edu::ProgramStatus::programRunning);
 }
+
+TEST_CASE("Reset mechanism")
+{
+    fram::ram::SetAllDoFunctions();
+    fram::ram::memory.fill(0x00_b);
+    fram::Initialize();
+
+    {
+        sts1cobcsw::fram::RingBuffer<int, 10, sts1cobcsw::fram::Address{1234}> buffer;
+        buffer.Push(1);
+        buffer.Push(2);
+        buffer.Push(3);
+    }
+
+    // Simulate a reset by creating a new buffer instance
+    fram::RingBuffer<int, 10, fram::Address{1234}> buffer;
+
+    REQUIRE(buffer.Size() == 3);
+    REQUIRE(buffer.Front() == 1);
+    REQUIRE(buffer.Back() == 3);
+}

@@ -20,10 +20,9 @@ template<typename T, std::size_t size, Address startAddress>
 class RingBuffer
 {
 public:
-    RingBuffer() : bufferSize_(size + 1U)
+    RingBuffer() : bufferSize_(size + 1U), offset_(sizeof(std::size_t) * 2)
     {
-        nextWriteIndex_.set(0);
-        nextReadIndex_.set(0);
+        Initialize();
     };
 
     auto Push(T const & newData) -> void;
@@ -39,11 +38,17 @@ public:
     //! @brief Returns the capacity of the ringbuffer
     auto Capacity() -> std::size_t;
 
+    // @brief Initializes the ringbuffer by reading indices from FRAM
+    auto Initialize() -> void;
 
 private:
     std::size_t bufferSize_;
-    etl::cyclic_value<std::size_t, 0, size> nextWriteIndex_;
-    etl::cyclic_value<std::size_t, 0, size> nextReadIndex_;
+    std::size_t offset_;
+    etl::cyclic_value<std::size_t, 0, size> iEnd_;
+    etl::cyclic_value<std::size_t, 0, size> iBegin_;
+
+    auto WriteIndices() -> void;
+    auto ReadIndices() -> void;
 };
 }
 
