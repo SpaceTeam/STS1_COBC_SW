@@ -65,7 +65,7 @@ private:
     {
         // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
         DEBUG_PRINT("Entering EduProgramQueueThread\n");
-        PrintFormattedSystemUtc();
+        DEBUG_PRINT_REAL_TIME();
         while(true)
         {
             if(edu::programQueue.empty())
@@ -95,7 +95,7 @@ private:
             // AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             DEBUG_PRINT("Resuming here after first wait.\n");
-            PrintFormattedSystemUtc();
+            DEBUG_PRINT_REAL_TIME();
 
             auto updateTimeResult =
                 edu::UpdateTime(edu::UpdateTimeData{.currentTime = CurrentRealTime()});
@@ -152,7 +152,7 @@ private:
                 DEBUG_PRINT("Suspending for execution time\n");
                 AT(NOW() + value_of(executionTime));
                 DEBUG_PRINT("Resuming from execution time\n");
-                PrintFormattedSystemUtc();
+                DEBUG_PRINT_REAL_TIME();
 
                 // Set current Queue ID to next
                 edu::queueIndex++;

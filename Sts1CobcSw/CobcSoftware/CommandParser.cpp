@@ -29,7 +29,7 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
 
     // TODO: Move this somewhere else
     RODOS::sysTime.setUTC(UnixToRodosTime(gsCommandHeader.utc));
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
 
     auto targetIsCobc = true;
     if(targetIsCobc)

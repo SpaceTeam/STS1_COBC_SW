@@ -22,28 +22,28 @@ namespace edu
 {
 auto Initialize() -> void
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to Initialize()\n");
 }
 
 
 auto TurnOn() -> void
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to TurnOn()\n");
 }
 
 
 auto TurnOff() -> void
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to TurnOff()\n");
 }
 
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to StoreProgram(programId = %" PRIu16 ")\n", value_of(data.programId));
     return outcome_v2::success();
 }
@@ -51,7 +51,7 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
 
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
                 ", timeout = %d)\n",
                 value_of(data.programId),
@@ -63,7 +63,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 
 auto StopProgram() -> Result<void>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to StopProgram()\n");
     return outcome_v2::success();
 }
@@ -71,7 +71,7 @@ auto StopProgram() -> Result<void>
 
 auto GetStatus() -> Result<Status>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to GetStatus()\n");
     return Status();
 }
@@ -79,7 +79,7 @@ auto GetStatus() -> Result<Status>
 
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", value_of(data.currentTime));
     return outcome_v2::success();
 }

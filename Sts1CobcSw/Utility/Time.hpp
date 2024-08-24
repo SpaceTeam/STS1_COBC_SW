@@ -31,6 +31,7 @@ using RealTime =
     strong::type<std::int32_t, struct RealTimeTag, strong::equality, strong::strongly_ordered>;
 
 
+// TODO: Remove this
 //! Number of nanoseconds between 01.01.1970 and 01.01.2000
 constexpr auto rodosUnixOffset = 946'684'800 * RODOS::SECONDS;
 
@@ -39,11 +40,9 @@ inline constexpr std::size_t serialSize<RealTime> =
     totalSerialSize<strong::underlying_type_t<RealTime>>;
 
 
-// TODO: Change name
-//! @brief Print UTC system time in human readable format.
-auto PrintFormattedSystemUtc() -> void;
-
+// TODO: Remove this
 [[nodiscard]] auto UnixToRodosTime(std::int32_t unixTimeSeconds) -> std::int64_t;
+
 [[nodiscard]] auto ToRodosTime(RealTime realTime) -> RodosTime;
 [[nodiscard]] auto ToRealTime(RodosTime rodosTime) -> RealTime;
 [[nodiscard]] auto CurrentRealTime() -> RealTime;
