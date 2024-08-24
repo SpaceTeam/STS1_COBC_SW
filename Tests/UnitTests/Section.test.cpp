@@ -2,7 +2,6 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 
 #include <catch2/catch_test_macros.hpp>
-#include <strong_type/affine_point.hpp>
 #include <strong_type/equality.hpp>
 #include <strong_type/type.hpp>
 

@@ -15,6 +15,7 @@ include(cmake/variables.cmake)
 include(cmake/custom-commands.cmake)
 include(cmake/clang-tidy-cache.cmake)
 include(cmake/ccache.cmake)
+include(cmake/rodos-without-main-on-linux.cmake)
 
 # ---- Find dependencies ----
 

@@ -7,7 +7,6 @@
 #include <strong_type/equality.hpp>
 #include <strong_type/ordered.hpp>
 #include <strong_type/ordered_with.hpp>
-#include <strong_type/regular.hpp>
 #include <strong_type/type.hpp>
 
 #include <array>

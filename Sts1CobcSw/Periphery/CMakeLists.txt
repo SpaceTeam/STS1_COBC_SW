@@ -1,4 +1,6 @@
-target_link_libraries(Sts1CobcSw_Periphery PUBLIC rodos::rodos Sts1CobcSw_Serial Sts1CobcSw_Outcome)
+target_link_libraries(
+    Sts1CobcSw_Periphery PUBLIC rodos::without_main_on_linux Sts1CobcSw_Serial Sts1CobcSw_Outcome
+)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(
