@@ -17,10 +17,10 @@
 namespace sts1cobcsw::fram
 {
 template<typename T, std::size_t size, Address startAddress>
-class RingBuffer
+class RingArray
 {
 public:
-    RingBuffer() : bufferSize_(size + 1U), offset_(sizeof(std::size_t) * 2)
+    RingArray() : bufferSize_(size + 1U), offset_(sizeof(std::size_t) * 2)
     {
         Initialize();
     };
@@ -32,13 +32,13 @@ public:
     auto Front() -> T;
     auto Back() -> T;
 
-    //! @brief Returns the current size of the ringbuffer
+    //! @brief Returns the current size of the ring array
     auto Size() -> std::size_t;
 
-    //! @brief Returns the capacity of the ringbuffer
+    //! @brief Returns the capacity of the ring array
     auto Capacity() -> std::size_t;
 
-    // @brief Initializes the ringbuffer by reading indices from FRAM
+    // @brief Initializes the ring array by reading indices from FRAM
     auto Initialize() -> void;
 
 private:
@@ -53,4 +53,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/Periphery/FramRingBuffer.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Periphery/FramRingArray.ipp>  // IWYU pragma: keep

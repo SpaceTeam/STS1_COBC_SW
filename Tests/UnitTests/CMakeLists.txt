@@ -14,10 +14,10 @@ target_link_libraries(
                                  Sts1CobcSw_Utility
 )
 
-add_program(FramRingBuffer FramRingBuffer.test.cpp)
+add_program(FramRingArray FramRingArray.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_FramRingBuffer PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-                                           Sts1CobcSw_Serial Sts1CobcSw_Edu
+    Sts1CobcSwTests_FramRingArray PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
+                                          Sts1CobcSw_Serial Sts1CobcSw_Edu
 )
 
 add_program(LfsRam LfsRam.test.cpp)

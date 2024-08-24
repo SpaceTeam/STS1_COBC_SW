@@ -1,13 +1,13 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/FramRingBuffer.hpp>
+#include <Sts1CobcSw/Periphery/FramRingArray.hpp>
 
 
 namespace sts1cobcsw::fram
 {
 template<typename T, std::size_t size, Address startAddress>
-void RingBuffer<T, size, startAddress>::Push(T const & newData)
+void RingArray<T, size, startAddress>::Push(T const & newData)
 {
     auto const rawAddress = offset_ + value_of(startAddress) + (iEnd_ * serialSize<T>);
     fram::WriteTo(fram::Address(rawAddress), Span(Serialize(newData)), 0);
@@ -23,7 +23,7 @@ void RingBuffer<T, size, startAddress>::Push(T const & newData)
 
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::Front() -> T
+auto RingArray<T, size, startAddress>::Front() -> T
 {
     auto const rawAddress = offset_ + value_of(startAddress) + (iBegin_ * serialSize<T>);
     auto readData = fram::ReadFrom<serialSize<T>>(fram::Address(rawAddress), 0);
@@ -34,7 +34,7 @@ auto RingBuffer<T, size, startAddress>::Front() -> T
 
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::Back() -> T
+auto RingArray<T, size, startAddress>::Back() -> T
 {
     std::uint32_t readIndex = 0;
     if(iEnd_ == 0)
@@ -55,7 +55,7 @@ auto RingBuffer<T, size, startAddress>::Back() -> T
 
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::operator[](std::size_t index) -> T
+auto RingArray<T, size, startAddress>::operator[](std::size_t index) -> T
 {
     auto const rawAddress =
         offset_ + value_of(startAddress) + ((iBegin_ + index) % bufferSize_) * serialSize<T>;
@@ -67,7 +67,7 @@ auto RingBuffer<T, size, startAddress>::operator[](std::size_t index) -> T
 
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::Size() -> std::size_t
+auto RingArray<T, size, startAddress>::Size() -> std::size_t
 {
     if(iEnd_ >= iBegin_)
     {
@@ -77,19 +77,19 @@ auto RingBuffer<T, size, startAddress>::Size() -> std::size_t
 }
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::Capacity() -> std::size_t
+auto RingArray<T, size, startAddress>::Capacity() -> std::size_t
 {
     return (bufferSize_ - 1U);
 }
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::Initialize() -> void
+auto RingArray<T, size, startAddress>::Initialize() -> void
 {
     ReadIndices();
 }
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::WriteIndices() -> void
+auto RingArray<T, size, startAddress>::WriteIndices() -> void
 {
     auto beginAddress = value_of(startAddress);
     auto endAddress = beginAddress + sizeof(std::size_t);
@@ -99,7 +99,7 @@ auto RingBuffer<T, size, startAddress>::WriteIndices() -> void
 }
 
 template<typename T, std::size_t size, Address startAddress>
-auto RingBuffer<T, size, startAddress>::ReadIndices() -> void
+auto RingArray<T, size, startAddress>::ReadIndices() -> void
 {
     auto beginAddress = value_of(startAddress);
     auto endAddress = beginAddress + sizeof(std::size_t);

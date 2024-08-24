@@ -1,7 +1,7 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
-#include <Sts1CobcSw/Periphery/FramRingBuffer.hpp>
+#include <Sts1CobcSw/Periphery/FramRingArray.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
@@ -20,15 +20,15 @@ using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 TEST_CASE("Initial State ringbuffer")
 {
-    fram::RingBuffer<int, 10, fram::Address{0}> buffer;
+    fram::RingArray<int, 10, fram::Address{0}> buffer;
 
     REQUIRE(buffer.Size() == 0);
     REQUIRE(buffer.Capacity() == 10);  // Fixed from 0 to 10 to reflect actual buffer capacity
 }
 
-TEST_CASE("FramRingBuffer Push function")
+TEST_CASE("FramRingArray Push function")
 {
-    fram::RingBuffer<int, 10, fram::Address{0}> buffer;
+    fram::RingArray<int, 10, fram::Address{0}> buffer;
 
     buffer.Push(1);
     buffer.Push(2);
@@ -37,7 +37,7 @@ TEST_CASE("FramRingBuffer Push function")
     REQUIRE(buffer.Size() == 3);
 }
 
-TEMPLATE_TEST_CASE_SIG("FramRingBuffer Front Address",
+TEMPLATE_TEST_CASE_SIG("FramRingArray Front Address",
                        "",
                        ((typename T, size_t S, fram::Address A), T, S, A),
                        (int, 10U, fram::Address{0}),
@@ -47,7 +47,7 @@ TEMPLATE_TEST_CASE_SIG("FramRingBuffer Front Address",
     fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    fram::RingBuffer<T, S, A> buffer;
+    fram::RingArray<T, S, A> buffer;
 
     // FIXME: [] not working
     buffer.Push(10);
@@ -63,13 +63,13 @@ TEMPLATE_TEST_CASE_SIG("FramRingBuffer Front Address",
     REQUIRE(buffer[2] == 30);
 }
 
-TEST_CASE("FramRingBuffer Back() and Front() methods")
+TEST_CASE("FramRingArray Back() and Front() methods")
 {
     fram::ram::SetAllDoFunctions();
     fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    auto buffer = fram::RingBuffer<int, 5, fram::Address{0}>();
+    auto buffer = fram::RingArray<int, 5, fram::Address{0}>();
     etl::circular_buffer<int, 5U> etlBuffer;
 
     // NOLINTNEXTLINE (readability-container-size-empty)
@@ -121,13 +121,13 @@ TEST_CASE("FramRingBuffer Back() and Front() methods")
     REQUIRE(buffer[2] == 4);
 }
 
-TEST_CASE("FramRingBuffer Full and Empty conditions")
+TEST_CASE("FramRingArray Full and Empty conditions")
 {
     fram::ram::SetAllDoFunctions();
     fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    auto buffer = fram::RingBuffer<int, 3, fram::Address(0)>{};
+    auto buffer = fram::RingArray<int, 3, fram::Address(0)>{};
 
     REQUIRE(buffer.Size() == 0);
     REQUIRE(buffer.Capacity() == 3);
@@ -153,13 +153,13 @@ TEST_CASE("FramRingBuffer Full and Empty conditions")
     REQUIRE(buffer.Back() == 10);
 }
 
-TEST_CASE("FramRingBuffer and ETL Circular Buffer")
+TEST_CASE("FramRingArray and ETL Circular Buffer")
 {
     fram::ram::SetAllDoFunctions();
     fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    fram::RingBuffer<int, 5U, fram::Address{0}> framBuffer{};
+    fram::RingArray<int, 5U, fram::Address{0}> framBuffer{};
     etl::circular_buffer<int, 5U> etlBuffer;
 
     for(int i = 0; i < 5; ++i)
@@ -181,13 +181,13 @@ TEST_CASE("FramRingBuffer and ETL Circular Buffer")
     REQUIRE(framBuffer.Back() == etlBuffer.back());
 }
 
-TEST_CASE("FramRingBuffer Stress Test")
+TEST_CASE("FramRingArray Stress Test")
 {
     fram::ram::SetAllDoFunctions();
     fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    auto buffer = fram::RingBuffer<int, 10000, fram::Address{0}>();
+    auto buffer = fram::RingArray<int, 10000, fram::Address{0}>();
 
     for(int i = 0; i < 10000; ++i)
     {
@@ -209,7 +209,7 @@ TEST_CASE("Custom Type")
     fram::Initialize();
 
 
-    fram::RingBuffer<sts1cobcsw::edu::ProgramStatusHistoryEntry, 10U, fram::Address{0}> buffer;
+    fram::RingArray<sts1cobcsw::edu::ProgramStatusHistoryEntry, 10U, fram::Address{0}> buffer;
 
     auto pshEntry = sts1cobcsw::edu::ProgramStatusHistoryEntry{
         .programId = sts1cobcsw::ProgramId(0),
@@ -230,14 +230,14 @@ TEST_CASE("Reset mechanism")
     fram::Initialize();
 
     {
-        sts1cobcsw::fram::RingBuffer<int, 10, sts1cobcsw::fram::Address{1234}> buffer;
+        sts1cobcsw::fram::RingArray<int, 10, sts1cobcsw::fram::Address{1234}> buffer;
         buffer.Push(1);
         buffer.Push(2);
         buffer.Push(3);
     }
 
     // Simulate a reset by creating a new buffer instance
-    fram::RingBuffer<int, 10, fram::Address{1234}> buffer;
+    fram::RingArray<int, 10, fram::Address{1234}> buffer;
 
     REQUIRE(buffer.Size() == 3);
     REQUIRE(buffer.Front() == 1);
