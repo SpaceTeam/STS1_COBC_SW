@@ -44,6 +44,8 @@ inline constexpr std::size_t serialSize<RealTime> =
 auto PrintFormattedSystemUtc() -> void;
 
 [[nodiscard]] auto UnixToRodosTime(std::int32_t unixTimeSeconds) -> std::int64_t;
+[[nodiscard]] auto ToRodosTime(RealTime realTime) -> RodosTime;
+[[nodiscard]] auto ToRealTime(RodosTime rodosTime) -> RealTime;
 [[nodiscard]] auto CurrentRealTime() -> RealTime;
 [[nodiscard]] auto CurrentRodosTime() -> RodosTime;
 

@@ -31,9 +31,21 @@ void PrintFormattedSystemUtc()
 }
 
 
+auto ToRodosTime(RealTime realTime) -> RodosTime
+{
+    return RodosTime(value_of(realTime) * RODOS::SECONDS) - realTimeOffset;
+}
+
+
+auto ToRealTime(RodosTime rodosTime) -> RealTime
+{
+    return RealTime(value_of(rodosTime + realTimeOffset) / RODOS::SECONDS);
+}
+
+
 auto CurrentRealTime() -> RealTime
 {
-    return RealTime(value_of(CurrentRodosTime() + realTimeOffset) / RODOS::SECONDS);
+    return ToRealTime(CurrentRodosTime());
 }
 
 
