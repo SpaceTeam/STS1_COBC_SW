@@ -1,3 +1,5 @@
+# --- Tests with Catch2 ---
+
 # TODO: Implement something like add_test_program() which adds the suffix "Test" to the output name
 add_program(Dummy Dummy.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
@@ -39,13 +41,6 @@ target_link_libraries(
             Sts1CobcSw_Utility
 )
 
-add_program(PersistentVariables PersistentVariables.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_PersistentVariables
-    PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections Sts1CobcSw_Periphery Sts1CobcSw_Serial
-            Sts1CobcSw_Utility
-)
-
 add_program(Section Section.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
@@ -76,12 +71,27 @@ target_link_libraries(
 )
 
 get_property(
+    all_catch2_unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS
+)
+include(Catch)
+foreach(target IN LISTS all_catch2_unit_test_targets)
+    catch_discover_tests(${target})
+endforeach()
+
+# --- Tests with Rodos ---
+
+add_program(PersistentVariables PersistentVariables.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_PersistentVariables
+    PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Periphery Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
+)
+add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
+
+# --- All unit tests ---
+
+get_property(
     all_unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS
 )
 add_custom_target(AllUnitTests) # Must be defined after getting all unit test targets
 add_dependencies(AllUnitTests ${all_unit_test_targets})
-
-include(Catch)
-foreach(target IN LISTS all_unit_test_targets)
-    catch_discover_tests(${target})
-endforeach()

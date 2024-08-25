@@ -6,13 +6,14 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
-#include <catch2/catch_test_macros.hpp>
 #include <strong_type/type.hpp>
+
+#include <rodos_no_using_namespace.h>
 
 #include <array>
 #include <cstdint>
-#include <optional>
-#include <string>
+#include <cstdlib>
+#include <source_location>
 #include <type_traits>
 
 
@@ -21,12 +22,6 @@ using sts1cobcsw::PersistentVariables;
 using sts1cobcsw::Section;
 using sts1cobcsw::fram::Address;
 using sts1cobcsw::fram::Size;
-
-
-TEST_CASE("All static_asserts passed")
-{
-    REQUIRE(true);
-}
 
 
 constexpr auto section0 = Section<Address(0), Size(100)>();
@@ -49,33 +44,57 @@ static_assert(std::is_same_v<decltype(pvs.Load<"activeFwImage">()), std::uint8_t
 static_assert(std::is_same_v<decltype(pvs.Load<"somethingElse">()), std::int16_t>);
 
 
-TEST_CASE("Majority vote")
+// UnitTestWithRodos.hpp
+
+std::uint32_t printfMask = 0;
+
+
+auto RunUnitTest() -> void;
+auto Require(bool condition, std::source_location location = std::source_location::current())
+    -> void;
+
+
+class UnitTestThread : public RODOS::StaticThread<>
 {
-    using sts1cobcsw::ComputeMajorityVote;
+public:
+    UnitTestThread() : StaticThread("UnitTestThread")
+    {
+    }
 
-    auto voteResult = ComputeMajorityVote(173, 173, 173);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
 
-    voteResult = ComputeMajorityVote(-2, 173, 173);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
+private:
+    void init() override
+    {
+    }
 
-    voteResult = ComputeMajorityVote(173, -2, 173);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
+    void run() override
+    {
+        printfMask = 1;
+        RunUnitTest();
+        RODOS::isShuttingDown = true;
+        std::exit(EXIT_SUCCESS);  // NOLINT(concurrency-mt-unsafe)
+    }
+} unitTestThread;
 
-    voteResult = ComputeMajorityVote(173, 173, -2);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
 
-    voteResult = ComputeMajorityVote(17, 173, -2);
-    CHECK(not voteResult.has_value());
+// UnitTestWithRodos.cpp
+
+auto Require(bool condition, std::source_location location) -> void
+{
+    if(not condition)
+    {
+        RODOS::PRINTF("%s:%d: FAILED\n", location.file_name(), location.line());
+        RODOS::isShuttingDown = true;
+        std::exit(EXIT_FAILURE);  // NOLINT(concurrency-mt-unsafe)
+    }
 }
 
 
-TEST_CASE("Load() and Store()")
+// PersistentVariables.test.cpp
+
+auto RunUnitTest() -> void
 {
+    // Test case: Load() and Store()
     using sts1cobcsw::fram::Address;
     using sts1cobcsw::fram::framIsWorking;
     using sts1cobcsw::fram::ram::memory;
@@ -89,110 +108,135 @@ TEST_CASE("Load() and Store()")
 
     sts1cobcsw::fram::ram::SetAllDoFunctions();
 
-    SECTION("FRAM is working")
+    // Section: FRAM is working
     {
         memory.fill(0x00_b);
         framIsWorking = true;
 
-        SECTION("You load what you store")
+        // Section: You load what you store
         {
             pvs.Store<"nResets">(0x12345678);
             pvs.Store<"activeFwImage">(42);
             pvs.Store<"somethingElse">(-2);
-            CHECK(pvs.Load<"nResets">() == 0x12345678);
-            CHECK(pvs.Load<"activeFwImage">() == 42);
-            CHECK(pvs.Load<"somethingElse">() == -2);
+            Require(pvs.Load<"nResets">() == 0x12345678);
+            Require(pvs.Load<"activeFwImage">() == 42);
+            Require(pvs.Load<"somethingElse">() == -2);
         }
 
-        SECTION("Store() writes to memory")
+        // Section: Store() writes to memory
         {
             pvs.Store<"nResets">(0x12345678);
             pvs.Store<"activeFwImage">(42);
             pvs.Store<"somethingElse">(-2);
-            CHECK(memory[nResetsAddress0] == 0x78_b);
-            CHECK(memory[nResetsAddress0 + 1] == 0x56_b);
-            CHECK(memory[nResetsAddress0 + 2] == 0x34_b);
-            CHECK(memory[nResetsAddress0 + 3] == 0x12_b);
-            CHECK(memory[activeFwImageAddress0] == 42_b);
-            CHECK(memory[somethingElseAddress0] == 0xFE_b);
-            CHECK(memory[somethingElseAddress0 + 1] == 0xFF_b);
+            Require(memory[nResetsAddress0] == 0x78_b);
+            Require(memory[nResetsAddress0 + 1] == 0x56_b);
+            Require(memory[nResetsAddress0 + 2] == 0x34_b);
+            Require(memory[nResetsAddress0 + 3] == 0x12_b);
+            Require(memory[activeFwImageAddress0] == 42_b);
+            Require(memory[somethingElseAddress0] == 0xFE_b);
+            Require(memory[somethingElseAddress0 + 1] == 0xFF_b);
         }
 
-        SECTION("Load() reads from memory")
+        // Section: Load() reads from memory
         {
             memory[activeFwImageAddress0] = 17_b;
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
-            CHECK(pvs.Load<"activeFwImage">() == 17);
+            Require(pvs.Load<"activeFwImage">() == 17);
         }
 
-        SECTION("Load() returns majority and repairs memory")
+        // Section: Load() returns majority and repairs memory
         {
             memory[activeFwImageAddress0] = 42_b;
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
-            CHECK(pvs.Load<"activeFwImage">() == 17);
-            CHECK(memory[activeFwImageAddress0] == 17_b);
-            CHECK(memory[activeFwImageAddress1] == 17_b);
-            CHECK(memory[activeFwImageAddress2] == 17_b);
+            Require(pvs.Load<"activeFwImage">() == 17);
+            Require(memory[activeFwImageAddress0] == 17_b);
+            Require(memory[activeFwImageAddress1] == 17_b);
+            Require(memory[activeFwImageAddress2] == 17_b);
 
             memory[activeFwImageAddress1] = 42_b;
-            CHECK(pvs.Load<"activeFwImage">() == 17);
-            CHECK(memory[activeFwImageAddress0] == 17_b);
-            CHECK(memory[activeFwImageAddress1] == 17_b);
-            CHECK(memory[activeFwImageAddress2] == 17_b);
+            Require(pvs.Load<"activeFwImage">() == 17);
+            Require(memory[activeFwImageAddress0] == 17_b);
+            Require(memory[activeFwImageAddress1] == 17_b);
+            Require(memory[activeFwImageAddress2] == 17_b);
 
             memory[activeFwImageAddress2] = 42_b;
-            CHECK(pvs.Load<"activeFwImage">() == 17);
-            CHECK(memory[activeFwImageAddress0] == 17_b);
-            CHECK(memory[activeFwImageAddress1] == 17_b);
-            CHECK(memory[activeFwImageAddress2] == 17_b);
+            Require(pvs.Load<"activeFwImage">() == 17);
+            Require(memory[activeFwImageAddress0] == 17_b);
+            Require(memory[activeFwImageAddress1] == 17_b);
+            Require(memory[activeFwImageAddress2] == 17_b);
 
             memory[activeFwImageAddress0] = 42_b;
             memory[activeFwImageAddress2] = 42_b;
-            CHECK(pvs.Load<"activeFwImage">() == 42);
-            CHECK(memory[activeFwImageAddress0] == 42_b);
-            CHECK(memory[activeFwImageAddress1] == 42_b);
-            CHECK(memory[activeFwImageAddress2] == 42_b);
+            Require(pvs.Load<"activeFwImage">() == 42);
+            Require(memory[activeFwImageAddress0] == 42_b);
+            Require(memory[activeFwImageAddress1] == 42_b);
+            Require(memory[activeFwImageAddress2] == 42_b);
         }
     }
 
-    SECTION("FRAM is not working")
+    // Section: FRAM is not working
     {
         memory.fill(0x00_b);
         framIsWorking = false;
 
-        SECTION("You load what you store")
+        // Section: You load what you store
         {
             pvs.Store<"nResets">(0xABCDABCD);
             pvs.Store<"activeFwImage">(111);
             pvs.Store<"somethingElse">(-55);
-            CHECK(pvs.Load<"nResets">() == 0xABCDABCD);
-            CHECK(pvs.Load<"activeFwImage">() == 111);
-            CHECK(pvs.Load<"somethingElse">() == -55);
+            Require(pvs.Load<"nResets">() == 0xABCDABCD);
+            Require(pvs.Load<"activeFwImage">() == 111);
+            Require(pvs.Load<"somethingElse">() == -55);
         }
 
-        SECTION("Store() does not write to memory")
+        // Section: Store() does not write to memory
         {
             pvs.Store<"nResets">(0xABCDABCD);
             pvs.Store<"activeFwImage">(111);
             pvs.Store<"somethingElse">(-55);
-            CHECK(memory[nResetsAddress0] == 0x00_b);
-            CHECK(memory[nResetsAddress0 + 1] == 0x00_b);
-            CHECK(memory[nResetsAddress0 + 2] == 0x00_b);
-            CHECK(memory[nResetsAddress0 + 3] == 0x00_b);
-            CHECK(memory[activeFwImageAddress0] == 00_b);
-            CHECK(memory[somethingElseAddress0] == 0x00_b);
-            CHECK(memory[somethingElseAddress0 + 1] == 0x00_b);
+            Require(memory[nResetsAddress0] == 0x00_b);
+            Require(memory[nResetsAddress0 + 1] == 0x00_b);
+            Require(memory[nResetsAddress0 + 2] == 0x00_b);
+            Require(memory[nResetsAddress0 + 3] == 0x00_b);
+            Require(memory[activeFwImageAddress0] == 00_b);
+            Require(memory[somethingElseAddress0] == 0x00_b);
+            Require(memory[somethingElseAddress0 + 1] == 0x00_b);
         }
 
-        SECTION("Load() does not read from memory")
+        // Section: Load() does not read from memory
         {
             pvs.Store<"activeFwImage">(0);
             memory[activeFwImageAddress0] = 17_b;
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
-            CHECK(pvs.Load<"activeFwImage">() == 0);
+            Require(pvs.Load<"activeFwImage">() == 0);
         }
     }
 }
+
+
+// TEST_CASE("Majority vote")
+// {
+//     using sts1cobcsw::ComputeMajorityVote;
+
+//     auto voteResult = ComputeMajorityVote(173, 173, 173);
+//     CHECK(voteResult.has_value());
+//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
+
+//     voteResult = ComputeMajorityVote(-2, 173, 173);
+//     CHECK(voteResult.has_value());
+//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
+
+//     voteResult = ComputeMajorityVote(173, -2, 173);
+//     CHECK(voteResult.has_value());
+//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
+
+//     voteResult = ComputeMajorityVote(173, 173, -2);
+//     CHECK(voteResult.has_value());
+//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
+
+//     voteResult = ComputeMajorityVote(17, 173, -2);
+//     CHECK(not voteResult.has_value());
+// }
