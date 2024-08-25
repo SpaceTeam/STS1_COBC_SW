@@ -9,6 +9,8 @@ add_program(ErrorDetectionAndCorrection ErrorDetectionAndCorrection.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_ErrorDetectionAndCorrection PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
 )
+# Disable warnings about memcpy() of non-trivially copiable type EdacVariable<>
+target_compile_options(Sts1CobcSwTests_ErrorDetectionAndCorrection PRIVATE -Wno-class-memaccess)
 
 add_program(FlatArray FlatArray.test.cpp)
 target_link_libraries(Sts1CobcSwTests_FlatArray PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)

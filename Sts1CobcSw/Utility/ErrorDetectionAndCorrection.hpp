@@ -6,20 +6,37 @@
 
 namespace sts1cobcsw
 {
-// I won't make a separate .ipp file just for this simple function
+template<typename T>
+class EdacVariable
+{
+public:
+    constexpr EdacVariable() = default;
+    explicit constexpr EdacVariable(T const & value);
+    EdacVariable(EdacVariable const &) = delete;
+    EdacVariable(EdacVariable &&) = delete;
+    auto operator=(EdacVariable const &) -> EdacVariable & = delete;
+    auto operator=(EdacVariable &&) -> EdacVariable & = delete;
+    ~EdacVariable() = default;
+
+    [[nodiscard]] constexpr auto Load() const -> T;
+    constexpr auto Store(T const & value) -> void;
+
+
+private:
+    // This function must be const, because it is called from Load() which is const
+    constexpr auto SetAllValues(T const & value) const -> void;
+
+    mutable T value0_ = T{};
+    mutable T value1_ = T{};
+    mutable T value2_ = T{};
+};
+
+
 template<typename T>
 [[nodiscard]] constexpr auto ComputeMajorityVote(T const & value0,
                                                  T const & value1,
-                                                 T const & value2) -> std::optional<T>
-{
-    if(value0 == value1 or value0 == value2)
-    {
-        return value0;
-    }
-    if(value1 == value2)
-    {
-        return value1;
-    }
-    return std::nullopt;
+                                                 T const & value2) -> std::optional<T>;
 }
-}
+
+
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.ipp>  // IWYU pragma: keep
