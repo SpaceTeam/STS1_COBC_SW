@@ -44,7 +44,7 @@ static_assert(std::is_same_v<decltype(pvs.Load<"activeFwImage">()), std::uint8_t
 static_assert(std::is_same_v<decltype(pvs.Load<"somethingElse">()), std::int16_t>);
 
 
-// UnitTestWithRodos.hpp
+// TODO: Move this to UnitTestWithRodos.hpp
 
 std::uint32_t printfMask = 0;
 
@@ -77,7 +77,7 @@ private:
 } unitTestThread;
 
 
-// UnitTestWithRodos.cpp
+// TODO: Move this to UnitTestWithRodos.cpp
 
 auto Require(bool condition, std::source_location location) -> void
 {
@@ -90,7 +90,7 @@ auto Require(bool condition, std::source_location location) -> void
 }
 
 
-// PersistentVariables.test.cpp
+// TODO: This should stay here in PersistentVariables.test.cpp
 
 auto RunUnitTest() -> void
 {
@@ -215,28 +215,3 @@ auto RunUnitTest() -> void
         }
     }
 }
-
-
-// TEST_CASE("Majority vote")
-// {
-//     using sts1cobcsw::ComputeMajorityVote;
-
-//     auto voteResult = ComputeMajorityVote(173, 173, 173);
-//     CHECK(voteResult.has_value());
-//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-//     voteResult = ComputeMajorityVote(-2, 173, 173);
-//     CHECK(voteResult.has_value());
-//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-//     voteResult = ComputeMajorityVote(173, -2, 173);
-//     CHECK(voteResult.has_value());
-//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-//     voteResult = ComputeMajorityVote(173, 173, -2);
-//     CHECK(voteResult.has_value());
-//     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-//     voteResult = ComputeMajorityVote(17, 173, -2);
-//     CHECK(not voteResult.has_value());
-// }

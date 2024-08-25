@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 
@@ -191,19 +192,4 @@ std::tuple<typename PersistentVariableInfos::ValueType...> PersistentVariables<
     parentSection2,
     PersistentVariableInfos...>::cache2 =
     std::tuple(typename PersistentVariableInfos::ValueType{}...);
-
-
-template<typename T>
-auto ComputeMajorityVote(T const & value0, T const & value1, T const & value2) -> std::optional<T>
-{
-    if(value0 == value1 or value0 == value2)
-    {
-        return value0;
-    }
-    if(value1 == value2)
-    {
-        return value1;
-    }
-    return std::nullopt;
-}
 }

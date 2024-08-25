@@ -59,12 +59,6 @@ private:
 
     static RODOS::Semaphore semaphore;
 };
-
-
-// TODO: This should probably be defined somewhere else
-template<typename T>
-[[nodiscard]] static auto ComputeMajorityVote(T const & value0, T const & value1, T const & value2)
-    -> std::optional<T>;
 }
 
 
