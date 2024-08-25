@@ -13,13 +13,25 @@ template<Section parentSection0,
          APersistentVariableInfo... PersistentVariableInfos>
     requires(sizeof...(PersistentVariableInfos) > 0 && parentSection0.end <= parentSection1.begin
              && parentSection1.end <= parentSection2.begin)
+RODOS::Semaphore PersistentVariables<parentSection0,
+                                     parentSection1,
+                                     parentSection2,
+                                     PersistentVariableInfos...>::semaphore = RODOS::Semaphore();
+
+
+template<Section parentSection0,
+         Section parentSection1,
+         Section parentSection2,
+         APersistentVariableInfo... PersistentVariableInfos>
+    requires(sizeof...(PersistentVariableInfos) > 0 && parentSection0.end <= parentSection1.begin
+             && parentSection1.end <= parentSection2.begin)
 template<StringLiteral name>
 auto PersistentVariables<parentSection0,
                          parentSection1,
                          parentSection2,
                          PersistentVariableInfos...>::Load() -> ValueType<name>
 {
-    // TODO: Load() must be atomic
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     auto [value0, value1, value2] =
         fram::framIsWorking ? ReadFromFram<name>() : ReadFromCache<name>();
     auto voteResult = ComputeMajorityVote(value0, value1, value2);
@@ -46,7 +58,7 @@ auto PersistentVariables<parentSection0,
                          parentSection2,
                          PersistentVariableInfos...>::Store(ValueType<name> const & value)
 {
-    // TODO: Store() must be atomic
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     if(fram::framIsWorking)
     {
         WriteToFram<name>(value);

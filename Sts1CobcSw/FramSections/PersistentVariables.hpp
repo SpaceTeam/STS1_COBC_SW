@@ -6,6 +6,7 @@
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 
+#include <rodos/api/rodos-semaphore.h>
 #include <rodos/api/timemodel.h>
 
 #include <optional>
@@ -55,6 +56,8 @@ private:
 
     // With a baud rate of 48 MHz we can read 6000 bytes in 1 ms, which should be more than enough
     static constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+
+    static RODOS::Semaphore semaphore;
 };
 
 
