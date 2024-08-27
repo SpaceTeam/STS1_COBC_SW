@@ -7,6 +7,10 @@
 namespace sts1cobcsw
 {
 template<typename T>
+RODOS::Semaphore EdacVariable<T>::semaphore{};
+
+
+template<typename T>
 constexpr EdacVariable<T>::EdacVariable(T const & value)
     : value0_(value), value1_(value), value2_(value)
 {
@@ -14,9 +18,9 @@ constexpr EdacVariable<T>::EdacVariable(T const & value)
 
 
 template<typename T>
-constexpr auto EdacVariable<T>::Load() const -> T
+auto EdacVariable<T>::Load() const -> T
 {
-    // TODO: Make Load() thread-safe/atomic
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     auto voteResult = ComputeMajorityVote(value0_, value1_, value2_);
     auto value = voteResult.value_or(value0_);
     SetAllValues(value);
@@ -25,9 +29,9 @@ constexpr auto EdacVariable<T>::Load() const -> T
 
 
 template<typename T>
-constexpr auto EdacVariable<T>::Store(T const & value) -> void
+auto EdacVariable<T>::Store(T const & value) -> void
 {
-    // TODO: Make Store() thread-safe/atomic
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     SetAllValues(value);
 }
 

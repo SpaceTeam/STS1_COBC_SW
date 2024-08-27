@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <rodos/api/rodos-semaphore.h>
+
 #include <optional>
 
 
@@ -18,13 +20,15 @@ public:
     auto operator=(EdacVariable &&) -> EdacVariable & = delete;
     ~EdacVariable() = default;
 
-    [[nodiscard]] constexpr auto Load() const -> T;
-    constexpr auto Store(T const & value) -> void;
+    [[nodiscard]] auto Load() const -> T;
+    auto Store(T const & value) -> void;
 
 
 private:
     // This function must be const, because it is called from Load() which is const
     constexpr auto SetAllValues(T const & value) const -> void;
+
+    static RODOS::Semaphore semaphore;
 
     mutable T value0_ = T{};
     mutable T value1_ = T{};
