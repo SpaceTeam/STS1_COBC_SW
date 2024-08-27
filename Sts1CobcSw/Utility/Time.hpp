@@ -9,6 +9,8 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -28,6 +30,23 @@ using RodosTime = strong::type<std::int64_t,
 using RealTime =
     strong::type<std::int32_t, struct RealTimeTag, strong::equality, strong::strongly_ordered>;
 
+constexpr auto seconds = Duration(RODOS::SECONDS);
+constexpr auto milliSeconds = Duration(RODOS::MILLISECONDS);
+constexpr auto microSeconds = Duration(RODOS::MICROSECONDS);
+constexpr auto nanoSeconds = Duration(RODOS::NANOSECONDS);
+constexpr auto minutes = Duration(RODOS::MINUTES);
+constexpr auto hours = Duration(RODOS::HOURS);
+constexpr auto days = Duration(RODOS::DAYS);
+constexpr auto weeks = Duration(RODOS::WEEKS);
+constexpr auto s = seconds;
+constexpr auto ms = milliSeconds;
+constexpr auto us = microSeconds;
+constexpr auto ns = nanoSeconds;
+constexpr auto min = minutes;
+constexpr auto h = hours;
+constexpr auto d = days;
+constexpr auto w = weeks;
+
 
 template<>
 inline constexpr std::size_t serialSize<RealTime> =
@@ -44,6 +63,8 @@ template<std::endian endianness>
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, RealTime * data) -> void const *;
 
+auto SuspendUntil(RodosTime time) -> void;
+auto SuspendFor(Duration duration) -> void;
 
 // TODO: Replace this with a persistent variable
 namespace internal
