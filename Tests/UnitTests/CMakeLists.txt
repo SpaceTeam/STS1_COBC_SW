@@ -85,7 +85,7 @@ endforeach()
 
 # --- Tests with Rodos ---
 
-add_program(PersistentVariables PersistentVariables.test.cpp)
+add_program(PersistentVariables PersistentVariables.test.cpp UnitTestThread.cpp)
 target_link_libraries(
     Sts1CobcSwTests_PersistentVariables
     PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Periphery Sts1CobcSw_Serial

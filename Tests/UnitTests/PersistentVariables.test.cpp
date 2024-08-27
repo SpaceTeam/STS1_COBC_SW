@@ -1,3 +1,5 @@
+#include <Tests/UnitTests/UnitTestThread.hpp>
+
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
@@ -9,12 +11,8 @@
 
 #include <strong_type/type.hpp>
 
-#include <rodos_no_using_namespace.h>
-
 #include <array>
 #include <cstdint>
-#include <cstdlib>
-#include <source_location>
 #include <type_traits>
 
 
@@ -45,57 +43,9 @@ static_assert(std::is_same_v<decltype(pvs.Load<"activeFwImage">()), std::uint8_t
 static_assert(std::is_same_v<decltype(pvs.Load<"somethingElse">()), std::int16_t>);
 
 
-// TODO: Move this to UnitTestWithRodos.hpp
-
-std::uint32_t printfMask = 0;
-
-
-auto RunUnitTest() -> void;
-auto Require(bool condition, std::source_location location = std::source_location::current())
-    -> void;
-
-
-class UnitTestThread : public RODOS::StaticThread<>
-{
-public:
-    UnitTestThread() : StaticThread("UnitTestThread")
-    {
-    }
-
-
-private:
-    void init() override
-    {
-    }
-
-    void run() override
-    {
-        printfMask = 1;
-        RunUnitTest();
-        RODOS::isShuttingDown = true;
-        std::exit(EXIT_SUCCESS);  // NOLINT(concurrency-mt-unsafe)
-    }
-} unitTestThread;
-
-
-// TODO: Move this to UnitTestWithRodos.cpp
-
-auto Require(bool condition, std::source_location location) -> void
-{
-    if(not condition)
-    {
-        RODOS::PRINTF("%s:%d: FAILED\n", location.file_name(), location.line());
-        RODOS::isShuttingDown = true;
-        std::exit(EXIT_FAILURE);  // NOLINT(concurrency-mt-unsafe)
-    }
-}
-
-
-// TODO: This should stay here in PersistentVariables.test.cpp
-
 auto RunUnitTest() -> void
 {
-    // Test case: Load() and Store()
+    // TEST_CASE("Load() and Store()")
     using sts1cobcsw::fram::Address;
     using sts1cobcsw::fram::framIsWorking;
     using sts1cobcsw::fram::ram::memory;
@@ -109,12 +59,12 @@ auto RunUnitTest() -> void
 
     sts1cobcsw::fram::ram::SetAllDoFunctions();
 
-    // Section: FRAM is working
+    // SECTION("FRAM is working")
     {
         memory.fill(0x00_b);
         framIsWorking.Store(true);
 
-        // Section: You load what you store
+        // SECTION("You load what you store")
         {
             pvs.Store<"nResets">(0x12345678);
             pvs.Store<"activeFwImage">(42);
@@ -124,7 +74,7 @@ auto RunUnitTest() -> void
             Require(pvs.Load<"somethingElse">() == -2);
         }
 
-        // Section: Store() writes to memory
+        // SECTION("Store() writes to memory")
         {
             pvs.Store<"nResets">(0x12345678);
             pvs.Store<"activeFwImage">(42);
@@ -138,7 +88,7 @@ auto RunUnitTest() -> void
             Require(memory[somethingElseAddress0 + 1] == 0xFF_b);
         }
 
-        // Section: Load() reads from memory
+        // SECTION("Load() reads from memory")
         {
             memory[activeFwImageAddress0] = 17_b;
             memory[activeFwImageAddress1] = 17_b;
@@ -146,7 +96,7 @@ auto RunUnitTest() -> void
             Require(pvs.Load<"activeFwImage">() == 17);
         }
 
-        // Section: Load() returns majority and repairs memory
+        // SECTION("Load() returns majority and repairs memory")
         {
             memory[activeFwImageAddress0] = 42_b;
             memory[activeFwImageAddress1] = 17_b;
@@ -177,12 +127,12 @@ auto RunUnitTest() -> void
         }
     }
 
-    // Section: FRAM is not working
+    // SECTION("FRAM is not working")
     {
         memory.fill(0x00_b);
         framIsWorking.Store(false);
 
-        // Section: You load what you store
+        // SECTION("You load what you store")
         {
             pvs.Store<"nResets">(0xABCDABCD);
             pvs.Store<"activeFwImage">(111);
@@ -192,7 +142,7 @@ auto RunUnitTest() -> void
             Require(pvs.Load<"somethingElse">() == -55);
         }
 
-        // Section: Store() does not write to memory
+        // SECTION("Store() does not write to memory")
         {
             pvs.Store<"nResets">(0xABCDABCD);
             pvs.Store<"activeFwImage">(111);
@@ -206,7 +156,7 @@ auto RunUnitTest() -> void
             Require(memory[somethingElseAddress0 + 1] == 0x00_b);
         }
 
-        // Section: Load() does not read from memory
+        // SECTION("Load() does not read from memory")
         {
             pvs.Store<"activeFwImage">(0);
             memory[activeFwImageAddress0] = 17_b;
