@@ -53,7 +53,6 @@ Docker image, the file should look something like the following:
         "inherits": [
           "dev-mode",
           "clang-tidy",
-          "cppcheck",
           "ci-unix",
           "include-what-you-use"
         ],

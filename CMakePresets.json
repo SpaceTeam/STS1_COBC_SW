@@ -141,7 +141,6 @@
       "binaryDir": "${sourceDir}/build/linux-x86",
       "inherits": [
         "dev-mode",
-        "cppcheck",
         "clang-tidy",
         "ci-unix",
         "include-what-you-use"
@@ -153,7 +152,6 @@
       "binaryDir": "${sourceDir}/build/cobc",
       "inherits": [
         "dev-mode",
-        "cppcheck",
         "clang-tidy",
         "ci-unix",
         "include-what-you-use"
