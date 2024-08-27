@@ -5,9 +5,11 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -48,7 +50,7 @@ private:
         auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
         if(not testWasSuccessful)
         {
-            persistentstate::FramIsWorking(false);
+            fram::framIsWorking.Store(false);
             persistentstate::EpsIsWorking(false);
         }
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);

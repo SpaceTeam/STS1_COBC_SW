@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/equality.hpp>
@@ -37,9 +38,7 @@ inline constexpr auto memorySize = Size(1024 * 1024);
 inline constexpr auto correctDeviceId =
     DeviceId{0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b};
 
-// TODO: This needs to be implemented as an EDAC variable. Maybe it should also be moved to
-// somewhere else then :man-shrugging:
-extern bool framIsWorking;
+extern EdacVariable<bool> framIsWorking;
 
 
 auto Initialize() -> void;

@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
 #include <strong_type/type.hpp>
@@ -111,7 +112,7 @@ auto RunUnitTest() -> void
     // Section: FRAM is working
     {
         memory.fill(0x00_b);
-        framIsWorking = true;
+        framIsWorking.Store(true);
 
         // Section: You load what you store
         {
@@ -179,7 +180,7 @@ auto RunUnitTest() -> void
     // Section: FRAM is not working
     {
         memory.fill(0x00_b);
-        framIsWorking = false;
+        framIsWorking.Store(false);
 
         // Section: You load what you store
         {

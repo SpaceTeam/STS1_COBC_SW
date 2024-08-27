@@ -3,7 +3,7 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/PersistentState.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -37,7 +37,7 @@ private:
         auto deviceId = fram::ReadDeviceId();
         if(deviceId != fram::correctDeviceId)
         {
-            persistentstate::FramIsWorking(false);
+            fram::framIsWorking.Store(false);
         }
         eps::Initialize();
         (void)eps::Read();

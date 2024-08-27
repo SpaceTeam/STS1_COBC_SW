@@ -1,4 +1,6 @@
+#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/type.hpp>
 
@@ -7,7 +9,7 @@
 
 namespace sts1cobcsw::fram
 {
-bool framIsWorking = true;
+EdacVariable<bool> framIsWorking(true);
 
 
 auto doInitialize = empty::DoInitialize;

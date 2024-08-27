@@ -17,7 +17,8 @@
 namespace sts1cobcsw::fram
 {
 // --- Public globals ---
-bool framIsWorking = true;
+
+EdacVariable<bool> framIsWorking(true);
 
 
 // --- Private globals ---

@@ -34,7 +34,7 @@ auto PersistentVariables<parentSection0,
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     auto [value0, value1, value2] =
-        fram::framIsWorking ? ReadFromFram<name>() : ReadFromCache<name>();
+        fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
     auto voteResult = ComputeMajorityVote(value0, value1, value2);
     auto value = voteResult.value_or(value0);
     auto allVotesAreEqual = (value0 == value1) && (value1 == value2);
@@ -60,7 +60,7 @@ auto PersistentVariables<parentSection0,
                          PersistentVariableInfos...>::Store(ValueType<name> const & value)
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    if(fram::framIsWorking)
+    if(fram::framIsWorking.Load())
     {
         WriteToFram<name>(value);
     }
