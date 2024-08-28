@@ -2,6 +2,7 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -28,7 +29,7 @@ class WatchdogTest : public RODOS::StaticThread<>
         rfLatchupDisableGpioPin.Reset();
 #endif
         led1Gpio.Reset();
-        RODOS::AT(RODOS::NOW() + 800 * RODOS::MILLISECONDS);
+        SuspendFor(800 * ms);
         led1Gpio.Set();
     }
 } watchdogTest;

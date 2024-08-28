@@ -3,6 +3,9 @@
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -10,7 +13,7 @@
 namespace sts1cobcsw
 {
 constexpr auto stackSize = 2'000U;
-constexpr auto eduShutDownDelay = 2 * RODOS::SECONDS;
+constexpr auto eduShutDownDelay = 2 * s;
 std::int32_t eduCommunicationErrorCounter = 0;
 
 
@@ -33,7 +36,7 @@ private:
     {
         while(true)
         {
-            RODOS::AT(RODOS::END_OF_TIME);
+            SuspendUntil(endOfTime);
 
             eduCommunicationErrorCounter++;
 
@@ -41,7 +44,7 @@ private:
             // Reset EDU
 
             edu::TurnOff();
-            RODOS::AT(RODOS::NOW() + eduShutDownDelay);
+            SuspendFor(eduShutDownDelay);
             edu::TurnOn();
 
             // TODO: Why is this here?

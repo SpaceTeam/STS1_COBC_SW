@@ -31,12 +31,12 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data) -> void
 
 
 template<typename T, std::size_t extent>
-auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64_t timeout)
+auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, Duration timeout)
     -> Result<void>
 {
     auto bytes = std::as_bytes(data);
     std::size_t nWrittenBytes = 0;
-    auto reactivationTime = RODOS::NOW() + timeout;
+    auto reactivationTime = CurrentRodosTime() + timeout;
     while(nWrittenBytes < bytes.size())
     {
         // uart.write() writes at most RODOS::UART_BUF_SIZE bytes and returns how many it has
@@ -45,8 +45,8 @@ auto WriteTo(RODOS::HAL_UART * uart, std::span<T const, extent> data, std::int64
         // UART_IDX is out of range. Since we can check that statically, we do not have to worry
         // about that though.
         nWrittenBytes += uart->write(bytes.data() + nWrittenBytes, bytes.size() - nWrittenBytes);
-        uart->suspendUntilWriteFinished(reactivationTime);
-        if(RODOS::NOW() >= reactivationTime)
+        uart->suspendUntilWriteFinished(value_of(reactivationTime));
+        if(CurrentRodosTime() >= reactivationTime)
         {
             return ErrorCode::timeout;
         }
@@ -72,16 +72,15 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void
 
 
 template<typename T, std::size_t extent>
-auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, std::int64_t timeout)
-    -> Result<void>
+auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, Duration timeout) -> Result<void>
 {
     auto bytes = std::as_writable_bytes(data);
     std::size_t nReadBytes = 0;
-    auto reactivationTime = RODOS::NOW() + timeout;
+    auto reactivationTime = CurrentRodosTime() + timeout;
     while(nReadBytes < bytes.size())
     {
-        uart->suspendUntilDataReady(reactivationTime);
-        if(RODOS::NOW() >= reactivationTime)
+        uart->suspendUntilDataReady(value_of(reactivationTime));
+        if(CurrentRodosTime() >= reactivationTime)
         {
             return ErrorCode::timeout;
         }

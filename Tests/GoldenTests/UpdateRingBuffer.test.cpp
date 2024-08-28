@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/type.hpp>
 
@@ -55,19 +56,19 @@ class UpdateRingBufferTest : public RODOS::StaticThread<>
 
         edu::programStatusHistory.put(
             edu::ProgramStatusHistoryEntry{.programId = ProgramId(1),
-                                           .startTime = 1,
+                                           .startTime = RealTime(1),
                                            .status = edu::ProgramStatus::programExecutionFailed});
         edu::programStatusHistory.put(
             edu::ProgramStatusHistoryEntry{.programId = ProgramId(2),
-                                           .startTime = 1,
+                                           .startTime = RealTime(1),
                                            .status = edu::ProgramStatus::programRunning});
         edu::programStatusHistory.put(
             edu::ProgramStatusHistoryEntry{.programId = ProgramId(3),
-                                           .startTime = 1,
+                                           .startTime = RealTime(1),
                                            .status = edu::ProgramStatus::programRunning});
         edu::programStatusHistory.put(
             edu::ProgramStatusHistoryEntry{.programId = ProgramId(4),
-                                           .startTime = 1,
+                                           .startTime = RealTime(1),
                                            .status = edu::ProgramStatus::programRunning});
 
 
@@ -78,15 +79,15 @@ class UpdateRingBufferTest : public RODOS::StaticThread<>
         PrintBuffer();
 
         edu::UpdateProgramStatusHistory(
-            ProgramId(2), 1, edu::ProgramStatus::programExecutionSucceeded);
+            ProgramId(2), RealTime(1), edu::ProgramStatus::programExecutionSucceeded);
         edu::UpdateProgramStatusHistory(
-            ProgramId(4), 1, edu::ProgramStatus::programExecutionFailed);
+            ProgramId(4), RealTime(1), edu::ProgramStatus::programExecutionFailed);
         edu::programStatusHistory.put(
             edu::ProgramStatusHistoryEntry{.programId = ProgramId(5),
-                                           .startTime = 1,
+                                           .startTime = RealTime(1),
                                            .status = edu::ProgramStatus::programRunning});
         edu::UpdateProgramStatusHistory(
-            ProgramId(5), 1, edu::ProgramStatus::programExecutionSucceeded);
+            ProgramId(5), RealTime(1), edu::ProgramStatus::programExecutionSucceeded);
 
         // 1, because we did not read anything
         RODOS::PRINTF("readCnt unchanged     : %d\n",

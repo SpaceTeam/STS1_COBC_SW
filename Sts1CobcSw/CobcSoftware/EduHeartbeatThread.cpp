@@ -3,6 +3,9 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -11,8 +14,6 @@
 
 namespace sts1cobcsw
 {
-using RODOS::MILLISECONDS;
-
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 
@@ -63,16 +64,16 @@ private:
 
         auto const heartbeatFrequency = 10;                     // Hz
         auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
-        auto const samplingPeriod = 1'000 * MILLISECONDS / samplingFrequency;
+        auto const samplingPeriod = 1 * s / samplingFrequency;
 
         auto samplingCount = 0;
         auto heartbeatIsConstant = true;
         auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0;
 
-        DEBUG_PRINT("Sampling period : %" PRIi64 "\n", samplingPeriod / MILLISECONDS);
+        DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
         auto toggle = true;
-        TIME_LOOP(0, samplingPeriod)
+        TIME_LOOP(0, value_of(samplingPeriod))
         {
             // Read current heartbeat value
 
@@ -129,7 +130,7 @@ private:
 
 auto EduIsAlive() -> bool
 {
-    auto begin = RODOS::NOW();
+    auto begin = CurrentRodosTime();
 
     auto refHeartbeat = eduHeartbeatGpioPin.Read();
     auto edgeCounter = 0;
@@ -148,10 +149,9 @@ auto EduIsAlive() -> bool
         }
     }
 
-    auto executionTime = RODOS::NOW() - begin;
-    DEBUG_PRINT("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", executionTime);
-    DEBUG_PRINT("Execution Time of EduIsAlive (ms) : %" PRIi64 "\n",
-                executionTime / RODOS::MILLISECONDS);
+    auto executionTime = CurrentRodosTime() - begin;
+    DEBUG_PRINT("Execution Time of EduIsAlive: %" PRIi64 " ns\n", executionTime / ns);
+    DEBUG_PRINT("Execution Time of EduIsAlive: %" PRIi64 " ms\n", executionTime / ms);
     return false;
 }
 /*

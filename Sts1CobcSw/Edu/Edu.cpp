@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -32,10 +33,10 @@ constexpr auto cepData = 0x8b_b;  //! Data packet format is used (not a command 
 
 // The max. data length is 11 KiB. At 115'200 baud, this takes about 1 second to transmit. We use
 // 1.5 s just to be sure.
-constexpr auto sendTimeout = 1500 * RODOS::MILLISECONDS;
-constexpr auto receiveTimeout = 1500 * RODOS::MILLISECONDS;
+constexpr auto sendTimeout = 1500 * ms;
+constexpr auto receiveTimeout = 1500 * ms;
 // TODO: Can we choose a smaller value?
-constexpr auto flushReceiveBufferTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto flushReceiveBufferTimeout = 1 * ms;
 
 // TODO: Choose proper values
 // Max. number of send retries after receiving NACK
@@ -288,7 +289,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
         // TODO: Actually store the result in the COBC file system
         DEBUG_PRINT("Pretending to write %d bytes to the file system ...\n",
                     static_cast<int>(cepDataBuffer.size()));
-        RODOS::AT(RODOS::NOW() + 3 * RODOS::MILLISECONDS);
+        SuspendFor(3 * ms);
         OUTCOME_TRY(SendCommand(cepAck));
     }
     return ErrorCode::tooManyDataPackets;

@@ -1,7 +1,11 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Utility/Time.hpp>
+
 #include <rodos_no_using_namespace.h>
+
+#include <cinttypes>
 
 
 #ifdef DEBUG
@@ -13,3 +17,5 @@
 #else
     #define DEBUG_PRINT(fmt, ...)
 #endif
+
+#define DEBUG_PRINT_REAL_TIME() DEBUG_PRINT("Real time: %" PRIi32 "\n", value_of(CurrentRealTime()))

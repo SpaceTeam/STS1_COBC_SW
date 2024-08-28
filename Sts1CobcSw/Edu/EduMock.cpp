@@ -1,7 +1,6 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/type.hpp>
 
@@ -10,9 +9,6 @@
 
 namespace sts1cobcsw
 {
-using utility::PrintFormattedSystemUtc;
-
-
 // TODO: Move this to EduProgramQueueThreadMock.cpp or something
 auto ResumeEduProgramQueueThread() -> void
 {
@@ -25,28 +21,28 @@ namespace edu
 {
 auto Initialize() -> void
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to Initialize()\n");
 }
 
 
 auto TurnOn() -> void
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to TurnOn()\n");
 }
 
 
 auto TurnOff() -> void
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to TurnOff()\n");
 }
 
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to StoreProgram(programId = %" PRIu16 ")\n", value_of(data.programId));
     return outcome_v2::success();
 }
@@ -54,11 +50,11 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
 
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
                 ", timeout = %d)\n",
                 value_of(data.programId),
-                data.startTime,
+                value_of(data.startTime),
                 data.timeout);
     return outcome_v2::success();
 }
@@ -66,7 +62,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 
 auto StopProgram() -> Result<void>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to StopProgram()\n");
     return outcome_v2::success();
 }
@@ -74,7 +70,7 @@ auto StopProgram() -> Result<void>
 
 auto GetStatus() -> Result<Status>
 {
-    PrintFormattedSystemUtc();
+    DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to GetStatus()\n");
     return Status();
 }
@@ -82,8 +78,8 @@ auto GetStatus() -> Result<Status>
 
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
-    PrintFormattedSystemUtc();
-    DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", data.currentTime);
+    DEBUG_PRINT_REAL_TIME();
+    DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", value_of(data.currentTime));
     return outcome_v2::success();
 }
 }

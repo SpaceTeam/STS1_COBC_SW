@@ -4,11 +4,8 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/type.hpp>
-
-#include <rodos_no_using_namespace.h>
 
 #include <cinttypes>  // IWYU pragma: keep
 
@@ -28,8 +25,8 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
     DEBUG_PRINT("Header length          : %" PRIi16 "\n", gsCommandHeader.length);
 
     // TODO: Move this somewhere else
-    RODOS::sysTime.setUTC(utility::UnixToRodosTime(gsCommandHeader.utc));
-    utility::PrintFormattedSystemUtc();
+    // TODO: Compute real time offset from command UTC
+    DEBUG_PRINT_REAL_TIME();
 
     auto targetIsCobc = true;
     if(targetIsCobc)
@@ -93,7 +90,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
             queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());
 
         DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", value_of(entry.programId));
-        DEBUG_PRINT("Start Time   : %" PRIi32 "\n", entry.startTime);
+        DEBUG_PRINT("Start Time   : %" PRIi32 "\n", value_of(entry.startTime));
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
         edu::programQueue.push_back(entry);

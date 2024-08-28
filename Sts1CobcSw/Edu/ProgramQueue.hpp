@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Periphery/FramLayout.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/ordered_with.hpp>
 
@@ -21,7 +22,7 @@ namespace edu
 struct ProgramQueueEntry
 {
     ProgramId programId = ProgramId(0);
-    std::int32_t startTime = 0;
+    RealTime startTime = RealTime(0);
     std::int16_t timeout = 0;
 };
 }

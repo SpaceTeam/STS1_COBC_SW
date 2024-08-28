@@ -104,7 +104,7 @@ add_watchdog_version_of(Uart)
 
 add_program(Watchdog Watchdog.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_Watchdog PRIVATE rodos::rodos Sts1CobcSw_Hal
+    Sts1CobcSwTests_Watchdog PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Utility
                                      Sts1CobcSwTests_RfLatchupDisablePin
 )
 

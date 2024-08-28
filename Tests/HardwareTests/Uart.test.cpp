@@ -13,6 +13,7 @@
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -52,9 +53,6 @@ class UartTest : public RODOS::StaticThread<>
 
     void run() override
     {
-        using RODOS::MICROSECONDS;
-        using RODOS::MILLISECONDS;
-        using RODOS::NOW;
         using RODOS::PRINTF;
 
 #if HW_VERSION >= 27
@@ -84,19 +82,19 @@ class UartTest : public RODOS::StaticThread<>
             PRINTF("Sending a message containing an update time command to the EDU.\n");
             PRINTF("message.size() = %i\n", static_cast<int>(message.size()));
 
-            auto tWrite0 = NOW();
-            auto writeToResult1 = hal::WriteTo(&eduUart, Span(message), 100 * MILLISECONDS);
-            auto tWrite1 = NOW();
+            auto tWrite0 = CurrentRodosTime();
+            auto writeToResult1 = hal::WriteTo(&eduUart, Span(message), 100 * ms);
+            auto tWrite1 = CurrentRodosTime();
 
             auto answer1 = std::array<char, 1>{};
 
-            auto tRead0 = NOW();
-            auto readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), 100 * MILLISECONDS);
-            auto tRead1 = NOW();
+            auto tRead0 = CurrentRodosTime();
+            auto readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), 100 * ms);
+            auto tRead1 = CurrentRodosTime();
 
             PRINTF("\n");
-            PRINTF("tWrite1 - tWrite0 = %5" PRIi64 " us\n", (tWrite1 - tWrite0) / MICROSECONDS);
-            PRINTF("tRead1  - tRead0  = %5" PRIi64 " us\n", (tRead1 - tRead0) / MICROSECONDS);
+            PRINTF("tWrite1 - tWrite0 = %5" PRIi64 " us\n", (tWrite1 - tWrite0) / us);
+            PRINTF("tRead1  - tRead0  = %5" PRIi64 " us\n", (tRead1 - tRead0) / us);
             PRINTF("writeToResult1.hasError()  = %s\n",
                    writeToResult1.has_error() ? "true" : "false");
             PRINTF("readFromResult1.hasError() = %s\n",
@@ -105,23 +103,23 @@ class UartTest : public RODOS::StaticThread<>
 
             PRINTF("\n");
             PRINTF("Sending the message again.");
-            auto writeTimeout = 500 * MICROSECONDS;
+            auto writeTimeout = 500 * us;
             PRINTF(" This time with a write timeout of %" PRIi64 " us which is too short.\n",
-                   writeTimeout / MICROSECONDS);
+                   writeTimeout / us);
 
-            tWrite0 = NOW();
+            tWrite0 = CurrentRodosTime();
             writeToResult1 = hal::WriteTo(&eduUart, Span(message), writeTimeout);
-            tWrite1 = NOW();
+            tWrite1 = CurrentRodosTime();
 
             answer1[0] = 0x00;
 
-            tRead0 = NOW();
-            readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), 100 * MILLISECONDS);
-            tRead1 = NOW();
+            tRead0 = CurrentRodosTime();
+            readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), 100 * ms);
+            tRead1 = CurrentRodosTime();
 
             PRINTF("\n");
-            PRINTF("tWrite1 - tWrite0 = %5" PRIi64 " us\n", (tWrite1 - tWrite0) / MICROSECONDS);
-            PRINTF("tRead1  - tRead0  = %5" PRIi64 " us\n", (tRead1 - tRead0) / MICROSECONDS);
+            PRINTF("tWrite1 - tWrite0 = %5" PRIi64 " us\n", (tWrite1 - tWrite0) / us);
+            PRINTF("tRead1  - tRead0  = %5" PRIi64 " us\n", (tRead1 - tRead0) / us);
             PRINTF("writeToResult1.hasError()  = %s\n",
                    writeToResult1.has_error() ? "true" : "false");
             PRINTF("readFromResult1.hasError() = %s\n",
@@ -130,29 +128,29 @@ class UartTest : public RODOS::StaticThread<>
 
             PRINTF("\n");
             PRINTF("Sending the message twice.");
-            auto readTimeout = 1500 * MICROSECONDS;
+            auto readTimeout = 1500 * us;
             PRINTF(" The first time with a read timeout of %" PRIi64 " us which is too short.\n",
-                   readTimeout / MICROSECONDS);
+                   readTimeout / us);
 
-            tWrite0 = NOW();
-            writeToResult1 = hal::WriteTo(&eduUart, Span(message), 100 * MILLISECONDS);
-            tWrite1 = NOW();
-            auto writeToResult2 = hal::WriteTo(&eduUart, Span(message), 100 * MILLISECONDS);
-            auto tWrite2 = NOW();
+            tWrite0 = CurrentRodosTime();
+            writeToResult1 = hal::WriteTo(&eduUart, Span(message), 100 * ms);
+            tWrite1 = CurrentRodosTime();
+            auto writeToResult2 = hal::WriteTo(&eduUart, Span(message), 100 * ms);
+            auto tWrite2 = CurrentRodosTime();
 
             auto answer2 = std::array<char, 1>{};
 
-            tRead0 = NOW();
+            tRead0 = CurrentRodosTime();
             readFromResult1 = hal::ReadFrom(&eduUart, Span(&answer1), readTimeout);
-            tRead1 = NOW();
-            auto readFromResult2 = hal::ReadFrom(&eduUart, Span(&answer2), 100 * MILLISECONDS);
-            auto tRead2 = NOW();
+            tRead1 = CurrentRodosTime();
+            auto readFromResult2 = hal::ReadFrom(&eduUart, Span(&answer2), 100 * ms);
+            auto tRead2 = CurrentRodosTime();
 
             PRINTF("\n");
-            PRINTF("tWrite1 - tWrite0 = %5" PRIi64 " us\n", (tWrite1 - tWrite0) / MICROSECONDS);
-            PRINTF("tWrite2 - tWrite1 = %5" PRIi64 " us\n", (tWrite2 - tWrite1) / MICROSECONDS);
-            PRINTF("tRead1  - tRead0  = %5" PRIi64 " us\n", (tRead1 - tRead0) / MICROSECONDS);
-            PRINTF("tRead2  - tRead1  = %5" PRIi64 " us\n", (tRead2 - tRead1) / MICROSECONDS);
+            PRINTF("tWrite1 - tWrite0 = %5" PRIi64 " us\n", (tWrite1 - tWrite0) / us);
+            PRINTF("tWrite2 - tWrite1 = %5" PRIi64 " us\n", (tWrite2 - tWrite1) / us);
+            PRINTF("tRead1  - tRead0  = %5" PRIi64 " us\n", (tRead1 - tRead0) / us);
+            PRINTF("tRead2  - tRead1  = %5" PRIi64 " us\n", (tRead2 - tRead1) / us);
             PRINTF("writeToResult1.hasError()  = %s\n",
                    writeToResult1.has_error() ? "true" : "false");
             PRINTF("writeToResult2.hasError()  = %s\n",

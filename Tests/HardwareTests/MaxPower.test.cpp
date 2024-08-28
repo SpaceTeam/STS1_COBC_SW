@@ -6,6 +6,10 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
@@ -21,7 +25,7 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
-constexpr auto uartTimeout = 100 * RODOS::MILLISECONDS;
+constexpr auto uartTimeout = 100 * ms;
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 auto led2GpioPin = hal::GpioPin(hal::led2Pin);
@@ -53,7 +57,7 @@ private:
         PRINTF("\nMax. power test LED thread\n\n");
         auto toggle = true;
         led1GpioPin.Set();
-        TIME_LOOP(0, 100 * RODOS::MILLISECONDS)
+        TIME_LOOP(0, value_of(100 * ms))
         {
             toggle ? led2GpioPin.Set() : led2GpioPin.Reset();
             toggle = not toggle;

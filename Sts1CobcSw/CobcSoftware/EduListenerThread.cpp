@@ -7,13 +7,16 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw
 {
-constexpr auto timeLoopPeriod = 1 * RODOS::SECONDS;
+constexpr auto timeLoopPeriod = 1 * s;
 
 // TODO: This should also go to Edu.hpp/.cpp
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
@@ -36,7 +39,7 @@ private:
 
     void run() override
     {
-        TIME_LOOP(0, timeLoopPeriod)
+        TIME_LOOP(0, value_of(timeLoopPeriod))
         {
             // DEBUG_PRINT("[EduListenerThread] Start of TimeLoop Iteration\n");
             auto eduHasUpdate = (eduUpdateGpioPin.Read() == hal::PinState::set);
