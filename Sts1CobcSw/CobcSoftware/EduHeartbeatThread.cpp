@@ -14,7 +14,6 @@
 
 namespace sts1cobcsw
 {
-using RODOS::MILLISECONDS;
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
@@ -66,14 +65,14 @@ private:
 
         auto const heartbeatFrequency = 10;                     // Hz
         auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
-        auto const samplingPeriod = Duration(1'000 * MILLISECONDS / samplingFrequency);
+        auto const samplingPeriod = 1'000 * ms / samplingFrequency;
 
         auto samplingCount = 0;
         auto heartbeatIsConstant = true;
         auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0;
 
-        DEBUG_PRINT("Sampling period : %" PRIi64 "\n", value_of(samplingPeriod) / MILLISECONDS);
+        DEBUG_PRINT("Sampling period : %" PRIi64 "\n", samplingPeriod / ms);
         auto toggle = true;
         TIME_LOOP(0, value_of(samplingPeriod))
         {
@@ -151,10 +150,10 @@ auto EduIsAlive() -> bool
         }
     }
 
-    auto executionTime = RODOS::NOW() - begin;
-    DEBUG_PRINT("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", executionTime);
+    auto executionTime = Duration(RODOS::NOW() - begin);
+    DEBUG_PRINT("Execution Time of EduIsAlive (ns) : %" PRIi64 "\n", value_of(executionTime));
     DEBUG_PRINT("Execution Time of EduIsAlive (ms) : %" PRIi64 "\n",
-                executionTime / RODOS::MILLISECONDS);
+                executionTime / ms);
     return false;
 }
 /*

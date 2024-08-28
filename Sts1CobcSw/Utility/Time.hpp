@@ -46,7 +46,7 @@ constexpr auto min = minutes;
 constexpr auto h = hours;
 constexpr auto d = days;
 constexpr auto w = weeks;
-
+constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
 
 template<>
 inline constexpr std::size_t serialSize<RealTime> =

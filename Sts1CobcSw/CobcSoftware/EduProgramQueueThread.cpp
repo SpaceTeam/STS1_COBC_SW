@@ -24,17 +24,12 @@
 
 namespace sts1cobcsw
 {
-using RODOS::AT;
-using RODOS::NOW;
-using RODOS::SECONDS;
-
-
 [[nodiscard]] auto ComputeStartDelay() -> Duration;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 8'000U;
-constexpr auto eduCommunicationDelay = Duration(2 * SECONDS);
+constexpr auto eduCommunicationDelay = 2 * s;
 
 
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
@@ -72,12 +67,12 @@ private:
             if(edu::programQueue.empty())
             {
                 DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
-                AT(RODOS::END_OF_TIME);
+                SuspendUntil(endOfTime);
             }
             else if(edu::queueIndex >= edu::programQueue.size())
             {
                 DEBUG_PRINT("End of queue is reached, thread set to sleep until end of time\n");
-                AT(RODOS::END_OF_TIME);
+                SuspendUntil(endOfTime);
             }
 
             // All variables in this thread whose name is of the form *Time are in Rodos Time
@@ -87,12 +82,12 @@ private:
 
             DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
                         edu::queueIndex,
-                        value_of(startDelay) / SECONDS);
+                        startDelay / s);
 
             // Suspend until delay time - 2 seconds
             DEBUG_PRINT("Suspending for the first time for      : %" PRIi64 " s\n",
-                        value_of(startDelay - eduCommunicationDelay) / SECONDS);
-            AT(NOW() + value_of(startDelay - eduCommunicationDelay));
+                        (startDelay - eduCommunicationDelay) / s);
+            SuspendFor(startDelay - eduCommunicationDelay);
             // AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             DEBUG_PRINT("Resuming here after first wait.\n");
@@ -114,12 +109,12 @@ private:
 
             DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
                         edu::queueIndex,
-                        value_of(startDelay2) / SECONDS);
+                        startDelay2 / s);
 
             // Suspend for delay a second time
             DEBUG_PRINT("Suspending for the second time for     : %" PRIi64 " s\n",
-                        value_of(startDelay2) / SECONDS);
-            AT(NOW() + value_of(startDelay2));
+                        startDelay2 / s);
+            SuspendFor(startDelay2);
 
             // Never reached
             DEBUG_PRINT("Done suspending for the second time\n");
@@ -149,9 +144,9 @@ private:
                                                    .status = edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
-                auto const executionTime = Duration(timeout * SECONDS) + eduCommunicationDelay;
+                auto const executionTime = timeout * s + eduCommunicationDelay;
                 DEBUG_PRINT("Suspending for execution time\n");
-                AT(NOW() + value_of(executionTime));
+                SuspendFor(executionTime);
                 DEBUG_PRINT("Resuming from execution time\n");
                 DEBUG_PRINT_REAL_TIME();
 

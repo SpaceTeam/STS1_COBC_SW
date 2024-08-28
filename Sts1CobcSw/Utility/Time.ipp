@@ -26,6 +26,7 @@ inline auto CurrentRealTime() -> RealTime
     return ToRealTime(CurrentRodosTime());
 }
 
+
 inline auto SuspendUntil(RodosTime time) -> void
 {
     RODOS::AT(value_of(time));

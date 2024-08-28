@@ -16,7 +16,7 @@
 
 namespace sts1cobcsw
 {
-constexpr auto timeLoopPeriod = Duration(1 * RODOS::SECONDS);
+constexpr auto timeLoopPeriod = 1 * s;
 
 // TODO: This should also go to Edu.hpp/.cpp
 hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);

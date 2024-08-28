@@ -13,7 +13,7 @@
 namespace sts1cobcsw
 {
 constexpr auto stackSize = 2'000U;
-constexpr auto eduShutDownDelay = Duration(2 * RODOS::SECONDS);
+constexpr auto eduShutDownDelay = 2 * s;
 std::int32_t eduCommunicationErrorCounter = 0;
 
 
@@ -36,7 +36,7 @@ private:
     {
         while(true)
         {
-            RODOS::AT(RODOS::END_OF_TIME);
+            SuspendUntil(endOfTime);
 
             eduCommunicationErrorCounter++;
 
@@ -44,7 +44,7 @@ private:
             // Reset EDU
 
             edu::TurnOff();
-            RODOS::AT(RODOS::NOW() + value_of(eduShutDownDelay));
+            SuspendFor(eduShutDownDelay);
             edu::TurnOn();
 
             // TODO: Why is this here?
