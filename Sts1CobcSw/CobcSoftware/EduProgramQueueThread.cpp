@@ -75,8 +75,6 @@ private:
                 SuspendUntil(endOfTime);
             }
 
-            // All variables in this thread whose name is of the form *Time are in Rodos Time
-            // seconds (n of seconds since 1st January 2000).
             auto startDelay = ComputeStartDelay();
             nextProgramStartDelayTopic.publish(startDelay);
 
@@ -88,7 +86,6 @@ private:
             DEBUG_PRINT("Suspending for the first time for      : %" PRIi64 " s\n",
                         (startDelay - eduCommunicationDelay) / s);
             SuspendFor(startDelay - eduCommunicationDelay);
-            // AT(nextProgramStartTime * SECONDS - eduCommunicationDelay);
 
             DEBUG_PRINT("Resuming here after first wait.\n");
             DEBUG_PRINT_REAL_TIME();

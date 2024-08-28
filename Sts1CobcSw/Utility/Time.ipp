@@ -8,7 +8,6 @@
 
 namespace sts1cobcsw
 {
-// TODO: Make all those single line functions inline and move them to the .ipp file
 inline auto ToRodosTime(RealTime realTime) -> RodosTime
 {
     return RodosTime(value_of(realTime) * RODOS::SECONDS) - internal::realTimeOffset;
@@ -27,6 +26,12 @@ inline auto CurrentRealTime() -> RealTime
 }
 
 
+inline auto CurrentRodosTime() -> RodosTime
+{
+    return RodosTime(RODOS::NOW());
+}
+
+
 inline auto SuspendUntil(RodosTime time) -> void
 {
     RODOS::AT(value_of(time));
@@ -36,12 +41,6 @@ inline auto SuspendUntil(RodosTime time) -> void
 inline auto SuspendFor(Duration duration) -> void
 {
     RODOS::AT(RODOS::NOW() + value_of(duration));
-}
-
-
-inline auto CurrentRodosTime() -> RodosTime
-{
-    return RodosTime(RODOS::NOW());
 }
 
 

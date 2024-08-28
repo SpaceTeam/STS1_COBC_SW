@@ -30,6 +30,7 @@ using RodosTime = strong::type<std::int64_t,
 using RealTime =
     strong::type<std::int32_t, struct RealTimeTag, strong::equality, strong::strongly_ordered>;
 
+
 constexpr auto seconds = Duration(RODOS::SECONDS);
 constexpr auto milliseconds = Duration(RODOS::MILLISECONDS);
 constexpr auto microseconds = Duration(RODOS::MICROSECONDS);
@@ -38,6 +39,7 @@ constexpr auto minutes = Duration(RODOS::MINUTES);
 constexpr auto hours = Duration(RODOS::HOURS);
 constexpr auto days = Duration(RODOS::DAYS);
 constexpr auto weeks = Duration(RODOS::WEEKS);
+// NOLINTBEGIN(readability-identifier-length)
 constexpr auto s = seconds;
 constexpr auto ms = milliseconds;
 constexpr auto us = microseconds;
@@ -46,6 +48,7 @@ constexpr auto min = minutes;
 constexpr auto h = hours;
 constexpr auto d = days;
 constexpr auto w = weeks;
+// NOLINTEND(readability-identifier-length)
 constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
 
 template<>

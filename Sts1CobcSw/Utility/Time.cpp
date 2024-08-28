@@ -3,5 +3,5 @@
 
 namespace sts1cobcsw::internal
 {
-Duration realTimeOffset = Duration(0);
+Duration realTimeOffset = 0 * s;
 }
