@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 
 namespace sts1cobcsw
@@ -32,8 +33,8 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"txIsOn", bool>,
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
                         PersistentVariableInfo<"nTotalResets", std::uint32_t>,
-                        PersistentVariableInfo<"realTime", std::int32_t>,
-                        PersistentVariableInfo<"realTimeOffset", std::int64_t>,
+                        PersistentVariableInfo<"realTime", RealTime>,
+                        PersistentVariableInfo<"realTimeOffset", Duration>,
                         PersistentVariableInfo<"epsIsWorking", bool>,
                         PersistentVariableInfo<"flashIsWorking", bool>,
                         PersistentVariableInfo<"nFlashErrors", std::uint16_t>,
