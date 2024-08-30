@@ -61,6 +61,7 @@
   { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",                        "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.ipp\"",               "private", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Time.ipp\"",                        "private", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/TimeTypes.ipp\"",                   "private", "<Sts1CobcSw/Utility/TimeTypes.hpp>", "public"] },
 
   # Include all our headers with <> instead of ""
   { include: ["\"Sts1CobcSw/Edu/Edu.hpp\"",                             "public", "<Sts1CobcSw/Edu/Edu.hpp>", "public"] },
@@ -73,6 +74,7 @@
   { include: ["\"Sts1CobcSw/FileSystem/LfsWrapper.hpp\"",               "public", "<Sts1CobcSw/FileSystem/LfsWrapper.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramLayout.hpp\"",             "public", "<Sts1CobcSw/FramSections/FramLayout.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/PersistentVariableInfo.hpp\"", "public", "<Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FramSections/PersistentVariables.hpp\"",    "public", "<Sts1CobcSw/FramSections/PersistentVariables.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/Section.hpp\"",                "public", "<Sts1CobcSw/FramSections/Section.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/SubsectionInfo.hpp\"",         "public", "<Sts1CobcSw/FramSections/SubsectionInfo.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/Subsections.hpp\"",            "public", "<Sts1CobcSw/FramSections/Subsections.hpp>", "public"] },
@@ -100,6 +102,7 @@
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                        "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",               "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Time.hpp\"",                        "public", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/TimeTypes.hpp\"",                   "public", "<Sts1CobcSw/Utility/TimeTypes.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/CommandParser.hpp\"",                       "public", "<Sts1CobcSw/CommandParser.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/EduCommunicationErrorThread.hpp\"",         "public", "<Sts1CobcSw/EduCommunicationErrorThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/EduListenerThread.hpp\"",                   "public", "<Sts1CobcSw/EduListenerThread.hpp>", "public"] },

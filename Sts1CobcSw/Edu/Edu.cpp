@@ -12,6 +12,8 @@
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
+#include <strong_type/difference.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <etl/vector.h>

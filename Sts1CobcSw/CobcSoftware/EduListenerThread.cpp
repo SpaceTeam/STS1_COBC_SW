@@ -9,6 +9,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>

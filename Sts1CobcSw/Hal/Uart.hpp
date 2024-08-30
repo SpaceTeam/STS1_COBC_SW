@@ -2,7 +2,7 @@
 
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <rodos_no_using_namespace.h>
 

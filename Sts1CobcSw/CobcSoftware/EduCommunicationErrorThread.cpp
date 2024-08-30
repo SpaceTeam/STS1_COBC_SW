@@ -5,7 +5,7 @@
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <strong_type/type.hpp>
+#include <strong_type/difference.hpp>
 
 #include <rodos_no_using_namespace.h>
 
