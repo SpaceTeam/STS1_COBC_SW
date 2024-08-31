@@ -58,15 +58,13 @@ private:
         if(not testWasSuccessful)
         {
             persistentVariables.template Store<"flashIsWorking">(false);
-            persistentVariables.template Store<"nFlashErrors">(
-                persistentVariables.template Load<"nFlashErrors">() + 1);
+            persistentVariables.template Increment<"nFlashErrors">();
         }
         testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
         if(not testWasSuccessful)
         {
             persistentVariables.template Store<"rfIsWorking">(false);
-            persistentVariables.template Store<"nRfErrors">(
-                persistentVariables.template Load<"nRfErrors">() + 1);
+            persistentVariables.template Increment<"nRfErrors">();
             AT(NOW() + 2 * RODOS::SECONDS);
             RODOS::hwResetAndReboot();
         }
@@ -81,14 +79,12 @@ private:
             if(NOW() > flash::spi.TransferEnd())
             {
                 timeoutHappened = true;
-                persistentVariables.template Store<"nFlashErrors">(
-                    persistentVariables.template Load<"nFlashErrors">() + 1);
+                persistentVariables.template Increment<"nFlashErrors">();
             }
             if(NOW() > rf::spi.TransferEnd())
             {
                 timeoutHappened = true;
-                persistentVariables.template Store<"nRfErrors">(
-                    persistentVariables.template Load<"nRfErrors">() + 1);
+                persistentVariables.template Increment<"nRfErrors">();
             }
             if(timeoutHappened)
             {

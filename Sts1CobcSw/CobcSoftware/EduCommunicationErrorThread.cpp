@@ -38,8 +38,7 @@ private:
         {
             SuspendUntil(endOfTime);
 
-            persistentVariables.template Store<"eduCommunicationErrorCounter">(
-                persistentVariables.template Load<"eduCommunicationErrorCounter">() + 1);
+            persistentVariables.template Increment<"eduCommunicationErrorCounter">();
 
             DEBUG_PRINT("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU

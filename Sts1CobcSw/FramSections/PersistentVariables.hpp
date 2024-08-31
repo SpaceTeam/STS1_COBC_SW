@@ -34,6 +34,8 @@ public:
     [[nodiscard]] static auto Load() -> ValueType<name>;
     template<StringLiteral name>
     [[nodiscard]] static auto Store(ValueType<name> const & value);
+    template<StringLiteral name>
+    [[nodiscard]] static auto Increment();
 
 
 private:

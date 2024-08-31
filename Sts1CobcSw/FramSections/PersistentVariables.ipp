@@ -38,7 +38,7 @@ auto PersistentVariables<parentSection0,
     auto voteResult = ComputeMajorityVote(value0, value1, value2);
     auto value = voteResult.value_or(value0);
     auto allVotesAreEqual = (value0 == value1) && (value1 == value2);
-    if(not allVotesAreEqual)
+    if(not allVotesAreEqual and fram::framIsWorking.Load())
     {
         WriteToFram<name>(value);
     }
@@ -60,6 +60,32 @@ auto PersistentVariables<parentSection0,
                          PersistentVariableInfos...>::Store(ValueType<name> const & value)
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    if(fram::framIsWorking.Load())
+    {
+        WriteToFram<name>(value);
+    }
+    WriteToCache<name>(value);
+}
+
+
+template<Section parentSection0,
+         Section parentSection1,
+         Section parentSection2,
+         APersistentVariableInfo... PersistentVariableInfos>
+    requires(sizeof...(PersistentVariableInfos) > 0 && parentSection0.end <= parentSection1.begin
+             && parentSection1.end <= parentSection2.begin)
+template<StringLiteral name>
+auto PersistentVariables<parentSection0,
+                         parentSection1,
+                         parentSection2,
+                         PersistentVariableInfos...>::Increment()
+{
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    auto [value0, value1, value2] =
+        fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
+    auto voteResult = ComputeMajorityVote(value0, value1, value2);
+    auto value = voteResult.value_or(value0);
+    value++;
     if(fram::framIsWorking.Load())
     {
         WriteToFram<name>(value);
