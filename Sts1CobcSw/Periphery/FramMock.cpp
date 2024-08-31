@@ -1,4 +1,6 @@
+#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/type.hpp>
 
@@ -7,6 +9,9 @@
 
 namespace sts1cobcsw::fram
 {
+EdacVariable<bool> framIsWorking(true);
+
+
 auto doInitialize = empty::DoInitialize;
 auto doReadDeviceId = empty::DoReadDeviceId;
 auto doActualBaudRate = empty::DoActualBaudRate;
@@ -133,7 +138,7 @@ auto DoReadFrom([[maybe_unused]] Address address,
 
 namespace ram
 {
-std::array<Byte, memorySize> memory{};
+std::array<Byte, value_of(memorySize)> memory{};
 
 
 auto SetAllDoFunctions() -> void

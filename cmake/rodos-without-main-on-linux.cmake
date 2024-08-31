@@ -1,0 +1,7 @@
+add_library(rodos_without_main_on_linux INTERFACE)
+add_library(rodos::without_main_on_linux ALIAS rodos_without_main_on_linux)
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+    target_link_libraries(rodos_without_main_on_linux INTERFACE rodos::without_main)
+else()
+    target_link_libraries(rodos_without_main_on_linux INTERFACE rodos::rodos)
+endif()

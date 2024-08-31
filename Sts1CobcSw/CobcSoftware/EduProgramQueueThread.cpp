@@ -9,6 +9,7 @@
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>

@@ -95,7 +95,7 @@
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "ENABLE_CCACHE": "OFF"
+        "USE_CCACHE": "OFF"
       }
     },
     {
@@ -106,7 +106,7 @@
       "cacheVariables": {
         "ENABLE_COVERAGE": "ON",
         "CMAKE_BUILD_TYPE": "Coverage",
-        "CMAKE_CXX_FLAGS_COVERAGE": "-Og -g --coverage -fkeep-inline-functions -fkeep-static-functions",
+        "CMAKE_CXX_FLAGS_COVERAGE": "-O0 -g --coverage",
         "CMAKE_EXE_LINKER_FLAGS_COVERAGE": "--coverage",
         "CMAKE_SHARED_LINKER_FLAGS_COVERAGE": "--coverage"
       }
@@ -139,13 +139,23 @@
     {
       "name": "ci-linux-x86",
       "binaryDir": "${sourceDir}/build/linux-x86",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix", "include-what-you-use"],
+      "inherits": [
+        "dev-mode",
+        "clang-tidy",
+        "ci-unix",
+        "include-what-you-use"
+      ],
       "toolchainFile": "/linux-x86.cmake"
     },
     {
       "name": "ci-cobc",
       "binaryDir": "${sourceDir}/build/cobc",
-      "inherits": ["dev-mode", "cppcheck", "clang-tidy", "ci-unix", "include-what-you-use"],
+      "inherits": [
+        "dev-mode",
+        "clang-tidy",
+        "ci-unix",
+        "include-what-you-use"
+      ],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"

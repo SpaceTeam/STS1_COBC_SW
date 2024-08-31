@@ -16,6 +16,11 @@
 
 namespace sts1cobcsw::fram
 {
+// --- Public globals ---
+
+EdacVariable<bool> framIsWorking(true);
+
+
 // --- Private globals ---
 
 constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;

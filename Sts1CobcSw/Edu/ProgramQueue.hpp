@@ -1,12 +1,14 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-#include <strong_type/ordered_with.hpp>
+#include <strong_type/type.hpp>
 
 #include <etl/vector.h>
 
@@ -37,12 +39,13 @@ inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
 
 namespace edu
 {
-inline constexpr auto programQueueSize = 20;
-static_assert(programQueueSize * totalSerialSize<ProgramQueueEntry> <= fram::EduProgramQueue::size,
-              "Size of EDU program queue exceeds size of FRAM section");
+inline constexpr auto nProgramQueueEntries =
+    value_of(framSections.template Get<"eduProgramQueue">().size)
+    / totalSerialSize<ProgramQueueEntry>;
+
 
 extern std::uint16_t queueIndex;
-extern etl::vector<ProgramQueueEntry, programQueueSize> programQueue;
+extern etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue;
 
 
 template<std::endian endianness>

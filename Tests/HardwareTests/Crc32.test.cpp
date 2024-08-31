@@ -27,7 +27,7 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/Crc32.hpp>
+#include <Sts1CobcSw/Utility/Crc32Hardware.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>

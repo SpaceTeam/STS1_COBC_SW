@@ -15,6 +15,7 @@ include(cmake/variables.cmake)
 include(cmake/custom-commands.cmake)
 include(cmake/clang-tidy-cache.cmake)
 include(cmake/ccache.cmake)
+include(cmake/rodos-without-main-on-linux.cmake)
 
 # ---- Find dependencies ----
 
@@ -28,11 +29,13 @@ find_package_and_notify(strong_type)
 add_library(Sts1CobcSw_Dummy STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
+add_library(Sts1CobcSw_FramSections INTERFACE)
 add_library(Sts1CobcSw_Outcome INTERFACE)
 add_library(Sts1CobcSw_ProgramId INTERFACE)
+add_library(Sts1CobcSw_Periphery STATIC)
+add_library(Sts1CobcSw_PersistentState INTERFACE)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility STATIC)
-add_library(Sts1CobcSw_Periphery STATIC)
 add_program(HelloDummy)
 # add_program(Heartbeat)
 

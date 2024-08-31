@@ -1,12 +1,14 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-#include <strong_type/ordered_with.hpp>
+#include <strong_type/type.hpp>
 
 // clang-format off
 #include <cstdint>
@@ -52,12 +54,12 @@ inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
 
 namespace edu
 {
-inline constexpr auto programStatusHistorySize = 20;
-static_assert(programStatusHistorySize * totalSerialSize<ProgramStatusHistoryEntry>
-                  <= fram::EduProgramStatusHistory::size,
-              "Size of EDU program status history exceeds size of FRAM section");
+inline constexpr auto nProgramStatusHistoryEntries =
+    value_of(framSections.template Get<"eduProgramStatusHistory">().size)
+    / serialSize<ProgramStatusHistoryEntry>;
 
-extern RODOS::RingBuffer<ProgramStatusHistoryEntry, programStatusHistorySize> programStatusHistory;
+extern RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries>
+    programStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)

@@ -1,7 +1,8 @@
 #include <Sts1CobcSw/CobcSoftware/RfStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
-#include <Sts1CobcSw/Periphery/PersistentState.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -33,7 +34,7 @@ private:
         auto partNumber = rf::ReadPartNumber();
         if(partNumber != rf::correctPartNumber)
         {
-            persistentstate::RfIsWorking(false);
+            persistentVariables.template Store<"rfIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         RODOS::AT(RODOS::END_OF_TIME);

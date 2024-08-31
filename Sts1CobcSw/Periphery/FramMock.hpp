@@ -4,6 +4,8 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -37,8 +39,7 @@ auto DoReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t t
 // Do functions that simulate the FRAM in RAM
 namespace ram
 {
-constexpr auto memorySize = 1U << 20U;
-extern std::array<Byte, memorySize> memory;
+extern std::array<Byte, value_of(memorySize)> memory;
 
 
 auto SetAllDoFunctions() -> void;

@@ -3,11 +3,14 @@
 #include <Sts1CobcSw/CobcSoftware/RfStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
-#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -48,20 +51,20 @@ private:
         auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
         if(not testWasSuccessful)
         {
-            persistentstate::FramIsWorking(false);
-            persistentstate::EpsIsWorking(false);
+            fram::framIsWorking.Store(false);
+            persistentVariables.template Store<"epsIsWorking">(false);
         }
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
         if(not testWasSuccessful)
         {
-            persistentstate::FlashIsWorking(false);
-            persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
+            persistentVariables.template Store<"flashIsWorking">(false);
+            persistentVariables.template Increment<"nFlashErrors">();
         }
         testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
         if(not testWasSuccessful)
         {
-            persistentstate::RfIsWorking(false);
-            persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
+            persistentVariables.template Store<"rfIsWorking">(false);
+            persistentVariables.template Increment<"nRfErrors">();
             AT(NOW() + 2 * RODOS::SECONDS);
             RODOS::hwResetAndReboot();
         }
@@ -76,12 +79,12 @@ private:
             if(NOW() > flash::spi.TransferEnd())
             {
                 timeoutHappened = true;
-                persistentstate::FlashErrorCounter(persistentstate::FlashErrorCounter() + 1);
+                persistentVariables.template Increment<"nFlashErrors">();
             }
             if(NOW() > rf::spi.TransferEnd())
             {
                 timeoutHappened = true;
-                persistentstate::RfErrorCounter(persistentstate::RfErrorCounter() + 1);
+                persistentVariables.template Increment<"nRfErrors">();
             }
             if(timeoutHappened)
             {

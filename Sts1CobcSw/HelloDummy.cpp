@@ -5,6 +5,8 @@
 
 #include <etl/string.h>
 
+#include <cinttypes>  // IWYU pragma: keep
+
 
 namespace RODOS
 {
@@ -27,7 +29,7 @@ class HelloDummy : public RODOS::StaticThread<>
         TIME_LOOP(0, 500 * RODOS::MILLISECONDS)
         {
             RODOS::PRINTF("Hello %s!\n", dummy.name.data());
-            DEBUG_PRINT("Debug printing ! printfMask = %d\n", printfMask);
+            DEBUG_PRINT("Debug printing ! printfMask = %" PRIu32 "\n", printfMask);
         }
     }
 } helloDummy;

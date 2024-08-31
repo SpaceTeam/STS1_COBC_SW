@@ -8,7 +8,7 @@ using sts1cobcsw::DeserializeFrom;
 using sts1cobcsw::SerializeTo;
 
 
-etl::vector<ProgramQueueEntry, programQueueSize> programQueue{};
+etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue{};
 std::uint16_t queueIndex = 0;
 
 

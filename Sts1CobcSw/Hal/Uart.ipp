@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/Hal/Uart.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 
 namespace sts1cobcsw::hal
