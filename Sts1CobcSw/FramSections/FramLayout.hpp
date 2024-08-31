@@ -41,5 +41,6 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"rfIsWorking", bool>,
                         PersistentVariableInfo<"nRfErrors", std::uint16_t>,
                         PersistentVariableInfo<"nFileSystemErrors", std::uint16_t>,
-                        PersistentVariableInfo<"eduShouldBePowered", bool>>{};
+                        PersistentVariableInfo<"eduShouldBePowered", bool>,
+                        PersistentVariableInfo<"eduCommunicationErrorCounter", std::uint16_t>>{};
 }

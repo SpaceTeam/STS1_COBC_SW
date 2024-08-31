@@ -1,10 +1,11 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
-#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32Software.hpp>
@@ -85,15 +86,13 @@ auto FlushUartReceiveBuffer() -> void;
 auto Initialize() -> void
 {
     eduEnableGpioPin.Direction(hal::PinDirection::out);
-    // TODO: I think we should actually read from persistent state to determine whether the EDU
-    // should be powered or not. We do have a separate EDU power management thread which though.
-    TurnOff();
+    persistentVariables.template Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
 }
 
 
 auto TurnOn() -> void
 {
-    persistentstate::EduShouldBePowered(true);
+    persistentVariables.template Store<"eduShouldBePowered">(true);
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
@@ -104,7 +103,7 @@ auto TurnOn() -> void
 
 auto TurnOff() -> void
 {
-    persistentstate::EduShouldBePowered(false);
+    persistentVariables.template Store<"eduShouldBePowered">(false);
     eduEnableGpioPin.Reset();
     hal::Deinitialize(&uart);
 }

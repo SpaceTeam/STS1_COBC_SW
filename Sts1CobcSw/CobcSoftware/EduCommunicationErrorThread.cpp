@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
@@ -14,7 +15,6 @@ namespace sts1cobcsw
 {
 constexpr auto stackSize = 2'000U;
 constexpr auto eduShutDownDelay = 2 * s;
-std::int32_t eduCommunicationErrorCounter = 0;
 
 
 class EduCommunicationErrorThread : public RODOS::StaticThread<stackSize>
@@ -38,7 +38,8 @@ private:
         {
             SuspendUntil(endOfTime);
 
-            eduCommunicationErrorCounter++;
+            persistentVariables.template Store<"eduCommunicationErrorCounter">(
+                persistentVariables.template Load<"eduCommunicationErrorCounter">() + 1);
 
             DEBUG_PRINT("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU

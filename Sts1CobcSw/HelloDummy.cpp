@@ -5,7 +5,7 @@
 
 #include <etl/string.h>
 
-#include <cinttypes>
+#include <cinttypes>  // IWYU pragma: keep
 
 
 namespace RODOS

@@ -1,8 +1,9 @@
 #include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
-#include <Sts1CobcSw/Periphery/PersistentState.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -35,7 +36,7 @@ private:
         if(jedecId.deviceId != flash::correctJedecId.deviceId
            || jedecId.manufacturerId != flash::correctJedecId.manufacturerId)
         {
-            persistentstate::FlashIsWorking(false);
+            persistentVariables.template Store<"flashIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         RODOS::AT(RODOS::END_OF_TIME);

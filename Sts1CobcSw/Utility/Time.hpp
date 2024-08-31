@@ -8,8 +8,6 @@
 
 namespace sts1cobcsw
 {
-
-
 constexpr auto seconds = Duration(RODOS::SECONDS);
 constexpr auto milliseconds = Duration(RODOS::MILLISECONDS);
 constexpr auto microseconds = Duration(RODOS::MICROSECONDS);
@@ -37,13 +35,6 @@ constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
 [[nodiscard]] auto CurrentRodosTime() -> RodosTime;
 auto SuspendUntil(RodosTime time) -> void;
 auto SuspendFor(Duration duration) -> void;
-
-
-// TODO: Replace this with a persistent variable
-namespace internal
-{
-extern Duration realTimeOffset;
-}
 }
 
 
