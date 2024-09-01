@@ -25,20 +25,6 @@ target_link_libraries(
 add_program(Outcome Outcome.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
 
-# TODO: Fix the problem with two main()s, one from Rodos one from Catch, somehow
-if(FALSE)
-    add_program(PersistentState PersistentState.test.cpp)
-    target_link_libraries(
-        Sts1CobcSwTests_PersistentState PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-    )
-endif()
-
-add_program(PersistentVariable PersistentVariable.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_PersistentVariable PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-                                               Sts1CobcSw_PersistentState
-)
-
 add_program(PersistentVariableInfo PersistentVariableInfo.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_PersistentVariableInfo
