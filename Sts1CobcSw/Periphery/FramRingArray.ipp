@@ -2,112 +2,139 @@
 
 
 #include <Sts1CobcSw/Periphery/FramRingArray.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 
-namespace sts1cobcsw::fram
+namespace sts1cobcsw
 {
-template<typename T, std::size_t size, Address startAddress>
-void RingArray<T, size, startAddress>::Push(T const & newData)
-{
-    auto const rawAddress = offset_ + value_of(startAddress) + (iEnd_ * serialSize<T>);
-    fram::WriteTo(fram::Address(rawAddress), Span(Serialize(newData)), 0);
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+typename RingArray<T, ringArraySection>::RingIndex RingArray<T, ringArraySection>::iEnd =
+    RingIndex{};
 
-    ++iEnd_;
-    if(iEnd_ == iBegin_)
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+typename RingArray<T, ringArraySection>::RingIndex RingArray<T, ringArraySection>::iBegin =
+    RingIndex{};
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+inline constexpr auto RingArray<T, ringArraySection>::Capacity() -> std::size_t
+{
+    return capacity;
+}
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::Size() -> std::size_t
+{
+    LoadIndexes();
+    return ComputeSize();
+}
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::Get(std::size_t index) -> T
+{
+    LoadIndexes();
+    auto size = ComputeSize();
+    if(index >= size)
     {
-        iBegin_++;
+        DEBUG_PRINT("Index out of bounds in RingArray::Get: %u >= %u\n", index, size);
+        index = size - 1;
     }
-
-    WriteIndices();
+    auto i = iBegin;
+    i.advance(static_cast<int>(index));
+    return ReadElement(i);
 }
 
 
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::Front() -> T
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::Front() -> T
 {
-    auto const rawAddress = offset_ + value_of(startAddress) + (iBegin_ * serialSize<T>);
-    auto readData = fram::ReadFrom<serialSize<T>>(fram::Address(rawAddress), 0);
-    auto fromRing = Deserialize<T>(std::span(readData));
-
-    return fromRing;
+    LoadIndexes();
+    return ReadElement(iBegin);
 }
 
 
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::Back() -> T
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::Back() -> T
 {
-    std::uint32_t readIndex = 0;
-    if(iEnd_ == 0)
+    LoadIndexes();
+    auto i = iEnd;
+    i--;
+    return ReadElement(i);
+}
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::PushBack(T const & t) -> void
+{
+    LoadIndexes();
+    WriteElement(iEnd, t);
+    // We reduce the capacity by one to distinguish between an empty and a full ring: iEnd == iBegin
+    // means empty, iEnd == iBegin - 1 means full
+    iEnd++;
+    if(iEnd == iBegin)
     {
-        readIndex = bufferSize_ - 1;
+        iBegin++;
     }
-    else
+    StoreIndexes();
+}
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::LoadIndexes() -> void
+{
+    iBegin.set(persistentIndexes.template Load<"iBegin">());
+    iEnd.set(persistentIndexes.template Load<"iEnd">());
+}
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::StoreIndexes() -> void
+{
+    persistentIndexes.template Store<"iBegin">(iBegin.get());
+    persistentIndexes.template Store<"iEnd">(iEnd.get());
+}
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::ComputeSize() -> std::size_t
+{
+    if(iEnd.get() >= iBegin.get())
     {
-        readIndex = iEnd_.get() - 1;
+        return iEnd.get() - iBegin.get();
     }
-
-    auto const rawAddress = offset_ + value_of(startAddress) + readIndex * serialSize<T>;
-    auto readData = fram::ReadFrom<serialSize<T>>(fram::Address(rawAddress), 0);
-    auto fromRing = Deserialize<T>(std::span(readData));
-
-    return fromRing;
+    return capacity + 1 + iEnd.get() - iBegin.get();
 }
 
 
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::operator[](std::size_t index) -> T
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::ReadElement(RingIndex index) -> T
 {
-    auto const rawAddress =
-        offset_ + value_of(startAddress) + ((iBegin_ + index) % bufferSize_) * serialSize<T>;
-    auto readData = fram::ReadFrom<serialSize<T>>(fram::Address(rawAddress), 0);
-    auto fromRing = Deserialize<T>(std::span(readData));
-
-    return fromRing;
+    auto address = subsections.template Get<"array">().begin + index.get() * elementSize;
+    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, value_of(spiTimeout)));
 }
 
 
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::Size() -> std::size_t
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::WriteElement(RingIndex index, T const & t) -> void
 {
-    if(iEnd_ >= iBegin_)
-    {
-        return (iEnd_ - iBegin_);
-    }
-    return (bufferSize_ - (iBegin_ - iEnd_));
-}
-
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::Capacity() -> std::size_t
-{
-    return (bufferSize_ - 1U);
-}
-
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::Initialize() -> void
-{
-    ReadIndices();
-}
-
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::WriteIndices() -> void
-{
-    auto beginAddress = value_of(startAddress);
-    auto endAddress = beginAddress + sizeof(std::size_t);
-
-    fram::WriteTo(fram::Address(beginAddress), Span(Serialize(iBegin_.get())), 0);
-    fram::WriteTo(fram::Address(endAddress), Span(Serialize(iEnd_.get())), 0);
-}
-
-template<typename T, std::size_t size, Address startAddress>
-auto RingArray<T, size, startAddress>::ReadIndices() -> void
-{
-    auto beginAddress = value_of(startAddress);
-    auto endAddress = beginAddress + sizeof(std::size_t);
-
-    auto beginData = fram::ReadFrom<sizeof(std::size_t)>(fram::Address(beginAddress), 0);
-    auto endData = fram::ReadFrom<sizeof(std::size_t)>(fram::Address(endAddress), 0);
-
-    iBegin_.set(Deserialize<std::size_t>(std::span(beginData)));
-    iEnd_.set(Deserialize<std::size_t>(std::span(endData)));
+    auto address = subsections.template Get<"array">().begin + index.get() * elementSize;
+    fram::WriteTo(address, Span(Serialize(t)), value_of(spiTimeout));
 }
 }
