@@ -14,12 +14,6 @@ target_link_libraries(
                                  Sts1CobcSw_Utility
 )
 
-add_program(FramRingArray FramRingArray.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_FramRingArray PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-                                          Sts1CobcSw_Serial Sts1CobcSw_Edu
-)
-
 add_program(LfsRam LfsRam.test.cpp)
 target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
 
@@ -90,6 +84,13 @@ target_link_libraries(
             Sts1CobcSw_Utility
 )
 add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
+
+add_program(FramRingArray FramRingArray.test.cpp UnitTestThread.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_FramRingArray PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
+                                          Sts1CobcSw_Edu
+)
+add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
 # --- All unit tests ---
 

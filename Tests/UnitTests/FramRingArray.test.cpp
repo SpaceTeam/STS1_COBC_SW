@@ -1,245 +1,86 @@
-#include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
+#include <Tests/UnitTests/UnitTestThread.hpp>
+
+#include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Periphery/FramRingArray.hpp>
-#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <strong_type/equality.hpp>
+#include <strong_type/type.hpp>
 
-#include <etl/circular_buffer.h>
-
-#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <type_traits>
+
 
 namespace fram = sts1cobcsw::fram;
-
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
-TEST_CASE("Initial State ringbuffer")
-{
-    fram::RingArray<int, 10, fram::Address{0}> buffer;
 
-    REQUIRE(buffer.Size() == 0);
-    REQUIRE(buffer.Capacity() == 10);  // Fixed from 0 to 10 to reflect actual buffer capacity
-}
+inline constexpr auto section =
+    sts1cobcsw::Section<fram::Address(0), fram::Size(3 * 2 * sizeof(std::size_t) + 4)>{};
+inline constexpr auto charRingArray = sts1cobcsw::RingArray<char, section>{};
 
-TEST_CASE("FramRingArray Push function")
-{
-    fram::RingArray<int, 10, fram::Address{0}> buffer;
+static_assert(std::is_same_v<decltype(charRingArray)::ValueType, char>);
+static_assert(charRingArray.Capacity() == 3);
+static_assert(charRingArray.section.begin == fram::Address(0));
+static_assert(charRingArray.section.end == fram::Address(28));
+static_assert(charRingArray.section.size == fram::Size(28));
 
-    buffer.Push(1);
-    buffer.Push(2);
-    buffer.Push(3);
 
-    REQUIRE(buffer.Size() == 3);
-}
-
-TEMPLATE_TEST_CASE_SIG("FramRingArray Front Address",
-                       "",
-                       ((typename T, size_t S, fram::Address A), T, S, A),
-                       (int, 10U, fram::Address{0}),
-                       (int, 10U, fram::Address{31415}))
+auto RunUnitTest() -> void
 {
     fram::ram::SetAllDoFunctions();
     fram::ram::memory.fill(0x00_b);
     fram::Initialize();
 
-    fram::RingArray<T, S, A> buffer;
+    Require(charRingArray.Size() == 0);
 
-    // FIXME: [] not working
-    buffer.Push(10);
-    REQUIRE(buffer[0] == 10);
+    charRingArray.PushBack(11);
+    Require(charRingArray.Size() == 1);
+    Require(charRingArray.Front() == 11);
+    Require(charRingArray.Back() == 11);
 
-    buffer.Push(20);
-    REQUIRE(buffer[0] == 10);
-    REQUIRE(buffer[1] == 20);
+    charRingArray.PushBack(12);
+    Require(charRingArray.Size() == 2);
+    Require(charRingArray.Front() == 11);
+    Require(charRingArray.Back() == 12);
 
-    buffer.Push(30);
-    REQUIRE(buffer[0] == 10);
-    REQUIRE(buffer[1] == 20);
-    REQUIRE(buffer[2] == 30);
-}
+    charRingArray.PushBack(13);
+    Require(charRingArray.Size() == 3);
+    Require(charRingArray.Front() == 11);
+    Require(charRingArray.Back() == 13);
 
-TEST_CASE("FramRingArray Back() and Front() methods")
-{
-    fram::ram::SetAllDoFunctions();
-    fram::ram::memory.fill(0x00_b);
-    fram::Initialize();
+    Require(charRingArray.Get(0) == 11);
+    Require(charRingArray.Get(1) == 12);
+    Require(charRingArray.Get(2) == 13);
 
-    auto buffer = fram::RingArray<int, 5, fram::Address{0}>();
-    etl::circular_buffer<int, 5U> etlBuffer;
+    // Out-of-bounds access returns the last element and prints a debug message
+    Require(charRingArray.Get(17) == 13);
 
-    // NOLINTNEXTLINE (readability-container-size-empty)
-    CHECK(etlBuffer.size() == 0);
-    CHECK(etlBuffer.max_size() == 5);
-    CHECK(etlBuffer.capacity() == 5);
+    // PushBack writes to memory
+    constexpr auto ringArrayStartAddress = 3 * 2 * sizeof(std::size_t);
+    Require(fram::ram::memory[ringArrayStartAddress] == 11_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 1] == 12_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 2] == 13_b);
 
-    buffer.Push(1);
-    buffer.Push(2);
-    REQUIRE(buffer.Front() == 1);
-    buffer.Push(3);
+    // When pushing to a full ring, the size stays the same and the oldest element is lost
+    charRingArray.PushBack(14);
+    Require(charRingArray.Size() == 3);
+    Require(charRingArray.Front() == 12);
+    Require(charRingArray.Back() == 14);
 
-    etlBuffer.push(1);
-    etlBuffer.push(2);
-    etlBuffer.push(3);
+    // Only the (size + 2)th element overwrites the first one in memory because we keep a gap of one
+    // between begin and end indexes
+    charRingArray.PushBack(15);
+    Require(charRingArray.Size() == 3);
+    Require(charRingArray.Front() == 13);
+    Require(charRingArray.Back() == 15);
+    Require(fram::ram::memory[ringArrayStartAddress] == 15_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 1] == 12_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 2] == 13_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 3] == 14_b);
 
-    REQUIRE(etlBuffer.size() == 3);
-    REQUIRE(etlBuffer.capacity() == 5);
-    REQUIRE(etlBuffer.back() == 3);
-    REQUIRE(etlBuffer.front() == 1);
-
-    REQUIRE(buffer.Size() == 3);
-    REQUIRE(buffer.Capacity() == 5);
-    REQUIRE(buffer.Back() == 3);
-    REQUIRE(buffer.Front() == 1);
-
-    etlBuffer.push(4);
-    etlBuffer.push(5);
-    // Overwrite
-    etlBuffer.push(6);
-
-    buffer.Push(4);
-    buffer.Push(5);
-    buffer.Push(6);
-
-    REQUIRE(etlBuffer.front() == 2);
-    REQUIRE(buffer.Front() == 2);
-
-    REQUIRE(etlBuffer.back() == 6);
-    REQUIRE(buffer.Back() == 6);
-
-    REQUIRE(etlBuffer.size() == 5);
-    REQUIRE(etlBuffer.capacity() == 5);
-    REQUIRE(etlBuffer[0] == 2);
-    REQUIRE(etlBuffer[1] == 3);
-    REQUIRE(etlBuffer[2] == 4);
-    REQUIRE(buffer[0] == 2);
-    REQUIRE(buffer[1] == 3);
-    REQUIRE(buffer[2] == 4);
-}
-
-TEST_CASE("FramRingArray Full and Empty conditions")
-{
-    fram::ram::SetAllDoFunctions();
-    fram::ram::memory.fill(0x00_b);
-    fram::Initialize();
-
-    auto buffer = fram::RingArray<int, 3, fram::Address(0)>{};
-
-    REQUIRE(buffer.Size() == 0);
-    REQUIRE(buffer.Capacity() == 3);
-
-    buffer.Push(1);
-    buffer.Push(2);
-    buffer.Push(3);
-
-    REQUIRE(buffer.Size() == 3);
-    REQUIRE(buffer.Front() == 1);
-    REQUIRE(buffer.Back() == 3);
-
-    buffer.Push(4);  // Overwrite the oldest element
-
-    REQUIRE(buffer.Size() == 3);
-    REQUIRE(buffer.Front() == 2);
-    REQUIRE(buffer.Back() == 4);
-
-    buffer.Push(10);
-
-    REQUIRE(buffer.Size() == 3);
-    REQUIRE(buffer.Front() == 3);
-    REQUIRE(buffer.Back() == 10);
-}
-
-TEST_CASE("FramRingArray and ETL Circular Buffer")
-{
-    fram::ram::SetAllDoFunctions();
-    fram::ram::memory.fill(0x00_b);
-    fram::Initialize();
-
-    fram::RingArray<int, 5U, fram::Address{0}> framBuffer{};
-    etl::circular_buffer<int, 5U> etlBuffer;
-
-    for(int i = 0; i < 5; ++i)
-    {
-        framBuffer.Push(i);
-        etlBuffer.push(i);
-    }
-
-    REQUIRE(framBuffer.Size() == etlBuffer.size());
-    for(size_t i = 0; i < framBuffer.Size(); ++i)
-    {
-        REQUIRE(framBuffer[i] == etlBuffer[i]);
-    }
-
-    framBuffer.Push(5);
-    etlBuffer.push(5);
-
-    REQUIRE(framBuffer.Front() == etlBuffer.front());
-    REQUIRE(framBuffer.Back() == etlBuffer.back());
-}
-
-TEST_CASE("FramRingArray Stress Test")
-{
-    fram::ram::SetAllDoFunctions();
-    fram::ram::memory.fill(0x00_b);
-    fram::Initialize();
-
-    auto buffer = fram::RingArray<int, 10000, fram::Address{0}>();
-
-    for(int i = 0; i < 10000; ++i)
-    {
-        buffer.Push(i);
-    }
-
-    REQUIRE(buffer.Size() == 10000);
-
-    for(size_t i = 0; i < 10000; ++i)
-    {
-        REQUIRE(buffer[i] == static_cast<int>(i));
-    }
-}
-
-TEST_CASE("Custom Type")
-{
-    fram::ram::SetAllDoFunctions();
-    fram::ram::memory.fill(0x00_b);
-    fram::Initialize();
-
-
-    fram::RingArray<sts1cobcsw::edu::ProgramStatusHistoryEntry, 10U, fram::Address{0}> buffer;
-
-    auto pshEntry = sts1cobcsw::edu::ProgramStatusHistoryEntry{
-        .programId = sts1cobcsw::ProgramId(0),
-        .startTime = 0,
-        .status = sts1cobcsw::edu::ProgramStatus::programRunning};
-
-    // some things are wrong with the Serialize Functions here
-    buffer.Push(pshEntry);
-
-    REQUIRE(buffer.Size() == 1);
-    REQUIRE(buffer.Front().status == sts1cobcsw::edu::ProgramStatus::programRunning);
-}
-
-TEST_CASE("Reset mechanism")
-{
-    fram::ram::SetAllDoFunctions();
-    fram::ram::memory.fill(0x00_b);
-    fram::Initialize();
-
-    {
-        sts1cobcsw::fram::RingArray<int, 10, sts1cobcsw::fram::Address{1234}> buffer;
-        buffer.Push(1);
-        buffer.Push(2);
-        buffer.Push(3);
-    }
-
-    // Simulate a reset by creating a new buffer instance
-    fram::RingArray<int, 10, fram::Address{1234}> buffer;
-
-    REQUIRE(buffer.Size() == 3);
-    REQUIRE(buffer.Front() == 1);
-    REQUIRE(buffer.Back() == 3);
+    // TODO: Add tests with custom types
 }
