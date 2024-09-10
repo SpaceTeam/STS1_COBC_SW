@@ -12,7 +12,7 @@
 #include <Sts1CobcSw/Utility/Time.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-#include <rodos-debug.h>
+#include <rodos/api/rodos-semaphore.h>
 
 #include <etl/cyclic_value.h>
 
@@ -24,7 +24,6 @@
 // TODO: Move to FramSections
 namespace sts1cobcsw
 {
-// TODO: Make RingArray thread-safe with semaphores and scope protectors
 template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
 class RingArray
@@ -36,7 +35,7 @@ public:
     [[nodiscard]] static constexpr auto Capacity() -> std::size_t;
     [[nodiscard]] static auto Size() -> std::size_t;
     [[nodiscard]] static auto Get(std::size_t index) -> T;
-    // TODO: We might also need Set(index, t)
+    // TODO: We also need Set(index, t)
     [[nodiscard]] static auto Front() -> T;
     [[nodiscard]] static auto Back() -> T;
     static auto PushBack(T const & t) -> void;
@@ -66,6 +65,7 @@ private:
 
     static RingIndex iEnd;
     static RingIndex iBegin;
+    static RODOS::Semaphore semaphore;
 
     static auto LoadIndexes() -> void;
     static auto StoreIndexes() -> void;

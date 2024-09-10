@@ -22,6 +22,11 @@ typename RingArray<T, ringArraySection>::RingIndex RingArray<T, ringArraySection
 
 template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
+RODOS::Semaphore RingArray<T, ringArraySection>::semaphore = RODOS::Semaphore{};
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
 inline constexpr auto RingArray<T, ringArraySection>::Capacity() -> std::size_t
 {
     return capacity;
@@ -32,6 +37,7 @@ template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection>::Size() -> std::size_t
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     LoadIndexes();
     return ComputeSize();
 }
@@ -41,6 +47,7 @@ template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection>::Get(std::size_t index) -> T
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     LoadIndexes();
     auto size = ComputeSize();
     if(index >= size)
@@ -58,6 +65,7 @@ template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection>::Front() -> T
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     LoadIndexes();
     return ReadElement(iBegin);
 }
@@ -67,6 +75,7 @@ template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection>::Back() -> T
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     LoadIndexes();
     auto i = iEnd;
     i--;
@@ -78,6 +87,7 @@ template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection>::PushBack(T const & t) -> void
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     LoadIndexes();
     WriteElement(iEnd, t);
     // We reduce the capacity by one to distinguish between an empty and a full ring: iEnd == iBegin
