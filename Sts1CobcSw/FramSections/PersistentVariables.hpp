@@ -28,8 +28,6 @@ public:
         Subsections<parentSection0, PersistentVariableInfos...>::template Index<name>(),
         std::tuple<typename PersistentVariableInfos::ValueType...>>;
 
-    constexpr PersistentVariables() = default;
-
     template<StringLiteral name>
     [[nodiscard]] static auto Load() -> ValueType<name>;
     template<StringLiteral name>
