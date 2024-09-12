@@ -21,6 +21,7 @@
 #include <span>
 
 
+// TODO: Add cache in case the FRAM is not working
 // TODO: Move to FramSections
 namespace sts1cobcsw
 {
@@ -35,9 +36,9 @@ public:
     [[nodiscard]] static constexpr auto Capacity() -> std::size_t;
     [[nodiscard]] static auto Size() -> std::size_t;
     [[nodiscard]] static auto Get(std::size_t index) -> T;
-    // TODO: We also need Set(index, t)
     [[nodiscard]] static auto Front() -> T;
     [[nodiscard]] static auto Back() -> T;
+    static auto Set(std::size_t index, T const & t) -> void;
     static auto PushBack(T const & t) -> void;
 
 

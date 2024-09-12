@@ -9,6 +9,7 @@
 #include <strong_type/equality.hpp>
 #include <strong_type/type.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <type_traits>
@@ -31,11 +32,17 @@ static_assert(charRingArray.section.size == fram::Size(28));
 
 auto RunUnitTest() -> void
 {
+    using fram::ram::memory;
+
     fram::ram::SetAllDoFunctions();
-    fram::ram::memory.fill(0x00_b);
     fram::Initialize();
+    memory.fill(0x00_b);
 
     Require(charRingArray.Size() == 0);
+
+    // Trying to set an element in an empty ring prints a debug message and does not set anything
+    charRingArray.Set(0, 11);
+    Require(std::all_of(memory.begin(), memory.end(), [](auto x) { return x == 0_b; }));
 
     charRingArray.PushBack(11);
     Require(charRingArray.Size() == 1);
@@ -56,12 +63,9 @@ auto RunUnitTest() -> void
     Require(charRingArray.Get(1) == 12);
     Require(charRingArray.Get(2) == 13);
 
-    // Out-of-bounds access returns the last element and prints a debug message
-    Require(charRingArray.Get(17) == 13);
-
     // PushBack writes to memory
     constexpr auto ringArrayStartAddress = 3 * 2 * sizeof(std::size_t);
-    Require(fram::ram::memory[ringArrayStartAddress] == 11_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 0] == 11_b);
     Require(fram::ram::memory[ringArrayStartAddress + 1] == 12_b);
     Require(fram::ram::memory[ringArrayStartAddress + 2] == 13_b);
 
@@ -77,10 +81,30 @@ auto RunUnitTest() -> void
     Require(charRingArray.Size() == 3);
     Require(charRingArray.Front() == 13);
     Require(charRingArray.Back() == 15);
-    Require(fram::ram::memory[ringArrayStartAddress] == 15_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 0] == 15_b);
     Require(fram::ram::memory[ringArrayStartAddress + 1] == 12_b);
     Require(fram::ram::memory[ringArrayStartAddress + 2] == 13_b);
     Require(fram::ram::memory[ringArrayStartAddress + 3] == 14_b);
+
+    // Set() writes to memory
+    charRingArray.Set(0, 21);
+    charRingArray.Set(1, 22);
+    charRingArray.Set(2, 23);
+    Require(charRingArray.Get(0) == 21);
+    Require(charRingArray.Get(1) == 22);
+    Require(charRingArray.Get(2) == 23);
+    Require(fram::ram::memory[ringArrayStartAddress + 0] == 23_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 1] == 12_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 2] == 21_b);
+    Require(fram::ram::memory[ringArrayStartAddress + 3] == 22_b);
+
+    // Get() with out-of-bounds index prints a debug message and returns the last element
+    Require(charRingArray.Get(17) == 23);
+    // Set() with out-of-bounds index prints a debug message and does not set anything
+    charRingArray.Set(17, 0);
+    Require(charRingArray.Get(0) == 21);
+    Require(charRingArray.Get(1) == 22);
+    Require(charRingArray.Get(2) == 23);
 
     // TODO: Add tests with custom types
 }

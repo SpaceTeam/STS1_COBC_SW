@@ -85,6 +85,24 @@ auto RingArray<T, ringArraySection>::Back() -> T
 
 template<typename T, Section ringArraySection>
     requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection>::Set(std::size_t index, T const & t) -> void
+{
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    LoadIndexes();
+    auto size = ComputeSize();
+    if(index >= size)
+    {
+        DEBUG_PRINT("Index out of bounds in RingArray::Set: %u >= %u\n", index, size);
+        return;
+    }
+    auto i = iBegin;
+    i.advance(static_cast<int>(index));
+    WriteElement(i, t);
+}
+
+
+template<typename T, Section ringArraySection>
+    requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection>::PushBack(T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
