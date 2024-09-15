@@ -1,6 +1,5 @@
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
@@ -11,8 +10,6 @@ using sts1cobcsw::APersistentVariableInfo;
 using sts1cobcsw::isAPersistentVariableInfo;
 using sts1cobcsw::PersistentVariableInfo;
 using sts1cobcsw::SubsectionInfoLike;
-using sts1cobcsw::fram::Address;
-using sts1cobcsw::fram::Size;
 
 
 TEST_CASE("All static_asserts passed")

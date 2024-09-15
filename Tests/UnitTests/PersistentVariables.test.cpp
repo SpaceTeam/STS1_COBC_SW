@@ -9,6 +9,7 @@
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <array>
@@ -23,16 +24,10 @@ using sts1cobcsw::fram::Address;
 using sts1cobcsw::fram::Size;
 
 
-constexpr auto section0 = Section<Address(0), Size(100)>();
-constexpr auto section1 = Section<Address(100), Size(100)>();
-constexpr auto section2 = Section<Address(200), Size(100)>();
-
-constexpr auto pvs = PersistentVariables<section0,
-                                         section1,
-                                         section2,
+constexpr auto pvs = PersistentVariables<Section<Address(0), Size(60)>{},
                                          PersistentVariableInfo<"nResets", std::uint32_t>,
                                          PersistentVariableInfo<"activeFwImage", std::uint8_t>,
-                                         PersistentVariableInfo<"somethingElse", std::int16_t>>();
+                                         PersistentVariableInfo<"somethingElse", std::int16_t>>{};
 
 static_assert(std::is_same_v<decltype(pvs)::ValueType<"nResets">, std::uint32_t>);
 static_assert(std::is_same_v<decltype(pvs)::ValueType<"activeFwImage">, std::uint8_t>);
@@ -54,8 +49,8 @@ auto RunUnitTest() -> void
     constexpr auto nResetsAddress0 = 0;
     constexpr auto activeFwImageAddress0 = 4;
     constexpr auto somethingElseAddress0 = 5;
-    constexpr auto activeFwImageAddress1 = activeFwImageAddress0 + 100;
-    constexpr auto activeFwImageAddress2 = activeFwImageAddress1 + 100;
+    constexpr auto activeFwImageAddress1 = activeFwImageAddress0 + value_of(pvs.section.size / 3);
+    constexpr auto activeFwImageAddress2 = activeFwImageAddress1 + value_of(pvs.section.size / 3);
 
     sts1cobcsw::fram::ram::SetAllDoFunctions();
 

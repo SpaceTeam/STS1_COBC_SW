@@ -5,8 +5,9 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 
-#include <cinttypes>  // IWYU pragma: keep
+#include <strong_type/type.hpp>
 
+#include <cinttypes>  // IWYU pragma: keep
 
 namespace sts1cobcsw
 {

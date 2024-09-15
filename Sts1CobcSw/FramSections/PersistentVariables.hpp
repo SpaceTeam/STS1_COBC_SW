@@ -14,21 +14,17 @@
 
 namespace sts1cobcsw
 {
-template<Section parentSection0,
-         Section parentSection1,
-         Section parentSection2,
-         APersistentVariableInfo... PersistentVariableInfos>
-    requires(sizeof...(PersistentVariableInfos) > 0 && parentSection0.end <= parentSection1.begin
-             && parentSection1.end <= parentSection2.begin)
+template<Section persistentVariablesSection, APersistentVariableInfo... PersistentVariableInfos>
+    requires(sizeof...(PersistentVariableInfos) > 0)
 class PersistentVariables
 {
 public:
+    static constexpr auto section = persistentVariablesSection;
+
     template<StringLiteral name>
     using ValueType = std::tuple_element_t<
-        Subsections<parentSection0, PersistentVariableInfos...>::template Index<name>(),
+        Subsections<section, PersistentVariableInfos...>::template Index<name>(),
         std::tuple<typename PersistentVariableInfos::ValueType...>>;
-
-    constexpr PersistentVariables() = default;
 
     template<StringLiteral name>
     [[nodiscard]] static auto Load() -> ValueType<name>;
@@ -52,9 +48,16 @@ private:
     static std::tuple<typename PersistentVariableInfos::ValueType...> cache1;
     static std::tuple<typename PersistentVariableInfos::ValueType...> cache2;
 
-    static constexpr auto subsections0 = Subsections<parentSection0, PersistentVariableInfos...>();
-    static constexpr auto subsections1 = Subsections<parentSection1, PersistentVariableInfos...>();
-    static constexpr auto subsections2 = Subsections<parentSection2, PersistentVariableInfos...>();
+    static constexpr auto subsections = Subsections<section,
+                                                    SubsectionInfo<"0", section.size / 3>,
+                                                    SubsectionInfo<"1", section.size / 3>,
+                                                    SubsectionInfo<"2", section.size / 3>>{};
+    static constexpr auto variables0 =
+        Subsections<subsections.template Get<"0">(), PersistentVariableInfos...>();
+    static constexpr auto variables1 =
+        Subsections<subsections.template Get<"1">(), PersistentVariableInfos...>();
+    static constexpr auto variables2 =
+        Subsections<subsections.template Get<"2">(), PersistentVariableInfos...>();
 
     // With a baud rate of 48 MHz we can read 6000 bytes in 1 ms, which should be more than enough
     static constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;

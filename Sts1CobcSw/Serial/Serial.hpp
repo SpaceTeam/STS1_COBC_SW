@@ -59,25 +59,24 @@ inline constexpr auto defaultEndianness = std::endian::little;
 
 template<typename T>
     requires(serialSize<T> != 0)
-using Buffer = std::array<Byte, serialSize<T>>;
+using SerialBuffer = std::array<Byte, serialSize<T>>;
 
-// TODO: Maybe remove this type alias or prepend "Serial" to both again
 template<typename T>
     requires(serialSize<T> != 0)
-using BufferView = std::span<Byte const, serialSize<T>>;
+using SerialBufferView = std::span<Byte const, serialSize<T>>;
 
 
 template<typename T>
-[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>;
+[[nodiscard]] auto Serialize(T const & t) -> SerialBuffer<T>;
 
 template<std::endian endianness, typename T>
-[[nodiscard]] auto Serialize(T const & t) -> Buffer<T>;
+[[nodiscard]] auto Serialize(T const & t) -> SerialBuffer<T>;
 
 template<std::default_initializable T>
-[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
+[[nodiscard]] auto Deserialize(SerialBufferView<T> bufferView) -> T;
 
 template<std::endian endianness, std::default_initializable T>
-[[nodiscard]] auto Deserialize(BufferView<T> bufferView) -> T;
+[[nodiscard]] auto Deserialize(SerialBufferView<T> bufferView) -> T;
 
 // Must be overloaded for user-defined types to be serializable
 template<std::endian endianness, TriviallySerializable T>

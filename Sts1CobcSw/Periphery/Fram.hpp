@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/equality.hpp>
 #include <strong_type/ordered.hpp>
 #include <strong_type/ordered_with.hpp>
@@ -20,11 +21,8 @@ namespace sts1cobcsw::fram
 {
 // NOLINTNEXTLINE(*magic-numbers)
 using DeviceId = std::array<Byte, 9>;
-using Size = strong::type<std::uint32_t,
-                          struct SizeTag,
-                          strong::equality,
-                          strong::ordered,
-                          strong::ordered_with<std::size_t>>;
+using Size = strong::
+    type<std::uint32_t, struct SizeTag, strong::difference, strong::ordered_with<std::size_t>>;
 using Address = strong::type<std::uint32_t,
                              struct AddressTag,
                              strong::affine_point<Size>,

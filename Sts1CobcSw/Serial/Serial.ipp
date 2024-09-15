@@ -7,30 +7,30 @@
 namespace sts1cobcsw
 {
 template<typename T>
-inline auto Serialize(T const & t) -> Buffer<T>
+inline auto Serialize(T const & t) -> SerialBuffer<T>
 {
     return Serialize<defaultEndianness>(t);
 }
 
 
 template<std::endian endianness, typename T>
-inline auto Serialize(T const & t) -> Buffer<T>
+inline auto Serialize(T const & t) -> SerialBuffer<T>
 {
-    auto buffer = Buffer<T>{};
+    auto buffer = SerialBuffer<T>{};
     (void)SerializeTo<endianness>(buffer.data(), t);
     return buffer;
 }
 
 
 template<std::default_initializable T>
-inline auto Deserialize(BufferView<T> bufferView) -> T
+inline auto Deserialize(SerialBufferView<T> bufferView) -> T
 {
     return Deserialize<defaultEndianness, T>(bufferView);
 }
 
 
 template<std::endian endianness, std::default_initializable T>
-inline auto Deserialize(BufferView<T> bufferView) -> T
+inline auto Deserialize(SerialBufferView<T> bufferView) -> T
 {
     auto t = T{};
     (void)DeserializeFrom<endianness>(bufferView.data(), &t);

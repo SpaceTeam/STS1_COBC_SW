@@ -13,20 +13,15 @@
 namespace sts1cobcsw
 {
 inline constexpr auto framMemory = Section<fram::Address(0), fram::memorySize>{};
-inline constexpr auto persistentVariablesSize = fram::Size(100);
 inline constexpr auto framSections =
     Subsections<framMemory,
-                SubsectionInfo<"persistentVariables0", persistentVariablesSize>,
-                SubsectionInfo<"persistentVariables1", persistentVariablesSize>,
-                SubsectionInfo<"persistentVariables2", persistentVariablesSize>,
+                SubsectionInfo<"persistentVariables0", fram::Size(300)>,
                 SubsectionInfo<"eduProgramQueue", fram::Size(20 * 8)>,
                 SubsectionInfo<"eduProgramStatusHistory", fram::Size(50 * 7)>,
                 SubsectionInfo<"testMemory", fram::Size(1000)>,
                 SubsectionInfo<"telemetry", fram::Size(26'168 * 40)>>{};
 inline constexpr auto persistentVariables =
     PersistentVariables<framSections.Get<"persistentVariables0">(),
-                        framSections.Get<"persistentVariables1">(),
-                        framSections.Get<"persistentVariables2">(),
                         PersistentVariableInfo<"nResetsSinceRf", std::uint16_t>,
                         PersistentVariableInfo<"activeSecondaryFwPartition", std::int8_t>,
                         PersistentVariableInfo<"backupSecondaryFwPartition", std::int8_t>,

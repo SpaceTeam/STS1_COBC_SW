@@ -230,7 +230,7 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     RODOS::AT(RODOS::NOW() + conversionTime);
 
     // Resolution is 12 bit, sent like this: [0 0 0 0 MSB x x x], [x x x x x x x LSB]
-    auto adcData = Buffer<AdcValues>{};
+    auto adcData = SerialBuffer<AdcValues>{};
     adcCsPin->Reset();
     hal::ReadFrom(&framEpsSpi, Span(&adcData), spiTimeout);
     adcCsPin->Set();
