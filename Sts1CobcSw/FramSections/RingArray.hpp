@@ -22,8 +22,6 @@
 #include <span>
 
 
-// TODO: Add cache in case the FRAM is not working
-// TODO: Move to FramSections
 namespace sts1cobcsw
 {
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
@@ -77,4 +75,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/Periphery/FramRingArray.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FramSections/RingArray.ipp>  // IWYU pragma: keep
