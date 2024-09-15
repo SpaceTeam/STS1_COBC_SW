@@ -75,4 +75,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/Periphery/FramRingArray.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FramSections/RingArray.ipp>  // IWYU pragma: keep

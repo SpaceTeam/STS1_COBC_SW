@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/FramRingArray.hpp>
+#include <Sts1CobcSw/FramSections/RingArray.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 

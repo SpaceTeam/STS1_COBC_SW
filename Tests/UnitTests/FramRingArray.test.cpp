@@ -1,6 +1,6 @@
 #include <Tests/UnitTests/UnitTestThread.hpp>
 
-#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
+#include <Sts1CobcSw/FramSections/RingArray.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
