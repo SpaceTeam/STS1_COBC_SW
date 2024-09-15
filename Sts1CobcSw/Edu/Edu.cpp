@@ -432,7 +432,7 @@ auto ReceiveDataPacket() -> Result<void>
 template<typename T>
 auto Receive() -> Result<T>
 {
-    auto buffer = Buffer<T>{};
+    auto buffer = SerialBuffer<T>{};
     OUTCOME_TRY(Receive(buffer));
     return Deserialize<T>(buffer);
 }
