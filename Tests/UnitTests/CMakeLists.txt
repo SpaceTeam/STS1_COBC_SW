@@ -87,8 +87,8 @@ add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 
 add_program(FramRingArray FramRingArray.test.cpp UnitTestThread.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_FramRingArray PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
-                                          Sts1CobcSw_Edu
+    Sts1CobcSwTests_FramRingArray PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Periphery
+                                          Sts1CobcSw_Serial
 )
 add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
