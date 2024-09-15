@@ -44,17 +44,13 @@ public:
 
 private:
     static constexpr auto elementSize = fram::Size(serialSize<T>);
-    static constexpr auto indexesSize = fram::Size(2 * totalSerialSize<std::size_t>);
+    static constexpr auto indexesSize = fram::Size(3 * 2 * totalSerialSize<std::size_t>);
     static constexpr auto subsections =
         Subsections<section,
-                    SubsectionInfo<"indexes0", indexesSize>,
-                    SubsectionInfo<"indexes1", indexesSize>,
-                    SubsectionInfo<"indexes2", indexesSize>,
-                    SubsectionInfo<"array", section.size - 3 * indexesSize>>{};
+                    SubsectionInfo<"indexes", indexesSize>,
+                    SubsectionInfo<"array", section.size - indexesSize>>{};
     static constexpr auto persistentIndexes =
-        PersistentVariables<subsections.template Get<"indexes0">(),
-                            subsections.template Get<"indexes1">(),
-                            subsections.template Get<"indexes2">(),
+        PersistentVariables<subsections.template Get<"indexes">(),
                             PersistentVariableInfo<"iBegin", std::size_t>,
                             PersistentVariableInfo<"iEnd", std::size_t>>{};
     // We reduce the capacity by one to distinguish between an empty and a full ring. See PushBack()
