@@ -60,7 +60,6 @@ auto SetDoProgramPage(void (*doProgramPageFunction)(std::uint32_t address, PageS
 auto SetDoEraseSector(void (*doEraseSectorFunction)(std::uint32_t address)) -> void;
 auto SetDoWaitWhileBusyFunction(Result<void> (*doWaitWhileBusy)(std::int64_t timeout)) -> void;
 auto SetDoActualBaudRate(std::int32_t (*doActualBaudRateFunction)()) -> void;
-}
 
 namespace empty
 {
@@ -75,4 +74,5 @@ auto DoProgramPage(std::uint32_t address, PageSpan data) -> void;
 auto DoEraseSector(std::uint32_t address) -> void;
 auto DoWaitWhileBusy(std::int64_t timeout) -> Result<void>;
 auto DoActualBaudRate() -> std::int32_t;
+}
 }
