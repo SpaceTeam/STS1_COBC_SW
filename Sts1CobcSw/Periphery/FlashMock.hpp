@@ -16,13 +16,13 @@
 
 namespace sts1cobcsw::flash
 {
-/*struct JedecId
+struct JedecId
 {
     std::uint8_t manufacturerId = 0;
     std::uint16_t deviceId = 0;
 };
 
-
+/*
 enum class ErrorCode
 {
     timeout = 1
