@@ -7,9 +7,6 @@
 
 namespace sts1cobcsw::flash
 {
-std::int64_t initializeDelay = 0;
-
-
 auto doInitialize = empty::DoInitialize;
 auto doReadJedecId = empty::DoReadJedecId;
 auto doReadStatusRegister = empty::DoReadStatusRegister;
@@ -141,13 +138,12 @@ auto SetAllDoFunctions() -> void
 
 auto DoInitialize() -> void
 {
-    RODOS::AT(initializeDelay);
 }
 
 
 auto DoReadJedecId() -> JedecId
 {
-    return correctJedecId;
+    return JedecId{};
 }
 
 
