@@ -109,7 +109,8 @@ auto SetDoEraseSector(void (*doEraseSectorFunction)(std::uint32_t address)) -> v
 }
 
 
-auto SetDoWaitWhileBusyFunction(Result<void> (*doWaitWhileBusyFunction)(std::int64_t timeout)) -> void
+auto SetDoWaitWhileBusyFunction(Result<void> (*doWaitWhileBusyFunction)(std::int64_t timeout))
+    -> void
 {
     doWaitWhileBusy = doWaitWhileBusyFunction;
 }
