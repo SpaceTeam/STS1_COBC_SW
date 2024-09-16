@@ -98,8 +98,9 @@ target_sources(
             ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.cpp
 )
 target_link_libraries(
-    Sts1CobcSwTests_SpiSupervisor PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility
-                                          Sts1CobcSw_Hal Sts1CobcSwTests_RfLatchupDisablePin
+    Sts1CobcSwTests_SpiSupervisor
+    PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility Sts1CobcSw_Hal Sts1CobcSw_Serial
+            Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(SpiSupervisor)
 
