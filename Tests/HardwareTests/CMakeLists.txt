@@ -82,20 +82,20 @@ target_link_libraries(
 )
 add_watchdog_version_of(MaxPower)
 
-add_program(PeripherySupervision PeripherySupervision.test.cpp)
+add_program(SpiSupervisor SpiSupervisor.test.cpp)
 target_sources(
-    Sts1CobcSwTests_PeripherySupervision
+    Sts1CobcSwTests_SpiSupervisor
     PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/FlashStartupTestThread.cpp
             ${CMAKE_SOURCE_DIR}/Sts1CobcSw/FramEpsStartupTestThread.cpp
             ${CMAKE_SOURCE_DIR}/Sts1CobcSw/RfStartupTestThread.cpp
             ${CMAKE_SOURCE_DIR}/Sts1CobcSw/SpiStartupTestAndSupervisorThread.cpp
 )
 target_link_libraries(
-    Sts1CobcSwTests_PeripherySupervision
+    Sts1CobcSwTests_SpiSupervisor
     PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility
             Sts1CobcSwTests_RfLatchupDisablePin
 )
-add_watchdog_version_of(PeripherySupervision)
+add_watchdog_version_of(SpiSupervisor)
 
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(
