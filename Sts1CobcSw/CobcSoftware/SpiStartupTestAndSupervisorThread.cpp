@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -47,26 +48,48 @@ private:
         using RODOS::AT;
         using RODOS::NOW;
 
-        // TODO: Test if this works
+        static constexpr auto errorMessage = " failed to complete in time\n";
+        static constexpr auto successMessage = " completed in time\n";
+
         auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
+        DEBUG_PRINT(fram::framIsWorking.Load() ? "\n" : " and");
         if(not testWasSuccessful)
         {
+            DEBUG_PRINT("%s", errorMessage);
             fram::framIsWorking.Store(false);
             persistentVariables.template Store<"epsIsWorking">(false);
         }
+        else
+        {
+            DEBUG_PRINT("%s", successMessage);
+        }
+
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
+        DEBUG_PRINT(persistentVariables.template Load<"flashIsWorking">() ? "\n" : " and");
         if(not testWasSuccessful)
         {
+            DEBUG_PRINT("%s", errorMessage);
             persistentVariables.template Store<"flashIsWorking">(false);
             persistentVariables.template Increment<"nFlashErrors">();
         }
+        else
+        {
+            DEBUG_PRINT("%s", successMessage);
+        }
+
         testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
+        DEBUG_PRINT(persistentVariables.template Load<"rfIsWorking">() ? "\n" : " and");
         if(not testWasSuccessful)
         {
+            DEBUG_PRINT("%s", errorMessage);
             persistentVariables.template Store<"rfIsWorking">(false);
             persistentVariables.template Increment<"nRfErrors">();
             AT(NOW() + 2 * RODOS::SECONDS);
             RODOS::hwResetAndReboot();
+        }
+        else
+        {
+            DEBUG_PRINT("%s", successMessage);
         }
 
         TIME_LOOP(0, supervisionPeriod)
@@ -74,20 +97,24 @@ private:
             auto timeoutHappened = false;
             if(NOW() > framEpsSpi.TransferEnd())
             {
+                DEBUG_PRINT("FRAM/EPS SPI timeout occurred\n");
                 timeoutHappened = true;
             }
             if(NOW() > flash::spi.TransferEnd())
             {
+                DEBUG_PRINT("Flash SPI timeout occurred\n");
                 timeoutHappened = true;
                 persistentVariables.template Increment<"nFlashErrors">();
             }
             if(NOW() > rf::spi.TransferEnd())
             {
+                DEBUG_PRINT("RF SPI timeout occurred\n");
                 timeoutHappened = true;
                 persistentVariables.template Increment<"nRfErrors">();
             }
             if(timeoutHappened)
             {
+                DEBUG_PRINT("Hardware reset and reboot");
                 RODOS::hwResetAndReboot();
             }
         }
