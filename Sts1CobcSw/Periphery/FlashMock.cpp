@@ -147,29 +147,29 @@ auto DoReadJedecId() -> JedecId
 }
 
 
-auto DoReadStatusRegister(std::int8_t registerNo) -> Byte
+auto DoReadStatusRegister([maybe_unused] std::int8_t registerNo) -> Byte
 {
     return Byte{0};
 }
 
 
-auto DoReadPage(std::uint32_t address) -> Page
+auto DoReadPage([maybe_unused] std::uint32_t address) -> Page
 {
     return Page{};
 }
 
 
-auto DoProgramPage(std::uint32_t address, PageSpan data) -> void
+auto DoProgramPage([maybe_unused] std::uint32_t address, [maybe_unused] PageSpan data) -> void
 {
 }
 
 
-auto DoEraseSector(std::uint32_t address) -> void
+auto DoEraseSector([maybe_unused] std::uint32_t address) -> void
 {
 }
 
 
-auto DoWaitWhileBusy(std::int64_t timeout) -> Result<void>
+auto DoWaitWhileBusy([maybe_unused] std::int64_t timeout) -> Result<void>
 {
     return outcome_v2::success();
 }
@@ -179,6 +179,5 @@ auto DoActualBaudRate() -> std::int32_t
 {
     return 0;
 }
-
 }
 }
