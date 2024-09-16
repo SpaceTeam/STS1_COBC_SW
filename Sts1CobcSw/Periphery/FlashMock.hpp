@@ -22,7 +22,7 @@ struct JedecId
     std::uint16_t deviceId = 0;
 };
 
-/*
+
 enum class ErrorCode
 {
     timeout = 1
@@ -49,7 +49,7 @@ using PageSpan = std::span<Byte const, pageSize>;
 
 inline constexpr auto correctJedecId = JedecId{.manufacturerId = 0xEF, .deviceId = 0x4021};
 
-extern hal::Spi spi;*/
+extern hal::Spi spi;
 
 auto SetDoInitialize(void (*doInitializeFunction)()) -> void;
 auto SetDoReadJedecId(JedecId (*doReadJedecIdFunction)()) -> void;
