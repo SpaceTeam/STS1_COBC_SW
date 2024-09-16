@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -32,6 +33,7 @@ private:
 
     void run() override
     {
+        DEBUG_PRINT("FramEpsStartupTest ...");
         RODOS::AT(RODOS::END_OF_TIME);
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
