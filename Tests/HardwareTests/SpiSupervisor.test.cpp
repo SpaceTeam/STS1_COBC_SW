@@ -11,10 +11,6 @@
 
 namespace sts1cobcsw
 {
-
-
-auto delay = 1 * RODOS::SECONDS;
-
 class SpiSupervisorTest : public RODOS::StaticThread<>
 {
 public:
@@ -40,25 +36,26 @@ private:
         rfLatchupDisableGpioPin.Reset();
 #endif
 
-        std::uint32_t const flashAddress = 0x00'01'00'00U;
+        PRINTF("\nSPI supervisor test\n\n");
 
-        RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
-        constexpr std::uint32_t nAdressBits = 20U;
-        auto framAddress = fram::Address{RODOS::uint32Rand() % (1U << nAdressBits)};
-
-        constexpr std::size_t testDataSize = 11 * 1024;
-        auto framTestData = std::array<Byte, testDataSize>{};
-        // Baud rate = 6 MHz, largest data transfer = 11 KiB -> spiTimeout = 30 ms is enough for all
-        // transfers
-        constexpr auto spiTimeout = 30 * RODOS::MILLISECONDS;
-
-        RODOS::AT(delay);
-
-        PRINTF("Testing Flash writing\n");
+        PRINTF("\n");
+        std::uint32_t const flashAddress = 0x00'01'10'00U;
+        PRINTF("Reading flash page ...\n");
         auto page = flash::ReadPage(flashAddress);
+        PRINTF("Writing flash page ...\n");
         flash::ProgramPage(flashAddress, Span(page));
 
-        PRINTF("Testing Fram writing and reading\n");
+        RODOS::AT(2 * RODOS::SECONDS);
+
+        PRINTF("\n");
+        RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
+        constexpr std::uint32_t nAdressBits = 20U;
+        auto framAddress = fram::Address(RODOS::uint32Rand() % (1U << nAdressBits));
+
+        auto framTestData = std::array<Byte, 11 * 1024>{};
+        // Baud rate = 6 MHz, data size = 11 KiB -> transfer time ~ 15 ms
+        constexpr auto spiTimeout = 30 * RODOS::MILLISECONDS;
+        PRINTF("Writing %d B to FRAM ...\n", static_cast<int>(framTestData.size()));
         fram::WriteTo(framAddress, Span(framTestData), spiTimeout);
     }
 
