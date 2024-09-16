@@ -109,8 +109,7 @@ auto SetDoEraseSector(void (*doEraseSectorFunction)(std::uint32_t address)) -> v
 }
 
 
-auto SetDoWaitWhileBusyFunction(Result<void> (*doWaitWhileBusyFunction)(std::int64_t timeout))
-    -> void
+auto SetDoWaitWhileBusy(Result<void> (*doWaitWhileBusyFunction)(std::int64_t timeout)) -> void
 {
     doWaitWhileBusy = doWaitWhileBusyFunction;
 }
@@ -148,19 +147,19 @@ auto DoInitialize() -> void
 
 auto DoReadJedecId() -> JedecId
 {
-    return JedecId{};
+    return correctJedecId;
 }
 
 
 auto DoReadStatusRegister(std::int8_t registerNo) -> Byte
 {
-    return 0x00_0;
+    return Byte{0};
 }
 
 
 auto DoReadPage(std::uint32_t address) -> Page
 {
-    return 0;
+    return Page{};
 }
 
 
