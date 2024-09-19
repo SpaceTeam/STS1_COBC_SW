@@ -53,15 +53,19 @@ private:
     // Only allow creation of File class through friend function Open()
     File() = default;
     auto MoveConstructFrom(File * other) noexcept -> void;
+    [[nodiscard]] auto CreateLockFile() noexcept -> Result<int>;
     [[nodiscard]] auto Read(void * buffer, std::size_t size) const -> Result<int>;
     [[nodiscard]] auto Write(void const * buffer, std::size_t size) -> Result<int>;
 
     Path path_ = "";
+    Path lockFilePath_ = "";
     unsigned int openFlags_ = 0;
     mutable lfs_file_t lfsFile_ = {};
     bool isOpen_ = false;
     std::array<Byte, lfsCacheSize> buffer_ = {};
+    std::array<Byte, lfsCacheSize> bufferLockFile_ = {};
     lfs_file_config lfsFileConfig_ = {.buffer = buffer_.data()};
+    lfs_file_config lfsLockFileConfig_ = {.buffer = bufferLockFile_.data()};
 };
 }
 

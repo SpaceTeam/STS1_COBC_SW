@@ -46,6 +46,14 @@ auto Unmount() -> Result<void>
 auto Open(std::string_view path, unsigned int flags) -> Result<File>
 {
     auto file = File();
+    file.lockFilePath_ = Path(path.data(), path.size()).append(".lock");
+
+    auto errorLockFile = file.CreateLockFile();
+    if(errorLockFile.has_error())
+    {
+        return errorLockFile.error();
+    }
+
     auto error = lfs_file_opencfg(
         &lfs, &file.lfsFile_, path.data(), static_cast<int>(flags), &file.lfsFileConfig_);
     if(error == 0)
@@ -106,7 +114,14 @@ auto File::Close() -> Result<void>
     {
         return outcome_v2::success();
     }
-    auto error = lfs_file_close(&lfs, &lfsFile_);
+
+    auto error = lfs_remove(&lfs, lockFilePath_.data());
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+
+    error = lfs_file_close(&lfs, &lfsFile_);
     if(error != 0)
     {
         return static_cast<ErrorCode>(error);
@@ -133,13 +148,38 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
     if(error == 0)
     {
         path_ = other->path_;
+        lockFilePath_ = other->lockFilePath_;
         openFlags_ = other->openFlags_;
         isOpen_ = true;
     }
     (void)other->Close();
     other->path_ = "";
+    other->lockFilePath_ = "";
     other->openFlags_ = 0;
     other->lfsFile_ = {};
+    (void)CreateLockFile();  // TODO handle lock file error
+}
+
+
+auto File::CreateLockFile() noexcept -> Result<int>
+{
+    lfs_file_t lfsLockFile;
+
+    auto error = lfs_file_opencfg(&lfs,
+                                  &lfsLockFile,
+                                  lockFilePath_.data(),
+                                  static_cast<unsigned int>(LFS_O_RDWR | LFS_O_CREAT) | LFS_O_EXCL,
+                                  &lfsLockFileConfig_);
+
+    if(error == 0)
+    {
+        error = lfs_file_close(&lfs, &lfsLockFile);
+    }
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);
 }
 
 
