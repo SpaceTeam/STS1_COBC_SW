@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <span>
 
 
@@ -21,21 +22,24 @@ public:
         RODOS::GPIO_PIN misoPin,
         RODOS::GPIO_PIN mosiPin);
 
+    // The following functions are friends and not members to keep the interface coherent with the
+    // rest of the low-level code.
     friend auto Initialize(Spi * spi, std::uint32_t baudRate, bool useOpenDrainOutputs) -> void;
-
+    template<typename T, std::size_t extent>
+    friend auto ReadFrom(Spi * spi, std::span<T, extent> data, Duration timeout) -> void;
     template<typename T, std::size_t extent>
     friend auto WriteTo(Spi * spi, std::span<T const, extent> data, Duration timeout) -> void;
 
-    template<typename T, std::size_t extent>
-    friend auto ReadFrom(Spi * spi, std::span<T, extent> data, Duration timeout) -> void;
-
-    auto TransferEnd() const -> RodosTime;
-    auto BaudRate() -> std::int32_t;
+    [[nodiscard]] auto TransferEnd() const -> RodosTime;
+    [[nodiscard]] auto BaudRate() const -> std::int32_t;
 
 
 private:
-    RODOS::HAL_SPI spi_;
-    mutable RODOS::CommBuffer<std::int64_t> transferEnd_;
+    class Impl;
+    Impl * pimpl_;
+
+    auto Read(void * data, std::size_t nBytes, Duration timeout) -> void;
+    auto Write(void const * data, std::size_t nBytes, Duration timeout) -> void;
 };
 
 
