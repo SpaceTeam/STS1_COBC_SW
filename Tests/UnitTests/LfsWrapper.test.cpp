@@ -28,6 +28,9 @@ TEST_CASE("LfsWrapper")
 
     auto & writeableFile = openResult.value();
 
+    auto reopenResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+    CHECK(reopenResult.has_error());  // open should fail because the file is already open
+
     auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
     auto writeResult = writeableFile.Write(Span(writeData));
     CHECK(writeResult.has_value());
