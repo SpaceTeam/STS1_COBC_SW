@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <span>
 
 
@@ -21,33 +22,25 @@ public:
         RODOS::GPIO_PIN misoPin,
         RODOS::GPIO_PIN mosiPin);
 
+    // The following functions are friends and not members to keep the interface coherent with the
+    // rest of the low-level code.
     friend auto Initialize(Spi * spi, std::uint32_t baudRate) -> void;
-
+    template<typename T, std::size_t extent>
+    friend auto ReadFrom(Spi * spi, std::span<T, extent> data, Duration timeout) -> void;
     template<typename T, std::size_t extent>
     friend auto WriteTo(Spi * spi, std::span<T const, extent> data, Duration timeout) -> void;
 
-    template<typename T, std::size_t extent>
-    friend auto ReadFrom(Spi * spi, std::span<T, extent> data, Duration timeout) -> void;
-
-    auto TransferEnd() const -> RodosTime;
-    auto BaudRate() -> std::int32_t;
+    [[nodiscard]] auto TransferEnd() const -> RodosTime;
+    [[nodiscard]] auto BaudRate() const -> std::int32_t;
 
 
 private:
-    RODOS::HAL_SPI spi_;
-    mutable RODOS::CommBuffer<std::int64_t> transferEnd_;
+    class Impl;
+    Impl * pimpl_;
+
+    auto Read(void * data, std::size_t nBytes, Duration timeout) -> void;
+    auto Write(void const * data, std::size_t nBytes, Duration timeout) -> void;
 };
-
-
-auto Initialize(RODOS::HAL_SPI * spi, std::uint32_t baudRate) -> void;
-
-// TODO: Maybe remove extent to reduce code bloat, or probably build time since it is just a single
-// call to the Rodos function, which is trivial to inline.
-template<typename T, std::size_t extent>
-auto WriteTo(RODOS::HAL_SPI * spi, std::span<T const, extent> data) -> void;
-
-template<typename T, std::size_t extent>
-auto ReadFrom(RODOS::HAL_SPI * spi, std::span<T, extent> data) -> void;
 }
 
 
