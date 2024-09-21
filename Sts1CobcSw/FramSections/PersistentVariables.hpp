@@ -5,13 +5,12 @@
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <rodos/api/rodos-semaphore.h>
 #include <rodos/api/timemodel.h>
 
 #include <optional>
-
-#include "Sts1CobcSw/Utility/TimeTypes.hpp"
 
 
 namespace sts1cobcsw

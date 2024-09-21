@@ -3,6 +3,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
+#include <strong_type/difference.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>

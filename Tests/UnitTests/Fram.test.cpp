@@ -8,8 +8,10 @@
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <catch2/generators/catch_generators_random.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
+#include <algorithm>
 #include <array>
 #include <string>
 

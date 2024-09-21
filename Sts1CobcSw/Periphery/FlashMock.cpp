@@ -1,9 +1,5 @@
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Periphery/FlashMock.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
-
-#include <strong_type/type.hpp>
-
-#include <cstring>
 
 
 namespace sts1cobcsw::flash

@@ -13,7 +13,7 @@
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
 
-#include <rodos_no_using_namespace.h>
+#include <strong_type/difference.hpp>
 
 #include <array>
 #include <bit>
