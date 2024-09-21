@@ -4,8 +4,10 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+
+#include <strong_type/difference.hpp>
 
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>

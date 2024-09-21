@@ -3,7 +3,12 @@
 
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+
+#include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 

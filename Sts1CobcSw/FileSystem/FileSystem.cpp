@@ -1,7 +1,9 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
+
+#include <strong_type/difference.hpp>
 
 #include <rodos_no_using_namespace.h>
 

@@ -1,16 +1,11 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Hal/Spi.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-#include <array>
-#include <cstddef>
 #include <cstdint>
-#include <span>
 
 
 namespace sts1cobcsw::flash

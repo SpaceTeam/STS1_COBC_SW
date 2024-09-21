@@ -5,7 +5,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <rodos_no_using_namespace.h>
 

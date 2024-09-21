@@ -1,15 +1,17 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <catch2/generators/catch_generators_random.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
+#include <algorithm>
 #include <array>
 #include <string>
 
@@ -19,9 +21,7 @@ namespace fram = sts1cobcsw::fram;
 using sts1cobcsw::Byte;
 using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
-// For some reason including Time.hpp causes the test to fail with "Program ERROR topic deleted!!",
-// etc. Therefore, we define ms here again.
-constexpr auto ms = sts1cobcsw::Duration(RODOS::MILLISECONDS);
+using sts1cobcsw::ms;
 
 
 auto WriteAndReadTestData(sts1cobcsw::fram::Address address) -> void;

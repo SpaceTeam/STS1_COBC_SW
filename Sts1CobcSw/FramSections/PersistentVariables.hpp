@@ -5,13 +5,12 @@
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <rodos/api/rodos-semaphore.h>
 #include <rodos/api/timemodel.h>
 
 #include <optional>
-
-#include "Sts1CobcSw/Utility/TimeTypes.hpp"
 
 
 namespace sts1cobcsw
@@ -62,7 +61,7 @@ private:
         Subsections<subsections.template Get<"2">(), PersistentVariableInfos...>();
 
     // With a baud rate of 48 MHz we can read 6000 bytes in 1 ms, which should be more than enough
-    static constexpr auto spiTimeout = 1 * Duration(RODOS::MILLISECONDS);
+    static constexpr auto spiTimeout = 1 * ms;
 
     static RODOS::Semaphore semaphore;
 };

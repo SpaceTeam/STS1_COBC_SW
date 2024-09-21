@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 
+#include <strong_type/affine_point.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <etl/vector.h>

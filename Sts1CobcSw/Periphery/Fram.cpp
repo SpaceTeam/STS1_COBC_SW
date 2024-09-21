@@ -7,9 +7,8 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-
-#include <rodos_no_using_namespace.h>
 
 #include <bit>
 
@@ -23,7 +22,7 @@ EdacVariable<bool> framIsWorking(true);
 
 // --- Private globals ---
 
-constexpr auto spiTimeout = 1 * Duration(RODOS::MILLISECONDS);
+constexpr auto spiTimeout = 1 * ms;
 constexpr auto endianness = std::endian::big;
 
 // Command opcodes according to section 4.1 in CY15B108QN-40SXI datasheet. I couldn't use an enum

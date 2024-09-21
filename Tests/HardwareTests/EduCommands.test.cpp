@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/RealTime.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <strong_type/type.hpp>
