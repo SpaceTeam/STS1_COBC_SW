@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <strong_type/affine_point.hpp>

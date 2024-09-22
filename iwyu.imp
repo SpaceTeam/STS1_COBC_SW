@@ -61,8 +61,8 @@
   { include: ["\"Sts1CobcSw/Utility/ErrorDetectionAndCorrection.ipp\"", "private", "<Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",                        "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.ipp\"",               "private", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/Time.ipp\"",                        "private", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/TimeTypes.ipp\"",                   "private", "<Sts1CobcSw/Utility/TimeTypes.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/RodosTime.ipp\"",                   "private", "<Sts1CobcSw/Utility/RodosTime.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/RealTime.ipp\"",                    "private", "<Sts1CobcSw/Utility/RealTime.hpp>", "public"] },
 
   # Include all our headers with <> instead of ""
   { include: ["\"Sts1CobcSw/Edu/Edu.hpp\"",                             "public", "<Sts1CobcSw/Edu/Edu.hpp>", "public"] },
@@ -102,8 +102,8 @@
   { include: ["\"Sts1CobcSw/Utility/FlatArray.hpp\"",                   "public", "<Sts1CobcSw/Utility/FlatArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                        "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",               "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/Time.hpp\"",                        "public", "<Sts1CobcSw/Utility/Time.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/TimeTypes.hpp\"",                   "public", "<Sts1CobcSw/Utility/TimeTypes.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/RodosTime.hpp\"",                   "public", "<Sts1CobcSw/Utility/RodosTime.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/RealTime.hpp\"",                    "public", "<Sts1CobcSw/Utility/RealTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/CommandParser.hpp\"",                       "public", "<Sts1CobcSw/CommandParser.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/EduCommunicationErrorThread.hpp\"",         "public", "<Sts1CobcSw/EduCommunicationErrorThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/EduListenerThread.hpp\"",                   "public", "<Sts1CobcSw/EduListenerThread.hpp>", "public"] },
