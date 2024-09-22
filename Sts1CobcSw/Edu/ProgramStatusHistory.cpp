@@ -1,4 +1,6 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/RingArray.hpp>
 
 #include <strong_type/equality.hpp>
 
@@ -6,6 +8,14 @@
 namespace sts1cobcsw::edu
 {
 RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries> programStatusHistory;
+
+
+// Start by defining an other variable, update methods, and when everything works remove `old`
+// programStatusHistory
+constexpr auto programStatusHistorySection = framSections.Get<"eduProgramStatusHistory">();
+sts1cobcsw::
+    RingArray<ProgramStatusHistoryEntry, programStatusHistorySection, nProgramStatusHistoryEntries>
+        framProgramStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
@@ -19,6 +29,21 @@ auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, Program
            and programStatusHistory.vals[i].programId == programId)
         {
             programStatusHistory.vals[i].status = newStatus;
+        }
+    }
+}
+
+auto UpdateFramProgramStatusHistory(ProgramId programId,
+                                    RealTime startTime,
+                                    ProgramStatus newStatus) -> void
+{
+    for(std::size_t i = 0; i < framProgramStatusHistory.Size(); ++i)
+    {
+        auto entry = framProgramStatusHistory.Get(i);
+        if(entry.startTime == startTime and entry.programId == programId)
+        {
+            entry.status = newStatus;
+            framProgramStatusHistory.Set(i, entry);
         }
     }
 }
