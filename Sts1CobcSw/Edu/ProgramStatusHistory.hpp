@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/RingArray.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
@@ -62,6 +63,15 @@ inline constexpr auto nProgramStatusHistoryEntries =
 extern RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries>
     programStatusHistory;
 
+
+extern RingArray<ProgramStatusHistoryEntry,
+                 framSections.template Get<"eduProgramStatusHistory">(),
+                 nProgramStatusHistoryEntries>
+    framProgramStatusHistory;
+
+auto UpdateFramProgramStatusHistory(ProgramId programId,
+                                    RealTime startTime,
+                                    ProgramStatus newStatus) -> void;
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void;
