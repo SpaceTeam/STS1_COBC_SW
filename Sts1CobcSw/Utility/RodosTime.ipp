@@ -1,22 +1,28 @@
 #pragma once
 
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
+
 
 namespace sts1cobcsw
 {
-template<std::endian endianness>
-inline auto SerializeTo(void * destination, RealTime const & data) -> void *
+inline auto CurrentRodosTime() -> RodosTime
 {
-    return SerializeTo<endianness>(destination, value_of(data));
+    return RodosTime(RODOS::NOW());
 }
 
 
-template<std::endian endianness>
-inline auto DeserializeFrom(void const * source, RealTime * data) -> void const *
+inline auto SuspendUntil(RodosTime time) -> void
 {
-    source = DeserializeFrom<endianness>(source, &(value_of(*data)));
-    return source;
+    RODOS::AT(value_of(time));
 }
+
+
+inline auto SuspendFor(Duration duration) -> void
+{
+    RODOS::AT(RODOS::NOW() + value_of(duration));
+}
+
 
 template<std::endian endianness>
 inline auto SerializeTo(void * destination, Duration const & data) -> void *
