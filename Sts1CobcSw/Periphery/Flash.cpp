@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -40,7 +41,7 @@ hal::Spi spi =
 
 // Baud rate = 48 MHz, largest data transfer = 1 page = 256 bytes -> spiTimeout = 1 ms is enough for
 // all transfers
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto spiTimeout = 1 * ms;
 constexpr auto endianness = std::endian::big;
 
 // Instructions according to section 7.3 in W25Q01JV datasheet
@@ -68,13 +69,13 @@ auto DisableWriting() -> void;
 auto IsBusy() -> bool;
 
 template<std::size_t extent>
-auto Write(std::span<Byte const, extent> data, std::int64_t timeout) -> void;
+auto Write(std::span<Byte const, extent> data, Duration timeout) -> void;
 
 template<std::size_t extent>
-auto Read(std::span<Byte, extent> data, std::int64_t timeout) -> void;
+auto Read(std::span<Byte, extent> data, Duration timeout) -> void;
 
 template<std::size_t size>
-auto Read(std::int64_t timeout) -> std::array<Byte, size>;
+auto Read(Duration timeout) -> std::array<Byte, size>;
 
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength > 0)
@@ -169,17 +170,17 @@ auto EraseSector(std::uint32_t address) -> void
 }
 
 
-auto WaitWhileBusy(std::int64_t timeout) -> Result<void>
+auto WaitWhileBusy(Duration timeout) -> Result<void>
 {
-    auto const pollingCycleTime = 1 * RODOS::MILLISECONDS;
-    auto const reactivationTime = RODOS::NOW() + timeout;
+    auto const pollingCycleTime = 1 * ms;
+    auto const reactivationTime = CurrentRodosTime() + timeout;
     while(IsBusy())
     {
-        if(RODOS::NOW() >= reactivationTime)
+        if(CurrentRodosTime() >= reactivationTime)
         {
             return ErrorCode::timeout;
         }
-        RODOS::AT(RODOS::NOW() + pollingCycleTime);
+        SuspendFor(pollingCycleTime);
     }
     return outcome_v2::success();
 }
@@ -225,21 +226,21 @@ auto IsBusy() -> bool
 
 
 template<std::size_t extent>
-inline auto Write(std::span<Byte const, extent> data, std::int64_t timeout) -> void
+inline auto Write(std::span<Byte const, extent> data, Duration timeout) -> void
 {
     hal::WriteTo(&spi, data, timeout);
 }
 
 
 template<std::size_t extent>
-inline auto Read(std::span<Byte, extent> data, std::int64_t timeout) -> void
+inline auto Read(std::span<Byte, extent> data, Duration timeout) -> void
 {
     hal::ReadFrom(&spi, data, timeout);
 }
 
 
 template<std::size_t size>
-inline auto Read(std::int64_t timeout) -> std::array<Byte, size>
+inline auto Read(Duration timeout) -> std::array<Byte, size>
 {
     auto answer = std::array<Byte, size>{};
     hal::ReadFrom(&spi, Span(&answer), timeout);

@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Periphery/FlashMock.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <strong_type/type.hpp>
 
@@ -56,7 +57,7 @@ auto EraseSector(std::uint32_t address) -> void
 }
 
 
-auto WaitWhileBusy(std::int64_t timeout) -> Result<void>
+auto WaitWhileBusy(Duration timeout) -> Result<void>
 {
     return doWaitWhileBusy(timeout);
 }
@@ -106,7 +107,7 @@ auto SetDoEraseSector(void (*doEraseSectorFunction)(std::uint32_t address)) -> v
 }
 
 
-auto SetDoWaitWhileBusy(Result<void> (*doWaitWhileBusyFunction)(std::int64_t timeout)) -> void
+auto SetDoWaitWhileBusy(Result<void> (*doWaitWhileBusyFunction)(Duration timeout)) -> void
 {
     doWaitWhileBusy = doWaitWhileBusyFunction;
 }
@@ -169,7 +170,7 @@ auto DoEraseSector([[maybe_unused]] std::uint32_t address) -> void
 }
 
 
-auto DoWaitWhileBusy([[maybe_unused]] std::int64_t timeout) -> Result<void>
+auto DoWaitWhileBusy([[maybe_unused]] Duration timeout) -> Result<void>
 {
     return outcome_v2::success();
 }

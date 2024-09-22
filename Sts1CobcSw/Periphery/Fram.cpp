@@ -23,7 +23,7 @@ EdacVariable<bool> framIsWorking(true);
 
 // --- Private globals ---
 
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto spiTimeout = 1 * Duration(RODOS::MILLISECONDS);
 constexpr auto endianness = std::endian::big;
 
 // Command opcodes according to section 4.1 in CY15B108QN-40SXI datasheet. I couldn't use an enum
@@ -76,7 +76,7 @@ auto ActualBaudRate() -> std::int32_t
 
 namespace internal
 {
-auto WriteTo(Address address, void const * data, std::size_t nBytes, std::int64_t timeout) -> void
+auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration timeout) -> void
 {
     SetWriteEnableLatch();
     csGpioPin.Reset();
@@ -89,7 +89,7 @@ auto WriteTo(Address address, void const * data, std::size_t nBytes, std::int64_
 }
 
 
-auto ReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t timeout) -> void
+auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout) -> void
 {
     csGpioPin.Reset();
     hal::WriteTo(&framEpsSpi, Span(opcode::readData), spiTimeout);

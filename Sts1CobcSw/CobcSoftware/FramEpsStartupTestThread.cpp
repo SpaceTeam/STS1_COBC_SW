@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -34,7 +35,7 @@ private:
     void run() override
     {
         DEBUG_PRINT("FRAM/EPS start-up test ...");
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
         if(deviceId != fram::correctDeviceId)
@@ -45,7 +46,7 @@ private:
         eps::Initialize();
         (void)eps::Read();
         ResumeSpiStartupTestAndSupervisorThread();
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
     }
 } framEpsStartupTestThread;
 

@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -88,7 +89,7 @@ enum class ResetType
 
 // --- Private globals ---
 
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto spiTimeout = 1 * ms;
 
 auto adc4CsGpioPin = hal::GpioPin(hal::epsAdc4CsPin);
 auto adc5CsGpioPin = hal::GpioPin(hal::epsAdc5CsPin);
@@ -226,8 +227,8 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     // According to the datasheet at most 514 conversions are done after a conversion command
     // (depends on averaging and channels). This takes 514 * (t_acq + t_conv) + wakeup = 514 * (0.6
     // + 3.5) us + 65 us = 2172.4 us.
-    static constexpr auto conversionTime = 3 * RODOS::MILLISECONDS;
-    RODOS::AT(RODOS::NOW() + conversionTime);
+    static constexpr auto conversionTime = 3 * ms;
+    SuspendFor(conversionTime);
 
     // Resolution is 12 bit, sent like this: [0 0 0 0 MSB x x x], [x x x x x x x LSB]
     auto adcData = SerialBuffer<AdcValues>{};
