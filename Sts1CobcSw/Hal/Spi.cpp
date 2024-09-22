@@ -25,11 +25,11 @@ auto Initialize(Spi * spi, std::uint32_t baudRate, bool useOpenDrainOutputs) -> 
 }
 
 
-auto Spi::TransferEnd() const -> std::int64_t
+auto Spi::TransferEnd() const -> RodosTime
 {
     std::int64_t transferEnd = 0;
     this->transferEnd_.get(transferEnd);
-    return transferEnd;
+    return RodosTime(transferEnd);
 }
 
 

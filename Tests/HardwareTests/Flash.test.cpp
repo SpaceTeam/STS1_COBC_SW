@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -84,24 +85,22 @@ private:
         std::fill(page.begin(), page.end(), 0x00_b);
         PRINTF("Programming page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
         Print(page);
-        auto begin = RODOS::NOW();
+        auto begin = CurrentRodosTime();
         flash::ProgramPage(pageAddress, page);
-        auto endPage = RODOS::NOW();
+        auto endPage = CurrentRodosTime();
 
-        auto const programPageTimeout = 10 * RODOS::MILLISECONDS;
+        auto const programPageTimeout = 10 * ms;
         auto waitWhileBusyResult = flash::WaitWhileBusy(programPageTimeout);
-        auto end = RODOS::NOW();
-        PRINTF("ProgrammPage took %d us\n",
-               static_cast<int>((endPage - begin) / RODOS::MICROSECONDS));
+        auto end = CurrentRodosTime();
+        PRINTF("ProgrammPage took %d us\n", static_cast<int>((endPage - begin) / us));
         if(waitWhileBusyResult.has_error())
         {
             PRINTF("WaitWhileBusy failed because it didn't finish in %d us\n",
-                   static_cast<int>(programPageTimeout / RODOS::MICROSECONDS));
+                   static_cast<int>(programPageTimeout / us));
         }
         else
         {
-            PRINTF("WaitWhileBusy took %d us\n",
-                   static_cast<int>((end - endPage) / RODOS::MICROSECONDS));
+            PRINTF("WaitWhileBusy took %d us\n", static_cast<int>((end - endPage) / us));
         }
 
         PRINTF("\n");
@@ -114,19 +113,18 @@ private:
                static_cast<unsigned int>(pageAddress));
         flash::EraseSector(pageAddress);
 
-        auto const eraseSectorTimeout = 500 * RODOS::MILLISECONDS;
-        begin = RODOS::NOW();
+        auto const eraseSectorTimeout = 500 * ms;
+        begin = CurrentRodosTime();
         waitWhileBusyResult = flash::WaitWhileBusy(eraseSectorTimeout);
-        end = RODOS::NOW();
+        end = CurrentRodosTime();
         if(waitWhileBusyResult.has_error())
         {
             PRINTF("WaitWhileBusy failed because it didn't finish in %d us\n",
-                   static_cast<int>(eraseSectorTimeout / RODOS::MICROSECONDS));
+                   static_cast<int>(eraseSectorTimeout / us));
         }
         else
         {
-            PRINTF("WaitWhileBusy took %d us\n",
-                   static_cast<int>((end - begin) / RODOS::MICROSECONDS));
+            PRINTF("WaitWhileBusy took %d us\n", static_cast<int>((end - begin) / us));
         }
 
         PRINTF("\n");

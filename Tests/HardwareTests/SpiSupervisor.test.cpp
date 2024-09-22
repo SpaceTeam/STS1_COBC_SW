@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos/support/support-libs/random.h>
 #include <rodos_no_using_namespace.h>
@@ -46,7 +47,7 @@ private:
         PRINTF("Writing flash page ...\n");
         flash::ProgramPage(flashAddress, Span(page));
 
-        RODOS::AT(2 * RODOS::SECONDS);
+        SuspendFor(2 * s);
 
         PRINTF("\n");
         RODOS::setRandSeed(static_cast<std::uint64_t>(RODOS::NOW()));
@@ -55,7 +56,7 @@ private:
 
         auto framTestData = std::array<Byte, 11 * 1024>{};
         // Baud rate = 6 MHz, data size = 11 KiB -> transfer time ~ 15 ms
-        constexpr auto spiTimeout = 30 * RODOS::MILLISECONDS;
+        constexpr auto spiTimeout = 30 * ms;
         PRINTF("Writing %d B to FRAM ...\n", static_cast<int>(framTestData.size()));
         fram::WriteTo(framAddress, Span(framTestData), spiTimeout);
     }

@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -31,7 +32,7 @@ private:
     void run() override
     {
         DEBUG_PRINT("RF start-up test ...");
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
         rf::Initialize(rf::TxType::packet);
         auto partNumber = rf::ReadPartNumber();
         if(partNumber != rf::correctPartNumber)
@@ -40,7 +41,7 @@ private:
             persistentVariables.template Store<"rfIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
     }
 } rfStartupTestThread;
 

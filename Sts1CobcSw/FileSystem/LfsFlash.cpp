@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos/api/rodos-semaphore.h>
 #include <rodos_no_using_namespace.h>
@@ -33,9 +34,9 @@ auto Unlock(lfs_config const * config) -> int;
 
 // TODO: Test with real HW
 // max. 3.5 ms acc. W25Q01JV datasheet
-constexpr auto pageProgramTimeout = 5 * RODOS::MILLISECONDS;
+constexpr auto pageProgramTimeout = 5 * ms;
 // max. 400 ms acc. W25Q01JV datasheet (lfs_config.block_size = flash::sectorSize)
-constexpr auto blockEraseTimeout = 500 * RODOS::MILLISECONDS;
+constexpr auto blockEraseTimeout = 500 * ms;
 
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};

@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <cstddef>
@@ -22,12 +24,12 @@ public:
     friend auto Initialize(Spi * spi, std::uint32_t baudRate, bool useOpenDrainOutputs) -> void;
 
     template<typename T, std::size_t extent>
-    friend auto WriteTo(Spi * spi, std::span<T const, extent> data, std::int64_t timeout) -> void;
+    friend auto WriteTo(Spi * spi, std::span<T const, extent> data, Duration timeout) -> void;
 
     template<typename T, std::size_t extent>
-    friend auto ReadFrom(Spi * spi, std::span<T, extent> data, std::int64_t timeout) -> void;
+    friend auto ReadFrom(Spi * spi, std::span<T, extent> data, Duration timeout) -> void;
 
-    auto TransferEnd() const -> std::int64_t;
+    auto TransferEnd() const -> RodosTime;
     auto BaudRate() -> std::int32_t;
 
 

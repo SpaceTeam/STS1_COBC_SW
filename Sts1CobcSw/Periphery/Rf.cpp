@@ -12,6 +12,7 @@
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -24,12 +25,6 @@
 
 namespace sts1cobcsw::rf
 {
-using RODOS::AT;
-using RODOS::MICROSECONDS;
-using RODOS::MILLISECONDS;
-using RODOS::NOW;
-
-
 enum class PropertyGroup : std::uint8_t
 {
     global = 0x00,       //
@@ -74,13 +69,13 @@ constexpr auto partInfoAnswerLength = 8U;
 constexpr auto maxNProperties = 12;
 
 // Delay to wait for power on reset to finish
-constexpr auto porRunningDelay = 20 * MILLISECONDS;
+constexpr auto porRunningDelay = 20 * ms;
 // Time until PoR circuit settles after applying power
-constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
+constexpr auto porCircuitSettleDelay = 100 * ms;
 // Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
-constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
+constexpr auto watchDogResetPinDelay = 1 * ms;
 // TODO: Check this and write a good comment
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto spiTimeout = 1 * ms;
 
 // Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
 constexpr auto txFifoThreshold = 32_b;
@@ -186,9 +181,9 @@ auto InitializeGpiosAndSpi() -> void
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
     // The watchdog must be reset at least once to enable the RF module
     watchdogResetGpioPin.Reset();
-    AT(NOW() + watchDogResetPinDelay);
+    SuspendFor(watchDogResetPinDelay);
     watchdogResetGpioPin.Set();
-    AT(NOW() + watchDogResetPinDelay);
+    SuspendFor(watchDogResetPinDelay);
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 6'000'000;
@@ -199,9 +194,9 @@ auto InitializeGpiosAndSpi() -> void
 #endif
 
     // Enable Si4463 and wait for PoR to finish
-    AT(NOW() + porCircuitSettleDelay);
+    SuspendFor(porCircuitSettleDelay);
     sdnGpioPin.Reset();
-    AT(NOW() + porRunningDelay);
+    SuspendFor(porRunningDelay);
 }
 
 
@@ -802,7 +797,7 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 auto WaitForCts() -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
-    auto const pollingDelay = 50 * MICROSECONDS;
+    auto const pollingDelay = 50 * us;
     do
     {
         csGpioPin.Reset();
@@ -814,7 +809,7 @@ auto WaitForCts() -> void
             break;
         }
         csGpioPin.Set();
-        AT(NOW() + pollingDelay);
+        SuspendFor(pollingDelay);
     } while(true);
     // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
     // RF code
