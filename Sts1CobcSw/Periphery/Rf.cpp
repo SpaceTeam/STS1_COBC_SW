@@ -167,6 +167,7 @@ auto SetTxType(TxType txType) -> void
 auto InitializeGpiosAndSpi() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
+    csGpioPin.OutputType(hal::PinOutputType::openDrain);
     csGpioPin.Set();
     nirqGpioPin.Direction(hal::PinDirection::in);
     sdnGpioPin.Direction(hal::PinDirection::out);
@@ -181,7 +182,7 @@ auto InitializeGpiosAndSpi() -> void
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 6'000'000;
-    Initialize(&spi, baudrate);
+    Initialize(&spi, baudrate, /*useOpenDrainOutputs=*/true);
 
     // Enable Si4463 and wait for PoR to finish
     AT(NOW() + porCircuitSettleDelay);
