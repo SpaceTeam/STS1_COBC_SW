@@ -14,6 +14,14 @@ enum class PinDirection
     out
 };
 
+
+enum class PinOutputType
+{
+    pushPull,
+    openDrain
+};
+
+
 enum class PinState
 {
     set,
@@ -29,6 +37,7 @@ public:
     GpioPin(RODOS::GPIO_PIN pinIndex);
 
     auto Direction(PinDirection pinDirection) -> void;
+    auto OutputType(PinOutputType pinOutputType) -> void;
     auto Set() -> void;
     auto Reset() -> void;
     [[nodiscard]] auto Read() const -> PinState;
