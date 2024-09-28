@@ -19,7 +19,7 @@ public:
         RODOS::GPIO_PIN misoPin,
         RODOS::GPIO_PIN mosiPin);
 
-    friend auto Initialize(Spi * spi, std::uint32_t baudRate) -> void;
+    friend auto Initialize(Spi * spi, std::uint32_t baudRate, bool useOpenDrainOutputs) -> void;
 
     template<typename T, std::size_t extent>
     friend auto WriteTo(Spi * spi, std::span<T const, extent> data, std::int64_t timeout) -> void;
@@ -37,15 +37,7 @@ private:
 };
 
 
-auto Initialize(RODOS::HAL_SPI * spi, std::uint32_t baudRate) -> void;
-
-// TODO: Maybe remove extent to reduce code bloat, or probably build time since it is just a single
-// call to the Rodos function, which is trivial to inline.
-template<typename T, std::size_t extent>
-auto WriteTo(RODOS::HAL_SPI * spi, std::span<T const, extent> data) -> void;
-
-template<typename T, std::size_t extent>
-auto ReadFrom(RODOS::HAL_SPI * spi, std::span<T, extent> data) -> void;
+auto Initialize(Spi * spi, std::uint32_t baudRate, bool useOpenDrainOutputs = false) -> void;
 }
 
 
