@@ -1,7 +1,5 @@
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
-
 #include <rodos_no_using_namespace.h>
 
 
@@ -11,17 +9,13 @@ class DisableRfLatchupProtectionTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
-#endif
+        InitializeRfLatchupDisablePins();
     }
 
 
     void run() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Set();
-#endif
+        DisableRfLatchupProtection();
     }
 } disableRfLatchupProtectionTest;
 }

@@ -2,7 +2,6 @@
 
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
@@ -44,9 +43,7 @@ public:
 private:
     void init() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
-#endif
+        InitializeRfLatchupDisablePins();
         edu::Initialize();
         auto const baudRate = 115'200;
         hal::Initialize(&uciUart, baudRate);
@@ -55,9 +52,7 @@ private:
 
     void run() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Reset();
-#endif
+        EnableRfLatchupProtection();
 
         // Permanently turn on EDU for this test
         edu::TurnOn();
