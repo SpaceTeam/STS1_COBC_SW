@@ -3,8 +3,6 @@
 
 #include <strong_type/affine_point.hpp>
 
-#include <rodos_no_using_namespace.h>
-
 #include <etl/vector.h>
 
 
