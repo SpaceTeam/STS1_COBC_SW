@@ -5,7 +5,7 @@ include(cmake/prelude.cmake)
 project(
     Sts1CobcSw
     VERSION 0.1.0
-    DESCRIPTION "Software for the Communication and onboard computer of SpaceTeamSat1"
+    DESCRIPTION "Software for the communication and onboard computer of SpaceTeamSat1"
     HOMEPAGE_URL "https://github.com/SpaceTeam/STS1_COBC_SW"
     LANGUAGES CXX
 )
@@ -30,16 +30,15 @@ add_library(Sts1CobcSw_Dummy STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
 add_library(Sts1CobcSw_FramSections INTERFACE)
+add_library(Sts1CobcSw_Hal STATIC)
 add_library(Sts1CobcSw_Outcome INTERFACE)
 add_library(Sts1CobcSw_ProgramId INTERFACE)
 add_library(Sts1CobcSw_Periphery STATIC)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility STATIC)
 add_program(HelloDummy)
-# add_program(Heartbeat)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    add_library(Sts1CobcSw_Hal STATIC)
     add_program(CobcSoftware)
 endif()
 
