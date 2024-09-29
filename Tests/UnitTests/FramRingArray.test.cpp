@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <array>
-#include <bit>
 #include <cstddef>
 #include <type_traits>
 
@@ -24,39 +23,6 @@
 namespace fram = sts1cobcsw::fram;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
-namespace sts1cobcsw::edu
-{
-using sts1cobcsw::DeserializeFrom;
-using sts1cobcsw::SerializeTo;
-
-
-template<std::endian endianness>
-auto DeserializeFrom(void const * source, ProgramStatusHistoryEntry * data) -> void const *
-{
-    source = DeserializeFrom<endianness>(source, &(data->programId));
-    source = DeserializeFrom<endianness>(source, &(data->startTime));
-    source = DeserializeFrom<endianness>(source, &(data->status));
-    return source;
-}
-
-
-template<std::endian endianness>
-auto SerializeTo(void * destination, ProgramStatusHistoryEntry const & data) -> void *
-{
-    destination = SerializeTo<endianness>(destination, data.programId);
-    destination = SerializeTo<endianness>(destination, data.startTime);
-    destination = SerializeTo<endianness>(destination, data.status);
-    return destination;
-}
-
-
-template auto DeserializeFrom<std::endian::big>(void const *, ProgramStatusHistoryEntry *)
-    -> void const *;
-template auto DeserializeFrom<std::endian::little>(void const *, ProgramStatusHistoryEntry *)
-    -> void const *;
-template auto SerializeTo<std::endian::big>(void *, ProgramStatusHistoryEntry const &) -> void *;
-template auto SerializeTo<std::endian::little>(void *, ProgramStatusHistoryEntry const &) -> void *;
-}
 
 inline constexpr auto section =
     sts1cobcsw::Section<fram::Address(0), fram::Size(3 * 2 * sizeof(std::size_t) + 4)>{};
@@ -77,11 +43,19 @@ static_assert(charRingArray.section.begin == fram::Address(0));
 static_assert(charRingArray.section.end == fram::Address(28));
 static_assert(charRingArray.section.size == fram::Size(28));
 
+static_assert(std::is_same_v<decltype(programStatusHistory)::ValueType,
+                             sts1cobcsw::edu::ProgramStatusHistoryEntry>);
 static_assert(programStatusHistory.FramCapacity() == 3);
 static_assert(programStatusHistory.CacheCapacity() == 2);
-
-
-// TODO: Static asserts for custom type ring array
+static_assert(programStatusHistory.section.begin == fram::Address(28));
+static_assert(
+    programStatusHistory.section.end
+    == fram::Address(28 + 3 * 2 * sizeof(size_t)
+                     + 4 * sts1cobcsw::serialSize<sts1cobcsw::edu::ProgramStatusHistoryEntry>));
+static_assert(
+    programStatusHistory.section.size
+    == fram::Size(3 * 2 * sizeof(size_t)
+                  + 4 * sts1cobcsw::serialSize<sts1cobcsw::edu::ProgramStatusHistoryEntry>));
 
 
 auto RunUnitTest() -> void
@@ -223,8 +197,12 @@ auto RunUnitTest() -> void
     // SECTION("ProgramStatusHistoryEntry test")
     {
         using sts1cobcsw::serialSize;
-        using sts1cobcsw::edu::ProgramStatus;
         using sts1cobcsw::edu::ProgramStatusHistoryEntry;
+
+        using sts1cobcsw::ProgramId;
+        using sts1cobcsw::RealTime;
+        using sts1cobcsw::edu::ProgramStatus;
+
 
         memory.fill(0x00_b);
         fram::framIsWorking.Store(true);
@@ -235,53 +213,49 @@ auto RunUnitTest() -> void
         //      ProgramId     : 2 bytes
         //      RealTime      : 4 bytes
         //      ProgramStatus : 1 byte
+        auto entry1 = ProgramStatusHistoryEntry{.programId = ProgramId(1),
+                                                .startTime = RealTime(11),
+                                                .status = ProgramStatus::programCouldNotBeStarted};
 
-        auto entry = ProgramStatusHistoryEntry{
-            .programId = sts1cobcsw::ProgramId(1),
-            .startTime = sts1cobcsw::RealTime(11),
-            .status = sts1cobcsw::edu::ProgramStatus::programCouldNotBeStarted};
-
-        auto entry2 =
-            ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(2),
-                                      .startTime = sts1cobcsw::RealTime(12),
-                                      .status = sts1cobcsw::edu::ProgramStatus::programRunning};
-
-        auto entry3 =
-            ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(3),
-                                      .startTime = sts1cobcsw::RealTime(13),
-                                      .status = sts1cobcsw::edu::ProgramStatus::programRunning};
-
-        auto entry4 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(4),
-                                                .startTime = sts1cobcsw::RealTime(10),
+        auto entry2 = ProgramStatusHistoryEntry{.programId = ProgramId(2),
+                                                .startTime = RealTime(12),
                                                 .status = ProgramStatus::programRunning};
 
-        auto entry5 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(5),
-                                                .startTime = sts1cobcsw::RealTime(10),
+        auto entry3 = ProgramStatusHistoryEntry{.programId = ProgramId(3),
+                                                .startTime = RealTime(13),
                                                 .status = ProgramStatus::programRunning};
 
-        auto entry6 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(6),
-                                                .startTime = sts1cobcsw::RealTime(10),
+        auto entry4 = ProgramStatusHistoryEntry{.programId = ProgramId(4),
+                                                .startTime = RealTime(10),
                                                 .status = ProgramStatus::programRunning};
 
-        auto entry7 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(7),
-                                                .startTime = sts1cobcsw::RealTime(10),
+        auto entry5 = ProgramStatusHistoryEntry{.programId = ProgramId(5),
+                                                .startTime = RealTime(10),
                                                 .status = ProgramStatus::programRunning};
 
-        auto entry8 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(8),
-                                                .startTime = sts1cobcsw::RealTime(10),
+        auto entry6 = ProgramStatusHistoryEntry{.programId = ProgramId(6),
+                                                .startTime = RealTime(10),
+                                                .status = ProgramStatus::programRunning};
+
+        auto entry7 = ProgramStatusHistoryEntry{.programId = ProgramId(7),
+                                                .startTime = RealTime(10),
+                                                .status = ProgramStatus::programRunning};
+
+        auto entry8 = ProgramStatusHistoryEntry{.programId = ProgramId(8),
+                                                .startTime = RealTime(10),
                                                 .status = ProgramStatus::programRunning};
 
 
-        Require(entry.programId == sts1cobcsw::ProgramId{1});
+        Require(entry1.programId == sts1cobcsw::ProgramId{1});
 
         Require(programStatusHistory.Size() == 0);
 
         // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
-        programStatusHistory.Set(0, entry);
+        programStatusHistory.Set(0, entry1);
         Require(std::all_of(memory.begin(), memory.end(), [](auto x) { return x == 0_b; }));
 
-        programStatusHistory.PushBack(entry);
+        programStatusHistory.PushBack(entry1);
         Require(programStatusHistory.Size() == 1);
         Require(programStatusHistory.Front().programId == sts1cobcsw::ProgramId(1));
         Require(programStatusHistory.Back().programId == sts1cobcsw::ProgramId(1));
@@ -306,7 +280,8 @@ auto RunUnitTest() -> void
 
         // PushBack writes to memory
         Require(fram::ram::memory[programStatusHistoryStartAddress + 0] == 1_b);
-        Require(fram::ram::memory[programStatusHistoryStartAddress + 2] == 11_b);
+        Require(fram::ram::memory[programStatusHistoryStartAddress + sizeof(sts1cobcsw::ProgramId)]
+                == 11_b);
         Require(fram::ram::memory[programStatusHistoryStartAddress + 6] == 1_b);
 
         // When pushing to a full ring, the size stays the same and the oldest element is lost
@@ -315,8 +290,8 @@ auto RunUnitTest() -> void
         Require(programStatusHistory.Front().programId.value_of() == 2);
         Require(programStatusHistory.Back().programId.value_of() == 4);
 
-        //// Only the (size + 2)th element overwrites the first one in memory because we keep a gap
-        ///of / one between begin and end indexes
+        // Only the (size + 2)th element overwrites the first one in memory because we keep a gap
+        // of one between begin and end indexes
         programStatusHistory.PushBack(entry5);
         Require(programStatusHistory.Size() == 3);
         Require(programStatusHistory.Front().programId.value_of() == 3);
@@ -344,9 +319,23 @@ auto RunUnitTest() -> void
         // Get() with out-of-bounds index prints a debug message and returns the last element
         Require(programStatusHistory.Get(17).programId.value_of() == 8);
         //// Set() with out-of-bounds index prints a debug message and does not set anything
-        programStatusHistory.Set(17, entry);
+        programStatusHistory.Set(17, entry1);
         Require(programStatusHistory.Get(0).programId.value_of() == 6);
         Require(programStatusHistory.Get(1).programId.value_of() == 7);
         Require(programStatusHistory.Get(2).programId.value_of() == 8);
+
+        // UpdateProgramStatusHistory()
+        for(std::size_t i = 0; i < programStatusHistory.Size(); ++i)
+        {
+            auto entry = programStatusHistory.Get(i);
+            if(entry.startTime == sts1cobcsw::RealTime(10)
+               and entry.programId == sts1cobcsw::ProgramId(8))
+            {
+                entry.status = ProgramStatus::programExecutionSucceeded;
+                programStatusHistory.Set(i, entry);
+            }
+        }
+
+        Require(programStatusHistory.Get(2).status == ProgramStatus::programExecutionSucceeded);
     }
 }
