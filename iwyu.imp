@@ -85,6 +85,7 @@
   { include: ["\"Sts1CobcSw/Hal/IoNames.hpp\"",                         "public", "<Sts1CobcSw/Hal/IoNames.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/PinNames.hpp\"",                        "public", "<Sts1CobcSw/Hal/PinNames.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Spi.hpp\"",                             "public", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/SpiMock.hpp\"",                         "public", "<Sts1CobcSw/Hal/SpiMock.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Uart.hpp\"",                            "public", "<Sts1CobcSw/Hal/Uart.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Outcome/Outcome.hpp\"",                     "public", "<Sts1CobcSw/Outcome/Outcome.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Periphery/Eps.hpp\"",                       "public", "<Sts1CobcSw/Periphery/Eps.hpp>", "public"] },
