@@ -136,7 +136,7 @@ private:
             }
             else
             {
-                edu::programStatusHistory.put(
+                edu::programStatusHistory.PushBack(
                     edu::ProgramStatusHistoryEntry{.programId = programId,
                                                    .startTime = startTime,
                                                    .status = edu::ProgramStatus::programRunning});
