@@ -42,6 +42,10 @@ private:
             DEBUG_PRINT(" failed to read correct flash JEDEC ID");
             persistentVariables.template Store<"flashIsWorking">(false);
         }
+        else
+        {
+            persistentVariables.template Store<"flashIsWorking">(true);
+        }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }

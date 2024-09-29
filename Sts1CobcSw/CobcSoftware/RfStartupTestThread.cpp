@@ -40,6 +40,10 @@ private:
             DEBUG_PRINT(" failed to read correct RF part number");
             persistentVariables.template Store<"rfIsWorking">(false);
         }
+        else
+        {
+            persistentVariables.template Store<"rfIsWorking">(true);
+        }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }

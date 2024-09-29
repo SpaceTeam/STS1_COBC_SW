@@ -7,18 +7,22 @@ namespace sts1cobcsw
 // "rfIsWorking" to true.
 auto ResumeFlashStartupTestThread() -> void
 {
+    persistentVariables.template Store<"flashIsWorking">(true);
     ResumeSpiStartupTestAndSupervisorThread();
 }
 
 
 auto ResumeFramEpsStartupTestThread() -> void
 {
+    fram::framIsWorking.Store(true);
+    persistentVariables.template Store<"epsIsWorking">(true);
     ResumeSpiStartupTestAndSupervisorThread();
 }
 
 
 auto ResumeRfStartupTestThread() -> void
 {
+    persistentVariables.template Store<"rfIsWorking">(true);
     ResumeSpiStartupTestAndSupervisorThread();
 }
 }
