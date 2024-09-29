@@ -4,8 +4,9 @@
 #include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
-#include <rodos_no_using_namespace.h>
+#include <strong_type/difference.hpp>
 
 #include <algorithm>
 #include <span>
@@ -59,9 +60,9 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
 
 // TODO: Test with real HW
 // max. 3.5 ms acc. W25Q01JV datasheet
-constexpr auto pageProgramTimeout = 5 * RODOS::MILLISECONDS;
+constexpr auto pageProgramTimeout = 5 * ms;
 // max. 400 ms acc. W25Q01JV datasheet (lfs_config.block_size = flash::sectorSize)
-constexpr auto blockEraseTimeout = 500 * RODOS::MILLISECONDS;
+constexpr auto blockEraseTimeout = 500 * ms;
 
 
 auto Initialize() -> void

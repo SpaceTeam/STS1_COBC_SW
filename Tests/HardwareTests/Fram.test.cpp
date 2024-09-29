@@ -4,7 +4,9 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos/support/support-libs/random.h>
@@ -29,7 +31,8 @@ auto testData = std::array<Byte, testDataSize>{};
 auto readData = std::array<Byte, testDataSize>{};
 // Baud rate = 6 MHz, largest data transfer = 11 KiB -> spiTimeout = 30 ms is enough for all
 // transfers
-constexpr auto spiTimeout = 30 * RODOS::MILLISECONDS;
+// TODO: Test if the test still works if we include Time.hpp and use ms here instead
+constexpr auto spiTimeout = 30 * Duration(RODOS::MILLISECONDS);
 
 
 auto PrintDeviceId(fram::DeviceId const & deviceId) -> void;

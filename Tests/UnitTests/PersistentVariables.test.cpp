@@ -12,6 +12,7 @@
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <type_traits>

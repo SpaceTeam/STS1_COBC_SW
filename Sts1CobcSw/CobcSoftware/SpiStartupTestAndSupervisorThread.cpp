@@ -10,18 +10,28 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+
+#include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
+#include <strong_type/ordered.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <compare>
 
 
 namespace sts1cobcsw
 {
 constexpr auto stackSize = 100U;
 // TODO: Measure how long the startup tests really take to determine the correct timeout
-constexpr auto startupTestTimeout = 100 * RODOS::MILLISECONDS;
+constexpr auto startupTestTimeout = 100 * ms;
 // TODO: Think about how often the supervision should run
-constexpr auto supervisionPeriod = 1 * RODOS::SECONDS;
+constexpr auto supervisionPeriod = 1 * s;
 
 
 auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool;
@@ -44,50 +54,73 @@ private:
 
     void run() override
     {
-        using RODOS::AT;
-        using RODOS::NOW;
+        static constexpr auto errorMessage = " failed to complete in time\n";
+        static constexpr auto successMessage = " completed in time\n";
 
-        // TODO: Test if this works
         auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
+        DEBUG_PRINT(fram::framIsWorking.Load() ? "\n" : " and");
         if(not testWasSuccessful)
         {
+            DEBUG_PRINT("%s", errorMessage);
             fram::framIsWorking.Store(false);
             persistentVariables.template Store<"epsIsWorking">(false);
         }
+        else
+        {
+            DEBUG_PRINT("%s", successMessage);
+        }
+
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
+        DEBUG_PRINT(persistentVariables.template Load<"flashIsWorking">() ? "\n" : " and");
         if(not testWasSuccessful)
         {
+            DEBUG_PRINT("%s", errorMessage);
             persistentVariables.template Store<"flashIsWorking">(false);
             persistentVariables.template Increment<"nFlashErrors">();
         }
-        testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
-        if(not testWasSuccessful)
+        else
         {
-            persistentVariables.template Store<"rfIsWorking">(false);
-            persistentVariables.template Increment<"nRfErrors">();
-            AT(NOW() + 2 * RODOS::SECONDS);
-            RODOS::hwResetAndReboot();
+            DEBUG_PRINT("%s", successMessage);
         }
 
-        TIME_LOOP(0, supervisionPeriod)
+        testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
+        DEBUG_PRINT(persistentVariables.template Load<"rfIsWorking">() ? "\n" : " and");
+        if(not testWasSuccessful)
+        {
+            DEBUG_PRINT("%s", errorMessage);
+            persistentVariables.template Store<"rfIsWorking">(false);
+            persistentVariables.template Increment<"nRfErrors">();
+            SuspendFor(2 * s);
+            RODOS::hwResetAndReboot();
+        }
+        else
+        {
+            DEBUG_PRINT("%s", successMessage);
+        }
+
+        TIME_LOOP(0, value_of(supervisionPeriod))
         {
             auto timeoutHappened = false;
-            if(NOW() > framEpsSpi.TransferEnd())
+            if(CurrentRodosTime() > framEpsSpi.TransferEnd())
             {
+                DEBUG_PRINT("FRAM/EPS SPI timeout occurred\n");
                 timeoutHappened = true;
             }
-            if(NOW() > flash::spi.TransferEnd())
+            if(CurrentRodosTime() > flash::spi.TransferEnd())
             {
+                DEBUG_PRINT("Flash SPI timeout occurred\n");
                 timeoutHappened = true;
                 persistentVariables.template Increment<"nFlashErrors">();
             }
-            if(NOW() > rf::spi.TransferEnd())
+            if(CurrentRodosTime() > rf::spi.TransferEnd())
             {
+                DEBUG_PRINT("RF SPI timeout occurred\n");
                 timeoutHappened = true;
                 persistentVariables.template Increment<"nRfErrors">();
             }
             if(timeoutHappened)
             {
+                DEBUG_PRINT("Hardware reset and reboot");
                 RODOS::hwResetAndReboot();
             }
         }
@@ -103,9 +136,9 @@ auto ResumeSpiStartupTestAndSupervisorThread() -> void
 
 auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool
 {
-    auto testEnd = RODOS::NOW() + startupTestTimeout;
+    auto testEnd = CurrentRodosTime() + startupTestTimeout;
     startupTestThreadResumeFuntion();
-    RODOS::AT(testEnd);
-    return RODOS::NOW() <= testEnd;
+    SuspendUntil(testEnd);
+    return CurrentRodosTime() <= testEnd;
 }
 }

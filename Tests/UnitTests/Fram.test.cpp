@@ -1,14 +1,17 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <catch2/generators/catch_generators_random.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
+#include <algorithm>
 #include <array>
 #include <string>
 
@@ -18,6 +21,7 @@ namespace fram = sts1cobcsw::fram;
 using sts1cobcsw::Byte;
 using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
+using sts1cobcsw::ms;
 
 
 auto WriteAndReadTestData(sts1cobcsw::fram::Address address) -> void;
@@ -41,12 +45,12 @@ TEST_CASE("Mocked functions do nothing by default")
     SECTION("WriteTo() and ReadFrom()")
     {
         auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
-        fram::ReadFrom(address, Span(&readData), 0);
+        fram::ReadFrom(address, Span(&readData), 0 * ms);
         CHECK(readData == std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b});
 
         auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
-        fram::WriteTo(address, Span(writeData), 0);
-        readData = fram::ReadFrom<writeData.size()>(address, 0);
+        fram::WriteTo(address, Span(writeData), 0 * ms);
+        readData = fram::ReadFrom<writeData.size()>(address, 0 * ms);
         CHECK(readData == decltype(readData){});
     }
 }
@@ -67,16 +71,16 @@ TEST_CASE("Mocking FRAM in RAM")
     auto address = fram::Address(GENERATE(take(1, random(0U, value_of(fram::memorySize) - 10))));
 
     auto readData = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
-    fram::ReadFrom(address, Span(&readData), 0);
+    fram::ReadFrom(address, Span(&readData), 0 * ms);
     CHECK(readData == decltype(readData){});
 
     auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
-    fram::WriteTo(address, Span(writeData), 0);
+    fram::WriteTo(address, Span(writeData), 0 * ms);
     CHECK(fram::ram::memory[value_of(address)] == writeData[0]);
     CHECK(fram::ram::memory[value_of(address) + 1] == writeData[1]);
     CHECK(fram::ram::memory[value_of(address) + 2] == writeData[2]);
     CHECK(fram::ram::memory[value_of(address) + 3] == writeData[3]);
 
-    readData = fram::ReadFrom<writeData.size()>(address, 0);
+    readData = fram::ReadFrom<writeData.size()>(address, 0 * ms);
     CHECK(readData == writeData);
 }
