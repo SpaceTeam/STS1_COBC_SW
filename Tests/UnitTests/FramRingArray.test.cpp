@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cstddef>
 #include <type_traits>
 
@@ -60,11 +61,14 @@ template auto SerializeTo<std::endian::little>(void *, ProgramStatusHistoryEntry
 inline constexpr auto section =
     sts1cobcsw::Section<fram::Address(0), fram::Size(3 * 2 * sizeof(std::size_t) + 4)>{};
 
-inline constexpr auto programStatusHistorySection = 
-    sts1cobcsw::Section<fram::Address(3*2*sizeof(std::size_t)+4), fram::Size(3 * 2 * sizeof(std::size_t)+ sts1cobcsw::serialSize<sts1cobcsw::edu::ProgramStatusHistoryEntry> * 4)>{};
+inline constexpr auto programStatusHistorySection = sts1cobcsw::Section<
+    fram::Address(3 * 2 * sizeof(std::size_t) + 4),
+    fram::Size(3 * 2 * sizeof(std::size_t)
+               + sts1cobcsw::serialSize<sts1cobcsw::edu::ProgramStatusHistoryEntry> * 4)>{};
 
 inline constexpr auto charRingArray = sts1cobcsw::RingArray<char, section, 2>{};
-inline constexpr auto programStatusHistory = sts1cobcsw::RingArray<sts1cobcsw::edu::ProgramStatusHistoryEntry, programStatusHistorySection, 2>{};
+inline constexpr auto programStatusHistory = sts1cobcsw::
+    RingArray<sts1cobcsw::edu::ProgramStatusHistoryEntry, programStatusHistorySection, 2>{};
 
 static_assert(std::is_same_v<decltype(charRingArray)::ValueType, char>);
 static_assert(charRingArray.FramCapacity() == 3);
@@ -87,7 +91,8 @@ auto RunUnitTest() -> void
     fram::ram::SetAllDoFunctions();
     fram::Initialize();
     static constexpr auto ringArrayStartAddress = 3 * 2 * sizeof(std::size_t);
-    static constexpr auto programStatusHistoryStartAddress = 3 * 2 * sizeof(std::size_t) + 4 + 3 * 2 * sizeof(std::size_t);
+    static constexpr auto programStatusHistoryStartAddress =
+        3 * 2 * sizeof(std::size_t) + 4 + 3 * 2 * sizeof(std::size_t);
 
 
     // SECTION("FRAM is working")
@@ -217,41 +222,61 @@ auto RunUnitTest() -> void
 
     // SECTION("ProgramStatusHistoryEntry test")
     {
+        using sts1cobcsw::serialSize;
+        using sts1cobcsw::edu::ProgramStatus;
         using sts1cobcsw::edu::ProgramStatusHistoryEntry;
-        memory.fill(0x00_b); 
+
+        memory.fill(0x00_b);
         fram::framIsWorking.Store(true);
 
         Require(programStatusHistory.Size() == 0);
 
-        // Create a program status history entry
+        // NOTE:
+        //      ProgramId     : 2 bytes
+        //      RealTime      : 4 bytes
+        //      ProgramStatus : 1 byte
 
-        auto entry = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(1),
-                                                   .startTime = sts1cobcsw::RealTime(10),
-                                                   .status = sts1cobcsw::edu::ProgramStatus::programRunning};
+        auto entry = ProgramStatusHistoryEntry{
+            .programId = sts1cobcsw::ProgramId(1),
+            .startTime = sts1cobcsw::RealTime(11),
+            .status = sts1cobcsw::edu::ProgramStatus::programCouldNotBeStarted};
 
-        auto entry2 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(2),
-                                                   .startTime = sts1cobcsw::RealTime(10),
-                                                   .status = sts1cobcsw::edu::ProgramStatus::programRunning};
+        auto entry2 =
+            ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(2),
+                                      .startTime = sts1cobcsw::RealTime(12),
+                                      .status = sts1cobcsw::edu::ProgramStatus::programRunning};
 
-        auto entry3 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(3),
-                                                   .startTime = sts1cobcsw::RealTime(10),
-                                                   .status = sts1cobcsw::edu::ProgramStatus::programRunning};
+        auto entry3 =
+            ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(3),
+                                      .startTime = sts1cobcsw::RealTime(13),
+                                      .status = sts1cobcsw::edu::ProgramStatus::programRunning};
 
         auto entry4 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(4),
                                                 .startTime = sts1cobcsw::RealTime(10),
-                                                .status = sts1cobcsw::edu::ProgramStatus::programRunning};
+                                                .status = ProgramStatus::programRunning};
 
         auto entry5 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(5),
                                                 .startTime = sts1cobcsw::RealTime(10),
-                                                .status = sts1cobcsw::edu::ProgramStatus::programRunning};
+                                                .status = ProgramStatus::programRunning};
+
+        auto entry6 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(6),
+                                                .startTime = sts1cobcsw::RealTime(10),
+                                                .status = ProgramStatus::programRunning};
+
+        auto entry7 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(7),
+                                                .startTime = sts1cobcsw::RealTime(10),
+                                                .status = ProgramStatus::programRunning};
+
+        auto entry8 = ProgramStatusHistoryEntry{.programId = sts1cobcsw::ProgramId(8),
+                                                .startTime = sts1cobcsw::RealTime(10),
+                                                .status = ProgramStatus::programRunning};
 
 
         Require(entry.programId == sts1cobcsw::ProgramId{1});
 
         Require(programStatusHistory.Size() == 0);
-        
 
-         // Trying to set an element in an empty ring prints a debug message and does not set
+        // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
         programStatusHistory.Set(0, entry);
         Require(std::all_of(memory.begin(), memory.end(), [](auto x) { return x == 0_b; }));
@@ -263,21 +288,26 @@ auto RunUnitTest() -> void
 
         programStatusHistory.PushBack(entry2);
         Require(programStatusHistory.Size() == 2);
-        //Require(programStatusHistory.Front() == 11);
-        //Require(programStatusHistory.Back() == 12);
+        Require(programStatusHistory.Front().programId.value_of() == 1);
+        Require(programStatusHistory.Front().startTime.value_of() == 11);
+        Require(programStatusHistory.Front().status == ProgramStatus::programCouldNotBeStarted);
+        Require(programStatusHistory.Back().programId.value_of() == 2);
+        Require(programStatusHistory.Back().startTime.value_of() == 12);
+        Require(programStatusHistory.Back().status == ProgramStatus::programRunning);
 
         programStatusHistory.PushBack(entry3);
         Require(programStatusHistory.Size() == 3);
         Require(programStatusHistory.Front().programId.value_of() == 1);
         Require(programStatusHistory.Back().programId.value_of() == 3);
 
-        Require(programStatusHistory.Get(0).startTime.value_of() == 10);
-        Require(programStatusHistory.Get(1).startTime.value_of() == 10);
-        Require(programStatusHistory.Get(2).startTime.value_of() == 10);
+        Require(programStatusHistory.Get(0).startTime.value_of() == 11);
+        Require(programStatusHistory.Get(1).startTime.value_of() == 12);
+        Require(programStatusHistory.Get(2).startTime.value_of() == 13);
 
         // PushBack writes to memory
         Require(fram::ram::memory[programStatusHistoryStartAddress + 0] == 1_b);
-        Require(fram::ram::memory[programStatusHistoryStartAddress + 2] == 10_b);
+        Require(fram::ram::memory[programStatusHistoryStartAddress + 2] == 11_b);
+        Require(fram::ram::memory[programStatusHistoryStartAddress + 6] == 1_b);
 
         // When pushing to a full ring, the size stays the same and the oldest element is lost
         programStatusHistory.PushBack(entry4);
@@ -285,31 +315,38 @@ auto RunUnitTest() -> void
         Require(programStatusHistory.Front().programId.value_of() == 2);
         Require(programStatusHistory.Back().programId.value_of() == 4);
 
-        //// Only the (size + 2)th element overwrites the first one in memory because we keep a gap of
-        //// one between begin and end indexes
+        //// Only the (size + 2)th element overwrites the first one in memory because we keep a gap
+        ///of / one between begin and end indexes
         programStatusHistory.PushBack(entry5);
         Require(programStatusHistory.Size() == 3);
         Require(programStatusHistory.Front().programId.value_of() == 3);
         Require(programStatusHistory.Back().programId.value_of() == 5);
 
         // Set() writes to memory
-        //programStatusHistory.Set(0, 21);
-        //programStatusHistory.Set(1, 22);
-        //programStatusHistory.Set(2, 23);
-        //Require(programStatusHistory.Get(0) == 21);
-        //Require(programStatusHistory.Get(1) == 22);
-        //Require(programStatusHistory.Get(2) == 23);
-        //Require(fram::ram::memory[ringArrayStartAddress + 0] == 23_b);
-        //Require(fram::ram::memory[ringArrayStartAddress + 1] == 12_b);
-        //Require(fram::ram::memory[ringArrayStartAddress + 2] == 21_b);
-        //Require(fram::ram::memory[ringArrayStartAddress + 3] == 22_b);
+        programStatusHistory.Set(0, entry6);
+        programStatusHistory.Set(1, entry7);
+        programStatusHistory.Set(2, entry8);
+        Require(programStatusHistory.Get(0).programId.value_of() == 6);
+        Require(programStatusHistory.Get(1).programId.value_of() == 7);
+        Require(programStatusHistory.Get(2).programId.value_of() == 8);
+
+        Require(fram::ram::memory[programStatusHistoryStartAddress + 0] == 8_b);
+        Require(fram::ram::memory[programStatusHistoryStartAddress
+                                  + serialSize<ProgramStatusHistoryEntry>]
+                == 2_b);
+        Require(fram::ram::memory[programStatusHistoryStartAddress
+                                  + 2 * serialSize<ProgramStatusHistoryEntry>]
+                == 6_b);
+        Require(fram::ram::memory[programStatusHistoryStartAddress
+                                  + 3 * serialSize<ProgramStatusHistoryEntry>]
+                == 7_b);
 
         // Get() with out-of-bounds index prints a debug message and returns the last element
-        Require(programStatusHistory.Get(17).programId.value_of() == 5);
+        Require(programStatusHistory.Get(17).programId.value_of() == 8);
         //// Set() with out-of-bounds index prints a debug message and does not set anything
-        programStatusHistory.Set(17, entry); 
-        //Require(programStatusHistory.Get(0) == 21);
-        //Require(programStatusHistory.Get(1) == 22);
-        //Require(programStatusHistory.Get(2) == 23);
+        programStatusHistory.Set(17, entry);
+        Require(programStatusHistory.Get(0).programId.value_of() == 6);
+        Require(programStatusHistory.Get(1).programId.value_of() == 7);
+        Require(programStatusHistory.Get(2).programId.value_of() == 8);
     }
 }
