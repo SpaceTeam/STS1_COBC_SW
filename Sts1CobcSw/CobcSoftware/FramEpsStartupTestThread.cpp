@@ -38,13 +38,18 @@ private:
         SuspendUntil(endOfTime);
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
-        if(deviceId != fram::correctDeviceId)
+        if(deviceId == fram::correctDeviceId)
+        {
+            fram::framIsWorking.Store(true);
+        }
+        else
         {
             DEBUG_PRINT(" failed to read correct FRAM device ID");
             fram::framIsWorking.Store(false);
         }
         eps::Initialize();
         (void)eps::Read();
+        persistentVariables.template Store<"epsIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }

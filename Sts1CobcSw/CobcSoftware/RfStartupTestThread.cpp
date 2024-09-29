@@ -35,7 +35,11 @@ private:
         SuspendUntil(endOfTime);
         rf::Initialize(rf::TxType::packet);
         auto partNumber = rf::ReadPartNumber();
-        if(partNumber != rf::correctPartNumber)
+        if(partNumber == rf::correctPartNumber)
+        {
+            persistentVariables.template Store<"rfIsWorking">(true);
+        }
+        else
         {
             DEBUG_PRINT(" failed to read correct RF part number");
             persistentVariables.template Store<"rfIsWorking">(false);

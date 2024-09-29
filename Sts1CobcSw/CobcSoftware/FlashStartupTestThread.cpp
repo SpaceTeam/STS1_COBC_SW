@@ -36,8 +36,12 @@ private:
         SuspendUntil(endOfTime);
         flash::Initialize();
         auto jedecId = flash::ReadJedecId();
-        if(jedecId.deviceId != flash::correctJedecId.deviceId
-           || jedecId.manufacturerId != flash::correctJedecId.manufacturerId)
+        if(jedecId.deviceId == flash::correctJedecId.deviceId
+           && jedecId.manufacturerId == flash::correctJedecId.manufacturerId)
+        {
+            persistentVariables.template Store<"flashIsWorking">(true);
+        }
+        else
         {
             DEBUG_PRINT(" failed to read correct flash JEDEC ID");
             persistentVariables.template Store<"flashIsWorking">(false);
