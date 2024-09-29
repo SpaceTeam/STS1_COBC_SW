@@ -8,7 +8,6 @@
 
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -47,9 +46,7 @@ class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
-#endif
+        InitializeRfLatchupDisablePins();
         auto uartBaudRate = 115'200U;
         hal::Initialize(&eduUart, uartBaudRate);
         hal::Initialize(&uciUart, uartBaudRate);
@@ -60,9 +57,7 @@ class UartTest : public RODOS::StaticThread<>
     {
         using RODOS::PRINTF;
 
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Reset();
-#endif
+        EnableRfLatchupProtection();
 
         PRINTF("\n");
         PRINTF("Is an EDU connected to test the non-blocking UART functions? (y/n)\n");

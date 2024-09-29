@@ -1,7 +1,6 @@
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
 
 #include <littlefs/lfs.h>
 
@@ -28,18 +27,14 @@ public:
 private:
     void init() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
-#endif
+        InitializeRfLatchupDisablePins();
         fs::deprecated::Initialize();
     }
 
 
     void run() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Reset();
-#endif
+        EnableRfLatchupProtection();
 
         PRINTF("\n");
         PRINTF("File system test\n");

@@ -1,7 +1,6 @@
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
 
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
@@ -48,18 +47,14 @@ public:
 private:
     void init() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
-#endif
+        InitializeRfLatchupDisablePins();
         fram::Initialize();
     }
 
 
     void run() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Reset();
-#endif
+        EnableRfLatchupProtection();
 
         PRINTF("\nFRAM test\n\n");
 

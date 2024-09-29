@@ -29,9 +29,7 @@ public:
 private:
     void init() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
-#endif
+        InitializeRfLatchupDisablePins();
         edu::Initialize();
         eduUpdateGpioPin.Direction(hal::PinDirection::in);
         auto const baudRate = 115'200;
@@ -41,9 +39,7 @@ private:
 
     void run() override
     {
-#if HW_VERSION >= 27
-        rfLatchupDisableGpioPin.Reset();
-#endif
+        EnableRfLatchupProtection();
 
         PRINTF("\n");
         PRINTF("EDU power management test\n");

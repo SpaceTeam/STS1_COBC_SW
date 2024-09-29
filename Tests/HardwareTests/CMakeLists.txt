@@ -30,9 +30,16 @@ target_link_libraries(
 )
 add_watchdog_version_of(Crc32)
 
+add_program(DeviceIds DeviceIds.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_DeviceIds PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery
+                                      Sts1CobcSw_Serial Sts1CobcSwTests_RfLatchupDisablePin
+)
+add_watchdog_version_of(DeviceIds)
+
 add_program(DisableRfLatchupProtection DisableRfLatchupProtection.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_DisableRfLatchupProtection PRIVATE rodos::rodos Sts1CobcSw_Hal
+    Sts1CobcSwTests_DisableRfLatchupProtection PRIVATE rodos::rodos
                                                        Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(DisableRfLatchupProtection)

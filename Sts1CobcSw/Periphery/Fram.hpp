@@ -34,7 +34,7 @@ using Address = strong::type<std::uint32_t,
 // TODO: Set correct values
 inline constexpr auto memorySize = Size(1024 * 1024);
 inline constexpr auto correctDeviceId =
-    DeviceId{0x03_b, 0x2E_b, 0xC2_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b};
+    DeviceId{0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0xC2_b, 0x26_b, 0x08_b};
 
 extern EdacVariable<bool> framIsWorking;
 
