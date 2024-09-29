@@ -7,43 +7,22 @@
 
 namespace sts1cobcsw::edu
 {
-RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries> programStatusHistory;
-
-
-// Start by defining an other variable, update methods, and when everything works remove `old`
-// programStatusHistory
 constexpr auto programStatusHistorySection = framSections.Get<"eduProgramStatusHistory">();
 sts1cobcsw::
     RingArray<ProgramStatusHistoryEntry, programStatusHistorySection, nProgramStatusHistoryEntries>
-        framProgramStatusHistory;
+        programStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void
 {
-    // TODO: Check that there is only one entry matching program/queue ID, or should it be the case
-    // by construction ?
-    for(std::uint32_t i = 0; i < programStatusHistory.occupiedCnt; ++i)
+    for(std::size_t i = 0; i < programStatusHistory.Size(); ++i)
     {
-        if(programStatusHistory.vals[i].startTime == startTime
-           and programStatusHistory.vals[i].programId == programId)
-        {
-            programStatusHistory.vals[i].status = newStatus;
-        }
-    }
-}
-
-auto UpdateFramProgramStatusHistory(ProgramId programId,
-                                    RealTime startTime,
-                                    ProgramStatus newStatus) -> void
-{
-    for(std::size_t i = 0; i < framProgramStatusHistory.Size(); ++i)
-    {
-        auto entry = framProgramStatusHistory.Get(i);
+        auto entry = programStatusHistory.Get(i);
         if(entry.startTime == startTime and entry.programId == programId)
         {
             entry.status = newStatus;
-            framProgramStatusHistory.Set(i, entry);
+            programStatusHistory.Set(i, entry);
         }
     }
 }

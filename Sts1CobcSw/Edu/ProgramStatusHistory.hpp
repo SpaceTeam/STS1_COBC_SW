@@ -13,8 +13,6 @@
 
 // clang-format off
 #include <cstdint>
-// ringbuffer.h does not include <cstdint> even though it requires it
-#include <rodos/support/support-libs/ringbuffer.h>
 // clang-format on
 
 #include <bit>
@@ -56,22 +54,15 @@ inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
 
 namespace edu
 {
+// NOTE: Shouldn't this also account for indexes ?
 inline constexpr auto nProgramStatusHistoryEntries =
     value_of(framSections.template Get<"eduProgramStatusHistory">().size)
     / serialSize<ProgramStatusHistoryEntry>;
 
-extern RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries>
-    programStatusHistory;
-
-
 extern RingArray<ProgramStatusHistoryEntry,
                  framSections.template Get<"eduProgramStatusHistory">(),
-                 nProgramStatusHistoryEntries>
-    framProgramStatusHistory;
-
-auto UpdateFramProgramStatusHistory(ProgramId programId,
-                                    RealTime startTime,
-                                    ProgramStatus newStatus) -> void;
+                 nProgramStatusHistoryEntries> // FIXME: Currently caching everything
+    programStatusHistory;
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void;

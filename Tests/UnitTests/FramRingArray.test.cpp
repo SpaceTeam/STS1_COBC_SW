@@ -191,9 +191,6 @@ auto RunUnitTest() -> void
         Require(charRingArray.Get(1) == 22);
     }
 
-    // TODO: Add tests with custom types
-    // We need to provide serialization functions
-
     // SECTION("ProgramStatusHistoryEntry test")
     {
         using sts1cobcsw::serialSize;
