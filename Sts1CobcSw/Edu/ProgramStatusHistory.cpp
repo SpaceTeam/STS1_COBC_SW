@@ -8,9 +8,10 @@
 namespace sts1cobcsw::edu
 {
 constexpr auto programStatusHistorySection = framSections.Get<"eduProgramStatusHistory">();
-sts1cobcsw::
-    RingArray<ProgramStatusHistoryEntry, programStatusHistorySection, nProgramStatusHistoryEntries>
-        programStatusHistory;
+sts1cobcsw::RingArray<ProgramStatusHistoryEntry,
+                      programStatusHistorySection,
+                      nCachedProgramStatusHistoryEntries>
+    programStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
