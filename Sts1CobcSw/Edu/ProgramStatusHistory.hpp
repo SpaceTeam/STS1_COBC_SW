@@ -3,13 +3,10 @@
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/RingArray.hpp>
-#include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
-
-#include <strong_type/type.hpp>
 
 // clang-format off
 #include <cstdint>
@@ -54,15 +51,14 @@ inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
 
 namespace edu
 {
-// NOTE: Shouldn't this also account for indexes ?
-inline constexpr auto nProgramStatusHistoryEntries =
-    value_of(framSections.template Get<"eduProgramStatusHistory">().size)
-    / serialSize<ProgramStatusHistoryEntry>;
+inline constexpr auto nCachedProgramStatusHistoryEntries = 10;
 
 extern RingArray<ProgramStatusHistoryEntry,
                  framSections.template Get<"eduProgramStatusHistory">(),
-                 nProgramStatusHistoryEntries>  // FIXME: Currently caching everything
+                 nCachedProgramStatusHistoryEntries>
     programStatusHistory;
+
+inline constexpr auto nProgramStatusHistoryEntries = programStatusHistory.FramCapacity();
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void;
