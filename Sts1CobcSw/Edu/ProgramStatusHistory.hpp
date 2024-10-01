@@ -61,7 +61,7 @@ inline constexpr auto nProgramStatusHistoryEntries =
 
 extern RingArray<ProgramStatusHistoryEntry,
                  framSections.template Get<"eduProgramStatusHistory">(),
-                 nProgramStatusHistoryEntries> // FIXME: Currently caching everything
+                 nProgramStatusHistoryEntries>  // FIXME: Currently caching everything
     programStatusHistory;
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
