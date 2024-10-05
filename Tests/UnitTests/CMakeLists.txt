@@ -15,12 +15,8 @@ target_link_libraries(
 )
 
 add_program(LfsRam LfsRam.test.cpp)
-target_link_libraries(Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FileSystem)
-
-add_program(LfsWrapper LfsWrapper.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_LfsWrapper PRIVATE Catch2::Catch2WithMain littlefs::littlefs
-                                       Sts1CobcSw_FileSystem
+    Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain littlefs::littlefs Sts1CobcSw_FileSystem
 )
 
 add_program(MajorityVote MajorityVote.test.cpp)
@@ -83,6 +79,19 @@ add_test(NAME EdacVariable COMMAND Sts1CobcSwTests_EdacVariable)
 # Disable warnings about memcpy() of non-trivially copiable type EdacVariable<>
 target_compile_options(Sts1CobcSwTests_EdacVariable PRIVATE -Wno-class-memaccess)
 
+add_program(FramRingArray FramRingArray.test.cpp UnitTestThread.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_FramRingArray PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Periphery
+                                          Sts1CobcSw_Serial
+)
+add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
+
+add_program(LfsWrapper LfsWrapper.test.cpp UnitTestThread.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_LfsWrapper PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
+)
+add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_FramRingArray)
+
 add_program(PersistentVariables PersistentVariables.test.cpp UnitTestThread.cpp)
 target_link_libraries(
     Sts1CobcSwTests_PersistentVariables
@@ -90,13 +99,6 @@ target_link_libraries(
             Sts1CobcSw_Utility
 )
 add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
-
-add_program(FramRingArray FramRingArray.test.cpp UnitTestThread.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_FramRingArray PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Periphery
-                                          Sts1CobcSw_Serial
-)
-add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
 # --- All unit tests ---
 
