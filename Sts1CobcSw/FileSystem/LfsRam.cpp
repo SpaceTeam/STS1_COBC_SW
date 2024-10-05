@@ -62,9 +62,7 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read_buffer = readBuffer.data(),
                                         .prog_buffer = programBuffer.data(),
                                         .lookahead_buffer = lookaheadBuffer.data(),
-                                        // TODO: Consider reducing this to a bit more than 20 =
-                                        // strlen("/programs/65536.zip")
-                                        .name_max = LFS_NAME_MAX,
+                                        .name_max = maxPathLength,
                                         .file_max = LFS_FILE_MAX,
                                         .attr_max = LFS_ATTR_MAX,
                                         .metadata_max = sectorSize,

@@ -17,11 +17,10 @@
 
 namespace sts1cobcsw::fs
 {
-// TODO: Consider reducing this to a bit more than 20 = strlen("/programs/65536.zip") to save RAM
-using Path = etl::string<LFS_NAME_MAX>;
-
+using Path = etl::string<maxPathLength>;
 
 class File;
+
 
 [[nodiscard]] auto Mount() -> Result<void>;
 [[nodiscard]] auto Unmount() -> Result<void>;
