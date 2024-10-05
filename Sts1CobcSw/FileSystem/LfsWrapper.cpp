@@ -43,22 +43,23 @@ auto Unmount() -> Result<void>
 }
 
 
-auto Open(std::string_view path, unsigned int flags) -> Result<File>
+auto Open(Path const & path, unsigned int flags) -> Result<File>
 {
     auto file = File();
-    file.lockFilePath_ = Path(path.data(), path.size()).append(".lock");
-
-    auto errorLockFile = file.CreateLockFile();
-    if(errorLockFile.has_error())
+    // We need to create a temporary with Path(path) here since append() modifies the object and we
+    // don't want to change the original path
+    file.lockFilePath_ = Path(path).append(".lock");
+    auto createLockFileResult = file.CreateLockFile();
+    if(createLockFileResult.has_error())
     {
-        return errorLockFile.error();
+        return createLockFileResult.error();
     }
 
     auto error = lfs_file_opencfg(
-        &lfs, &file.lfsFile_, path.data(), static_cast<int>(flags), &file.lfsFileConfig_);
+        &lfs, &file.lfsFile_, path.c_str(), static_cast<int>(flags), &file.lfsFileConfig_);
     if(error == 0)
     {
-        file.path_ = Path(path.data(), path.size());
+        file.path_ = path;
         file.openFlags_ = flags;
         file.isOpen_ = true;
         return file;
@@ -115,7 +116,7 @@ auto File::Close() -> Result<void>
         return outcome_v2::success();
     }
 
-    auto error = lfs_remove(&lfs, lockFilePath_.data());
+    auto error = lfs_remove(&lfs, lockFilePath_.c_str());
     if(error != 0)
     {
         return static_cast<ErrorCode>(error);
@@ -161,16 +162,16 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
 }
 
 
-auto File::CreateLockFile() noexcept -> Result<int>
+auto File::CreateLockFile() noexcept -> Result<void>
 {
-    lfs_file_t lfsLockFile;
-
+    auto lfsLockFile = lfs_file_t{};
+    auto lockFileBuffer = std::array<Byte, lfsCacheSize>{};
+    auto lfsLockFileConfig = lfs_file_config{.buffer = lockFileBuffer.data()};
     auto error = lfs_file_opencfg(&lfs,
                                   &lfsLockFile,
-                                  lockFilePath_.data(),
-                                  static_cast<unsigned int>(LFS_O_RDWR | LFS_O_CREAT) | LFS_O_EXCL,
-                                  &lfsLockFileConfig_);
-
+                                  lockFilePath_.c_str(),
+                                  static_cast<unsigned int>(LFS_O_RDWR) | LFS_O_CREAT | LFS_O_EXCL,
+                                  &lfsLockFileConfig);
     if(error == 0)
     {
         error = lfs_file_close(&lfs, &lfsLockFile);
