@@ -7,9 +7,8 @@
 
 namespace sts1cobcsw::edu
 {
-constexpr auto programStatusHistorySection = framSections.Get<"eduProgramStatusHistory">();
 sts1cobcsw::RingArray<ProgramStatusHistoryEntry,
-                      programStatusHistorySection,
+                      framSections.Get<"eduProgramStatusHistory">(),
                       nCachedProgramStatusHistoryEntries>
     programStatusHistory;
 
