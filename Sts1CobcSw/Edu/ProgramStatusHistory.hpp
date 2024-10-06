@@ -8,12 +8,9 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-// clang-format off
-#include <cstdint>
-// clang-format on
-
 #include <bit>
 #include <cstddef>
+#include <cstdint>
 
 
 namespace sts1cobcsw
@@ -57,8 +54,6 @@ extern RingArray<ProgramStatusHistoryEntry,
                  framSections.template Get<"eduProgramStatusHistory">(),
                  nCachedProgramStatusHistoryEntries>
     programStatusHistory;
-
-inline constexpr auto nProgramStatusHistoryEntries = programStatusHistory.FramCapacity();
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void;
