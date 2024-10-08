@@ -24,6 +24,9 @@ enum class ErrorCode
     noMemory = LFS_ERR_NOMEM,           // No more memory available
     noAttribute = LFS_ERR_NOATTR,       // No data/attr available
     nameTooLong = LFS_ERR_NAMETOOLONG,  // File name too long
+    fileNotOpen = 1,
+    unsupportedOperation,
+    fileLocked,
 };
 
 

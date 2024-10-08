@@ -1,13 +1,14 @@
 //! @file
-//! @brief  Implement a flash storage device for littlefs.
+//! @brief  Implement a flash memory device for littlefs.
 
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
+#include <array>
 #include <span>
 
 
@@ -29,9 +30,14 @@ auto Lock(lfs_config const * config) -> int;
 auto Unlock(lfs_config const * config) -> int;
 
 
-auto readBuffer = flash::Page{};
+auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
-auto lookaheadBuffer = flash::Page{};
+auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
+
+// littlefs requires the lookaheadBuffer size to be a multiple of 8
+static_assert(lookaheadBuffer.size() % 8 == 0);  // NOLINT(*magic-numbers)
+// littlefs requires the cacheSize to be a multiple of the read_size and prog_size, i.e., pageSize
+static_assert(lfsCacheSize % flash::pageSize == 0);
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
@@ -51,7 +57,7 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read_buffer = readBuffer.data(),
                                         .prog_buffer = programBuffer.data(),
                                         .lookahead_buffer = lookaheadBuffer.data(),
-                                        .name_max = LFS_NAME_MAX,
+                                        .name_max = maxPathLength,
                                         .file_max = LFS_FILE_MAX,
                                         .attr_max = LFS_ATTR_MAX,
                                         .metadata_max = flash::sectorSize,

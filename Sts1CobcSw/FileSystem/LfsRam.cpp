@@ -1,9 +1,9 @@
 //! @file
-//! @brief Simulate a storage device for littlefs in RAM.
+//! @brief Simulate a memory device for littlefs in RAM.
 //!
 //! This is useful for testing the file system without using a real flash memory.
 
-#include <Sts1CobcSw/FileSystem/LfsStorageDevice.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <algorithm>
@@ -35,9 +35,14 @@ constexpr auto sectorSize = 4 * 1024;
 constexpr auto memorySize = 128 * 1024 * 1024;
 
 auto memory = std::vector<Byte>();
-auto readBuffer = std::array<Byte, pageSize>{};
+auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
-auto lookaheadBuffer = std::array<Byte, pageSize>{};
+auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
+
+// littlefs requires the lookaheadBuffer size to be a multiple of 8
+static_assert(lookaheadBuffer.size() % 8 == 0);  // NOLINT(*magic-numbers)
+// littlefs requires the cacheSize to be a multiple of the read_size and prog_size, i.e., pageSize
+static_assert(lfsCacheSize % pageSize == 0);
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
@@ -57,7 +62,7 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read_buffer = readBuffer.data(),
                                         .prog_buffer = programBuffer.data(),
                                         .lookahead_buffer = lookaheadBuffer.data(),
-                                        .name_max = LFS_NAME_MAX,
+                                        .name_max = maxPathLength,
                                         .file_max = LFS_FILE_MAX,
                                         .attr_max = LFS_ATTR_MAX,
                                         .metadata_max = sectorSize,
