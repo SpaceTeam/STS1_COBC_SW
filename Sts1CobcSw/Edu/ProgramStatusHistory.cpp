@@ -1,24 +1,28 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/RingArray.hpp>
 
 #include <strong_type/equality.hpp>
 
 
 namespace sts1cobcsw::edu
 {
-RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries> programStatusHistory;
+sts1cobcsw::RingArray<ProgramStatusHistoryEntry,
+                      framSections.Get<"eduProgramStatusHistory">(),
+                      nCachedProgramStatusHistoryEntries>
+    programStatusHistory;
 
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void
 {
-    // TODO: Check that there is only one entry matching program/queue ID, or should it be the case
-    // by construction ?
-    for(std::uint32_t i = 0; i < programStatusHistory.occupiedCnt; ++i)
+    for(std::size_t i = 0; i < programStatusHistory.Size(); ++i)
     {
-        if(programStatusHistory.vals[i].startTime == startTime
-           and programStatusHistory.vals[i].programId == programId)
+        auto entry = programStatusHistory.Get(i);
+        if(entry.startTime == startTime and entry.programId == programId)
         {
-            programStatusHistory.vals[i].status = newStatus;
+            entry.status = newStatus;
+            programStatusHistory.Set(i, entry);
         }
     }
 }
