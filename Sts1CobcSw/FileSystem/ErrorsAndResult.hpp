@@ -26,6 +26,7 @@ enum class ErrorCode
     nameTooLong = LFS_ERR_NAMETOOLONG,  // File name too long
     fileNotOpen = 1,
     unsupportedOperation,
+    fileLocked,
 };
 
 

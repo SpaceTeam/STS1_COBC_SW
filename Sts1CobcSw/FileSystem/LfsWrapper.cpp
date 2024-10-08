@@ -52,9 +52,8 @@ auto Open(Path const & path, unsigned int flags) -> Result<File>
     auto createLockFileResult = file.CreateLockFile();
     if(createLockFileResult.has_error())
     {
-        return createLockFileResult.error();
+        return ErrorCode::fileLocked;
     }
-
     auto error = lfs_file_opencfg(
         &lfs, &file.lfsFile_, path.c_str(), static_cast<int>(flags), &file.lfsFileConfig_);
     if(error == 0)
