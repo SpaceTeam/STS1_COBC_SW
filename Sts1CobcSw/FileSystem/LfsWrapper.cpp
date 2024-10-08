@@ -109,7 +109,7 @@ auto File::Size() const -> Result<int>
 }
 
 
-auto File::Close() -> Result<void>
+auto File::Close() const -> Result<void>
 {
     if(not isOpen_)
     {
@@ -161,7 +161,7 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
 }
 
 
-auto File::CloseAndKeepLockFile() -> Result<void>
+auto File::CloseAndKeepLockFile() const -> Result<void>
 {
     if(not isOpen_)
     {
@@ -180,7 +180,7 @@ auto File::CloseAndKeepLockFile() -> Result<void>
 }
 
 
-auto File::CreateLockFile() noexcept -> Result<void>
+auto File::CreateLockFile() const noexcept -> Result<void>
 {
     auto lfsLockFile = lfs_file_t{};
     auto lockFileBuffer = std::array<Byte, lfsCacheSize>{};
