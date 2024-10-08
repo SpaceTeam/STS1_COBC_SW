@@ -115,20 +115,12 @@ auto File::Close() const -> Result<void>
     {
         return outcome_v2::success();
     }
-
     auto error = lfs_remove(&lfs, lockFilePath_.c_str());
     if(error != 0)
     {
         return static_cast<ErrorCode>(error);
     }
-
-    error = lfs_file_close(&lfs, &lfsFile_);
-    if(error != 0)
-    {
-        return static_cast<ErrorCode>(error);
-    }
-    isOpen_ = false;
-    return outcome_v2::success();
+    return CloseAndKeepLockFile();
 }
 
 
@@ -158,25 +150,6 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
     other->lockFilePath_ = "";
     other->openFlags_ = 0;
     other->lfsFile_ = {};
-}
-
-
-auto File::CloseAndKeepLockFile() const -> Result<void>
-{
-    if(not isOpen_)
-    {
-        return outcome_v2::success();
-    }
-
-    // don't remove lock file here
-
-    auto error = lfs_file_close(&lfs, &lfsFile_);
-    if(error != 0)
-    {
-        return static_cast<ErrorCode>(error);
-    }
-    isOpen_ = false;
-    return outcome_v2::success();
 }
 
 
@@ -237,5 +210,21 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
         return nWrittenBytes;
     }
     return static_cast<ErrorCode>(nWrittenBytes);
+}
+
+
+auto File::CloseAndKeepLockFile() const -> Result<void>
+{
+    if(not isOpen_)
+    {
+        return outcome_v2::success();
+    }
+    auto error = lfs_file_close(&lfs, &lfsFile_);
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    isOpen_ = false;
+    return outcome_v2::success();
 }
 }

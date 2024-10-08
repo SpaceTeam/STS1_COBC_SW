@@ -51,9 +51,9 @@ private:
     File() = default;
     auto MoveConstructFrom(File * other) noexcept -> void;
     [[nodiscard]] auto CreateLockFile() const noexcept -> Result<void>;
-    [[nodiscard]] auto CloseAndKeepLockFile() const -> Result<void>;
     [[nodiscard]] auto Read(void * buffer, std::size_t size) const -> Result<int>;
     [[nodiscard]] auto Write(void const * buffer, std::size_t size) -> Result<int>;
+    [[nodiscard]] auto CloseAndKeepLockFile() const -> Result<void>;
 
     Path path_ = "";
     Path lockFilePath_ = "";
