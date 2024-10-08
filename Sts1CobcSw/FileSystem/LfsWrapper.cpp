@@ -153,12 +153,30 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
         openFlags_ = other->openFlags_;
         isOpen_ = true;
     }
-    (void)other->Close();
+    (void)other->CloseAndKeepLockFile();
     other->path_ = "";
     other->lockFilePath_ = "";
     other->openFlags_ = 0;
     other->lfsFile_ = {};
-    (void)CreateLockFile();  // TODO handle lock file error
+}
+
+
+auto File::CloseAndKeepLockFile() -> Result<void>
+{
+    if(not isOpen_)
+    {
+        return outcome_v2::success();
+    }
+
+    // don't remove lock file here
+
+    auto error = lfs_file_close(&lfs, &lfsFile_);
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    isOpen_ = false;
+    return outcome_v2::success();
 }
 
 
