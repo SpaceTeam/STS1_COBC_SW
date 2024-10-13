@@ -5,6 +5,8 @@
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
+#include <concepts>
+
 
 namespace sts1cobcsw
 {
@@ -152,6 +154,23 @@ auto RingArray<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> v
     StoreIndexes();
 }
 
+
+template<typename T, Section ringArraySection, std::size_t nCachedElements>
+    requires(serialSize<T> > 0)
+template<typename Predicate>
+    requires std::predicate<Predicate, T>
+auto RingArray<T, ringArraySection, nCachedElements>::FindAndReplace(Predicate predicate,
+                                                                     T const & newData) -> void
+{
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    for(std::size_t index = 0; index < Size(); ++index)
+    {
+        if(predicate(Get(index)))
+        {
+            Set(index, newData);
+        }
+    }
+}
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)

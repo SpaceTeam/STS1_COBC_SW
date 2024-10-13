@@ -41,6 +41,10 @@ public:
     static auto Set(std::size_t index, T const & t) -> void;
     static auto PushBack(T const & t) -> void;
 
+    template<typename Predicate>
+        requires std::predicate<Predicate, T>
+    static auto FindAndReplace(Predicate predicate, T const & newData) -> void;
+
 
 private:
     static constexpr auto elementSize = fram::Size(serialSize<T>);
