@@ -16,15 +16,10 @@ sts1cobcsw::RingArray<ProgramStatusHistoryEntry,
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void
 {
-    for(std::size_t i = 0; i < programStatusHistory.Size(); ++i)
-    {
-        auto entry = programStatusHistory.Get(i);
-        if(entry.startTime == startTime and entry.programId == programId)
-        {
-            entry.status = newStatus;
-            programStatusHistory.Set(i, entry);
-        }
-    }
+    programStatusHistory.FindAndReplace(
+        [&](ProgramStatusHistoryEntry const & entry) -> bool
+        { return entry.startTime == startTime && entry.programId == programId; },
+        ProgramStatusHistoryEntry{programId, startTime, newStatus});
 }
 
 
