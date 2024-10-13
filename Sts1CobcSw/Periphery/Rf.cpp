@@ -10,9 +10,10 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
-#include <rodos_no_using_namespace.h>
+#include <strong_type/difference.hpp>
 
 #include <array>
 #include <bit>
@@ -22,12 +23,6 @@
 
 namespace sts1cobcsw::rf
 {
-using RODOS::AT;
-using RODOS::MICROSECONDS;
-using RODOS::MILLISECONDS;
-using RODOS::NOW;
-
-
 enum class PropertyGroup : std::uint8_t
 {
     global = 0x00,       //
@@ -72,13 +67,13 @@ constexpr auto partInfoAnswerLength = 8U;
 constexpr auto maxNProperties = 12;
 
 // Delay to wait for power on reset to finish
-constexpr auto porRunningDelay = 20 * MILLISECONDS;
+constexpr auto porRunningDelay = 20 * ms;
 // Time until PoR circuit settles after applying power
-constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
+constexpr auto porCircuitSettleDelay = 100 * ms;
 // Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
-constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
+constexpr auto watchDogResetPinDelay = 1 * ms;
 // TODO: Check this and write a good comment
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto spiTimeout = 1 * ms;
 
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
@@ -175,18 +170,18 @@ auto InitializeGpiosAndSpi() -> void
     gpio0GpioPin.Reset();
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
     watchdogResetGpioPin.Reset();
-    AT(NOW() + watchDogResetPinDelay);
+    SuspendFor(watchDogResetPinDelay);
     watchdogResetGpioPin.Set();
-    AT(NOW() + watchDogResetPinDelay);
+    SuspendFor(watchDogResetPinDelay);
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 6'000'000;
     Initialize(&spi, baudrate);
 
     // Enable Si4463 and wait for PoR to finish
-    AT(NOW() + porCircuitSettleDelay);
+    SuspendFor(porCircuitSettleDelay);
     sdnGpioPin.Reset();
-    AT(NOW() + porRunningDelay);
+    SuspendFor(porRunningDelay);
 }
 
 

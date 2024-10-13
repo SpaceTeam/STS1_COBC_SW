@@ -2,7 +2,7 @@
 
 
 #include <Sts1CobcSw/Hal/Uart.hpp>
-#include <Sts1CobcSw/Utility/Time.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 
 namespace sts1cobcsw::hal

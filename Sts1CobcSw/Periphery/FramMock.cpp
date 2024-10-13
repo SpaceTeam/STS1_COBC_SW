@@ -41,13 +41,13 @@ auto ActualBaudRate() -> std::int32_t
 
 namespace internal
 {
-auto WriteTo(Address address, void const * data, std::size_t nBytes, std::int64_t timeout) -> void
+auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration timeout) -> void
 {
     return doWriteTo(address, data, nBytes, timeout);
 }
 
 
-auto ReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t timeout) -> void
+auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout) -> void
 {
     return doReadFrom(address, data, nBytes, timeout);
 }
@@ -75,14 +75,14 @@ void SetDoActualBaudRate(std::int32_t (*doActualBaudRateFunction)())
 
 
 auto SetDoWriteTo(void (*doWriteToFunction)(
-    Address address, void const * data, std::size_t nBytes, std::int64_t timeout)) -> void
+    Address address, void const * data, std::size_t nBytes, Duration timeout)) -> void
 {
     doWriteTo = doWriteToFunction;
 }
 
 
 auto SetDoReadFrom(void (*doReadFromFunction)(
-    Address address, void * data, std::size_t nBytes, std::int64_t timeout)) -> void
+    Address address, void * data, std::size_t nBytes, Duration timeout)) -> void
 {
     doReadFrom = doReadFromFunction;
 }
@@ -122,7 +122,7 @@ auto DoActualBaudRate() -> std::int32_t
 auto DoWriteTo([[maybe_unused]] Address address,
                [[maybe_unused]] void const * data,
                [[maybe_unused]] std::size_t nBytes,
-               [[maybe_unused]] std::int64_t timeout) -> void
+               [[maybe_unused]] Duration timeout) -> void
 {
 }
 
@@ -130,7 +130,7 @@ auto DoWriteTo([[maybe_unused]] Address address,
 auto DoReadFrom([[maybe_unused]] Address address,
                 [[maybe_unused]] void * data,
                 [[maybe_unused]] std::size_t nBytes,
-                [[maybe_unused]] std::int64_t timeout) -> void
+                [[maybe_unused]] Duration timeout) -> void
 {
 }
 }
@@ -171,16 +171,14 @@ auto DoActualBaudRate() -> std::int32_t
 auto DoWriteTo(Address address,
                void const * data,
                std::size_t nBytes,
-               [[maybe_unused]] std::int64_t timeout) -> void
+               [[maybe_unused]] Duration timeout) -> void
 {
     std::memcpy(memory.data() + value_of(address), data, nBytes);
 }
 
 
-auto DoReadFrom(Address address,
-                void * data,
-                std::size_t nBytes,
-                [[maybe_unused]] std::int64_t timeout) -> void
+auto DoReadFrom(Address address, void * data, std::size_t nBytes, [[maybe_unused]] Duration timeout)
+    -> void
 {
     std::memcpy(data, memory.data() + value_of(address), nBytes);
 }

@@ -1,6 +1,8 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
+
 
 namespace sts1cobcsw
 {
@@ -17,6 +19,7 @@ inline auto DeserializeFrom(void const * source, RealTime * data) -> void const 
     source = DeserializeFrom<endianness>(source, &(value_of(*data)));
     return source;
 }
+
 
 template<std::endian endianness>
 inline auto SerializeTo(void * destination, Duration const & data) -> void *
