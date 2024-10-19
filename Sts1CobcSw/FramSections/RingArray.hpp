@@ -68,6 +68,7 @@ private:
     static etl::circular_buffer<SerialBuffer<T>, nCachedElements> cache;
     static RODOS::Semaphore semaphore;
 
+    [[nodiscard]] static auto DoSize() -> std::size_t;
     static auto LoadIndexes() -> void;
     static auto StoreIndexes() -> void;
     [[nodiscard]] static auto FramSize() -> std::size_t;

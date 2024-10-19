@@ -33,12 +33,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::Size() -> std::size_t
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    if(not framIsWorking.Load())
-    {
-        return cache.size();
-    }
-    LoadIndexes();
-    return FramSize();
+    return DoSize();
 }
 
 
@@ -47,15 +42,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::Get(std::size_t index) -> T
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto size = []()
-    {
-        if(framIsWorking.Load())
-        {
-            LoadIndexes();
-            return FramSize();
-        }
-        return cache.size();
-    }();
+    auto size = DoSize();
     if(index >= size)
     {
         DEBUG_PRINT("Index out of bounds in RingArray::Get(): %u >= %u\n",
@@ -108,15 +95,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::Set(std::size_t index, T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto size = []()
-    {
-        if(framIsWorking.Load())
-        {
-            LoadIndexes();
-            return FramSize();
-        }
-        return cache.size();
-    }();
+    auto size = DoSize();
     if(index >= size)
     {
         DEBUG_PRINT("Index out of bounds in RingArray::Set: %u >= %u\n", index, size);
@@ -161,8 +140,10 @@ auto RingArray<T, ringArraySection, nCachedElements>::FindAndReplace(
     std::predicate<T> auto predicate, T const & newData) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    for(std::size_t index = 0; index < Size(); ++index)
+    auto size = DoSize();
+    for(std::size_t index = 0; index < size; ++index)
     {
+        // TODO: Add and use DoGet() and DoSet() functions
         if(predicate(Get(index)))
         {
             Set(index, newData);
@@ -193,6 +174,21 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 RODOS::Semaphore RingArray<T, ringArraySection, nCachedElements>::semaphore = {};
 
 
+// Load the begin and end indexes from the FRAM
+template<typename T, Section ringArraySection, std::size_t nCachedElements>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection, nCachedElements>::DoSize() -> std::size_t
+{
+    if(framIsWorking.Load())
+    {
+        LoadIndexes();
+        return FramSize();
+    }
+    return cache.size();
+}
+
+
+// Load the begin and end indexes from the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::LoadIndexes() -> void
