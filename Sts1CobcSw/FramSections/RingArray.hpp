@@ -17,6 +17,7 @@
 #include <etl/circular_buffer.h>
 #include <etl/cyclic_value.h>
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -40,10 +41,7 @@ public:
     [[nodiscard]] static auto Back() -> T;
     static auto Set(std::size_t index, T const & t) -> void;
     static auto PushBack(T const & t) -> void;
-
-    template<typename Predicate>
-        requires std::predicate<Predicate, T>
-    static auto FindAndReplace(Predicate predicate, T const & newData) -> void;
+    static auto FindAndReplace(std::predicate<T> auto predicate, T const & newData) -> void;
 
 
 private:
@@ -72,7 +70,7 @@ private:
 
     static auto LoadIndexes() -> void;
     static auto StoreIndexes() -> void;
-    [[nodiscard]] static auto ComputeSize() -> std::size_t;
+    [[nodiscard]] static auto FramSize() -> std::size_t;
     [[nodiscard]] static auto ReadElement(RingIndex index) -> T;
     static auto WriteElement(RingIndex index, T const & t) -> void;
 };

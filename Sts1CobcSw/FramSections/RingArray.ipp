@@ -5,8 +5,6 @@
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
-#include <concepts>
-
 
 namespace sts1cobcsw
 {
@@ -40,7 +38,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::Size() -> std::size_t
         return cache.size();
     }
     LoadIndexes();
-    return ComputeSize();
+    return FramSize();
 }
 
 
@@ -54,13 +52,15 @@ auto RingArray<T, ringArraySection, nCachedElements>::Get(std::size_t index) -> 
         if(framIsWorking.Load())
         {
             LoadIndexes();
-            return ComputeSize();
+            return FramSize();
         }
         return cache.size();
     }();
     if(index >= size)
     {
-        DEBUG_PRINT("Index out of bounds in RingArray::Get: %u >= %u\n", index, size);
+        DEBUG_PRINT("Index out of bounds in RingArray::Get(): %u >= %u\n",
+                    static_cast<unsigned>(index),
+                    static_cast<unsigned>(size));
         index = size - 1;
     }
     if(not framIsWorking.Load())
@@ -113,7 +113,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::Set(std::size_t index, T c
         if(framIsWorking.Load())
         {
             LoadIndexes();
-            return ComputeSize();
+            return FramSize();
         }
         return cache.size();
     }();
@@ -157,10 +157,8 @@ auto RingArray<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> v
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-template<typename Predicate>
-    requires std::predicate<Predicate, T>
-auto RingArray<T, ringArraySection, nCachedElements>::FindAndReplace(Predicate predicate,
-                                                                     T const & newData) -> void
+auto RingArray<T, ringArraySection, nCachedElements>::FindAndReplace(
+    std::predicate<T> auto predicate, T const & newData) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     for(std::size_t index = 0; index < Size(); ++index)
@@ -204,6 +202,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::LoadIndexes() -> void
 }
 
 
+// Store the begin and end indexes on the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::StoreIndexes() -> void
@@ -213,9 +212,10 @@ auto RingArray<T, ringArraySection, nCachedElements>::StoreIndexes() -> void
 }
 
 
+// Compute the size of the FRAM ring buffer
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-auto RingArray<T, ringArraySection, nCachedElements>::ComputeSize() -> std::size_t
+auto RingArray<T, ringArraySection, nCachedElements>::FramSize() -> std::size_t
 {
     if(iEnd.get() >= iBegin.get())
     {
@@ -225,6 +225,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::ComputeSize() -> std::size
 }
 
 
+// Read an element from the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::ReadElement(RingIndex index) -> T
@@ -234,6 +235,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::ReadElement(RingIndex inde
 }
 
 
+// Write an element to the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::WriteElement(RingIndex index, T const & t)

@@ -141,6 +141,8 @@ auto RunUnitTest() -> void
         // Set() writes to memory
         charRingArray.Set(0, 21);
         charRingArray.Set(1, 22);
+        // Set() with an out-of-bounds index for the cache prints a debug message and does not write
+        // to the cache
         charRingArray.Set(2, 23);
         Require(charRingArray.Get(0) == 21);
         Require(charRingArray.Get(1) == 22);

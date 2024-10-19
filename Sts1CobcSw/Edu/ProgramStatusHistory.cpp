@@ -17,8 +17,8 @@ auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, Program
     -> void
 {
     programStatusHistory.FindAndReplace(
-        [&](ProgramStatusHistoryEntry const & entry) -> bool
-        { return entry.startTime == startTime && entry.programId == programId; },
+        [programId, startTime](auto const & entry) -> bool
+        { return entry.programId == programId and entry.startTime == startTime; },
         ProgramStatusHistoryEntry{programId, startTime, newStatus});
 }
 
