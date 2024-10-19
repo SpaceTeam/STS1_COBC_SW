@@ -95,15 +95,29 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::Set(std::size_t index, T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto size = DoSize();
-    if(index >= size)
+    if(index >= cache.size())
     {
-        DEBUG_PRINT("Index out of bounds in RingArray::Set: %u >= %u\n", index, size);
-        return;
+        DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %u >= %u\n",
+                    static_cast<unsigned>(index),
+                    static_cast<unsigned>(cache.size()));
+    }
+    else
+    {
+        // If the index is not out of bounds, we always write to the cache
+        cache[index] = Serialize(t);
     }
     if(not framIsWorking.Load())
     {
-        cache[index] = Serialize(t);
+        return;
+    }
+    LoadIndexes();
+    auto size = FramSize();
+    if(index >= size)
+    {
+        DEBUG_PRINT("Index out of bounds in RingArray::Set(): %u >= %u\n",
+                    static_cast<unsigned>(index),
+                    static_cast<unsigned>(size));
+        return;
     }
     auto i = iBegin;
     i.advance(static_cast<int>(index));
