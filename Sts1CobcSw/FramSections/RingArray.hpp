@@ -36,6 +36,11 @@ public:
     [[nodiscard]] static constexpr auto FramCapacity() -> std::size_t;
     [[nodiscard]] static constexpr auto CacheCapacity() -> std::size_t;
     [[nodiscard]] static auto Size() -> std::size_t;
+    // TODO: The cache should hold the latest elements. However, Set(0) currently writes to the
+    // first element of the cache and the FRAM ring buffer. Since the cache usually holds less
+    // elements than the FRAM ring buffer, Set(0) updates different entries in the cache and the
+    // FRAM ring buffer. We can ignore this because we assume that the cache and FRAM ring buffer
+    // are never used at the same time, but I am not sure if this is a good idea.
     [[nodiscard]] static auto Get(std::size_t index) -> T;
     [[nodiscard]] static auto Front() -> T;
     [[nodiscard]] static auto Back() -> T;

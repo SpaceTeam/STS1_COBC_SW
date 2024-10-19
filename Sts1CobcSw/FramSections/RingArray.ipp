@@ -130,9 +130,10 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    // We always write to the cache
+    cache.push(Serialize(t));
     if(not framIsWorking.Load())
     {
-        cache.push(Serialize(t));
         return;
     }
     LoadIndexes();
