@@ -63,10 +63,10 @@ private:
 
     using RingIndex = etl::cyclic_value<std::size_t, 0, framCapacity>;
 
-    static RingIndex iEnd;
-    static RingIndex iBegin;
-    static etl::circular_buffer<SerialBuffer<T>, nCachedElements> cache;
-    static RODOS::Semaphore semaphore;
+    static inline auto iEnd = RingIndex{};
+    static inline auto iBegin = RingIndex{};
+    static inline auto cache = etl::circular_buffer<SerialBuffer<T>, nCachedElements>{};
+    static inline auto semaphore = RODOS::Semaphore{};
 
     [[nodiscard]] static auto DoSize() -> std::size_t;
     static auto LoadIndexes() -> void;

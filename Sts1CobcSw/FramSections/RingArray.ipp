@@ -151,28 +151,6 @@ auto RingArray<T, ringArraySection, nCachedElements>::FindAndReplace(
     }
 }
 
-template<typename T, Section ringArraySection, std::size_t nCachedElements>
-    requires(serialSize<T> > 0)
-typename RingArray<T, ringArraySection, nCachedElements>::RingIndex
-    RingArray<T, ringArraySection, nCachedElements>::iEnd = {};
-
-
-template<typename T, Section ringArraySection, std::size_t nCachedElements>
-    requires(serialSize<T> > 0)
-typename RingArray<T, ringArraySection, nCachedElements>::RingIndex
-    RingArray<T, ringArraySection, nCachedElements>::iBegin = {};
-
-
-template<typename T, Section ringArraySection, std::size_t nCachedElements>
-    requires(serialSize<T> > 0)
-etl::circular_buffer<SerialBuffer<T>,
-                     nCachedElements> RingArray<T, ringArraySection, nCachedElements>::cache = {};
-
-
-template<typename T, Section ringArraySection, std::size_t nCachedElements>
-    requires(serialSize<T> > 0)
-RODOS::Semaphore RingArray<T, ringArraySection, nCachedElements>::semaphore = {};
-
 
 // Load the begin and end indexes from the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
