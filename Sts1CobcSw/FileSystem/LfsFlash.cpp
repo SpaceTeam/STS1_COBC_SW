@@ -1,6 +1,7 @@
 //! @file
 //! @brief  Implement a flash memory device for littlefs.
 
+#include <Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -33,6 +34,8 @@ auto Unlock(lfs_config const * config) -> int;
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
+
+auto mutex = RODOS::Semaphore();
 
 // littlefs requires the lookaheadBuffer size to be a multiple of 8
 static_assert(lookaheadBuffer.size() % 8 == 0);  // NOLINT(*magic-numbers)
@@ -141,16 +144,19 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 }
 
 
-// TODO: Add a proper implementation
 auto Lock([[maybe_unused]] lfs_config const * config) -> int
 {
-    return 0;
+    if(mutex.tryEnter())
+    {
+        return 0;
+    }
+    return static_cast<int>(ErrorCode::lfsLockBusy);
 }
 
 
-// TODO: Add a proper implementation
 auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
+    mutex.leave();
     return 0;
 }
 }
