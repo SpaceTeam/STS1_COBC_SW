@@ -27,6 +27,7 @@ enum class ErrorCode
     fileNotOpen = 1,
     unsupportedOperation,
     fileLocked,
+    lfsLockBusy
 };
 
 
