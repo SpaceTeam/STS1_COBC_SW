@@ -107,3 +107,5 @@ get_property(
 )
 add_custom_target(AllUnitTests) # Must be defined after getting all unit test targets
 add_dependencies(AllUnitTests ${all_unit_test_targets})
+
+add_subdirectory(NoCatch2)
