@@ -42,21 +42,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::Get(std::size_t index) -> T
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto size = DoSize();
-    if(index >= size)
-    {
-        DEBUG_PRINT("Index out of bounds in RingArray::Get(): %u >= %u\n",
-                    static_cast<unsigned>(index),
-                    static_cast<unsigned>(size));
-        index = size - 1;
-    }
-    if(not framIsWorking.Load())
-    {
-        return Deserialize<T>(cache[index]);
-    }
-    auto i = iBegin;
-    i.advance(static_cast<int>(index));
-    return ReadElement(i);
+    return DoGet(index);
 }
 
 
@@ -95,33 +81,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::Set(std::size_t index, T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    if(index >= cache.size())
-    {
-        DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %u >= %u\n",
-                    static_cast<unsigned>(index),
-                    static_cast<unsigned>(cache.size()));
-    }
-    else
-    {
-        // If the index is not out of bounds, we always write to the cache
-        cache[index] = Serialize(t);
-    }
-    if(not framIsWorking.Load())
-    {
-        return;
-    }
-    LoadIndexes();
-    auto size = FramSize();
-    if(index >= size)
-    {
-        DEBUG_PRINT("Index out of bounds in RingArray::Set(): %u >= %u\n",
-                    static_cast<unsigned>(index),
-                    static_cast<unsigned>(size));
-        return;
-    }
-    auto i = iBegin;
-    i.advance(static_cast<int>(index));
-    WriteElement(i, t);
+    DoSet(index, t);
 }
 
 
@@ -158,16 +118,14 @@ auto RingArray<T, ringArraySection, nCachedElements>::FindAndReplace(
     auto size = DoSize();
     for(std::size_t index = 0; index < size; ++index)
     {
-        // TODO: Add and use DoGet() and DoSet() functions
-        if(predicate(Get(index)))
+        if(predicate(DoGet(index)))
         {
-            Set(index, newData);
+            DoSet(index, newData);
         }
     }
 }
 
 
-// Load the begin and end indexes from the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::DoSize() -> std::size_t
@@ -178,6 +136,62 @@ auto RingArray<T, ringArraySection, nCachedElements>::DoSize() -> std::size_t
         return FramSize();
     }
     return cache.size();
+}
+
+
+template<typename T, Section ringArraySection, std::size_t nCachedElements>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection, nCachedElements>::DoGet(std::size_t index) -> T
+{
+    auto size = DoSize();
+    if(index >= size)
+    {
+        DEBUG_PRINT("Index out of bounds in RingArray::Get(): %u >= %u\n",
+                    static_cast<unsigned>(index),
+                    static_cast<unsigned>(size));
+        index = size - 1;
+    }
+    if(not framIsWorking.Load())
+    {
+        return Deserialize<T>(cache[index]);
+    }
+    auto i = iBegin;
+    i.advance(static_cast<int>(index));
+    return ReadElement(i);
+}
+
+
+template<typename T, Section ringArraySection, std::size_t nCachedElements>
+    requires(serialSize<T> > 0)
+auto RingArray<T, ringArraySection, nCachedElements>::DoSet(std::size_t index, T const & t) -> void
+{
+    if(index >= cache.size())
+    {
+        DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %u >= %u\n",
+                    static_cast<unsigned>(index),
+                    static_cast<unsigned>(cache.size()));
+    }
+    else
+    {
+        // If the index is not out of bounds, we always write to the cache
+        cache[index] = Serialize(t);
+    }
+    if(not framIsWorking.Load())
+    {
+        return;
+    }
+    LoadIndexes();
+    auto size = FramSize();
+    if(index >= size)
+    {
+        DEBUG_PRINT("Index out of bounds in RingArray::Set(): %u >= %u\n",
+                    static_cast<unsigned>(index),
+                    static_cast<unsigned>(size));
+        return;
+    }
+    auto i = iBegin;
+    i.advance(static_cast<int>(index));
+    WriteElement(i, t);
 }
 
 

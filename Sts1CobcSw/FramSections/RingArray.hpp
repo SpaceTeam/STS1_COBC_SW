@@ -74,6 +74,8 @@ private:
     static inline auto semaphore = RODOS::Semaphore{};
 
     [[nodiscard]] static auto DoSize() -> std::size_t;
+    [[nodiscard]] static auto DoGet(std::size_t index) -> T;
+    static auto DoSet(std::size_t index, T const & t) -> void;
     static auto LoadIndexes() -> void;
     static auto StoreIndexes() -> void;
     [[nodiscard]] static auto FramSize() -> std::size_t;
