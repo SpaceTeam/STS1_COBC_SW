@@ -6,4 +6,6 @@ target_link_libraries(
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(Sts1CobcSw_Utility PRIVATE Crc32Hardware.cpp)
+else()
+    target_sources(Sts1CobcSw_Utility PRIVATE LinuxSemaphore.cpp)
 endif()
