@@ -6,6 +6,7 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FramSections/RingArray.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/Time.hpp>
@@ -15,7 +16,6 @@
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
-#include <rodos/support/support-libs/ringbuffer.h>
 #include <rodos_no_using_namespace.h>
 
 #include <etl/vector.h>

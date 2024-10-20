@@ -52,12 +52,11 @@ auto DeserializeFrom(void const * source, S * data) -> void const *;
 
 
 inline constexpr auto charSection1 =
-    sts1cobcsw::Section<fram::Address(0), fram::Size(3 * 2 * sizeof(std::size_t) + 4)>{};
+    sts1cobcsw::Section<fram::Address(0), fram::Size(3 * 2 * 4 + 4)>{};
 inline constexpr auto charSection2 =
-    sts1cobcsw::Section<charSection1.end, fram::Size(3 * 2 * sizeof(std::size_t) + 4)>{};
+    sts1cobcsw::Section<charSection1.end, fram::Size(3 * 2 * 4 + 4)>{};
 inline constexpr auto sSection =
-    sts1cobcsw::Section<charSection2.end,
-                        fram::Size(3 * 2 * sizeof(std::size_t) + 4 * totalSerialSize<S>)>{};
+    sts1cobcsw::Section<charSection2.end, fram::Size(3 * 2 * 4 + 4 * totalSerialSize<S>)>{};
 
 inline constexpr auto charRingArray1 = sts1cobcsw::RingArray<char, charSection1, 2>{};
 inline constexpr auto charRingArray2 = sts1cobcsw::RingArray<char, charSection2, 2>{};
@@ -85,9 +84,8 @@ auto RunUnitTest() -> void
 
     fram::ram::SetAllDoFunctions();
     fram::Initialize();
-    static constexpr auto charRingArray1StartAddress = 3 * 2 * sizeof(std::size_t);
-    static constexpr auto sRingArrayStartAddress =
-        value_of(charRingArray2.section.end) + 3 * 2 * sizeof(std::size_t);
+    static constexpr auto charRingArray1StartAddress = 3 * 2 * 4;
+    static constexpr auto sRingArrayStartAddress = value_of(charRingArray2.section.end) + 3 * 2 * 4;
 
     // SECTION("FRAM is working")
     {

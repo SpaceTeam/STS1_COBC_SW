@@ -50,23 +50,24 @@ public:
 
 
 private:
+    using RingIndexType = strong::underlying_type_t<fram::Size>;
+
     static constexpr auto elementSize = fram::Size(serialSize<T>);
-    static constexpr auto indexesSize = fram::Size(3 * 2 * totalSerialSize<std::size_t>);
+    static constexpr auto indexesSize = fram::Size(3 * 2 * totalSerialSize<RingIndexType>);
     static constexpr auto subsections =
         Subsections<section,
                     SubsectionInfo<"indexes", indexesSize>,
                     SubsectionInfo<"array", section.size - indexesSize>>{};
     static constexpr auto persistentIndexes =
         PersistentVariables<subsections.template Get<"indexes">(),
-                            PersistentVariableInfo<"iBegin", std::size_t>,
-                            PersistentVariableInfo<"iEnd", std::size_t>>{};
+                            PersistentVariableInfo<"iBegin", RingIndexType>,
+                            PersistentVariableInfo<"iEnd", RingIndexType>>{};
     // We reduce the FRAM capacity by one to distinguish between an empty and a full ring. See
     // PushBack() for details.
     static constexpr auto framCapacity = subsections.template Get<"array">().size / elementSize - 1;
     static constexpr auto spiTimeout = elementSize < 300U ? 1 * ms : value_of(elementSize) * 3 * us;
 
-
-    using RingIndex = etl::cyclic_value<std::size_t, 0, framCapacity>;
+    using RingIndex = etl::cyclic_value<RingIndexType, 0, framCapacity>;
 
     static inline auto iEnd = RingIndex{};
     static inline auto iBegin = RingIndex{};
