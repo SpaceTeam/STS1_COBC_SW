@@ -3,8 +3,17 @@
 //!
 //! This is useful for testing the file system without using a real flash memory.
 
+#include <Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
+
+#ifdef NO_RODOS
+    #include <mutex>
+#else
+    #include <Sts1CobcSw/Utility/LinuxSemaphore.hpp>
+
+    #include <rodos_no_using_namespace.h>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -38,6 +47,12 @@ auto memory = std::vector<Byte>();
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
+
+#ifdef NO_RODOS
+auto mutex = std::mutex();
+#else
+auto mutex = utility::LinuxSemaphore();
+#endif
 
 // littlefs requires the lookaheadBuffer size to be a multiple of 8
 static_assert(lookaheadBuffer.size() % 8 == 0);  // NOLINT(*magic-numbers)
@@ -115,13 +130,34 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 // TODO: Add a proper implementation
 auto Lock([[maybe_unused]] lfs_config const * config) -> int
 {
-    return 0;
+#ifdef NO_RODOS
+    if(mutex.try_lock())
+    {
+        return 0;
+    }
+    return static_cast<int>(ErrorCode::lfsLockBusy);
+#else
+    if(mutex.TryEnter())
+    {
+        // For testing: wait some time to check concurrent locking
+        // static constexpr auto lockDelay = 200 * RODOS::MILLISECONDS;
+        // RODOS::AT(RODOS::NOW() + lockDelay);
+        return 0;
+    }
+    return static_cast<int>(ErrorCode::lfsLockBusy);
+#endif
 }
 
 
 // TODO: Add a proper implementation
 auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
+#ifdef NO_RODOS
+    mutex.unlock();
     return 0;
+#else
+    mutex.Leave();
+    return 0;
+#endif
 }
 }
