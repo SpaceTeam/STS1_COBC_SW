@@ -82,7 +82,7 @@ target_compile_options(Sts1CobcSwTests_EdacVariable PRIVATE -Wno-class-memaccess
 add_program(FramRingArray FramRingArray.test.cpp UnitTestThread.cpp)
 target_link_libraries(
     Sts1CobcSwTests_FramRingArray PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Periphery
-                                          Sts1CobcSw_Serial
+                                          Sts1CobcSw_Serial Sts1CobcSw_Utility
 )
 add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
