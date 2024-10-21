@@ -31,20 +31,23 @@ class RingArray
 {
 public:
     using ValueType = T;
+    using IndexType = std::size_t;
+    using SizeType = std::size_t;
+
     static constexpr auto section = ringArraySection;
 
-    [[nodiscard]] static constexpr auto FramCapacity() -> std::size_t;
-    [[nodiscard]] static constexpr auto CacheCapacity() -> std::size_t;
-    [[nodiscard]] static auto Size() -> std::size_t;
+    [[nodiscard]] static constexpr auto FramCapacity() -> SizeType;
+    [[nodiscard]] static constexpr auto CacheCapacity() -> SizeType;
+    [[nodiscard]] static auto Size() -> SizeType;
     // TODO: The cache should hold the latest elements. However, Set(0) currently writes to the
     // first element of the cache and the FRAM ring buffer. Since the cache usually holds less
     // elements than the FRAM ring buffer, Set(0) updates different entries in the cache and the
     // FRAM ring buffer. We can ignore this because we assume that the cache and FRAM ring buffer
     // are never used at the same time, but I am not sure if this is a good idea.
-    [[nodiscard]] static auto Get(std::size_t index) -> T;
+    [[nodiscard]] static auto Get(IndexType index) -> T;
     [[nodiscard]] static auto Front() -> T;
     [[nodiscard]] static auto Back() -> T;
-    static auto Set(std::size_t index, T const & t) -> void;
+    static auto Set(IndexType index, T const & t) -> void;
     static auto PushBack(T const & t) -> void;
     static auto FindAndReplace(std::predicate<T> auto predicate, T const & newData) -> void;
 
@@ -69,17 +72,17 @@ private:
 
     using RingIndex = etl::cyclic_value<RingIndexType, 0, framCapacity>;
 
-    static inline auto iEnd = RingIndex{};
     static inline auto iBegin = RingIndex{};
+    static inline auto iEnd = RingIndex{};
     static inline auto cache = etl::circular_buffer<SerialBuffer<T>, nCachedElements>{};
     static inline auto semaphore = RODOS::Semaphore{};
 
-    [[nodiscard]] static auto DoSize() -> std::size_t;
-    [[nodiscard]] static auto DoGet(std::size_t index) -> T;
-    static auto DoSet(std::size_t index, T const & t) -> void;
+    [[nodiscard]] static auto DoSize() -> SizeType;
+    [[nodiscard]] static auto DoGet(IndexType index) -> T;
+    static auto DoSet(IndexType index, T const & t) -> void;
     static auto LoadIndexes() -> void;
     static auto StoreIndexes() -> void;
-    [[nodiscard]] static auto FramSize() -> std::size_t;
+    [[nodiscard]] static auto FramSize() -> SizeType;
     [[nodiscard]] static auto ReadElement(RingIndex index) -> T;
     static auto WriteElement(RingIndex index, T const & t) -> void;
 };
