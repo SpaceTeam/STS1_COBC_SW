@@ -13,7 +13,7 @@ using fram::framIsWorking;
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-inline constexpr auto RingArray<T, ringArraySection, nCachedElements>::FramCapacity() -> std::size_t
+inline constexpr auto RingArray<T, ringArraySection, nCachedElements>::FramCapacity() -> SizeType
 {
     return framCapacity;
 }
@@ -21,8 +21,7 @@ inline constexpr auto RingArray<T, ringArraySection, nCachedElements>::FramCapac
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-inline constexpr auto RingArray<T, ringArraySection, nCachedElements>::CacheCapacity()
-    -> std::size_t
+inline constexpr auto RingArray<T, ringArraySection, nCachedElements>::CacheCapacity() -> SizeType
 {
     return nCachedElements;
 }
@@ -30,44 +29,19 @@ inline constexpr auto RingArray<T, ringArraySection, nCachedElements>::CacheCapa
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-auto RingArray<T, ringArraySection, nCachedElements>::Size() -> std::size_t
+auto RingArray<T, ringArraySection, nCachedElements>::Size() -> SizeType
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    if(not framIsWorking.Load())
-    {
-        return cache.size();
-    }
-    LoadIndexes();
-    return ComputeSize();
+    return DoSize();
 }
 
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-auto RingArray<T, ringArraySection, nCachedElements>::Get(std::size_t index) -> T
+auto RingArray<T, ringArraySection, nCachedElements>::Get(IndexType index) -> T
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto size = []()
-    {
-        if(framIsWorking.Load())
-        {
-            LoadIndexes();
-            return ComputeSize();
-        }
-        return cache.size();
-    }();
-    if(index >= size)
-    {
-        DEBUG_PRINT("Index out of bounds in RingArray::Get: %u >= %u\n", index, size);
-        index = size - 1;
-    }
-    if(not framIsWorking.Load())
-    {
-        return Deserialize<T>(cache[index]);
-    }
-    auto i = iBegin;
-    i.advance(static_cast<int>(index));
-    return ReadElement(i);
+    return DoGet(index);
 }
 
 
@@ -103,30 +77,10 @@ auto RingArray<T, ringArraySection, nCachedElements>::Back() -> T
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-auto RingArray<T, ringArraySection, nCachedElements>::Set(std::size_t index, T const & t) -> void
+auto RingArray<T, ringArraySection, nCachedElements>::Set(IndexType index, T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto size = []()
-    {
-        if(framIsWorking.Load())
-        {
-            LoadIndexes();
-            return ComputeSize();
-        }
-        return cache.size();
-    }();
-    if(index >= size)
-    {
-        DEBUG_PRINT("Index out of bounds in RingArray::Set: %u >= %u\n", index, size);
-        return;
-    }
-    if(not framIsWorking.Load())
-    {
-        cache[index] = Serialize(t);
-    }
-    auto i = iBegin;
-    i.advance(static_cast<int>(index));
-    WriteElement(i, t);
+    DoSet(index, t);
 }
 
 
@@ -135,9 +89,10 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    // We always write to the cache
+    cache.push(Serialize(t));
     if(not framIsWorking.Load())
     {
-        cache.push(Serialize(t));
         return;
     }
     LoadIndexes();
@@ -155,27 +110,99 @@ auto RingArray<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> v
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-typename RingArray<T, ringArraySection, nCachedElements>::RingIndex
-    RingArray<T, ringArraySection, nCachedElements>::iEnd = {};
+auto RingArray<T, ringArraySection, nCachedElements>::FindAndReplace(
+    std::predicate<T> auto predicate, T const & newData) -> void
+{
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    auto size = DoSize();
+    for(IndexType index = 0; index < size; ++index)
+    {
+        if(predicate(DoGet(index)))
+        {
+            DoSet(index, newData);
+        }
+    }
+}
 
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-typename RingArray<T, ringArraySection, nCachedElements>::RingIndex
-    RingArray<T, ringArraySection, nCachedElements>::iBegin = {};
+auto RingArray<T, ringArraySection, nCachedElements>::DoSize() -> SizeType
+{
+    if(framIsWorking.Load())
+    {
+        LoadIndexes();
+        return FramSize();
+    }
+    return cache.size();
+}
 
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-etl::circular_buffer<SerialBuffer<T>,
-                     nCachedElements> RingArray<T, ringArraySection, nCachedElements>::cache = {};
+auto RingArray<T, ringArraySection, nCachedElements>::DoGet(IndexType index) -> T
+{
+    auto size = DoSize();
+    if(index >= size)
+    {
+        DEBUG_PRINT("Index out of bounds in RingArray::Get(): %u >= %u\n",
+                    static_cast<unsigned>(index),
+                    static_cast<unsigned>(size));
+        index = size - 1;
+    }
+    if(not framIsWorking.Load())
+    {
+        return Deserialize<T>(cache[index]);
+    }
+    auto i = iBegin;
+    i.advance(static_cast<int>(index));
+    return ReadElement(i);
+}
 
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-RODOS::Semaphore RingArray<T, ringArraySection, nCachedElements>::semaphore = {};
+auto RingArray<T, ringArraySection, nCachedElements>::DoSet(IndexType index, T const & t) -> void
+{
+    if(not framIsWorking.Load())
+    {
+        if(index >= cache.size())
+        {
+            DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %d >= %d\n",
+                        static_cast<int>(index),
+                        static_cast<int>(cache.size()));
+            return;
+        }
+        cache[index] = Serialize(t);
+        return;
+    }
+    LoadIndexes();
+    auto framSize = FramSize();
+    if(index >= framSize)
+    {
+        DEBUG_PRINT("Index out of bounds in RingArray::Set(): %d >= %d\n",
+                    static_cast<int>(index),
+                    static_cast<int>(framSize));
+        return;
+    }
+    auto i = iBegin;
+    i.advance(static_cast<int>(index));
+    WriteElement(i, t);
+    // The cache should hold the latest elements, not the oldest ones, so we need to shift the index
+    auto cacheIndex =
+        static_cast<int>(index) - static_cast<int>(FramSize()) + static_cast<int>(cache.size());
+    if(cacheIndex < 0)
+    {
+        DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %d < 0\n",
+                    static_cast<int>(cacheIndex));
+        return;
+    }
+    // If the index is not out of bounds, we always write to the cache
+    cache[static_cast<unsigned>(cacheIndex)] = Serialize(t);
+}
 
 
+// Load the begin and end indexes from the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::LoadIndexes() -> void
@@ -185,6 +212,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::LoadIndexes() -> void
 }
 
 
+// Store the begin and end indexes on the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::StoreIndexes() -> void
@@ -194,9 +222,10 @@ auto RingArray<T, ringArraySection, nCachedElements>::StoreIndexes() -> void
 }
 
 
+// Compute the size of the FRAM ring buffer
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-auto RingArray<T, ringArraySection, nCachedElements>::ComputeSize() -> std::size_t
+auto RingArray<T, ringArraySection, nCachedElements>::FramSize() -> SizeType
 {
     if(iEnd.get() >= iBegin.get())
     {
@@ -206,6 +235,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::ComputeSize() -> std::size
 }
 
 
+// Read an element from the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::ReadElement(RingIndex index) -> T
@@ -215,6 +245,7 @@ auto RingArray<T, ringArraySection, nCachedElements>::ReadElement(RingIndex inde
 }
 
 
+// Write an element to the FRAM
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::WriteElement(RingIndex index, T const & t)

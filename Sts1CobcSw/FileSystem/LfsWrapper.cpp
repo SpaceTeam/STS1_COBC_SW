@@ -184,7 +184,7 @@ auto File::Read(void * buffer, std::size_t size) const -> Result<int>
     {
         return ErrorCode::unsupportedOperation;
     }
-    auto nReadBytes = lfs_file_read(&lfs, &lfsFile_, buffer, size);
+    auto nReadBytes = lfs_file_read(&lfs, &lfsFile_, buffer, static_cast<lfs_size_t>(size));
     if(nReadBytes >= 0)
     {
         return nReadBytes;
@@ -203,7 +203,7 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
     {
         return ErrorCode::unsupportedOperation;
     }
-    auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, buffer, size);
+    auto nWrittenBytes = lfs_file_write(&lfs, &lfsFile_, buffer, static_cast<lfs_size_t>(size));
     if(nWrittenBytes >= 0)
     {
         return nWrittenBytes;

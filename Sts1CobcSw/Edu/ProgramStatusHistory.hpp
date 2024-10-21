@@ -2,22 +2,15 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/RingArray.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-#include <strong_type/type.hpp>
-
-// clang-format off
-#include <cstdint>
-// ringbuffer.h does not include <cstdint> even though it requires it
-#include <rodos/support/support-libs/ringbuffer.h>
-// clang-format on
-
 #include <bit>
 #include <cstddef>
+#include <cstdint>
 
 
 namespace sts1cobcsw
@@ -55,13 +48,12 @@ inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
 
 namespace edu
 {
-inline constexpr auto nProgramStatusHistoryEntries =
-    value_of(framSections.template Get<"eduProgramStatusHistory">().size)
-    / serialSize<ProgramStatusHistoryEntry>;
+inline constexpr auto nCachedProgramStatusHistoryEntries = 10;
 
-extern RODOS::RingBuffer<ProgramStatusHistoryEntry, nProgramStatusHistoryEntries>
+extern RingArray<ProgramStatusHistoryEntry,
+                 framSections.template Get<"eduProgramStatusHistory">(),
+                 nCachedProgramStatusHistoryEntries>
     programStatusHistory;
-
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void;
