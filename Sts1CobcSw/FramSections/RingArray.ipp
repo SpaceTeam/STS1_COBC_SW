@@ -164,33 +164,41 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto RingArray<T, ringArraySection, nCachedElements>::DoSet(IndexType index, T const & t) -> void
 {
-    if(index >= cache.size())
-    {
-        DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %u >= %u\n",
-                    static_cast<unsigned>(index),
-                    static_cast<unsigned>(cache.size()));
-    }
-    else
-    {
-        // If the index is not out of bounds, we always write to the cache
-        cache[index] = Serialize(t);
-    }
     if(not framIsWorking.Load())
     {
+        if(index >= cache.size())
+        {
+            DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %d >= %d\n",
+                        static_cast<int>(index),
+                        static_cast<int>(cache.size()));
+            return;
+        }
+        cache[index] = Serialize(t);
         return;
     }
     LoadIndexes();
-    auto size = FramSize();
-    if(index >= size)
+    auto framSize = FramSize();
+    if(index >= framSize)
     {
-        DEBUG_PRINT("Index out of bounds in RingArray::Set(): %u >= %u\n",
-                    static_cast<unsigned>(index),
-                    static_cast<unsigned>(size));
+        DEBUG_PRINT("Index out of bounds in RingArray::Set(): %d >= %d\n",
+                    static_cast<int>(index),
+                    static_cast<int>(framSize));
         return;
     }
     auto i = iBegin;
     i.advance(static_cast<int>(index));
     WriteElement(i, t);
+    // The cache should hold the latest elements, not the oldest ones, so we need to shift the index
+    auto cacheIndex =
+        static_cast<int>(index) - static_cast<int>(FramSize()) + static_cast<int>(cache.size());
+    if(cacheIndex < 0)
+    {
+        DEBUG_PRINT("Index out of bounds for cache in RingArray::Set(): %d < 0\n",
+                    static_cast<int>(cacheIndex));
+        return;
+    }
+    // If the index is not out of bounds, we always write to the cache
+    cache[static_cast<unsigned>(cacheIndex)] = Serialize(t);
 }
 
 

@@ -169,8 +169,8 @@ auto RunUnitTest() -> void
 
         // Even though we reset the FRAM memory to zero, the cached values are still there
         Require(charRingArray1.Size() == charRingArray1.CacheCapacity());
-        Require(charRingArray1.Get(0) == 21);
-        Require(charRingArray1.Get(1) == 22);
+        Require(charRingArray1.Get(0) == 22);
+        Require(charRingArray1.Get(1) == 23);
 
         Require(charRingArray2.Size() == 0);
         // Trying to set an element in an empty ring prints a debug message
