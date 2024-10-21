@@ -160,6 +160,17 @@ auto RunUnitTest() -> void
         Require(charRingArray1.Get(0) == 21);
         Require(charRingArray1.Get(1) == 22);
         Require(charRingArray1.Get(2) == 23);
+
+        charRingArray1.FindAndReplace([](auto x) { return x == 22; }, 42);
+        Require(charRingArray1.Get(0) == 21);
+        Require(charRingArray1.Get(1) == 42);
+        Require(charRingArray1.Get(2) == 23);
+        Require(fram::ram::memory[charRingArray1StartAddress + 3] == 42_b);
+
+        charRingArray1.FindAndReplace([](auto x) { return x == 0; }, 1);
+        Require(charRingArray1.Get(0) == 21);
+        Require(charRingArray1.Get(1) == 42);
+        Require(charRingArray1.Get(2) == 23);
     }
 
     // SECTION("FRAM is not working")
@@ -169,7 +180,7 @@ auto RunUnitTest() -> void
 
         // Even though we reset the FRAM memory to zero, the cached values are still there
         Require(charRingArray1.Size() == charRingArray1.CacheCapacity());
-        Require(charRingArray1.Get(0) == 22);
+        Require(charRingArray1.Get(0) == 42);
         Require(charRingArray1.Get(1) == 23);
 
         Require(charRingArray2.Size() == 0);
@@ -213,6 +224,14 @@ auto RunUnitTest() -> void
         charRingArray2.Set(17, 0);
         Require(charRingArray2.Get(0) == 21);
         Require(charRingArray2.Get(1) == 22);
+
+        charRingArray2.FindAndReplace([](auto x) { return x == 22; }, 42);
+        Require(charRingArray2.Get(0) == 21);
+        Require(charRingArray2.Get(1) == 42);
+
+        charRingArray2.FindAndReplace([](auto x) { return x == 0; }, 1);
+        Require(charRingArray2.Get(0) == 21);
+        Require(charRingArray2.Get(1) == 42);
     }
 
     // SECTION("RingArray of custom type")
@@ -291,6 +310,17 @@ auto RunUnitTest() -> void
         // Set() with out-of-bounds index prints a debug message and does not set anything
         sRingArray.Set(17, s1);
         Require(sRingArray.Get(0) == s6);
+        Require(sRingArray.Get(1) == s7);
+        Require(sRingArray.Get(2) == s8);
+
+        sRingArray.FindAndReplace([&s6](auto const & x) { return x == s6; }, s2);
+        Require(sRingArray.Get(0) == s2);
+        Require(sRingArray.Get(1) == s7);
+        Require(sRingArray.Get(2) == s8);
+        Require(fram::ram::memory[sRingArrayStartAddress + 2 * totalSerialSize<S>] == 2_b);
+
+        sRingArray.FindAndReplace([](auto const & x) { return x == S{}; }, s1);
+        Require(sRingArray.Get(0) == s2);
         Require(sRingArray.Get(1) == s7);
         Require(sRingArray.Get(2) == s8);
     }
