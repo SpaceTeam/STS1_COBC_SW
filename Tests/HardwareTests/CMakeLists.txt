@@ -99,7 +99,13 @@ target_sources(
 )
 target_link_libraries(
     Sts1CobcSwTests_SpiSupervisor
-    PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Utility Sts1CobcSw_Hal Sts1CobcSw_Serial
+    PRIVATE rodos::rodos
+            strong_type::strong_type
+            Sts1CobcSw_FramSections
+            Sts1CobcSw_Hal
+            Sts1CobcSw_Periphery
+            Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
             Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(SpiSupervisor)

@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
@@ -9,6 +11,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
 #include <array>
 
 
