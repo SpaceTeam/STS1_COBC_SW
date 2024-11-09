@@ -16,11 +16,11 @@ Spi::Spi(RODOS::SPI_IDX spiIndex,
 }
 
 
-auto Initialize(Spi * spi, std::uint32_t baudRate) -> void
+auto Initialize(Spi * spi, std::uint32_t baudRate, bool useOpenDrainOutputs) -> void
 {
     // spi.init() only returns -1 if the SPI_IDX is out of range. Since we can check that statically
     // we do not need to report that error at runtime.
-    spi->spi_.init(baudRate, /*slave=*/false, /*tiMode=*/false);
+    spi->spi_.init(baudRate, /*slave=*/false, /*tiMode=*/false, useOpenDrainOutputs);
     spi->transferEnd_.put(RODOS::END_OF_TIME);
 }
 

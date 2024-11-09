@@ -18,6 +18,13 @@ inline auto GpioPin::Direction(PinDirection pinDirection) -> void
 }
 
 
+inline auto GpioPin::OutputType(PinOutputType pinOutputType) -> void
+{
+    pin_.config(RODOS::GPIO_CFG_OPENDRAIN_ENABLE,
+                pinOutputType == PinOutputType::openDrain ? 1U : 0U);
+}
+
+
 inline auto GpioPin::Set() -> void
 {
     pin_.setPins(1U);

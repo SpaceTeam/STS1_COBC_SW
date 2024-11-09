@@ -9,6 +9,7 @@
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -16,6 +17,7 @@
 
 #include <array>
 #include <bit>
+#include <cinttypes>
 #include <cstddef>
 #include <span>
 
@@ -80,6 +82,11 @@ constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
 // TODO: Check this and write a good comment
 constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
 
+// Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
+constexpr auto txFifoThreshold = 32_b;
+// Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
+constexpr auto rxFifoThreshold = 48_b;
+
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
@@ -96,13 +103,10 @@ auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 auto InitializeGpiosAndSpi() -> void;
 auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
-
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
-
 auto WaitForCts() -> void;
-
 template<std::size_t extent>
     requires(extent <= maxNProperties)
 auto SetProperties(PropertyGroup propertyGroup,
@@ -120,8 +124,7 @@ auto Initialize(TxType txType) -> void
     InitializeGpiosAndSpi();
     PowerUp();
     Configure(txType);
-    // TODO: Why is this one not set with all the other GPIO pins in InitializeGpiosAndSpi()?
-    paEnablePin.Direction(hal::PinDirection::out);
+    // Power amplifier should only be turned on after the configuration is done
     paEnablePin.Set();
 }
 
@@ -142,23 +145,23 @@ auto SetTxType(TxType txType) -> void
     // * 2600000 * 10) / 26000000 = 9600 = 0x002580
     static constexpr std::uint32_t dataRate2Gfsk = 9'600U;
     // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
-    static constexpr auto modemModTypeMorse = 0x09_b;
+    static constexpr auto modemModeTypeMorse = 0x09_b;
     // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
-    static constexpr auto modemModType2Gfsk = 0x03_b;
+    static constexpr auto modemModeType2Gfsk = 0x03_b;
     // Inconsistent naming pattern due to strict adherence to datasheet
     static constexpr auto modemMapControl = 0x00_b;
     static constexpr auto modemDsmCtrl = 0x07_b;
     static constexpr auto startIndex = 0x00_b;
-    auto modemModType = (txType == TxType::morse ? modemModTypeMorse : modemModType2Gfsk);
+    auto modemModeType = (txType == TxType::morse ? modemModeTypeMorse : modemModeType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
     SetProperties(
         PropertyGroup::modem,
         startIndex,
-        Span(FlatArray(modemModType,
+        Span(FlatArray(modemModeType,
                        modemMapControl,
                        modemDsmCtrl,
                        // The data rate property is only 3 bytes wide, so drop the first byte
-                       Span(Serialize<std::endian::big, std::uint32_t>(dataRate)).subspan<1>())));
+                       Span(Serialize<std::endian::big>(dataRate)).subspan<1>())));
 }
 
 
@@ -167,13 +170,21 @@ auto SetTxType(TxType txType) -> void
 auto InitializeGpiosAndSpi() -> void
 {
     csGpioPin.Direction(hal::PinDirection::out);
+#if HW_VERSION >= 30
+    csGpioPin.OutputType(hal::PinOutputType::openDrain);
+#else
+    csGpioPin.OutputType(hal::PinOutputType::pushPull);
+#endif
     csGpioPin.Set();
     nirqGpioPin.Direction(hal::PinDirection::in);
     sdnGpioPin.Direction(hal::PinDirection::out);
     sdnGpioPin.Set();
     gpio0GpioPin.Direction(hal::PinDirection::out);
     gpio0GpioPin.Reset();
+    paEnablePin.Direction(hal::PinDirection::out);
+    paEnablePin.Reset();
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
+    // The watchdog must be reset at least once to enable the RF module
     watchdogResetGpioPin.Reset();
     AT(NOW() + watchDogResetPinDelay);
     watchdogResetGpioPin.Set();
@@ -181,7 +192,11 @@ auto InitializeGpiosAndSpi() -> void
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 6'000'000;
-    Initialize(&spi, baudrate);
+#if HW_VERSION >= 30
+    Initialize(&spi, baudrate, /*useOpenDrainOutputs=*/true);
+#else
+    Initialize(&spi, baudrate, /*useOpenDrainOutputs=*/false);
+#endif
 
     // Enable Si4463 and wait for PoR to finish
     AT(NOW() + porCircuitSettleDelay);
@@ -192,19 +207,39 @@ auto InitializeGpiosAndSpi() -> void
 
 auto PowerUp() -> void
 {
-    static constexpr auto bootOption = 0x01_b;
-    static constexpr auto xtalOption = 0x00_b;
-    static constexpr std::uint32_t powerUpXoFrequency = 26'000'000;  // 26 MHz
-    SendCommand(FlatArray(cmdPowerUp,
-                          bootOption,
-                          xtalOption,
-                          Serialize<std::endian::big, std::uint32_t>(powerUpXoFrequency)));
+    static constexpr auto bootOptions = 0x01_b;
+    static constexpr auto xtalOptions = 0x00_b;
+    static constexpr std::uint32_t xoFreq = 26'000'000;  // 26 MHz
+    SendCommand(FlatArray(
+        cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
 }
 
 
 auto Configure(TxType txType) -> void
 {
-    SendCommand(Span({cmdGpioPinCfg, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
+    // Configure GPIO pins, NIRQ, and SDO
+    // Don't change
+    static constexpr auto gpio0Config = 0x41_b;
+    // Don't change
+    static constexpr auto gpio1Config = 0x41_b;
+    // GPIO2 active in RX state
+    static constexpr auto gpio2Config = 0x21_b;
+    // GPIO3 active in TX state
+    static constexpr auto gpio3Config = 0x20_b;
+    // NIRQ is still used as NIRQ
+    static constexpr auto nirqConfig = 0x27_b;
+    // SDO is still used as SDO
+    static constexpr auto sdoConfig = 0x4B_b;
+    // GPIOs configured as outputs will have highest drive strength
+    static constexpr auto genConfig = 0x00_b;
+    SendCommand<7>(Span({cmdGpioPinCfg,
+                         gpio0Config,
+                         gpio1Config,
+                         gpio2Config,
+                         gpio3Config,
+                         nirqConfig,
+                         sdoConfig,
+                         genConfig}));
 
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
@@ -226,7 +261,7 @@ auto Configure(TxType txType) -> void
     // Preamble
     static constexpr auto iPreambleTxLength = 0x00_b;
     // 0 bytes preamble
-    static constexpr auto preambleTxLength = 0x00_b;
+    static constexpr auto preambleTxLength = 0x08_b;
     // Normal sync timeout, 14-bit preamble RX threshold
     static constexpr auto preambleConfigStd1 = 0x14_b;
     // No non-standard preamble pattern
@@ -278,7 +313,7 @@ auto Configure(TxType txType) -> void
     static constexpr auto pktWhtBitNum = 0x00_b;
     // Don't split RX and TX field information (length, ...), enable RX packet handler, use normal
     // (2)FSK, no Manchester coding, no CRC, data transmission with MSB first
-    static constexpr auto pktConfig1 = 0x01_b;
+    static constexpr auto pktConfig1 = 0x00_b;
     SetProperties(PropertyGroup::pkt, iPktWhtBitNum, Span({pktWhtBitNum, pktConfig1}));
 
     // Packet length part 1
@@ -287,10 +322,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto pktLen = 0x60_b;
     static constexpr auto pktLenFieldSource = 0x00_b;
     static constexpr auto pktLenAdjust = 0x00_b;
-    // Trigger TX FIFO almost empty interrupt when 0x30 bytes in FIFO (size 0x40) are empty
-    static constexpr auto pktTxThreshold = 0x30_b;
-    // Trigger RX FIFO almost full interrupt when 0x30 bytes in FIFO (size 0x40) are full
-    static constexpr auto pktRxThreshold = 0x30_b;
+    static constexpr auto pktTxThreshold = txFifoThreshold;
+    static constexpr auto pktRxThreshold = rxFifoThreshold;
     static constexpr auto pktField1Length = std::array{0x00_b, 0x00_b};
     static constexpr auto pktField1Config = 0x04_b;
     static constexpr auto pktField1CrcConfig = 0x80_b;
@@ -380,9 +413,11 @@ auto Configure(TxType txType) -> void
     static constexpr auto iModemTxNcoMode = 0x06_b;
     // TXOSR = x10 = 0, NCOMOD = F_XTAL / 10 = 2600000 = 0x027ac40
     static constexpr auto modemTxNcoMode = std::array{0x00_b, 0x27_b, 0xAC_b, 0x40_b};
-    // (2^19 * outdiv * deviation_Hz) / (N_presc * F_xo) = (2^19 * 8 * 9600 / 4) / (2 * 26000000) =
-    // 194 = 0x0000C2
-    static constexpr auto modemFreqDeviation = std::array{0x00_b, 0x00_b, 0xC2_b};
+    // We use minimum shift keying, i.e., a frequency deviation of baudrate / 4. The value we need
+    // to write to the property is (2^19 * outdiv * deviation_Hz) / (N_presc * F_xo) = (2^19 * 8 *
+    // (9600 / 4)) / (2 * 26000000) = 194 = 0x0000C2
+    // 0x308 = 4 * 194
+    static constexpr auto modemFreqDeviation = std::array{0x00_b, 0x0C_b, 0x20_b};
     SetProperties(
         PropertyGroup::modem, iModemTxNcoMode, Span(FlatArray(modemTxNcoMode, modemFreqDeviation)));
 
@@ -721,27 +756,6 @@ auto Configure(TxType txType) -> void
                                  freqControlWSize,
                                  freqControlVcontRxAdj)));
 
-    // Set RF4463 module antenna switch
-    // Don't change
-    static constexpr auto gpio0Config = 0x00_b;
-    // Don't change
-    static constexpr auto gpio1Config = 0x00_b;
-    // GPIO2 active in RX state
-    static constexpr auto gpio2Config = 0x21_b;
-    // GPIO3 active in TX state
-    static constexpr auto gpio3Config = 0x20_b;
-    // NIRQ is still used as NIRQ
-    static constexpr auto nirqConfig = 0x27_b;
-    // SDO is still used as SDO
-    static constexpr auto sdoConfig = 0x0B_b;
-    SendCommand(Span({cmdGpioPinCfg,
-                      gpio0Config,
-                      gpio1Config,
-                      gpio2Config,
-                      gpio3Config,
-                      nirqConfig,
-                      sdoConfig}));
-
     // Frequency adjust (stolen from Arduino demo code)
     static constexpr auto globalXoTuneUpdated = 0x62_b;
     SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTuneUpdated}));
@@ -758,40 +772,49 @@ auto Configure(TxType txType) -> void
 
 auto SendCommand(std::span<Byte const> data) -> void
 {
-    csGpioPin.Reset();
-    hal::WriteTo(&spi, data, spiTimeout);
-    csGpioPin.Set();
-    WaitForCts();
+    (void)SendCommand<0>(data);
 }
 
 
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
-    SendCommand(data);
-    auto answer = std::array<Byte, answerLength>{};
     csGpioPin.Reset();
-    hal::ReadFrom(&spi, Span(&answer), spiTimeout);
+    hal::WriteTo(&spi, data, spiTimeout);
+    csGpioPin.Set();
+    WaitForCts();
+    auto answer = std::array<Byte, answerLength>{};
+    if constexpr(answerLength != 0)
+    {
+        hal::ReadFrom(&spi, Span(&answer), spiTimeout);
+    }
     csGpioPin.Set();
     return answer;
 }
 
 
-//! @brief Polls the CTS byte until 0xFF is received (i.e. Si4463 is ready for command).
+//! @brief Polls the CTS byte until the Si4463 chip is ready for a new command.
+//!
+//! @note This function keeps the CS pin low when it returns.
+// TODO: Refactor the whole waiting for CTS so that the caller of this function does not need to
+// remember to pull the CS pin high afterwards. Maybe rework it into something like
+// WaitForResponse/Answer<answerLength>().
 auto WaitForCts() -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
+    auto const pollingDelay = 50 * MICROSECONDS;
     do
     {
         csGpioPin.Reset();
         hal::WriteTo(&spi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
         hal::ReadFrom(&spi, Span(&cts), spiTimeout);
-        csGpioPin.Set();
         if(cts == dataIsReadyValue)
         {
             break;
         }
+        csGpioPin.Set();
+        AT(NOW() + pollingDelay);
     } while(true);
     // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
     // RF code
