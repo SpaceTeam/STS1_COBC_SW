@@ -5,9 +5,10 @@
 
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
-#include <Sts1CobcSw/Hal/HardwareSpi.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
@@ -47,9 +48,6 @@ enum class PropertyGroup : std::uint8_t
 
 // --- Public globals ---
 
-auto hardwareSpi =
-    hal::HardwareSpi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
-hal::Spi & spi = hardwareSpi;
 bool rfIsWorking = true;
 
 
@@ -191,9 +189,9 @@ auto InitializeGpiosAndSpi() -> void
 
     constexpr auto baudrate = 6'000'000;
 #if HW_VERSION >= 30
-    Initialize(&spi, baudrate, /*useOpenDrainOutputs=*/true);
+    Initialize(&rfSpi, baudrate, /*useOpenDrainOutputs=*/true);
 #else
-    Initialize(&spi, baudrate, /*useOpenDrainOutputs=*/false);
+    Initialize(&rfSpi, baudrate, /*useOpenDrainOutputs=*/false);
 #endif
 
     // Enable Si4463 and wait for PoR to finish
@@ -778,13 +776,13 @@ template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, data, spiTimeout);
+    hal::WriteTo(&rfSpi, data, spiTimeout);
     csGpioPin.Set();
     WaitForCts();
     auto answer = std::array<Byte, answerLength>{};
     if constexpr(answerLength != 0)
     {
-        hal::ReadFrom(&spi, Span(&answer), spiTimeout);
+        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
     }
     csGpioPin.Set();
     return answer;
@@ -804,9 +802,9 @@ auto WaitForCts() -> void
     do
     {
         csGpioPin.Reset();
-        hal::WriteTo(&spi, Span(cmdReadCmdBuff), spiTimeout);
+        hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
-        hal::ReadFrom(&spi, Span(&cts), spiTimeout);
+        hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
         if(cts == dataIsReadyValue)
         {
             break;

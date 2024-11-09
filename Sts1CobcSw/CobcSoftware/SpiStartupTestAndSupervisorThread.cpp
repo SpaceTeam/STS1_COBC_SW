@@ -6,10 +6,8 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
-#include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/FramEpsSpi.hpp>
-#include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
@@ -106,13 +104,13 @@ private:
                 DEBUG_PRINT("FRAM/EPS SPI timeout occurred\n");
                 timeoutHappened = true;
             }
-            if(CurrentRodosTime() > flash::spi.TransferEnd())
+            if(CurrentRodosTime() > flashSpi.TransferEnd())
             {
                 DEBUG_PRINT("Flash SPI timeout occurred\n");
                 timeoutHappened = true;
                 persistentVariables.template Increment<"nFlashErrors">();
             }
-            if(CurrentRodosTime() > rf::spi.TransferEnd())
+            if(CurrentRodosTime() > rfSpi.TransferEnd())
             {
                 DEBUG_PRINT("RF SPI timeout occurred\n");
                 timeoutHappened = true;

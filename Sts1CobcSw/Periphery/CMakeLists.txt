@@ -5,7 +5,7 @@ target_link_libraries(
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    target_sources(Sts1CobcSw_Periphery PRIVATE Eps.cpp Flash.cpp Fram.cpp Rf.cpp FramEpsSpi.cpp)
+    target_sources(Sts1CobcSw_Periphery PRIVATE Eps.cpp Flash.cpp Fram.cpp Rf.cpp Spis.cpp)
 else()
     target_sources(Sts1CobcSw_Periphery PRIVATE FlashMock.cpp FramMock.cpp)
 endif()

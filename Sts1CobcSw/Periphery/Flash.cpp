@@ -1,7 +1,8 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
-#include <Sts1CobcSw/Hal/HardwareSpi.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
@@ -33,13 +34,6 @@ struct SimpleInstruction
     Byte id = 0x00_b;
     std::size_t answerLength = 0;
 };
-
-
-// --- Public globals ---
-
-auto hardwareSpi = hal::HardwareSpi(
-    hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
-hal::Spi & spi = hardwareSpi;
 
 
 // --- Private globals ---
@@ -103,7 +97,7 @@ auto Initialize() -> void
     writeProtectionGpioPin.Direction(hal::PinDirection::out);
     writeProtectionGpioPin.Set();
     auto const baudRate = 48'000'000;
-    Initialize(&spi, baudRate);
+    Initialize(&flashSpi, baudRate);
     Enter4ByteAdressMode();
 }
 
@@ -193,7 +187,7 @@ auto WaitWhileBusy(Duration timeout) -> Result<void>
 
 auto ActualBaudRate() -> std::int32_t
 {
-    return spi.BaudRate();
+    return flashSpi.BaudRate();
 }
 
 
@@ -233,14 +227,14 @@ auto IsBusy() -> bool
 template<std::size_t extent>
 inline auto Write(std::span<Byte const, extent> data, Duration timeout) -> void
 {
-    hal::WriteTo(&spi, data, timeout);
+    hal::WriteTo(&flashSpi, data, timeout);
 }
 
 
 template<std::size_t extent>
 inline auto Read(std::span<Byte, extent> data, Duration timeout) -> void
 {
-    hal::ReadFrom(&spi, data, timeout);
+    hal::ReadFrom(&flashSpi, data, timeout);
 }
 
 
@@ -248,7 +242,7 @@ template<std::size_t size>
 inline auto Read(Duration timeout) -> std::array<Byte, size>
 {
     auto answer = std::array<Byte, size>{};
-    hal::ReadFrom(&spi, Span(&answer), timeout);
+    hal::ReadFrom(&flashSpi, Span(&answer), timeout);
     return answer;
 }
 
