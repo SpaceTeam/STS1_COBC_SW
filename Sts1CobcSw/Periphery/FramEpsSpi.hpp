@@ -3,5 +3,5 @@
 
 namespace sts1cobcsw
 {
-extern hal::Spi framEpsSpi;
+extern hal::Spi & framEpsSpi;
 }

@@ -5,6 +5,7 @@
 
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/HardwareSpi.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -46,7 +47,9 @@ enum class PropertyGroup : std::uint8_t
 
 // --- Public globals ---
 
-hal::Spi spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+auto hardwareSpi =
+    hal::HardwareSpi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+hal::Spi & spi = hardwareSpi;
 bool rfIsWorking = true;
 
 

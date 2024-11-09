@@ -17,7 +17,7 @@ enum class TxType
 
 inline constexpr auto correctPartNumber = 0x4463;
 
-extern hal::Spi spi;
+extern hal::Spi & spi;
 extern bool rfIsWorking;
 
 

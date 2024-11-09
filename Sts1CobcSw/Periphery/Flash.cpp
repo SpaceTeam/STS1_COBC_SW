@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/HardwareSpi.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -36,8 +37,9 @@ struct SimpleInstruction
 
 // --- Public globals ---
 
-hal::Spi spi =
-    hal::Spi(hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
+auto hardwareSpi = hal::HardwareSpi(
+    hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
+hal::Spi & spi = hardwareSpi;
 
 
 // --- Private globals ---

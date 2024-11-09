@@ -82,6 +82,7 @@
   { include: ["\"Sts1CobcSw/FramSections/SubsectionInfo.hpp\"",         "public", "<Sts1CobcSw/FramSections/SubsectionInfo.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/Subsections.hpp\"",            "public", "<Sts1CobcSw/FramSections/Subsections.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/GpioPin.hpp\"",                         "public", "<Sts1CobcSw/Hal/GpioPin.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Hal/HardwareSpi.hpp\"",                     "public", "<Sts1CobcSw/Hal/HardwareSpi.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/IoNames.hpp\"",                         "public", "<Sts1CobcSw/Hal/IoNames.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/PinNames.hpp\"",                        "public", "<Sts1CobcSw/Hal/PinNames.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Spi.hpp\"",                             "public", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
