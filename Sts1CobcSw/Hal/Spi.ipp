@@ -1,6 +1,8 @@
 #pragma once
 
 
+// IWYU pragma: private, include <Sts1CobcSw/Hal/Spi.hpp>
+
 #include <Sts1CobcSw/Hal/Spi.hpp>
 
 
