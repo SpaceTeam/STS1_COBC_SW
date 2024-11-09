@@ -1,41 +1,64 @@
 #include <Sts1CobcSw/Hal/SpiMock.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
-
-#include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw::hal
 {
-namespace empty
+auto SpiMock::SetInitialize(void (*initialize)(std::uint32_t, bool)) -> void
 {
-auto DoInitialize([[maybe_unused]] std::uint32_t baudRate) -> void
-{
+    initialize_ = initialize;
 }
 
 
-auto DoRead([[maybe_unused]] void * data,
-            [[maybe_unused]] std::size_t nBytes,
-            [[maybe_unused]] Duration timeout) -> void
+auto SpiMock::SetRead(void (*read)(void *, std::size_t, Duration)) -> void
 {
+    read_ = read;
 }
 
 
-auto DoWrite([[maybe_unused]] void const * data,
-             [[maybe_unused]] std::size_t nBytes,
-             [[maybe_unused]] Duration timeout) -> void
+auto SpiMock::SetWrite(void (*write)(void const *, std::size_t, Duration)) -> void
 {
+    write_ = write;
 }
 
 
-auto DoTransferEnd() -> RodosTime
+auto SpiMock::SetTransferEnd(RodosTime (*transferEnd)()) -> void
 {
-    return endOfTime;
+    transferEnd_ = transferEnd;
 }
 
 
-auto DoBaudRate() -> std::int32_t
+auto SpiMock::SetBaudRate(std::int32_t (*baudRate)()) -> void
 {
-    return 0;
+    baudRate_ = baudRate;
 }
+
+
+auto SpiMock::DoInitialize(std::uint32_t baudRate, bool useOpenDrainOutputs) -> void
+{
+    initialize_(baudRate, useOpenDrainOutputs);
+}
+
+
+auto SpiMock::Read(void * data, std::size_t nBytes, Duration timeout) -> void
+{
+    read_(data, nBytes, timeout);
+}
+
+
+auto SpiMock::Write(void const * data, std::size_t nBytes, Duration timeout) -> void
+{
+    write_(data, nBytes, timeout);
+}
+
+
+auto SpiMock::DoTransferEnd() const -> RodosTime
+{
+    return transferEnd_();
+}
+
+
+auto SpiMock::DoBaudRate() const -> std::int32_t
+{
+    return baudRate_();
 }
 }

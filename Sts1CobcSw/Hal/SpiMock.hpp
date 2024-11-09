@@ -10,23 +10,34 @@
 
 namespace sts1cobcsw::hal
 {
-namespace empty
-{
-auto DoInitialize(std::uint32_t baudRate) -> void;
-auto DoRead(void * data, std::size_t nBytes, Duration timeout) -> void;
-auto DoWrite(void const * data, std::size_t nBytes, Duration timeout) -> void;
-auto DoTransferEnd() -> RodosTime;
-auto DoBaudRate() -> std::int32_t;
-}
-
-
-class Spi::Impl
+class SpiMock : public Spi
 {
 public:
-    void (*doInitialize)(std::uint32_t baudRate) = empty::DoInitialize;
-    void (*doRead)(void * data, std::size_t nBytes, Duration timeout) = empty::DoRead;
-    void (*doWrite)(void const * data, std::size_t nBytes, Duration timeout) = empty::DoWrite;
-    RodosTime (*doTransferEnd)() = empty::DoTransferEnd;
-    std::int32_t (*doBaudRate)() = empty::DoBaudRate;
+    SpiMock() = default;
+    SpiMock(SpiMock const &) = delete;
+    SpiMock(SpiMock &&) = default;
+    auto operator=(SpiMock const &) -> SpiMock & = delete;
+    auto operator=(SpiMock &&) -> SpiMock & = default;
+    ~SpiMock() override = default;
+
+    auto SetInitialize(void (*initialize)(std::uint32_t, bool)) -> void;
+    auto SetRead(void (*read)(void *, std::size_t, Duration)) -> void;
+    auto SetWrite(void (*write)(void const *, std::size_t, Duration)) -> void;
+    auto SetTransferEnd(RodosTime (*transferEnd)()) -> void;
+    auto SetBaudRate(std::int32_t (*baudRate)()) -> void;
+
+
+private:
+    auto DoInitialize(std::uint32_t baudRate, bool useOpenDrainOutputs) -> void override;
+    auto Read(void * data, std::size_t nBytes, Duration timeout) -> void override;
+    auto Write(void const * data, std::size_t nBytes, Duration timeout) -> void override;
+    [[nodiscard]] auto DoTransferEnd() const -> RodosTime override;
+    [[nodiscard]] auto DoBaudRate() const -> std::int32_t override;
+
+    void (*initialize_)(std::uint32_t, bool) = [](auto...) {};
+    void (*read_)(void *, std::size_t, Duration) = [](auto...) {};
+    void (*write_)(void const *, std::size_t, Duration) = [](auto...) {};
+    RodosTime (*transferEnd_)() = []() { return RodosTime{}; };
+    std::int32_t (*baudRate_)() = []() { return 0; };
 };
 }
