@@ -3,6 +3,8 @@
 
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 
+#include <strong_type/type.hpp>
+
 
 namespace sts1cobcsw
 {

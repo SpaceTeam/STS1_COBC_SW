@@ -1,20 +1,9 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-#include <strong_type/affine_point.hpp>
-#include <strong_type/difference.hpp>
-#include <strong_type/equality.hpp>
-#include <strong_type/ordered.hpp>
-#include <strong_type/type.hpp>
-
 #include <rodos_no_using_namespace.h>
-
-#include <bit>
-#include <cstddef>
-#include <cstdint>
 
 
 namespace sts1cobcsw
