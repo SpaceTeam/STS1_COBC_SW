@@ -37,8 +37,8 @@ private:
 
     void run() override
     {
-        DEBUG_PRINT("FRAM/EPS start-up test ...");
         SuspendUntil(endOfTime);
+        DEBUG_PRINT("FRAM/EPS start-up test ...");
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
         if(deviceId == fram::correctDeviceId)

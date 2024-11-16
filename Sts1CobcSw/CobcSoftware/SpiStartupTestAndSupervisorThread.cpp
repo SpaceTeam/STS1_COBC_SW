@@ -25,7 +25,9 @@
 
 namespace sts1cobcsw
 {
-constexpr auto stackSize = 100U;
+// Running the integration test for the supervisor thread showed that at least 850 bytes are needed
+constexpr auto stackSize = 900U;
+constexpr auto initialSleepTime = 10 * ms;
 // TODO: Measure how long the startup tests really take to determine the correct timeout
 constexpr auto startupTestTimeout = 100 * ms;
 // TODO: Think about how often the supervision should run
@@ -52,6 +54,10 @@ private:
 
     void run() override
     {
+        // Briefly go to sleep to ensure that the low-priority startup test threads have started and
+        // are waiting for the high-priority supervisor thread to resume them
+        SuspendFor(initialSleepTime);
+
         static constexpr auto errorMessage = " failed to complete in time\n";
         static constexpr auto successMessage = " completed in time\n";
 
@@ -118,7 +124,6 @@ private:
             }
             if(timeoutHappened)
             {
-                DEBUG_PRINT("Hardware reset and reboot");
                 RODOS::hwResetAndReboot();
             }
         }

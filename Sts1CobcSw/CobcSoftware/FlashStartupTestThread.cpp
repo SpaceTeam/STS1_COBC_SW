@@ -32,8 +32,8 @@ private:
 
     void run() override
     {
-        DEBUG_PRINT("Flash start-up test ...");
         SuspendUntil(endOfTime);
+        DEBUG_PRINT("Flash start-up test ...");
         flash::Initialize();
         auto jedecId = flash::ReadJedecId();
         if(jedecId.deviceId == flash::correctJedecId.deviceId

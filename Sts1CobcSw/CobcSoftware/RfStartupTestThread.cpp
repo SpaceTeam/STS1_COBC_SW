@@ -31,8 +31,8 @@ private:
 
     void run() override
     {
-        DEBUG_PRINT("RF start-up test ...");
         SuspendUntil(endOfTime);
+        DEBUG_PRINT("RF start-up test ...");
         rf::Initialize(rf::TxType::packet);
         auto partNumber = rf::ReadPartNumber();
         if(partNumber == rf::correctPartNumber)
