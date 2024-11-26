@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <rodos/api/rodos-semaphore.h>
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>
@@ -29,6 +30,12 @@ auto Sync(lfs_config const * config) -> int;
 auto Lock(lfs_config const * config) -> int;
 auto Unlock(lfs_config const * config) -> int;
 
+
+// TODO: Test with real HW
+// max. 3.5 ms acc. W25Q01JV datasheet
+constexpr auto pageProgramTimeout = 5 * RODOS::MILLISECONDS;
+// max. 400 ms acc. W25Q01JV datasheet (lfs_config.block_size = flash::sectorSize)
+constexpr auto blockEraseTimeout = 500 * RODOS::MILLISECONDS;
 
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
@@ -63,11 +70,7 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .metadata_max = flash::sectorSize,
                                         .inline_max = 0};
 
-// TODO: Test with real HW
-// max. 3.5 ms acc. W25Q01JV datasheet
-constexpr auto pageProgramTimeout = 5 * RODOS::MILLISECONDS;
-// max. 400 ms acc. W25Q01JV datasheet (lfs_config.block_size = flash::sectorSize)
-constexpr auto blockEraseTimeout = 500 * RODOS::MILLISECONDS;
+auto semaphore = RODOS::Semaphore();
 
 
 auto Initialize() -> void
@@ -141,16 +144,16 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 }
 
 
-// TODO: Add a proper implementation
 auto Lock([[maybe_unused]] lfs_config const * config) -> int
 {
+    semaphore.enter();
     return 0;
 }
 
 
-// TODO: Add a proper implementation
 auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
+    semaphore.leave();
     return 0;
 }
 }
