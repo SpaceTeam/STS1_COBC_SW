@@ -14,11 +14,6 @@ target_link_libraries(
                                  Sts1CobcSw_Utility
 )
 
-add_program(LfsRam LfsRam.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_LfsRam PRIVATE Catch2::Catch2WithMain littlefs::littlefs Sts1CobcSw_FileSystem
-)
-
 add_program(MajorityVote MajorityVote.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_MajorityVote PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
@@ -85,6 +80,11 @@ target_link_libraries(
                                           Sts1CobcSw_Serial Sts1CobcSw_Utility
 )
 add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
+
+add_program(LfsRam LfsRam.test.cpp UnitTestThread.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_LfsRam PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
+)
 
 add_program(LfsWrapper LfsWrapper.test.cpp UnitTestThread.cpp)
 target_link_libraries(

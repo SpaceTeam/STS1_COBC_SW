@@ -6,6 +6,8 @@
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <rodos/api/rodos-semaphore.h>
+
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -68,6 +70,8 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .metadata_max = sectorSize,
                                         .inline_max = 0};
 
+auto semaphore = RODOS::Semaphore();
+
 
 auto Initialize() -> void
 {
@@ -112,16 +116,16 @@ auto Sync([[maybe_unused]] lfs_config const * config) -> int
 }
 
 
-// TODO: Add a proper implementation
 auto Lock([[maybe_unused]] lfs_config const * config) -> int
 {
+    semaphore.enter();
     return 0;
 }
 
 
-// TODO: Add a proper implementation
 auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
+    semaphore.leave();
     return 0;
 }
 }
