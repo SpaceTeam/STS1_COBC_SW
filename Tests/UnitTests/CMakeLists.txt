@@ -103,7 +103,7 @@ add_program(LfsWrapper LfsWrapper.test.cpp UnitTestThread.cpp)
 target_link_libraries(
     Sts1CobcSwTests_LfsWrapper PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
 )
-add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_FramRingArray)
+add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_LfsWrapper)
 
 add_program(PersistentVariables PersistentVariables.test.cpp UnitTestThread.cpp)
 target_link_libraries(
