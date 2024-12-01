@@ -24,9 +24,9 @@ using RODOS::PRINTF;
 auto WriteThatFinishesInTime([[maybe_unused]] void const * data,
                              [[maybe_unused]] std::size_t nBytes,
                              Duration duration) -> void;
-auto WriteThatNeverFinishes([[maybe_unused]] void const * data,
-                            [[maybe_unused]] std::size_t nBytes,
-                            Duration duration) -> void;
+auto WriteThatTakesTooLong([[maybe_unused]] void const * data,
+                           [[maybe_unused]] std::size_t nBytes,
+                           Duration duration) -> void;
 
 
 auto transferEnd = endOfTime;
@@ -61,7 +61,7 @@ public:
 
     void run() override
     {
-        SuspendFor(1 * s);
+        SuspendFor(100 * ms);
 
         PRINTF("\nSPI supervisor test\n\n");
 
@@ -73,9 +73,10 @@ public:
         WriteTo(&rfSpi_, Span(0x00_b), 1500 * ms);
         PRINTF("  -> works\n");
 
-        PRINTF("Writing with implementation that never finishes ...\n");
-        flashSpi_.SetWrite(WriteThatNeverFinishes);
+        PRINTF("Writing with implementation that takes too long ...\n");
+        flashSpi_.SetWrite(WriteThatTakesTooLong);
         WriteTo(&flashSpi_, Span(0x00_b), 1 * ms);
+        PRINTF("  -> this should never be printed\n");
     }
 } spiSupervisorTest;
 
@@ -90,11 +91,11 @@ auto WriteThatFinishesInTime([[maybe_unused]] void const * data,
 }
 
 
-auto WriteThatNeverFinishes([[maybe_unused]] void const * data,
-                            [[maybe_unused]] std::size_t nBytes,
-                            Duration duration) -> void
+auto WriteThatTakesTooLong([[maybe_unused]] void const * data,
+                           [[maybe_unused]] std::size_t nBytes,
+                           Duration duration) -> void
 {
     transferEnd = CurrentRodosTime() + duration;
-    SuspendUntil(endOfTime);
+    SuspendFor(duration + 3 * s);
 }
 }
