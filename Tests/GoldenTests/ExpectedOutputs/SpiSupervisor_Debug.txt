@@ -1,0 +1,16 @@
+FRAM/EPS start-up test ...
+ completed in time
+Flash start-up test ...
+ completed in time
+RF start-up test ...
+ completed in time
+
+SPI supervisor test
+
+Writing with implementation that finishes in time ...
+  -> works
+Writing with implementation that never finishes ...
+FRAM/EPS SPI timeout occurred
+Flash SPI timeout occurred
+RF SPI timeout occurred
+hw_resetAndReboot() -> exit
