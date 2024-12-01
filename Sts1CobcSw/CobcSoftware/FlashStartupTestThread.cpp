@@ -4,6 +4,8 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -30,16 +32,22 @@ private:
 
     void run() override
     {
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
+        DEBUG_PRINT("Flash start-up test ...");
         flash::Initialize();
         auto jedecId = flash::ReadJedecId();
-        if(jedecId.deviceId != flash::correctJedecId.deviceId
-           || jedecId.manufacturerId != flash::correctJedecId.manufacturerId)
+        if(jedecId.deviceId == flash::correctJedecId.deviceId
+           && jedecId.manufacturerId == flash::correctJedecId.manufacturerId)
         {
+            persistentVariables.template Store<"flashIsWorking">(true);
+        }
+        else
+        {
+            DEBUG_PRINT(" failed to read correct flash JEDEC ID");
             persistentVariables.template Store<"flashIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
     }
 } flashStartupTestThread;
 

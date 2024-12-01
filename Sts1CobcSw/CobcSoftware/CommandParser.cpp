@@ -9,10 +9,9 @@
 
 #include <cinttypes>  // IWYU pragma: keep
 
+
 namespace sts1cobcsw
 {
-
-
 auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
 {
     auto gsCommandHeader =

@@ -23,4 +23,14 @@ if(NOT PROJECT_IS_TOP_LEVEL)
     endif()
 endif()
 
+# ---- Other variables ----
+
 set(HW_VERSION 27 CACHE STRING "Hardware version")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Sanitize")
+    set(EXTRA_SANITIZER_STACK_SIZE 20000)
+else()
+    set(EXTRA_SANITIZER_STACK_SIZE 0)
+endif()
+message("Adding -DEXTRA_SANITIZER_STACK_SIZE=${EXTRA_SANITIZER_STACK_SIZE} to all targets")
+add_compile_definitions(EXTRA_SANITIZER_STACK_SIZE=${EXTRA_SANITIZER_STACK_SIZE})

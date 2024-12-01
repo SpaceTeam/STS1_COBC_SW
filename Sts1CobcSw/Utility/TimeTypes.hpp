@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <strong_type/affine_point.hpp>
@@ -15,13 +16,12 @@
 
 namespace sts1cobcsw
 {
-using Duration = strong::type<std::int64_t,
-                              struct DurationTag,
-                              strong::default_constructible,  // For RODOS::CommBuffer
-                              strong::difference>;
+using Duration = strong::
+    type<std::int64_t, struct DurationTag, strong::difference, strong::default_constructible>;
 using RodosTime = strong::type<std::int64_t,
                                struct RodosTimeTag,
                                strong::affine_point<Duration>,
+                               strong::default_constructible,
                                strong::equality,
                                strong::strongly_ordered>;
 using RealTime = strong::type<std::int32_t,
@@ -50,4 +50,4 @@ template<std::endian endianness>
 }
 
 
-#include "TimeTypes.ipp"  // IWYU pragma: keep
+#include <Sts1CobcSw/Utility/TimeTypes.ipp>  // IWYU pragma: keep

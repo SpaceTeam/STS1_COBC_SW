@@ -4,9 +4,9 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <array>
 #include <cstddef>
@@ -49,8 +49,6 @@ using PageSpan = std::span<Byte const, pageSize>;
 
 inline constexpr auto correctJedecId = JedecId{.manufacturerId = 0xEF, .deviceId = 0x4021};
 
-extern hal::Spi spi;
-
 
 // TODO: Proper error handling/return type
 auto Initialize() -> void;
@@ -60,6 +58,6 @@ auto Initialize() -> void;
 [[nodiscard]] auto ReadPage(std::uint32_t address) -> Page;
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
 auto EraseSector(std::uint32_t address) -> void;
-[[nodiscard]] auto WaitWhileBusy(std::int64_t timeout) -> Result<void>;
+[[nodiscard]] auto WaitWhileBusy(Duration timeout) -> Result<void>;
 auto ActualBaudRate() -> std::int32_t;
 }

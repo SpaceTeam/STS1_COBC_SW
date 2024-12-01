@@ -1,0 +1,7 @@
+
+SPI supervisor test
+
+Writing with implementation that finishes in time ...
+  -> works
+Writing with implementation that takes too long ...
+hw_resetAndReboot() -> exit

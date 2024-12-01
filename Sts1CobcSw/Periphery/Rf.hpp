@@ -1,8 +1,6 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Hal/Spi.hpp>
-
 #include <cstdint>
 
 
@@ -17,7 +15,6 @@ enum class TxType
 
 inline constexpr auto correctPartNumber = 0x4463;
 
-extern hal::Spi spi;
 extern bool rfIsWorking;
 
 

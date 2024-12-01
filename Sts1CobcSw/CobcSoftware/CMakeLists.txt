@@ -19,6 +19,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         PRIVATE etl::etl
                 rodos::rodos
                 Sts1CobcSw_Edu
+                Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial

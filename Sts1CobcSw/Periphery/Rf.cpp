@@ -6,30 +6,25 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
-#include <rodos_no_using_namespace.h>
+#include <strong_type/difference.hpp>
 
 #include <array>
 #include <bit>
-#include <cinttypes>
 #include <cstddef>
 #include <span>
 
 
 namespace sts1cobcsw::rf
 {
-using RODOS::AT;
-using RODOS::MICROSECONDS;
-using RODOS::MILLISECONDS;
-using RODOS::NOW;
-
-
 enum class PropertyGroup : std::uint8_t
 {
     global = 0x00,       //
@@ -51,7 +46,6 @@ enum class PropertyGroup : std::uint8_t
 
 // --- Public globals ---
 
-hal::Spi spi = hal::Spi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
 bool rfIsWorking = true;
 
 
@@ -74,13 +68,13 @@ constexpr auto partInfoAnswerLength = 8U;
 constexpr auto maxNProperties = 12;
 
 // Delay to wait for power on reset to finish
-constexpr auto porRunningDelay = 20 * MILLISECONDS;
+constexpr auto porRunningDelay = 20 * ms;
 // Time until PoR circuit settles after applying power
-constexpr auto porCircuitSettleDelay = 100 * MILLISECONDS;
+constexpr auto porCircuitSettleDelay = 100 * ms;
 // Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
-constexpr auto watchDogResetPinDelay = 1 * MILLISECONDS;
+constexpr auto watchDogResetPinDelay = 1 * ms;
 // TODO: Check this and write a good comment
-constexpr auto spiTimeout = 1 * RODOS::MILLISECONDS;
+constexpr auto spiTimeout = 1 * ms;
 
 // Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
 constexpr auto txFifoThreshold = 32_b;
@@ -186,22 +180,22 @@ auto InitializeGpiosAndSpi() -> void
     watchdogResetGpioPin.Direction(hal::PinDirection::out);
     // The watchdog must be reset at least once to enable the RF module
     watchdogResetGpioPin.Reset();
-    AT(NOW() + watchDogResetPinDelay);
+    SuspendFor(watchDogResetPinDelay);
     watchdogResetGpioPin.Set();
-    AT(NOW() + watchDogResetPinDelay);
+    SuspendFor(watchDogResetPinDelay);
     watchdogResetGpioPin.Reset();
 
     constexpr auto baudrate = 6'000'000;
 #if HW_VERSION >= 30
-    Initialize(&spi, baudrate, /*useOpenDrainOutputs=*/true);
+    Initialize(&rfSpi, baudrate, /*useOpenDrainOutputs=*/true);
 #else
-    Initialize(&spi, baudrate, /*useOpenDrainOutputs=*/false);
+    Initialize(&rfSpi, baudrate, /*useOpenDrainOutputs=*/false);
 #endif
 
     // Enable Si4463 and wait for PoR to finish
-    AT(NOW() + porCircuitSettleDelay);
+    SuspendFor(porCircuitSettleDelay);
     sdnGpioPin.Reset();
-    AT(NOW() + porRunningDelay);
+    SuspendFor(porRunningDelay);
 }
 
 
@@ -780,13 +774,13 @@ template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
     csGpioPin.Reset();
-    hal::WriteTo(&spi, data, spiTimeout);
+    hal::WriteTo(&rfSpi, data, spiTimeout);
     csGpioPin.Set();
     WaitForCts();
     auto answer = std::array<Byte, answerLength>{};
     if constexpr(answerLength != 0)
     {
-        hal::ReadFrom(&spi, Span(&answer), spiTimeout);
+        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
     }
     csGpioPin.Set();
     return answer;
@@ -802,19 +796,19 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 auto WaitForCts() -> void
 {
     auto const dataIsReadyValue = 0xFF_b;
-    auto const pollingDelay = 50 * MICROSECONDS;
+    auto const pollingDelay = 50 * us;
     do
     {
         csGpioPin.Reset();
-        hal::WriteTo(&spi, Span(cmdReadCmdBuff), spiTimeout);
+        hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
-        hal::ReadFrom(&spi, Span(&cts), spiTimeout);
+        hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
         if(cts == dataIsReadyValue)
         {
             break;
         }
         csGpioPin.Set();
-        AT(NOW() + pollingDelay);
+        SuspendFor(pollingDelay);
     } while(true);
     // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
     // RF code

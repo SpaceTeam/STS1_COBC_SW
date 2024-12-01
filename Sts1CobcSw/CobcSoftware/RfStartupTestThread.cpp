@@ -4,6 +4,8 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -29,15 +31,21 @@ private:
 
     void run() override
     {
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
+        DEBUG_PRINT("RF start-up test ...");
         rf::Initialize(rf::TxType::packet);
         auto partNumber = rf::ReadPartNumber();
-        if(partNumber != rf::correctPartNumber)
+        if(partNumber == rf::correctPartNumber)
         {
+            persistentVariables.template Store<"rfIsWorking">(true);
+        }
+        else
+        {
+            DEBUG_PRINT(" failed to read correct RF part number");
             persistentVariables.template Store<"rfIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
     }
 } rfStartupTestThread;
 

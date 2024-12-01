@@ -40,7 +40,7 @@ auto TurnOff() -> void
 }
 
 
-auto StoreProgram(StoreProgramData const & data) -> Result<void>
+auto StoreProgram([[maybe_unused]] StoreProgramData const & data) -> Result<void>
 {
     DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to StoreProgram(programId = %" PRIu16 ")\n", value_of(data.programId));
@@ -48,7 +48,7 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
 }
 
 
-auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
+auto ExecuteProgram([[maybe_unused]] ExecuteProgramData const & data) -> Result<void>
 {
     DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to ExecuteProgram(programId = %" PRIu16 ", startTime = %" PRIi32
@@ -76,7 +76,7 @@ auto GetStatus() -> Result<Status>
 }
 
 
-auto UpdateTime(UpdateTimeData const & data) -> Result<void>
+auto UpdateTime([[maybe_unused]] UpdateTimeData const & data) -> Result<void>
 {
     DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", value_of(data.currentTime));

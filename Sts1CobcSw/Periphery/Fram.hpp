@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
@@ -44,21 +45,21 @@ auto Initialize() -> void;
 auto ActualBaudRate() -> std::int32_t;
 
 template<std::size_t extent>
-auto WriteTo(Address address, std::span<Byte const, extent> data, std::int64_t timeout) -> void;
+auto WriteTo(Address address, std::span<Byte const, extent> data, Duration timeout) -> void;
 
 template<std::size_t extent>
-auto ReadFrom(Address address, std::span<Byte, extent> data, std::int64_t timeout) -> void;
+auto ReadFrom(Address address, std::span<Byte, extent> data, Duration timeout) -> void;
 
 template<std::size_t size>
-[[nodiscard]] auto ReadFrom(Address address, std::int64_t timeout) -> std::array<Byte, size>;
+[[nodiscard]] auto ReadFrom(Address address, Duration timeout) -> std::array<Byte, size>;
 
 
 // Contents of namespace internal is only for internal use and not part of the public interface. The
 // declarations here are necessary because of templates.
 namespace internal
 {
-auto WriteTo(Address address, void const * data, std::size_t nBytes, std::int64_t timeout) -> void;
-auto ReadFrom(Address address, void * data, std::size_t nBytes, std::int64_t timeout) -> void;
+auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration timeout) -> void;
+auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout) -> void;
 }
 }
 

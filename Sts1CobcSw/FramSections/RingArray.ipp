@@ -241,7 +241,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
 auto RingArray<T, ringArraySection, nCachedElements>::ReadElement(RingIndex index) -> T
 {
     auto address = subsections.template Get<"array">().begin + index.get() * elementSize;
-    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, value_of(spiTimeout)));
+    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, spiTimeout));
 }
 
 
@@ -252,6 +252,6 @@ auto RingArray<T, ringArraySection, nCachedElements>::WriteElement(RingIndex ind
     -> void
 {
     auto address = subsections.template Get<"array">().begin + index.get() * elementSize;
-    fram::WriteTo(address, Span(Serialize(t)), value_of(spiTimeout));
+    fram::WriteTo(address, Span(Serialize(t)), spiTimeout);
 }
 }

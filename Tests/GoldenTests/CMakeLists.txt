@@ -1,12 +1,26 @@
-include(${CMAKE_SOURCE_DIR}/cmake/golden-tests.cmake)
+include("${CMAKE_SOURCE_DIR}/cmake/add-golden-test.cmake")
 
-# Initialize "global" variables used by macros
-set(output_files "")
+add_golden_test(HelloWorld.test.cpp)
+target_link_libraries(Sts1CobcSwTests_HelloWorld PRIVATE rodos::rodos)
 
-set(Sts1CobcSw "${CMAKE_SOURCE_DIR}/Sts1CobcSw")
+add_golden_test(HelloDummy.test.cpp)
+target_link_libraries(Sts1CobcSwTests_HelloDummy PRIVATE rodos::rodos etl::etl Sts1CobcSw_Dummy)
 
-add_golden_test(TESTFILE "HelloWorld.test.cpp" LIB rodos::rodos)
+add_golden_test(SpiSupervisor.test.cpp)
+target_sources(
+    Sts1CobcSwTests_SpiSupervisor
+    PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/StartupTestThreadStubs.cpp
+            ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.cpp
+)
+target_link_libraries(
+    Sts1CobcSwTests_SpiSupervisor PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Hal
+                                          Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+)
 
-add_golden_test(TESTFILE "HelloDummy.test.cpp" LIB rodos::rodos etl::etl Sts1CobcSw_Dummy)
+# --- All golden tests ---
 
-add_custom_target(AllGoldenTests DEPENDS ${output_files})
+get_property(
+    all_golden_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS
+)
+add_custom_target(AllGoldenTests) # Must be defined after getting all hardware test targets
+add_dependencies(AllGoldenTests ${all_golden_test_targets})

@@ -1,12 +1,17 @@
 #include <Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Utility/Debug.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
 #include <array>
 
 
@@ -32,17 +37,24 @@ private:
 
     void run() override
     {
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
+        DEBUG_PRINT("FRAM/EPS start-up test ...");
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
-        if(deviceId != fram::correctDeviceId)
+        if(deviceId == fram::correctDeviceId)
         {
+            fram::framIsWorking.Store(true);
+        }
+        else
+        {
+            DEBUG_PRINT(" failed to read correct FRAM device ID");
             fram::framIsWorking.Store(false);
         }
         eps::Initialize();
         (void)eps::Read();
+        persistentVariables.template Store<"epsIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
-        RODOS::AT(RODOS::END_OF_TIME);
+        SuspendUntil(endOfTime);
     }
 } framEpsStartupTestThread;
 
