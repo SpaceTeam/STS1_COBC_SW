@@ -12,7 +12,7 @@
 
 namespace sts1cobcsw
 {
-auto const stackSize = 800U;
+auto const stackSize = 800U + EXTRA_SANITIZER_STACK_SIZE;
 
 
 class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>

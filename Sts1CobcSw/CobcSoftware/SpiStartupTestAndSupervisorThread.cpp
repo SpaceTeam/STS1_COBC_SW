@@ -26,7 +26,7 @@
 namespace sts1cobcsw
 {
 // Running the integration test for the supervisor thread showed that at least 850 bytes are needed
-constexpr auto stackSize = 900U;
+constexpr auto stackSize = 900U + EXTRA_SANITIZER_STACK_SIZE;
 constexpr auto initialSleepTime = 10 * ms;
 // TODO: Measure how long the startup tests really take to determine the correct timeout
 constexpr auto startupTestTimeout = 100 * ms;
