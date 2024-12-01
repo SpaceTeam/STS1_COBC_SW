@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
-#include <rodos/api/rodos-semaphore.h>
+#include <rodos_no_using_namespace.h>
 
 #include <algorithm>
 #include <array>

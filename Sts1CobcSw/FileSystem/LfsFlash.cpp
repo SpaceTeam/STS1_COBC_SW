@@ -8,7 +8,6 @@
 
 #include <strong_type/difference.hpp>
 
-#include <rodos/api/rodos-semaphore.h>
 #include <rodos_no_using_namespace.h>
 
 #include <algorithm>

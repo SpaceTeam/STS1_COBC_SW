@@ -1,6 +1,5 @@
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
-#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>

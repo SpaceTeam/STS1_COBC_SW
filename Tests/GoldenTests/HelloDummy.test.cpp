@@ -4,8 +4,6 @@
 
 #include <etl/string.h>
 
-#include <cstdint>
-
 
 namespace sts1cobcsw
 {

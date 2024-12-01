@@ -58,8 +58,9 @@ private:
         // are waiting for the high-priority supervisor thread to resume them
         SuspendFor(initialSleepTime);
 
-        static constexpr auto errorMessage = " failed to complete in time\n";
-        static constexpr auto successMessage = " completed in time\n";
+        // The messages are only used in DEBUG_PRINT() calls, so they are unused in release builds
+        [[maybe_unused]] static constexpr auto errorMessage = " failed to complete in time\n";
+        [[maybe_unused]] static constexpr auto successMessage = " completed in time\n";
 
         auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
         DEBUG_PRINT(fram::framIsWorking.Load() ? "\n" : " and");
