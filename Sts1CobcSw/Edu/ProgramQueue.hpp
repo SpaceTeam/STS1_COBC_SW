@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/ProgramQueue.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
@@ -44,8 +45,12 @@ inline constexpr auto nProgramQueueEntries =
     / totalSerialSize<ProgramQueueEntry>;
 
 
+inline constexpr auto nCached = 10;
+
 extern std::uint16_t queueIndex;
 extern etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue;
+extern ProgramQueue<ProgramQueueEntry, framSections.template Get<"eduProgramStatusHistory">(), 10>
+    ProgramQueue;
 
 
 template<std::endian endianness>
