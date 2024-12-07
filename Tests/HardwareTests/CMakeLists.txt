@@ -59,13 +59,6 @@ target_link_libraries(
 )
 add_watchdog_version_of(Eps)
 
-add_program(FileSystem FileSystem.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_FileSystem PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
-                                       Sts1CobcSwTests_RfLatchupDisablePin
-)
-add_watchdog_version_of(FileSystem)
-
 add_program(Flash Flash.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Flash PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
@@ -115,6 +108,13 @@ target_link_libraries(
     Sts1CobcSwTests_Gpio PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(Gpio)
+
+add_program(Littlefs Littlefs.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Littlefs PRIVATE littlefs::littlefs rodos::rodos Sts1CobcSw_FileSystem
+                                     Sts1CobcSwTests_RfLatchupDisablePin Sts1CobcSwTests_Utility
+)
+add_watchdog_version_of(Littlefs)
 
 add_program(Rf Rf.test.cpp)
 target_link_libraries(
