@@ -116,6 +116,13 @@ target_link_libraries(
 )
 add_watchdog_version_of(Gpio)
 
+add_program(Littlefs Littlefs.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Littlefs PRIVATE littlefs::littlefs rodos::rodos Sts1CobcSw_FileSystem
+                                     Sts1CobcSwTests_RfLatchupDisablePin Sts1CobcSwTests_Utility
+)
+add_watchdog_version_of(Littlefs)
+
 add_program(Rf Rf.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSwTests_Utility
