@@ -53,6 +53,8 @@ inline constexpr auto epsAdc4CsPin = pd2;
 inline constexpr auto epsAdc5CsPin = pb4;
 inline constexpr auto epsAdc6CsPin = pb5;
 
+inline constexpr auto rfTmpPin = pc0;
+
 inline constexpr auto rfSpiIndex = RODOS::SPI_IDX2;
 inline constexpr auto rfSpiSckPin = pc7;
 inline constexpr auto rfSpiMisoPin = pc2;
