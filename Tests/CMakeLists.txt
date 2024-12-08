@@ -20,6 +20,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 elseif(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_subdirectory(HardwareTests EXCLUDE_FROM_ALL)
     add_dependencies(AllTests AllHardwareTests)
+    add_custom_target(SomeTests)
+    add_dependencies(
+        SomeTests Sts1CobcSwTests_EduCommands Sts1CobcSwTests_Gpio Sts1CobcSwTests_Littlefs
+        Sts1CobcSwTests_SpiSupervisor
+    )
 endif()
 
 # ---- End-of-file commands ----
