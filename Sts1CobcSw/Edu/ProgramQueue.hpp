@@ -11,8 +11,6 @@
 
 #include <strong_type/type.hpp>
 
-#include <etl/vector.h>
-
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -45,12 +43,13 @@ inline constexpr auto nProgramQueueEntries =
     / totalSerialSize<ProgramQueueEntry>;
 
 
-inline constexpr auto nCached = 10;
-
 extern std::uint16_t queueIndex;
-extern etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue;
-extern ProgramQueue<ProgramQueueEntry, framSections.template Get<"eduProgramStatusHistory">(), 10>
-    ProgramQueue;
+
+inline constexpr auto nCachedProgramEntries = 10;
+extern ProgramQueue<ProgramQueueEntry,
+                    framSections.template Get<"eduProgramStatusHistory">(),
+                    nCachedProgramEntries>
+    programQueue;
 
 
 template<std::endian endianness>

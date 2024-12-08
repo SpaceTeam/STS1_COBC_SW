@@ -77,6 +77,7 @@
   { include: ["\"Sts1CobcSw/FileSystem/LfsWrapper.hpp\"",               "public", "<Sts1CobcSw/FileSystem/LfsWrapper.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramLayout.hpp\"",             "public", "<Sts1CobcSw/FramSections/FramLayout.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/RingArray.hpp\"",              "public", "<Sts1CobcSw/FramSections/RingArray.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FramSections/ProgramQueue.hpp\"",           "public", "<Sts1CobcSw/FramSections/ProgramQueue.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/PersistentVariableInfo.hpp\"", "public", "<Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/PersistentVariables.hpp\"",    "public", "<Sts1CobcSw/FramSections/PersistentVariables.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/Section.hpp\"",                "public", "<Sts1CobcSw/FramSections/Section.hpp>", "public"] },

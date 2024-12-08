@@ -60,12 +60,12 @@ auto BuildEduQueue(std::span<Byte const> commandData) -> void
 {
     DEBUG_PRINT("Entering build queue command parsing\n");
 
-    edu::programQueue.clear();
+    edu::programQueue.Clear();
     ParseAndAddQueueEntries(commandData);
     edu::queueIndex = 0;
 
     DEBUG_PRINT("Queue index reset. Current size of EDU program queue is %d.\n",
-                static_cast<int>(edu::programQueue.size()));
+                static_cast<int>(edu::programQueue.Size()));
 
     ResumeEduProgramQueueThread();
 }
@@ -80,7 +80,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
     DEBUG_PRINT("Printing and parsing\n");
 
     while(queueEntries.size() >= totalSerialSize<edu::ProgramQueueEntry>
-          and (not edu::programQueue.full()))
+          and (not edu::programQueue.Full()))
     {
         auto entry = Deserialize<edu::ProgramQueueEntry>(
             queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());
@@ -89,7 +89,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
         DEBUG_PRINT("Start Time   : %" PRIi32 "\n", value_of(entry.startTime));
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
-        edu::programQueue.push_back(entry);
+        edu::programQueue.PushBack(entry);  // NOLINT
         queueEntries = queueEntries.subspan<totalSerialSize<edu::ProgramQueueEntry>>();
     }
 }

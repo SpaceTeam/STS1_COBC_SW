@@ -56,7 +56,7 @@ private:
         // eduProgramQueue.push_back(queueEntry1);
         // eduProgramQueue.push_back(queueEntry2);
 
-        DEBUG_PRINT("Size of EduProgramQueue : %zu\n", edu::programQueue.size());
+        DEBUG_PRINT("Size of EduProgramQueue : %zu\n", edu::programQueue.Size());
     }
 
     void run() override
@@ -66,12 +66,12 @@ private:
         DEBUG_PRINT_REAL_TIME();
         while(true)
         {
-            if(edu::programQueue.empty())
+            if(edu::programQueue.Empty())
             {
                 DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
             }
-            else if(edu::queueIndex >= edu::programQueue.size())
+            else if(edu::queueIndex >= edu::programQueue.Size())
             {
                 DEBUG_PRINT("End of queue is reached, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
@@ -118,9 +118,10 @@ private:
             // Never reached
             DEBUG_PRINT("Done suspending for the second time\n");
 
-            auto startTime = edu::programQueue[edu::queueIndex].startTime;
-            auto programId = edu::programQueue[edu::queueIndex].programId;
-            auto timeout = edu::programQueue[edu::queueIndex].timeout;
+
+            auto startTime = edu::programQueue.Get(edu::queueIndex).startTime;
+            auto programId = edu::programQueue.Get(edu::queueIndex).programId;
+            auto timeout = edu::programQueue.Get(edu::queueIndex).timeout;
 
             DEBUG_PRINT("Executing program %" PRIu16 "\n", value_of(programId));
             // Start Process
@@ -142,6 +143,7 @@ private:
                                                    .startTime = startTime,
                                                    .status = edu::ProgramStatus::programRunning});
 
+
                 // Suspend Self for execution time
                 auto const executionTime = timeout * s + eduCommunicationDelay;
                 DEBUG_PRINT("Suspending for execution time\n");
@@ -162,7 +164,7 @@ private:
 //! Compute the delay in nanoseconds before the start of program at current queue index
 auto ComputeStartDelay() -> Duration
 {
-    auto delay = ToRodosTime(edu::programQueue[edu::queueIndex].startTime) - CurrentRodosTime();
+    auto delay = ToRodosTime(edu::programQueue.Get(edu::queueIndex).startTime) - CurrentRodosTime();
     return delay < Duration(0) ? Duration(0) : delay;
 }
 
