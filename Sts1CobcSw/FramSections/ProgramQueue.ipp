@@ -61,6 +61,7 @@ auto ProgramQueue<T, ringArraySection, nCachedElements>::PushBack(T const & t) -
     // TODO: Test cache usage.
     auto protector = RODOS::ScopeProtector(&semaphore);
 
+    DEBUG_PRINT("[ProgramQueue] FRAM pusing element.\n");
     if(cache.size() < cache.capacity())
     {
         cache.push_back(t);
@@ -74,17 +75,18 @@ auto ProgramQueue<T, ringArraySection, nCachedElements>::PushBack(T const & t) -
     // If FRAM is working, attempt to write to it.
     if(framIsWorking.Load())
     {
+        DEBUG_PRINT("Fram is working.\n");
         LoadSize();  // Load current size from FRAM
 
         if(size >= FramCapacity())
         {
-            // DEBUG_PRINT("[ProgramQueue] FRAM queue is full. Cannot push back new element.\n");
+            DEBUG_PRINT("[ProgramQueue] FRAM queue is full. Cannot push back new element.\n");
             return false;
         }
 
-        WriteElement(size, t);  // Write the new element to FRAM
-        size++;                 // Increment the size
-        StoreSize();            // Store the updated size back to FRAM
+        WriteElement(size, t);
+        size++;
+        StoreSize();
     }
 
     return true;
@@ -111,7 +113,6 @@ template<typename T, Section queueSection, std::size_t nCachedElements>
 auto ProgramQueue<T, queueSection, nCachedElements>::Get(IndexType index) -> T
 {
     auto protector = RODOS::ScopeProtector(&semaphore);
-    DEBUG_PRINT("Get-Reading element at index %u\n", index);
     if(index >= Size())
     {
         return T{};
@@ -156,6 +157,4 @@ auto ProgramQueue<T, queueSection, nCachedElements>::ReadElement(IndexType index
     DEBUG_PRINT("Reading element at index %u\n", index);
     return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, value_of(spiTimeout)));
 }
-
-
 }

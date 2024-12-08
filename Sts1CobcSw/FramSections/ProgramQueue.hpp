@@ -44,7 +44,6 @@ public:
 
 private:
     static constexpr auto elementSize = fram::Size(serialSize<T>);
-    static constexpr auto framCapacity = eduProgramQueueSection.size / elementSize;
     static constexpr auto indexesSize = fram::Size(3 * totalSerialSize<SizeType>);
 
     static constexpr auto subsections =
@@ -56,6 +55,7 @@ private:
         PersistentVariables<subsections.template Get<"indexes">(),
                             PersistentVariableInfo<"size", SizeType>>{};
 
+    static constexpr auto framCapacity = subsections.template Get<"array">().size / elementSize;
     static constexpr auto spiTimeout = elementSize < 300U ? 1 * ms : value_of(elementSize) * 3 * us;
 
     static inline auto cache = etl::vector<T, nCachedElements>{};
