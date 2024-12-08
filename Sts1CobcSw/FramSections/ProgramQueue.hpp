@@ -29,8 +29,8 @@ public:
 
     static constexpr auto section = eduProgramQueueSection;
 
-    static constexpr auto FramCapacity() -> SizeType;
-    static constexpr auto CacheCapacity() -> SizeType;
+    [[nodiscard]] static constexpr auto FramCapacity() -> SizeType;
+    [[nodiscard]] static constexpr auto CacheCapacity() -> SizeType;
 
     [[nodiscard]] static auto Size() -> SizeType;
     [[nodiscard]] static auto Empty() -> bool;

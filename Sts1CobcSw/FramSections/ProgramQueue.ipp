@@ -28,7 +28,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto ProgramQueue<T, ringArraySection, nCachedElements>::Size() -> SizeType
 {
-    auto protector = RODOS::ScopeProtector(&semaphore);
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     if(not framIsWorking.Load())
     {
         size = cache.size();
@@ -44,6 +44,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto ProgramQueue<T, ringArraySection, nCachedElements>::Full() -> bool
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     return Size() >= FramCapacity();
 }
 
@@ -51,6 +52,7 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto ProgramQueue<T, ringArraySection, nCachedElements>::Empty() -> bool
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     return Size() == 0;
 }
 
@@ -58,25 +60,18 @@ template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto ProgramQueue<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> bool
 {
-    // TODO: Test cache usage.
-    auto protector = RODOS::ScopeProtector(&semaphore);
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
 
-    DEBUG_PRINT("[ProgramQueue] FRAM pusing element.\n");
+    // Store in cache if it is not full.
     if(cache.size() < cache.capacity())
     {
         cache.push_back(t);
-    }
-    else
-    {
-        // cache is full
-        return false;
     }
 
     // If FRAM is working, attempt to write to it.
     if(framIsWorking.Load())
     {
-        DEBUG_PRINT("Fram is working.\n");
-        LoadSize();  // Load current size from FRAM
+        LoadSize();
 
         if(size >= FramCapacity())
         {
