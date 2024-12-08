@@ -110,7 +110,7 @@ auto ProgramQueue<T, queueSection, nCachedElements>::Get(IndexType index) -> T
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     if(index >= Size())
     {
-        // TODO: Get element at index size-1
+        DEBUG_PRINT("[ProgramQueue] Index out of bounds.\n");
         return T{};
     }
 
