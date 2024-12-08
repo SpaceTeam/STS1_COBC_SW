@@ -91,7 +91,7 @@ template<typename T, Section queueSection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto ProgramQueue<T, queueSection, nCachedElements>::Clear() -> void
 {
-    auto protector = RODOS::ScopeProtector(&semaphore);
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     if(not framIsWorking.Load())
     {
         cache.clear();
@@ -107,9 +107,10 @@ template<typename T, Section queueSection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
 auto ProgramQueue<T, queueSection, nCachedElements>::Get(IndexType index) -> T
 {
-    auto protector = RODOS::ScopeProtector(&semaphore);
+    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     if(index >= Size())
     {
+        // TODO: Get element at index size-1
         return T{};
     }
 
@@ -139,7 +140,6 @@ template<typename T, Section queueSection, std::size_t nCachedElements>
 auto ProgramQueue<T, queueSection, nCachedElements>::WriteElement(IndexType index, T const & t)
     -> void
 {
-    DEBUG_PRINT("Writing element at index %u\n", index);
     auto address = subsections.template Get<"array">().begin + index * elementSize;
     fram::WriteTo(address, Span(Serialize(t)), value_of(spiTimeout));
 }
@@ -149,7 +149,6 @@ template<typename T, Section queueSection, std::size_t nCachedElements>
 auto ProgramQueue<T, queueSection, nCachedElements>::ReadElement(IndexType index) -> T
 {
     auto address = subsections.template Get<"array">().begin + index * elementSize;
-    DEBUG_PRINT("Reading element at index %u\n", index);
     return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, value_of(spiTimeout)));
 }
 }

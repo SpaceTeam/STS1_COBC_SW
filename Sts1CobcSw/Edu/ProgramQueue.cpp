@@ -8,7 +8,12 @@ using sts1cobcsw::DeserializeFrom;
 using sts1cobcsw::SerializeTo;
 
 
-etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue{};
+sts1cobcsw::ProgramQueue<ProgramQueueEntry,
+                         framSections.Get<"eduProgramStatusHistory">(),
+                         nCachedProgramEntries>
+    programQueue;
+
+
 std::uint16_t queueIndex = 0;
 
 
