@@ -1,7 +1,6 @@
 #pragma once
 
 
-
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
@@ -14,16 +13,8 @@
 #include <Sts1CobcSw/Utility/Time.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
+#include <rodos-semaphore.h>
 
-
-
-// TODO:
-// Methods needed (used through the program) :
-// - empty(),
-// - full()
-// - clear()
-// - push_back()
-// = []operator
 
 namespace sts1cobcsw
 {
@@ -36,24 +27,47 @@ public:
     using IndexType = std::size_t;
     using SizeType = std::size_t;
 
-    [[nodiscard]] static auto Empty() -> bool;
-    [[nodiscard]] static auto Full() -> bool;
-    [[nodiscard]] static auto Clear() -> bool;
-    [[nodiscard]] static auto PushBack(T const & t) -> bool;
+    static constexpr auto section = eduProgramQueueSection;
+
+    static constexpr auto FramCapacity() -> SizeType;
+    static constexpr auto CacheCapacity() -> SizeType;
 
     [[nodiscard]] static auto Size() -> SizeType;
+    [[nodiscard]] static auto Empty() -> bool;
+    [[nodiscard]] static auto Full() -> bool;
+
+
+    static auto Get(IndexType index) -> T;
+    [[nodiscard]] static auto PushBack(T const & t) -> bool;
+
+    static auto Clear() -> void;
 
 private:
     static constexpr auto elementSize = fram::Size(serialSize<T>);
     static constexpr auto framCapacity = eduProgramQueueSection.size / elementSize;
+    static constexpr auto indexesSize = fram::Size(3 * totalSerialSize<SizeType>);
+
+    static constexpr auto subsections =
+        Subsections<section,
+                    SubsectionInfo<"indexes", indexesSize>,
+                    SubsectionInfo<"array", section.size - indexesSize>>{};
+
+    static constexpr auto persistentIndexes =
+        PersistentVariables<subsections.template Get<"indexes">(),
+                            PersistentVariableInfo<"size", SizeType>>{};
 
     static constexpr auto spiTimeout = elementSize < 300U ? 1 * ms : value_of(elementSize) * 3 * us;
 
-    static inline auto iBegin = 0u;
-    static inline auto size = 0u;
+    static inline auto cache = etl::vector<T, nCachedElements>{};
 
-    [[nodiscard]] static auto FramCapacity() -> SizeType;
+    static auto LoadSize() -> void;
+    static auto StoreSize() -> void;
 
+    static inline auto size = 0U;
+    static inline auto semaphore = RODOS::Semaphore{};
+
+    static auto ReadElement(IndexType index) -> T;
+    static auto WriteElement(IndexType index, T const & t) -> void;
 };
 }
 
