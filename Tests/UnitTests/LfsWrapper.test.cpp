@@ -38,52 +38,81 @@ auto RunUnitTest() -> void
     Require(not mountResult.has_error());
 
     {  // success run with no corruption
-    auto filePath = Path("/MyFile");
-    auto openResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
-    Require(openResult.has_value());
-    auto & writeableFile = openResult.value();
+        auto filePath = Path("/MyFile");
+        auto openResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+        Require(openResult.has_value());
+        auto & writeableFile = openResult.value();
 
-    // Reopening the file should fail
-    auto reopenResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
-    Require(reopenResult.has_error());
+        // Reopening the file should fail
+        auto reopenResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+        Require(reopenResult.has_error());
 
-    // Empty file should have size 0
-    auto sizeResult = writeableFile.Size();
-    Require(sizeResult.has_value());
-    Require(sizeResult.value() == 0);
+        // Empty file should have size 0
+        auto sizeResult = writeableFile.Size();
+        Require(sizeResult.has_value());
+        Require(sizeResult.value() == 0);
 
-    auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
-    auto writeResult = writeableFile.Write(Span(writeData));
-    Require(writeResult.has_value());
-    Require(writeResult.value() == sizeof(writeData));
+        auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
+        auto writeResult = writeableFile.Write(Span(writeData));
+        Require(writeResult.has_value());
+        Require(writeResult.value() == sizeof(writeData));
 
-    // Read() should fail since the file is only opened for writing
-    auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
-    auto readResult = writeableFile.Read(Span(&readData));
-    Require(readResult.has_error());
+        // Read() should fail since the file is only opened for writing
+        auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
+        auto readResult = writeableFile.Read(Span(&readData));
+        Require(readResult.has_error());
 
-    auto closeResult = writeableFile.Close();
-    Require(not closeResult.has_error());
+        auto closeResult = writeableFile.Close();
+        Require(not closeResult.has_error());
 
-    openResult = sts1cobcsw::fs::Open(filePath, LFS_O_RDONLY);
-    Require(openResult.has_value());
-    auto & readableFile = openResult.value();
+        openResult = sts1cobcsw::fs::Open(filePath, LFS_O_RDONLY);
+        Require(openResult.has_value());
+        auto & readableFile = openResult.value();
 
-    sizeResult = readableFile.Size();
-    Require(sizeResult.has_value());
-    Require(sizeResult.value() == sizeof(writeData));
+        sizeResult = readableFile.Size();
+        Require(sizeResult.has_value());
+        Require(sizeResult.value() == sizeof(writeData));
 
-    readResult = readableFile.Read(Span(&readData));
-    Require(readResult.has_value());
-    Require(readResult.value() == sizeof(readData));
-    Require(readData == writeData);
+        readResult = readableFile.Read(Span(&readData));
+        Require(readResult.has_value());
+        Require(readResult.value() == sizeof(readData));
+        Require(readData == writeData);
 
-    // Write() should fail since the file is only opened for reading
-    writeResult = readableFile.Write(Span(writeData));
-    Require(writeResult.has_error());
+        // Write() should fail since the file is only opened for reading
+        writeResult = readableFile.Write(Span(writeData));
+        Require(writeResult.has_error());
 
-    closeResult = readableFile.Close();
-    Require(not closeResult.has_error());
+        closeResult = readableFile.Close();
+        Require(not closeResult.has_error());
+    }
+
+    {  // run with faulty write
+        auto filePath = Path("/WriteCorruption");
+        auto openResult = sts1cobcsw::fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+        Require(openResult.has_value());
+        auto & file = openResult.value();
+
+        // the pattern 0xC0FFEEEE will be replaced with 0xDDFFEEEE at the device level -> no error,
+        // Lfs switches to next Block!
+        ::sts1cobcsw::fs::SimulateFailOnNextWrite();
+
+        auto writeData = std::array{0xC0_b, 0xFF_b, 0xEE_b, 0xEE_b};
+        auto writeResult = file.Write(Span(writeData));
+        Require(writeResult.has_value());
+        Require(writeResult.value() == sizeof(corruptionPattern));
+
+        auto closeResult = file.Close();
+        Require(not closeResult.has_error());
+
+        openResult = sts1cobcsw::fs::Open(filePath, LFS_O_RDONLY);
+        Require(openResult.has_value());
+        auto & corruptedFile = openResult.value();
+
+        auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
+        auto readResult = corruptedFile.Read(Span(&readData));
+        Require(readResult.has_value());
+        Require(readResult.value() == sizeof(readData));
+        Require(readData == writeData);
     }
 
     {  // run with bit flip
