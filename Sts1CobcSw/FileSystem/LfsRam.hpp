@@ -7,4 +7,5 @@
 namespace sts1cobcsw::fs
 {
 extern std::vector<Byte> memory;
+void SimulateFailOnNextWrite();
 }
