@@ -4,6 +4,7 @@
 //! This is useful for testing the file system without using a real flash memory.
 
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/FileSystem/LfsRam.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -36,7 +37,7 @@ constexpr auto pageSize = 256;
 constexpr auto sectorSize = 4 * 1024;
 constexpr auto memorySize = 128 * 1024 * 1024;
 
-auto memory = std::vector<Byte>();
+std::vector<Byte> memory = std::vector<Byte>();
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
