@@ -100,7 +100,7 @@
   { include: ["\"Sts1CobcSw/Serial/Serial.hpp\"",                       "public", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Crc32Hardware.hpp\"",               "public", "<Sts1CobcSw/Utility/Crc32Hardware.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Crc32Software.hpp\"",               "public", "<Sts1CobcSw/Utility/Crc32Software.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/Debug.hpp\"",                       "public", "<Sts1CobcSw/Utility/Debug.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/DebugPrint.hpp\"",                  "public", "<Sts1CobcSw/Utility/DebugPrint.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp\"", "public", "<Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/FlatArray.hpp\"",                   "public", "<Sts1CobcSw/Utility/FlatArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/RealTime.hpp\"",                    "public", "<Sts1CobcSw/Utility/RealTime.hpp>", "public"] },

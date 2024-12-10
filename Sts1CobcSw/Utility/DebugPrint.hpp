@@ -8,7 +8,7 @@
 #include <cinttypes>
 
 
-#ifdef DEBUG
+#ifdef ENABLE_DEBUG_PRINT
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wpedantic"
     // NOLINTNEXTLINE(cppcoreguidelines-macro-usage, *variadic-macro-arguments)
