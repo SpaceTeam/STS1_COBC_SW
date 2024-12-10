@@ -81,9 +81,7 @@
       "hidden": true,
       "inherits": "warnings-unix",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "$env{WARNINGS}",
-        "CMAKE_CXX_FLAGS_DEBUG": "-O0 -g -DDEBUG",
-        "CMAKE_CXX_FLAGS_RELEASE": "-Os -DNDEBUG"
+        "CMAKE_CXX_FLAGS": "$env{WARNINGS}"
       }
     },
     {
