@@ -8,7 +8,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FramSections/RingArray.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RealTime.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
