@@ -93,7 +93,7 @@
         "cpp-std"
       ],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_TYPE": "MinSizeRel",
         "USE_CCACHE": "OFF"
       }
     },
