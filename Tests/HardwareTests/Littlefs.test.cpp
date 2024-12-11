@@ -39,8 +39,7 @@ private:
     {
         EnableRfLatchupProtection();
 
-        PRINTF("\n\n");
-        PRINTF("littlefs test\n");
+        PRINTF("\n\nlittlefs test\n");
 
         PRINTF("\n");
         auto lfs = lfs_t{};
@@ -56,7 +55,6 @@ private:
         PRINTF("Creating directory '%s' ...\n", directoryPath);
         errorCode = lfs_mkdir(&lfs, directoryPath);
         Check(errorCode == 0);
-
         PRINTF("\n");
         auto const * filePath = "MyFolder/MyFile";
         PRINTF("Creating file '%s' ...\n", filePath);
@@ -92,6 +90,33 @@ private:
         PRINTF("Closing file ...\n");
         errorCode = lfs_file_close(&lfs, &file);
         Check(errorCode == 0);
+
+        PRINTF("\n");
+        PRINTF("Removing the non-empty directory '%s' should fail ...\n", directoryPath);
+        errorCode = lfs_remove(&lfs, directoryPath);
+        PRINTF("Error code = %d == %d\n", errorCode, LFS_ERR_NOTEMPTY);
+        Check(errorCode == LFS_ERR_NOTEMPTY);
+        PRINTF("Removing the file '%s' ...\n", filePath);
+        errorCode = lfs_remove(&lfs, filePath);
+        Check(errorCode == 0);
+        PRINTF("Removing the empty directory '%s' ...\n", directoryPath);
+        errorCode = lfs_remove(&lfs, directoryPath);
+        Check(errorCode == 0);
+
+        PRINTF("\n");
+        PRINTF("Unmounting ...\n");
+        errorCode = lfs_unmount(&lfs);
+        Check(errorCode == 0);
+
+        PRINTF("\n");
+        if(AllChecksPassed())
+        {
+            PRINTF("ALL CHECKS PASSED :)\n");
+        }
+        else
+        {
+            PRINTF("SOME CHECKS FAILED :(\n");
+        }
     }
 } littlefsTest;
 }
