@@ -5,6 +5,9 @@
 
 namespace sts1cobcsw
 {
+auto allChecksPassed = true;
+
+
 auto Check(bool condition, std::string_view failMessage, std::string_view successMessage) -> void
 {
     if(condition)
@@ -13,7 +16,14 @@ auto Check(bool condition, std::string_view failMessage, std::string_view succes
     }
     else
     {
+        allChecksPassed = false;
         RODOS::PRINTF("%s", failMessage.data());
     }
+}
+
+
+auto AllChecksPassed() -> bool
+{
+    return allChecksPassed;
 }
 }
