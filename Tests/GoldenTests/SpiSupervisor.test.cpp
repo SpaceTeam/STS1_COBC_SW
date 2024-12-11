@@ -61,7 +61,7 @@ public:
 
     void run() override
     {
-        SuspendFor(100 * ms);
+        SuspendFor(totalStartupTestTimeout);
 
         PRINTF("\nSPI supervisor test\n\n");
 

@@ -10,8 +10,6 @@
 #include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
@@ -25,11 +23,10 @@
 
 namespace sts1cobcsw
 {
-// Running the integration test for the supervisor thread showed that at least 850 bytes are needed
-constexpr auto stackSize = 900U + EXTRA_SANITIZER_STACK_SIZE;
-constexpr auto initialSleepTime = 10 * ms;
-// TODO: Measure how long the startup tests really take to determine the correct timeout
-constexpr auto startupTestTimeout = 100 * ms;
+// Running the golden test for the supervisor thread showed that at least 850 bytes are needed
+constexpr auto stackSize = 900 + EXTRA_SANITIZER_STACK_SIZE;
+
+inline constexpr auto initialSleepTime = 10 * ms;
 // TODO: Think about how often the supervision should run
 constexpr auto supervisionPeriod = 1 * s;
 
@@ -95,6 +92,8 @@ private:
             DEBUG_PRINT("%s", errorMessage);
             persistentVariables.template Store<"rfIsWorking">(false);
             persistentVariables.template Increment<"nRfErrors">();
+            DEBUG_PRINT("Resetting and rebooting in 2 s\n");
+            // TODO: Add a named constant for this delay
             SuspendFor(2 * s);
             RODOS::hwResetAndReboot();
         }
