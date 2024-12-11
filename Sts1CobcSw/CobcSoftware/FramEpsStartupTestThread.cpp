@@ -17,7 +17,8 @@
 
 namespace sts1cobcsw
 {
-constexpr auto stackSize = 100U;
+// Running the SpiSupervisor HW test showed that the minimum required stack size is ~800 bytes
+constexpr auto stackSize = 850;
 
 
 class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>

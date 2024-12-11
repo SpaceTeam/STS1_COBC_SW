@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/SpiMock.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
@@ -61,7 +62,7 @@ public:
 
     void run() override
     {
-        SuspendFor(100 * ms);
+        SuspendFor(totalStartupTestTimeout);
 
         PRINTF("\nSPI supervisor test\n\n");
 
