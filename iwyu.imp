@@ -119,4 +119,6 @@
   # Fixing iwyu bug where <tuple> is required to be include for array symbol
   # unfortunately, the `symbol` directive does not work
   { include: ["<tuple>", "public", "<array>", "public"] },
+
+  { include: ["<bits/std_abs.h>", "public", "<cmath>", "public"] },
 ]

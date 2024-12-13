@@ -2,6 +2,7 @@
 
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstring>
