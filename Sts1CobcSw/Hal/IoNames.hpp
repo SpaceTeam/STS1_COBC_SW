@@ -53,8 +53,6 @@ inline constexpr auto epsAdc4CsPin = pd2;
 inline constexpr auto epsAdc5CsPin = pb4;
 inline constexpr auto epsAdc6CsPin = pb5;
 
-inline constexpr auto rfTmpPin = pc0;
-
 inline constexpr auto rfSpiIndex = RODOS::SPI_IDX2;
 inline constexpr auto rfSpiSckPin = pc7;
 inline constexpr auto rfSpiMisoPin = pc2;
@@ -66,7 +64,6 @@ inline constexpr auto rfGpio0Pin = pc6;
 inline constexpr auto rfGpio1Pin = pc8;
 inline constexpr auto rfPaEnablePin = pc9;
 #if HW_VERSION >= 27
-inline constexpr auto rfTmpPin = pc0;
     #if HW_VERSION >= 30
 inline constexpr auto rfLatchupDisablePin1 = pa0;
 inline constexpr auto rfLatchupDisablePin2 = pa1;
