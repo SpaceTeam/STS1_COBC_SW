@@ -103,6 +103,13 @@ target_link_libraries(
 )
 add_watchdog_version_of(SpiSupervisor)
 
+add_program(TemperatureSensor TemperatureSensor.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_TemperatureSensor PRIVATE rodos::rodos Sts1CobcSw_Periphery
+                                              Sts1CobcSwTests_RfLatchupDisablePin
+)
+add_watchdog_version_of(TemperatureSensor)
+
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Gpio PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSwTests_RfLatchupDisablePin
