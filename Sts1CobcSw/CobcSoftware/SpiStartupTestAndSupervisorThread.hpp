@@ -2,7 +2,8 @@
 
 
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+
+#include <strong_type/difference.hpp>
 
 
 namespace sts1cobcsw

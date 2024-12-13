@@ -5,8 +5,6 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
-#include <strong_type/type.hpp>
-
 #include <cinttypes>  // IWYU pragma: keep
 
 
