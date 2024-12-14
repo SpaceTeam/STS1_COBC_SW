@@ -64,7 +64,6 @@ inline constexpr auto rfGpio0Pin = pc6;
 inline constexpr auto rfGpio1Pin = pc8;
 inline constexpr auto rfPaEnablePin = pc9;
 #if HW_VERSION >= 27
-inline constexpr auto rfTmpPin = pc0;
     #if HW_VERSION >= 30
 inline constexpr auto rfLatchupDisablePin1 = pa0;
 inline constexpr auto rfLatchupDisablePin2 = pa1;
