@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/Dummy.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
 #include <rodos_no_using_namespace.h>
 

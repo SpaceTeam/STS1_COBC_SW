@@ -9,7 +9,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32Software.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 

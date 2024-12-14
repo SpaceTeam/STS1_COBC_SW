@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -12,7 +12,8 @@
 
 namespace sts1cobcsw
 {
-constexpr auto stackSize = 100U;
+// Running the SpiSupervisor HW test showed that the minimum required stack size is ~560 bytes
+constexpr auto stackSize = 600;
 
 
 class FlashStartupTestThread : public RODOS::StaticThread<stackSize>

@@ -5,7 +5,7 @@
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 
@@ -17,7 +17,8 @@
 
 namespace sts1cobcsw
 {
-constexpr auto stackSize = 100U;
+// Running the SpiSupervisor HW test showed that the minimum required stack size is ~800 bytes
+constexpr auto stackSize = 850;
 
 
 class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>

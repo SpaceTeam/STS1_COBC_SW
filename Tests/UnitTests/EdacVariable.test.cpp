@@ -2,7 +2,9 @@
 
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstring>
 #include <type_traits>
 
@@ -18,6 +20,12 @@ struct S
 };
 
 
+auto ApproximatelyEqual(double lhs, double rhs, double relativeTolerance = 1e-6) -> bool
+{
+    return std::abs(lhs - rhs) < relativeTolerance * std::max(std::abs(lhs), std::abs(rhs));
+}
+
+
 auto RunUnitTest() -> void
 {
     using sts1cobcsw::EdacVariable;
@@ -29,7 +37,7 @@ auto RunUnitTest() -> void
         auto variable3 = EdacVariable<double>(-3.14);
         Require(variable1.Load().c == 's');
         Require(variable2.Load() == 0);
-        Require(variable3.Load() == -3.14);
+        Require(ApproximatelyEqual(variable3.Load(), -3.14));
     }
 
     // SECTION("You load what you store")

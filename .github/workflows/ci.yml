@@ -23,7 +23,7 @@ on:
 jobs:
   format-and-spell-check:
     runs-on: ubuntu-latest
-    container: tuwienspaceteam/sts1-cobc:1.10.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
     needs: format-and-spell-check
 
     runs-on: ubuntu-latest
-    container: tuwienspaceteam/sts1-cobc:1.10.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
     needs: format-and-spell-check
 
     runs-on: ubuntu-latest
-    container: tuwienspaceteam/sts1-cobc:1.10.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
@@ -97,7 +97,7 @@ jobs:
     needs: format-and-spell-check
 
     runs-on: ubuntu-latest
-    container: tuwienspaceteam/sts1-cobc:1.10.0
+    container: tuwienspaceteam/sts1-cobc:1.12.0
 
     steps:
     - uses: actions/checkout@v4
@@ -147,7 +147,7 @@ jobs:
     needs: format-and-spell-check
 
     runs-on: ubuntu-latest
-    container: tuwienspaceteam/sts1-cobc:1.10.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4

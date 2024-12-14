@@ -23,33 +23,34 @@ function(find_rodos)
 endfunction()
 
 function(add_program program_name)
-    add_executable(${PROJECT_NAME}_${program_name} ${ARGN})
-    set_target_properties(${PROJECT_NAME}_${program_name} PROPERTIES OUTPUT_NAME ${program_name})
+    set(target ${PROJECT_NAME}_${program_name})
+    add_executable(${target} ${ARGN})
+    set_target_properties(${target} PROPERTIES OUTPUT_NAME ${program_name})
 
     # Add a definition of the target system
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-        target_compile_definitions(${PROJECT_NAME}_${program_name} PUBLIC GENERIC_SYSTEM)
-        message("Adding -DGENERIC_SYSTEM to ${PROJECT_NAME}_${program_name}")
+        target_compile_definitions(${target} PUBLIC GENERIC_SYSTEM)
+        message("Adding -DGENERIC_SYSTEM to ${target}")
     elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
-        target_compile_definitions(${PROJECT_NAME}_${program_name} PUBLIC LINUX_SYSTEM)
-        message("Adding -DLINUX_SYSTEM to ${PROJECT_NAME}_${program_name}")
+        target_compile_definitions(${target} PUBLIC LINUX_SYSTEM)
+        message("Adding -DLINUX_SYSTEM to ${target}")
     else()
         message(SEND_ERROR "CMAKE_SYSTEM_NAME is neither Generic nor Linux")
     endif()
 
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         # Automatically call objcopy on the executable targets after the build
-        objcopy_target(${PROJECT_NAME}_${program_name})
+        objcopy_target(${target})
     endif()
 endfunction()
 
-function(objcopy_target target_name)
-    get_target_property(output_name ${target_name} OUTPUT_NAME)
+function(objcopy_target target)
+    get_target_property(output_name ${target} OUTPUT_NAME)
     add_custom_command(
-        TARGET ${target_name}
+        TARGET ${target}
         POST_BUILD
-        COMMAND "${CMAKE_OBJCOPY}" -O binary ${output_name} ${output_name}.bin
-        BYPRODUCTS ${output_name}.bin
+        COMMAND "${CMAKE_OBJCOPY}" -O binary "$<TARGET_FILE:${target}>"
+                "$<TARGET_FILE:${target}>.bin"
         COMMENT "Calling objcopy on ${output_name} to generate flashable ${output_name}.bin"
         VERBATIM
     )

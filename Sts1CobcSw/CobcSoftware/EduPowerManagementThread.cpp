@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
