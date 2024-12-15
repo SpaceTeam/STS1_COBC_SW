@@ -6,9 +6,11 @@
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/type.hpp>
 
+#include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -76,61 +78,73 @@ auto RunUnitTest() -> void
 {
     using fram::ram::memory;
     fram::ram::SetAllDoFunctions();
-
-    Require(programQueueChar.Size() == 0);
-    Require(not programQueueChar.Full());
-    Require(programQueueChar.Empty());
-
+    fram::Initialize();
     fram::framIsWorking.Store(true);
     memory.fill(0x00_b);  // Clear memory
 
+    // SECTION("Initialization")
+    {
+        Require(programQueueChar.Size() == 0);
+        Require(not programQueueChar.Full());
+        Require(programQueueChar.Empty());
+        Require(programQueueChar2.Size() == 0);
+        Require(programQueueS.Size() == 0);
+    }
 
-    // Test PushBack for char
-    Require(programQueueChar.PushBack('a'));
-    Require(programQueueChar.Size() == 1);
-    Require(programQueueChar.Get(0) == 'a');
+    // SECTION("Push operations")
+    {
+        Require(programQueueChar.PushBack('a'));
+        Require(programQueueChar.Size() == 1);
+        Require(programQueueChar.Get(0) == 'a');
+        Require(not programQueueChar.Empty());
 
-    Require(programQueueChar.PushBack('b'));
-    Require(programQueueChar.Size() == 2);
-    Require(programQueueChar.Get(1) == 'b');
+        Require(programQueueChar.PushBack('b'));
+        Require(programQueueChar.Size() == 2);
+        Require(programQueueChar.Get(1) == 'b');
 
-    Require(fram::ram::memory[charProgramQueueStartAddress + 0] == 0x61_b);
-    Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0x62_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress + 0] == 0x61_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0x62_b);
+
+        Require(programQueueChar.PushBack('c'));
+        Require(programQueueChar.PushBack('d'));
+        Require(programQueueChar.PushBack('e'));
+        Require(programQueueChar.Size() == 5);
+        Require(programQueueChar.Full());
+        Require(not programQueueChar.Empty());
+        Require(programQueueChar.Get(4) == 'e');
+
+        // Attempt to PushBack beyond cache capacity (should fail)
+        Require(not programQueueChar.PushBack('f'));
+        Require(programQueueChar.Size() == 5);
+        Require(programQueueChar.Get(4) == 'e');
+
+    }
 
 
-    // Fill cache
-    Require(programQueueChar.PushBack('c'));
-    Require(programQueueChar.PushBack('d'));
-    Require(programQueueChar.PushBack('e'));
-    Require(programQueueChar.Size() == 5);
-    Require(programQueueChar.Full());
-    Require(not programQueueChar.Empty());
-    Require(programQueueChar.Get(4) == 'e');
+    // SECTION("Custom Type")
+    {
+        // Test PushBack for custom type S
+        S s1{.u16 = 1, .i32 = 100, .u8 = 10};
+        S s2{.u16 = 2, .i32 = 200, .u8 = 20};
+        S s3{.u16 = 3, .i32 = 300, .u8 = 30};
+        S s4{.u16 = 4, .i32 = 400, .u8 = 40};
+        // S s5{.u16 = 5, .i32 = 500, .u8 = 50};
 
-    // Attempt to PushBack beyond cache capacity (should fail)
-    Require(not programQueueChar.PushBack('f'));
-    Require(programQueueChar.Size() == 5);
-    Require(programQueueChar.Get(4) == 'e');
+        Require(programQueueS.PushBack(s1));
+        Require(programQueueS.Size() == 1);
+        Require(programQueueS.Get(0) == s1);
 
-    // Test PushBack for custom type S
-    S s1{.u16 = 1, .i32 = 100, .u8 = 10};
-    S s2{.u16 = 2, .i32 = 200, .u8 = 20};
-    S s3{.u16 = 3, .i32 = 300, .u8 = 30};
-    S s4{.u16 = 4, .i32 = 400, .u8 = 40};
-    // S s5{.u16 = 5, .i32 = 500, .u8 = 50};
+        Require(programQueueS.PushBack(s2));
+        Require(programQueueS.Size() == 2);
+        Require(programQueueS.Get(0) == s1);
 
-    Require(programQueueS.PushBack(s1));
-    Require(programQueueS.Size() == 1);
-    Require(programQueueS.Get(0) == s1);
+        Require(programQueueS.PushBack(s3));
+        Require(programQueueS.PushBack(s4));
+        Require(programQueueS.Size() == 4);
+        Require(programQueueS.Full());
 
-    Require(programQueueS.PushBack(s2));
-    Require(programQueueS.Size() == 2);
-    Require(programQueueS.Get(0) == s1);
-
-    Require(programQueueS.PushBack(s3));
-    Require(programQueueS.PushBack(s4));
-    Require(programQueueS.Size() == 4);
-    Require(programQueueS.Full());
+        // TODO: Push beyond capacity
+    }
 
     // SECTION("FRAM is not working")
     {
