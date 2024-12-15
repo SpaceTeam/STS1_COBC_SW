@@ -19,7 +19,6 @@ struct SubsectionInfo
 template<typename T>
 concept SubsectionInfoLike = std::derived_from<T, SubsectionInfo<T::name, T::size>>;
 
-
 template<SubsectionInfoLike T, SubsectionInfoLike... Ts>
 // NOLINTNEXTLINE(misc-redundant-expression)
 inline constexpr auto nameAppearsOnce = (((T::name == Ts::name) ? 1 : 0) + ...) == 1;

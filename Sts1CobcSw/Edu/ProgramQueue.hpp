@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/ProgramQueue.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
@@ -9,8 +10,6 @@
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <strong_type/type.hpp>
-
-#include <etl/vector.h>
 
 #include <bit>
 #include <cstddef>
@@ -45,7 +44,12 @@ inline constexpr auto nProgramQueueEntries =
 
 
 extern std::uint16_t queueIndex;
-extern etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue;
+
+inline constexpr auto nCachedProgramEntries = 10;
+extern ProgramQueue<ProgramQueueEntry,
+                    framSections.template Get<"eduProgramStatusHistory">(),
+                    nCachedProgramEntries>
+    programQueue;
 
 
 template<std::endian endianness>
