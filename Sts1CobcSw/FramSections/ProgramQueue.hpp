@@ -38,7 +38,9 @@ public:
 
 
     static auto Get(IndexType index) -> T;
-    [[nodiscard]] static auto PushBack(T const & t) -> bool;
+    //! @brief Pushes a value to the back of the program queue.
+    //! If it is full, a debug message is printed.
+    static auto PushBack(T const & t) -> void;
 
     static auto Clear() -> void;
 
