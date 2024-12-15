@@ -10,6 +10,7 @@
 
 #include <strong_type/type.hpp>
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
@@ -167,9 +168,9 @@ auto RunUnitTest() -> void
         Require(programQueueChar2.Get(1) == 12);
 
         // PushBack() does not write to memory
-        Require(fram::ram::memory[charProgramQueueStartAddress + 0] == 0x00_b);
-        Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0x00_b);
-        Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0x00_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress2 + 0] == 0x00_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress2 + 1] == 0x00_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress2 + 1] == 0x00_b);
     }
 }
 

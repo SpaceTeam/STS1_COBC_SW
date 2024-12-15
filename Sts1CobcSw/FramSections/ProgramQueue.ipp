@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Sts1CobcSw/FramSections/ProgramQueue.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
 #include <rodos-semaphore.h>
 
@@ -58,7 +58,7 @@ auto ProgramQueue<T, ringArraySection, nCachedElements>::Empty() -> bool
 
 template<typename T, Section ringArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-auto ProgramQueue<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> bool
+auto ProgramQueue<T, ringArraySection, nCachedElements>::PushBack(T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
 
@@ -76,15 +76,13 @@ auto ProgramQueue<T, ringArraySection, nCachedElements>::PushBack(T const & t) -
         if(size >= FramCapacity())
         {
             DEBUG_PRINT("[ProgramQueue] FRAM queue is full. Cannot push back new element.\n");
-            return false;
+            return;
         }
 
         WriteElement(size, t);
         size++;
         StoreSize();
     }
-
-    return true;
 }
 
 template<typename T, Section queueSection, std::size_t nCachedElements>
@@ -141,7 +139,7 @@ auto ProgramQueue<T, queueSection, nCachedElements>::WriteElement(IndexType inde
     -> void
 {
     auto address = subsections.template Get<"array">().begin + index * elementSize;
-    fram::WriteTo(address, Span(Serialize(t)), value_of(spiTimeout));
+    fram::WriteTo(address, Span(Serialize(t)), spiTimeout);
 }
 
 template<typename T, Section queueSection, std::size_t nCachedElements>
@@ -149,6 +147,6 @@ template<typename T, Section queueSection, std::size_t nCachedElements>
 auto ProgramQueue<T, queueSection, nCachedElements>::ReadElement(IndexType index) -> T
 {
     auto address = subsections.template Get<"array">().begin + index * elementSize;
-    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, value_of(spiTimeout)));
+    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, spiTimeout));
 }
 }
