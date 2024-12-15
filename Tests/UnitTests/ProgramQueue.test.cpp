@@ -93,31 +93,30 @@ auto RunUnitTest() -> void
 
     // SECTION("Push operations")
     {
-        Require(programQueueChar.PushBack('a'));
+        programQueueChar.PushBack('a');
         Require(programQueueChar.Size() == 1);
         Require(programQueueChar.Get(0) == 'a');
         Require(not programQueueChar.Empty());
 
-        Require(programQueueChar.PushBack('b'));
+        programQueueChar.PushBack('b');
         Require(programQueueChar.Size() == 2);
         Require(programQueueChar.Get(1) == 'b');
 
         Require(fram::ram::memory[charProgramQueueStartAddress + 0] == 0x61_b);
         Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0x62_b);
 
-        Require(programQueueChar.PushBack('c'));
-        Require(programQueueChar.PushBack('d'));
-        Require(programQueueChar.PushBack('e'));
+        programQueueChar.PushBack('c');
+        programQueueChar.PushBack('d');
+        programQueueChar.PushBack('e');
         Require(programQueueChar.Size() == 5);
         Require(programQueueChar.Full());
         Require(not programQueueChar.Empty());
         Require(programQueueChar.Get(4) == 'e');
 
-        // Attempt to PushBack beyond cache capacity (should fail)
-        Require(not programQueueChar.PushBack('f'));
+        // Attempt to PushBack beyond cache capacity (should print a debug message)
+        programQueueChar.PushBack('f');
         Require(programQueueChar.Size() == 5);
         Require(programQueueChar.Get(4) == 'e');
-
     }
 
 
@@ -128,22 +127,24 @@ auto RunUnitTest() -> void
         S s2{.u16 = 2, .i32 = 200, .u8 = 20};
         S s3{.u16 = 3, .i32 = 300, .u8 = 30};
         S s4{.u16 = 4, .i32 = 400, .u8 = 40};
-        // S s5{.u16 = 5, .i32 = 500, .u8 = 50};
+        S s5{.u16 = 5, .i32 = 500, .u8 = 50};
 
-        Require(programQueueS.PushBack(s1));
+        programQueueS.PushBack(s1);
         Require(programQueueS.Size() == 1);
         Require(programQueueS.Get(0) == s1);
 
-        Require(programQueueS.PushBack(s2));
+        programQueueS.PushBack(s2);
         Require(programQueueS.Size() == 2);
         Require(programQueueS.Get(0) == s1);
 
-        Require(programQueueS.PushBack(s3));
-        Require(programQueueS.PushBack(s4));
+        programQueueS.PushBack(s3);
+        programQueueS.PushBack(s4);
         Require(programQueueS.Size() == 4);
         Require(programQueueS.Full());
 
-        // TODO: Push beyond capacity
+        programQueueS.PushBack(s5);
+        Require(programQueueS.Size() == 4);
+        Require(programQueueS.Get(3) == s4);
     }
 
     // SECTION("FRAM is not working")
@@ -157,17 +158,18 @@ auto RunUnitTest() -> void
         Require(programQueueChar.Get(1) == 'b');
 
         Require(programQueueChar2.Size() == 0);
-        Require(programQueueChar2.PushBack(11));
+        programQueueChar2.PushBack(11);
         Require(programQueueChar2.Size() == 1);
 
-        Require(programQueueChar2.PushBack(12));
+        programQueueChar2.PushBack(12);
         Require(programQueueChar2.Size() == 2);
         Require(programQueueChar2.Get(0) == 11);
         Require(programQueueChar2.Get(1) == 12);
 
         // PushBack() does not write to memory
-        Require(fram::ram::memory[charProgramQueueStartAddress + 0] == 0_b);
-        Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress + 0] == 0x00_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0x00_b);
+        Require(fram::ram::memory[charProgramQueueStartAddress + 1] == 0x00_b);
     }
 }
 
