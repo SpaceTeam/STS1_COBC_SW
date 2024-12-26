@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <array>
-#include <span>
 #include <vector>
 
 
@@ -37,10 +36,6 @@ auto Unlock(lfs_config const * config) -> int;
 constexpr auto pageSize = 256;
 constexpr auto sectorSize = 4 * 1024;
 constexpr auto memorySize = 128 * 1024 * 1024;
-// only used for testing write errors. This pattern will fail in ram when SimulateFailOnNextWrite is
-// called
-constexpr auto corruptionPattern =
-    std::array<Byte, 4>{Byte{0xC0}, Byte{0xFF}, Byte{0xEE}, Byte{0xEE}};
 
 std::vector<Byte> memory = std::vector<Byte>();
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
@@ -78,6 +73,7 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .inline_max = 0};
 
 auto semaphore = RODOS::Semaphore();
+void (*programFinishedHandler)() = nullptr;
 
 
 auto Initialize() -> void
@@ -85,10 +81,6 @@ auto Initialize() -> void
     memory.resize(memorySize, 0xFF_b);  // NOLINT(*magic-numbers*)
 }
 
-auto SimulateFailOnNextWrite() -> void
-{
-    corruptNextWrite = true;
-}
 
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
@@ -101,6 +93,7 @@ auto Read(lfs_config const * config,
     return 0;
 }
 
+
 auto Program(lfs_config const * config,
              lfs_block_t blockNo,
              lfs_off_t offset,
@@ -108,22 +101,10 @@ auto Program(lfs_config const * config,
              lfs_size_t size) -> int
 {
     auto start = static_cast<int>(blockNo * config->block_size + offset);
-
-
     std::copy_n(static_cast<Byte const *>(buffer), size, memory.begin() + start);
-    // for testing only to trigger a file corruption
-    if(corruptNextWrite)
+    if(programFinishedHandler != nullptr)
     {
-        auto bufferSpan = std::span(memory.begin() + start, size);
-        for(uint32_t i = 0; i < size - corruptionPattern.size(); i++)
-        {
-            if(memcmp(&bufferSpan[i], &corruptionPattern, corruptionPattern.size()) == 0)
-            {
-                const Byte corruptedByte{0xDD};
-                bufferSpan[i] = corruptedByte;
-                corruptNextWrite = false;
-            }
-        }
+        programFinishedHandler();
     }
     return 0;
 }
@@ -154,5 +135,11 @@ auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
     semaphore.leave();
     return 0;
+}
+
+
+auto SetProgramFinishedHandler(void (*handler)()) -> void
+{
+    programFinishedHandler = handler;
 }
 }
