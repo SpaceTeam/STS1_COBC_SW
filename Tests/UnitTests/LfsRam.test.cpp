@@ -124,8 +124,12 @@ auto RunUnitTest() -> void
         Require(errorCode == 0);
     }
 
-    // Test with bit flip (once while mounted and once while unmounted)
-    for(auto i = 0; i < 2; ++i)
+    // Test with bit flip
+    // - i = 0: bit flip while unmounted with small file (<= page size)
+    // - i = 1: bit flip while mounted with small file (<= page size)
+    // - i = 2: bit flip while unmounted with large file (> page size)
+    // - i = 3: bit flip while mounted with large file (> page size)
+    for(auto i = 0; i < 4; ++i)
     {
         errorCode = lfs_mount(&lfs, &fs::lfsConfig);
         Require(errorCode == 0);
@@ -135,19 +139,22 @@ auto RunUnitTest() -> void
         errorCode = lfs_file_open(&lfs, &file, filePath.c_str(), LFS_O_WRONLY | LFS_O_CREAT);
         Require(errorCode == 0);
 
-        auto writeData = std::array{0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b};
+        static constexpr auto dataToCorrupt = std::array{0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b};
+        auto fileSize = i < 2 ? 256U : 257U;
+        auto writeData = std::vector(fileSize, 0xB0_b);
+        std::copy(dataToCorrupt.begin(), dataToCorrupt.end(), writeData.begin());
         errorCode = lfs_file_write(&lfs, &file, writeData.data(), writeData.size());
         Require(errorCode == static_cast<int>(writeData.size()));
 
         errorCode = lfs_file_close(&lfs, &file);
         Require(errorCode == 0);
-        if(i == 0)
+        if(i % 2 == 0)
         {
             errorCode = lfs_unmount(&lfs);
             Require(errorCode == 0);
         }
-        TryToCorruptDataInMemory(writeData);
-        if(i == 0)
+        TryToCorruptDataInMemory(dataToCorrupt);
+        if(i % 2 == 0)
         {
             errorCode = lfs_mount(&lfs, &fs::lfsConfig);
             Require(errorCode == 0);
@@ -155,12 +162,22 @@ auto RunUnitTest() -> void
         errorCode = lfs_file_open(&lfs, &file, filePath.c_str(), LFS_O_RDONLY);
         Require(errorCode == 0);
 
-        // File is empty, but it can be read (i.e. lfs_file_read() does not fail)
+        // If the original file size is <= 256 bytes (page size), the corrupted file size is 0.
+        // Otherwise, the file size does not change.
         auto size = lfs_file_size(&lfs, &file);
-        Require(size == 0);
-        auto readData = decltype(writeData){};
+        if(i < 2)
+        {
+            Require(size == 0);
+        }
+        else
+        {
+            Require(size == static_cast<int>(fileSize));
+        }
+
+        // Reading never fails, but it reads either 0 bytes or the corrupted data
+        auto readData = std::vector<sts1cobcsw::Byte>(writeData.size());
         errorCode = lfs_file_read(&lfs, &file, readData.data(), readData.size());
-        Require(errorCode == 0);
+        Require(errorCode == size);
         Require(readData != writeData);
 
         errorCode = lfs_file_close(&lfs, &file);
