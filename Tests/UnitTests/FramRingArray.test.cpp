@@ -51,12 +51,13 @@ template<std::endian endianness>
 auto DeserializeFrom(void const * source, S * data) -> void const *;
 
 
+inline constexpr auto indexesSize = fram::Size(3 * 2 * sizeof(std::uint32_t));
 inline constexpr auto charSection1 =
-    sts1cobcsw::Section<fram::Address(0), fram::Size(3 * 2 * 4 + 4)>{};
+    sts1cobcsw::Section<fram::Address(0), indexesSize + fram::Size(4)>{};
 inline constexpr auto charSection2 =
-    sts1cobcsw::Section<charSection1.end, fram::Size(3 * 2 * 4 + 4)>{};
+    sts1cobcsw::Section<charSection1.end, indexesSize + fram::Size(4)>{};
 inline constexpr auto sSection =
-    sts1cobcsw::Section<charSection2.end, fram::Size(3 * 2 * 4 + 4 * totalSerialSize<S>)>{};
+    sts1cobcsw::Section<charSection2.end, indexesSize + fram::Size(4 * totalSerialSize<S>)>{};
 
 inline constexpr auto charRingArray1 = sts1cobcsw::FramRingArray<char, charSection1, 2>{};
 inline constexpr auto charRingArray2 = sts1cobcsw::FramRingArray<char, charSection2, 2>{};
@@ -84,8 +85,9 @@ auto RunUnitTest() -> void
 
     fram::ram::SetAllDoFunctions();
     fram::Initialize();
-    static constexpr auto charRingArray1StartAddress = 3 * 2 * 4;
-    static constexpr auto sRingArrayStartAddress = value_of(charRingArray2.section.end) + 3 * 2 * 4;
+    static constexpr auto charRingArray1StartAddress = value_of(indexesSize);
+    static constexpr auto sRingArrayStartAddress =
+        value_of(charRingArray2.section.end + indexesSize);
 
     // SECTION("FRAM is working")
     {
@@ -313,13 +315,13 @@ auto RunUnitTest() -> void
         Require(sRingArray.Get(1) == s7);
         Require(sRingArray.Get(2) == s8);
 
-        sRingArray.FindAndReplace([&s6](auto const & x) { return x == s6; }, s2);
+        sRingArray.FindAndReplace([](auto const & x) { return x.u16 == 6; }, s2);
         Require(sRingArray.Get(0) == s2);
         Require(sRingArray.Get(1) == s7);
         Require(sRingArray.Get(2) == s8);
         Require(fram::ram::memory[sRingArrayStartAddress + 2 * totalSerialSize<S>] == 2_b);
 
-        sRingArray.FindAndReplace([](auto const & x) { return x == S{}; }, s1);
+        sRingArray.FindAndReplace([](auto const & x) { return x.i32 == 32; }, s1);
         Require(sRingArray.Get(0) == s2);
         Require(sRingArray.Get(1) == s7);
         Require(sRingArray.Get(2) == s8);
