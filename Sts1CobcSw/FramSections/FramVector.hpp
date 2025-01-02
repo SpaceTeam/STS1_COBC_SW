@@ -18,16 +18,16 @@
 
 namespace sts1cobcsw
 {
-template<typename T, Section eduProgramQueueSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-class ProgramQueue
+class FramVector
 {
 public:
     using ValueType = T;
     using IndexType = std::size_t;
     using SizeType = std::size_t;
 
-    static constexpr auto section = eduProgramQueueSection;
+    static constexpr auto section = framVectorSection;
 
     [[nodiscard]] static constexpr auto FramCapacity() -> SizeType;
     [[nodiscard]] static constexpr auto CacheCapacity() -> SizeType;
@@ -64,4 +64,4 @@ private:
 };
 }
 
-#include <Sts1CobcSw/FramSections/ProgramQueue.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FramSections/FramVector.ipp>  // IWYU pragma: keep

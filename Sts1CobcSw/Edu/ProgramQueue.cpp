@@ -8,10 +8,9 @@ using sts1cobcsw::DeserializeFrom;
 using sts1cobcsw::SerializeTo;
 
 
-sts1cobcsw::ProgramQueue<ProgramQueueEntry,
-                         framSections.Get<"eduProgramQueue">(),
-                         nCachedProgramQueueEntries>
-    programQueue;
+sts1cobcsw::
+    FramVector<ProgramQueueEntry, framSections.Get<"eduProgramQueue">(), nCachedProgramQueueEntries>
+        programQueue;
 std::uint16_t queueIndex = 0;
 
 

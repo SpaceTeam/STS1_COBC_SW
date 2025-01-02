@@ -2,7 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/ProgramQueue.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
@@ -39,9 +39,9 @@ inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
 namespace edu
 {
 inline constexpr auto nCachedProgramQueueEntries = 10;
-extern ProgramQueue<ProgramQueueEntry,
-                    framSections.template Get<"eduProgramQueue">(),
-                    nCachedProgramQueueEntries>
+extern FramVector<ProgramQueueEntry,
+                  framSections.template Get<"eduProgramQueue">(),
+                  nCachedProgramQueueEntries>
     programQueue;
 extern std::uint16_t queueIndex;
 
