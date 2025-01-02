@@ -1,6 +1,6 @@
 #include <Tests/UnitTests/UnitTestThread.hpp>
 
-#include <Sts1CobcSw/FramSections/RingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
@@ -58,9 +58,9 @@ inline constexpr auto charSection2 =
 inline constexpr auto sSection =
     sts1cobcsw::Section<charSection2.end, fram::Size(3 * 2 * 4 + 4 * totalSerialSize<S>)>{};
 
-inline constexpr auto charRingArray1 = sts1cobcsw::RingArray<char, charSection1, 2>{};
-inline constexpr auto charRingArray2 = sts1cobcsw::RingArray<char, charSection2, 2>{};
-inline constexpr auto sRingArray = sts1cobcsw::RingArray<S, sSection, 2>{};
+inline constexpr auto charRingArray1 = sts1cobcsw::FramRingArray<char, charSection1, 2>{};
+inline constexpr auto charRingArray2 = sts1cobcsw::FramRingArray<char, charSection2, 2>{};
+inline constexpr auto sRingArray = sts1cobcsw::FramRingArray<S, sSection, 2>{};
 
 
 static_assert(std::is_same_v<decltype(charRingArray1)::ValueType, char>);
@@ -234,7 +234,7 @@ auto RunUnitTest() -> void
         Require(charRingArray2.Get(1) == 42);
     }
 
-    // SECTION("RingArray of custom type")
+    // SECTION("FramRingArray of custom type")
     {
         memory.fill(0x00_b);
         fram::framIsWorking.Store(true);

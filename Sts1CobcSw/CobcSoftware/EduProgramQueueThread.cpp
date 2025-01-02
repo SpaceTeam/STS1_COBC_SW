@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/FramSections/RingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RealTime.hpp>
@@ -61,7 +61,6 @@ private:
 
     void run() override
     {
-        // TODO: Define some DebugPrint() or something in a separate file that can be turned on/off
         DEBUG_PRINT("Entering EduProgramQueueThread\n");
         DEBUG_PRINT_REAL_TIME();
         while(true)

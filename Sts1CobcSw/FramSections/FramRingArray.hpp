@@ -24,16 +24,16 @@
 
 namespace sts1cobcsw
 {
-template<typename T, Section ringArraySection, std::size_t nCachedElements>
+template<typename T, Section framRingArraySection, std::size_t nCachedElements>
     requires(serialSize<T> > 0)
-class RingArray
+class FramRingArray
 {
 public:
     using ValueType = T;
     using IndexType = std::size_t;
     using SizeType = std::size_t;
 
-    static constexpr auto section = ringArraySection;
+    static constexpr auto section = framRingArraySection;
 
     [[nodiscard]] static constexpr auto FramCapacity() -> SizeType;
     [[nodiscard]] static constexpr auto CacheCapacity() -> SizeType;
@@ -67,6 +67,8 @@ private:
 
     using RingIndex = etl::cyclic_value<RingIndexType, 0, framCapacity>;
 
+    // TODO: Get rid of iBegin and iEnd by making LoadIndexes() return something and StoreIndexes()
+    // take arguments
     static inline auto iBegin = RingIndex{};
     static inline auto iEnd = RingIndex{};
     static inline auto cache = etl::circular_buffer<SerialBuffer<T>, nCachedElements>{};
@@ -77,6 +79,7 @@ private:
     static auto DoSet(IndexType index, T const & t) -> void;
     static auto LoadIndexes() -> void;
     static auto StoreIndexes() -> void;
+    // TODO: Rename to FramArraySize()
     [[nodiscard]] static auto FramSize() -> SizeType;
     [[nodiscard]] static auto ReadElement(RingIndex index) -> T;
     static auto WriteElement(RingIndex index, T const & t) -> void;
@@ -84,4 +87,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/FramSections/RingArray.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FramSections/FramRingArray.ipp>  // IWYU pragma: keep

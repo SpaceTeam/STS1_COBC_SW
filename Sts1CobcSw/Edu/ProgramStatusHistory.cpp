@@ -1,15 +1,15 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/RingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 
 #include <strong_type/equality.hpp>
 
 
 namespace sts1cobcsw::edu
 {
-sts1cobcsw::RingArray<ProgramStatusHistoryEntry,
-                      framSections.Get<"eduProgramStatusHistory">(),
-                      nCachedProgramStatusHistoryEntries>
+sts1cobcsw::FramRingArray<ProgramStatusHistoryEntry,
+                          framSections.Get<"eduProgramStatusHistory">(),
+                          nCachedProgramStatusHistoryEntries>
     programStatusHistory;
 
 

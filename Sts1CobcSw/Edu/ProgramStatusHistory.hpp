@@ -2,7 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/RingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -49,11 +49,11 @@ inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
 namespace edu
 {
 inline constexpr auto nCachedProgramStatusHistoryEntries = 10;
-
-extern RingArray<ProgramStatusHistoryEntry,
-                 framSections.template Get<"eduProgramStatusHistory">(),
-                 nCachedProgramStatusHistoryEntries>
+extern FramRingArray<ProgramStatusHistoryEntry,
+                     framSections.template Get<"eduProgramStatusHistory">(),
+                     nCachedProgramStatusHistoryEntries>
     programStatusHistory;
+
 
 auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, ProgramStatus newStatus)
     -> void;
