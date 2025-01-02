@@ -38,18 +38,12 @@ inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
 
 namespace edu
 {
-inline constexpr auto nProgramQueueEntries =
-    value_of(framSections.template Get<"eduProgramQueue">().size)
-    / totalSerialSize<ProgramQueueEntry>;
-
-
-extern std::uint16_t queueIndex;
-
-inline constexpr auto nCachedProgramEntries = 10;
+inline constexpr auto nCachedProgramQueueEntries = 10;
 extern ProgramQueue<ProgramQueueEntry,
-                    framSections.template Get<"eduProgramStatusHistory">(),
-                    nCachedProgramEntries>
+                    framSections.template Get<"eduProgramQueue">(),
+                    nCachedProgramQueueEntries>
     programQueue;
+extern std::uint16_t queueIndex;
 
 
 template<std::endian endianness>

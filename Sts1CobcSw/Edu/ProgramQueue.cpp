@@ -9,11 +9,9 @@ using sts1cobcsw::SerializeTo;
 
 
 sts1cobcsw::ProgramQueue<ProgramQueueEntry,
-                         framSections.Get<"eduProgramStatusHistory">(),
-                         nCachedProgramEntries>
+                         framSections.Get<"eduProgramQueue">(),
+                         nCachedProgramQueueEntries>
     programQueue;
-
-
 std::uint16_t queueIndex = 0;
 
 
@@ -25,6 +23,7 @@ auto DeserializeFrom(void const * source, ProgramQueueEntry * data) -> void cons
     source = DeserializeFrom<endianness>(source, &(data->timeout));
     return source;
 }
+
 
 // Explicit template specializations to keep everything in .cpp file
 template auto DeserializeFrom<std::endian::big>(void const *, ProgramQueueEntry *) -> void const *;
@@ -40,6 +39,7 @@ auto SerializeTo(void * destination, ProgramQueueEntry const & data) -> void *
     destination = SerializeTo<endianness>(destination, data.timeout);
     return destination;
 }
+
 
 // Explicit template specializations to keep everything in .cpp file
 template auto SerializeTo<std::endian::big>(void *, ProgramQueueEntry const &) -> void *;
