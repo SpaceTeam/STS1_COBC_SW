@@ -43,9 +43,11 @@ public:
     [[nodiscard]] static constexpr auto FramCapacity() -> SizeType;
     [[nodiscard]] static constexpr auto CacheCapacity() -> SizeType;
     [[nodiscard]] static auto Size() -> SizeType;
-    // Return the last element if index >= size
+    // Return the last element if index >= size and T{} if the ring is empty
     [[nodiscard]] static auto Get(IndexType index) -> T;
+    // Return T{} if the ring is empty
     [[nodiscard]] static auto Front() -> T;
+    // Return T{} if the ring is empty
     [[nodiscard]] static auto Back() -> T;
     // Do nothing if index >= size
     static auto Set(IndexType index, T const & t) -> void;

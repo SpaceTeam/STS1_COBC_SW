@@ -62,9 +62,19 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::Front() -> T
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     if(not framIsWorking.Load())
     {
+        if(cache.empty())
+        {
+            DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
+            return T{};
+        }
         return Deserialize<T>(cache.front());
     }
     auto indexes = LoadIndexes();
+    if(indexes.iBegin == indexes.iEnd)
+    {
+        DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
+        return T{};
+    }
     return LoadElement(indexes.iBegin);
 }
 
@@ -76,9 +86,19 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::Back() -> T
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     if(not framIsWorking.Load())
     {
+        if(cache.empty())
+        {
+            DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
+            return T{};
+        }
         return Deserialize<T>(cache.back());
     }
     auto indexes = LoadIndexes();
+    if(indexes.iBegin == indexes.iEnd)
+    {
+        DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
+        return T{};
+    }
     auto i = indexes.iEnd;
     i--;
     return LoadElement(i);
@@ -173,6 +193,11 @@ template<typename T, Section framRingArraySection, std::uint32_t nCachedElements
     requires(serialSize<T> > 0)
 auto FramRingArray<T, framRingArraySection, nCachedElements>::GetFromCache(IndexType index) -> T
 {
+    if(cache.empty())
+    {
+        DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
+        return T{};
+    }
     auto size = cache.size();
     if(index >= size)
     {
@@ -191,6 +216,11 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::GetFromFram(IndexT
                                                                           Indexes const & indexes)
     -> T
 {
+    if(indexes.iBegin == indexes.iEnd)
+    {
+        DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
+        return T{};
+    }
     auto framArraySize = FramArraySize(indexes);
     if(index >= framArraySize)
     {
@@ -242,11 +272,8 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::SetInFramAndCache(
         static_cast<int>(index) - static_cast<int>(framArraySize) + static_cast<int>(cache.size());
     if(cacheIndex < 0)
     {
-        DEBUG_PRINT("Index out of bounds for cache in FramRingArray::SetInFramAndCache(): %d < 0\n",
-                    static_cast<int>(cacheIndex));
         return;
     }
-    // If the index is not out of bounds, we always write to the cache
     cache[static_cast<unsigned>(cacheIndex)] = Serialize(t);
 }
 

@@ -95,7 +95,10 @@ auto RunUnitTest() -> void
         fram::framIsWorking.Store(true);
 
         Require(charRingArray1.Size() == 0);
-
+        // Reading from an empty ring prints a debug message and returns a default-constructed value
+        Require(charRingArray1.Front() == 0);
+        Require(charRingArray1.Back() == 0);
+        Require(charRingArray1.Get(0) == 0);
         // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
         charRingArray1.Set(0, 11);
@@ -186,7 +189,11 @@ auto RunUnitTest() -> void
         Require(charRingArray1.Get(1) == 23);
 
         Require(charRingArray2.Size() == 0);
-        // Trying to set an element in an empty ring prints a debug message
+        // Reading from an empty ring prints a debug message and returns a default-constructed value
+        Require(charRingArray2.Front() == 0);
+        Require(charRingArray2.Back() == 0);
+        Require(charRingArray2.Get(0) == 0);
+        // Trying to set an element in an empty ring only prints a debug message
         charRingArray2.Set(0, 11);
 
         charRingArray2.PushBack(11);
@@ -251,7 +258,10 @@ auto RunUnitTest() -> void
         auto s8 = S{.u16 = 8, .i32 = 8, .u8 = 8};
 
         Require(sRingArray.Size() == 0);
-
+        // Reading from an empty ring prints a debug message and returns a default-constructed value
+        Require(sRingArray.Front() == S{});
+        Require(sRingArray.Back() == S{});
+        Require(sRingArray.Get(0) == S{});
         // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
         sRingArray.Set(0, s1);
