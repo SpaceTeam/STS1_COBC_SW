@@ -30,10 +30,7 @@ struct S
     std::int32_t i32 = 0;
     std::uint8_t u8 = 0;
 
-    friend auto operator==(S const & lhs, S const & rhs) -> bool
-    {
-        return (lhs.i32 == rhs.i32) and (lhs.u16 == rhs.u16) and (lhs.u8 == rhs.u8);
-    }
+    friend auto operator==(S const & lhs, S const & rhs) -> bool = default;
 };
 
 
@@ -50,27 +47,25 @@ template<std::endian endianness>
 auto DeserializeFrom(void const * source, S * data) -> void const *;
 
 // Define FRAM sections for testing
+inline constexpr auto metadataSize = fram::Size(3 * 4);
 inline constexpr auto charSection1 =
-    sts1cobcsw::Section<fram::Address(0),
-                        fram::Size(3 * 4 + 5 * totalSerialSize<char>)>{};  // Adjust size as needed
-
+    sts1cobcsw::Section<fram::Address(0), metadataSize + fram::Size(3)>{};
 inline constexpr auto charSection2 =
-    sts1cobcsw::Section<fram::Address(charSection1.end),
-                        fram::Size(3 * 4 + 5 * totalSerialSize<char>)>{};  // Adjust size as needed
+    sts1cobcsw::Section<charSection1.end, metadataSize + fram::Size(3)>{};
 inline constexpr auto sSection =
-    sts1cobcsw::Section<charSection2.end, fram::Size(3 * 4 + 4 * totalSerialSize<S>)>{};
+    sts1cobcsw::Section<charSection2.end, metadataSize + fram::Size(4 * totalSerialSize<S>)>{};
 
 // Instantiate FramVector with different configurations
 inline constexpr auto charVector1 = sts1cobcsw::FramVector<char, charSection1, 2>{};
 inline constexpr auto charVector2 = sts1cobcsw::FramVector<char, charSection2, 2>{};
 inline constexpr auto sVector = sts1cobcsw::FramVector<S, sSection, 4>{};
 
-static constexpr auto charVector1StartAddress = 3 * 4;
-static constexpr auto charVector2StartAddress = value_of(charVector1.section.end) + 3 * 4;
+static constexpr auto charVector1StartAddress = value_of(metadataSize);
+static constexpr auto charVector2StartAddress = value_of(charVector1.section.end + metadataSize);
 
 // Static assertions to ensure correct configurations
 static_assert(std::is_same_v<decltype(charVector1)::ValueType, char>);
-static_assert(charVector1.FramCapacity() == 5);
+static_assert(charVector1.FramCapacity() == 3);
 static_assert(charVector1.CacheCapacity() == 2);
 static_assert(sVector.FramCapacity() == 4);
 static_assert(sVector.CacheCapacity() == 4);
@@ -79,57 +74,121 @@ static_assert(sVector.CacheCapacity() == 4);
 auto RunUnitTest() -> void
 {
     using fram::ram::memory;
+
     fram::ram::SetAllDoFunctions();
     fram::Initialize();
     fram::framIsWorking.Store(true);
     memory.fill(0x00_b);  // Clear memory
 
-    // SECTION("Initialization")
+    // SECTION("FRAM is working")
     {
         Require(charVector1.Size() == 0);
-        Require(not charVector1.Full());
         Require(charVector1.Empty());
-        Require(charVector2.Size() == 0);
-        Require(sVector.Size() == 0);
-    }
+        Require(not charVector1.Full());
+        // Reading from an empty vector prints a debug message and returns a default-constructed
+        // value
+        Require(charVector1.Get(0) == 0x00);
 
-    // SECTION("Push operations")
-    {
-        charVector1.PushBack('a');
+        charVector1.PushBack(0x61);
         Require(charVector1.Size() == 1);
-        Require(charVector1.Get(0) == 'a');
         Require(not charVector1.Empty());
+        Require(not charVector1.Full());
+        Require(charVector1.Get(0) == 0x61);
 
-        charVector1.PushBack('b');
+        charVector1.PushBack(0x62);
         Require(charVector1.Size() == 2);
-        Require(charVector1.Get(1) == 'b');
+        Require(not charVector1.Empty());
+        Require(not charVector1.Full());
+        Require(charVector1.Get(1) == 0x62);
 
+        charVector1.PushBack(0x63);
+        Require(charVector1.Size() == 3);
+        Require(not charVector1.Empty());
+        Require(charVector1.Full());
+        Require(charVector1.Get(2) == 0x63);
+
+        // PushBack() writes to memory
         Require(fram::ram::memory[charVector1StartAddress + 0] == 0x61_b);
         Require(fram::ram::memory[charVector1StartAddress + 1] == 0x62_b);
+        Require(fram::ram::memory[charVector1StartAddress + 2] == 0x63_b);
 
-        charVector1.PushBack('c');
-        charVector1.PushBack('d');
-        charVector1.PushBack('e');
-        Require(charVector1.Size() == 5);
+        // PushBack() does nothing, except for printing a debug message, if the vector is full
         Require(charVector1.Full());
-        Require(not charVector1.Empty());
-        Require(charVector1.Get(4) == 'e');
+        charVector1.PushBack(0x64);
+        Require(charVector1.Size() == 3);
+        Require(charVector1.Get(0) == 0x61);
+        Require(charVector1.Get(1) == 0x62);
+        Require(charVector1.Get(2) == 0x63);
 
-        // Attempt to PushBack() beyond cache capacity (should print a debug message)
-        charVector1.PushBack('f');
-        Require(charVector1.Size() == 5);
-        Require(charVector1.Get(4) == 'e');
+        // Get() with out-of-bounds index prints a debug message and returns the last element
+        Require(charVector1.Get(17) == 0x63);
     }
 
-
-    // SECTION("Custom Type")
+    // SECTION("FRAM is not working")
     {
-        // Test PushBack() for custom type S
-        S s1{.u16 = 1, .i32 = 100, .u8 = 10};
-        S s2{.u16 = 2, .i32 = 200, .u8 = 20};
-        S s3{.u16 = 3, .i32 = 300, .u8 = 30};
-        S s4{.u16 = 4, .i32 = 400, .u8 = 40};
-        S s5{.u16 = 5, .i32 = 500, .u8 = 50};
+        memory.fill(0x00_b);
+        fram::framIsWorking.Store(false);
+
+        // Even though we reset the FRAM memory to zero, the cached values are still there
+        Require(charVector1.Size() == charVector1.CacheCapacity());
+        Require(charVector1.Get(0) == 0x61);
+        Require(charVector1.Get(1) == 0x62);
+
+        Require(charVector2.Size() == 0);
+        Require(charVector2.Empty());
+        Require(not charVector2.Full());
+        // Reading from an empty vector prints a debug message and returns a default-constructed
+        // value
+        Require(charVector2.Get(0) == 0x00);
+
+        charVector2.PushBack(11);
+        Require(charVector2.Size() == 1);
+        Require(not charVector2.Empty());
+        Require(not charVector2.Full());
+        Require(charVector2.Get(0) == 11);
+
+        charVector2.PushBack(12);
+        Require(charVector2.Size() == 2);
+        Require(not charVector2.Empty());
+        Require(charVector2.Full());
+        Require(charVector2.Get(1) == 12);
+
+        // PushBack() does not write to memory
+        Require(fram::ram::memory[charVector2StartAddress + 0] == 0x00_b);
+        Require(fram::ram::memory[charVector2StartAddress + 1] == 0x00_b);
+
+        // PushBack() does nothing, except for printing a debug message, if the vector is full
+        Require(charVector2.Full());
+        charVector2.PushBack(13);
+        Require(charVector2.Size() == 2);
+        Require(charVector2.Get(0) == 11);
+        Require(charVector2.Get(1) == 12);
+
+        // Get() with out-of-bounds index prints a debug message and returns the last element
+        Require(charVector2.Get(17) == 12);
+
+        charVector2.Clear();
+        Require(charVector2.Size() == 0);
+        Require(charVector2.Empty());
+    }
+
+    // SECTION("Custom type")
+    {
+        memory.fill(0x00_b);
+        fram::framIsWorking.Store(true);
+
+        auto s1 = S{.u16 = 1, .i32 = 100, .u8 = 10};
+        auto s2 = S{.u16 = 2, .i32 = 200, .u8 = 20};
+        auto s3 = S{.u16 = 3, .i32 = 300, .u8 = 30};
+        auto s4 = S{.u16 = 4, .i32 = 400, .u8 = 40};
+        auto s5 = S{.u16 = 5, .i32 = 500, .u8 = 50};
+
+        Require(sVector.Size() == 0);
+        Require(sVector.Empty());
+        Require(not sVector.Full());
+        // Reading from an empty vector prints a debug message and returns a default-constructed
+        // value
+        Require(sVector.Get(0) == S{});
 
         sVector.PushBack(s1);
         Require(sVector.Size() == 1);
@@ -147,31 +206,10 @@ auto RunUnitTest() -> void
         sVector.PushBack(s5);
         Require(sVector.Size() == 4);
         Require(sVector.Get(3) == s4);
-    }
 
-    // SECTION("FRAM is not working")
-    {
-        memory.fill(0x00_b);
-        fram::framIsWorking.Store(false);
-
-        // Even though we reset the FRAM memory to zero, the cached values are still there
-        Require(charVector1.Size() == charVector1.CacheCapacity());
-        Require(charVector1.Get(0) == 'a');
-        Require(charVector1.Get(1) == 'b');
-
-        Require(charVector2.Size() == 0);
-        charVector2.PushBack(11);
-        Require(charVector2.Size() == 1);
-
-        charVector2.PushBack(12);
-        Require(charVector2.Size() == 2);
-        Require(charVector2.Get(0) == 11);
-        Require(charVector2.Get(1) == 12);
-
-        // PushBack() does not write to memory
-        Require(fram::ram::memory[charVector2StartAddress + 0] == 0x00_b);
-        Require(fram::ram::memory[charVector2StartAddress + 1] == 0x00_b);
-        Require(fram::ram::memory[charVector2StartAddress + 1] == 0x00_b);
+        sVector.Clear();
+        Require(sVector.Size() == 0);
+        Require(sVector.Empty());
     }
 }
 
