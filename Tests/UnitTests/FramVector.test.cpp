@@ -83,28 +83,28 @@ auto RunUnitTest() -> void
     // SECTION("FRAM is working")
     {
         Require(charVector1.Size() == 0);
-        Require(charVector1.Empty());
-        Require(not charVector1.Full());
+        Require(charVector1.IsEmpty());
+        Require(not charVector1.IsFull());
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
         Require(charVector1.Get(0) == 0x00);
 
         charVector1.PushBack(0x61);
         Require(charVector1.Size() == 1);
-        Require(not charVector1.Empty());
-        Require(not charVector1.Full());
+        Require(not charVector1.IsEmpty());
+        Require(not charVector1.IsFull());
         Require(charVector1.Get(0) == 0x61);
 
         charVector1.PushBack(0x62);
         Require(charVector1.Size() == 2);
-        Require(not charVector1.Empty());
-        Require(not charVector1.Full());
+        Require(not charVector1.IsEmpty());
+        Require(not charVector1.IsFull());
         Require(charVector1.Get(1) == 0x62);
 
         charVector1.PushBack(0x63);
         Require(charVector1.Size() == 3);
-        Require(not charVector1.Empty());
-        Require(charVector1.Full());
+        Require(not charVector1.IsEmpty());
+        Require(charVector1.IsFull());
         Require(charVector1.Get(2) == 0x63);
 
         // PushBack() writes to memory
@@ -113,7 +113,7 @@ auto RunUnitTest() -> void
         Require(fram::ram::memory[charVector1StartAddress + 2] == 0x63_b);
 
         // PushBack() does nothing, except for printing a debug message, if the vector is full
-        Require(charVector1.Full());
+        Require(charVector1.IsFull());
         charVector1.PushBack(0x64);
         Require(charVector1.Size() == 3);
         Require(charVector1.Get(0) == 0x61);
@@ -135,22 +135,22 @@ auto RunUnitTest() -> void
         Require(charVector1.Get(1) == 0x62);
 
         Require(charVector2.Size() == 0);
-        Require(charVector2.Empty());
-        Require(not charVector2.Full());
+        Require(charVector2.IsEmpty());
+        Require(not charVector2.IsFull());
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
         Require(charVector2.Get(0) == 0x00);
 
         charVector2.PushBack(11);
         Require(charVector2.Size() == 1);
-        Require(not charVector2.Empty());
-        Require(not charVector2.Full());
+        Require(not charVector2.IsEmpty());
+        Require(not charVector2.IsFull());
         Require(charVector2.Get(0) == 11);
 
         charVector2.PushBack(12);
         Require(charVector2.Size() == 2);
-        Require(not charVector2.Empty());
-        Require(charVector2.Full());
+        Require(not charVector2.IsEmpty());
+        Require(charVector2.IsFull());
         Require(charVector2.Get(1) == 12);
 
         // PushBack() does not write to memory
@@ -158,7 +158,7 @@ auto RunUnitTest() -> void
         Require(fram::ram::memory[charVector2StartAddress + 1] == 0x00_b);
 
         // PushBack() does nothing, except for printing a debug message, if the vector is full
-        Require(charVector2.Full());
+        Require(charVector2.IsFull());
         charVector2.PushBack(13);
         Require(charVector2.Size() == 2);
         Require(charVector2.Get(0) == 11);
@@ -169,7 +169,7 @@ auto RunUnitTest() -> void
 
         charVector2.Clear();
         Require(charVector2.Size() == 0);
-        Require(charVector2.Empty());
+        Require(charVector2.IsEmpty());
     }
 
     // SECTION("Custom type")
@@ -184,8 +184,8 @@ auto RunUnitTest() -> void
         auto s5 = S{.u16 = 5, .i32 = 500, .u8 = 50};
 
         Require(sVector.Size() == 0);
-        Require(sVector.Empty());
-        Require(not sVector.Full());
+        Require(sVector.IsEmpty());
+        Require(not sVector.IsFull());
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
         Require(sVector.Get(0) == S{});
@@ -201,7 +201,7 @@ auto RunUnitTest() -> void
         sVector.PushBack(s3);
         sVector.PushBack(s4);
         Require(sVector.Size() == 4);
-        Require(sVector.Full());
+        Require(sVector.IsFull());
 
         sVector.PushBack(s5);
         Require(sVector.Size() == 4);
@@ -209,7 +209,7 @@ auto RunUnitTest() -> void
 
         sVector.Clear();
         Require(sVector.Size() == 0);
-        Require(sVector.Empty());
+        Require(sVector.IsEmpty());
     }
 }
 

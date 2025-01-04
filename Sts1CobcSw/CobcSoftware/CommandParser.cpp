@@ -80,7 +80,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
     DEBUG_PRINT("Printing and parsing\n");
 
     while(queueEntries.size() >= totalSerialSize<edu::ProgramQueueEntry>
-          and (not edu::programQueue.Full()))
+          and (not edu::programQueue.IsFull()))
     {
         auto entry = Deserialize<edu::ProgramQueueEntry>(
             queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());

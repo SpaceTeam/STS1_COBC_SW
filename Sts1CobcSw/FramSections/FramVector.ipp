@@ -12,7 +12,7 @@ namespace sts1cobcsw
 using fram::framIsWorking;
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
 constexpr auto FramVector<T, framVectorSection, nCachedElements>::FramCapacity() -> SizeType
 {
@@ -20,7 +20,7 @@ constexpr auto FramVector<T, framVectorSection, nCachedElements>::FramCapacity()
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
 constexpr auto FramVector<T, framVectorSection, nCachedElements>::CacheCapacity() -> SizeType
 {
@@ -28,134 +28,149 @@ constexpr auto FramVector<T, framVectorSection, nCachedElements>::CacheCapacity(
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
 auto FramVector<T, framVectorSection, nCachedElements>::Size() -> SizeType
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    if(not framIsWorking.Load())
-    {
-        size = cache.size();
-    }
-    else
-    {
-        LoadSize();
-    }
-    return size;
+    return DoSize();
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-auto FramVector<T, framVectorSection, nCachedElements>::Full() -> bool
+auto FramVector<T, framVectorSection, nCachedElements>::IsFull() -> bool
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    return Size() >= FramCapacity();
+    if(framIsWorking.Load())
+    {
+        return LoadSize() >= FramCapacity();
+    }
+    return cache.full();
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-auto FramVector<T, framVectorSection, nCachedElements>::Empty() -> bool
+auto FramVector<T, framVectorSection, nCachedElements>::IsEmpty() -> bool
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    return Size() == 0;
+    if(framIsWorking.Load())
+    {
+        return LoadSize() == 0;
+    }
+    return cache.empty();
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
 auto FramVector<T, framVectorSection, nCachedElements>::PushBack(T const & t) -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
+    // We always write to the cache
     if(not cache.full())
     {
-        cache.push_back(t);
+        cache.push_back(Serialize(t));
     }
-    if(framIsWorking.Load())
+    if(not framIsWorking.Load())
     {
-        LoadSize();
-        if(size >= FramCapacity())
-        {
-            DEBUG_PRINT("FramVector is full. Cannot push back new element.\n");
-            return;
-        }
-        WriteElement(size, t);
-        size++;
-        StoreSize();
+        return;
     }
+    auto size = LoadSize();
+    if(size >= FramCapacity())
+    {
+        DEBUG_PRINT("FramVector is full. Cannot push back new element.\n");
+        return;
+    }
+    StoreElement(size, t);
+    size++;
+    StoreSize(size);
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
 auto FramVector<T, framVectorSection, nCachedElements>::Clear() -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    if(not framIsWorking.Load())
+    cache.clear();
+    if(framIsWorking.Load())
     {
-        cache.clear();
-    }
-    else
-    {
-        size = 0;
-        StoreSize();
+        StoreSize(0);
     }
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
 auto FramVector<T, framVectorSection, nCachedElements>::Get(IndexType index) -> T
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto size = Size();
+    auto size = DoSize();
+    if(size == 0)
+    {
+        DEBUG_PRINT("Trying to get element from empty FramVector\n");
+        return T{};
+    }
     if(index >= size)
     {
         DEBUG_PRINT("Index out of bounds in FramVector::Get(): %d >= %d\n",
                     static_cast<int>(index),
                     static_cast<int>(size));
-        return T{};
+        index = size - 1;
     }
-    if(not framIsWorking.Load())
+    if(framIsWorking.Load())
     {
-        return cache[index];
+        return LoadElement(index);
     }
-    return ReadElement(index);
+    return Deserialize<T>(cache[index]);
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-auto FramVector<T, framVectorSection, nCachedElements>::LoadSize() -> void
+auto FramVector<T, framVectorSection, nCachedElements>::DoSize() -> SizeType
 {
-    size = persistentIndexes.template Load<"size">();
+    if(framIsWorking.Load())
+    {
+        return LoadSize();
+    }
+    return static_cast<SizeType>(cache.size());
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-auto FramVector<T, framVectorSection, nCachedElements>::StoreSize() -> void
+auto FramVector<T, framVectorSection, nCachedElements>::LoadSize() -> SizeType
 {
-    persistentIndexes.template Store<"size">(size);
+    return persistentMetadata.template Load<"size">();
 }
 
 
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-auto FramVector<T, framVectorSection, nCachedElements>::WriteElement(IndexType index, T const & t)
+auto FramVector<T, framVectorSection, nCachedElements>::LoadElement(IndexType index) -> T
+{
+    auto address = subsections.template Get<"array">().begin + index * elementSize;
+    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, spiTimeout));
+}
+
+
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
+    requires(serialSize<T> > 0)
+auto FramVector<T, framVectorSection, nCachedElements>::StoreSize(SizeType size) -> void
+{
+    persistentMetadata.template Store<"size">(size);
+}
+
+
+template<typename T, Section framVectorSection, std::uint32_t nCachedElements>
+    requires(serialSize<T> > 0)
+auto FramVector<T, framVectorSection, nCachedElements>::StoreElement(IndexType index, T const & t)
     -> void
 {
     auto address = subsections.template Get<"array">().begin + index * elementSize;
     fram::WriteTo(address, Span(Serialize(t)), spiTimeout);
-}
-
-
-template<typename T, Section framVectorSection, std::size_t nCachedElements>
-    requires(serialSize<T> > 0)
-auto FramVector<T, framVectorSection, nCachedElements>::ReadElement(IndexType index) -> T
-{
-    auto address = subsections.template Get<"array">().begin + index * elementSize;
-    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, spiTimeout));
 }
 }

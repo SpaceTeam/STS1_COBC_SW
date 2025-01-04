@@ -56,7 +56,7 @@ private:
         // eduProgramQueue.push_back(queueEntry1);
         // eduProgramQueue.push_back(queueEntry2);
 
-        DEBUG_PRINT("Size of EduProgramQueue : %zu\n", edu::programQueue.Size());
+        DEBUG_PRINT("Size of EDU program queue = %" PRIu32 "\n", edu::programQueue.Size());
     }
 
     void run() override
@@ -65,7 +65,7 @@ private:
         DEBUG_PRINT_REAL_TIME();
         while(true)
         {
-            if(edu::programQueue.Empty())
+            if(edu::programQueue.IsEmpty())
             {
                 DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
