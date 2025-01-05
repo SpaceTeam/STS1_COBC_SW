@@ -43,7 +43,6 @@ extern FramVector<ProgramQueueEntry,
                   framSections.template Get<"eduProgramQueue">(),
                   nCachedProgramQueueEntries>
     programQueue;
-extern std::uint16_t queueIndex;
 
 
 template<std::endian endianness>

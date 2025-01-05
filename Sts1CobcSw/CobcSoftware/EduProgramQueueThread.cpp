@@ -6,6 +6,7 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
@@ -26,7 +27,7 @@
 
 namespace sts1cobcsw
 {
-[[nodiscard]] auto ComputeStartDelay() -> Duration;
+[[nodiscard]] auto ComputeStartDelay(RealTime startTime) -> Duration;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
@@ -70,17 +71,19 @@ private:
                 DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
             }
-            else if(edu::queueIndex >= edu::programQueue.Size())
+            else if(persistentVariables.Load<"eduProgramQueueIndex">() >= edu::programQueue.Size())
             {
                 DEBUG_PRINT("End of queue is reached, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
             }
 
-            auto startDelay = ComputeStartDelay();
+            auto queueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
+            auto queueEntry = edu::programQueue.Get(queueIndex);
+            auto startDelay = ComputeStartDelay(queueEntry.startTime);
             nextProgramStartDelayTopic.publish(startDelay);
 
             DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
-                        edu::queueIndex,
+                        queueIndex,
                         startDelay / s);
 
             // Suspend until delay time - 2 seconds
@@ -91,8 +94,7 @@ private:
             DEBUG_PRINT("Resuming here after first wait.\n");
             DEBUG_PRINT_REAL_TIME();
 
-            auto updateTimeResult =
-                edu::UpdateTime(edu::UpdateTimeData{.currentTime = CurrentRealTime()});
+            auto updateTimeResult = edu::UpdateTime({CurrentRealTime()});
             if(updateTimeResult.has_error())
             {
                 DEBUG_PRINT("UpdateTime error code : %d\n",
@@ -102,11 +104,15 @@ private:
                 ResumeEduCommunicationErrorThread();
             }
 
-            auto startDelay2 = ComputeStartDelay();
+            // Reload queue index and entry because the start delay might be very long and the
+            // variables might have been corrupted in the meantime
+            queueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
+            queueEntry = edu::programQueue.Get(queueIndex);
+            auto startDelay2 = ComputeStartDelay(queueEntry.startTime);
             nextProgramStartDelayTopic.publish(startDelay2);
 
             DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
-                        edu::queueIndex,
+                        queueIndex,
                         startDelay2 / s);
 
             // Suspend for delay a second time
@@ -117,15 +123,10 @@ private:
             // Never reached
             DEBUG_PRINT("Done suspending for the second time\n");
 
-
-            auto startTime = edu::programQueue.Get(edu::queueIndex).startTime;
-            auto programId = edu::programQueue.Get(edu::queueIndex).programId;
-            auto timeout = edu::programQueue.Get(edu::queueIndex).timeout;
-
-            DEBUG_PRINT("Executing program %" PRIu16 "\n", value_of(programId));
+            DEBUG_PRINT("Executing EDU program %" PRIu16 "\n", value_of(queueEntry.programId));
             // Start Process
-            auto executeProgramResult = edu::ExecuteProgram(edu::ExecuteProgramData{
-                .programId = programId, .startTime = startTime, .timeout = timeout});
+            auto executeProgramResult = edu::ExecuteProgram(
+                {queueEntry.programId, queueEntry.startTime, queueEntry.timeout});
             // errorCode = edu::ErrorCode::success;
 
             if(executeProgramResult.has_error())
@@ -137,21 +138,19 @@ private:
             }
             else
             {
-                edu::programStatusHistory.PushBack(
-                    edu::ProgramStatusHistoryEntry{.programId = programId,
-                                                   .startTime = startTime,
-                                                   .status = edu::ProgramStatus::programRunning});
-
+                edu::programStatusHistory.PushBack({queueEntry.programId,
+                                                    queueEntry.startTime,
+                                                    edu::ProgramStatus::programRunning});
 
                 // Suspend Self for execution time
-                auto const executionTime = timeout * s + eduCommunicationDelay;
+                auto const executionTime = queueEntry.timeout * s + eduCommunicationDelay;
                 DEBUG_PRINT("Suspending for execution time\n");
                 SuspendFor(executionTime);
                 DEBUG_PRINT("Resuming from execution time\n");
                 DEBUG_PRINT_REAL_TIME();
 
-                // Set current Queue ID to next
-                edu::queueIndex++;
+                // Set current queue ID to next
+                persistentVariables.Increment<"eduProgramQueueIndex">();
             }
         }
     }
@@ -161,9 +160,9 @@ private:
 // TODO: We should just use time points instead of delays in the thread. Then we won't need this
 // function.
 //! Compute the delay in nanoseconds before the start of program at current queue index
-auto ComputeStartDelay() -> Duration
+auto ComputeStartDelay(RealTime startTime) -> Duration
 {
-    auto delay = ToRodosTime(edu::programQueue.Get(edu::queueIndex).startTime) - CurrentRodosTime();
+    auto delay = ToRodosTime(startTime) - CurrentRodosTime();
     return delay < Duration(0) ? Duration(0) : delay;
 }
 

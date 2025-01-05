@@ -1,7 +1,6 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 
 
-// TODO: Change namespace here too, or move it back to Sts1CobSw/
 namespace sts1cobcsw::edu
 {
 using sts1cobcsw::DeserializeFrom;
@@ -11,7 +10,6 @@ using sts1cobcsw::SerializeTo;
 sts1cobcsw::
     FramVector<ProgramQueueEntry, framSections.Get<"eduProgramQueue">(), nCachedProgramQueueEntries>
         programQueue;
-std::uint16_t queueIndex = 0;
 
 
 template<std::endian endianness>

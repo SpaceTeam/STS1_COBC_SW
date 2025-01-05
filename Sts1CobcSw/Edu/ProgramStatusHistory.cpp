@@ -1,12 +1,14 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
-#include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 
 #include <strong_type/equality.hpp>
 
 
 namespace sts1cobcsw::edu
 {
+using sts1cobcsw::DeserializeFrom;
+using sts1cobcsw::SerializeTo;
+
+
 sts1cobcsw::FramRingArray<ProgramStatusHistoryEntry,
                           framSections.Get<"eduProgramStatusHistory">(),
                           nCachedProgramStatusHistoryEntries>
@@ -21,10 +23,6 @@ auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, Program
         { return entry.programId == programId and entry.startTime == startTime; },
         ProgramStatusHistoryEntry{programId, startTime, newStatus});
 }
-
-
-using sts1cobcsw::DeserializeFrom;
-using sts1cobcsw::SerializeTo;
 
 
 template<std::endian endianness>

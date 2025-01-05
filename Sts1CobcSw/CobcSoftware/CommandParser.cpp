@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
@@ -59,14 +60,11 @@ auto DispatchCommand(etl::vector<Byte, commandSize> const & command) -> void
 auto BuildEduQueue(std::span<Byte const> commandData) -> void
 {
     DEBUG_PRINT("Entering build queue command parsing\n");
-
     edu::programQueue.Clear();
+    persistentVariables.Store<"eduProgramQueueIndex">(0);
     ParseAndAddQueueEntries(commandData);
-    edu::queueIndex = 0;
-
     DEBUG_PRINT("Queue index reset. Current size of EDU program queue is %d.\n",
                 static_cast<int>(edu::programQueue.Size()));
-
     ResumeEduProgramQueueThread();
 }
 
