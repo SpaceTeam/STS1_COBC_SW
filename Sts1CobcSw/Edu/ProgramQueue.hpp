@@ -2,15 +2,11 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
-
-#include <strong_type/type.hpp>
-
-#include <etl/vector.h>
 
 #include <bit>
 #include <cstddef>
@@ -39,13 +35,11 @@ inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
 
 namespace edu
 {
-inline constexpr auto nProgramQueueEntries =
-    value_of(framSections.template Get<"eduProgramQueue">().size)
-    / totalSerialSize<ProgramQueueEntry>;
-
-
-extern std::uint16_t queueIndex;
-extern etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue;
+inline constexpr auto nCachedProgramQueueEntries = 10;
+extern FramVector<ProgramQueueEntry,
+                  framSections.template Get<"eduProgramQueue">(),
+                  nCachedProgramQueueEntries>
+    programQueue;
 
 
 template<std::endian endianness>

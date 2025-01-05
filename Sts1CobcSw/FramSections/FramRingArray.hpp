@@ -24,64 +24,76 @@
 
 namespace sts1cobcsw
 {
-template<typename T, Section ringArraySection, std::size_t nCachedElements>
+// I don't want to repeat strong::underlying_type_t<fram::Size> as the type of the template
+// parameter nCachedElements of FramRingArray every time so I assert that it's uint32_t
+static_assert(std::is_same_v<strong::underlying_type_t<fram::Size>, std::uint32_t>);
+
+
+template<typename T, Section framRingArraySection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-class RingArray
+class FramRingArray
 {
 public:
     using ValueType = T;
-    using IndexType = std::size_t;
-    using SizeType = std::size_t;
+    using IndexType = strong::underlying_type_t<fram::Size>;
+    using SizeType = strong::underlying_type_t<fram::Size>;
 
-    static constexpr auto section = ringArraySection;
+    static constexpr auto section = framRingArraySection;
 
     [[nodiscard]] static constexpr auto FramCapacity() -> SizeType;
     [[nodiscard]] static constexpr auto CacheCapacity() -> SizeType;
     [[nodiscard]] static auto Size() -> SizeType;
+    // Return the last element if index >= size and T{} if the ring is empty
     [[nodiscard]] static auto Get(IndexType index) -> T;
+    // Return T{} if the ring is empty
     [[nodiscard]] static auto Front() -> T;
+    // Return T{} if the ring is empty
     [[nodiscard]] static auto Back() -> T;
+    // Do nothing if index >= size
     static auto Set(IndexType index, T const & t) -> void;
     static auto PushBack(T const & t) -> void;
-    // TODO: Test this function
+    // Find and replace the first element that satisfies the predicate. Do nothing if no such
+    // element is found.
     static auto FindAndReplace(std::predicate<T> auto predicate, T const & newData) -> void;
 
 
 private:
-    using RingIndexType = strong::underlying_type_t<fram::Size>;
-
     static constexpr auto elementSize = fram::Size(serialSize<T>);
-    static constexpr auto indexesSize = fram::Size(3 * 2 * totalSerialSize<RingIndexType>);
+    static constexpr auto indexesSize = fram::Size(3 * 2 * totalSerialSize<IndexType>);
     static constexpr auto subsections =
         Subsections<section,
                     SubsectionInfo<"indexes", indexesSize>,
                     SubsectionInfo<"array", section.size - indexesSize>>{};
     static constexpr auto persistentIndexes =
         PersistentVariables<subsections.template Get<"indexes">(),
-                            PersistentVariableInfo<"iBegin", RingIndexType>,
-                            PersistentVariableInfo<"iEnd", RingIndexType>>{};
+                            PersistentVariableInfo<"iBegin", IndexType>,
+                            PersistentVariableInfo<"iEnd", IndexType>>{};
     // We reduce the FRAM capacity by one to distinguish between an empty and a full ring. See
     // PushBack() for details.
     static constexpr auto framCapacity = subsections.template Get<"array">().size / elementSize - 1;
     static constexpr auto spiTimeout = elementSize < 300U ? 1 * ms : value_of(elementSize) * 3 * us;
 
-    using RingIndex = etl::cyclic_value<RingIndexType, 0, framCapacity>;
+    using RingIndex = etl::cyclic_value<IndexType, 0, framCapacity>;
+    struct Indexes
+    {
+        RingIndex iBegin;
+        RingIndex iEnd;
+    };
 
-    static inline auto iBegin = RingIndex{};
-    static inline auto iEnd = RingIndex{};
     static inline auto cache = etl::circular_buffer<SerialBuffer<T>, nCachedElements>{};
     static inline auto semaphore = RODOS::Semaphore{};
 
-    [[nodiscard]] static auto DoSize() -> SizeType;
-    [[nodiscard]] static auto DoGet(IndexType index) -> T;
-    static auto DoSet(IndexType index, T const & t) -> void;
-    static auto LoadIndexes() -> void;
-    static auto StoreIndexes() -> void;
-    [[nodiscard]] static auto FramSize() -> SizeType;
-    [[nodiscard]] static auto ReadElement(RingIndex index) -> T;
-    static auto WriteElement(RingIndex index, T const & t) -> void;
+    [[nodiscard]] static auto FramArraySize(Indexes const & indexes) -> SizeType;
+    [[nodiscard]] static auto GetFromCache(IndexType index) -> T;
+    [[nodiscard]] static auto GetFromFram(IndexType index, Indexes const & indexes) -> T;
+    static auto SetInCache(IndexType index, T const & t) -> void;
+    static auto SetInFramAndCache(IndexType index, T const & t, Indexes const & indexes) -> void;
+    [[nodiscard]] static auto LoadIndexes() -> Indexes;
+    [[nodiscard]] static auto LoadElement(RingIndex index) -> T;
+    static auto StoreIndexes(Indexes const & indexes) -> void;
+    static auto StoreElement(RingIndex index, T const & t) -> void;
 };
 }
 
 
-#include <Sts1CobcSw/FramSections/RingArray.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FramSections/FramRingArray.ipp>  // IWYU pragma: keep

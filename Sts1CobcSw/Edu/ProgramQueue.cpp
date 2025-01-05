@@ -1,15 +1,15 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 
 
-// TODO: Change namespace here too, or move it back to Sts1CobSw/
 namespace sts1cobcsw::edu
 {
 using sts1cobcsw::DeserializeFrom;
 using sts1cobcsw::SerializeTo;
 
 
-etl::vector<ProgramQueueEntry, nProgramQueueEntries> programQueue{};
-std::uint16_t queueIndex = 0;
+sts1cobcsw::
+    FramVector<ProgramQueueEntry, framSections.Get<"eduProgramQueue">(), nCachedProgramQueueEntries>
+        programQueue;
 
 
 template<std::endian endianness>
@@ -20,6 +20,7 @@ auto DeserializeFrom(void const * source, ProgramQueueEntry * data) -> void cons
     source = DeserializeFrom<endianness>(source, &(data->timeout));
     return source;
 }
+
 
 // Explicit template specializations to keep everything in .cpp file
 template auto DeserializeFrom<std::endian::big>(void const *, ProgramQueueEntry *) -> void const *;
@@ -35,6 +36,7 @@ auto SerializeTo(void * destination, ProgramQueueEntry const & data) -> void *
     destination = SerializeTo<endianness>(destination, data.timeout);
     return destination;
 }
+
 
 // Explicit template specializations to keep everything in .cpp file
 template auto SerializeTo<std::endian::big>(void *, ProgramQueueEntry const &) -> void *;

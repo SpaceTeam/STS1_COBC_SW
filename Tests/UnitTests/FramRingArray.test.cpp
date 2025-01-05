@@ -1,6 +1,6 @@
 #include <Tests/UnitTests/UnitTestThread.hpp>
 
-#include <Sts1CobcSw/FramSections/RingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/FramMock.hpp>
@@ -8,8 +8,12 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
+#include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/equality.hpp>
 #include <strong_type/type.hpp>
+
+#include <etl/circular_buffer.h>
 
 #include <algorithm>
 #include <array>
@@ -51,16 +55,17 @@ template<std::endian endianness>
 auto DeserializeFrom(void const * source, S * data) -> void const *;
 
 
+inline constexpr auto indexesSize = fram::Size(3 * 2 * sizeof(std::uint32_t));
 inline constexpr auto charSection1 =
-    sts1cobcsw::Section<fram::Address(0), fram::Size(3 * 2 * 4 + 4)>{};
+    sts1cobcsw::Section<fram::Address(0), indexesSize + fram::Size(4)>{};
 inline constexpr auto charSection2 =
-    sts1cobcsw::Section<charSection1.end, fram::Size(3 * 2 * 4 + 4)>{};
+    sts1cobcsw::Section<charSection1.end, indexesSize + fram::Size(4)>{};
 inline constexpr auto sSection =
-    sts1cobcsw::Section<charSection2.end, fram::Size(3 * 2 * 4 + 4 * totalSerialSize<S>)>{};
+    sts1cobcsw::Section<charSection2.end, indexesSize + fram::Size(4 * totalSerialSize<S>)>{};
 
-inline constexpr auto charRingArray1 = sts1cobcsw::RingArray<char, charSection1, 2>{};
-inline constexpr auto charRingArray2 = sts1cobcsw::RingArray<char, charSection2, 2>{};
-inline constexpr auto sRingArray = sts1cobcsw::RingArray<S, sSection, 2>{};
+inline constexpr auto charRingArray1 = sts1cobcsw::FramRingArray<char, charSection1, 2>{};
+inline constexpr auto charRingArray2 = sts1cobcsw::FramRingArray<char, charSection2, 2>{};
+inline constexpr auto sRingArray = sts1cobcsw::FramRingArray<S, sSection, 2>{};
 
 
 static_assert(std::is_same_v<decltype(charRingArray1)::ValueType, char>);
@@ -84,8 +89,9 @@ auto RunUnitTest() -> void
 
     fram::ram::SetAllDoFunctions();
     fram::Initialize();
-    static constexpr auto charRingArray1StartAddress = 3 * 2 * 4;
-    static constexpr auto sRingArrayStartAddress = value_of(charRingArray2.section.end) + 3 * 2 * 4;
+    static constexpr auto charRingArray1StartAddress = value_of(indexesSize);
+    static constexpr auto sRingArrayStartAddress =
+        value_of(charRingArray2.section.end + indexesSize);
 
     // SECTION("FRAM is working")
     {
@@ -93,7 +99,10 @@ auto RunUnitTest() -> void
         fram::framIsWorking.Store(true);
 
         Require(charRingArray1.Size() == 0);
-
+        // Reading from an empty ring prints a debug message and returns a default-constructed value
+        Require(charRingArray1.Front() == 0);
+        Require(charRingArray1.Back() == 0);
+        Require(charRingArray1.Get(0) == 0);
         // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
         charRingArray1.Set(0, 11);
@@ -184,7 +193,11 @@ auto RunUnitTest() -> void
         Require(charRingArray1.Get(1) == 23);
 
         Require(charRingArray2.Size() == 0);
-        // Trying to set an element in an empty ring prints a debug message
+        // Reading from an empty ring prints a debug message and returns a default-constructed value
+        Require(charRingArray2.Front() == 0);
+        Require(charRingArray2.Back() == 0);
+        Require(charRingArray2.Get(0) == 0);
+        // Trying to set an element in an empty ring only prints a debug message
         charRingArray2.Set(0, 11);
 
         charRingArray2.PushBack(11);
@@ -234,7 +247,7 @@ auto RunUnitTest() -> void
         Require(charRingArray2.Get(1) == 42);
     }
 
-    // SECTION("RingArray of custom type")
+    // SECTION("FramRingArray of custom type")
     {
         memory.fill(0x00_b);
         fram::framIsWorking.Store(true);
@@ -249,7 +262,10 @@ auto RunUnitTest() -> void
         auto s8 = S{.u16 = 8, .i32 = 8, .u8 = 8};
 
         Require(sRingArray.Size() == 0);
-
+        // Reading from an empty ring prints a debug message and returns a default-constructed value
+        Require(sRingArray.Front() == S{});
+        Require(sRingArray.Back() == S{});
+        Require(sRingArray.Get(0) == S{});
         // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
         sRingArray.Set(0, s1);
@@ -313,13 +329,13 @@ auto RunUnitTest() -> void
         Require(sRingArray.Get(1) == s7);
         Require(sRingArray.Get(2) == s8);
 
-        sRingArray.FindAndReplace([&s6](auto const & x) { return x == s6; }, s2);
+        sRingArray.FindAndReplace([](auto const & x) { return x.u16 == 6; }, s2);
         Require(sRingArray.Get(0) == s2);
         Require(sRingArray.Get(1) == s7);
         Require(sRingArray.Get(2) == s8);
         Require(fram::ram::memory[sRingArrayStartAddress + 2 * totalSerialSize<S>] == 2_b);
 
-        sRingArray.FindAndReplace([](auto const & x) { return x == S{}; }, s1);
+        sRingArray.FindAndReplace([](auto const & x) { return x.i32 == 32; }, s1);
         Require(sRingArray.Get(0) == s2);
         Require(sRingArray.Get(1) == s7);
         Require(sRingArray.Get(2) == s8);

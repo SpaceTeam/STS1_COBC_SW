@@ -1,15 +1,19 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
-#include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/RingArray.hpp>
 
 #include <strong_type/equality.hpp>
+
+#include <etl/circular_buffer.h>
 
 
 namespace sts1cobcsw::edu
 {
-sts1cobcsw::RingArray<ProgramStatusHistoryEntry,
-                      framSections.Get<"eduProgramStatusHistory">(),
-                      nCachedProgramStatusHistoryEntries>
+using sts1cobcsw::DeserializeFrom;
+using sts1cobcsw::SerializeTo;
+
+
+sts1cobcsw::FramRingArray<ProgramStatusHistoryEntry,
+                          framSections.Get<"eduProgramStatusHistory">(),
+                          nCachedProgramStatusHistoryEntries>
     programStatusHistory;
 
 
@@ -21,10 +25,6 @@ auto UpdateProgramStatusHistory(ProgramId programId, RealTime startTime, Program
         { return entry.programId == programId and entry.startTime == startTime; },
         ProgramStatusHistoryEntry{programId, startTime, newStatus});
 }
-
-
-using sts1cobcsw::DeserializeFrom;
-using sts1cobcsw::SerializeTo;
 
 
 template<std::endian endianness>

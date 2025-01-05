@@ -81,6 +81,13 @@ target_link_libraries(
 )
 add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
+add_program(FramVector FramVector.test.cpp UnitTestThread.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_FramVector PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Utility
+                                       Sts1CobcSw_Periphery Sts1CobcSw_Serial
+)
+add_test(NAME FramVector COMMAND Sts1CobcSwTests_FramVector)
+
 add_program(LfsRam LfsRam.test.cpp UnitTestThread.cpp)
 target_link_libraries(
     Sts1CobcSwTests_LfsRam PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem

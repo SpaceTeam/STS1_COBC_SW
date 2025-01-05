@@ -15,18 +15,22 @@ namespace sts1cobcsw
 inline constexpr auto framMemory = Section<fram::Address(0), fram::memorySize>{};
 inline constexpr auto framSections =
     Subsections<framMemory,
-                SubsectionInfo<"persistentVariables0", fram::Size(300)>,
+                SubsectionInfo<"persistentVariables", fram::Size(300)>,
                 SubsectionInfo<"eduProgramQueue", fram::Size(20 * 8)>,
                 SubsectionInfo<"eduProgramStatusHistory", fram::Size(50 * 7)>,
                 SubsectionInfo<"testMemory", fram::Size(1000)>,
                 SubsectionInfo<"telemetry", fram::Size(26'168 * 40)>>{};
 inline constexpr auto persistentVariables =
-    PersistentVariables<framSections.Get<"persistentVariables0">(),
+    PersistentVariables<framSections.Get<"persistentVariables">(),
+                        // Bootloader
                         PersistentVariableInfo<"nResetsSinceRf", std::uint16_t>,
                         PersistentVariableInfo<"activeSecondaryFwPartition", std::int8_t>,
                         PersistentVariableInfo<"backupSecondaryFwPartition", std::int8_t>,
+                        // COBC state
                         PersistentVariableInfo<"txIsOn", bool>,
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
+                        PersistentVariableInfo<"eduProgramQueueIndex", std::uint8_t>,
+                        // Housekeeping
                         PersistentVariableInfo<"nTotalResets", std::uint32_t>,
                         PersistentVariableInfo<"realTime", RealTime>,
                         PersistentVariableInfo<"realTimeOffset", Duration>,
@@ -37,5 +41,5 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"nRfErrors", std::uint16_t>,
                         PersistentVariableInfo<"nFileSystemErrors", std::uint16_t>,
                         PersistentVariableInfo<"eduShouldBePowered", bool>,
-                        PersistentVariableInfo<"eduCommunicationErrorCounter", std::uint16_t>>{};
+                        PersistentVariableInfo<"nEduCommunicationErrors", std::uint16_t>>{};
 }
