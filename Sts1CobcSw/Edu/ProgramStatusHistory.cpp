@@ -2,6 +2,8 @@
 
 #include <strong_type/equality.hpp>
 
+#include <etl/circular_buffer.h>
+
 
 namespace sts1cobcsw::edu
 {

@@ -8,8 +8,12 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
+#include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/equality.hpp>
 #include <strong_type/type.hpp>
+
+#include <etl/circular_buffer.h>
 
 #include <algorithm>
 #include <array>

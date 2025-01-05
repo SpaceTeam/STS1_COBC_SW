@@ -152,7 +152,7 @@ auto EduIsAlive() -> bool
         }
     }
 
-    auto executionTime = CurrentRodosTime() - begin;
+    [[maybe_unused]] auto executionTime = CurrentRodosTime() - begin;
     DEBUG_PRINT("Execution Time of EduIsAlive: %" PRIi64 " ns\n", executionTime / ns);
     DEBUG_PRINT("Execution Time of EduIsAlive: %" PRIi64 " ms\n", executionTime / ms);
     return false;

@@ -8,6 +8,8 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
+#include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <algorithm>

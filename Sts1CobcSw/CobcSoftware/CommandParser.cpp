@@ -3,8 +3,12 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
+
+#include <strong_type/type.hpp>
 
 #include <cinttypes>  // IWYU pragma: keep
 
@@ -87,7 +91,7 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
         DEBUG_PRINT("Start Time   : %" PRIi32 "\n", value_of(entry.startTime));
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
 
-        edu::programQueue.PushBack(entry);  // NOLINT
+        edu::programQueue.PushBack(entry);
         queueEntries = queueEntries.subspan<totalSerialSize<edu::ProgramQueueEntry>>();
     }
 }

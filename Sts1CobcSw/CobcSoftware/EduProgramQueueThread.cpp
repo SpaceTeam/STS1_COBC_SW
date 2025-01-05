@@ -5,9 +5,10 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
-#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RealTime.hpp>
@@ -19,8 +20,6 @@
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
-
-#include <etl/vector.h>
 
 #include <cinttypes>  // IWYU pragma: keep
 
