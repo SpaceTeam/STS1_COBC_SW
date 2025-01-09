@@ -125,10 +125,10 @@ auto RunUnitTest() -> void
     }
 
     // Test with bit flip
-    // - i = 0: bit flip while unmounted with small file (<= page size)
-    // - i = 1: bit flip while mounted with small file (<= page size)
-    // - i = 2: bit flip while unmounted with large file (> page size)
-    // - i = 3: bit flip while mounted with large file (> page size)
+    // - i = 0: bit flip while unmounted with small file (<= read size)
+    // - i = 1: bit flip while mounted with small file (<= read size)
+    // - i = 2: bit flip while unmounted with large file (> read size)
+    // - i = 3: bit flip while mounted with large file (> read size)
     for(auto i = 0; i < 4; ++i)
     {
         errorCode = lfs_mount(&lfs, &fs::lfsConfig);
@@ -140,7 +140,7 @@ auto RunUnitTest() -> void
         Require(errorCode == 0);
 
         static constexpr auto dataToCorrupt = std::array{0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b};
-        auto fileSize = i < 2 ? 256U : 257U;
+        auto fileSize = i < 2 ? 252U : 257U;
         auto writeData = std::vector(fileSize, 0xB0_b);
         std::copy(dataToCorrupt.begin(), dataToCorrupt.end(), writeData.begin());
         errorCode = lfs_file_write(&lfs, &file, writeData.data(), writeData.size());
@@ -162,7 +162,7 @@ auto RunUnitTest() -> void
         errorCode = lfs_file_open(&lfs, &file, filePath.c_str(), LFS_O_RDONLY);
         Require(errorCode == 0);
 
-        // If the original file size is <= 256 bytes (page size), the corrupted file size is 0.
+        // If the original file size is <= 252 bytes (read size), the corrupted file size is 0.
         // Otherwise, the file size does not change.
         auto size = lfs_file_size(&lfs, &file);
         if(i < 2)
@@ -177,7 +177,14 @@ auto RunUnitTest() -> void
         // Reading never fails, but it reads either 0 bytes or the corrupted data
         auto readData = std::vector<sts1cobcsw::Byte>(writeData.size());
         errorCode = lfs_file_read(&lfs, &file, readData.data(), readData.size());
-        Require(errorCode == size);
+        if(i < 2)
+        {
+            Require(errorCode == 0);
+        }
+        else
+        {
+            Require(errorCode == LFS_ERR_CORRUPT);
+        }
         Require(readData != writeData);
 
         errorCode = lfs_file_close(&lfs, &file);

@@ -99,6 +99,7 @@ target_link_libraries(
     Sts1CobcSwTests_LfsRam PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
                                    Sts1CobcSw_Utility
 )
+add_test(NAME LfsRam COMMAND Sts1CobcSwTests_LfsRam)
 
 add_program(LfsWrapper LfsWrapper.test.cpp UnitTestThread.cpp)
 target_link_libraries(
