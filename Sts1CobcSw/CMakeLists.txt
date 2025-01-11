@@ -5,6 +5,7 @@ add_subdirectory(Hal)
 add_subdirectory(Outcome)
 add_subdirectory(Periphery)
 add_subdirectory(Serial)
+add_subdirectory(Telemetry)
 add_subdirectory(Utility)
 add_subdirectory(CobcSoftware)
 

@@ -9,6 +9,7 @@ RODOS::Topic<bool> eduIsAliveTopic(-1, "eduIsAliveTopic");
 RODOS::CommBuffer<bool> eduIsAliveBufferForPowerManagement{};
 RODOS::CommBuffer<bool> eduIsAliveBufferForCommunicationError{};
 RODOS::CommBuffer<bool> eduIsAliveBufferForListener{};
+RODOS::CommBuffer<bool> eduIsAliveBufferForTelemetry{};
 
 RODOS::Subscriber eduIsAliveSubscriberForPowerManagement(eduIsAliveTopic,
                                                          eduIsAliveBufferForPowerManagement,
@@ -19,6 +20,9 @@ RODOS::Subscriber eduIsAliveSubscriberForCommunicationError(eduIsAliveTopic,
 RODOS::Subscriber eduIsAliveSubscriberForListener(eduIsAliveTopic,
                                                   eduIsAliveBufferForListener,
                                                   "eduIsAliveSubscriber");
+RODOS::Subscriber eduIsAliveSubscriberForTelemetry(eduIsAliveTopic,
+                                                   eduIsAliveBufferForListener,
+                                                   "eduIsAliveSubscriber");
 
 RODOS::Topic<Duration> nextProgramStartDelayTopic(-1, "nextProgramStartDelayTopic");
 RODOS::CommBuffer<Duration> nextProgramStartDelayBuffer{};

@@ -65,6 +65,8 @@ CheckOptions:
     value: '<cmath>'
   - key: 'cppcoreguidelines-narrowing-conversions.PedanticMode'
     value: 'true'
+  - key: 'cppcoreguidelines-pro-type-member-init.UseAssignment'
+    value: 'true'
   - key: 'readability-else-after-return.WarnOnUnfixable'
     value: 'true'
   - key: 'readability-else-after-return.WarnOnConditionVariables'
