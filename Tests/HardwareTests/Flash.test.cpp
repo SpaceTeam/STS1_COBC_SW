@@ -41,7 +41,6 @@ private:
     void init() override
     {
         InitializeRfLatchupDisablePins();
-        flash::Initialize();
     }
 
 
@@ -52,6 +51,7 @@ private:
         PRINTF("\nFlash test\n\n");
 
         PRINTF("\n");
+        flash::Initialize();
         auto actualBaudRate = flash::ActualBaudRate();
         PRINTF("Actual baud rate: %" PRIi32 "\n", actualBaudRate);
 

@@ -51,7 +51,6 @@ private:
     void init() override
     {
         InitializeRfLatchupDisablePins();
-        fram::Initialize();
     }
 
 
@@ -62,6 +61,7 @@ private:
         PRINTF("\nFRAM test\n\n");
 
         PRINTF("\n");
+        fram::Initialize();
         auto actualBaudRate = fram::ActualBaudRate();
         PRINTF("Actual baud rate: %" PRIi32 "\n", actualBaudRate);
 

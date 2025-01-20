@@ -28,6 +28,8 @@ public:
 
 
 private:
+    // Do not call this in the init() function of a thread. The semaphore doesn't work correctly
+    // there, making other SPIs silently fail to get initialized afterwards.
     auto DoInitialize(std::uint32_t baudRate, bool useOpenDrainOutputs) -> void override;
     auto Read(void * data, std::size_t nBytes, Duration timeout) -> void override;
     auto Write(void const * data, std::size_t nBytes, Duration timeout) -> void override;

@@ -31,7 +31,6 @@ private:
     auto init() -> void override
     {
         InitializeRfLatchupDisablePins();
-        fs::Initialize();
     }
 
 
@@ -42,6 +41,7 @@ private:
         PRINTF("\n\nlittlefs test\n");
 
         PRINTF("\n");
+        fs::Initialize();
         auto lfs = lfs_t{};
         PRINTF("Formatting ...\n");
         auto errorCode = lfs_format(&lfs, &fs::lfsConfig);

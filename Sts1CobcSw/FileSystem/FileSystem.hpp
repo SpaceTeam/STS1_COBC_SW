@@ -18,7 +18,8 @@ extern lfs_file_t lfsFile;
 extern const lfs_config lfsConfig;
 
 
-// Must be called once in a thread's init() function
+// Must not be called in a thread's init() function since HardwareSpi::DoInitialize() uses a
+// semaphore that doesn't work correctly there.
 auto Initialize() -> void;
 auto Format() -> int;
 auto Mount() -> int;
