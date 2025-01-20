@@ -57,7 +57,6 @@ public:
         rfSpi_.SetTransferEnd([]() { return transferEnd; });
         rfSpi_.SetWrite(WriteThatFinishesInTime);
         fram::ram::SetAllDoFunctions();
-        fram::Initialize();
     }
 
     void run() override
@@ -66,6 +65,8 @@ public:
 
         PRINTF("\nSPI supervisor test\n\n");
 
+        // The FRAM is required for the persistent variables
+        fram::Initialize();
         PRINTF("Writing with implementation that finishes in time ...\n");
         WriteTo(&flashSpi_, Span(0x00_b), 10 * ms);
         WriteTo(&framEpsSpi_, Span(0x00_b), 100 * ms);

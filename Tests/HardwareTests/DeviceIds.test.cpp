@@ -44,8 +44,6 @@ private:
         InitializeRfLatchupDisablePins();
         led1GpioPin.Direction(hal::PinDirection::out);
         led1GpioPin.Reset();
-        flash::Initialize();
-        fram::Initialize();
     }
 
 
@@ -55,7 +53,9 @@ private:
 
         PRINTF("\nDevice IDs test\n\n");
 
+        flash::Initialize();
         PRINTF("Flash initialized\n");
+        fram::Initialize();
         PRINTF("FRAM initialized\n");
         DisableRfLatchupProtection();
         rf::Initialize(rf::TxType::morse);
