@@ -50,7 +50,6 @@ constexpr auto readStatusRegister2 = SimpleInstruction{.id = 0x35_b, .answerLeng
 constexpr auto readStatusRegister3 = SimpleInstruction{.id = 0x15_b, .answerLength = 1};
 constexpr auto writeEnable = SimpleInstruction{.id = 0x06_b, .answerLength = 0};
 constexpr auto writeDisable = SimpleInstruction{.id = 0x04_b, .answerLength = 0};
-constexpr auto enter4ByteAdressMode = SimpleInstruction{.id = 0xB7_b, .answerLength = 0};
 
 constexpr auto readData4ByteAddress = 0x13_b;
 constexpr auto pageProgram4ByteAddress = 0x12_b;
@@ -62,7 +61,6 @@ auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
 
 // --- Private function declarations ---
 
-auto Enter4ByteAdressMode() -> void;
 auto EnableWriting() -> void;
 auto DisableWriting() -> void;
 auto IsBusy() -> bool;
@@ -98,7 +96,6 @@ auto Initialize() -> void
     writeProtectionGpioPin.Set();
     auto const baudRate = 48'000'000;
     Initialize(&flashSpi, baudRate);
-    Enter4ByteAdressMode();
 }
 
 
@@ -192,14 +189,6 @@ auto ActualBaudRate() -> std::int32_t
 
 
 // --- Private function definitions ---
-
-auto Enter4ByteAdressMode() -> void
-{
-    csGpioPin.Reset();
-    SendInstruction<enter4ByteAdressMode>();
-    csGpioPin.Set();
-}
-
 
 auto EnableWriting() -> void
 {
