@@ -2,7 +2,7 @@
 //! @brief "Driver" for the temperature sensor TMP36xS
 
 
-#include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
+#include <Sts1CobcSw/Periphery/TemperatureSensors.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -23,38 +23,58 @@ C:\Coding_Stuff\Space_Team\STS1_COBC_SW\build\cobc\Tests\HardwareTests
 
 */
 
-namespace sts1cobcsw::rftemperaturesensor
+namespace sts1cobcsw::temperaturesensors
 {
-// RF_TMP is read on pin PC0 on internal ADC1
-auto adc = RODOS::HAL_ADC(RODOS::ADC_IDX1);
-constexpr auto channel = RODOS::ADC_CH_016;
+
+// RF_TMP is read on pin PC0 == ADC_CH_010 on internal ADC1
+auto rfAdc = RODOS::HAL_ADC(RODOS::ADC_IDX1);
+constexpr auto rfChannel = RODOS::ADC_CH_010;
+
+// MCU_TMP is read on ADC_CH_016 on internal ADC1 (and not on 18!)
+auto mcuAdc = RODOS::HAL_ADC(RODOS::ADC_IDX1);
+constexpr auto mcuChannel = RODOS::ADC_CH_016;
+
+constexpr int32_t adcBitResolution = 12;  // 3.3 V / 2^12 bits / (10 mV/°C) = 0.0806 °C/bit
 
 
-
-
-
-auto Initialize() -> void
+auto InitializeRf() -> void
 {
     ADC_TempSensorVrefintCmd(FunctionalState::ENABLE);
-
-
-    adc.init(channel);
-    const int32_t bitResolution = 12;  // 3.3 V / 2^12 bits / (10 mV/°C) = 0.0806 °C/bit
-    adc.config(RODOS::ADC_PARAMETER_RESOLUTION, bitResolution);
-
+    rfAdc.init(rfChannel);
+    rfAdc.config(RODOS::ADC_PARAMETER_RESOLUTION, adcBitResolution);
 }
 
-
-auto Read() -> std::uint16_t
+auto InitializeMcu() -> void
 {
+    mcuAdc.init(mcuChannel);
+    mcuAdc.config(RODOS::ADC_PARAMETER_RESOLUTION, adcBitResolution);
+}
 
-    auto rfTemperature = adc.read(channel);
+auto ReadRf() -> std::uint16_t
+{
+    auto rfTemperature = rfAdc.read(rfChannel);
     if(rfTemperature == static_cast<std::uint16_t>(RODOS::ADC_ERR_CONV_FAIL))
     {
-        adc.reset();
-        Initialize();
-        rfTemperature = adc.read(channel);
+        rfAdc.reset();
+        InitializeRf();
+        rfTemperature = rfAdc.read(rfChannel);
     }
     return rfTemperature;
 }
+
+auto ReadMcu() -> std::uint16_t
+{
+    auto rfTemperature = mcuAdc.read(mcuChannel);
+    if(rfTemperature == static_cast<std::uint16_t>(RODOS::ADC_ERR_CONV_FAIL))
+    {
+        mcuAdc.reset();
+        InitializeMcu();
+        rfTemperature = mcuAdc.read(mcuChannel);
+    }
+    return rfTemperature;
+}
+
+
+
+
 }

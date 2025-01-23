@@ -1,6 +1,6 @@
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
-#include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
+#include <Sts1CobcSw/Periphery/TemperatureSensors.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -19,7 +19,7 @@ private:
     void init() override
     {
         InitializeRfLatchupDisablePins();
-        rftemperaturesensor::Initialize();
+        temperaturesensors::InitializeRf();
     }
 
 
@@ -35,7 +35,7 @@ private:
         auto const offset = -50;               // °C at 0 V
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
         {
-            auto temperature = rftemperaturesensor::Read();
+            auto temperature = temperaturesensors::ReadRf();
             PRINTF("MCU raw value   = %5d\n", temperature);
             PRINTF("MCU temperature = %5.1f deg C\n", temperature * conversionFactor + offset);
         }

@@ -4,11 +4,12 @@
 #include <cstdint>
 
 
-namespace sts1cobcsw::rftemperaturesensor
+namespace sts1cobcsw::temperaturesensors
 {
-auto Initialize() -> void;
-auto Read() -> std::uint16_t;
+auto InitializeRf() -> void;
+auto InitializeMcu() -> void;
 
-auto InitializeStm32Temperature() -> void;
-auto ReadStm32Temperature() -> std::uint16_t;
+auto ReadRf() -> std::uint16_t;
+auto ReadMcu() -> std::uint16_t;
+
 }
