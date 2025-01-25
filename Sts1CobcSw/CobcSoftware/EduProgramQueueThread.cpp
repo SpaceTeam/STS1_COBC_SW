@@ -67,12 +67,13 @@ private:
         {
             if(edu::programQueue.IsEmpty())
             {
-                DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
+                DEBUG_PRINT("EDU program queue is empty. Suspend thread until end of time.\n");
                 SuspendUntil(endOfTime);
             }
             else if(persistentVariables.Load<"eduProgramQueueIndex">() >= edu::programQueue.Size())
             {
-                DEBUG_PRINT("End of queue is reached, thread set to sleep until end of time\n");
+                DEBUG_PRINT(
+                    "End of EDU program queue is reached. Suspend thread until end of time.\n");
                 SuspendUntil(endOfTime);
             }
 
@@ -81,12 +82,12 @@ private:
             auto startDelay = ComputeStartDelay(queueEntry.startTime);
             nextProgramStartDelayTopic.publish(startDelay);
 
-            DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
+            DEBUG_PRINT("EDU program at queue index %d will start in %" PRIi64 " s\n",
                         queueIndex,
                         startDelay / s);
 
             // Suspend until delay time - 2 seconds
-            DEBUG_PRINT("Suspending for the first time for      : %" PRIi64 " s\n",
+            DEBUG_PRINT("Suspending for the first time for           %" PRIi64 " s\n",
                         (startDelay - eduCommunicationDelay) / s);
             SuspendFor(startDelay - eduCommunicationDelay);
 
@@ -96,7 +97,7 @@ private:
             auto updateTimeResult = edu::UpdateTime({CurrentRealTime()});
             if(updateTimeResult.has_error())
             {
-                DEBUG_PRINT("UpdateTime error code : %d\n",
+                DEBUG_PRINT("UpdateTime() error code = %d\n",
                             static_cast<int>(updateTimeResult.error()));
                 DEBUG_PRINT(
                     "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
@@ -110,12 +111,12 @@ private:
             auto startDelay2 = ComputeStartDelay(queueEntry.startTime);
             nextProgramStartDelayTopic.publish(startDelay2);
 
-            DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
+            DEBUG_PRINT("EDU program at queue index %d will start in %" PRIi64 " s\n",
                         queueIndex,
                         startDelay2 / s);
 
             // Suspend for delay a second time
-            DEBUG_PRINT("Suspending for the second time for     : %" PRIi64 " s\n",
+            DEBUG_PRINT("Suspending for the second time for          %" PRIi64 " s\n",
                         startDelay2 / s);
             SuspendFor(startDelay2);
 
