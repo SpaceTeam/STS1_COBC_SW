@@ -4,7 +4,7 @@
 #include <cstdint>
 
 
-namespace sts1cobcsw::temperaturesensors
+namespace sts1cobcsw::adc
 {
 auto Initialize() -> void;
 auto ReadRfTemperature() -> std::uint16_t;

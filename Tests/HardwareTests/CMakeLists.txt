@@ -23,6 +23,13 @@ target_include_directories(
                                                "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
 )
 
+add_program(AdcSensors AdcSensors.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_AdcSensors PRIVATE rodos::rodos Sts1CobcSw_Periphery
+                                       Sts1CobcSwTests_RfLatchupDisablePin
+)
+add_watchdog_version_of(AdcSensors)
+
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSwTests_Utility
@@ -102,13 +109,6 @@ target_link_libraries(
             Sts1CobcSwTests_RfLatchupDisablePin
 )
 add_watchdog_version_of(SpiSupervisor)
-
-add_program(TemperatureSensors TemperatureSensors.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_TemperatureSensors PRIVATE rodos::rodos Sts1CobcSw_Periphery
-                                               Sts1CobcSwTests_RfLatchupDisablePin
-)
-add_watchdog_version_of(TemperatureSensors)
 
 add_program(Gpio Gpio.test.cpp)
 target_link_libraries(

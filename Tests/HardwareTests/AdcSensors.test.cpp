@@ -1,6 +1,6 @@
 #include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 
-#include <Sts1CobcSw/Periphery/TemperatureSensors.hpp>
+#include <Sts1CobcSw/Periphery/AdcSensors.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -25,10 +25,10 @@ auto ConvertToRfTemperature(std::uint16_t adcValue) -> double
 }
 
 
-class TermperatureSensorTest : public RODOS::StaticThread<>
+class AdcSensorsTest : public RODOS::StaticThread<>
 {
 public:
-    TermperatureSensorTest() : StaticThread("TermperatureSensorTest")
+    AdcSensorsTest() : StaticThread("AdcSensorsTest")
     {
     }
 
@@ -46,20 +46,20 @@ private:
 
         EnableRfLatchupProtection();
 
-        PRINTF("\nTemperature sensor test\n\n");
+        PRINTF("\nADC sensors test\n\n");
 
-        temperaturesensors::Initialize();
+        adc::Initialize();
 
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
         {
-            auto adcValue = temperaturesensors::ReadRfTemperature();
+            auto adcValue = adc::ReadRfTemperature();
             PRINTF("RF raw value    = %5d\n", adcValue);
             PRINTF("RF temperature  = %5.1f deg C\n", ConvertToRfTemperature(adcValue));
-            adcValue = temperaturesensors::ReadMcuTemperature();
+            adcValue = adc::ReadMcuTemperature();
             PRINTF("MCU raw value   = %5d\n", adcValue);
             PRINTF("MCU temperature = %5.1f deg C\n", ConvertToMcuTemperature(adcValue));
             PRINTF("\n");
         }
     }
-} termperatureSensorTest;
+} adcSensorsTest;
 }
