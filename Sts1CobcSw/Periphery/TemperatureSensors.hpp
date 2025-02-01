@@ -6,10 +6,7 @@
 
 namespace sts1cobcsw::temperaturesensors
 {
-auto InitializeRf() -> void;
-auto InitializeMcu() -> void;
-
-auto ReadRf() -> std::uint16_t;
-auto ReadMcu() -> std::uint16_t;
-
+auto Initialize() -> void;
+auto ReadRfTemperature() -> std::uint16_t;
+auto ReadMcuTemperature() -> std::uint16_t;
 }
