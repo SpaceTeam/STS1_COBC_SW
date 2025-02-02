@@ -13,6 +13,9 @@ find_rodos()
 # ---- Tests ----
 
 add_custom_target(AllTests)
+
+add_subdirectory(CatchRodos EXCLUDE_FROM_ALL)
+
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_subdirectory(GoldenTests EXCLUDE_FROM_ALL)
     add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
