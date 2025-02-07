@@ -1,4 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
 
 #include <Sts1CobcSw/Periphery/Rf.hpp>
@@ -22,14 +21,11 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
     }
 
 
     void run() override
     {
-        EnableRfLatchupProtection();
-
         PRINTF("\nRF test\n\n");
 
         rf::Initialize(rf::TxType::morse);

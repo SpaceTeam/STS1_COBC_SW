@@ -1,5 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -29,7 +27,6 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
         edu::Initialize();
         eduUpdateGpioPin.Direction(hal::PinDirection::in);
         auto const baudRate = 115'200;
@@ -39,8 +36,6 @@ private:
 
     void run() override
     {
-        EnableRfLatchupProtection();
-
         PRINTF("\n");
         PRINTF("EDU power management test\n");
 

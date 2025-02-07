@@ -1,4 +1,4 @@
-#include <Tests/CatchRodos/RfLatchupDisablePin.hpp>
+#include <Tests/HardwareSetup/RfLatchupProtection.hpp>
 
 #ifndef __linux__
     #include <Sts1CobcSw/Hal/GpioPin.hpp>

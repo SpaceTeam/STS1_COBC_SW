@@ -1,5 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
@@ -19,6 +17,9 @@
 
 namespace sts1cobcsw
 {
+using RODOS::PRINTF;
+
+
 // Running this test showed that the minimum required stack size is between 12.0 and 12.1 kB
 constexpr auto stackSize = 13'000;
 
@@ -34,15 +35,11 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
     }
 
 
     void run() override
     {
-        using RODOS::PRINTF;
-
-        EnableRfLatchupProtection();
         SuspendFor(totalStartupTestTimeout);
 
         PRINTF("\nSPI supervisor test\n\n");
@@ -74,6 +71,5 @@ private:
         fram::WriteTo(framAddress, Span(framTestData), spiTimeout);
         PRINTF("  done\n\n");
     }
-
 } spiSupervisorTest;
 }

@@ -1,5 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -7,6 +5,9 @@
 
 namespace sts1cobcsw
 {
+using RODOS::PRINTF;
+
+
 class TermperatureSensorTest : public RODOS::StaticThread<>
 {
 public:
@@ -18,17 +19,12 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
         rftemperaturesensor::Initialize();
     }
 
 
     void run() override
     {
-        using RODOS::PRINTF;
-
-        EnableRfLatchupProtection();
-
         PRINTF("\nRF temperature sensor test\n\n");
 
         auto const conversionFactor = 0.0806;  // °C/bit

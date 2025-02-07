@@ -1,4 +1,3 @@
-#include <Tests/CatchRodos/RfLatchupDisablePin.hpp>
 #include <Tests/CatchRodos/TestRegistration.hpp>
 #include <Tests/CatchRodos/TestReporter.hpp>
 
@@ -13,7 +12,12 @@ std::uint32_t printfMask = 0;
 
 namespace sts1cobcsw
 {
-class TestThread : public RODOS::StaticThread<>
+// We really don't want stack overflows in tests, so we are generous with the stack size and use
+// about half of the available RAM (128 kiB) on the STM32F411RE
+static constexpr auto stackSize = 64'000U;
+
+
+class TestThread : public RODOS::StaticThread<stackSize>
 {
 public:
     TestThread() : StaticThread("TestThread")
@@ -25,7 +29,6 @@ private:
     auto init() -> void override
     {
         printfMask = 1;
-        InitializeRfLatchupDisablePins();
         TestReporter::GetInstance().PrintPreamble();
         TestRegistry::GetInstance().RunTestInits();
         printfMask = 0;
@@ -35,7 +38,6 @@ private:
     auto run() -> void override
     {
         printfMask = 1;
-        EnableRfLatchupProtection();
         TestRegistry::GetInstance().RunTestCases();
         TestReporter::GetInstance().PrintSummary();
 #ifdef __linux__

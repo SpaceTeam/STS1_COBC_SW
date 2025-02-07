@@ -1,4 +1,4 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+#include <Tests/HardwareSetup/RfLatchupProtection.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -9,7 +9,6 @@ class DisableRfLatchupProtectionTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        InitializeRfLatchupDisablePins();
     }
 
 

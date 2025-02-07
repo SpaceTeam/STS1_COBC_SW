@@ -1,5 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 
@@ -21,7 +19,6 @@ class GpioTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        InitializeRfLatchupDisablePins();
         for(auto & pin : pinsToTest)
         {
             pin.Direction(hal::PinDirection::out);
@@ -31,10 +28,7 @@ class GpioTest : public RODOS::StaticThread<>
 
     void run() override
     {
-        EnableRfLatchupProtection();
-
         auto toggle = true;
-
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
         {
             for(auto & pin : pinsToTest)

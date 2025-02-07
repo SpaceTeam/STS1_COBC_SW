@@ -1,4 +1,4 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+#include <Tests/HardwareSetup/RfLatchupProtection.hpp>
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -41,7 +41,6 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
         led1GpioPin.Direction(hal::PinDirection::out);
         led1GpioPin.Reset();
     }
@@ -49,8 +48,6 @@ private:
 
     void run() override
     {
-        EnableRfLatchupProtection();
-
         PRINTF("\nDevice IDs test\n\n");
 
         flash::Initialize();

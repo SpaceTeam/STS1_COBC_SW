@@ -1,4 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
 
 #include <Sts1CobcSw/Periphery/Flash.hpp>
@@ -40,14 +39,11 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
     }
 
 
     void run() override
     {
-        EnableRfLatchupProtection();
-
         PRINTF("\nFlash test\n\n");
 
         PRINTF("\n");

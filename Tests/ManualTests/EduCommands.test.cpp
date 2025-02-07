@@ -1,5 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -43,7 +41,6 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
         edu::Initialize();
         auto const baudRate = 115'200;
         hal::Initialize(&uciUart, baudRate);
@@ -52,8 +49,6 @@ private:
 
     void run() override
     {
-        EnableRfLatchupProtection();
-
         // Permanently turn on EDU for this test
         edu::TurnOn();
 

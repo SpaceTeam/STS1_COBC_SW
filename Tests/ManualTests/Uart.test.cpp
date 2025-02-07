@@ -6,8 +6,6 @@
 //!
 //! After flashing the COBC just follow the instructions on the screen.
 
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -29,6 +27,9 @@
 
 namespace sts1cobcsw
 {
+using RODOS::PRINTF;
+
+
 auto eduUart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
@@ -46,7 +47,6 @@ class UartTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        InitializeRfLatchupDisablePins();
         auto uartBaudRate = 115'200U;
         hal::Initialize(&eduUart, uartBaudRate);
         hal::Initialize(&uciUart, uartBaudRate);
@@ -55,10 +55,6 @@ class UartTest : public RODOS::StaticThread<>
 
     void run() override
     {
-        using RODOS::PRINTF;
-
-        EnableRfLatchupProtection();
-
         PRINTF("\n");
         PRINTF("Is an EDU connected to test the non-blocking UART functions? (y/n)\n");
         auto isEduConnected = std::array<Byte, 1>{};

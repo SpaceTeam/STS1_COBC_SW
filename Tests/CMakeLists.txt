@@ -15,6 +15,10 @@ find_rodos()
 add_custom_target(AllTests)
 
 add_subdirectory(CatchRodos EXCLUDE_FROM_ALL)
+# Even though it is called "HardwareSetup", it can be build for both Linux and the COBC. On Linux it
+# just does not do anything. This simplifies the CMake code for tests that can be built for both
+# targets.
+add_subdirectory(HardwareSetup EXCLUDE_FROM_ALL)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_subdirectory(GoldenTests EXCLUDE_FROM_ALL)
@@ -22,7 +26,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_dependencies(AllTests AllGoldenTests AllUnitTests)
 elseif(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_subdirectory(HardwareTests EXCLUDE_FROM_ALL)
-    add_dependencies(AllTests AllHardwareTests)
+    add_subdirectory(ManualTests EXCLUDE_FROM_ALL)
+    add_dependencies(AllTests AllHardwareTests AllManualTests)
 endif()
 
 # ---- End-of-file commands ----

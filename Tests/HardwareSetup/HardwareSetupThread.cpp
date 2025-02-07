@@ -1,4 +1,4 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
+#include <Tests/HardwareSetup/RfLatchupProtection.hpp>
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -8,46 +8,45 @@
 
 namespace sts1cobcsw
 {
-static auto led2Gpio = hal::GpioPin(hal::led2Pin);
 static auto watchdogClearGpio = hal::GpioPin(hal::watchdogClearPin);
 
 
-class WatchdogClearTest : public RODOS::StaticThread<>
+class HardwareSetupThread : public RODOS::StaticThread<>
 {
 public:
-    WatchdogClearTest() : StaticThread("WatchdogClearTest", MAX_THREAD_PRIORITY)
+    HardwareSetupThread() : StaticThread("HardwareSetupThread", MAX_THREAD_PRIORITY)
     {
     }
 
 
 private:
-    void init() override
+    auto init() -> void override
     {
         InitializeRfLatchupDisablePins();
-        led2Gpio.Direction(hal::PinDirection::out);
+#ifdef USE_WATCHDOG
         watchdogClearGpio.Direction(hal::PinDirection::out);
+#endif
     }
 
 
-    void run() override
+    auto run() -> void override
     {
         EnableRfLatchupProtection();
-
+#ifdef USE_WATCHDOG
         auto toggle = true;
         TIME_LOOP(0, 800 * RODOS::MILLISECONDS)
         {
             if(toggle)
             {
-                led2Gpio.Reset();
                 watchdogClearGpio.Reset();
             }
             else
             {
-                led2Gpio.Set();
                 watchdogClearGpio.Set();
             }
             toggle = not toggle;
         }
+#endif
     }
-} watchdogClearTest;
+} hardwareSetupThread;
 }

@@ -1,4 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
 #include <Tests/HardwareTests/Utility.hpp>
 
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
@@ -30,14 +29,11 @@ public:
 private:
     auto init() -> void override
     {
-        InitializeRfLatchupDisablePins();
     }
 
 
     auto run() -> void override
     {
-        EnableRfLatchupProtection();
-
         PRINTF("\n\nlittlefs test\n");
 
         PRINTF("\n");

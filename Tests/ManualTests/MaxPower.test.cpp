@@ -1,5 +1,3 @@
-#include <Tests/HardwareTests/RfLatchupDisablePin.hpp>
-
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
@@ -110,7 +108,6 @@ public:
 private:
     void init() override
     {
-        InitializeRfLatchupDisablePins();
         auto const baudRate = 115'200;
         hal::Initialize(&uciUart, baudRate);
     }
@@ -118,8 +115,6 @@ private:
 
     void run() override
     {
-        EnableRfLatchupProtection();
-
         while(true)
         {
             PRINTF("\nMax. power test main thread\n\n");
