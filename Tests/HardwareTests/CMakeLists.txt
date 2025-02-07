@@ -8,8 +8,7 @@ target_include_directories(
 
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_Crc32 PRIVATE rodos::rodos Sts1CobcSw_Utility Sts1CobcSwTests_Utility
-                                  Sts1CobcSwTests_RfLatchupDisablePin
+    Sts1CobcSwTests_Crc32 PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
 )
 
 add_program(Flash Flash.test.cpp)
