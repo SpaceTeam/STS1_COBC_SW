@@ -13,14 +13,8 @@ target_link_libraries(
 
 add_program(Flash Flash.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_Flash
-    PRIVATE rodos::rodos
-            Sts1CobcSw_Periphery
-            Sts1CobcSw_Serial
-            Sts1CobcSw_Utility
-            strong_type::strong_type
-            Sts1CobcSwTests::HardwareSetup
-            Sts1CobcSwTests_Utility
+    Sts1CobcSwTests_Flash PRIVATE Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+                                  strong_type::strong_type Sts1CobcSwTests::CatchRodos
 )
 
 add_program(Fram Fram.test.cpp)

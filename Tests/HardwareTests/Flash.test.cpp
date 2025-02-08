@@ -1,154 +1,57 @@
-#include <Tests/HardwareTests/Utility.hpp>
+#include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
-#include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
-#include <strong_type/type.hpp>
-
-#include <rodos_no_using_namespace.h>
 
 #include <algorithm>
-#include <cinttypes>
-#include <cstddef>
-#include <cstdint>
+#include <array>
 
 
-namespace sts1cobcsw
+namespace flash = sts1cobcsw::flash;
+using sts1cobcsw::ms;
+using sts1cobcsw::operator""_b;
+
+
+TEST_CASE("Flash")
 {
-using RODOS::PRINTF;
+    flash::Initialize();
+    auto actualBaudRate = flash::ActualBaudRate();
+    CHECK(actualBaudRate == 48'000'000);
 
+    auto jedecId = flash::ReadJedecId();
+    CHECK(jedecId.manufacturerId == flash::correctJedecId.manufacturerId);
+    CHECK(jedecId.deviceId == flash::correctJedecId.deviceId);
 
-constexpr std::size_t stackSize = 5'000;
+    auto statusRegister1 = flash::ReadStatusRegister(1);
+    CHECK(statusRegister1 == 0x00_b);
+    auto statusRegister2 = flash::ReadStatusRegister(2);
+    CHECK(statusRegister2 == 0x02_b);
+    auto statusRegister3 = flash::ReadStatusRegister(3);
+    CHECK(statusRegister3 == 0x40_b);
 
+    // TODO: Test programming and erasing all pages and sectors. This will take a long time, so
+    // maybe it's better to do this in a separate test.
+    static constexpr auto address = 0x00'01'00'00U;
 
-auto Print(flash::Page const & page) -> void;
+    auto page = flash::Page{};
+    flash::ProgramPage(address, page);
+    auto waitWhileBusyResult = flash::WaitWhileBusy(5 * ms);
+    CHECK(waitWhileBusyResult.has_error() == false);
+    page = flash::ReadPage(address);
+    CHECK(page == flash::Page{});
 
-
-class FlashTest : public RODOS::StaticThread<stackSize>
-{
-public:
-    FlashTest() : StaticThread("FlashTest")
+    flash::EraseSector(address);
+    waitWhileBusyResult = flash::WaitWhileBusy(500 * ms);
+    CHECK(waitWhileBusyResult.has_error() == false);
+    page = flash::ReadPage(address);
+    static constexpr auto erasedPage = []()
     {
-    }
-
-
-private:
-    void init() override
-    {
-    }
-
-
-    void run() override
-    {
-        PRINTF("\nFlash test\n\n");
-
-        PRINTF("\n");
-        flash::Initialize();
-        auto actualBaudRate = flash::ActualBaudRate();
-        PRINTF("Actual baud rate: %" PRIi32 "\n", actualBaudRate);
-
-        PRINTF("\n");
-        auto jedecId = flash::ReadJedecId();
-        PRINTF("Manufacturer ID: 0x%02x == 0x%02x\n",
-               static_cast<unsigned int>(jedecId.manufacturerId),
-               static_cast<unsigned int>(flash::correctJedecId.manufacturerId));
-        Check(jedecId.manufacturerId == flash::correctJedecId.manufacturerId);
-        PRINTF("Device ID: 0x%04x == 0x%04x\n",
-               static_cast<unsigned int>(jedecId.deviceId),
-               static_cast<unsigned int>(flash::correctJedecId.deviceId));
-        Check(jedecId.deviceId == flash::correctJedecId.deviceId);
-
-        PRINTF("\n");
-        auto statusRegister = flash::ReadStatusRegister(1);
-        PRINTF("Status register 1: 0x%02x == 0x00\n", static_cast<unsigned int>(statusRegister));
-        Check(statusRegister == 0x00_b);
-
-        statusRegister = flash::ReadStatusRegister(2);
-        PRINTF("Status register 2: 0x%02x == 0x02\n", static_cast<unsigned int>(statusRegister));
-        Check(statusRegister == 0x02_b);
-
-        statusRegister = flash::ReadStatusRegister(3);
-        PRINTF("Status register 3: 0x%02x == 0x41\n", static_cast<unsigned int>(statusRegister));
-        Check(statusRegister == 0x41_b);
-
-        std::uint32_t const pageAddress = 0x00'01'00'00U;
-
-        PRINTF("\n");
-        PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
-        auto page = flash::ReadPage(pageAddress);
-        Print(page);
-
-        PRINTF("\n");
-        std::fill(page.begin(), page.end(), 0x00_b);
-        PRINTF("Programming page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
-        Print(page);
-        auto begin = CurrentRodosTime();
-        flash::ProgramPage(pageAddress, page);
-        auto endPage = CurrentRodosTime();
-
-        auto const programPageTimeout = 10 * ms;
-        auto waitWhileBusyResult = flash::WaitWhileBusy(programPageTimeout);
-        auto end = CurrentRodosTime();
-        PRINTF("ProgrammPage took %d us\n", static_cast<int>((endPage - begin) / us));
-        if(waitWhileBusyResult.has_error())
-        {
-            PRINTF("WaitWhileBusy failed because it didn't finish in %d us\n",
-                   static_cast<int>(programPageTimeout / us));
-        }
-        else
-        {
-            PRINTF("WaitWhileBusy took %d us\n", static_cast<int>((end - endPage) / us));
-        }
-
-        PRINTF("\n");
-        PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
-        page = flash::ReadPage(pageAddress);
-        Print(page);
-
-        PRINTF("\n");
-        PRINTF("Erasing sector containing address 0x%08x:\n",
-               static_cast<unsigned int>(pageAddress));
-        flash::EraseSector(pageAddress);
-
-        auto const eraseSectorTimeout = 500 * ms;
-        begin = CurrentRodosTime();
-        waitWhileBusyResult = flash::WaitWhileBusy(eraseSectorTimeout);
-        end = CurrentRodosTime();
-        if(waitWhileBusyResult.has_error())
-        {
-            PRINTF("WaitWhileBusy failed because it didn't finish in %d us\n",
-                   static_cast<int>(eraseSectorTimeout / us));
-        }
-        else
-        {
-            PRINTF("WaitWhileBusy took %d us\n", static_cast<int>((end - begin) / us));
-        }
-
-        PRINTF("\n");
-        PRINTF("Reading page at address 0x%08x:\n", static_cast<unsigned int>(pageAddress));
-        page = flash::ReadPage(pageAddress);
-        Print(page);
-    }
-} flashTest;
-
-
-auto Print(flash::Page const & page) -> void
-{
-    constexpr auto nRows = 16;
-    auto iRow = 0;
-    for(auto x : page)
-    {
-        PRINTF(" 0x%02x", static_cast<unsigned int>(x));
-        iRow++;
-        if(iRow == nRows)
-        {
-            PRINTF("\n");
-            iRow = 0;
-        }
-    }
-}
+        auto p = flash::Page();
+        p.fill(0xFF_b);
+        return p;
+    }();
+    CHECK(page == erasedPage);
 }
