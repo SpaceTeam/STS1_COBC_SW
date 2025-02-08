@@ -25,8 +25,8 @@ endfunction()
 function(add_program program_name)
     set(target ${PROJECT_NAME}_${program_name})
     add_executable(${target} ${ARGN})
-    set_target_properties(${target} PROPERTIES OUTPUT_NAME ${program_name})
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+        set_target_properties(${target} PROPERTIES OUTPUT_NAME ${program_name} SUFFIX ".elf")
         # Automatically call objcopy on the executable targets after the build
         objcopy_target(${target})
     endif()
@@ -38,7 +38,7 @@ function(objcopy_target target)
         TARGET ${target}
         POST_BUILD
         COMMAND "${CMAKE_OBJCOPY}" -O binary "$<TARGET_FILE:${target}>"
-                "$<TARGET_FILE:${target}>.bin"
+                "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_BASE_NAME:${target}>.bin"
         COMMENT "Calling objcopy on ${output_name} to generate flashable ${output_name}.bin"
         VERBATIM
     )
