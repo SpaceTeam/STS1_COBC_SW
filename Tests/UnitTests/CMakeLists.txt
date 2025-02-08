@@ -58,6 +58,12 @@ target_link_libraries(
                                         Sts1CobcSw_Periphery Sts1CobcSw_Utility
 )
 
+add_program(TelemetryRecord TelemetryRecord.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_TelemetryRecord PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial
+                                            Sts1CobcSw_Telemetry
+)
+
 get_property(
     all_catch2_unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS
 )
