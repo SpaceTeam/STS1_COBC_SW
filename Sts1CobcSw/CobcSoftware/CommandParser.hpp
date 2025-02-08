@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Edu/ProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 

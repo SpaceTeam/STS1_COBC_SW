@@ -32,12 +32,41 @@ enum class ErrorCode
 };
 
 
+enum class ProgramStatus : std::uint8_t
+{
+    programRunning,
+    programCouldNotBeStarted,
+    programExecutionFailed,
+    programExecutionSucceeded,
+    resultFileTransfered,
+    resultFileSentToRf,
+    ackFromGround,
+    resultFileDeleted
+};
+
+
 enum class StatusType
 {
     noEvent,
     programFinished,
     resultsReady,
     invalid,
+};
+
+
+struct ProgramQueueEntry
+{
+    ProgramId programId = ProgramId(0);
+    RealTime startTime = RealTime(0);
+    std::int16_t timeout = 0;
+};
+
+
+struct ProgramStatusHistoryEntry
+{
+    ProgramId programId = ProgramId(0);
+    RealTime startTime = RealTime(0);
+    ProgramStatus status = ProgramStatus::programRunning;
 };
 
 
@@ -125,6 +154,18 @@ struct ResultInfo
 
 
 template<>
+inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
+    totalSerialSize<decltype(edu::ProgramQueueEntry::programId),
+                    decltype(edu::ProgramQueueEntry::startTime),
+                    decltype(edu::ProgramQueueEntry::timeout)>;
+
+template<>
+inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
+    totalSerialSize<decltype(edu::ProgramStatusHistoryEntry::programId),
+                    decltype(edu::ProgramStatusHistoryEntry::startTime),
+                    decltype(edu::ProgramStatusHistoryEntry::status)>;
+
+template<>
 inline constexpr std::size_t serialSize<edu::StoreProgramData> =
     totalSerialSize<decltype(edu::StoreProgramData::id),
                     decltype(edu::StoreProgramData::programId)>;
@@ -175,6 +216,11 @@ inline constexpr std::size_t serialSize<edu::ResultsReadyData> =
 namespace edu
 {
 template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, ProgramQueueEntry const & data) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, ProgramStatusHistoryEntry const & data)
+    -> void *;
+template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, StoreProgramData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
@@ -187,6 +233,11 @@ template<std::endian endianness>
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, UpdateTimeData const & data) -> void *;
 
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramQueueEntry * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, ProgramStatusHistoryEntry * data)
+    -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, NoEventData * data) -> void const *;
 template<std::endian endianness>

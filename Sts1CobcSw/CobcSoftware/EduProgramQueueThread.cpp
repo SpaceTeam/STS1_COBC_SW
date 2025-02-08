@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
