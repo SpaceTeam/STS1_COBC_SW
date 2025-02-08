@@ -12,8 +12,9 @@
 
 namespace sts1cobcsw
 {
-// Running the SpiSupervisor HW test showed that the minimum required stack size is ~765 bytes
-constexpr auto stackSize = 800;
+// Running the SpiSupervisor HW test in debug mode showed that the minimum required stack size is
+// between 900 and 1000 bytes
+constexpr auto stackSize = 1000;
 
 
 class RfStartupTestThread : public RODOS::StaticThread<stackSize>
