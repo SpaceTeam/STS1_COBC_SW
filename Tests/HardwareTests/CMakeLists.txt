@@ -24,6 +24,12 @@ target_link_libraries(
             strong_type::strong_type Sts1CobcSwTests::CatchRodos
 )
 
+add_program(WholeFram WholeFram.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_WholeFram PRIVATE Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+                                      strong_type::strong_type Sts1CobcSwTests::CatchRodos
+)
+
 add_program(Littlefs Littlefs.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Littlefs PRIVATE littlefs::littlefs rodos::rodos Sts1CobcSw_FileSystem
