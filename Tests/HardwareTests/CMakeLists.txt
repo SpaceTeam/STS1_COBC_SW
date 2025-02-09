@@ -20,13 +20,8 @@ target_link_libraries(
 add_program(Fram Fram.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Fram
-    PRIVATE rodos::rodos
-            Sts1CobcSw_Periphery
-            Sts1CobcSw_Serial
-            Sts1CobcSw_Utility
-            strong_type::strong_type
-            Sts1CobcSwTests::HardwareSetup
-            Sts1CobcSwTests_Utility
+    PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+            strong_type::strong_type Sts1CobcSwTests::CatchRodos
 )
 
 add_program(Littlefs Littlefs.test.cpp)
