@@ -1,7 +1,6 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
@@ -16,18 +15,28 @@ namespace sts1cobcsw
 // TODO: Merge the bools into bitfields
 struct TelemetryRecord
 {
+    // Booleans: byte 1: bootloader and EDU
+    bool fwChecksumsAreOk = false;
+    bool eduShouldBePowered = false;
+    bool eduHeartBeats = false;
+    bool newResultIsAvailable = false;
+    // Booleans: byte 2: housekeeping and communication
+    bool antennasShouldBeDeployed = false;
+    bool framIsWorking = false;
+    bool epsIsWorking = false;
+    bool flashIsWorking = false;
+    bool rfIsWorking = false;
+    bool lastTeleCommandIdWasInvalid = false;
+    bool lastTeleCommandArgumentsWereInvalid = false;
+
     // BootLoader
     std::uint8_t nResetsSinceRf = 0U;
     std::int8_t activeSecondaryFwPartition = 0;
     std::int8_t backupSecondaryFwPartition = 0;
-    bool fwChecksumsAreOk = false;
 
     // EDU
-    bool eduShouldBePowered = false;
-    bool eduHeartBeats = false;
     std::int8_t eduProgramQueueIndex = 0;
-    ProgramId programIdOfCurrentProgramQueueEntry;
-    bool newResultIsAvailable = false;
+    ProgramId programIdOfCurrentEduProgramQueueEntry;
     std::uint8_t nEduCommunicationErrors = 0U;
 
     // Housekeeping
@@ -35,11 +44,6 @@ struct TelemetryRecord
     std::uint8_t lastResetReason = 0U;
     std::int32_t rodosTimeInSeconds = 0;
     RealTime realTime;
-    bool antennasShouldBeDeployed = false;
-    bool framIsWorking = false;
-    bool epsIsWorking = false;
-    bool flashIsWorking = false;
-    bool rfIsWorking = false;
     std::uint8_t nFlashErrors = 0U;
     std::uint8_t nRfErrors = 0U;
     std::uint8_t nFileSystemErrors = 0U;
@@ -63,59 +67,49 @@ struct TelemetryRecord
     std::uint16_t nBadRfpackets = 0U;
     std::uint16_t nGoodRfpackets = 0U;
     std::uint8_t lastReceivedCommandId = 0U;
-    bool lastReceivedCommandIdWasInvalid = false;
-    bool lastReceivedCommandArgumentsWereInvalid = false;
 
     friend auto operator==(TelemetryRecord const &, TelemetryRecord const &) -> bool = default;
 };
 
 
 template<>
-inline constexpr std::size_t serialSize<TelemetryRecord> = totalSerialSize<
-    // Bootloader
-    decltype(TelemetryRecord::nResetsSinceRf),
-    decltype(TelemetryRecord::activeSecondaryFwPartition),
-    decltype(TelemetryRecord::backupSecondaryFwPartition),
-    decltype(TelemetryRecord::fwChecksumsAreOk),
-    // EDU
-    decltype(TelemetryRecord::eduShouldBePowered),
-    decltype(TelemetryRecord::eduHeartBeats),
-    decltype(TelemetryRecord::eduProgramQueueIndex),
-    decltype(TelemetryRecord::programIdOfCurrentProgramQueueEntry),
-    decltype(TelemetryRecord::newResultIsAvailable),
-    decltype(TelemetryRecord::nEduCommunicationErrors),
-    // Housekeeping
-    decltype(TelemetryRecord::nTotalResets),
-    decltype(TelemetryRecord::lastResetReason),
-    decltype(TelemetryRecord::rodosTimeInSeconds),
-    decltype(TelemetryRecord::realTime),
-    decltype(TelemetryRecord::antennasShouldBeDeployed),
-    decltype(TelemetryRecord::framIsWorking),
-    decltype(TelemetryRecord::epsIsWorking),
-    decltype(TelemetryRecord::flashIsWorking),
-    decltype(TelemetryRecord::rfIsWorking),
-    decltype(TelemetryRecord::nFlashErrors),
-    decltype(TelemetryRecord::nRfErrors),
-    decltype(TelemetryRecord::nFileSystemErrors),
-    decltype(TelemetryRecord::batteryPackVoltage),
-    decltype(TelemetryRecord::batteryCenterTapVoltage),
-    decltype(TelemetryRecord::batteryTemperature),
-    decltype(TelemetryRecord::cobcTemperature),
-    decltype(TelemetryRecord::cubeSatBusVoltage),
-    decltype(TelemetryRecord::sidepanelXPlusTemperature),
-    decltype(TelemetryRecord::sidepanelYPlusTemperature),
-    decltype(TelemetryRecord::sidepanelYMinusTemperature),
-    decltype(TelemetryRecord::sidepanelZPlusTemperature),
-    decltype(TelemetryRecord::sidepanelZMinusTemperature),
-    // Communication
-    decltype(TelemetryRecord::rfBaudRate),
-    decltype(TelemetryRecord::nCorrectableUplinkErrors),
-    decltype(TelemetryRecord::nUncorrectableUplinkErrors),
-    decltype(TelemetryRecord::nBadRfpackets),
-    decltype(TelemetryRecord::nGoodRfpackets),
-    decltype(TelemetryRecord::lastReceivedCommandId),
-    decltype(TelemetryRecord::lastReceivedCommandIdWasInvalid),
-    decltype(TelemetryRecord::lastReceivedCommandArgumentsWereInvalid)>;
+inline constexpr std::size_t serialSize<TelemetryRecord> =
+    2
+    + totalSerialSize<
+        // Bootloader
+        decltype(TelemetryRecord::nResetsSinceRf),
+        decltype(TelemetryRecord::activeSecondaryFwPartition),
+        decltype(TelemetryRecord::backupSecondaryFwPartition),
+        // EDU
+        decltype(TelemetryRecord::eduProgramQueueIndex),
+        decltype(TelemetryRecord::programIdOfCurrentEduProgramQueueEntry),
+        decltype(TelemetryRecord::nEduCommunicationErrors),
+        // Housekeeping
+        decltype(TelemetryRecord::nTotalResets),
+        decltype(TelemetryRecord::lastResetReason),
+        decltype(TelemetryRecord::rodosTimeInSeconds),
+        decltype(TelemetryRecord::realTime),
+        decltype(TelemetryRecord::nFlashErrors),
+        decltype(TelemetryRecord::nRfErrors),
+        decltype(TelemetryRecord::nFileSystemErrors),
+        // Sensor data
+        decltype(TelemetryRecord::batteryPackVoltage),
+        decltype(TelemetryRecord::batteryCenterTapVoltage),
+        decltype(TelemetryRecord::batteryTemperature),
+        decltype(TelemetryRecord::cobcTemperature),
+        decltype(TelemetryRecord::cubeSatBusVoltage),
+        decltype(TelemetryRecord::sidepanelXPlusTemperature),
+        decltype(TelemetryRecord::sidepanelYPlusTemperature),
+        decltype(TelemetryRecord::sidepanelYMinusTemperature),
+        decltype(TelemetryRecord::sidepanelZPlusTemperature),
+        decltype(TelemetryRecord::sidepanelZMinusTemperature),
+        // Communication
+        decltype(TelemetryRecord::rfBaudRate),
+        decltype(TelemetryRecord::nCorrectableUplinkErrors),
+        decltype(TelemetryRecord::nUncorrectableUplinkErrors),
+        decltype(TelemetryRecord::nBadRfpackets),
+        decltype(TelemetryRecord::nGoodRfpackets),
+        decltype(TelemetryRecord::lastReceivedCommandId)>;
 
 
 template<std::endian endianness>
