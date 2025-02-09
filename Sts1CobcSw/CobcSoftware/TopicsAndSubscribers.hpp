@@ -14,6 +14,7 @@ extern RODOS::Topic<bool> eduIsAliveTopic;
 extern RODOS::CommBuffer<bool> eduIsAliveBufferForListener;
 extern RODOS::CommBuffer<bool> eduIsAliveBufferForPowerManagement;
 extern RODOS::CommBuffer<bool> eduIsAliveBufferForCommunicationError;
+extern RODOS::CommBuffer<bool> eduIsAliveBufferForTelemetry;
 extern RODOS::Topic<Duration> nextProgramStartDelayTopic;
 extern RODOS::CommBuffer<Duration> nextProgramStartDelayBuffer;
 }

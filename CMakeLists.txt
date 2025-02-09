@@ -35,6 +35,7 @@ add_library(Sts1CobcSw_Outcome INTERFACE)
 add_library(Sts1CobcSw_ProgramId INTERFACE)
 add_library(Sts1CobcSw_Periphery STATIC)
 add_library(Sts1CobcSw_Serial INTERFACE)
+add_library(Sts1CobcSw_Telemetry STATIC)
 add_library(Sts1CobcSw_Utility STATIC)
 add_program(HelloDummy)
 
