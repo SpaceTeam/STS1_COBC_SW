@@ -97,13 +97,16 @@ add_test(NAME FramVector COMMAND Sts1CobcSwTests_FramVector)
 add_program(LfsRam LfsRam.test.cpp UnitTestThread.cpp)
 target_link_libraries(
     Sts1CobcSwTests_LfsRam PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
+                                   Sts1CobcSw_Serial
 )
+add_test(NAME LfsRam COMMAND Sts1CobcSwTests_LfsRam)
 
 add_program(LfsWrapper LfsWrapper.test.cpp UnitTestThread.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_LfsWrapper PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
+    Sts1CobcSwTests_LfsWrapper PRIVATE rodos::rodos etl::etl littlefs::littlefs
+                                       Sts1CobcSw_FileSystem Sts1CobcSw_Serial Sts1CobcSw_Utility
 )
-add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_FramRingArray)
+add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_LfsWrapper)
 
 add_program(PersistentVariables PersistentVariables.test.cpp UnitTestThread.cpp)
 target_link_libraries(
