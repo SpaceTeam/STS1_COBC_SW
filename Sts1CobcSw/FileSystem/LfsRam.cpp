@@ -16,10 +16,13 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <span>
 #include <vector>
 
 
 namespace sts1cobcsw::fs
+{
+namespace
 {
 // Before globals because lfsConfig needs the declarations
 auto Read(lfs_config const * config,
@@ -38,23 +41,28 @@ auto Lock(lfs_config const * config) -> int;
 auto Unlock(lfs_config const * config) -> int;
 
 
+constexpr auto erasedValue = 0xFF_b;
+constexpr auto initialCrcValue = 0;
+
 constexpr auto pageSize = 256;
-constexpr auto pageSizeLfs = pageSize - crcSize;
+constexpr auto readSize = pageSize - crcSize;
 constexpr auto sectorSize = 4 * 1024;
-constexpr auto sectorSizeLfs = 4 * (1024 - 4 * crcSize);
-constexpr auto memorySizeLfs = 128 * 1024 * (1024 - 4 * crcSize);
+constexpr auto blockSize = sectorSize * readSize / pageSize;
 constexpr auto memorySize = 128 * 1024 * 1024;
 
-std::vector<Byte> memory = std::vector<Byte>();
+
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
-auto corruptNextWrite = false;
+
+auto semaphore = RODOS::Semaphore();
+void (*programFinishedHandler)() = nullptr;
+}
 
 // littlefs requires the lookaheadBuffer size to be a multiple of 8
 static_assert(lookaheadBuffer.size() % 8 == 0);  // NOLINT(*magic-numbers)
-// littlefs requires the cacheSize to be a multiple of the read_size and prog_size, i.e., pageSize
-static_assert(lfsCacheSize % pageSizeLfs == 0);
+// littlefs requires the cacheSize to be a multiple of the read_size (and prog_size)
+static_assert(lfsCacheSize % readSize == 0);
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
@@ -63,10 +71,10 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .sync = &Sync,
                                         .lock = &Lock,
                                         .unlock = &Unlock,
-                                        .read_size = pageSizeLfs,
-                                        .prog_size = pageSizeLfs,
-                                        .block_size = sectorSizeLfs,
-                                        .block_count = memorySizeLfs / sectorSizeLfs,
+                                        .read_size = readSize,
+                                        .prog_size = readSize,
+                                        .block_size = blockSize,
+                                        .block_count = memorySize / sectorSize,
                                         .block_cycles = 200,
                                         .cache_size = readBuffer.size(),
                                         .lookahead_size = lookaheadBuffer.size(),
@@ -77,53 +85,54 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .name_max = maxPathLength,
                                         .file_max = LFS_FILE_MAX,
                                         .attr_max = LFS_ATTR_MAX,
-                                        .metadata_max = sectorSizeLfs,
+                                        .metadata_max = blockSize,
                                         .inline_max = 0};
 
-auto semaphore = RODOS::Semaphore();
-void (*programFinishedHandler)() = nullptr;
+std::vector<Byte> memory = std::vector<Byte>();
 
 
 auto Initialize() -> void
 {
-    memory.resize(memorySize, eraseValue);
+    memory.resize(memorySize, erasedValue);
 }
 
 
+auto SetProgramFinishedHandler(void (*handler)()) -> void
+{
+    programFinishedHandler = handler;
+}
+
+
+namespace
+{
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,  // NOLINT(bugprone-easily-swappable-parameters)
           lfs_off_t offset,
           void * buffer,
           lfs_size_t size) -> int
 {
-    // read page for page to check the crc of each one
-    for(lfs_size_t i = 0; i < size; i += config->read_size)
+    // Read page for page and check the CRC of each one
+    for(auto i = 0U; i < size; i += config->read_size)
     {
-        auto const pages = (i + offset) / config->read_size;
-        auto const offsetCrc = pages * pageSize;
-        auto const start = static_cast<size_t>(blockNo * sectorSize + offsetCrc);
-        auto const crcPosition = start + config->read_size;
-
-        // if the page is filled with eraseValue -> page was just erased and the crc is not set
-        if(!std::all_of(memory.begin() + static_cast<int>(start),
-                        memory.begin() + static_cast<int>(crcPosition),
-                        [](Byte byte) { return byte == eraseValue; }))
+        auto pageNo = (i + offset) / config->read_size;
+        auto pageAddress = blockNo * sectorSize + pageNo * pageSize;
+        auto page = std::span(&memory[pageAddress], pageSize);
+        auto pageIsErased =
+            std::all_of(page.begin(), page.end(), [](auto byte) { return byte == erasedValue; });
+        // Check the CRC only if the page is not erased
+        if(not pageIsErased)
         {
-            std::uint32_t crc = {};
-            std::memcpy(&crc, &memory[crcPosition], sizeof(crc));
-
-            const std::uint32_t crcCalculated =
-                lfs_crc(initialCrcValue, &memory[start], config->read_size);
-
-            if(crc != crcCalculated)
+            std::uint32_t crc;  // NOLINT(*init-variables)
+            static_assert(sizeof(crc) == crcSize);
+            std::memcpy(&crc, &page[config->read_size], sizeof(crc));
+            auto computedCrc = lfs_crc(initialCrcValue, page.data(), config->read_size);
+            if(crc != computedCrc)
             {
                 return LFS_ERR_CORRUPT;
             }
         }
-
-        std::copy_n(memory.begin() + static_cast<int>(start),
-                    config->read_size,
-                    static_cast<Byte *>(buffer) + i);  // NOLINT(*pointer-arithmetic)
+        // NOLINTNEXTLINE(*pointer-arithmetic)
+        std::copy_n(page.begin(), config->read_size, static_cast<Byte *>(buffer) + i);
     }
     return 0;
 }
@@ -137,22 +146,14 @@ auto Program(lfs_config const * config,
 {
     for(lfs_size_t i = 0; i < size; i += config->prog_size)
     {
-        auto const pages = (i + offset) / config->prog_size;
-        auto const offsetCrc = pages * pageSize;
-        auto const start = static_cast<size_t>(blockNo * sectorSize + offsetCrc);
-
-        // copy data
-        std::copy_n(static_cast<Byte const *>(buffer) + i,  // NOLINT(*pointer-arithmetic)
-                    config->prog_size,
-                    memory.begin() + static_cast<int>(start));
-        const std::uint32_t crc =
-            lfs_crc(initialCrcValue,
-                    static_cast<Byte const *>(buffer) + i,  // NOLINT(*pointer-arithmetic)
-                    config->prog_size);
-
-        // copy crc
-        const std::uint32_t crcPosition = start + config->prog_size;
-        std::memcpy(&memory[crcPosition], &crc, sizeof(crc));
+        auto pageNo = (i + offset) / config->prog_size;
+        auto pageAddress = blockNo * sectorSize + pageNo * pageSize;
+        auto page = std::span(&memory[pageAddress], pageSize);
+        // NOLINTNEXTLINE(*pointer-arithmetic)
+        std::copy_n(static_cast<Byte const *>(buffer) + i, config->prog_size, page.begin());
+        auto crc = lfs_crc(initialCrcValue, page.data(), config->prog_size);
+        static_assert(sizeof(crc) == crcSize);
+        std::memcpy(&page[config->prog_size], &crc, sizeof(crc));
     }
     if(programFinishedHandler != nullptr)
     {
@@ -164,8 +165,7 @@ auto Program(lfs_config const * config,
 
 auto Erase([[maybe_unused]] lfs_config const * config, lfs_block_t blockNo) -> int
 {
-    auto start = static_cast<size_t>(blockNo * sectorSize);
-    std::fill_n(memory.begin() + static_cast<int>(start), sectorSize, eraseValue);
+    std::fill_n(memory.begin() + static_cast<int>(blockNo * sectorSize), sectorSize, erasedValue);
     return 0;
 }
 
@@ -188,10 +188,5 @@ auto Unlock([[maybe_unused]] lfs_config const * config) -> int
     semaphore.leave();
     return 0;
 }
-
-
-auto SetProgramFinishedHandler(void (*handler)()) -> void
-{
-    programFinishedHandler = handler;
 }
 }

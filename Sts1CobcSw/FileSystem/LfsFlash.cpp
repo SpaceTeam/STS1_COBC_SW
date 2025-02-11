@@ -20,6 +20,8 @@
 
 namespace sts1cobcsw::fs
 {
+namespace
+{
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,
           lfs_off_t offset,
@@ -42,17 +44,24 @@ constexpr auto pageProgramTimeout = 5 * ms;
 // max. 400 ms acc. W25Q01JV datasheet (lfs_config.block_size = flash::sectorSize)
 constexpr auto blockEraseTimeout = 500 * ms;
 
-constexpr auto pageSizeLfs = flash::pageSize - crcSize;
-constexpr auto sectorSizeLfs = flash::sectorSize - (flash::sectorSize / flash::pageSize * crcSize);
+constexpr auto erasedValue = 0xFF_b;
+constexpr auto initialCrcValue = 0;
+
+constexpr auto readSize = flash::pageSize - crcSize;
+constexpr auto blockSize = flash::sectorSize - (flash::sectorSize / flash::pageSize * crcSize);
+
 
 auto readBuffer = std::array<Byte, lfsCacheSize>{};
 auto programBuffer = decltype(readBuffer){};
 auto lookaheadBuffer = std::array<Byte, 64>{};  // NOLINT(*magic-numbers)
 
+auto semaphore = RODOS::Semaphore();
+}
+
 // littlefs requires the lookaheadBuffer size to be a multiple of 8
 static_assert(lookaheadBuffer.size() % 8 == 0);  // NOLINT(*magic-numbers)
-// littlefs requires the cacheSize to be a multiple of the read_size and prog_size, i.e., pageSize
-static_assert(lfsCacheSize % pageSizeLfs == 0);
+// littlefs requires the cacheSize to be a multiple of the read_size (and prog_size)
+static_assert(lfsCacheSize % readSize == 0);
 
 lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .read = &Read,
@@ -61,9 +70,9 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .sync = &Sync,
                                         .lock = &Lock,
                                         .unlock = &Unlock,
-                                        .read_size = pageSizeLfs,
-                                        .prog_size = pageSizeLfs,
-                                        .block_size = sectorSizeLfs,
+                                        .read_size = readSize,
+                                        .prog_size = readSize,
+                                        .block_size = blockSize,
                                         .block_count = flash::nSectors,
                                         .block_cycles = 200,
                                         .cache_size = readBuffer.size(),
@@ -75,10 +84,8 @@ lfs_config const lfsConfig = lfs_config{.context = nullptr,
                                         .name_max = maxPathLength,
                                         .file_max = LFS_FILE_MAX,
                                         .attr_max = LFS_ATTR_MAX,
-                                        .metadata_max = sectorSizeLfs,
+                                        .metadata_max = blockSize,
                                         .inline_max = 0};
-
-auto semaphore = RODOS::Semaphore();
 
 
 auto Initialize() -> void
@@ -87,42 +94,41 @@ auto Initialize() -> void
 }
 
 
+namespace
+{
 auto Read(lfs_config const * config,
           lfs_block_t blockNo,  // NOLINT(bugprone-easily-swappable-parameters)
           lfs_off_t offset,
           void * buffer,
           lfs_size_t size) -> int
 {
-    // The following only works if read_size == pageSize
+    // Read page for page and check the CRC of each one
     for(auto i = 0U; i < size; i += config->read_size)
     {
-        auto const pages = (i + offset) / config->read_size;
-        auto const offsetCrc = pages * flash::pageSize;
-        auto const startAddress =
-            static_cast<std::uint32_t>(blockNo * flash::sectorSize + offsetCrc);
-
-        auto const page = flash::ReadPage(startAddress);
-
-        // if the page is filled with eraseValue -> page was just erased and the crc is not set
-        if(!std::all_of(page.begin(), page.end(), [](Byte byte) { return byte == eraseValue; }))
+        auto pageNo = (i + offset) / config->read_size;
+        auto pageAddress =
+            static_cast<std::uint32_t>(blockNo * flash::sectorSize + pageNo * flash::pageSize);
+        auto page = flash::ReadPage(pageAddress);
+        auto pageIsErased =
+            std::all_of(page.begin(), page.end(), [](auto byte) { return byte == erasedValue; });
+        // Check the CRC only if the page is not erased
+        if(not pageIsErased)
         {
-            std::uint32_t crc = {};
-            std::memcpy(&crc, page.begin() + config->read_size, sizeof(crc));
-
-            const std::uint32_t crcCalculated =
-                lfs_crc(initialCrcValue, page.begin(), config->read_size);
-            if(crc != crcCalculated)
+            std::uint32_t crc;  // NOLINT(*init-variables)
+            static_assert(sizeof(crc) == crcSize);
+            std::memcpy(&crc, &page[config->read_size], sizeof(crc));
+            auto computedCrc = lfs_crc(initialCrcValue, page.data(), config->read_size);
+            if(crc != computedCrc)
             {
                 return LFS_ERR_CORRUPT;
             }
         }
-
-        std::copy_n(page.begin(),
-                    config->read_size,
-                    static_cast<Byte *>(buffer) + i);  // NOLINT(*pointer-arithmetic)
+        // NOLINTNEXTLINE(*pointer-arithmetic)
+        std::copy_n(page.begin(), config->read_size, static_cast<Byte *>(buffer) + i);
     }
     return 0;
 }
+
 
 auto Program(lfs_config const * config,
              lfs_block_t blockNo,  // NOLINT(bugprone-easily-swappable-parameters)
@@ -130,26 +136,19 @@ auto Program(lfs_config const * config,
              void const * buffer,
              lfs_size_t size) -> int
 {
-    // The following only works if prog_size == pageSize
     for(auto i = 0U; i < size; i += config->prog_size)
     {
-        auto const pages = (i + offset) / config->prog_size;
-        auto const offsetCrc = pages * flash::pageSize;
-        auto const startAddress =
-            static_cast<std::uint32_t>(blockNo * flash::sectorSize + offsetCrc);
-
         auto page = flash::Page{};
-        std::copy_n(static_cast<Byte const *>(buffer) + i,  // NOLINT(*pointer-arithmetic)
-                    config->prog_size,
-                    page.begin());
+        // NOLINTNEXTLINE(*pointer-arithmetic)
+        std::copy_n(static_cast<Byte const *>(buffer) + i, config->prog_size, page.begin());
+        auto crc = lfs_crc(initialCrcValue, page.data(), config->prog_size);
+        static_assert(sizeof(crc) == crcSize);
+        std::memcpy(&page[config->prog_size], &crc, sizeof(crc));
 
-        const std::uint32_t crc =
-            lfs_crc(initialCrcValue,
-                    static_cast<Byte const *>(buffer) + i,  // NOLINT(*pointer-arithmetic)
-                    config->prog_size);
-        std::memcpy(page.begin() + config->prog_size, &crc, sizeof(crc));
-
-        flash::ProgramPage(startAddress, std::span(page));
+        auto pageNo = (i + offset) / config->prog_size;
+        auto pageAddress =
+            static_cast<std::uint32_t>(blockNo * flash::sectorSize + pageNo * flash::pageSize);
+        flash::ProgramPage(pageAddress, std::span(page));
         auto waitWhileBusyResult = flash::WaitWhileBusy(pageProgramTimeout);
         if(waitWhileBusyResult.has_error())
         {
@@ -194,5 +193,6 @@ auto Unlock([[maybe_unused]] lfs_config const * config) -> int
 {
     semaphore.leave();
     return 0;
+}
 }
 }
