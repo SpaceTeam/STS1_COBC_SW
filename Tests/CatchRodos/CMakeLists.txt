@@ -15,7 +15,3 @@ target_link_libraries(Sts1CobcSwTests_CatchRodos_Example PRIVATE Sts1CobcSwTests
 
 add_program(CatchRodos_FailMessages FailMessages.test.cpp)
 target_link_libraries(Sts1CobcSwTests_CatchRodos_FailMessages PRIVATE Sts1CobcSwTests::CatchRodos)
-
-add_dependencies(AllTests Sts1CobcSwTests_CatchRodos)
-add_dependencies(AllTests Sts1CobcSwTests_CatchRodos_Example)
-add_dependencies(AllTests Sts1CobcSwTests_CatchRodos_FailMessages)

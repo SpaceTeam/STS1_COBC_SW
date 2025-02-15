@@ -17,10 +17,8 @@ target_link_libraries(
                                           Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
 )
 
-# --- All golden tests ---
+# ---- All golden tests ----
 
-get_property(
-    all_golden_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS
-)
+get_property(golden_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 add_custom_target(AllGoldenTests) # Must be defined after getting all hardware test targets
-add_dependencies(AllGoldenTests ${all_golden_test_targets})
+add_dependencies(AllGoldenTests ${golden_test_targets})
