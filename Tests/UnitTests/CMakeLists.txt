@@ -159,11 +159,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME LfsRam COMMAND Sts1CobcSwTests_LfsRam)
 
-    add_program(LfsWrapper LfsWrapper.test.cpp UnitTestThread.cpp)
+    add_program(LfsWrapper LfsWrapper.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_LfsWrapper
-        PRIVATE rodos::rodos etl::etl littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Serial
-                Sts1CobcSw_Utility
+        PRIVATE etl::etl littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Serial
+                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_LfsWrapper)
 
