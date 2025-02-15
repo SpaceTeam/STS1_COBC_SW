@@ -2,7 +2,9 @@
 
 #include <Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
-#include <Sts1CobcSw/FileSystem/LfsRam.hpp>
+#ifdef __linux__
+    #include <Sts1CobcSw/FileSystem/LfsRam.hpp>
+#endif
 #include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
@@ -26,67 +28,73 @@ using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
+TEST_CASE("LfsWrapper without data corruption")
+{
+    fs::Initialize();
+    auto mountResult = fs::Mount();
+    CHECK(not mountResult.has_error());
+
+    auto filePath = fs::Path("/MyFile");
+    auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+    CHECK(openResult.has_value());
+    auto & writeableFile = openResult.value();
+
+    // Reopening the file should fail
+    auto reopenResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+    CHECK(reopenResult.has_error());
+
+    // Empty file should have size 0
+    auto sizeResult = writeableFile.Size();
+    CHECK(sizeResult.has_value());
+    CHECK(sizeResult.value() == 0);
+
+    auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
+    auto writeResult = writeableFile.Write(Span(writeData));
+    CHECK(writeResult.has_value());
+    CHECK(writeResult.value() == static_cast<int>(writeData.size()));
+
+    // Read() should fail since the file is only opened for writing
+    auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
+    auto readResult = writeableFile.Read(Span(&readData));
+    CHECK(readResult.has_error());
+
+    auto closeResult = writeableFile.Close();
+    CHECK(not closeResult.has_error());
+
+    openResult = fs::Open(filePath, LFS_O_RDONLY);
+    CHECK(openResult.has_value());
+    auto & readableFile = openResult.value();
+
+    sizeResult = readableFile.Size();
+    CHECK(sizeResult.has_value());
+    CHECK(sizeResult.value() == static_cast<int>(writeData.size()));
+
+    readResult = readableFile.Read(Span(&readData));
+    CHECK(readResult.has_value());
+    CHECK(readResult.value() == static_cast<int>(readData.size()));
+    CHECK(readData == writeData);
+
+    // Write() should fail since the file is only opened for reading
+    writeResult = readableFile.Write(Span(writeData));
+    CHECK(writeResult.has_error());
+
+    closeResult = readableFile.Close();
+    CHECK(not closeResult.has_error());
+
+    // TODO: Remove the file
+
+    auto unmountResult = fs::Unmount();
+    CHECK(not unmountResult.has_error());
+}
+
+
+#ifdef __linux__
 auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool;
 
 
-TEST_CASE("LfsWrapper")
+TEST_CASE("LfsWrapper with data corruption")
 {
     fs::Initialize();
-
-    // Test without memory corruption or faults
-    {
-        auto mountResult = fs::Mount();
-        CHECK(not mountResult.has_error());
-
-        auto filePath = fs::Path("/MyFile");
-        auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
-        CHECK(openResult.has_value());
-        auto & writeableFile = openResult.value();
-
-        // Reopening the file should fail
-        auto reopenResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
-        CHECK(reopenResult.has_error());
-
-        // Empty file should have size 0
-        auto sizeResult = writeableFile.Size();
-        CHECK(sizeResult.has_value());
-        CHECK(sizeResult.value() == 0);
-
-        auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
-        auto writeResult = writeableFile.Write(Span(writeData));
-        CHECK(writeResult.has_value());
-        CHECK(writeResult.value() == static_cast<int>(writeData.size()));
-
-        // Read() should fail since the file is only opened for writing
-        auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
-        auto readResult = writeableFile.Read(Span(&readData));
-        CHECK(readResult.has_error());
-
-        auto closeResult = writeableFile.Close();
-        CHECK(not closeResult.has_error());
-
-        openResult = fs::Open(filePath, LFS_O_RDONLY);
-        CHECK(openResult.has_value());
-        auto & readableFile = openResult.value();
-
-        sizeResult = readableFile.Size();
-        CHECK(sizeResult.has_value());
-        CHECK(sizeResult.value() == static_cast<int>(writeData.size()));
-
-        readResult = readableFile.Read(Span(&readData));
-        CHECK(readResult.has_value());
-        CHECK(readResult.value() == static_cast<int>(readData.size()));
-        CHECK(readData == writeData);
-
-        // Write() should fail since the file is only opened for reading
-        writeResult = readableFile.Write(Span(writeData));
-        CHECK(writeResult.has_error());
-
-        closeResult = readableFile.Close();
-        CHECK(not closeResult.has_error());
-        auto unmountResult = fs::Unmount();
-        CHECK(not unmountResult.has_error());
-    }
 
     // Test with faulty write
     {
@@ -203,3 +211,4 @@ auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -
     *it ^= 0x80_b;
     return true;
 }
+#endif

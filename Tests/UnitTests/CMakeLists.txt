@@ -132,14 +132,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME FramVector COMMAND Sts1CobcSwTests_FramVector)
 
-    add_program(LfsWrapper LfsWrapper.test.cpp)
-    target_link_libraries(
-        Sts1CobcSwTests_LfsWrapper
-        PRIVATE etl::etl littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Serial
-                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
-    )
-    add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_LfsWrapper)
-
     add_program(PersistentVariables PersistentVariables.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_PersistentVariables
@@ -157,6 +149,14 @@ target_link_libraries(
                                  Sts1CobcSw_Serial Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
 )
 add_test(NAME Fram COMMAND Sts1CobcSwTests_Fram)
+
+add_program(LfsWrapper LfsWrapper.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_LfsWrapper
+    PRIVATE etl::etl littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Serial Sts1CobcSw_Utility
+            Sts1CobcSwTests::CatchRodos
+)
+add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_LfsWrapper)
 
 add_program(Littlefs Littlefs.test.cpp)
 target_link_libraries(
