@@ -167,11 +167,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_LfsWrapper)
 
-    add_program(PersistentVariables PersistentVariables.test.cpp UnitTestThread.cpp)
+    add_program(PersistentVariables PersistentVariables.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_PersistentVariables
-        PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Periphery Sts1CobcSw_Serial
-                Sts1CobcSw_Utility
+        PRIVATE strong_type::strong_type Sts1CobcSw_FramSections Sts1CobcSw_Periphery
+                Sts1CobcSw_Serial Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 endif()
