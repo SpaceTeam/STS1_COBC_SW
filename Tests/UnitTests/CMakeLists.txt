@@ -1,8 +1,10 @@
 # TODO: Implement something like add_test_program() which adds the suffix "Test" to the output name
 
+# The Catch2 tests must be listed first to easily collect them for the Catch2 test discovery
+
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
-    # ---- Tests with Catch2 ----
+    # ---- Tests with Catch2 only for Linux ----
 
     add_program(Dummy Dummy.test.cpp)
     target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
@@ -78,7 +80,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     endforeach()
 else()
 
-    # ---- Hardware tests with CatchRodos ----
+    # ---- Tests with CatchRodos only for the COBC ----
 
     add_program(Crc32 Crc32.test.cpp)
     target_link_libraries(
@@ -105,19 +107,13 @@ else()
                                           strong_type::strong_type Sts1CobcSwTests::CatchRodos
     )
 
-    add_program(Littlefs Littlefs.test.cpp)
-    target_link_libraries(
-        Sts1CobcSwTests_Littlefs PRIVATE etl::etl littlefs::littlefs Sts1CobcSw_FileSystem
-                                         Sts1CobcSwTests::CatchRodos
-    )
-
     add_program(Rf Rf.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_Rf PRIVATE Sts1CobcSw_Periphery Sts1CobcSwTests::CatchRodos
     )
 endif()
 
-# ---- Tests with Rodos on Linux ----
+# ---- Tests with CatchRodos only for Linux ----
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_program(EdacVariable EdacVariable.test.cpp)
@@ -152,13 +148,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME FramVector COMMAND Sts1CobcSwTests_FramVector)
 
-    add_program(LfsRam LfsRam.test.cpp)
-    target_link_libraries(
-        Sts1CobcSwTests_LfsRam PRIVATE littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Serial
-                                       Sts1CobcSwTests::CatchRodos
-    )
-    add_test(NAME LfsRam COMMAND Sts1CobcSwTests_LfsRam)
-
     add_program(LfsWrapper LfsWrapper.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_LfsWrapper
@@ -175,6 +164,15 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 endif()
+
+# ---- Tests with CatchRodos for Linux and the COBC ----
+
+add_program(Littlefs Littlefs.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Littlefs PRIVATE etl::etl littlefs::littlefs Sts1CobcSw_FileSystem
+                                     Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
+)
+add_test(NAME Littlefs COMMAND Sts1CobcSwTests_Littlefs)
 
 # ---- All unit tests ----
 
