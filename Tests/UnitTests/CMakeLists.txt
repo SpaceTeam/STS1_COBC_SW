@@ -152,10 +152,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME FramVector COMMAND Sts1CobcSwTests_FramVector)
 
-    add_program(LfsRam LfsRam.test.cpp UnitTestThread.cpp)
+    add_program(LfsRam LfsRam.test.cpp)
     target_link_libraries(
-        Sts1CobcSwTests_LfsRam PRIVATE rodos::rodos littlefs::littlefs Sts1CobcSw_FileSystem
-                                       Sts1CobcSw_Serial
+        Sts1CobcSwTests_LfsRam PRIVATE littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Serial
+                                       Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME LfsRam COMMAND Sts1CobcSwTests_LfsRam)
 
