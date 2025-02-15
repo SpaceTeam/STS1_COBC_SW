@@ -1,5 +1,3 @@
-add_subdirectory(ThreadTests)
-
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Crc32 PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
@@ -33,8 +31,6 @@ target_link_libraries(
 add_program(Rf Rf.test.cpp)
 target_link_libraries(Sts1CobcSwTests_Rf PRIVATE Sts1CobcSw_Periphery Sts1CobcSwTests::CatchRodos)
 
-get_property(
-    top_level_hw_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS
-)
+get_property(hw_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 add_custom_target(AllHardwareTests) # Must be defined after getting all hardware test targets
-add_dependencies(AllHardwareTests ${top_level_hw_test_targets} AllThreadTests)
+add_dependencies(AllHardwareTests ${hw_test_targets})
