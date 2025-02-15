@@ -123,8 +123,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_program(EdacVariable EdacVariable.test.cpp UnitTestThread.cpp)
     target_link_libraries(Sts1CobcSwTests_EdacVariable PRIVATE rodos::rodos Sts1CobcSw_Utility)
     add_test(NAME EdacVariable COMMAND Sts1CobcSwTests_EdacVariable)
-    # Disable warnings about memcpy() of non-trivially copiable type EdacVariable<>
-    target_compile_options(Sts1CobcSwTests_EdacVariable PRIVATE -Wno-class-memaccess)
 
     add_program(FramRingArray FramRingArray.test.cpp UnitTestThread.cpp)
     target_link_libraries(

@@ -53,8 +53,6 @@ auto RunUnitTest() -> void
         auto variable = EdacVariable<char>('a');
         Require(variable.Load() == 'a');
 
-        // Those memcpy's are unspecified behavior but I can't think of a better way (= one that is
-        // not undefined behavior) and it seems to work
         auto data = std::array<char, sizeof(variable)>{};
         std::memcpy(data.data(), &variable, sizeof(variable));
         data[0] = 'x';
