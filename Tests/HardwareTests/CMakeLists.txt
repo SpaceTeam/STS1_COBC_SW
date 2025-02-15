@@ -32,8 +32,8 @@ target_link_libraries(
 
 add_program(Littlefs Littlefs.test.cpp)
 target_link_libraries(
-    Sts1CobcSwTests_Littlefs PRIVATE littlefs::littlefs rodos::rodos Sts1CobcSw_FileSystem
-                                     Sts1CobcSwTests::HardwareSetup Sts1CobcSwTests_Utility
+    Sts1CobcSwTests_Littlefs PRIVATE etl::etl littlefs::littlefs Sts1CobcSw_FileSystem
+                                     Sts1CobcSwTests::CatchRodos
 )
 
 add_program(Rf Rf.test.cpp)
