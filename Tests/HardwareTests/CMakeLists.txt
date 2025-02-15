@@ -37,10 +37,7 @@ target_link_libraries(
 )
 
 add_program(Rf Rf.test.cpp)
-target_link_libraries(
-    Sts1CobcSwTests_Rf PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSwTests::HardwareSetup
-                               Sts1CobcSwTests_Utility
-)
+target_link_libraries(Sts1CobcSwTests_Rf PRIVATE Sts1CobcSw_Periphery Sts1CobcSwTests::CatchRodos)
 
 get_property(
     top_level_hw_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS
