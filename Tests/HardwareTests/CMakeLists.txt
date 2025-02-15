@@ -1,11 +1,5 @@
 add_subdirectory(ThreadTests)
 
-add_library(Sts1CobcSwTests_Utility STATIC Utility.cpp)
-target_link_libraries(Sts1CobcSwTests_Utility PRIVATE rodos::rodos)
-target_include_directories(
-    Sts1CobcSwTests_Utility PUBLIC ${warning_guard} "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
-)
-
 add_program(Crc32 Crc32.test.cpp)
 target_link_libraries(
     Sts1CobcSwTests_Crc32 PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
