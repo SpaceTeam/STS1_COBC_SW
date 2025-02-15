@@ -120,8 +120,10 @@ endif()
 # ---- Tests with Rodos on Linux ----
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-    add_program(EdacVariable EdacVariable.test.cpp UnitTestThread.cpp)
-    target_link_libraries(Sts1CobcSwTests_EdacVariable PRIVATE rodos::rodos Sts1CobcSw_Utility)
+    add_program(EdacVariable EdacVariable.test.cpp)
+    target_link_libraries(
+        Sts1CobcSwTests_EdacVariable PRIVATE Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+    )
     add_test(NAME EdacVariable COMMAND Sts1CobcSwTests_EdacVariable)
 
     add_program(FramRingArray FramRingArray.test.cpp UnitTestThread.cpp)
