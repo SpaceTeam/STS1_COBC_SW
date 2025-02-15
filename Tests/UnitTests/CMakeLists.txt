@@ -6,9 +6,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     # The Catch2 tests must be listed first to easily collect them for the Catch2 test discovery
 
-    add_program(Dummy Dummy.test.cpp)
-    target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
-
     add_program(FlatArray FlatArray.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_FlatArray PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
