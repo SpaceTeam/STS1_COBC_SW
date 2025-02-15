@@ -1,10 +1,10 @@
 # TODO: Implement something like add_test_program() which adds the suffix "Test" to the output name
 
-# The Catch2 tests must be listed first to easily collect them for the Catch2 test discovery
-
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
-    # ---- Tests with Catch2 only for Linux ----
+    # ---- Tests only for Linux ----
+
+    # The Catch2 tests must be listed first to easily collect them for the Catch2 test discovery
 
     add_program(Dummy Dummy.test.cpp)
     target_link_libraries(Sts1CobcSwTests_Dummy PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Dummy)
@@ -12,12 +12,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_program(FlatArray FlatArray.test.cpp)
     target_link_libraries(
         Sts1CobcSwTests_FlatArray PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
-    )
-
-    add_program(FramMock FramMock.test.cpp)
-    target_link_libraries(
-        Sts1CobcSwTests_FramMock PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Periphery
-                                         Sts1CobcSw_Serial Sts1CobcSw_Utility
     )
 
     add_program(MajorityVote MajorityVote.test.cpp)
@@ -80,7 +74,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     endforeach()
 else()
 
-    # ---- Tests with CatchRodos only for the COBC ----
+    # ---- Tests only for the COBC ----
 
     add_program(Crc32 Crc32.test.cpp)
     target_link_libraries(
@@ -92,13 +86,6 @@ else()
     target_link_libraries(
         Sts1CobcSwTests_Flash PRIVATE Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
                                       strong_type::strong_type Sts1CobcSwTests::CatchRodos
-    )
-
-    add_program(Fram Fram.test.cpp)
-    target_link_libraries(
-        Sts1CobcSwTests_Fram
-        PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
-                strong_type::strong_type Sts1CobcSwTests::CatchRodos
     )
 
     add_program(WholeFram WholeFram.test.cpp)
@@ -165,7 +152,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 endif()
 
-# ---- Tests with CatchRodos for Linux and the COBC ----
+# ---- Tests for Linux and the COBC ----
+
+add_program(Fram Fram.test.cpp)
+target_link_libraries(
+    Sts1CobcSwTests_Fram PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Periphery
+                                 Sts1CobcSw_Serial Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+)
+add_test(NAME Fram COMMAND Sts1CobcSwTests_Fram)
 
 add_program(Littlefs Littlefs.test.cpp)
 target_link_libraries(
