@@ -1,4 +1,4 @@
-#include <Tests/UnitTests/UnitTestThread.hpp>
+#include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
@@ -73,108 +73,108 @@ static_assert(sVector.FramCapacity() == 4);
 static_assert(sVector.CacheCapacity() == 4);
 
 
-auto RunUnitTest() -> void
+TEST_CASE("FramVector")
 {
     using fram::ram::memory;
 
     fram::ram::SetAllDoFunctions();
     fram::Initialize();
     fram::framIsWorking.Store(true);
-    memory.fill(0x00_b);  // Clear memory
+    memory.fill(0x00_b);
 
-    // SECTION("FRAM is working")
+    // FRAM is working
     {
-        Require(charVector1.Size() == 0);
-        Require(charVector1.IsEmpty());
-        Require(not charVector1.IsFull());
+        CHECK(charVector1.Size() == 0U);
+        CHECK(charVector1.IsEmpty());
+        CHECK(not charVector1.IsFull());
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
-        Require(charVector1.Get(0) == 0x00);
+        CHECK(charVector1.Get(0) == 0x00);
 
         charVector1.PushBack(0x61);
-        Require(charVector1.Size() == 1);
-        Require(not charVector1.IsEmpty());
-        Require(not charVector1.IsFull());
-        Require(charVector1.Get(0) == 0x61);
+        CHECK(charVector1.Size() == 1U);
+        CHECK(not charVector1.IsEmpty());
+        CHECK(not charVector1.IsFull());
+        CHECK(charVector1.Get(0) == 0x61);
 
         charVector1.PushBack(0x62);
-        Require(charVector1.Size() == 2);
-        Require(not charVector1.IsEmpty());
-        Require(not charVector1.IsFull());
-        Require(charVector1.Get(1) == 0x62);
+        CHECK(charVector1.Size() == 2U);
+        CHECK(not charVector1.IsEmpty());
+        CHECK(not charVector1.IsFull());
+        CHECK(charVector1.Get(1) == 0x62);
 
         charVector1.PushBack(0x63);
-        Require(charVector1.Size() == 3);
-        Require(not charVector1.IsEmpty());
-        Require(charVector1.IsFull());
-        Require(charVector1.Get(2) == 0x63);
+        CHECK(charVector1.Size() == 3U);
+        CHECK(not charVector1.IsEmpty());
+        CHECK(charVector1.IsFull());
+        CHECK(charVector1.Get(2) == 0x63);
 
         // PushBack() writes to memory
-        Require(fram::ram::memory[charVector1StartAddress + 0] == 0x61_b);
-        Require(fram::ram::memory[charVector1StartAddress + 1] == 0x62_b);
-        Require(fram::ram::memory[charVector1StartAddress + 2] == 0x63_b);
+        CHECK(fram::ram::memory[charVector1StartAddress + 0] == 0x61_b);
+        CHECK(fram::ram::memory[charVector1StartAddress + 1] == 0x62_b);
+        CHECK(fram::ram::memory[charVector1StartAddress + 2] == 0x63_b);
 
         // PushBack() does nothing, except for printing a debug message, if the vector is full
-        Require(charVector1.IsFull());
+        CHECK(charVector1.IsFull());
         charVector1.PushBack(0x64);
-        Require(charVector1.Size() == 3);
-        Require(charVector1.Get(0) == 0x61);
-        Require(charVector1.Get(1) == 0x62);
-        Require(charVector1.Get(2) == 0x63);
+        CHECK(charVector1.Size() == 3U);
+        CHECK(charVector1.Get(0) == 0x61);
+        CHECK(charVector1.Get(1) == 0x62);
+        CHECK(charVector1.Get(2) == 0x63);
 
         // Get() with out-of-bounds index prints a debug message and returns the last element
-        Require(charVector1.Get(17) == 0x63);
+        CHECK(charVector1.Get(17) == 0x63);
     }
 
-    // SECTION("FRAM is not working")
+    // FRAM is not working
     {
         memory.fill(0x00_b);
         fram::framIsWorking.Store(false);
 
         // Even though we reset the FRAM memory to zero, the cached values are still there
-        Require(charVector1.Size() == charVector1.CacheCapacity());
-        Require(charVector1.Get(0) == 0x61);
-        Require(charVector1.Get(1) == 0x62);
+        CHECK(charVector1.Size() == charVector1.CacheCapacity());
+        CHECK(charVector1.Get(0) == 0x61);
+        CHECK(charVector1.Get(1) == 0x62);
 
-        Require(charVector2.Size() == 0);
-        Require(charVector2.IsEmpty());
-        Require(not charVector2.IsFull());
+        CHECK(charVector2.Size() == 0U);
+        CHECK(charVector2.IsEmpty());
+        CHECK(not charVector2.IsFull());
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
-        Require(charVector2.Get(0) == 0x00);
+        CHECK(charVector2.Get(0) == 0x00);
 
         charVector2.PushBack(11);
-        Require(charVector2.Size() == 1);
-        Require(not charVector2.IsEmpty());
-        Require(not charVector2.IsFull());
-        Require(charVector2.Get(0) == 11);
+        CHECK(charVector2.Size() == 1U);
+        CHECK(not charVector2.IsEmpty());
+        CHECK(not charVector2.IsFull());
+        CHECK(charVector2.Get(0) == 11);
 
         charVector2.PushBack(12);
-        Require(charVector2.Size() == 2);
-        Require(not charVector2.IsEmpty());
-        Require(charVector2.IsFull());
-        Require(charVector2.Get(1) == 12);
+        CHECK(charVector2.Size() == 2U);
+        CHECK(not charVector2.IsEmpty());
+        CHECK(charVector2.IsFull());
+        CHECK(charVector2.Get(1) == 12);
 
         // PushBack() does not write to memory
-        Require(fram::ram::memory[charVector2StartAddress + 0] == 0x00_b);
-        Require(fram::ram::memory[charVector2StartAddress + 1] == 0x00_b);
+        CHECK(fram::ram::memory[charVector2StartAddress + 0] == 0x00_b);
+        CHECK(fram::ram::memory[charVector2StartAddress + 1] == 0x00_b);
 
         // PushBack() does nothing, except for printing a debug message, if the vector is full
-        Require(charVector2.IsFull());
+        CHECK(charVector2.IsFull());
         charVector2.PushBack(13);
-        Require(charVector2.Size() == 2);
-        Require(charVector2.Get(0) == 11);
-        Require(charVector2.Get(1) == 12);
+        CHECK(charVector2.Size() == 2U);
+        CHECK(charVector2.Get(0) == 11);
+        CHECK(charVector2.Get(1) == 12);
 
         // Get() with out-of-bounds index prints a debug message and returns the last element
-        Require(charVector2.Get(17) == 12);
+        CHECK(charVector2.Get(17) == 12);
 
         charVector2.Clear();
-        Require(charVector2.Size() == 0);
-        Require(charVector2.IsEmpty());
+        CHECK(charVector2.Size() == 0U);
+        CHECK(charVector2.IsEmpty());
     }
 
-    // SECTION("Custom type")
+    // Custom type
     {
         memory.fill(0x00_b);
         fram::framIsWorking.Store(true);
@@ -185,33 +185,33 @@ auto RunUnitTest() -> void
         auto s4 = S{.u16 = 4, .i32 = 400, .u8 = 40};
         auto s5 = S{.u16 = 5, .i32 = 500, .u8 = 50};
 
-        Require(sVector.Size() == 0);
-        Require(sVector.IsEmpty());
-        Require(not sVector.IsFull());
+        CHECK(sVector.Size() == 0U);
+        CHECK(sVector.IsEmpty());
+        CHECK(not sVector.IsFull());
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
-        Require(sVector.Get(0) == S{});
+        CHECK(sVector.Get(0) == S{});
 
         sVector.PushBack(s1);
-        Require(sVector.Size() == 1);
-        Require(sVector.Get(0) == s1);
+        CHECK(sVector.Size() == 1U);
+        CHECK(sVector.Get(0) == s1);
 
         sVector.PushBack(s2);
-        Require(sVector.Size() == 2);
-        Require(sVector.Get(0) == s1);
+        CHECK(sVector.Size() == 2U);
+        CHECK(sVector.Get(0) == s1);
 
         sVector.PushBack(s3);
         sVector.PushBack(s4);
-        Require(sVector.Size() == 4);
-        Require(sVector.IsFull());
+        CHECK(sVector.Size() == 4U);
+        CHECK(sVector.IsFull());
 
         sVector.PushBack(s5);
-        Require(sVector.Size() == 4);
-        Require(sVector.Get(3) == s4);
+        CHECK(sVector.Size() == 4U);
+        CHECK(sVector.Get(3) == s4);
 
         sVector.Clear();
-        Require(sVector.Size() == 0);
-        Require(sVector.IsEmpty());
+        CHECK(sVector.Size() == 0U);
+        CHECK(sVector.IsEmpty());
     }
 }
 

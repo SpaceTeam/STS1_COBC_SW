@@ -139,10 +139,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
-    add_program(FramVector FramVector.test.cpp UnitTestThread.cpp)
+    add_program(FramVector FramVector.test.cpp)
     target_link_libraries(
-        Sts1CobcSwTests_FramVector PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Utility
-                                           Sts1CobcSw_Periphery Sts1CobcSw_Serial
+        Sts1CobcSwTests_FramVector
+        PRIVATE etl::etl
+                strong_type::strong_type
+                Sts1CobcSw_FramSections
+                Sts1CobcSw_Periphery
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Utility
+                Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME FramVector COMMAND Sts1CobcSwTests_FramVector)
 
