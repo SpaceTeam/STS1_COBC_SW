@@ -86,28 +86,28 @@ auto Convert(std::string const & str) noexcept -> Result<int>
 TEST_CASE("Inspecting result")
 {
     Result<int> result = outcome_v2::success();
-    REQUIRE(result.has_value());
-    REQUIRE(result);  // Boolean cast
+    CHECK(result.has_value());
+    CHECK(result);  // Boolean cast
 
     // Test each defined conversion error
     result = Convert("abc");
-    REQUIRE(result.has_error());
-    REQUIRE(result.error() == ConversionErrc::illegalChar);
+    CHECK(result.has_error());
+    CHECK(result.error() == ConversionErrc::illegalChar);
 
     result = Convert("314159265359");
-    REQUIRE(result.has_error());
-    REQUIRE(result.error() == ConversionErrc::tooLong);
+    CHECK(result.has_error());
+    CHECK(result.error() == ConversionErrc::tooLong);
 
     result = Convert("");
-    REQUIRE(result.has_error());
-    REQUIRE(result.error() == ConversionErrc::emptyString);
+    CHECK(result.has_error());
+    CHECK(result.error() == ConversionErrc::emptyString);
 
 
     // Test success
     result = Convert("278");
-    REQUIRE(result.has_value());
-    REQUIRE(result);  // Boolean cast
-    REQUIRE(result.value() == 278);
+    CHECK(result.has_value());
+    CHECK(result);  // Boolean cast
+    CHECK(result.value() == 278);
 }
 
 
@@ -153,24 +153,24 @@ TEST_CASE("TRY macro")
 {
     // Test failure
     auto result1 = Write(false);
-    REQUIRE(result1.has_error());
-    REQUIRE(result1.error() == ConversionErrc::emptyString);
+    CHECK(result1.has_error());
+    CHECK(result1.error() == ConversionErrc::emptyString);
 
     // Test success
     auto result2 = Write(true);
-    REQUIRE(result2.has_value());
-    REQUIRE(result2);
-    REQUIRE(result2.value() == 1);
+    CHECK(result2.has_value());
+    CHECK(result2);
+    CHECK(result2.value() == 1);
 
     // Test failure
     auto result3 = Add(1, "3.14");
-    REQUIRE(not result3.has_value());
-    REQUIRE(result3.has_error());
-    REQUIRE(result3.error() == ConversionErrc::illegalChar);
+    CHECK(not result3.has_value());
+    CHECK(result3.has_error());
+    CHECK(result3.error() == ConversionErrc::illegalChar);
 
     // Test success
     auto result4 = Add(1, "278");
-    REQUIRE(result4.has_value());
-    REQUIRE(result4);
-    REQUIRE(result4.value().first == 279);
+    CHECK(result4.has_value());
+    CHECK(result4);
+    CHECK(result4.value().first == 279);
 }

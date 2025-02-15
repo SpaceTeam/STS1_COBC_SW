@@ -8,7 +8,7 @@ using sts1cobcsw::StringLiteral;
 
 TEST_CASE("All static_asserts passed")
 {
-    REQUIRE(true);
+    CHECK(true);
 }
 
 
