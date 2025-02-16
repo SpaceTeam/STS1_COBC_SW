@@ -1,3 +1,5 @@
+# ---- Tests only for the COBC ----
+
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(DeviceIds)
     target_link_libraries(
@@ -89,5 +91,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 endif()
 
 get_property(manual_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS)
-add_custom_target(AllManualTests) # Must be defined after getting all manual test targets
-add_dependencies(AllManualTests ${manual_test_targets})
+add_custom_target(AllManualTests)
+if(manual_test_targets)
+    add_dependencies(AllManualTests ${manual_test_targets})
+endif()

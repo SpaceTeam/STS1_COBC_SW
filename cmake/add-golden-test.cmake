@@ -12,7 +12,7 @@ function(add_golden_test test_file)
     set_target_properties(${target} PROPERTIES OUTPUT_NAME ${test_file_name})
 
     # Check if an expected output file exists for the current build type
-    set(expected_output_directory "${CMAKE_SOURCE_DIR}/Tests/GoldenTests/ExpectedOutputs")
+    set(expected_output_directory "${CMAKE_SOURCE_DIR}/Tests/IntegrationTests/ExpectedOutputs")
     set(expected_output_file
         "${expected_output_directory}/${test_file_name}_${CMAKE_BUILD_TYPE}.txt"
     )

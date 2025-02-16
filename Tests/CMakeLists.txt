@@ -20,20 +20,14 @@ add_subdirectory(HardwareSetup EXCLUDE_FROM_ALL)
 
 # ---- Tests ----
 
-add_custom_target(AllTests)
-add_dependencies(
-    AllTests Sts1CobcSwTests_CatchRodos_Example Sts1CobcSwTests_CatchRodos_FailMessages
-)
-
 add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
-add_dependencies(AllTests AllUnitTests)
-if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-    add_subdirectory(GoldenTests EXCLUDE_FROM_ALL)
-    add_dependencies(AllTests AllGoldenTests)
-elseif(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    add_subdirectory(ManualTests EXCLUDE_FROM_ALL)
-    add_dependencies(AllTests AllManualTests)
-endif()
+add_subdirectory(IntegrationTests EXCLUDE_FROM_ALL)
+add_subdirectory(ManualTests EXCLUDE_FROM_ALL)
+
+add_custom_target(AllTests)
+add_dependencies(AllTests Sts1CobcSwTests_CatchRodos_Example)
+add_dependencies(AllTests Sts1CobcSwTests_CatchRodos_FailMessages)
+add_dependencies(AllTests AllUnitTests AllIntegrationTests AllManualTests)
 
 # ---- End-of-file commands ----
 

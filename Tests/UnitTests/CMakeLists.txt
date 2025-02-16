@@ -1,5 +1,3 @@
-# TODO: Add a target that runs all COBC tests. For this it needs all COBC tests as sources.
-
 # ---- Tests for Linux and the COBC ----
 
 add_test_program(Fram)
@@ -184,6 +182,6 @@ endif()
 
 # ---- All unit tests ----
 
-get_property(all_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
-add_custom_target(AllUnitTests) # Must be defined after getting all unit test targets
-add_dependencies(AllUnitTests ${all_test_targets})
+get_property(unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
+add_custom_target(AllUnitTests)
+add_dependencies(AllUnitTests ${unit_test_targets})
