@@ -163,8 +163,27 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
 endif()
 
+# ---- All COBC tests in one target ----
+
+if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    get_property(
+        all_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS
+    )
+    set(all_sources "")
+    set(all_link_libraries "")
+    foreach(target IN LISTS all_test_targets)
+        get_target_property(sources ${target} SOURCES)
+        list(APPEND all_sources ${sources})
+        get_target_property(link_libraries ${target} LINK_LIBRARIES)
+        list(APPEND all_link_libraries ${link_libraries})
+    endforeach()
+    list(REMOVE_DUPLICATES all_link_libraries)
+    add_program(AllUnitTests ${all_sources})
+    target_link_libraries(Sts1CobcSwTests_AllUnitTests PRIVATE ${all_link_libraries})
+endif()
+
 # ---- All unit tests ----
 
-get_property(unit_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
+get_property(all_test_targets DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 add_custom_target(AllUnitTests) # Must be defined after getting all unit test targets
-add_dependencies(AllUnitTests ${unit_test_targets})
+add_dependencies(AllUnitTests ${all_test_targets})
