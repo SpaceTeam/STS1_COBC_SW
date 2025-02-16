@@ -3,10 +3,10 @@
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     include("${CMAKE_SOURCE_DIR}/cmake/add-golden-test.cmake")
 
-    add_golden_test(HelloWorld.test.cpp)
+    add_golden_test(HelloWorld)
     target_link_libraries(Sts1CobcSwTests_HelloWorld PRIVATE rodos::rodos)
 
-    add_golden_test(SpiSupervisor.test.cpp)
+    add_golden_test(SpiSupervisor)
     target_sources(
         Sts1CobcSwTests_SpiSupervisor
         PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/StartupTestThreadStubs.cpp
