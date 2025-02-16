@@ -11,13 +11,11 @@
 
 #include <littlefs/lfs.h>
 
-#include <etl/string.h>
 #include <etl/to_string.h>
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
-#include <cstring>
+#include <cstddef>
 #include <span>
 #include <vector>
 

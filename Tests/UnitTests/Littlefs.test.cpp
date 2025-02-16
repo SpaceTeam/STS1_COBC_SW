@@ -165,7 +165,8 @@ TEST_CASE("Littlefs with data corruption")
         auto fileSize = i < 2 ? 252U : 257U;
         auto writeData = std::vector(fileSize, 0xB0_b);
         std::copy(dataToCorrupt.begin(), dataToCorrupt.end(), writeData.begin());
-        errorCode = lfs_file_write(&lfs, &file, writeData.data(), writeData.size());
+        errorCode = lfs_file_write(
+            &lfs, &file, writeData.data(), static_cast<lfs_size_t>(writeData.size()));
         CHECK(errorCode == static_cast<int>(writeData.size()));
 
         errorCode = lfs_file_close(&lfs, &file);
@@ -198,7 +199,8 @@ TEST_CASE("Littlefs with data corruption")
 
         // Reading never fails, but it reads either 0 bytes or the corrupted data
         auto readData = std::vector<sts1cobcsw::Byte>(writeData.size());
-        errorCode = lfs_file_read(&lfs, &file, readData.data(), readData.size());
+        errorCode =
+            lfs_file_read(&lfs, &file, readData.data(), static_cast<lfs_size_t>(readData.size()));
         if(i < 2)
         {
             CHECK(errorCode == 0);

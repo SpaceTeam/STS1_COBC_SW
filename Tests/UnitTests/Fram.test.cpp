@@ -12,6 +12,7 @@
 #include <strong_type/type.hpp>
 
 #include <rodos/support/support-libs/random.h>
+#include <rodos_no_using_namespace.h>
 
 #include <algorithm>
 #include <array>

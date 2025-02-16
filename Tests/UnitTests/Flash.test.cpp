@@ -33,7 +33,7 @@ TEST_CASE("Flash")
     CHECK(statusRegister3 == 0x40_b);
 
     // TODO: Test programming and erasing all pages and sectors. This will take a long time, so
-    // maybe it's better to do this in a separate FullFlash.test.cpp.
+    // maybe it's better to do this in a separate WholeFlash.test.cpp.
     static constexpr auto address = 0x00'01'00'00U;
 
     auto page = flash::Page{};

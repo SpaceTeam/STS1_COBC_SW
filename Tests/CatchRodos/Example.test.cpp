@@ -3,7 +3,7 @@
 
 TEST_INIT("Initialize something")
 {
-    // Someting to initialize
+    // Something to initialize
 }
 
 

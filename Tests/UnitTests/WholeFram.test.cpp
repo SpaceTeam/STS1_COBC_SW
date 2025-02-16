@@ -31,13 +31,13 @@ TEST_CASE("Reading and writing the whole FRAM")
     auto deviceId = fram::ReadDeviceId();
     CHECK(deviceId == fram::correctDeviceId);
 
-    static constexpr auto chunckSize = 16 * 1024U;
-    static_assert(value_of(fram::memorySize) % chunckSize == 0);
+    static constexpr auto chunkSize = 16 * 1024U;
+    static_assert(value_of(fram::memorySize) % chunkSize == 0);
     static constexpr auto endAddress = fram::Address(value_of(fram::memorySize));
-    for(auto address = fram::Address(0); address < endAddress; address += fram::Size(chunckSize))
+    for(auto address = fram::Address(0); address < endAddress; address += fram::Size(chunkSize))
     {
-        auto writtenData = std::array<Byte, chunckSize>{};
-        auto readData = std::array<Byte, chunckSize>{};
+        auto writtenData = std::array<Byte, chunkSize>{};
+        auto readData = std::array<Byte, chunkSize>{};
         // The timeout doesn't matter because we don't run the SPI supervisor thread in this test
         fram::WriteTo(address, Span(writtenData), 30 * ms);
         fram::ReadFrom(address, Span(&readData), 30 * ms);
