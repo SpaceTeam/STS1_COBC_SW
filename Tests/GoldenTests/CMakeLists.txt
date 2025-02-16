@@ -3,9 +3,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/add-golden-test.cmake")
 add_golden_test(HelloWorld.test.cpp)
 target_link_libraries(Sts1CobcSwTests_HelloWorld PRIVATE rodos::rodos)
 
-add_golden_test(HelloDummy.test.cpp)
-target_link_libraries(Sts1CobcSwTests_HelloDummy PRIVATE rodos::rodos etl::etl Sts1CobcSw_Dummy)
-
 add_golden_test(SpiSupervisor.test.cpp)
 target_sources(
     Sts1CobcSwTests_SpiSupervisor
