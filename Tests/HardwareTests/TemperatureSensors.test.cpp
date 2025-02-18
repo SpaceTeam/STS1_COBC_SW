@@ -30,21 +30,21 @@ private:
         EnableRfLatchupProtection();
 
         PRINTF("\nMCU temperature sensor test\n\n");
+        temperaturesensors::InitializeMcu();
 
         auto const conversionFactor = 0.0806;  // °C/bit
         auto const offset = -50;               // °C at 0 V
         TIME_LOOP(0, 1000 * RODOS::MILLISECONDS)
         {
-            temperaturesensors::InitializeRf();
-            auto temperature = temperaturesensors::ReadRf();
-            PRINTF("RF raw value   = %5d\n", temperature);
-            PRINTF("RF temperature = %5.1f deg C\n", temperature * conversionFactor + offset);
+            //temperaturesensors::InitializeRf();
+            //auto temperature = temperaturesensors::ReadRf();
+            //PRINTF("RF raw value   = %5d\n", temperature);
+            //PRINTF("RF temperature = %5.1f deg C\n", temperature * conversionFactor + offset);
 
 
-            temperaturesensors::InitializeMcu();
-            temperature = temperaturesensors::ReadMcu();
+            auto temperature = temperaturesensors::ReadMcu();
             PRINTF("MCU raw value   = %5d\n", temperature);
-            PRINTF("MCU temperature = %5.1f deg C\n", temperature * conversionFactor + offset);
+            PRINTF("MCU temperature = %5.1f deg C\n\n", temperature * conversionFactor + offset);
         }
     }
 } termperatureSensorTest;

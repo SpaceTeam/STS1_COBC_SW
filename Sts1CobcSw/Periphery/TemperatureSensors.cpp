@@ -34,7 +34,8 @@ constexpr auto rfChannel = RODOS::ADC_CH_010;
 auto mcuAdc = RODOS::HAL_ADC(RODOS::ADC_IDX1);
 constexpr auto mcuChannel = RODOS::ADC_CH_016;
 
-constexpr int32_t adcBitResolution = 12;  // 3.3 V / 2^12 bits / (10 mV/°C) = 0.0806 °C/bit
+//constexpr int32_t adcBitResolution = 12;  // 3.3 V / 2^12 bits / (10 mV/°C) = 0.0806 °C/bit
+constexpr int32_t adcBitResolution = 8;  // 3.3 V / 2^12 bits / (10 mV/°C) = 0.0806 °C/bit
 
 
 auto InitializeRf() -> void
@@ -46,6 +47,7 @@ auto InitializeRf() -> void
 
 auto InitializeMcu() -> void
 {
+    ADC_TempSensorVrefintCmd(FunctionalState::ENABLE);
     mcuAdc.init(mcuChannel);
     mcuAdc.config(RODOS::ADC_PARAMETER_RESOLUTION, adcBitResolution);
 }
