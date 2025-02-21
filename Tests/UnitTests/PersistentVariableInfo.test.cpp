@@ -14,7 +14,7 @@ using sts1cobcsw::SubsectionInfoLike;
 
 TEST_CASE("All static_asserts passed")
 {
-    REQUIRE(true);
+    CHECK(true);
 }
 
 

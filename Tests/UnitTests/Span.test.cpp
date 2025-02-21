@@ -33,24 +33,24 @@ TEST_CASE("Span() converts to the right std::span")
     auto const csa = std::array{0x12, 0x34};
 
     // Passing by const & yields std::span<T const> aka a read-only span
-    REQUIRE(std::is_same_v<decltype(Span(i)), std::span<int const, 1>>);
-    REQUIRE(std::is_same_v<decltype(Span(ci)), std::span<int const, 1>>);
-    REQUIRE(std::is_same_v<decltype(Span(123456L)), std::span<long const, 1>>);
-    REQUIRE(std::is_same_v<decltype(Span(a)), std::span<short const, 3>>);
-    REQUIRE(std::is_same_v<decltype(Span(ca)), std::span<char const, 5>>);
-    REQUIRE(std::is_same_v<decltype(Span("ijk")), std::span<char const, 4>>);
-    REQUIRE(std::is_same_v<decltype(Span({8U, 9U})), std::span<unsigned int const, 2>>);
-    REQUIRE(std::is_same_v<decltype(Span(sa)), std::span<short const, 3>>);
-    REQUIRE(std::is_same_v<decltype(Span(csa)), std::span<int const, 2>>);
+    CHECK(std::is_same_v<decltype(Span(i)), std::span<int const, 1>>);
+    CHECK(std::is_same_v<decltype(Span(ci)), std::span<int const, 1>>);
+    CHECK(std::is_same_v<decltype(Span(123456L)), std::span<long const, 1>>);
+    CHECK(std::is_same_v<decltype(Span(a)), std::span<short const, 3>>);
+    CHECK(std::is_same_v<decltype(Span(ca)), std::span<char const, 5>>);
+    CHECK(std::is_same_v<decltype(Span("ijk")), std::span<char const, 4>>);
+    CHECK(std::is_same_v<decltype(Span({8U, 9U})), std::span<unsigned int const, 2>>);
+    CHECK(std::is_same_v<decltype(Span(sa)), std::span<short const, 3>>);
+    CHECK(std::is_same_v<decltype(Span(csa)), std::span<int const, 2>>);
 
     // Passing a pointer yields std::span<T> aka a span with mutable elements
-    REQUIRE(std::is_same_v<decltype(Span(&i)), std::span<int, 1>>);
-    REQUIRE(std::is_same_v<decltype(Span(&a)), std::span<short, 3>>);
-    REQUIRE(std::is_same_v<decltype(Span(&sa)), std::span<short, 3>>);
+    CHECK(std::is_same_v<decltype(Span(&i)), std::span<int, 1>>);
+    CHECK(std::is_same_v<decltype(Span(&a)), std::span<short, 3>>);
+    CHECK(std::is_same_v<decltype(Span(&sa)), std::span<short, 3>>);
 
     // Passing a pointer to a constant object is not allowed aka does not compile
-    REQUIRE_FALSE(std::is_invocable_v<CallSpan, decltype(&ci)>);
-    REQUIRE_FALSE(std::is_invocable_v<CallSpan, decltype(&ca)>);
-    REQUIRE_FALSE(std::is_invocable_v<CallSpan, decltype(&"ijk")>);
-    REQUIRE_FALSE(std::is_invocable_v<CallSpan, decltype(&csa)>);
+    CHECK_FALSE(std::is_invocable_v<CallSpan, decltype(&ci)>);
+    CHECK_FALSE(std::is_invocable_v<CallSpan, decltype(&ca)>);
+    CHECK_FALSE(std::is_invocable_v<CallSpan, decltype(&"ijk")>);
+    CHECK_FALSE(std::is_invocable_v<CallSpan, decltype(&csa)>);
 }

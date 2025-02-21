@@ -10,9 +10,9 @@
 
 namespace RODOS
 {
-#if defined(LINUX_SYSTEM)
+#ifdef __linux__
 HAL_UART uart_stdout(RODOS::UART_IDX2);  // NOLINT
-#elif defined(GENERIC_SYSTEM)
+#else
 extern HAL_UART uart_stdout;  // NOLINT
 #endif
 }

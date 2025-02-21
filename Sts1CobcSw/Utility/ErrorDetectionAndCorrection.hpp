@@ -14,11 +14,6 @@ class EdacVariable
 public:
     constexpr EdacVariable() = default;
     explicit constexpr EdacVariable(T const & value);
-    EdacVariable(EdacVariable const &) = delete;
-    EdacVariable(EdacVariable &&) = delete;
-    auto operator=(EdacVariable const &) -> EdacVariable & = delete;
-    auto operator=(EdacVariable &&) -> EdacVariable & = delete;
-    ~EdacVariable() = default;
 
     [[nodiscard]] auto Load() const -> T;
     auto Store(T const & value) -> void;

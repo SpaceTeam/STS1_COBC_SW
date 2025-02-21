@@ -31,6 +31,7 @@ inline constexpr auto framSections =
 inline constexpr auto persistentVariables =
     PersistentVariables<framSections.Get<"persistentVariables">(),
                         // Bootloader
+                        PersistentVariableInfo<"nTotalResets", std::uint32_t>,
                         PersistentVariableInfo<"nResetsSinceRf", std::uint8_t>,
                         PersistentVariableInfo<"activeSecondaryFwPartition", std::int8_t>,
                         PersistentVariableInfo<"backupSecondaryFwPartition", std::int8_t>,
@@ -39,7 +40,6 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
                         PersistentVariableInfo<"eduProgramQueueIndex", std::uint8_t>,
                         // Housekeeping
-                        PersistentVariableInfo<"nTotalResets", std::uint32_t>,
                         PersistentVariableInfo<"realTime", RealTime>,
                         PersistentVariableInfo<"realTimeOffset", Duration>,
                         PersistentVariableInfo<"epsIsWorking", bool>,

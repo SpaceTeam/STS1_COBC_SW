@@ -1,4 +1,4 @@
-#include <Tests/UnitTests/UnitTestThread.hpp>
+#include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
@@ -27,19 +27,19 @@ using sts1cobcsw::fram::Size;
 
 constexpr auto pvs = PersistentVariables<Section<Address(0), Size(60)>{},
                                          PersistentVariableInfo<"nResets", std::uint32_t>,
-                                         PersistentVariableInfo<"activeFwImage", std::uint8_t>,
+                                         PersistentVariableInfo<"activeFwImage", std::int8_t>,
                                          PersistentVariableInfo<"somethingElse", std::int16_t>>{};
 
 static_assert(std::is_same_v<decltype(pvs)::ValueType<"nResets">, std::uint32_t>);
-static_assert(std::is_same_v<decltype(pvs)::ValueType<"activeFwImage">, std::uint8_t>);
+static_assert(std::is_same_v<decltype(pvs)::ValueType<"activeFwImage">, std::int8_t>);
 static_assert(std::is_same_v<decltype(pvs)::ValueType<"somethingElse">, std::int16_t>);
 
 static_assert(std::is_same_v<decltype(pvs.Load<"nResets">()), std::uint32_t>);
-static_assert(std::is_same_v<decltype(pvs.Load<"activeFwImage">()), std::uint8_t>);
+static_assert(std::is_same_v<decltype(pvs.Load<"activeFwImage">()), std::int8_t>);
 static_assert(std::is_same_v<decltype(pvs.Load<"somethingElse">()), std::int16_t>);
 
 
-auto RunUnitTest() -> void
+TEST_CASE("PersistentVariables")
 {
     // TEST_CASE("Load() and Store()")
     using sts1cobcsw::fram::Address;
@@ -65,32 +65,32 @@ auto RunUnitTest() -> void
             pvs.Store<"nResets">(0x12345678);
             pvs.Store<"activeFwImage">(42);
             pvs.Store<"somethingElse">(-2);
-            Require(pvs.Load<"nResets">() == 0x12345678);
-            Require(pvs.Load<"activeFwImage">() == 42);
-            Require(pvs.Load<"somethingElse">() == -2);
+            CHECK(pvs.Load<"nResets">() == 0x12345678U);
+            CHECK(pvs.Load<"activeFwImage">() == 42);
+            CHECK(pvs.Load<"somethingElse">() == -2);
         }
 
         // SECTION("Increment() increments")
         {
-            pvs.Store<"nResets">(13);
+            pvs.Store<"nResets">(13U);
             pvs.Increment<"nResets">();
-            Require(pvs.Load<"nResets">() == 14);
+            CHECK(pvs.Load<"nResets">() == 14U);
             pvs.Increment<"nResets">();
-            Require(pvs.Load<"nResets">() == 15);
+            CHECK(pvs.Load<"nResets">() == 15U);
         }
 
         // SECTION("Store() writes to memory")
         {
-            pvs.Store<"nResets">(0x12345678);
+            pvs.Store<"nResets">(0x12345678U);
             pvs.Store<"activeFwImage">(42);
             pvs.Store<"somethingElse">(-2);
-            Require(memory[nResetsAddress0] == 0x78_b);
-            Require(memory[nResetsAddress0 + 1] == 0x56_b);
-            Require(memory[nResetsAddress0 + 2] == 0x34_b);
-            Require(memory[nResetsAddress0 + 3] == 0x12_b);
-            Require(memory[activeFwImageAddress0] == 42_b);
-            Require(memory[somethingElseAddress0] == 0xFE_b);
-            Require(memory[somethingElseAddress0 + 1] == 0xFF_b);
+            CHECK(memory[nResetsAddress0] == 0x78_b);
+            CHECK(memory[nResetsAddress0 + 1] == 0x56_b);
+            CHECK(memory[nResetsAddress0 + 2] == 0x34_b);
+            CHECK(memory[nResetsAddress0 + 3] == 0x12_b);
+            CHECK(memory[activeFwImageAddress0] == 42_b);
+            CHECK(memory[somethingElseAddress0] == 0xFE_b);
+            CHECK(memory[somethingElseAddress0 + 1] == 0xFF_b);
         }
 
         // SECTION("Load() reads from memory")
@@ -98,7 +98,7 @@ auto RunUnitTest() -> void
             memory[activeFwImageAddress0] = 17_b;
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
-            Require(pvs.Load<"activeFwImage">() == 17);
+            CHECK(pvs.Load<"activeFwImage">() == 17);
         }
 
         // SECTION("Increment() loads from and writes to memory")
@@ -107,9 +107,9 @@ auto RunUnitTest() -> void
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
             pvs.Increment<"activeFwImage">();
-            Require(memory[activeFwImageAddress0] == 18_b);
-            Require(memory[activeFwImageAddress1] == 18_b);
-            Require(memory[activeFwImageAddress2] == 18_b);
+            CHECK(memory[activeFwImageAddress0] == 18_b);
+            CHECK(memory[activeFwImageAddress1] == 18_b);
+            CHECK(memory[activeFwImageAddress2] == 18_b);
         }
 
         // SECTION("Load() returns majority and repairs memory")
@@ -117,29 +117,29 @@ auto RunUnitTest() -> void
             memory[activeFwImageAddress0] = 42_b;
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
-            Require(pvs.Load<"activeFwImage">() == 17);
-            Require(memory[activeFwImageAddress0] == 17_b);
-            Require(memory[activeFwImageAddress1] == 17_b);
-            Require(memory[activeFwImageAddress2] == 17_b);
+            CHECK(pvs.Load<"activeFwImage">() == 17);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
 
             memory[activeFwImageAddress1] = 42_b;
-            Require(pvs.Load<"activeFwImage">() == 17);
-            Require(memory[activeFwImageAddress0] == 17_b);
-            Require(memory[activeFwImageAddress1] == 17_b);
-            Require(memory[activeFwImageAddress2] == 17_b);
+            CHECK(pvs.Load<"activeFwImage">() == 17);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
 
             memory[activeFwImageAddress2] = 42_b;
-            Require(pvs.Load<"activeFwImage">() == 17);
-            Require(memory[activeFwImageAddress0] == 17_b);
-            Require(memory[activeFwImageAddress1] == 17_b);
-            Require(memory[activeFwImageAddress2] == 17_b);
+            CHECK(pvs.Load<"activeFwImage">() == 17);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
 
             memory[activeFwImageAddress0] = 42_b;
             memory[activeFwImageAddress2] = 42_b;
-            Require(pvs.Load<"activeFwImage">() == 42);
-            Require(memory[activeFwImageAddress0] == 42_b);
-            Require(memory[activeFwImageAddress1] == 42_b);
-            Require(memory[activeFwImageAddress2] == 42_b);
+            CHECK(pvs.Load<"activeFwImage">() == 42);
+            CHECK(memory[activeFwImageAddress0] == 42_b);
+            CHECK(memory[activeFwImageAddress1] == 42_b);
+            CHECK(memory[activeFwImageAddress2] == 42_b);
         }
 
         // SECTION("Increment() increments majority and repairs memory")
@@ -148,32 +148,32 @@ auto RunUnitTest() -> void
             memory[activeFwImageAddress1] = 10_b;
             memory[activeFwImageAddress2] = 10_b;
             pvs.Increment<"activeFwImage">();
-            Require(pvs.Load<"activeFwImage">() == 11);
-            Require(memory[activeFwImageAddress0] == 11_b);
-            Require(memory[activeFwImageAddress1] == 11_b);
-            Require(memory[activeFwImageAddress2] == 11_b);
+            CHECK(pvs.Load<"activeFwImage">() == 11);
+            CHECK(memory[activeFwImageAddress0] == 11_b);
+            CHECK(memory[activeFwImageAddress1] == 11_b);
+            CHECK(memory[activeFwImageAddress2] == 11_b);
 
             memory[activeFwImageAddress1] = 42_b;
             pvs.Increment<"activeFwImage">();
-            Require(pvs.Load<"activeFwImage">() == 12);
-            Require(memory[activeFwImageAddress0] == 12_b);
-            Require(memory[activeFwImageAddress1] == 12_b);
-            Require(memory[activeFwImageAddress2] == 12_b);
+            CHECK(pvs.Load<"activeFwImage">() == 12);
+            CHECK(memory[activeFwImageAddress0] == 12_b);
+            CHECK(memory[activeFwImageAddress1] == 12_b);
+            CHECK(memory[activeFwImageAddress2] == 12_b);
 
             memory[activeFwImageAddress2] = 42_b;
             pvs.Increment<"activeFwImage">();
-            Require(pvs.Load<"activeFwImage">() == 13);
-            Require(memory[activeFwImageAddress0] == 13_b);
-            Require(memory[activeFwImageAddress1] == 13_b);
-            Require(memory[activeFwImageAddress2] == 13_b);
+            CHECK(pvs.Load<"activeFwImage">() == 13);
+            CHECK(memory[activeFwImageAddress0] == 13_b);
+            CHECK(memory[activeFwImageAddress1] == 13_b);
+            CHECK(memory[activeFwImageAddress2] == 13_b);
 
             memory[activeFwImageAddress0] = 42_b;
             memory[activeFwImageAddress2] = 42_b;
             pvs.Increment<"activeFwImage">();
-            Require(pvs.Load<"activeFwImage">() == 43);
-            Require(memory[activeFwImageAddress0] == 43_b);
-            Require(memory[activeFwImageAddress1] == 43_b);
-            Require(memory[activeFwImageAddress2] == 43_b);
+            CHECK(pvs.Load<"activeFwImage">() == 43);
+            CHECK(memory[activeFwImageAddress0] == 43_b);
+            CHECK(memory[activeFwImageAddress1] == 43_b);
+            CHECK(memory[activeFwImageAddress2] == 43_b);
         }
     }
 
@@ -187,9 +187,9 @@ auto RunUnitTest() -> void
             pvs.Store<"nResets">(0xABCDABCD);
             pvs.Store<"activeFwImage">(111);
             pvs.Store<"somethingElse">(-55);
-            Require(pvs.Load<"nResets">() == 0xABCDABCD);
-            Require(pvs.Load<"activeFwImage">() == 111);
-            Require(pvs.Load<"somethingElse">() == -55);
+            CHECK(pvs.Load<"nResets">() == 0xABCDABCDU);
+            CHECK(pvs.Load<"activeFwImage">() == 111);
+            CHECK(pvs.Load<"somethingElse">() == -55);
         }
 
         // SECTION("Store() does not write to memory")
@@ -197,13 +197,13 @@ auto RunUnitTest() -> void
             pvs.Store<"nResets">(0xABCDABCD);
             pvs.Store<"activeFwImage">(111);
             pvs.Store<"somethingElse">(-55);
-            Require(memory[nResetsAddress0] == 0x00_b);
-            Require(memory[nResetsAddress0 + 1] == 0x00_b);
-            Require(memory[nResetsAddress0 + 2] == 0x00_b);
-            Require(memory[nResetsAddress0 + 3] == 0x00_b);
-            Require(memory[activeFwImageAddress0] == 00_b);
-            Require(memory[somethingElseAddress0] == 0x00_b);
-            Require(memory[somethingElseAddress0 + 1] == 0x00_b);
+            CHECK(memory[nResetsAddress0] == 0x00_b);
+            CHECK(memory[nResetsAddress0 + 1] == 0x00_b);
+            CHECK(memory[nResetsAddress0 + 2] == 0x00_b);
+            CHECK(memory[nResetsAddress0 + 3] == 0x00_b);
+            CHECK(memory[activeFwImageAddress0] == 00_b);
+            CHECK(memory[somethingElseAddress0] == 0x00_b);
+            CHECK(memory[somethingElseAddress0 + 1] == 0x00_b);
         }
 
         // SECTION("Load() does not read from and write to memory")
@@ -212,10 +212,10 @@ auto RunUnitTest() -> void
             memory[activeFwImageAddress0] = 17_b;
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
-            Require(pvs.Load<"activeFwImage">() == 0);
-            Require(memory[activeFwImageAddress0] == 17_b);
-            Require(memory[activeFwImageAddress1] == 17_b);
-            Require(memory[activeFwImageAddress2] == 17_b);
+            CHECK(pvs.Load<"activeFwImage">() == 0);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
         }
 
         // SECTION("Increment() does not load from or write to memory")
@@ -225,10 +225,10 @@ auto RunUnitTest() -> void
             memory[activeFwImageAddress1] = 17_b;
             memory[activeFwImageAddress2] = 17_b;
             pvs.Increment<"activeFwImage">();
-            Require(pvs.Load<"activeFwImage">() == 1);
-            Require(memory[activeFwImageAddress0] == 17_b);
-            Require(memory[activeFwImageAddress1] == 17_b);
-            Require(memory[activeFwImageAddress2] == 17_b);
+            CHECK(pvs.Load<"activeFwImage">() == 1);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
         }
     }
 }
