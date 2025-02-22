@@ -4,10 +4,9 @@
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/RealTime.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
-#include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
-
 
 
 namespace sts1cobcsw
@@ -126,21 +125,21 @@ auto CollectTelemetryData() -> TelemetryRecord
     auto record = TelemetryRecord{};
 
     // Booleans: byte 1: bootloader and EDU
-    record.fwChecksumsAreOk = false; // TODO: Get fwChecksumAreOk from ?
+    record.fwChecksumsAreOk = false;  // TODO: Get fwChecksumAreOk from ?
     record.eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">();
     auto eduHeartBeats = false;
     eduIsAliveBufferForTelemetry.get(eduHeartBeats);
     record.eduHeartBeats = eduHeartBeats;
-    record.newResultIsAvailable = false; // TODO: Get from EDU status
+    record.newResultIsAvailable = false;  // TODO: Get from EDU status
 
     // Booleans: byte 2: housekeeping and communication
     record.antennasShouldBeDeployed = persistentVariables.Load<"antennasShouldBeDeployed">();
     record.framIsWorking = fram::framIsWorking.Load();
     record.epsIsWorking = persistentVariables.Load<"epsIsWorking">();
     record.flashIsWorking = persistentVariables.Load<"flashIsWorking">();
-    record.rfIsWorking = rf::rfIsWorking;
-    record.lastTeleCommandIdWasInvalid = false; // TODO: Get from command parser
-    record.lastTeleCommandArgumentsWereInvalid = false; // TODO: Get from command parser
+    record.rfIsWorking = false;
+    record.lastTeleCommandIdWasInvalid = false;          // TODO: Get from command parser
+    record.lastTeleCommandArgumentsWereInvalid = false;  // TODO: Get from command parser
 
     // BootLoader
     record.nResetsSinceRf = persistentVariables.Load<"nResetsSinceRf">();
@@ -148,14 +147,15 @@ auto CollectTelemetryData() -> TelemetryRecord
     record.backupSecondaryFwPartition = persistentVariables.Load<"backupSecondaryFwPartition">();
 
     // EDU
-    record.eduProgramQueueIndex = persistentVariables.Load<"eduProgramQueueIndex">(); // TODO: Change type of this record field from int8 to uint8
-    record.programIdOfCurrentEduProgramQueueEntry = ProgramId(0); // TODO: Get from EDU status
+    record.eduProgramQueueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
+    record.programIdOfCurrentEduProgramQueueEntry = ProgramId(0);  // TODO: Get from EDU status
     record.nEduCommunicationErrors = persistentVariables.Load<"nEduCommunicationErrors">();
 
     // Housekeeping
     record.nTotalResets = persistentVariables.Load<"nTotalResets">();
-    record.lastResetReason = 0; // TODO: Get from reset handler
-    record.rodosTimeInSeconds = static_cast<std::int32_t>(value_of(CurrentRodosTime()) / value_of(s));
+    record.lastResetReason = 0;  // TODO: Get from reset handler
+    record.rodosTimeInSeconds =
+        static_cast<std::int32_t>(value_of(CurrentRodosTime()) / value_of(s));
     record.realTime = CurrentRealTime();
     record.nFlashErrors = persistentVariables.Load<"nFlashErrors">();
     record.nRfErrors = persistentVariables.Load<"nRfErrors">();
@@ -174,12 +174,12 @@ auto CollectTelemetryData() -> TelemetryRecord
     record.sidepanelZMinusTemperature = 0;
 
     // Communication
-    record.rfBaudRate = 0; // TODO: Get from RF module
-    record.nCorrectableUplinkErrors = 0; // TODO: Get from RF module
-    record.nUncorrectableUplinkErrors = 0; // TODO: Get from RF module
-    record.nBadRfpackets = 0; // TODO: Get from RF module
-    record.nGoodRfpackets = 0; // TODO: Get from RF module
-    record.lastReceivedCommandId = 0; // TODO: Get from command parser
+    record.rfBaudRate = 0;                  // TODO: Get from RF module
+    record.nCorrectableUplinkErrors = 0;    // TODO: Get from RF module
+    record.nUncorrectableUplinkErrors = 0;  // TODO: Get from RF module
+    record.nBadRfpackets = 0;               // TODO: Get from RF module
+    record.nGoodRfpackets = 0;              // TODO: Get from RF module
+    record.lastReceivedCommandId = 0;       // TODO: Get from command parser
 
     return record;
 }
