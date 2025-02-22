@@ -35,7 +35,7 @@ struct TelemetryRecord
     std::int8_t backupSecondaryFwPartition = 0;
 
     // EDU
-    std::int8_t eduProgramQueueIndex = 0;
+    std::uint8_t eduProgramQueueIndex = 0;
     ProgramId programIdOfCurrentEduProgramQueueEntry;
     std::uint8_t nEduCommunicationErrors = 0U;
 
@@ -116,4 +116,6 @@ template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *;
+
+[[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
 }

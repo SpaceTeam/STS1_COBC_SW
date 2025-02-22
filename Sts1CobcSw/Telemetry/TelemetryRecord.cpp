@@ -1,4 +1,12 @@
+#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Utility/RealTime.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 
 namespace sts1cobcsw
@@ -111,4 +119,68 @@ template auto DeserializeFrom<std::endian::big>(void const *, TelemetryRecord *)
 template auto DeserializeFrom<std::endian::little>(void const *, TelemetryRecord *) -> void const *;
 template auto SerializeTo<std::endian::big>(void *, TelemetryRecord const &) -> void *;
 template auto SerializeTo<std::endian::little>(void *, TelemetryRecord const &) -> void *;
+
+auto CollectTelemetryData() -> TelemetryRecord
+{
+    auto record = TelemetryRecord{};
+
+    // Booleans: byte 1: bootloader and EDU
+    record.fwChecksumsAreOk = false;  // TODO: Get fwChecksumAreOk from ?
+    record.eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">();
+    auto eduHeartBeats = false;
+    eduIsAliveBufferForTelemetry.get(eduHeartBeats);
+    record.eduHeartBeats = eduHeartBeats;
+    record.newResultIsAvailable = false;  // TODO: Get from EDU status
+
+    // Booleans: byte 2: housekeeping and communication
+    record.antennasShouldBeDeployed = persistentVariables.Load<"antennasShouldBeDeployed">();
+    record.framIsWorking = fram::framIsWorking.Load();
+    record.epsIsWorking = persistentVariables.Load<"epsIsWorking">();
+    record.flashIsWorking = persistentVariables.Load<"flashIsWorking">();
+    record.rfIsWorking = false;
+    record.lastTeleCommandIdWasInvalid = false;          // TODO: Get from command parser
+    record.lastTeleCommandArgumentsWereInvalid = false;  // TODO: Get from command parser
+
+    // BootLoader
+    record.nResetsSinceRf = persistentVariables.Load<"nResetsSinceRf">();
+    record.activeSecondaryFwPartition = persistentVariables.Load<"activeSecondaryFwPartition">();
+    record.backupSecondaryFwPartition = persistentVariables.Load<"backupSecondaryFwPartition">();
+
+    // EDU
+    record.eduProgramQueueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
+    record.programIdOfCurrentEduProgramQueueEntry = ProgramId(0);  // TODO: Get from EDU status
+    record.nEduCommunicationErrors = persistentVariables.Load<"nEduCommunicationErrors">();
+
+    // Housekeeping
+    record.nTotalResets = persistentVariables.Load<"nTotalResets">();
+    record.lastResetReason = 0;  // TODO: Get from reset handler
+    record.rodosTimeInSeconds =
+        static_cast<std::int32_t>(value_of(CurrentRodosTime()) / value_of(s));
+    record.realTime = CurrentRealTime();
+    record.nFlashErrors = persistentVariables.Load<"nFlashErrors">();
+    record.nRfErrors = persistentVariables.Load<"nRfErrors">();
+    record.nFileSystemErrors = persistentVariables.Load<"nFileSystemErrors">();
+
+    // Sensor data
+    record.batteryPackVoltage = 0;
+    record.batteryCenterTapVoltage = 0;
+    record.batteryTemperature = 0;
+    record.cobcTemperature = 0;
+    record.cubeSatBusVoltage = 0;
+    record.sidepanelXPlusTemperature = 0;
+    record.sidepanelYPlusTemperature = 0;
+    record.sidepanelYMinusTemperature = 0;
+    record.sidepanelZPlusTemperature = 0;
+    record.sidepanelZMinusTemperature = 0;
+
+    // Communication
+    record.rfBaudRate = 0;                  // TODO: Get from RF module
+    record.nCorrectableUplinkErrors = 0;    // TODO: Get from RF module
+    record.nUncorrectableUplinkErrors = 0;  // TODO: Get from RF module
+    record.nBadRfpackets = 0;               // TODO: Get from RF module
+    record.nGoodRfpackets = 0;              // TODO: Get from RF module
+    record.lastReceivedCommandId = 0;       // TODO: Get from command parser
+
+    return record;
+}
 }
