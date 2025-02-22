@@ -116,4 +116,6 @@ template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *;
+
+[[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
 }
