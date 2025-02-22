@@ -12,17 +12,21 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 FramEpsStartupTestThread.cpp
                 RfStartupTestThread.cpp
                 SpiStartupTestAndSupervisorThread.cpp
+                TelemetryCollection.cpp
                 TopicsAndSubscribers.cpp
     )
     target_link_libraries(
         Sts1CobcSw_CobcSoftware
         PRIVATE etl::etl
                 rodos::rodos
+                strong_type::strong_type
                 Sts1CobcSw_Edu
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Periphery
+                Sts1CobcSw_ProgramId
                 Sts1CobcSw_Serial
+                Sts1CobcSw_Telemetry
                 Sts1CobcSw_Utility
     )
 endif()

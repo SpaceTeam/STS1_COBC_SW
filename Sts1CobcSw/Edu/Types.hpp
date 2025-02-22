@@ -38,10 +38,11 @@ enum class ProgramStatus : std::uint8_t
     programCouldNotBeStarted,
     programExecutionFailed,
     programExecutionSucceeded,
-    resultFileTransfered,
-    resultFileSentToRf,
-    ackFromGround,
-    resultFileDeleted
+    // TODO: Rename the following states
+    resultFileTransfered,  // resultStoredInFileSystem
+    resultFileSentToRf,    // resultSentToGround or resultRequestedByGround/FromGround
+    ackFromGround,         // resultAcknowledgedByGround or resultSentToGround
+    resultFileDeleted      // resultDeleted
 };
 
 
