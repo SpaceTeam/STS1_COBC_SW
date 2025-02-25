@@ -24,6 +24,10 @@ class File;
 [[nodiscard]] auto Mount() -> Result<void>;
 [[nodiscard]] auto Unmount() -> Result<void>;
 [[nodiscard]] auto Open(Path const & path, unsigned int flags) -> Result<File>;
+[[nodiscard]] auto CreateDirectory(Path const & path) -> Result<void>;
+[[nodiscard]] auto Remove(Path const & path) -> Result<void>;
+[[nodiscard]] auto ForceRemove(Path const & path) -> Result<void>;
+// TODO: Add Ls with etl::string or vector<etl::string> as return
 
 
 // TODO: Consider moving this class to a separate file
@@ -42,8 +46,11 @@ public:
     [[nodiscard]] auto Read(std::span<Byte, extent> data) const -> Result<int>;
     template<std::size_t extent>
     [[nodiscard]] auto Write(std::span<const Byte, extent> data) -> Result<int>;
+    [[nodiscard]] auto SeekAbsolute(int offset) -> Result<int>;
+    [[nodiscard]] auto SeekRelative(int offset) -> Result<int>;
     [[nodiscard]] auto Size() const -> Result<int>;
     [[nodiscard]] auto Close() const -> Result<void>;
+    [[nodiscard]] auto Flush() -> Result<void>;
 
 
 private:
@@ -53,6 +60,7 @@ private:
     [[nodiscard]] auto CreateLockFile() const noexcept -> Result<void>;
     [[nodiscard]] auto Read(void * buffer, std::size_t size) const -> Result<int>;
     [[nodiscard]] auto Write(void const * buffer, std::size_t size) -> Result<int>;
+    [[nodiscard]] auto Seek(int offset, int whence) -> Result<int>;
     [[nodiscard]] auto CloseAndKeepLockFile() const -> Result<void>;
 
     Path path_ = "";

@@ -1,4 +1,5 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
+#include <Tests/Utility/Stringification.hpp>
 
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #ifdef __linux__
@@ -26,22 +27,39 @@ using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
+namespace
+{
+auto VerifyDataInMemory(std::span<const sts1cobcsw::Byte> dataToCheck) -> bool;
+#ifdef __linux__
+auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool;
+#endif
+}
+
+
 TEST_CASE("LfsWrapper without data corruption")
 {
     fs::Initialize();
     auto mountResult = fs::Mount();
     CHECK(not mountResult.has_error());
 
-    auto filePath = fs::Path("/MyFile");
+    auto nonExistingPath = fs::Path("/Path/To/Wrong");
+    auto createDirResult = fs::CreateDirectory(nonExistingPath);
+    CHECK(createDirResult.has_error());
+    CHECK(createDirResult.error() == sts1cobcsw::ErrorCode::notFound);
+
+    auto dirPath = fs::Path("/MyDir");
+    createDirResult = fs::CreateDirectory(dirPath);
+    CHECK(not createDirResult.has_error());
+
+    auto filePath = fs::Path("/MyDir/MyFile");
     auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
     CHECK(openResult.has_value());
     auto & writeableFile = openResult.value();
 
-    // Reopening the file should fail
     auto reopenResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
     CHECK(reopenResult.has_error());
+    CHECK(reopenResult.error() == sts1cobcsw::ErrorCode::fileLocked);
 
-    // Empty file should have size 0
     auto sizeResult = writeableFile.Size();
     CHECK(sizeResult.has_value());
     CHECK(sizeResult.value() == 0);
@@ -55,9 +73,55 @@ TEST_CASE("LfsWrapper without data corruption")
     auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
     auto readResult = writeableFile.Read(Span(&readData));
     CHECK(readResult.has_error());
+    CHECK(readResult.error() == sts1cobcsw::ErrorCode::unsupportedOperation);
+
+    CHECK(not VerifyDataInMemory(writeData));
+    auto flushResult = writeableFile.Flush();
+    CHECK(not flushResult.has_error());
+    CHECK(VerifyDataInMemory(writeData));
+
+    auto seekResult = writeableFile.SeekAbsolute(-2);
+    CHECK(seekResult.has_error());
+    CHECK(seekResult.error() == sts1cobcsw::ErrorCode::invalidParameter);
+
+    seekResult = writeableFile.SeekRelative(-3);
+    CHECK(not seekResult.has_error());
+    CHECK(seekResult.value() == 1);
+
+    seekResult = writeableFile.SeekAbsolute(3);
+    CHECK(not seekResult.has_error());
+    CHECK(seekResult.value() == 3);
+
+    writeResult = writeableFile.Write(Span(0x12_b));
+    CHECK(writeResult.has_value());
+    CHECK(writeResult.value() == 1);
+
+    auto removeResult = fs::Remove(filePath);
+    CHECK(removeResult.has_error());
+    CHECK(removeResult.error() == sts1cobcsw::ErrorCode::fileLocked);
+
+    removeResult = fs::Remove(nonExistingPath);
+    CHECK(removeResult.has_error());
+    CHECK(removeResult.error() == sts1cobcsw::ErrorCode::notFound);
+
+    removeResult = fs::ForceRemove(nonExistingPath);
+    CHECK(removeResult.has_error());
+    CHECK(removeResult.error() == sts1cobcsw::ErrorCode::notFound);
 
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());
+
+    sizeResult = writeableFile.Size();
+    CHECK(sizeResult.has_error());
+    CHECK(sizeResult.error() == sts1cobcsw::ErrorCode::fileNotOpen);
+
+    flushResult = writeableFile.Flush();
+    CHECK(flushResult.has_error());
+    CHECK(flushResult.error() == sts1cobcsw::ErrorCode::fileNotOpen);
+
+    seekResult = writeableFile.SeekAbsolute(0);
+    CHECK(seekResult.has_error());
+    CHECK(seekResult.error() == sts1cobcsw::ErrorCode::fileNotOpen);
 
     openResult = fs::Open(filePath, LFS_O_RDONLY);
     CHECK(openResult.has_value());
@@ -65,21 +129,64 @@ TEST_CASE("LfsWrapper without data corruption")
 
     sizeResult = readableFile.Size();
     CHECK(sizeResult.has_value());
-    CHECK(sizeResult.value() == static_cast<int>(writeData.size()));
+    CHECK(sizeResult.value() == 4);
 
     readResult = readableFile.Read(Span(&readData));
     CHECK(readResult.has_value());
     CHECK(readResult.value() == static_cast<int>(readData.size()));
-    CHECK(readData == writeData);
+    CHECK(readData == (std::array{0xAA_b, 0xBB_b, 0xCC_b, 0x12_b}));
+
+    seekResult = readableFile.SeekRelative(-1);
+    CHECK(not seekResult.has_error());
+    CHECK(seekResult.value() == 3);
+
+    seekResult = readableFile.SeekAbsolute(2);
+    CHECK(not seekResult.has_error());
+    CHECK(seekResult.value() == 2);
+
+    readData = {};
+    readResult = readableFile.Read(Span(&readData));
+    CHECK(readResult.has_value());
+    CHECK(readResult.value() == 2);
+    CHECK(readData == (std::array{0xCC_b, 0x12_b, 0x00_b, 0x00_b}));
 
     // Write() should fail since the file is only opened for reading
     writeResult = readableFile.Write(Span(writeData));
     CHECK(writeResult.has_error());
+    CHECK(writeResult.error() == sts1cobcsw::ErrorCode::unsupportedOperation);
+
+    // Flush() should fail since the file is only opened for reading
+    flushResult = readableFile.Flush();
+    CHECK(flushResult.has_error());
+    CHECK(flushResult.error() == sts1cobcsw::ErrorCode::unsupportedOperation);
 
     closeResult = readableFile.Close();
     CHECK(not closeResult.has_error());
 
-    // TODO: Remove the file
+    removeResult = fs::Remove(filePath);
+    CHECK(not removeResult.has_error());
+
+    openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+    CHECK(openResult.has_value());
+    auto & deletedFile = openResult.value();
+
+    sizeResult = deletedFile.Size();
+    CHECK(sizeResult.has_value());
+    CHECK(sizeResult.value() == 0);
+
+    writeResult = deletedFile.Write(Span(writeData));
+    CHECK(not writeResult.has_error());
+
+    // ForceRemove() works even if the file is open
+    removeResult = fs::ForceRemove(filePath);
+    CHECK(not removeResult.has_error());
+
+    closeResult = deletedFile.Close();
+    CHECK(closeResult.has_error());
+    CHECK(closeResult.error() == sts1cobcsw::ErrorCode::notFound);
+
+    removeResult = fs::Remove(dirPath);
+    CHECK(not removeResult.has_error());
 
     auto unmountResult = fs::Unmount();
     CHECK(not unmountResult.has_error());
@@ -87,9 +194,6 @@ TEST_CASE("LfsWrapper without data corruption")
 
 
 #ifdef __linux__
-auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool;
-
-
 TEST_CASE("LfsWrapper with data corruption")
 {
     fs::Initialize();
@@ -196,8 +300,24 @@ TEST_CASE("LfsWrapper with data corruption")
         CHECK(not unmountResult.has_error());
     }
 }
+#endif
 
 
+namespace
+{
+auto VerifyDataInMemory([[maybe_unused]] std::span<const sts1cobcsw::Byte> dataToCheck) -> bool
+{
+#ifdef __linux__
+    auto it =
+        std::search(fs::memory.begin(), fs::memory.end(), dataToCheck.begin(), dataToCheck.end());
+    return static_cast<bool>(it != fs::memory.end());
+#else
+    return true;
+#endif
+}
+
+
+#ifdef __linux__
 auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool
 {
     auto it = std::search(
@@ -210,3 +330,4 @@ auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -
     return true;
 }
 #endif
+}

@@ -13,8 +13,8 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
         case ErrorCode::corrupt:
             Append(string, "ErrorCode::corrupt");
             break;
-        case ErrorCode::noDirectoryEntry:
-            Append(string, "ErrorCode::noDirectoryEntry");
+        case ErrorCode::notFound:
+            Append(string, "ErrorCode::notFound");
             break;
         case ErrorCode::alreadyExists:
             Append(string, "ErrorCode::alreadyExists");
