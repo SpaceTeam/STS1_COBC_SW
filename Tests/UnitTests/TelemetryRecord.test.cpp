@@ -8,8 +8,7 @@
 #include <strong_type/type.hpp>
 
 #include <cstdint>
-#include <format>
-#include <iostream>
+#include <string>
 
 
 using sts1cobcsw::Deserialize;

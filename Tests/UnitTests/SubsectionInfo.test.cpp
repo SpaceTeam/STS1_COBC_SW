@@ -15,7 +15,7 @@ using sts1cobcsw::fram::Size;
 
 TEST_CASE("All static_asserts passed")
 {
-    REQUIRE(true);
+    CHECK(true);
 }
 
 

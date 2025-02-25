@@ -26,19 +26,24 @@ function(add_program program_name)
     set(target ${PROJECT_NAME}_${program_name})
     add_executable(${target} ${ARGN})
     set_target_properties(${target} PROPERTIES OUTPUT_NAME ${program_name})
-
-    # Add a definition of the target system
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-        target_compile_definitions(${target} PUBLIC GENERIC_SYSTEM)
-        message("Adding -DGENERIC_SYSTEM to ${target}")
-    elseif(CMAKE_SYSTEM_NAME STREQUAL Linux)
-        target_compile_definitions(${target} PUBLIC LINUX_SYSTEM)
-        message("Adding -DLINUX_SYSTEM to ${target}")
-    else()
-        message(SEND_ERROR "CMAKE_SYSTEM_NAME is neither Generic nor Linux")
+        set_target_properties(${target} PROPERTIES SUFFIX ".elf")
+        # Automatically call objcopy on the executable targets after the build
+        objcopy_target(${target})
+    endif()
+endfunction()
+
+function(add_test_program test_name)
+    set(test_source_file "${CMAKE_CURRENT_LIST_DIR}/${test_name}.test.cpp")
+    if(NOT EXISTS ${test_source_file})
+        message(FATAL_ERROR "Test source file ${test_source_file} does not exist")
     endif()
 
+    set(target ${PROJECT_NAME}_${test_name})
+    add_executable(${target} ${test_source_file})
+    set_target_properties(${target} PROPERTIES OUTPUT_NAME ${test_name}Test)
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+        set_target_properties(${target} PROPERTIES SUFFIX ".elf")
         # Automatically call objcopy on the executable targets after the build
         objcopy_target(${target})
     endif()
@@ -50,7 +55,7 @@ function(objcopy_target target)
         TARGET ${target}
         POST_BUILD
         COMMAND "${CMAKE_OBJCOPY}" -O binary "$<TARGET_FILE:${target}>"
-                "$<TARGET_FILE:${target}>.bin"
+                "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_BASE_NAME:${target}>.bin"
         COMMENT "Calling objcopy on ${output_name} to generate flashable ${output_name}.bin"
         VERBATIM
     )
