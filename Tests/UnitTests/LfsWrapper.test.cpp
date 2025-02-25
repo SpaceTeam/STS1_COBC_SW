@@ -28,6 +28,9 @@ using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 TEST_CASE("LfsWrapper without data corruption")
 {
+    CHECK(0 == 1);
+    // REQUIRE(0 == 1);
+
     fs::Initialize();
     auto mountResult = fs::Mount();
     CHECK(not mountResult.has_error());
@@ -56,6 +59,9 @@ TEST_CASE("LfsWrapper without data corruption")
     auto readResult = writeableFile.Read(Span(&readData));
     CHECK(readResult.has_error());
 
+    auto flushResult = writeableFile.Flush();
+    CHECK(not flushResult.has_error());
+
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());
 
@@ -76,10 +82,23 @@ TEST_CASE("LfsWrapper without data corruption")
     writeResult = readableFile.Write(Span(writeData));
     CHECK(writeResult.has_error());
 
+    flushResult = readableFile.Flush();
+    CHECK(flushResult.has_error());
+
     closeResult = readableFile.Close();
     CHECK(not closeResult.has_error());
 
     // TODO: Remove the file
+    auto removeResult = fs::Remove(filePath);
+    CHECK(not removeResult.has_error());
+
+    openResult = fs::Open(filePath, LFS_O_RDONLY);
+    CHECK(openResult.has_value());
+    auto & deletedFile = openResult.value();
+
+    sizeResult = deletedFile.Size();
+    CHECK(sizeResult.has_value());
+    CHECK(sizeResult.value() == 0);
 
     auto unmountResult = fs::Unmount();
     CHECK(not unmountResult.has_error());
