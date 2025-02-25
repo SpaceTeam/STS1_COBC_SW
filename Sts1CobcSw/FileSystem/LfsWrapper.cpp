@@ -42,6 +42,46 @@ auto Unmount() -> Result<void>
     return outcome_v2::success();
 }
 
+auto CreateDirectory(Path const & path) -> Result<void>
+{
+    auto error = lfs_mkdir(&lfs, path.c_str());
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes of lfs_mkdir
+}
+
+
+auto Remove(Path const & path) -> Result<void>
+{
+    auto info = lfs_info{};
+    auto error = lfs_stat(&lfs, Path(path).append(".lock").c_str(), &info);
+    auto lockFileExists = error == 0;  // TODO: check if file is open
+    if(lockFileExists)
+    {
+        return ErrorCode::fileLocked;
+    }
+    error = lfs_remove(&lfs, path.c_str());
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes for lfs_remove
+}
+
+
+auto ForceRemove(Path const & path) -> Result<void>
+{
+    // TODO: remove lock file
+    auto error = lfs_remove(&lfs, Path(path).append(".lock").c_str());
+    if(error == 0 || error == LFS_ERR_NOENT)
+    {
+        return Remove(path);
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes for lfs_remove
+}
+
 
 auto Open(Path const & path, unsigned int flags) -> Result<File>
 {
@@ -120,6 +160,25 @@ auto File::Close() const -> Result<void>
         return static_cast<ErrorCode>(error);
     }
     return CloseAndKeepLockFile();
+}
+
+
+auto File::Flush() -> Result<void>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_WRONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto error = lfs_file_sync(&lfs, &lfsFile_);
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes for lfs_file_sync
 }
 
 
