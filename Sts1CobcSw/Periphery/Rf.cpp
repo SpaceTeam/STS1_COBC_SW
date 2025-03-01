@@ -530,9 +530,9 @@ auto PowerUp() -> void
 auto Configure(TxType txType) -> void
 {
     // Configure GPIO pins, NIRQ, and SDO
-    // Don't change
+    // Weak pull-up enabled, no function (tristate)
     static constexpr auto gpio0Config = 0x41_b;
-    // Don't change
+    // Weak pull-up enabled, no function (tristate)
     static constexpr auto gpio1Config = 0x41_b;
     // GPIO2 active in RX state
     static constexpr auto gpio2Config = 0x21_b;
@@ -540,7 +540,7 @@ auto Configure(TxType txType) -> void
     static constexpr auto gpio3Config = 0x20_b;
     // NIRQ is still used as NIRQ
     static constexpr auto nirqConfig = 0x27_b;
-    // SDO is still used as SDO
+    // SDO is still used as SDO but enable internal pull-up
     static constexpr auto sdoConfig = 0x4B_b;
     // GPIOs configured as outputs will have highest drive strength
     static constexpr auto genConfig = 0x00_b;
@@ -578,20 +578,17 @@ auto Configure(TxType txType) -> void
 
     // Preamble
     static constexpr auto iPreambleTxLength = 0x00_b;
-    // 0 bytes preamble
-    static constexpr auto preambleTxLength = 0x08_b;
-    // Normal sync timeout, 0x14 = 20 preamble bits must be valid to detect a preamble
+    // Send 0 bytes preamble
+    static constexpr auto preambleTxLength = 0x00_b;
+    // Normal sync timeout, 20-bit preamble RX threshold
     static constexpr auto preambleConfigStd1 = 0x14_b;
     // No non-standard preamble pattern
-    //
-    // TODO: Maybe we can detect RS+CC encoded preamble this way and be CCSDS compliant on uplink
-    // too? Problem: Max pattern length is 32 bit
     static constexpr auto preambleConfigNstd = 0x00_b;
     // No extended RX preamble timeout, 0x0F nibbles timeout until detected preamble is discarded as
     // invalid
     static constexpr auto preambleConfigStd2 = 0x0F_b;
-    // First transmitted preamble bit is 1, unit of preamble TX length is in bytes
-    static constexpr auto preambleConfig = 0x31_b;
+    // RX Standard preamble, first received preamble bit is 0, unit of preamble TX length is in bytes, use standard preamble 0101 pattern
+    static constexpr auto preambleConfig = 0b00010010_b;
     // Non-standard pattern
     static constexpr auto preamblePattern = std::array<Byte, 4>{};
     SetProperties(PropertyGroup::preamble,
@@ -605,11 +602,14 @@ auto Configure(TxType txType) -> void
 
     // Sync word
     static constexpr auto iSyncConfig = 0x00_b;
-    // Allow 4-bit sync word errors, 4-byte sync word
-    static constexpr auto syncConfig = 0x43_b;
+    // Do not transmit sync word, allow 4-bit sync word errors on receive, 4-byte sync word length
+    static constexpr auto syncConfig = 0b11000011_b;
     // Valid CCSDS TM sync word for Reed-Solomon or convolutional coding. Be careful: Send order is
     // MSB-first but little endian so the lowest bit of the highest byte is transmitted first, which
     // is different to how the CCSDS spec annotates those bit patterns!
+    //
+    // This sync word is in theory not correct for uplink - but as is Reed Solomon. We are using the
+    // same configuration for up- and downlink just without convolutional coding for uplink.
     //
     // TODO: Check that pattern!
     //
@@ -656,7 +656,6 @@ auto Configure(TxType txType) -> void
     // We use minimum shift keying, i.e., a frequency deviation of baudrate / 4. The value we need
     // to write to the property is (2^19 * outdiv * deviation_Hz) / (N_presc * F_xo) = (2^19 * 8 *
     // (9600 / 4)) / (2 * 26000000) = 194 = 0x0000C2
-    // 0x308 = 4 * 194
     static constexpr auto modemFreqDeviation = std::array{0x00_b, 0x00_b, 0xC2_b};
     SetProperties(
         PropertyGroup::modem, iModemTxNcoMode, Span(FlatArray(modemTxNcoMode, modemFreqDeviation)));
@@ -938,7 +937,7 @@ auto Configure(TxType txType) -> void
     static constexpr auto paMode = 0x08_b;
     // Enabled PA fingers (sets output power but not linearly; 10 µA bias current per enabled
     // finger, complementary drive signal with 50 % duty cycle)
-    static constexpr auto paPwrLvl = 0x18_b;
+    static constexpr auto paPwrLvl = 0x2f_b;
     static constexpr auto paBiasClkduty = 0x00_b;
     // Ramping time constant = 0x1B (~10 µs to full - 0.5 dB), FSK modulation delay 10 µs
     static constexpr auto paTc = 0x91_b;
@@ -1006,7 +1005,7 @@ auto Configure(TxType txType) -> void
     // FC_inte = 0x41
     static constexpr auto freqControlInte = 0x41_b;
     // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5, N_presc = 2, outdiv = 8, F_xo = 26 MHz,
-    // RF_channel_Hz = (FC_inte + FC_frac / 2^19) * ((N_presc * F_xo) / outdiv) = 433.5000048MHz MHz
+    // RF_channel_Hz = (FC_inte + FC_frac / 2^19) * ((N_presc * F_xo) / outdiv)
     static constexpr auto freqControlFrac = std::array{0x0E_b, 0xC4_b, 0xEC_b};
     // Channel step size = 0x4EC5
     static constexpr auto freqControlChannelStepSize = std::array{0x4E_b, 0xC5_b};
