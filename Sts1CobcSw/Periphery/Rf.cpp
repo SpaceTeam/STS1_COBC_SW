@@ -17,6 +17,8 @@
 
 #include <strong_type/difference.hpp>
 
+#include <timemodel.h>
+
 #include <array>
 #include <bit>
 #include <cinttypes>
@@ -87,11 +89,6 @@ constexpr auto porCircuitSettleDelay = 100 * ms;
 constexpr auto watchDogResetPinDelay = 1 * ms;
 // TODO: Check this and write a good comment
 constexpr auto spiTimeout = 1 * ms;
-
-// Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
-constexpr auto txFifoThreshold = 32_b;
-// Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
-constexpr auto rxFifoThreshold = 48_b;
 
 // Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
 constexpr auto txFifoThreshold = 32_b;

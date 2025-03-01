@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <array>
 #include <cstdint>
 #include <span>
 
