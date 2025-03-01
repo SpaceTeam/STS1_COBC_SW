@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/Hal/Spi.hpp>
+#include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <cstdint>

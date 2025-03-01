@@ -9,12 +9,14 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Debug.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <strong_type/difference.hpp>
+
+#include <timemodel.h>
 
 #include <array>
 #include <bit>
@@ -86,11 +88,6 @@ constexpr auto porCircuitSettleDelay = 100 * ms;
 constexpr auto watchDogResetPinDelay = 1 * ms;
 // TODO: Check this and write a good comment
 constexpr auto spiTimeout = 1 * ms;
-
-// Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
-constexpr auto txFifoThreshold = 32_b;
-// Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
-constexpr auto rxFifoThreshold = 48_b;
 
 // Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
 constexpr auto txFifoThreshold = 32_b;
@@ -1141,10 +1138,10 @@ auto EnterStandby() -> void
 auto WriteToFifo(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
-    WriteTo(&spi, Span(cmdWriteTxFifo), spiTimeout);
-    WriteTo(&spi, data, spiTimeout);
-    AT(NOW() + 2 * MICROSECONDS);
+    RODOS::AT(RODOS::NOW() + 20 * RODOS::MICROSECONDS);
+    WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
+    WriteTo(&rfSpi, data, spiTimeout);
+    RODOS::AT(RODOS::NOW() + 2 * RODOS::MICROSECONDS);
     csGpioPin.Set();
     WaitForCts();
     csGpioPin.Set();
@@ -1154,13 +1151,13 @@ auto WriteToFifo(std::span<Byte const> data) -> void
 auto ReadFromFifo(std::span<Byte> data) -> void
 {
     csGpioPin.Reset();
-    AT(NOW() + 20 * MICROSECONDS);
+    RODOS::AT(RODOS::NOW() + 20 * RODOS::MICROSECONDS);
     // auto buf = std::to_array<std::uint8_t>({0x77});
     // spi.write(std::data(buf), std::size(buf));
-    WriteTo(&spi, Span(0x77_b), spiTimeout);
+    WriteTo(&rfSpi, Span(0x77_b), spiTimeout);
     // spi.read(data, length);
-    ReadFrom(&spi, data, spiTimeout);
-    AT(NOW() + 2 * MICROSECONDS);
+    ReadFrom(&rfSpi, data, spiTimeout);
+    RODOS::AT(RODOS::NOW() + 2 * RODOS::MICROSECONDS);
     csGpioPin.Set();
 }
 
