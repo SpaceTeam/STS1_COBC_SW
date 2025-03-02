@@ -8,6 +8,7 @@
 #include <littlefs/lfs.h>
 
 #include <etl/string.h>
+#include <etl/vector.h>
 
 #include <array>
 #include <cstddef>
@@ -16,7 +17,11 @@
 
 namespace sts1cobcsw::fs
 {
+constexpr size_t lsOutputSize = 256;  // TODO: find ls max length and max files per dir
+constexpr size_t lsMaxFiles = 10;
+
 using Path = etl::string<maxPathLength>;
+using DirectoryOutput = etl::vector<etl::string<lsOutputSize>, lsMaxFiles>;
 
 class File;
 
@@ -27,7 +32,7 @@ class File;
 [[nodiscard]] auto CreateDirectory(Path const & path) -> Result<void>;
 [[nodiscard]] auto Remove(Path const & path) -> Result<void>;
 [[nodiscard]] auto ForceRemove(Path const & path) -> Result<void>;
-// TODO: Add Ls with etl::string or vector<etl::string> as return
+[[nodiscard]] auto Ls(Path const & path) -> Result<DirectoryOutput>;
 
 
 // TODO: Consider moving this class to a separate file

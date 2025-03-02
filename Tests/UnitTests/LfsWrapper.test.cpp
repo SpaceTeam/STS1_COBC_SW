@@ -11,7 +11,10 @@
 
 #include <littlefs/lfs.h>
 
+#include <etl/string.h>
 #include <etl/to_string.h>
+#include <etl/utility.h>
+#include <etl/vector.h>
 
 #include <algorithm>
 #include <array>
@@ -42,6 +45,12 @@ TEST_CASE("LfsWrapper without data corruption")
     CHECK(not mountResult.has_error());
 
     auto dirPath = fs::Path("/MyDir");
+
+    // dir does not exist
+    auto lsResult = fs::Ls(dirPath);
+    CHECK(lsResult.has_error());
+    CHECK(lsResult.error() == fs::ErrorCode::noDirectoryEntry);
+
     auto createDirResult = fs::CreateDirectory(dirPath);
     CHECK(not createDirResult.has_error());
 
@@ -77,6 +86,20 @@ TEST_CASE("LfsWrapper without data corruption")
     // Remove should fail because the file is opened
     auto removeResult = fs::Remove(filePath);
     CHECK(removeResult.has_error());
+
+    // we should get the following output from ls
+    // dir 0 B .
+    // dir 0 B ..
+    // reg 0 B MyFile.lock
+    // reg 4 B MyFile
+    lsResult = fs::Ls(dirPath);
+    CHECK(not lsResult.has_error());
+    auto lsOutput = lsResult.value();
+    CHECK(lsOutput.size() == static_cast<size_t>(4));
+    CHECK(lsOutput[0].compare("dir 0 B ."));
+    CHECK(lsOutput[1].compare("dir 0 B .."));
+    CHECK(lsOutput[2].compare("dir 0 B MyFile.lock"));
+    CHECK(lsOutput[3].compare("dir 4 B MyFile"));
 
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());

@@ -3,6 +3,8 @@
 
 #include <littlefs/lfs.h>
 
+#include <etl/to_string.h>
+
 
 namespace sts1cobcsw::fs
 {
@@ -80,6 +82,68 @@ auto ForceRemove(Path const & path) -> Result<void>
         return Remove(path);
     }
     return static_cast<ErrorCode>(error);  // TODO: check error codes for lfs_remove
+}
+
+// TODO: add offset for larger dirs?
+auto Ls(Path const & path) -> Result<DirectoryOutput>
+{
+    auto directory = lfs_dir_t{};
+    auto error = lfs_dir_open(&lfs, &directory, path.c_str());
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+
+    DirectoryOutput results{};
+
+    auto info = lfs_info{};
+    while(true)
+    {
+        if(results.full())
+        {
+            break;
+        }
+
+        int const result = lfs_dir_read(&lfs, &directory, &info);
+        if(result < 0)
+        {
+            // Return error or write error code for this file and continue?
+            return static_cast<ErrorCode>(error);
+        }
+        if(result == 0)
+        {
+            // End of directory
+            break;
+        }
+
+        auto fileInfo = etl::string<lsOutputSize>{};
+        switch(info.type)
+        {
+            case LFS_TYPE_REG:
+            {
+                fileInfo.append("reg ");
+                break;
+            }
+            case LFS_TYPE_DIR:
+            {
+                fileInfo.append("dir ");
+                break;
+            }
+            default:
+            {
+                fileInfo.append("?   ");
+                break;
+            }
+        }
+        etl::to_string(info.size, fileInfo, /*append=*/true);
+        fileInfo.append(" B ");
+        fileInfo.append(&(info.name[0]));
+        fileInfo.append("\n");
+
+        results.push_back(fileInfo);
+    }
+
+    return results;
 }
 
 
