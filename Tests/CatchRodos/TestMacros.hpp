@@ -31,7 +31,8 @@
         _Pragma("GCC diagnostic push"); \
         _Pragma("GCC diagnostic ignored \"-Wparentheses\""); \
         _Pragma("GCC diagnostic ignored \"-Wunused\""); \
-        sts1cobcsw::AssertionDecomposer{"CHECK", #expr} < expr; \
+        _Pragma("GCC diagnostic ignored \"-Wunused-value\""); \
+        (sts1cobcsw::AssertionDecomposer{"CHECK", #expr} < expr) == true; \
         _Pragma("GCC diagnostic pop"); \
     } while(false)
 
@@ -41,7 +42,7 @@
         _Pragma("GCC diagnostic push"); \
         _Pragma("GCC diagnostic ignored \"-Wparentheses\""); \
         _Pragma("GCC diagnostic ignored \"-Wunused\""); \
-        if(not(sts1cobcsw::AssertionDecomposer{"REQUIRE", #expr} < expr)) \
+        if(not((sts1cobcsw::AssertionDecomposer{"REQUIRE", #expr} < expr) == true)) \
             return; \
         _Pragma("GCC diagnostic pop"); \
     } while(false)
