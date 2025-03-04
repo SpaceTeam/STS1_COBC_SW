@@ -78,6 +78,7 @@ constexpr auto iIntCtlPhEnable = 0x01_b;
 // instead.
 constexpr auto partInfoAnswerLength = 8U;
 constexpr auto interruptStatusAnswerLength = 8U;
+constexpr auto fifoInfoAnswerLength = 2U;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
@@ -221,8 +222,8 @@ auto Send(void const * data, std::size_t nBytes) -> bool
     auto lengthLowerBits = static_cast<Byte>(nBytes);
     SetProperties(PropertyGroup::pkt, iPktField1Length, Span({lengthUpperBits, lengthLowerBits}));
 
-    // Fill the TX FIFO with chunkSize bytes each round
-    static constexpr auto chunkSize = static_cast<unsigned int>(txFifoThreshold);
+    // Fill the TX FIFO completely initially but then only add the amount of free space
+    size_t chunkSize = 64;
     auto almostEmptyInterruptEnabled = false;
 
     // While the packet is longer than a single fill round, wait for the almost empty interrupt,
@@ -265,6 +266,9 @@ auto Send(void const * data, std::size_t nBytes) -> bool
             }
             RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
         }
+
+        auto answer = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+        chunkSize = static_cast<size_t>(answer[1]);
     }
 
     // Enable packet sent interrupt
@@ -568,6 +572,7 @@ auto Configure(TxType txType) -> void
     SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTune, globalClkCfg}));
 
     // Global config
+    // Global config
     static constexpr auto iGlobalConfig = 0x03_b;
     // High performance mode, generic packet format, split FIFO mode, fast sequencer mode
     static constexpr auto globalConfig = 0x60_b;
@@ -633,6 +638,14 @@ auto Configure(TxType txType) -> void
     static constexpr auto pktCrcConfig = 0x00_b;
     SetProperties(PropertyGroup::pkt, iPktCrcConfig, Span({pktCrcConfig}));
 
+    // Packet Whitening and Config
+    static constexpr auto iPktWhiteConfig = 0x05_b;
+    // No Whitening
+    static constexpr auto pktWhiteConfig = 0x00_b;
+    // Don't split RX and TX field information (length, ...), enable RX packet handler, use normal (2)FSK, no Manchester coding, no CRC, data transmission with MSB first.
+    static constexpr auto pktConfig1 = 0x00_b;
+    SetProperties(PropertyGroup::pkt, iPktWhiteConfig, Span({pktWhiteConfig, pktConfig1}));
+
     // Packet length
     static constexpr auto iPktLen = 0x08_b;
     // Infinite receive, big endian (MSB first)
@@ -671,8 +684,8 @@ auto Configure(TxType txType) -> void
     // RF modem TX ramp delay, modem MDM control, modem IF control, modem IF frequency & modem
     // decimation
     static constexpr auto iModemTxRampDelay = 0x18_b;
-    // Ramp delay 1
-    static constexpr auto modemTxRampDelay = 0x01_b;
+    // TX amplifier ramp down delay after TX: 7 (max)
+    static constexpr auto modemTxRampDelay = 0x07_b;
     // Slicer phase source from phase computer output
     static constexpr auto modemMdmCtrl = 0x00_b;
     // No ETSI mode, fixed IF mode, normal IF mode (nonzero IF)
@@ -1040,16 +1053,6 @@ auto Configure(TxType txType) -> void
     // Split FIFO and guaranteed sequencer mode
     //static constexpr auto newGlobalConfig = 0x40_b;
     //SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
-
-    // Configure GPIO pins, NIRQ, and SDO
-    SendCommand<7>(Span({cmdGpioPinCfg,
-                         gpio0Config,
-                         gpio1Config,
-                         gpio2Config,
-                         gpio3Config,
-                         nirqConfig,
-                         sdoConfig,
-                         genConfig}));
 }
 
 
