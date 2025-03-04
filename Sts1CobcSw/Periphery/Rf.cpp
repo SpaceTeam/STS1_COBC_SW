@@ -205,8 +205,10 @@ auto SetTxType(TxType txType) -> void
 // TODO: Do we need to clear all FIFOs here, should be just TX FIFO
 // TODO: Refactor (issue #226)
 // TODO: Pull rfLatchupDisableGpioPin high while sending
-auto Send(void const * data, std::size_t nBytes) -> void
+auto Send(void const * data, std::size_t nBytes) -> bool
 {
+    auto startTime = RODOS::NOW();
+
     // TODO: Acc. the datasheet "fifo hardware does not need to be reset prior to use".
     ClearFifos();
 
@@ -251,8 +253,15 @@ auto Send(void const * data, std::size_t nBytes) -> void
         // chunkSize bytes: t_0 = chunkSize * 10 / baudRate (maybe even chunkSize + 1). Then wait
         // for the time, t_1 = 10 / baudRate, it takes to send a single byte in a loop. Also add a
         // timeout to not wait indefinitely.
+        startTime = RODOS::NOW();
         while(nirqGpioPin.Read() == hal::PinState::set)
         {
+            // TODO: Set timeout constant
+            if(RODOS::NOW() - startTime > 1 * RODOS::SECONDS)
+            {
+                EnterStandby();
+                return false;
+            }
             RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
         }
     }
@@ -267,19 +276,21 @@ auto Send(void const * data, std::size_t nBytes) -> void
     // NOLINTNEXTLINE(*pointer-arithmetic)
     WriteToFifo(dataSpan.subspan(dataIndex));
 
-    auto startTime = RODOS::NOW();
-
     // Wait for Packet Sent Interrupt
+    startTime = RODOS::NOW();
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
         // TODO: Set timeout constant
         if(RODOS::NOW() - startTime > 1 * RODOS::SECONDS)
         {
-            break;
+            EnterStandby();
+            return false;
         }
         RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
     }
     EnterStandby();
+
+    return true;
 }
 
 
@@ -534,8 +545,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto gpio2Config = 0x21_b;
     // GPIO3 active in TX state
     static constexpr auto gpio3Config = 0x20_b;
-    // NIRQ is still used as NIRQ
-    static constexpr auto nirqConfig = 0x27_b;
+    // NIRQ is still used as NIRQ but enable internal pull-up
+    static constexpr auto nirqConfig = 0x67_b;
     // SDO is still used as SDO but enable internal pull-up
     static constexpr auto sdoConfig = 0x4B_b;
     // GPIOs configured as outputs will have highest drive strength
@@ -1028,6 +1039,16 @@ auto Configure(TxType txType) -> void
     // Split FIFO and guaranteed sequencer mode
     //static constexpr auto newGlobalConfig = 0x40_b;
     //SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
+
+    // Configure GPIO pins, NIRQ, and SDO
+    SendCommand<7>(Span({cmdGpioPinCfg,
+                         gpio0Config,
+                         gpio1Config,
+                         gpio2Config,
+                         gpio3Config,
+                         nirqConfig,
+                         sdoConfig,
+                         genConfig}));
 }
 
 
