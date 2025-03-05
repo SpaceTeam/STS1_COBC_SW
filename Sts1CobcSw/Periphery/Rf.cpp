@@ -94,7 +94,7 @@ constexpr auto spiTimeout = 1 * ms;
 // Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
 constexpr auto txFifoThreshold = 32_b;
 // Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
-constexpr auto rxFifoThreshold = 48_b;
+constexpr auto rxFifoThreshold = 32_b;
 
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
@@ -298,16 +298,15 @@ auto Send(void const * data, std::size_t nBytes) -> bool
     return true;
 }
 
-
+//TODO: receive more than one FiFo length and make sure we can't get stuck in this state (timeouts!)
 auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
 {
-    // auto sendBuffer = std::array<std::uint8_t, 32>{};
-
     ClearFifos();
 
     // Enable RX FIFO almost full interrupt as well as preamble and sync detect interrupts
     static constexpr auto rxFifoAlmostFullInterrupt = 0b0000'0001_b;
-    static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0011_b;
+    //static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0011_b;
+    static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0000_b;
     SetProperties(PropertyGroup::intCtl,
                   iIntCtlPhEnable,
                   Span(FlatArray(rxFifoAlmostFullInterrupt, preambleAndSyncDetectInterrupt)));
@@ -355,29 +354,33 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
         if(i % 200 == 0)
         {
             auto modemStatus = ReadModemStatus();
-            DEBUG_PRINT("Modem status: %02x %02x %d %d %d %d %d\n",
-                        static_cast<int>(modemStatus[0]),
-                        static_cast<int>(modemStatus[1]),
-                        static_cast<int>(modemStatus[2]),
-                        static_cast<int>(modemStatus[3]),
-                        static_cast<int>(modemStatus[4]),
-                        static_cast<int>(modemStatus[5]),
-                        (static_cast<unsigned>(modemStatus[6]) << 8U)
-                            + static_cast<unsigned>(modemStatus[7]));
+            DEBUG_PRINT("Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: %6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %6d, ",
+                        static_cast<int>(modemStatus[0]), // Pending Modem Interrupt Flags
+                        static_cast<int>(modemStatus[1]), // Modem Interrupt Flags
+                        (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) -70, // Current RSSI
+                        (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) -70, // Latched RSSI
+                        //static_cast<int>(modemStatus[4]), // ANT1 RSSI
+                        //static_cast<int>(modemStatus[5]), // ANT2 RSSI
+                        (static_cast<unsigned>(modemStatus[6]) << 8U) + static_cast<unsigned>(modemStatus[7])); // AFC Offset
+
+            auto fifoStatus = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+            DEBUG_PRINT("RX FiFo Count: %d\n", static_cast<int>(fifoStatus[0])); // RX FiFo Count
+
+            //auto intStatus = SendCommand<interruptStatusAnswerLength>(Span({cmdGetIntStatus, 0xFF_b, 0xFF_b, 0xFF_b}));
+            //DEBUG_PRINT("Interrupt status: %02x %02x %02x %02x %02x %02x\n", static_cast<uint8_t>(intStatus[2]), static_cast<uint8_t>(intStatus[3]), static_cast<uint8_t>(intStatus[4]), static_cast<uint8_t>(intStatus[5]), static_cast<uint8_t>(intStatus[6]), static_cast<uint8_t>(intStatus[7]));
         }
         RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
         i++;
     }
     auto modemStatus = ReadModemStatus();
-    DEBUG_PRINT(
-        "Modem status: %02x %02x %d %d %d %d %d\n",
-        static_cast<int>(modemStatus[0]),
-        static_cast<int>(modemStatus[1]),
-        static_cast<int>(modemStatus[2]),
-        static_cast<int>(modemStatus[3]),
-        static_cast<int>(modemStatus[4]),
-        static_cast<int>(modemStatus[5]),
-        (static_cast<unsigned>(modemStatus[6]) << 8U) + static_cast<unsigned>(modemStatus[7]));
+    DEBUG_PRINT("Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: %6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %d\n",
+                static_cast<int>(modemStatus[0]), // Pending Modem Interrupt Flags
+                static_cast<int>(modemStatus[1]), // Modem Interrupt Flags
+                (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) -70, // Current RSSI
+                (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) -70, // Latched RSSI
+                //static_cast<int>(modemStatus[4]), // ANT1 RSSI
+                //static_cast<int>(modemStatus[5]), // ANT2 RSSI
+                (static_cast<unsigned>(modemStatus[6]) << 8U) + static_cast<unsigned>(modemStatus[7])); // AFC Offset
 
     auto rxBuffer = std::array<Byte, maxRxBytes>{};
     static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
@@ -654,8 +657,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto pktLenAdjust = 0x00_b;
     static constexpr auto pktTxThreshold = txFifoThreshold;
     static constexpr auto pktRxThreshold = rxFifoThreshold;
-    static constexpr auto pktField1Length = std::array{0x00_b, 0x00_b};
-    static constexpr auto pktField1Config = 0x04_b;
+    static constexpr auto pktField1Length = std::array{0x00_b, 0x01_b};
+    static constexpr auto pktField1Config = 0x00_b;
     static constexpr auto pktField1CrcConfig = 0x00_b;
     SetProperties(PropertyGroup::pkt,
                   iPktLen,
@@ -707,7 +710,7 @@ auto Configure(TxType txType) -> void
                                  modemDecimationCfg1,
                                  modemDecimationCfg0)));
 
-    // RF modem BCR vversampling rate, modem BCR NCO offset, modem BCR gain, modem BCR gear & modem
+    // RF modem BCR oversampling rate, modem BCR NCO offset, modem BCR gain, modem BCR gear & modem
     // BCR misc
     //
     // TODO: What values to use here?
@@ -960,8 +963,8 @@ auto Configure(TxType txType) -> void
     // finger, complementary drive signal with 50 % duty cycle)
     static constexpr auto paPwrLvl = 0x2f_b;
     static constexpr auto paBiasClkduty = 0x00_b;
-    // Ramping time constant = 0x1B (~10 µs to full - 0.5 dB), FSK modulation delay 10 µs
-    static constexpr auto paTc = 0x91_b;
+    // Ramping time constant = 0x1F (~56 µs to full - 0.5 dB), FSK modulation delay 30 µs
+    static constexpr auto paTc = 0xFF_b;
     SetProperties(PropertyGroup::pa, iPaMode, Span({paMode, paPwrLvl, paBiasClkduty, paTc}));
 
     // RF synth feed forward charge pump current, integrated charge pump current, VCO gain scaling
@@ -1023,11 +1026,11 @@ auto Configure(TxType txType) -> void
 
     // Frequency control
     static constexpr auto iFreqControlInte = 0x00_b;
-    // FC_inte = 0x41
-    static constexpr auto freqControlInte = 0x41_b;
-    // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5, N_presc = 2, outdiv = 8, F_xo = 26 MHz,
+    // FC_inte 0x41 = 533.5, 0x41 = 434.5, 0x42 = 437.395
+    static constexpr auto freqControlInte = 0x42_b;
+    // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5, 0xA5512 = 437.395, N_presc = 2, outdiv = 8, F_xo = 26 MHz,
     // RF_channel_Hz = (FC_inte + FC_frac / 2^19) * ((N_presc * F_xo) / outdiv)
-    static constexpr auto freqControlFrac = std::array{0x0E_b, 0xC4_b, 0xEC_b};
+    static constexpr auto freqControlFrac = std::array{0x0A_b, 0x55_b, 0x12_b};
     // Channel step size = 0x4EC5
     static constexpr auto freqControlChannelStepSize = std::array{0x4E_b, 0xC5_b};
     // Window gating period (in number of crystal clock cycles) = 32

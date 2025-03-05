@@ -18,7 +18,7 @@ enum class TxType
 
 
 inline constexpr auto correctPartNumber = 0x4463;
-inline constexpr auto maxRxBytes = 128;
+inline constexpr auto maxRxBytes = 1024;
 
 extern bool rfIsWorking;
 
