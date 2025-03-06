@@ -54,19 +54,21 @@ bool rfIsWorking = true;
 // --- Private globals ---
 
 // Si4463 commands
-constexpr auto cmdPartInfo = 0x01_b;
-constexpr auto cmdPowerUp = 0x02_b;
-constexpr auto cmdFuncInfo = 0x11_b;
-constexpr auto cmdSetProperty = 0x11_b;
-constexpr auto cmdGpioPinCfg = 0x13_b;
-constexpr auto cmdFifoInfo = 0x15_b;
-constexpr auto cmdGetIntStatus = 0x20_b;
-constexpr auto cmdGetModemStatus = 0x22_b;
-constexpr auto cmdStartTx = 0x31_b;
-constexpr auto cmdRequestDeviceState = 0x33_b;
-constexpr auto cmdChangeState = 0x34_b;
-constexpr auto cmdReadCmdBuff = 0x44_b;
-constexpr auto cmdWriteTxFifo = 0x66_b;
+[[maybe_unused]] constexpr auto cmdPartInfo = 0x01_b;
+[[maybe_unused]] constexpr auto cmdPowerUp = 0x02_b;
+[[maybe_unused]] constexpr auto cmdFuncInfo = 0x11_b;
+[[maybe_unused]] constexpr auto cmdSetProperty = 0x11_b;
+[[maybe_unused]] constexpr auto cmdGpioPinCfg = 0x13_b;
+[[maybe_unused]] constexpr auto cmdFifoInfo = 0x15_b;
+[[maybe_unused]] constexpr auto cmdGetIntStatus = 0x20_b;
+[[maybe_unused]] constexpr auto cmdGetModemStatus = 0x22_b;
+[[maybe_unused]] constexpr auto cmdStartTx = 0x31_b;
+[[maybe_unused]] constexpr auto cmdStartRx = 0x32_b;
+[[maybe_unused]] constexpr auto cmdRequestDeviceState = 0x33_b;
+[[maybe_unused]] constexpr auto cmdChangeState = 0x34_b;
+[[maybe_unused]] constexpr auto cmdReadCmdBuff = 0x44_b;
+[[maybe_unused]] constexpr auto cmdWriteTxFifo = 0x66_b;
+[[maybe_unused]] constexpr auto cmdReadRxFifo = 0x77_b;
 
 // Si4463 property indexes
 constexpr auto iIntCtlPhEnable = 0x01_b;
@@ -76,22 +78,29 @@ constexpr auto iIntCtlPhEnable = 0x01_b;
 // TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
 // this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
 // instead.
-constexpr auto partInfoAnswerLength = 8U;
-constexpr auto fifoInfoAnswerLength = 2U;
-constexpr auto interruptStatusAnswerLength = 8U;
-constexpr auto modemStatusAnswerLength = 8U;
+[[maybe_unused]] constexpr auto partInfoAnswerLength = 8U;
+[[maybe_unused]] constexpr auto fifoInfoAnswerLength = 2U;
+[[maybe_unused]] constexpr auto interruptStatusAnswerLength = 8U;
+[[maybe_unused]] constexpr auto modemStatusAnswerLength = 8U;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
+// TODO: Check this and write a good comment
+constexpr auto spiTimeout = 1 * ms;
+// The time between selecting the chip und writing or reading the first byte
+constexpr auto postChipSelectDelay = 20 * us;
+// The time between writing or reading the last byte and deselecting the chip
+constexpr auto preChipDeselectDelay = 2 * us;
+// The interval at which the NIRQ pin is polled
+constexpr auto pollingInterval = 10 * us;
 // Delay to wait for power on reset to finish
 constexpr auto porRunningDelay = 20 * ms;
 // Time until PoR circuit settles after applying power
 constexpr auto porCircuitSettleDelay = 100 * ms;
 // Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
 constexpr auto watchDogResetPinDelay = 1 * ms;
-// TODO: Check this and write a good comment
-constexpr auto spiTimeout = 1 * ms;
 
+constexpr auto txFifoSize = 64U;
 // Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
 constexpr auto txFifoThreshold = 32_b;
 // Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
@@ -202,7 +211,7 @@ auto Send(void const * data, std::size_t nBytes) -> bool
     SetProperties(PropertyGroup::pkt, iPktField1Length, Span({lengthUpperBits, lengthLowerBits}));
 
     // Fill the TX FIFO completely initially but then only add the amount of free space
-    size_t chunkSize = 64;
+    auto chunkSize = txFifoSize;
     auto almostEmptyInterruptEnabled = false;
 
     // While the packet is longer than a single fill round, wait for the almost empty interrupt,
@@ -235,6 +244,7 @@ auto Send(void const * data, std::size_t nBytes) -> bool
         // for the time, t_1 = 10 / baudRate, it takes to send a single byte in a loop. Also add a
         // timeout to not wait indefinitely.
         startTime = RODOS::NOW();
+        // TODO: Enable an external interrupt for the NIRQ pin and use that instead here.
         while(nirqGpioPin.Read() == hal::PinState::set)
         {
             // TODO: Set timeout constant
@@ -243,11 +253,11 @@ auto Send(void const * data, std::size_t nBytes) -> bool
                 EnterStandby();
                 return false;
             }
-            RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+            SuspendFor(pollingInterval);
         }
 
         auto answer = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
-        chunkSize = static_cast<size_t>(answer[1]);
+        chunkSize = static_cast<std::size_t>(answer[1]);
     }
 
     // Enable packet sent interrupt
@@ -270,7 +280,7 @@ auto Send(void const * data, std::size_t nBytes) -> bool
             EnterStandby();
             return false;
         }
-        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+        SuspendFor(pollingInterval);
     }
     EnterStandby();
 
@@ -302,10 +312,12 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
     // sendBuffer[5] = 0x00;  // Remain in RX state on preamble detection timeout
     // sendBuffer[6] = 0x00;  // Do nothing on RX packet valid (we'll never enter this state)
     // sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
-    SendCommand(Span({0x32_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
+    SendCommand(Span({cmdStartRx, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
 
     // Wait for interrupts
     auto i = 0U;
+    // TODO: Add a timeout
+    constexpr auto printInterval = 200 * ms;
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
         // if(nirqGpioPin.Read() == hal::PinState::reset)
@@ -331,9 +343,10 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
         //         break;
         //     }
         // }
-        if(i % 200 == 0)
+        if(i % (printInterval / pollingInterval) == 0)
         {
             auto modemStatus = ReadModemStatus();
+            // NOLINTBEGIN(*magic-numbers)
             DEBUG_PRINT(
                 "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
                 "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %6d, ",
@@ -345,25 +358,26 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
                 // static_cast<int>(modemStatus[5]), // ANT2 RSSI
                 (static_cast<unsigned>(modemStatus[6]) << 8U)
                     + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
+            // NOLINTEND(*magic-numbers)
 
             auto fifoStatus = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
             DEBUG_PRINT("RX FiFo Count: %d\n", static_cast<int>(fifoStatus[0]));  // RX FiFo Count
 
             // auto intStatus = SendCommand<interruptStatusAnswerLength>(
             //     Span({cmdGetIntStatus, 0xFF_b, 0xFF_b, 0xFF_b}));
-            // DEBUG_PRINT(
-            //     "Interrupt status: %02x %02x %02x %02x %02x
-            //         % 02x\n
-            //         ", static_cast<uint8_t>(intStatus[2]), static_cast<uint8_t>(intStatus[3]),
-            //         static_cast<uint8_t>(intStatus[4]),
-            //     static_cast<uint8_t>(intStatus[5]),
-            //     static_cast<uint8_t>(intStatus[6]),
-            //     static_cast<uint8_t>(intStatus[7]));
+            // DEBUG_PRINT("Interrupt status: %02x %02x %02x %02x %02x %02x\n",
+            //             static_cast<std::uint8_t>(intStatus[2]),
+            //             static_cast<std::uint8_t>(intStatus[3]),
+            //             static_cast<std::uint8_t>(intStatus[4]),
+            //             static_cast<std::uint8_t>(intStatus[5]),
+            //             static_cast<std::uint8_t>(intStatus[6]),
+            //             static_cast<std::uint8_t>(intStatus[7]));
         }
-        RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
+        SuspendFor(pollingInterval);
         i++;
     }
     auto modemStatus = ReadModemStatus();
+    // NOLINTBEGIN(*magic-numbers)
     DEBUG_PRINT(
         "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
         "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %d\n",
@@ -375,6 +389,7 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
         // static_cast<int>(modemStatus[5]), // ANT2 RSSI
         (static_cast<unsigned>(modemStatus[6]) << 8U)
             + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
+    // NOLINTEND(*magic-numbers)
 
     auto rxBuffer = std::array<Byte, maxRxBytes>{};
     static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
@@ -387,7 +402,7 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
     // Wait for RX FIFO Almost Full Interrupt
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
-        RODOS::AT(RODOS::NOW() + 10 * RODOS::MICROSECONDS);
+        SuspendFor(pollingInterval);
     }
 
     ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
@@ -553,14 +568,14 @@ auto Configure(TxType txType) -> void
     static constexpr auto sdoConfig = 0x4B_b;
     // GPIOs configured as outputs will have highest drive strength
     static constexpr auto genConfig = 0x00_b;
-    SendCommand<7>(Span({cmdGpioPinCfg,
-                         gpio0Config,
-                         gpio1Config,
-                         gpio2Config,
-                         gpio3Config,
-                         nirqConfig,
-                         sdoConfig,
-                         genConfig}));
+    SendCommand(Span({cmdGpioPinCfg,
+                      gpio0Config,
+                      gpio1Config,
+                      gpio2Config,
+                      gpio3Config,
+                      nirqConfig,
+                      sdoConfig,
+                      genConfig}));
 
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
@@ -1167,10 +1182,11 @@ auto EnterStandby() -> void
 auto WriteToFifo(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
-    RODOS::AT(RODOS::NOW() + 20 * RODOS::MICROSECONDS);
+    // TODO: Are those delays really necessary? I have never used or seen them.
+    SuspendFor(postChipSelectDelay);
     WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
     WriteTo(&rfSpi, data, spiTimeout);
-    RODOS::AT(RODOS::NOW() + 2 * RODOS::MICROSECONDS);
+    SuspendFor(preChipDeselectDelay);
     csGpioPin.Set();
     WaitForCts();
     csGpioPin.Set();
@@ -1180,13 +1196,13 @@ auto WriteToFifo(std::span<Byte const> data) -> void
 auto ReadFromFifo(std::span<Byte> data) -> void
 {
     csGpioPin.Reset();
-    RODOS::AT(RODOS::NOW() + 20 * RODOS::MICROSECONDS);
+    SuspendFor(postChipSelectDelay);
     // auto buf = std::to_array<std::uint8_t>({0x77});
     // spi.write(std::data(buf), std::size(buf));
-    WriteTo(&rfSpi, Span(0x77_b), spiTimeout);
+    WriteTo(&rfSpi, Span(cmdReadRxFifo), spiTimeout);
     // spi.read(data, length);
     ReadFrom(&rfSpi, data, spiTimeout);
-    RODOS::AT(RODOS::NOW() + 2 * RODOS::MICROSECONDS);
+    SuspendFor(preChipDeselectDelay);
     csGpioPin.Set();
 }
 
