@@ -2,7 +2,9 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -73,8 +75,10 @@ using RODOS::PRINTF;
      0x94, 0xf5, 0x31, 0xa1, 0x6b, 0xfc, 0x84, 0xc2, 0x2d, 0x1e, 0x20, 0x87, 0x9f, 0x52, 0x81,
      0xbb, 0x82, 0x75, 0xd8, 0xe5, 0x58, 0xf4, 0x4b, 0xe2, 0x1f, 0xe5, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00});
+static constexpr auto uartBaudRate = 115'200;
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
+auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
 class RfTest : public RODOS::StaticThread<>
@@ -83,6 +87,7 @@ class RfTest : public RODOS::StaticThread<>
     {
         led1GpioPin.Direction(hal::PinDirection::out);
         led1GpioPin.Reset();
+        hal::Initialize(&uciUart, uartBaudRate);
     }
 
 
@@ -97,37 +102,55 @@ class RfTest : public RODOS::StaticThread<>
         auto partNumber = rf::ReadPartNumber();
         PRINTF("Part number: 0x%4x == 0x%4x\n", partNumber, rf::correctPartNumber);
 
-        DisableRfLatchupProtection();
-
-        // // Send test data
-        // PRINTF("\n");
-        // auto n = 10;
-        // auto message = dataNoCc;
-        // PRINTF("Sending a %i bytes long test message %i time(s)\n", message.size(), n);
-        // for(int i = 0; i < n; ++i)
-        // {
-        //     led1GpioPin.Set();
-        //     rf::Send(message.data(), message.size());
-        //     SuspendFor(100 * ms);
-        //     led1GpioPin.Reset();
-
-        //     SuspendFor(400 * ms);
-        // }
-        // PRINTF("done\n");
-
-
-        // Receive test data
-        PRINTF("\n");
-        PRINTF("Waiting to receive test data\n");
-        auto receivedData = rf::ReceiveTestData();
-        PRINTF("Received data: ");
-        for(auto byte : receivedData)
+        while(true)
         {
-            PRINTF("0x%02x ", static_cast<unsigned int>(byte));
+            PRINTF("\n");
+            PRINTF("Do you want to send or receive test data? (s/r)\n");
+            auto answer = std::array<Byte, 1>{};
+            hal::ReadFrom(&uciUart, Span(&answer));
+            if(answer[0] == Byte{'s'})
+            {
+                auto n = 10;
+                auto message = dataNoCc;
+                PRINTF("\n");
+                PRINTF("Sending a %i bytes long test message %i time(s)\n", message.size(), n);
+                DisableRfLatchupProtection();
+                for(int i = 0; i < n; ++i)
+                {
+                    led1GpioPin.Set();
+                    rf::Send(message.data(), message.size());
+                    SuspendFor(100 * ms);
+                    led1GpioPin.Reset();
+                    SuspendFor(400 * ms);
+                }
+                EnableRfLatchupProtection();
+                PRINTF("-> done\n");
+            }
+            else if(answer[0] == Byte{'r'})
+            {
+                PRINTF("\n");
+                PRINTF("Waiting to receive test data\n");
+                DisableRfLatchupProtection();
+                auto receivedData = rf::ReceiveTestData();
+                EnableRfLatchupProtection();
+                PRINTF("Received data:");
+                static constexpr auto valuesPerLine = 100 / 5;
+                for(auto i = 0U; i < receivedData.size(); ++i)
+                {
+                    if(i % valuesPerLine == 0)
+                    {
+                        PRINTF("\n");
+                    }
+                    PRINTF("0x%02x ", static_cast<unsigned int>(receivedData[i]));
+                }
+                PRINTF("\n");
+                PRINTF("-> done\n");
+            }
+            else
+            {
+                PRINTF("Invalid input: '%c'\n", static_cast<char>(answer[0]));
+            }
         }
-        PRINTF("\ndone\n");
-
-        EnableRfLatchupProtection();
     }
 } rfTest;
 }
