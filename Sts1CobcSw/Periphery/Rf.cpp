@@ -26,6 +26,7 @@
 
 namespace sts1cobcsw::rf
 {
+// TODO: Put all private types, variables and functions in an anonymous namespace
 enum class PropertyGroup : std::uint8_t
 {
     global = 0x00,       //
@@ -76,8 +77,9 @@ constexpr auto iIntCtlPhEnable = 0x01_b;
 // this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
 // instead.
 constexpr auto partInfoAnswerLength = 8U;
-constexpr auto interruptStatusAnswerLength = 8U;
 constexpr auto fifoInfoAnswerLength = 2U;
+constexpr auto interruptStatusAnswerLength = 8U;
+constexpr auto modemStatusAnswerLength = 8U;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
@@ -129,6 +131,7 @@ auto EnterStandby() -> void;
 auto WriteToFifo(std::span<Byte const> data) -> void;
 auto ReadFromFifo(std::span<Byte> data) -> void;
 auto StartTx() -> void;
+auto ReadModemStatus() -> std::array<Byte, modemStatusAnswerLength>;
 
 
 // --- Public function definitions ---
@@ -151,36 +154,13 @@ auto ReadPartNumber() -> std::uint16_t
 }
 
 
-auto ReadPartInfo() -> std::array<Byte, 8>
-{
-    return SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
-}
-
-
-auto ReadFunctionInfo() -> std::array<Byte, 6>
-{
-    return SendCommand<6>(Span(cmdFuncInfo));
-}
-
-
-auto ReadModemStatus() -> std::array<Byte, 8>
-{
-    return SendCommand<8>(Span(cmdGetModemStatus));
-}
-
-
-auto ReadDeviceState() -> std::array<Byte, 2>
-{
-    return SendCommand<2>(Span(cmdRequestDeviceState));
-}
-
-
 auto SetTxType(TxType txType) -> void
 {
     // Constants for setting the TX type (morse, 2GFSK)
     // MODEM_DATA_RATE: unused, 20 kBaud
     static constexpr std::uint32_t dataRateMorse = 20'000U * 40U;
-    // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600 * 26000000 * 40)/26000000 = 9600 * 40
+    // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600
+    // * 26'000'000 * 40) / 26'000'000 = 9600 * 40
     static constexpr std::uint32_t dataRate2Gfsk = 9'600U * 40U;
     // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
     static constexpr auto modemModeTypeMorse = 0x09_b;
@@ -297,14 +277,15 @@ auto Send(void const * data, std::size_t nBytes) -> bool
     return true;
 }
 
-//TODO: receive more than one FiFo length and make sure we can't get stuck in this state (timeouts!)
+// TODO: receive more than one FiFo length and make sure we can't get stuck in this state
+// (timeouts!)
 auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
 {
     ClearFifos();
 
     // Enable RX FIFO almost full interrupt as well as preamble and sync detect interrupts
     static constexpr auto rxFifoAlmostFullInterrupt = 0b0000'0001_b;
-    //static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0011_b;
+    // static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0011_b;
     static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0000_b;
     SetProperties(PropertyGroup::intCtl,
                   iIntCtlPhEnable,
@@ -353,33 +334,47 @@ auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
         if(i % 200 == 0)
         {
             auto modemStatus = ReadModemStatus();
-            DEBUG_PRINT("Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: %6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %6d, ",
-                        static_cast<int>(modemStatus[0]), // Pending Modem Interrupt Flags
-                        static_cast<int>(modemStatus[1]), // Modem Interrupt Flags
-                        (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) -70, // Current RSSI
-                        (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) -70, // Latched RSSI
-                        //static_cast<int>(modemStatus[4]), // ANT1 RSSI
-                        //static_cast<int>(modemStatus[5]), // ANT2 RSSI
-                        (static_cast<unsigned>(modemStatus[6]) << 8U) + static_cast<unsigned>(modemStatus[7])); // AFC Offset
+            DEBUG_PRINT(
+                "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
+                "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %6d, ",
+                static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
+                static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
+                (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
+                (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
+                // static_cast<int>(modemStatus[4]), // ANT1 RSSI
+                // static_cast<int>(modemStatus[5]), // ANT2 RSSI
+                (static_cast<unsigned>(modemStatus[6]) << 8U)
+                    + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
 
             auto fifoStatus = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
-            DEBUG_PRINT("RX FiFo Count: %d\n", static_cast<int>(fifoStatus[0])); // RX FiFo Count
+            DEBUG_PRINT("RX FiFo Count: %d\n", static_cast<int>(fifoStatus[0]));  // RX FiFo Count
 
-            //auto intStatus = SendCommand<interruptStatusAnswerLength>(Span({cmdGetIntStatus, 0xFF_b, 0xFF_b, 0xFF_b}));
-            //DEBUG_PRINT("Interrupt status: %02x %02x %02x %02x %02x %02x\n", static_cast<uint8_t>(intStatus[2]), static_cast<uint8_t>(intStatus[3]), static_cast<uint8_t>(intStatus[4]), static_cast<uint8_t>(intStatus[5]), static_cast<uint8_t>(intStatus[6]), static_cast<uint8_t>(intStatus[7]));
+            // auto intStatus = SendCommand<interruptStatusAnswerLength>(
+            //     Span({cmdGetIntStatus, 0xFF_b, 0xFF_b, 0xFF_b}));
+            // DEBUG_PRINT(
+            //     "Interrupt status: %02x %02x %02x %02x %02x
+            //         % 02x\n
+            //         ", static_cast<uint8_t>(intStatus[2]), static_cast<uint8_t>(intStatus[3]),
+            //         static_cast<uint8_t>(intStatus[4]),
+            //     static_cast<uint8_t>(intStatus[5]),
+            //     static_cast<uint8_t>(intStatus[6]),
+            //     static_cast<uint8_t>(intStatus[7]));
         }
         RODOS::AT(RODOS::NOW() + 1 * RODOS::MILLISECONDS);
         i++;
     }
     auto modemStatus = ReadModemStatus();
-    DEBUG_PRINT("Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: %6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %d\n",
-                static_cast<int>(modemStatus[0]), // Pending Modem Interrupt Flags
-                static_cast<int>(modemStatus[1]), // Modem Interrupt Flags
-                (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) -70, // Current RSSI
-                (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) -70, // Latched RSSI
-                //static_cast<int>(modemStatus[4]), // ANT1 RSSI
-                //static_cast<int>(modemStatus[5]), // ANT2 RSSI
-                (static_cast<unsigned>(modemStatus[6]) << 8U) + static_cast<unsigned>(modemStatus[7])); // AFC Offset
+    DEBUG_PRINT(
+        "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
+        "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %d\n",
+        static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
+        static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
+        (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
+        (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
+        // static_cast<int>(modemStatus[4]), // ANT1 RSSI
+        // static_cast<int>(modemStatus[5]), // ANT2 RSSI
+        (static_cast<unsigned>(modemStatus[6]) << 8U)
+            + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
 
     auto rxBuffer = std::array<Byte, maxRxBytes>{};
     static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
@@ -589,7 +584,9 @@ auto Configure(TxType txType) -> void
     static constexpr auto intPhEnable = 0x00_b;
     static constexpr auto intModemEnable = 0x00_b;
     static constexpr auto intChipEnable = 0x00_b;
-    SetProperties(PropertyGroup::intCtl, iIntCtlEnable, Span({intCtlEnable, intPhEnable, intModemEnable, intChipEnable}));
+    SetProperties(PropertyGroup::intCtl,
+                  iIntCtlEnable,
+                  Span({intCtlEnable, intPhEnable, intModemEnable, intChipEnable}));
 
     // Preamble
     static constexpr auto iPreambleTxLength = 0x00_b;
@@ -602,7 +599,8 @@ auto Configure(TxType txType) -> void
     // No extended RX preamble timeout, 0x0F nibbles timeout until detected preamble is discarded as
     // invalid
     static constexpr auto preambleConfigStd2 = 0x0F_b;
-    // RX Standard preamble, first received preamble bit is 0, unit of preamble TX length is in bytes, use standard preamble 0101 pattern
+    // RX Standard preamble, first received preamble bit is 0, unit of preamble TX length is in
+    // bytes, use standard preamble 0101 pattern
     static constexpr auto preambleConfig = 0b00010010_b;
     // Non-standard pattern
     static constexpr auto preamblePattern = std::array<Byte, 4>{};
@@ -644,7 +642,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto iPktWhiteConfig = 0x05_b;
     // No Whitening
     static constexpr auto pktWhiteConfig = 0x00_b;
-    // Don't split RX and TX field information (length, ...), enable RX packet handler, use normal (2)FSK, no Manchester coding, no CRC, data transmission with MSB first.
+    // Don't split RX and TX field information (length, ...), enable RX packet handler, use normal
+    // (2)FSK, no Manchester coding, no CRC, data transmission with MSB first.
     static constexpr auto pktConfig1 = 0x00_b;
     SetProperties(PropertyGroup::pkt, iPktWhiteConfig, Span({pktWhiteConfig, pktConfig1}));
 
@@ -742,11 +741,13 @@ auto Configure(TxType txType) -> void
     static constexpr auto modemAfcGain = std::array{0x80_b, 0x61_b};
     static constexpr auto modemAfcLimiter = std::array{0x04_b, 0x11_b};
     // - Expected frequency error is less then 12 * symbol rate
-    // - AFC correction of PLL will be frozen if a consecutive string of 1 s or 0 s that exceed the search period is encountered
-    // - don't switch clock source for frequency estimator
-    // - don't freeze AFC at preamble end
-    // - AFC correction uses the frequency estimation developed by the 2*Tb estimator in the Synchronous Demodulator
-    // - disable AFC value feedback to PLL
+    // - AFC correction of PLL will be frozen if a consecutive string of 1 s or 0 s that exceed the
+    //   search period is encountered
+    // - Don't switch clock source for frequency estimator
+    // - Don't freeze AFC at preamble end
+    // - AFC correction uses the frequency estimation developed by the 2*Tb estimator in the
+    //   Synchronous Demodulator
+    // - Disable AFC value feedback to PLL
     // - freeze AFC after gear switching
     static constexpr auto modemAfcMisc = 0xA0_b;
     SetProperties(
@@ -807,21 +808,19 @@ auto Configure(TxType txType) -> void
     // - Discriminator's slicer output is de-glitched by sample clock to reduce turn-around time.
     // - Raw data output is not synchronized to bit clock.
     // - Estimated frequency from MA detector will not be truncated.
-    // - AGC and OOK moving average detector's threshold output will be frozen after the preamble is detected.
+    // - AGC and OOK moving average detector's threshold output will be frozen after the preamble is
+    //   detected.
     // - S2p_mapping 2.
     static constexpr auto modemOokCnt1 = 0xA4_b;
-    // - The min-max detector is selected to establish the slicing threshold level as the mid-point between the measured extreme frequency deviation levels.
+    // - The min-max detector is selected to establish the slicing threshold level as the mid-point
+    //   between the measured extreme frequency deviation levels.
     // - Does not affect OOK decay rate specified in decay[3:0] in MODEM_OOK_PDTC.
     // - Disable OOK Squelch functionality.
-    // - Peak detector discharge is disabled when the detected peak is lower than the input signal for low input levels.
+    // - Peak detector discharge is disabled when the detected peak is lower than the input signal
+    //   for low input levels.
     // - Normal MA filter window.
     static constexpr auto modemOokMisc = 0x23_b;
-    SetProperties(
-        PropertyGroup::modem,
-        iModemOokCnt1,
-        Span(FlatArray(
-            modemOokCnt1,
-            modemOokMisc)));
+    SetProperties(PropertyGroup::modem, iModemOokCnt1, Span(FlatArray(modemOokCnt1, modemOokMisc)));
 
     static constexpr auto iModemRawControl = 0x45_b;
     // - Gain = 1.
@@ -844,26 +843,25 @@ auto Configure(TxType txType) -> void
     // Compensation/offset of measured RSSI value
     // TODO: Measure this
     static constexpr auto modemRssiComp = 0x40_b;
-    SetProperties(
-        PropertyGroup::modem,
-        iModemRawControl,
-        Span(FlatArray(
-            modemRawControl,
-            modemRawEye,
-            modemAntDivMode,
-            modemAntDivControl,
-            modemRssiThresh,
-	    modemRssiJumpThresh,
-	    modemRssiControl,
-	    modemRssiControl2,
-	    modemRssiComp)));
+    SetProperties(PropertyGroup::modem,
+                  iModemRawControl,
+                  Span(FlatArray(modemRawControl,
+                                 modemRawEye,
+                                 modemAntDivMode,
+                                 modemAntDivControl,
+                                 modemRssiThresh,
+                                 modemRssiJumpThresh,
+                                 modemRssiControl,
+                                 modemRssiControl2,
+                                 modemRssiComp)));
 
     // RF modem clock generation band
     static constexpr auto iModemRawSearch = 0x50_b;
     // - Search window period after gear switching = 8*TB
     // - Search window period before gear switching = 2*TB
     // - Disable raw data filter to use the 4-tap MA filter.
-    // - Freeze the Moving Average or Min-Max slicing threshold search engine upon switching to low gear.
+    // - Freeze the Moving Average or Min-Max slicing threshold search engine upon switching to low
+    //   gear.
     static constexpr auto modemRawSearch = 0x84_b;
     // Band = FVCO_DIV_8, high performance mode fixed prescaler div2, force recalibration
     static constexpr auto modemClkgenBand = 0x0A_b;
@@ -889,12 +887,9 @@ auto Configure(TxType txType) -> void
     static constexpr auto modemDsaQual = 0x04_b;
     static constexpr auto modemDsaRssi = 0x78_b;
     static constexpr auto modemDsaMisc = 0x20_b;
-    SetProperties(PropertyGroup::modem, iModemDsaCtrl1, Span({
-                modemDsaCtrl1,
-                modemDsaCtrl2,
-                modemDsaQual,
-                modemDsaRssi,
-                modemDsaMisc}));
+    SetProperties(PropertyGroup::modem,
+                  iModemDsaCtrl1,
+                  Span({modemDsaCtrl1, modemDsaCtrl2, modemDsaQual, modemDsaRssi, modemDsaMisc}));
 
     // RX filter coefficients
     // Block 1
@@ -921,9 +916,12 @@ auto Configure(TxType txType) -> void
     static constexpr auto rxFilterCoefficientsBlock2 = std::array{
         0x03_b,  // RX1_CHFLT_COE1[7:0]
         0x00_b,  // RX1_CHFLT_COE0[7:0]
-        0x15_b,  // RX1_CHFLT_COE10[9:8]  | RX1_CHFLT_COE11[9:8]  | RX1_CHFLT_COE12[9:8]  | RX1_CHFLT_COE13[9:8]
-        0xFF_b,  // RX1_CHFLT_COE6[9:8]   | RX1_CHFLT_COE7[9:8]   | RX1_CHFLT_COE8[9:8]   | RX1_CHFLT_COE9[9:8]
-        0x00_b,  // RX1_CHFLT_COE2[9:8]   | RX1_CHFLT_COE3[9:8]   | RX1_CHFLT_COE4[9:8]   | RX1_CHFLT_COE5[9:8]
+        0x15_b,  // RX1_CHFLT_COE10[9:8]  | RX1_CHFLT_COE11[9:8]  | RX1_CHFLT_COE12[9:8]  |
+                 // RX1_CHFLT_COE13[9:8]
+        0xFF_b,  // RX1_CHFLT_COE6[9:8]   | RX1_CHFLT_COE7[9:8]   | RX1_CHFLT_COE8[9:8]   |
+                 // RX1_CHFLT_COE9[9:8]
+        0x00_b,  // RX1_CHFLT_COE2[9:8]   | RX1_CHFLT_COE3[9:8]   | RX1_CHFLT_COE4[9:8]   |
+                 // RX1_CHFLT_COE5[9:8]
         0x00_b,  // 0 | 0 | 0 | 0         | RX1_CHFLT_COE0[9:8]   | RX1_CHFLT_COE1[9:8]
         0xFF_b,  // RX2_CHFLT_COE13[7:0]
         0xC4_b,  // RX2_CHFLT_COE12[7:0]
@@ -946,9 +944,12 @@ auto Configure(TxType txType) -> void
         0x0C_b,  // RX2_CHFLT_COE2[7:0]
         0x03_b,  // RX2_CHFLT_COE1[7:0]
         0x00_b,  // RX2_CHFLT_COE0[7:0]
-        0x15_b,  // RX2_CHFLT_COE10[9:8]  | RX2_CHFLT_COE11[9:8]  | RX2_CHFLT_COE12[9:8] | RX2_CHFLT_COE13[9:8]
-        0xFF_b,  // RX2_CHFLT_COE6[9:8]   | RX2_CHFLT_COE7[9:8]   | RX2_CHFLT_COE8[9:8]  | RX2_CHFLT_COE9[9:8]
-        0x00_b,  // RX2_CHFLT_COE2[9:8]   | RX2_CHFLT_COE3[9:8]   | RX2_CHFLT_COE4[9:8]  | RX2_CHFLT_COE5[9:8]
+        0x15_b,  // RX2_CHFLT_COE10[9:8]  | RX2_CHFLT_COE11[9:8]  | RX2_CHFLT_COE12[9:8] |
+                 // RX2_CHFLT_COE13[9:8]
+        0xFF_b,  // RX2_CHFLT_COE6[9:8]   | RX2_CHFLT_COE7[9:8]   | RX2_CHFLT_COE8[9:8]  |
+                 // RX2_CHFLT_COE9[9:8]
+        0x00_b,  // RX2_CHFLT_COE2[9:8]   | RX2_CHFLT_COE3[9:8]   | RX2_CHFLT_COE4[9:8]  |
+                 // RX2_CHFLT_COE5[9:8]
         0x00_b   // 0 | 0 | 0 | 0         | RX2_CHFLT_COE0[9:8]   | RX2_CHFLT_COE1[9:8]  |
     };
     SetProperties(
@@ -956,7 +957,8 @@ auto Configure(TxType txType) -> void
 
     // RF PA mode
     static constexpr auto iPaMode = 0x00_b;
-    // PA switching amp mode, PA_SEL = HP_COARSE, disable power sequencing, disable external TX ramp signal
+    // PA switching amp mode, PA_SEL = HP_COARSE, disable power sequencing, disable external TX ramp
+    // signal
     static constexpr auto paMode = 0x08_b;
     // Enabled PA fingers (sets output power but not linearly; 10 µA bias current per enabled
     // finger, complementary drive signal with 50 % duty cycle)
@@ -1027,8 +1029,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto iFreqControlInte = 0x00_b;
     // FC_inte 0x41 = 533.5, 0x41 = 434.5, 0x42 = 437.395
     static constexpr auto freqControlInte = 0x42_b;
-    // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5, 0xA5512 = 437.395, N_presc = 2, outdiv = 8, F_xo = 26 MHz,
-    // RF_channel_Hz = (FC_inte + FC_frac / 2^19) * ((N_presc * F_xo) / outdiv)
+    // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5, 0xA5512 = 437.395, N_presc = 2, outdiv = 8, F_xo =
+    // 26 MHz, RF_channel_Hz = (FC_inte + FC_frac / 2^19) * ((N_presc * F_xo) / outdiv)
     static constexpr auto freqControlFrac = std::array{0x0A_b, 0x55_b, 0x12_b};
     // Channel step size = 0x4EC5
     static constexpr auto freqControlChannelStepSize = std::array{0x4E_b, 0xC5_b};
@@ -1045,16 +1047,16 @@ auto Configure(TxType txType) -> void
                                  freqControlVcontRxAdj)));
 
     // Frequency adjust (stolen from Arduino demo code)
-    //static constexpr auto globalXoTuneUpdated = 0x62_b;
-    //SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTuneUpdated}));
+    // static constexpr auto globalXoTuneUpdated = 0x62_b;
+    // SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTuneUpdated}));
 
     // Change sequencer mode to guaranteed
     //
     // TODO: Why?
     //
     // Split FIFO and guaranteed sequencer mode
-    //static constexpr auto newGlobalConfig = 0x40_b;
-    //SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
+    // static constexpr auto newGlobalConfig = 0x40_b;
+    // SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
 }
 
 
@@ -1204,5 +1206,11 @@ auto StartTx() -> void
     static constexpr auto numRepeat = 0x00_b;
     // FIXME: Acc. the datasheet this command consists of only 5 bytes. Why does this work?
     SendCommand(Span(FlatArray(cmdStartTx, channel, condition, txLen, txDelay, numRepeat)));
+}
+
+
+auto ReadModemStatus() -> std::array<Byte, modemStatusAnswerLength>
+{
+    return SendCommand<modemStatusAnswerLength>(Span(cmdGetModemStatus));
 }
 }
