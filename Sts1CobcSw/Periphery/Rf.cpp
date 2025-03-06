@@ -195,7 +195,7 @@ auto SetTxType(TxType txType) -> void
 // TODO: Do we need to clear all FIFOs here, should be just TX FIFO
 // TODO: Refactor (issue #226)
 // TODO: Pull rfLatchupDisableGpioPin high while sending
-auto Send(void const * data, std::size_t nBytes) -> bool
+auto Send(void const * data, std::uint16_t nBytes) -> bool
 {
     auto startTime = RODOS::NOW();
 
@@ -206,9 +206,7 @@ auto Send(void const * data, std::size_t nBytes) -> bool
     // TODO: Check if we can just set the length in START_TX
     // TODO: Use Deserialize(), but length should then be uint16_t
     static constexpr auto iPktField1Length = 0x0D_b;
-    auto lengthUpperBits = static_cast<Byte>(nBytes >> CHAR_BIT);
-    auto lengthLowerBits = static_cast<Byte>(nBytes);
-    SetProperties(PropertyGroup::pkt, iPktField1Length, Span({lengthUpperBits, lengthLowerBits}));
+    SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(nBytes)));
 
     // Fill the TX FIFO completely initially but then only add the amount of free space
     auto chunkSize = txFifoSize;
