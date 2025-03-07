@@ -19,10 +19,6 @@ enum class TxType
 inline constexpr auto correctPartNumber = 0x4463;
 inline constexpr auto maxRxBytes = 1024;
 
-// TODO: I am pretty sure that we should use persistentVariables.template
-// Get/Store<"flashIsWorking">(true) instead
-extern bool rfIsWorking;
-
 
 auto Initialize(TxType txType) -> void;
 auto ReadPartNumber() -> std::uint16_t;
