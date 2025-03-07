@@ -47,6 +47,11 @@ TEST_CASE("LfsWrapper without data corruption")
     auto createDirResult = fs::CreateDirectory(nonExistingPath);
     CHECK(createDirResult.has_error());
 
+    // dir does not exist
+    auto iteratorResult = fs::MakeIterator(nonExistingPath);
+    CHECK(iteratorResult.has_error());
+    CHECK(iteratorResult.error() == sts1cobcsw::ErrorCode::noDirectoryEntry);
+
     createDirResult = fs::CreateDirectory(dirPath);
     CHECK(not createDirResult.has_error());
 
@@ -90,6 +95,44 @@ TEST_CASE("LfsWrapper without data corruption")
     // ForceRemove should fail because the file does not exist
     removeResult = fs::ForceRemove(nonExistingPath);
     CHECK(removeResult.has_error());
+
+    iteratorResult = fs::MakeIterator(dirPath);
+    CHECK(not iteratorResult.has_error());
+    auto & dirIterator = iteratorResult.value();
+    CHECK(dirIterator != dirIterator.end());
+
+    // entry 0: 0Byte .
+    auto entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    auto entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(0));
+    ++dirIterator;
+
+    // entry 1: 0Byte ..
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(0));
+    ++dirIterator;
+
+    // entry 2: 0Byte MyFile.lock
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(0));
+    ++dirIterator;
+
+    // entry 3: 4Byte MyFile
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(4));
+    ++dirIterator;
+
+    // should fail because we are at the end of the dir
+    entryResult = *dirIterator;
+    CHECK(entryResult.has_error());
+    CHECK(dirIterator == dirIterator.end());
 
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());
