@@ -5,7 +5,6 @@
 
 #include <array>
 #include <cstdint>
-#include <span>
 
 
 namespace sts1cobcsw::rf
