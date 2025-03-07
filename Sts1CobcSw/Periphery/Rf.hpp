@@ -1,12 +1,10 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Hal/Spi.hpp>
-#include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <array>
 #include <cstdint>
-#include <span>
 
 
 namespace sts1cobcsw::rf

@@ -8,20 +8,22 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
+#include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
-
-#include <timemodel.h>
+#include <strong_type/type.hpp>
 
 #include <array>
 #include <bit>
-#include <cinttypes>
 #include <cstddef>
+#include <span>
 
 
 namespace sts1cobcsw::rf
@@ -197,8 +199,6 @@ auto SetTxType(TxType txType) -> void
 // TODO: Pull rfLatchupDisableGpioPin high while sending
 auto Send(void const * data, std::uint16_t nBytes) -> bool
 {
-    auto startTime = RODOS::NOW();
-
     // TODO: Acc. the datasheet "fifo hardware does not need to be reset prior to use".
     ClearFifos();
 
@@ -241,12 +241,12 @@ auto Send(void const * data, std::uint16_t nBytes) -> bool
         // chunkSize bytes: t_0 = chunkSize * 10 / baudRate (maybe even chunkSize + 1). Then wait
         // for the time, t_1 = 10 / baudRate, it takes to send a single byte in a loop. Also add a
         // timeout to not wait indefinitely.
-        startTime = RODOS::NOW();
+        auto startTime = CurrentRodosTime();
         // TODO: Enable an external interrupt for the NIRQ pin and use that instead here.
         while(nirqGpioPin.Read() == hal::PinState::set)
         {
             // TODO: Set timeout constant
-            if(RODOS::NOW() - startTime > 1 * RODOS::SECONDS)
+            if(CurrentRodosTime() - startTime > 1 * s)
             {
                 EnterStandby();
                 return false;
@@ -255,7 +255,7 @@ auto Send(void const * data, std::uint16_t nBytes) -> bool
         }
 
         auto answer = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
-        chunkSize = static_cast<std::size_t>(answer[1]);
+        chunkSize = static_cast<unsigned>(answer[1]);
     }
 
     // Enable packet sent interrupt
@@ -269,11 +269,11 @@ auto Send(void const * data, std::uint16_t nBytes) -> bool
     WriteToFifo(dataSpan.subspan(dataIndex));
 
     // Wait for Packet Sent Interrupt
-    startTime = RODOS::NOW();
+    auto startTime = CurrentRodosTime();
     while(nirqGpioPin.Read() == hal::PinState::set)
     {
         // TODO: Set timeout constant
-        if(RODOS::NOW() - startTime > 1 * RODOS::SECONDS)
+        if(CurrentRodosTime() - startTime > 1 * s)
         {
             EnterStandby();
             return false;
@@ -461,7 +461,7 @@ auto ApplyPatch() -> void
     // got the patch data from some configuration tool that Andriy found.
     //
     // clang-format off
-    static constexpr Byte patch[] = {
+    static constexpr auto patch = std::to_array<Byte>({
         0x08_b, 0x04_b, 0x21_b, 0x71_b, 0x4B_b, 0x00_b, 0x00_b, 0xDC_b, 0x95_b,
         0x08_b, 0x05_b, 0xA6_b, 0x22_b, 0x21_b, 0xF0_b, 0x41_b, 0x5B_b, 0x26_b,
         0x08_b, 0xE2_b, 0x2F_b, 0x1C_b, 0xBB_b, 0x0A_b, 0xA8_b, 0x94_b, 0x28_b,
@@ -526,13 +526,13 @@ auto ApplyPatch() -> void
         0x08_b, 0x05_b, 0x9E_b, 0xDB_b, 0xDE_b, 0x3F_b, 0x94_b, 0xE9_b, 0x6B_b,
         0x08_b, 0xEC_b, 0xC5_b, 0x05_b, 0xAA_b, 0x57_b, 0xDC_b, 0x8A_b, 0x5E_b,
         0x08_b, 0x05_b, 0x70_b, 0xDA_b, 0x84_b, 0x84_b, 0xDD_b, 0xCA_b, 0x90_b
-    };
+    });
     // clang-format on
 
     // We assume that the data length is the same for every line.
     static constexpr auto dataLength = static_cast<std::uint8_t>(patch[0]);
-    static_assert(std::size(patch) % (dataLength + 1U) == 0);
-    for(auto i = 1U; i < std::size(patch); i += dataLength + 1U)
+    static_assert(patch.size() % (dataLength + 1U) == 0);
+    for(auto i = 1U; i < patch.size(); i += dataLength + 1U)
     {
         SendCommand(Span(patch).subspan(i, dataLength));
     }
