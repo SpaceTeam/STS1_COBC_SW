@@ -17,12 +17,14 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <span>
 #include <vector>
 
 
 namespace fs = sts1cobcsw::fs;
 
+using sts1cobcsw::ErrorCode;
 using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
@@ -40,12 +42,16 @@ TEST_CASE("LfsWrapper without data corruption")
 {
     fs::Initialize();
     auto mountResult = fs::Mount();
-    CHECK(not mountResult.has_error());
+    REQUIRE(not mountResult.has_error());
 
     auto nonExistingPath = fs::Path("/Path/To/Wrong");
     auto createDirResult = fs::CreateDirectory(nonExistingPath);
     CHECK(createDirResult.has_error());
-    CHECK(createDirResult.error() == sts1cobcsw::ErrorCode::notFound);
+    CHECK(createDirResult.error() == ErrorCode::notFound);
+
+    auto makeIteratorResult = fs::MakeIterator(nonExistingPath);
+    CHECK(makeIteratorResult.has_error());
+    CHECK(makeIteratorResult.error() == ErrorCode::notFound);
 
     auto dirPath = fs::Path("/MyDir");
     createDirResult = fs::CreateDirectory(dirPath);
@@ -58,7 +64,7 @@ TEST_CASE("LfsWrapper without data corruption")
 
     auto reopenResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
     CHECK(reopenResult.has_error());
-    CHECK(reopenResult.error() == sts1cobcsw::ErrorCode::fileLocked);
+    CHECK(reopenResult.error() == ErrorCode::fileLocked);
 
     auto sizeResult = writeableFile.Size();
     CHECK(sizeResult.has_value());
@@ -73,7 +79,7 @@ TEST_CASE("LfsWrapper without data corruption")
     auto readData = std::array{0x11_b, 0x22_b, 0x33_b, 0x44_b};
     auto readResult = writeableFile.Read(Span(&readData));
     CHECK(readResult.has_error());
-    CHECK(readResult.error() == sts1cobcsw::ErrorCode::unsupportedOperation);
+    CHECK(readResult.error() == ErrorCode::unsupportedOperation);
 
     CHECK(not VerifyDataInMemory(writeData));
     auto flushResult = writeableFile.Flush();
@@ -82,7 +88,7 @@ TEST_CASE("LfsWrapper without data corruption")
 
     auto seekResult = writeableFile.SeekAbsolute(-2);
     CHECK(seekResult.has_error());
-    CHECK(seekResult.error() == sts1cobcsw::ErrorCode::invalidParameter);
+    CHECK(seekResult.error() == ErrorCode::invalidParameter);
 
     seekResult = writeableFile.SeekRelative(-3);
     CHECK(not seekResult.has_error());
@@ -98,30 +104,107 @@ TEST_CASE("LfsWrapper without data corruption")
 
     auto removeResult = fs::Remove(filePath);
     CHECK(removeResult.has_error());
-    CHECK(removeResult.error() == sts1cobcsw::ErrorCode::fileLocked);
+    CHECK(removeResult.error() == ErrorCode::fileLocked);
 
     removeResult = fs::Remove(nonExistingPath);
     CHECK(removeResult.has_error());
-    CHECK(removeResult.error() == sts1cobcsw::ErrorCode::notFound);
+    CHECK(removeResult.error() == ErrorCode::notFound);
 
     removeResult = fs::ForceRemove(nonExistingPath);
     CHECK(removeResult.has_error());
-    CHECK(removeResult.error() == sts1cobcsw::ErrorCode::notFound);
+    CHECK(removeResult.error() == ErrorCode::notFound);
+
+    makeIteratorResult = fs::MakeIterator(dirPath);
+    CHECK(not makeIteratorResult.has_error());
+    auto & dirIterator = makeIteratorResult.value();
+    CHECK(dirIterator != dirIterator.end());
+
+    // Entry 0: 0 B, "."
+    auto entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    auto entry = entryResult.value();
+    CHECK(entry.type == fs::EntryType::directory);
+    CHECK(entry.name == ".");
+    CHECK(entry.size == 0U);
+    ++dirIterator;
+
+    // Entry 1: 0 B, ".."
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.type == fs::EntryType::directory);
+    CHECK(entry.name == "..");
+    CHECK(entry.size == 0U);
+    ++dirIterator;
+
+    // Entry 2: 0 B, "MyFile.lock"
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.type == fs::EntryType::file);
+    CHECK(entry.name == "MyFile.lock");
+    CHECK(entry.size == 0U);
+    ++dirIterator;
+
+    // Entry 3: 4 B, "MyFile"
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.type == fs::EntryType::file);
+    CHECK(entry.name == "MyFile");
+    CHECK(entry.size == 4U);
+
+    auto dirIteratorCopy = dirIterator;
+    ++dirIterator;
+
+    // Should fail because we are at the end of the directory
+    entryResult = *dirIterator;
+    CHECK(entryResult.has_error());
+    CHECK(entryResult.error() == ErrorCode::unsupportedOperation);
+    CHECK(dirIterator == dirIterator.end());
+
+    // The copied iterator should still be at entry 3: 4 B, "MyFile"
+    CHECK(dirIteratorCopy != dirIterator.end());
+    entryResult = *dirIteratorCopy;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.type == fs::EntryType::file);
+    CHECK(entry.name == "MyFile");
+    CHECK(entry.size == 4U);
+
+    auto dirIteratorCopy2 = dirIteratorCopy;
+    CHECK(dirIteratorCopy2 == dirIteratorCopy);
+
+    auto nEntries = 0;
+    makeIteratorResult = fs::MakeIterator(dirPath);
+    CHECK(not makeIteratorResult.has_error());
+    for(auto const & forEntryResult : makeIteratorResult.value())
+    {
+        CHECK(not forEntryResult.has_error());
+        nEntries++;
+    }
+    CHECK(nEntries == 4);
+
+    makeIteratorResult = fs::MakeIterator(dirPath);
+    CHECK(not makeIteratorResult.has_error());
+    dirIterator = makeIteratorResult.value();
+    nEntries = std::distance(dirIterator, dirIterator.end());
+    CHECK(nEntries == 4);
 
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());
 
     sizeResult = writeableFile.Size();
     CHECK(sizeResult.has_error());
-    CHECK(sizeResult.error() == sts1cobcsw::ErrorCode::fileNotOpen);
+    CHECK(sizeResult.error() == ErrorCode::fileNotOpen);
 
     flushResult = writeableFile.Flush();
     CHECK(flushResult.has_error());
-    CHECK(flushResult.error() == sts1cobcsw::ErrorCode::fileNotOpen);
+    CHECK(flushResult.error() == ErrorCode::fileNotOpen);
 
     seekResult = writeableFile.SeekAbsolute(0);
     CHECK(seekResult.has_error());
-    CHECK(seekResult.error() == sts1cobcsw::ErrorCode::fileNotOpen);
+    CHECK(seekResult.error() == ErrorCode::fileNotOpen);
 
     openResult = fs::Open(filePath, LFS_O_RDONLY);
     CHECK(openResult.has_value());
@@ -153,12 +236,12 @@ TEST_CASE("LfsWrapper without data corruption")
     // Write() should fail since the file is only opened for reading
     writeResult = readableFile.Write(Span(writeData));
     CHECK(writeResult.has_error());
-    CHECK(writeResult.error() == sts1cobcsw::ErrorCode::unsupportedOperation);
+    CHECK(writeResult.error() == ErrorCode::unsupportedOperation);
 
     // Flush() should fail since the file is only opened for reading
     flushResult = readableFile.Flush();
     CHECK(flushResult.has_error());
-    CHECK(flushResult.error() == sts1cobcsw::ErrorCode::unsupportedOperation);
+    CHECK(flushResult.error() == ErrorCode::unsupportedOperation);
 
     closeResult = readableFile.Close();
     CHECK(not closeResult.has_error());
@@ -183,7 +266,7 @@ TEST_CASE("LfsWrapper without data corruption")
 
     closeResult = deletedFile.Close();
     CHECK(closeResult.has_error());
-    CHECK(closeResult.error() == sts1cobcsw::ErrorCode::notFound);
+    CHECK(closeResult.error() == ErrorCode::notFound);
 
     removeResult = fs::Remove(dirPath);
     CHECK(not removeResult.has_error());
