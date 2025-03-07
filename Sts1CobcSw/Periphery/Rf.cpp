@@ -50,7 +50,7 @@ enum class PropertyGroup : std::uint8_t
 
 // --- Private globals ---
 
-// Si4463 commands
+// Commands
 [[maybe_unused]] constexpr auto cmdPartInfo = 0x01_b;
 [[maybe_unused]] constexpr auto cmdPowerUp = 0x02_b;
 [[maybe_unused]] constexpr auto cmdFuncInfo = 0x11_b;
@@ -67,9 +67,6 @@ enum class PropertyGroup : std::uint8_t
 [[maybe_unused]] constexpr auto cmdWriteTxFifo = 0x66_b;
 [[maybe_unused]] constexpr auto cmdReadRxFifo = 0x77_b;
 
-// Si4463 property indexes
-constexpr auto iIntCtlPhEnable = 0x01_b;
-
 // Command answer lengths
 //
 // TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
@@ -82,26 +79,41 @@ constexpr auto iIntCtlPhEnable = 0x01_b;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
-// TODO: Check this and write a good comment
-constexpr auto spiTimeout = 1 * ms;
-// The time between selecting the chip und writing or reading the first byte
-constexpr auto postChipSelectDelay = 20 * us;
-// The time between writing or reading the last byte and deselecting the chip
-constexpr auto preChipDeselectDelay = 2 * us;
-// The interval at which the NIRQ pin is polled
-constexpr auto pollingInterval = 10 * us;
-// Delay to wait for power on reset to finish
-constexpr auto porRunningDelay = 20 * ms;
-// Time until PoR circuit settles after applying power
-constexpr auto porCircuitSettleDelay = 100 * ms;
-// Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
-constexpr auto watchDogResetPinDelay = 1 * ms;
+// Packet handler interrupt flags
+[[maybe_unused]] constexpr auto rxFifoAlmostFullInterrupt = Byte{1U << 0U};
+[[maybe_unused]] constexpr auto txFifoAlmostEmptyInterrupt = Byte{1U << 1U};
+[[maybe_unused]] constexpr auto crcErrorInterrupt = Byte{1U << 3U};
+[[maybe_unused]] constexpr auto packetRxInterrupt = Byte{1U << 4U};
+[[maybe_unused]] constexpr auto packetSentInterrupt = Byte{1U << 5U};
+[[maybe_unused]] constexpr auto filterMissInterrupt = Byte{1U << 6U};
+[[maybe_unused]] constexpr auto filterMatchInterrupt = Byte{1U << 7U};
+
+// Modem interrupt flags
+[[maybe_unused]] constexpr auto syncDetectInterrupt = Byte{1U << 0U};
+[[maybe_unused]] constexpr auto preambleDetectInterrupt = Byte{1U << 1U};
+[[maybe_unused]] constexpr auto invalidPreambleInterrupt = Byte{1U << 2U};
+[[maybe_unused]] constexpr auto rssiInterrupt = Byte{1U << 3U};
+[[maybe_unused]] constexpr auto rssiJumpInterrupt = Byte{1U << 4U};
+[[maybe_unused]] constexpr auto invalidSyncInterrupt = Byte{1U << 5U};
 
 constexpr auto txFifoSize = 64U;
-// Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
-constexpr auto txFifoThreshold = 32_b;
-// Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
-constexpr auto rxFifoThreshold = 32_b;
+constexpr auto txFifoThreshold = 32_b;  // When to trigger TX FIFO almost empty interrupt
+constexpr auto rxFifoThreshold = 32_b;  // When to trigger RX FIFO almost full interrupt
+
+// TODO: Check this and write a good comment
+constexpr auto spiTimeout = 1 * ms;
+constexpr auto postChipSelectDelay = 20 * us;
+constexpr auto preChipDeselectDelay = 2 * us;
+
+constexpr auto interruptTimeout = 1 * s;
+constexpr auto nirqPollingInterval = 10 * us;
+
+constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settles after power up
+constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to finish
+
+// Delay for the sequence reset -> pause -> set -> pause -> reset during initialization
+constexpr auto watchDogResetPinDelay = 1 * ms;
+
 
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
@@ -112,6 +124,9 @@ auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
 
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
+
+
+using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
 
 
 // --- Private function declarations ---
@@ -129,15 +144,24 @@ template<std::size_t extent>
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const, extent> propertyValues) -> void;
-auto ClearTxFifo() -> void;
-auto ClearRxFifo() -> void;
-auto ClearFifos() -> void;
+auto ResetTxFifo() -> void;
+auto ResetRxFifo() -> void;
+auto ResetFifos() -> void;
+auto SetTxDataLength(std::uint16_t length) -> void;
+auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
+auto SetModemInterrupts(Byte interruptFlags) -> void;
 auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
+auto ReadFreeTxFifoSpace() -> std::uint8_t;
+// TODO: Return a Result<void, E> instead
+[[nodiscard]] auto WaitForInterrupt(Duration timeout) -> bool;
+[[nodiscard]] auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool;
 auto EnterStandby() -> void;
 auto WriteToFifo(std::span<Byte const> data) -> void;
 auto ReadFromFifo(std::span<Byte> data) -> void;
 auto StartTx() -> void;
-auto ReadModemStatus() -> std::array<Byte, modemStatusAnswerLength>;
+auto StartRx() -> void;
+auto ReadModemStatus() -> ModemStatus;
+auto DebugPrint(ModemStatus const & modemStatus) -> void;
 
 
 // --- Public function definitions ---
@@ -192,37 +216,20 @@ auto SetTxType(TxType txType) -> void
 // TODO: Do we need to clear all FIFOs here, should be just TX FIFO
 // TODO: Refactor (issue #226)
 // TODO: Pull rfLatchupDisableGpioPin high while sending
-auto Send(void const * data, std::uint16_t nBytes) -> bool
+//
+// The RF module only supports packets up to 2^12 bytes
+auto Send(void const * data, std::uint16_t size) -> bool
 {
-    // TODO: Acc. the datasheet "fifo hardware does not need to be reset prior to use".
-    ClearFifos();
-
-    // Set TX Data Length
+    // TODO: Acc. the datasheet "FIFO hardware does not need to be reset prior to use"
+    ResetFifos();
     // TODO: Check if we can just set the length in START_TX
-    // TODO: Use Deserialize(), but length should then be uint16_t
-    static constexpr auto iPktField1Length = 0x0D_b;
-    SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(nBytes)));
-
-    // Fill the TX FIFO completely initially but then only add the amount of free space
-    auto chunkSize = txFifoSize;
-    auto almostEmptyInterruptEnabled = false;
-
-    // While the packet is longer than a single fill round, wait for the almost empty interrupt,
-    // afterwards for the packet sent interrupt
+    SetTxDataLength(size);
+    SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt);
+    auto dataSpan = std::span(static_cast<Byte const *>(data), size);
     auto dataIndex = 0U;
-    auto dataSpan = std::span(static_cast<Byte const *>(data), nBytes);
-    while(dataIndex + chunkSize < nBytes)
+    auto chunkSize = txFifoSize;
+    while(dataIndex + chunkSize < size)
     {
-        // Enable the almost empty interrupt in the first round
-        if(not almostEmptyInterruptEnabled)
-        {
-            // TODO: Setting interrupts could be put in a function
-            static constexpr auto txFifoAlmostEmptyInterrupt = 0b0000'0010_b;
-            SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(txFifoAlmostEmptyInterrupt));
-            almostEmptyInterruptEnabled = true;
-        }
-
-        // Write chunkSize bytes to the TX FIFO
         WriteToFifo(dataSpan.subspan(dataIndex, chunkSize));
         ReadAndClearInterruptStatus();
         if(dataIndex == 0)
@@ -230,179 +237,56 @@ auto Send(void const * data, std::uint16_t nBytes) -> bool
             StartTx();
         }
         dataIndex += chunkSize;
-        // Wait for TX FIFO almost empty interrupt
-        //
-        // TODO: Wait more intelligently by computing the estimated time t_0 it takes to send
-        // chunkSize bytes: t_0 = chunkSize * 10 / baudRate (maybe even chunkSize + 1). Then wait
-        // for the time, t_1 = 10 / baudRate, it takes to send a single byte in a loop. Also add a
-        // timeout to not wait indefinitely.
-        auto startTime = CurrentRodosTime();
-        // TODO: Enable an external interrupt for the NIRQ pin and use that instead here.
-        while(nirqGpioPin.Read() == hal::PinState::set)
-        {
-            // TODO: Set timeout constant
-            if(CurrentRodosTime() - startTime > 1 * s)
-            {
-                EnterStandby();
-                return false;
-            }
-            SuspendFor(pollingInterval);
-        }
-
-        auto answer = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
-        chunkSize = static_cast<unsigned>(answer[1]);
-    }
-
-    // Enable packet sent interrupt
-    static constexpr auto packetSentInterrupt = 0b0010'0000_b;
-    SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(packetSentInterrupt));
-
-    ReadAndClearInterruptStatus();
-
-    // Write the rest of the data
-    // NOLINTNEXTLINE(*pointer-arithmetic)
-    WriteToFifo(dataSpan.subspan(dataIndex));
-
-    // Wait for Packet Sent Interrupt
-    auto startTime = CurrentRodosTime();
-    while(nirqGpioPin.Read() == hal::PinState::set)
-    {
-        // TODO: Set timeout constant
-        if(CurrentRodosTime() - startTime > 1 * s)
+        auto interruptHappened = WaitForInterrupt(interruptTimeout);
+        if(not interruptHappened)
         {
             EnterStandby();
             return false;
         }
-        SuspendFor(pollingInterval);
+        chunkSize = ReadFreeTxFifoSpace();
     }
+    SetPacketHandlerInterrupts(packetSentInterrupt);
+    ReadAndClearInterruptStatus();
+    WriteToFifo(dataSpan.subspan(dataIndex));
+    auto interruptHappened = WaitForInterrupt(interruptTimeout);
     EnterStandby();
-
-    return true;
+    return interruptHappened;
 }
 
-// TODO: receive more than one FiFo length and make sure we can't get stuck in this state
-// (timeouts!)
-auto ReceiveTestData() -> std::array<Byte, maxRxBytes>
+
+// TODO: Receive more than one FIFO length
+auto ReceiveTestData() -> std::array<Byte, maxRxSize>
 {
-    ClearFifos();
-
+    // TODO: Acc. the datasheet "FIFO hardware does not need to be reset prior to use"
+    ResetFifos();
     // Enable RX FIFO almost full interrupt as well as preamble and sync detect interrupts
-    static constexpr auto rxFifoAlmostFullInterrupt = 0b0000'0001_b;
-    // static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0011_b;
-    static constexpr auto preambleAndSyncDetectInterrupt = 0b0000'0000_b;
-    SetProperties(PropertyGroup::intCtl,
-                  iIntCtlPhEnable,
-                  Span(FlatArray(rxFifoAlmostFullInterrupt, preambleAndSyncDetectInterrupt)));
-
+    SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt);
+    // TODO: Why are these interrupts commented out?
+    // SetModemInterrupts(preambleDetectInterrupt | syncDetectInterrupt);
     ReadAndClearInterruptStatus();
-
-    // Enter RX mode
-    // sendBuffer[0] = 0x32;
-    // sendBuffer[1] = 0x00;  // "Channel 0"
-    // sendBuffer[2] = 0x00;  // Start RX now
-    // sendBuffer[3] = 0x00;  // RX Length = 0
-    // sendBuffer[4] = 0x00;
-    // sendBuffer[5] = 0x00;  // Remain in RX state on preamble detection timeout
-    // sendBuffer[6] = 0x00;  // Do nothing on RX packet valid (we'll never enter this state)
-    // sendBuffer[7] = 0x00;  // Do nothing on RX packet invalid (we'll never enter this state)
-    SendCommand(Span({cmdStartRx, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b, 0x00_b}));
-
-    // Wait for interrupts
-    auto i = 0U;
-    // TODO: Add a timeout
-    constexpr auto printInterval = 200 * ms;
-    while(nirqGpioPin.Read() == hal::PinState::set)
+    StartRx();
+    auto interruptHappened = WaitForInterruptAndPrintStatus(interruptTimeout);
+    if(not interruptHappened)
     {
-        // if(nirqGpioPin.Read() == hal::PinState::reset)
-        // {
-        //     auto interruptStatus = ReadAndClearInterrupts();
-        //     auto preambleOrSyncWasDetected = (interruptStatus[4] & 0b11_b) != 0_b;
-        //     if(preambleOrSyncWasDetected)
-        //     {
-        //         auto modemStatus = ReadModemStatus();
-        //         DEBUG_PRINT("Modem status: %02x %02x %d %d %d %d %d\n",
-        //                     static_cast<int>(modemStatus[0]),
-        //                     static_cast<int>(modemStatus[1]),
-        //                     static_cast<int>(modemStatus[2]),
-        //                     static_cast<int>(modemStatus[3]),
-        //                     static_cast<int>(modemStatus[4]),
-        //                     static_cast<int>(modemStatus[5]),
-        //                     (static_cast<unsigned>(modemStatus[6]) << 8U)
-        //                         + static_cast<unsigned>(modemStatus[7]));
-        //     }
-        //     auto rxFifoIsAlmostFull = (interruptStatus[2] & 1_b) != 0_b;
-        //     if(rxFifoIsAlmostFull)
-        //     {
-        //         break;
-        //     }
-        // }
-        if(i % (printInterval / pollingInterval) == 0)
-        {
-            auto modemStatus = ReadModemStatus();
-            // NOLINTBEGIN(*magic-numbers)
-            DEBUG_PRINT(
-                "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
-                "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %6d, ",
-                static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
-                static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
-                (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
-                (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
-                // static_cast<int>(modemStatus[4]), // ANT1 RSSI
-                // static_cast<int>(modemStatus[5]), // ANT2 RSSI
-                (static_cast<unsigned>(modemStatus[6]) << 8U)
-                    + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
-            // NOLINTEND(*magic-numbers)
-
-            auto fifoStatus = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
-            DEBUG_PRINT("RX FiFo Count: %d\n", static_cast<int>(fifoStatus[0]));  // RX FiFo Count
-
-            // auto intStatus = SendCommand<interruptStatusAnswerLength>(
-            //     Span({cmdGetIntStatus, 0xFF_b, 0xFF_b, 0xFF_b}));
-            // DEBUG_PRINT("Interrupt status: %02x %02x %02x %02x %02x %02x\n",
-            //             static_cast<std::uint8_t>(intStatus[2]),
-            //             static_cast<std::uint8_t>(intStatus[3]),
-            //             static_cast<std::uint8_t>(intStatus[4]),
-            //             static_cast<std::uint8_t>(intStatus[5]),
-            //             static_cast<std::uint8_t>(intStatus[6]),
-            //             static_cast<std::uint8_t>(intStatus[7]));
-        }
-        SuspendFor(pollingInterval);
-        i++;
+        EnterStandby();
+        return {};
     }
     auto modemStatus = ReadModemStatus();
-    // NOLINTBEGIN(*magic-numbers)
-    DEBUG_PRINT(
-        "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
-        "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %d\n",
-        static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
-        static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
-        (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
-        (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
-        // static_cast<int>(modemStatus[4]), // ANT1 RSSI
-        // static_cast<int>(modemStatus[5]), // ANT2 RSSI
-        (static_cast<unsigned>(modemStatus[6]) << 8U)
-            + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
-    // NOLINTEND(*magic-numbers)
-
-    auto rxBuffer = std::array<Byte, maxRxBytes>{};
+    DebugPrint(modemStatus);
+    auto rxBuffer = std::array<Byte, maxRxSize>{};
     static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
     ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
-
     DEBUG_PRINT("Retrieved first %d bytes from FIFO\n", chunkSize);
-
     ReadAndClearInterruptStatus();
-
-    // Wait for RX FIFO Almost Full Interrupt
-    while(nirqGpioPin.Read() == hal::PinState::set)
+    interruptHappened = WaitForInterrupt(interruptTimeout);
+    if(not interruptHappened)
     {
-        SuspendFor(pollingInterval);
+        EnterStandby();
+        return rxBuffer;
     }
-
     ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
-
     EnterStandby();
     ReadAndClearInterruptStatus();
-
     return rxBuffer;
 }
 
@@ -1133,7 +1017,7 @@ inline auto SetProperties(PropertyGroup propertyGroup,
 }
 
 
-auto ClearTxFifo() -> void
+auto ResetTxFifo() -> void
 {
     static constexpr auto resetTxFifo = 0b01_b;
     // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
@@ -1141,7 +1025,7 @@ auto ClearTxFifo() -> void
 }
 
 
-auto ClearRxFifo() -> void
+auto ResetRxFifo() -> void
 {
     static constexpr auto resetRxFifo = 0b10_b;
     // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
@@ -1149,18 +1033,125 @@ auto ClearRxFifo() -> void
 }
 
 
-auto ClearFifos() -> void
+auto ResetFifos() -> void
 {
-    ClearTxFifo();
-    ClearRxFifo();
+    static constexpr auto resetBothFifos = 0b11_b;
+    // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
+    SendCommand(Span({cmdFifoInfo, resetBothFifos}));
 }
 
 
-// Read and clear all pending interrupts
+auto SetTxDataLength(std::uint16_t length) -> void
+{
+    static constexpr auto iPktField1Length = 0x0D_b;
+    SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
+}
+
+
+auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void
+{
+    static constexpr auto iIntCtlPhEnable = 0x01_b;
+    SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(interruptFlags));
+}
+
+
+auto SetModemInterrupts(Byte interruptFlags) -> void
+{
+    static constexpr auto iIntCtlModemEnable = 0x02_b;
+    SetProperties(PropertyGroup::intCtl, iIntCtlModemEnable, Span(interruptFlags));
+}
+
+
 auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>
 {
     return SendCommand<interruptStatusAnswerLength>(
         Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
+}
+
+
+auto ReadFreeTxFifoSpace() -> std::uint8_t
+{
+    auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+    return static_cast<std::uint8_t>(fifoInfo[1]);
+}
+
+
+// TODO: Enable an external interrupt for the NIRQ pin and use that instead
+auto WaitForInterrupt(Duration timeout) -> bool
+{
+    auto startTime = CurrentRodosTime();
+    // TODO: Wait more intelligently by computing the estimated time t_0 it takes to send
+    // chunkSize bytes: t_0 = chunkSize * 10 / baudRate (maybe even chunkSize + 1). Then wait
+    // for the time, t_1 = 10 / baudRate, it takes to send a single byte in a loop. Also add a
+    // timeout to not wait indefinitely.
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        if(CurrentRodosTime() - startTime > timeout)
+        {
+            return false;
+        }
+        SuspendFor(nirqPollingInterval);
+    }
+    return true;
+}
+
+
+auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool
+{
+    static constexpr auto printInterval = 200 * ms;
+    auto i = 0U;
+    auto startTime = CurrentRodosTime();
+    while(nirqGpioPin.Read() == hal::PinState::set)
+    {
+        if(CurrentRodosTime() - startTime > timeout)
+        {
+            return false;
+        }
+        // if(nirqGpioPin.Read() == hal::PinState::reset)
+        // {
+        //     auto interruptStatus = ReadAndClearInterrupts();
+        //     auto preambleOrSyncWasDetected = (interruptStatus[4] & 0b11_b) != 0_b;
+        //     if(preambleOrSyncWasDetected)
+        //     {
+        //         auto modemStatus = ReadModemStatus();
+        //         DEBUG_PRINT("Modem status: %02x %02x %d %d %d %d %d\n",
+        //                     static_cast<int>(modemStatus[0]),
+        //                     static_cast<int>(modemStatus[1]),
+        //                     static_cast<int>(modemStatus[2]),
+        //                     static_cast<int>(modemStatus[3]),
+        //                     static_cast<int>(modemStatus[4]),
+        //                     static_cast<int>(modemStatus[5]),
+        //                     (static_cast<unsigned>(modemStatus[6]) << 8U)
+        //                         + static_cast<unsigned>(modemStatus[7]));
+        //     }
+        //     auto rxFifoIsAlmostFull = (interruptStatus[2] & 1_b) != 0_b;
+        //     if(rxFifoIsAlmostFull)
+        //     {
+        //         break;
+        //     }
+        // }
+        if(i % (printInterval / nirqPollingInterval) == 0)
+        {
+            auto modemStatus = ReadModemStatus();
+            DebugPrint(modemStatus);
+
+            auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+            DEBUG_PRINT("RX FiFo Count: %d\n", static_cast<int>(fifoInfo[0]));  // RX FiFo Count
+
+            // auto intStatus = SendCommand<interruptStatusAnswerLength>(
+            //     Span({cmdGetIntStatus, 0xFF_b, 0xFF_b, 0xFF_b}));
+            // DEBUG_PRINT("Interrupt status: %02x %02x %02x %02x %02x %02x\n",
+            //             static_cast<std::uint8_t>(intStatus[2]),
+            //             static_cast<std::uint8_t>(intStatus[3]),
+            //             static_cast<std::uint8_t>(intStatus[4]),
+            //             static_cast<std::uint8_t>(intStatus[5]),
+            //             static_cast<std::uint8_t>(intStatus[6]),
+            //             static_cast<std::uint8_t>(intStatus[7]));
+        }
+        SuspendFor(nirqPollingInterval);
+        i++;
+    }
+    return true;
 }
 
 
@@ -1203,10 +1194,10 @@ auto ReadFromFifo(std::span<Byte> data) -> void
 auto StartTx() -> void
 {
     static constexpr auto channel = 0x00_b;
-    // [7:4]: TXCOMPLETE_STATE: 0b0011 -> READY state
-    // [3]: UPDATE: 0b0 -> Use TX parameters to enter TX mode
-    // [2]: RETRANSMIT: 0b0 -> Send from TX FIFO, not last packet
-    // [1:0]: START: 0b0 -> Start TX immediately
+    // [7:4]: TXCOMPLETE_STATE = 0b0011 -> READY state
+    // [3]: UPDATE = 0b0 -> Use TX parameters to enter TX mode
+    // [2]: RETRANSMIT = 0b0 -> Send from TX FIFO, not last packet
+    // [1:0]: START = 0b0 -> Start TX immediately
     static constexpr auto condition = 0x30_b;
     // Length is set in Send() via SetProperty, not in StartTx
     // TODO: Decide on either approach, and use Deserialize()
@@ -1218,8 +1209,44 @@ auto StartTx() -> void
 }
 
 
-auto ReadModemStatus() -> std::array<Byte, modemStatusAnswerLength>
+auto StartRx() -> void
+{
+    static constexpr auto channel = 0x00_b;
+    // [0]: START: 0b0 -> Start TX immediately
+    static constexpr auto condition = 0x00_b;
+    // RX_LEN = 0 -> Configuration of the packet handler fields is used
+    static constexpr auto rxLen = std::array{0x00_b, 0x00_b};
+    // [3:0] RXTIMEOUT_STATE = 0 -> Remain in RX state on preamble detection timeout
+    static constexpr auto nextState1 = 0x00_b;
+    // [3:0] RXVALID_STATE = 0 -> Remain in RX state if CRC check passes (we don't check CRC)
+    static constexpr auto nextState2 = 0x00_b;
+    // [3:0] RXINVALID_STATE = 0 -> Remain in RX state if CRC check fails (we don't check CRC)
+    static constexpr auto nextState3 = 0x00_b;
+    SendCommand(
+        Span(FlatArray(cmdStartRx, channel, condition, rxLen, nextState1, nextState2, nextState3)));
+}
+
+
+auto ReadModemStatus() -> ModemStatus
 {
     return SendCommand<modemStatusAnswerLength>(Span(cmdGetModemStatus));
+}
+
+
+auto DebugPrint(ModemStatus const & modemStatus) -> void
+{
+    // NOLINTBEGIN(*magic-numbers)
+    DEBUG_PRINT(
+        "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
+        "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %6d, ",
+        static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
+        static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
+        (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
+        (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
+        // static_cast<int>(modemStatus[4]), // ANT1 RSSI
+        // static_cast<int>(modemStatus[5]), // ANT2 RSSI
+        (static_cast<unsigned>(modemStatus[6]) << 8U)
+            + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
+    // NOLINTEND(*magic-numbers)
 }
 }
