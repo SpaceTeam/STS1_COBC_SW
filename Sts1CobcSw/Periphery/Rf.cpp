@@ -48,11 +48,6 @@ enum class PropertyGroup : std::uint8_t
 };
 
 
-// --- Public globals ---
-
-bool rfIsWorking = true;
-
-
 // --- Private globals ---
 
 // Si4463 commands
