@@ -51,6 +51,11 @@ TEST_CASE("LfsWrapper without data corruption")
     CHECK(lsResult.has_error());
     CHECK(lsResult.error() == fs::ErrorCode::noDirectoryEntry);
 
+    // dir does not exist
+    auto iteratorResult = fs::MakeIterator(dirPath);
+    CHECK(iteratorResult.has_error());
+    CHECK(iteratorResult.error() == fs::ErrorCode::noDirectoryEntry);
+
     auto createDirResult = fs::CreateDirectory(dirPath);
     CHECK(not createDirResult.has_error());
 
@@ -86,6 +91,44 @@ TEST_CASE("LfsWrapper without data corruption")
     // Remove should fail because the file is opened
     auto removeResult = fs::Remove(filePath);
     CHECK(removeResult.has_error());
+
+    iteratorResult = fs::MakeIterator(dirPath);
+    CHECK(not iteratorResult.has_error());
+    auto & dirIterator = iteratorResult.value();
+    CHECK(dirIterator != dirIterator.end());
+
+    // entry 0: 0Byte .
+    auto entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    auto entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(0));
+    ++dirIterator;
+
+    // entry 1: 0Byte ..
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(0));
+    ++dirIterator;
+
+    // entry 2: 0Byte MyFile.lock
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(0));
+    ++dirIterator;
+
+    // entry 3: 4Byte MyFile
+    entryResult = *dirIterator;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(4));
+    ++dirIterator;
+
+    // should fail because we are at the end of the dir
+    entryResult = *dirIterator;
+    CHECK(entryResult.has_error());
+    CHECK(dirIterator == dirIterator.end());
 
     // we should get the following output from ls
     // dir 0 B .

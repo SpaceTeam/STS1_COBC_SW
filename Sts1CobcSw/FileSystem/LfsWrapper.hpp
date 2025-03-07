@@ -22,8 +22,10 @@ constexpr size_t lsMaxFiles = 10;
 
 using Path = etl::string<maxPathLength>;
 using DirectoryOutput = etl::vector<etl::string<lsOutputSize>, lsMaxFiles>;
+using DirectoryInfo = lfs_info;
 
 class File;
+struct DirectoryIterator;
 
 
 [[nodiscard]] auto Mount() -> Result<void>;
@@ -33,6 +35,42 @@ class File;
 [[nodiscard]] auto Remove(Path const & path) -> Result<void>;
 [[nodiscard]] auto ForceRemove(Path const & path) -> Result<void>;
 [[nodiscard]] auto Ls(Path const & path) -> Result<DirectoryOutput>;
+[[nodiscard]] auto MakeIterator(Path const & path) -> Result<DirectoryIterator>;
+
+
+struct DirectoryIterator
+{
+    DirectoryIterator(DirectoryIterator const &) = delete;
+    DirectoryIterator(DirectoryIterator && other) noexcept;
+    auto operator=(DirectoryIterator const &) -> DirectoryIterator & = delete;
+    auto operator=(DirectoryIterator && other) noexcept -> DirectoryIterator &;
+    ~DirectoryIterator();
+
+    friend auto MakeIterator(Path const & path) -> Result<DirectoryIterator>;
+
+    auto operator++() -> DirectoryIterator &;                        // Pre-increment
+    auto operator*() const -> Result<DirectoryInfo>;                 // Dereference
+    auto operator==(DirectoryIterator const & other) const -> bool;  // Equality check
+    auto operator!=(DirectoryIterator const & other) const -> bool;  // Equality check
+
+    // NOLINTBEGIN(readability*)
+    auto begin() -> DirectoryIterator;
+    auto end() -> DirectoryIterator;
+    // NOLINTEND(readability*)
+
+
+private:
+    DirectoryIterator() = default;
+    auto MoveConstructFrom(DirectoryIterator * other) noexcept -> void;
+    auto OpenNextFile() -> void;
+
+    bool isOpen_ = false;
+    bool isEndReached_ = false;
+    Path path_ = "";
+    lfs_dir_t lfsDirectory_ = {};
+    lfs_info lfsFile_ = {};
+    int lfsFileErrorCode_ = 0;
+};
 
 
 // TODO: Consider moving this class to a separate file
