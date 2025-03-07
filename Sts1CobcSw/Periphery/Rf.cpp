@@ -28,7 +28,8 @@
 
 namespace sts1cobcsw::rf
 {
-// TODO: Put all private types, variables and functions in an anonymous namespace
+namespace
+{
 enum class PropertyGroup : std::uint8_t
 {
     global = 0x00,       //
@@ -144,12 +145,10 @@ template<std::size_t extent>
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const, extent> propertyValues) -> void;
-auto ResetTxFifo() -> void;
-auto ResetRxFifo() -> void;
 auto ResetFifos() -> void;
 auto SetTxDataLength(std::uint16_t length) -> void;
 auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
-auto SetModemInterrupts(Byte interruptFlags) -> void;
+[[maybe_unused]] auto SetModemInterrupts(Byte interruptFlags) -> void;
 auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
 auto ReadFreeTxFifoSpace() -> std::uint8_t;
 // TODO: Return a Result<void, E> instead
@@ -162,6 +161,7 @@ auto StartTx() -> void;
 auto StartRx() -> void;
 auto ReadModemStatus() -> ModemStatus;
 auto DebugPrint(ModemStatus const & modemStatus) -> void;
+}
 
 
 // --- Public function definitions ---
@@ -293,6 +293,8 @@ auto ReceiveTestData() -> std::array<Byte, maxRxSize>
 
 // --- Private function definitions ---
 
+namespace
+{
 auto InitializeGpiosAndSpi() -> void
 {
     csGpioPin.SetDirection(hal::PinDirection::out);
@@ -1017,22 +1019,6 @@ inline auto SetProperties(PropertyGroup propertyGroup,
 }
 
 
-auto ResetTxFifo() -> void
-{
-    static constexpr auto resetTxFifo = 0b01_b;
-    // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
-    SendCommand(Span({cmdFifoInfo, resetTxFifo}));
-}
-
-
-auto ResetRxFifo() -> void
-{
-    static constexpr auto resetRxFifo = 0b10_b;
-    // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
-    SendCommand(Span({cmdFifoInfo, resetRxFifo}));
-}
-
-
 auto ResetFifos() -> void
 {
     static constexpr auto resetBothFifos = 0b11_b;
@@ -1248,5 +1234,6 @@ auto DebugPrint(ModemStatus const & modemStatus) -> void
         (static_cast<unsigned>(modemStatus[6]) << 8U)
             + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
     // NOLINTEND(*magic-numbers)
+}
 }
 }
