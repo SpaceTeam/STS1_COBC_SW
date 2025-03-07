@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <array>
@@ -24,8 +25,7 @@ auto Initialize(TxType txType) -> void;
 auto ReadPartNumber() -> std::uint16_t;
 
 auto SetTxType(TxType txType) -> void;
-// TODO: Return a Result<void, E> instead
-auto Send(void const * data, std::uint16_t size) -> bool;
+auto Send(void const * data, std::uint16_t size) -> Result<void>;
 // TODO: Replace this by Receive(void * data, std::size_t size) -> void;
-auto ReceiveTestData() -> std::array<Byte, maxRxSize>;
+auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>;
 }
