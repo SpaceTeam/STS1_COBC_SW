@@ -17,15 +17,15 @@ enum class TxType
 
 
 inline constexpr auto correctPartNumber = 0x4463;
-inline constexpr auto maxRxBytes = 1024;
+inline constexpr auto maxRxSize = 1024;
 
 
 auto Initialize(TxType txType) -> void;
 auto ReadPartNumber() -> std::uint16_t;
 
 auto SetTxType(TxType txType) -> void;
-// TODO: Maybe return a Result<void, E> instead
-auto Send(void const * data, std::uint16_t nBytes) -> bool;
-// TODO: Replace this by Receive(void * data, std::size_t nBytes) -> void;
-auto ReceiveTestData() -> std::array<Byte, maxRxBytes>;
+// TODO: Return a Result<void, E> instead
+auto Send(void const * data, std::uint16_t size) -> bool;
+// TODO: Replace this by Receive(void * data, std::size_t size) -> void;
+auto ReceiveTestData() -> std::array<Byte, maxRxSize>;
 }
