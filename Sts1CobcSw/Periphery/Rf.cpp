@@ -136,6 +136,28 @@ auto InitializeGpiosAndSpi() -> void;
 auto ApplyPatch() -> void;
 auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
+
+auto SetTxDataLength(std::uint16_t length) -> void;
+
+auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
+// auto SetModemInterrupts(Byte interruptFlags) -> void;
+auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
+// TODO: Return a Result<void, E> instead
+[[nodiscard]] auto WaitForInterrupt(Duration timeout) -> bool;
+[[nodiscard]] auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool;
+
+auto StartTx() -> void;
+auto StartRx() -> void;
+auto EnterStandby() -> void;
+
+auto ResetFifos() -> void;
+auto WriteToFifo(std::span<Byte const> data) -> void;
+auto ReadFromFifo(std::span<Byte> data) -> void;
+
+auto ReadFreeTxFifoSpace() -> std::uint8_t;
+auto ReadModemStatus() -> ModemStatus;
+auto DebugPrint(ModemStatus const & modemStatus) -> void;
+
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
@@ -145,22 +167,6 @@ template<std::size_t extent>
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const, extent> propertyValues) -> void;
-auto ResetFifos() -> void;
-auto SetTxDataLength(std::uint16_t length) -> void;
-auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
-[[maybe_unused]] auto SetModemInterrupts(Byte interruptFlags) -> void;
-auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
-auto ReadFreeTxFifoSpace() -> std::uint8_t;
-// TODO: Return a Result<void, E> instead
-[[nodiscard]] auto WaitForInterrupt(Duration timeout) -> bool;
-[[nodiscard]] auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool;
-auto EnterStandby() -> void;
-auto WriteToFifo(std::span<Byte const> data) -> void;
-auto ReadFromFifo(std::span<Byte> data) -> void;
-auto StartTx() -> void;
-auto StartRx() -> void;
-auto ReadModemStatus() -> ModemStatus;
-auto DebugPrint(ModemStatus const & modemStatus) -> void;
 }
 
 
@@ -954,79 +960,6 @@ auto Configure(TxType txType) -> void
 }
 
 
-auto SendCommand(std::span<Byte const> data) -> void
-{
-    (void)SendCommand<0>(data);
-}
-
-
-template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
-{
-    csGpioPin.Reset();
-    hal::WriteTo(&rfSpi, data, spiTimeout);
-    csGpioPin.Set();
-    WaitForCts();
-    auto answer = std::array<Byte, answerLength>{};
-    if constexpr(answerLength != 0)
-    {
-        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
-    }
-    csGpioPin.Set();
-    return answer;
-}
-
-
-//! @brief Polls the CTS byte until the Si4463 chip is ready for a new command.
-//!
-//! @note This function keeps the CS pin low when it returns.
-// TODO: Refactor the whole waiting for CTS so that the caller of this function does not need to
-// remember to pull the CS pin high afterwards. Maybe rework it into something like
-// WaitForResponse/Answer<answerLength>().
-auto WaitForCts() -> void
-{
-    auto const dataIsReadyValue = 0xFF_b;
-    auto const pollingDelay = 50 * us;
-    do
-    {
-        csGpioPin.Reset();
-        hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
-        auto cts = 0x00_b;
-        hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
-        if(cts == dataIsReadyValue)
-        {
-            break;
-        }
-        csGpioPin.Set();
-        SuspendFor(pollingDelay);
-    } while(true);
-    // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
-    // RF code
-}
-
-
-template<std::size_t extent>
-    requires(extent <= maxNProperties)
-inline auto SetProperties(PropertyGroup propertyGroup,
-                          Byte startIndex,
-                          std::span<Byte const, extent> propertyValues) -> void
-{
-    SendCommand(FlatArray(cmdSetProperty,
-                          static_cast<Byte>(propertyGroup),
-                          static_cast<Byte>(extent),
-                          startIndex,
-                          propertyValues));
-}
-
-
-auto ResetFifos() -> void
-{
-    static constexpr auto resetBothFifos = 0b11_b;
-    // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
-    SendCommand(Span({cmdFifoInfo, resetBothFifos}));
-}
-
-
 auto SetTxDataLength(std::uint16_t length) -> void
 {
     static constexpr auto iPktField1Length = 0x0D_b;
@@ -1041,24 +974,17 @@ auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void
 }
 
 
-auto SetModemInterrupts(Byte interruptFlags) -> void
-{
-    static constexpr auto iIntCtlModemEnable = 0x02_b;
-    SetProperties(PropertyGroup::intCtl, iIntCtlModemEnable, Span(interruptFlags));
-}
+// auto SetModemInterrupts(Byte interruptFlags) -> void
+// {
+//     static constexpr auto iIntCtlModemEnable = 0x02_b;
+//     SetProperties(PropertyGroup::intCtl, iIntCtlModemEnable, Span(interruptFlags));
+// }
 
 
 auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>
 {
     return SendCommand<interruptStatusAnswerLength>(
         Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
-}
-
-
-auto ReadFreeTxFifoSpace() -> std::uint8_t
-{
-    auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
-    return static_cast<std::uint8_t>(fifoInfo[1]);
 }
 
 
@@ -1141,42 +1067,6 @@ auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool
 }
 
 
-auto EnterStandby() -> void
-{
-    static constexpr auto standbyMode = 0x01_b;
-    SendCommand(Span({cmdChangeState, standbyMode}));
-}
-
-
-// TODO: Refactor (issue #226)
-auto WriteToFifo(std::span<Byte const> data) -> void
-{
-    csGpioPin.Reset();
-    // TODO: Are those delays really necessary? I have never used or seen them.
-    SuspendFor(postChipSelectDelay);
-    WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
-    WriteTo(&rfSpi, data, spiTimeout);
-    SuspendFor(preChipDeselectDelay);
-    csGpioPin.Set();
-    WaitForCts();
-    csGpioPin.Set();
-}
-
-
-auto ReadFromFifo(std::span<Byte> data) -> void
-{
-    csGpioPin.Reset();
-    SuspendFor(postChipSelectDelay);
-    // auto buf = std::to_array<std::uint8_t>({0x77});
-    // spi.write(std::data(buf), std::size(buf));
-    WriteTo(&rfSpi, Span(cmdReadRxFifo), spiTimeout);
-    // spi.read(data, length);
-    ReadFrom(&rfSpi, data, spiTimeout);
-    SuspendFor(preChipDeselectDelay);
-    csGpioPin.Set();
-}
-
-
 auto StartTx() -> void
 {
     static constexpr auto channel = 0x00_b;
@@ -1213,6 +1103,57 @@ auto StartRx() -> void
 }
 
 
+auto EnterStandby() -> void
+{
+    static constexpr auto standbyMode = 0x01_b;
+    SendCommand(Span({cmdChangeState, standbyMode}));
+}
+
+
+auto ResetFifos() -> void
+{
+    static constexpr auto resetBothFifos = 0b11_b;
+    // FIXME: Acc. the datasheet this command has a 3-byte answer. Why does this work?
+    SendCommand(Span({cmdFifoInfo, resetBothFifos}));
+}
+
+
+// TODO: Refactor (issue #226)
+auto WriteToFifo(std::span<Byte const> data) -> void
+{
+    csGpioPin.Reset();
+    // TODO: Are those delays really necessary? I have never used or seen them.
+    SuspendFor(postChipSelectDelay);
+    WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
+    WriteTo(&rfSpi, data, spiTimeout);
+    SuspendFor(preChipDeselectDelay);
+    csGpioPin.Set();
+    WaitForCts();
+    csGpioPin.Set();
+}
+
+
+auto ReadFromFifo(std::span<Byte> data) -> void
+{
+    csGpioPin.Reset();
+    SuspendFor(postChipSelectDelay);
+    // auto buf = std::to_array<std::uint8_t>({0x77});
+    // spi.write(std::data(buf), std::size(buf));
+    WriteTo(&rfSpi, Span(cmdReadRxFifo), spiTimeout);
+    // spi.read(data, length);
+    ReadFrom(&rfSpi, data, spiTimeout);
+    SuspendFor(preChipDeselectDelay);
+    csGpioPin.Set();
+}
+
+
+auto ReadFreeTxFifoSpace() -> std::uint8_t
+{
+    auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+    return static_cast<std::uint8_t>(fifoInfo[1]);
+}
+
+
 auto ReadModemStatus() -> ModemStatus
 {
     return SendCommand<modemStatusAnswerLength>(Span(cmdGetModemStatus));
@@ -1234,6 +1175,71 @@ auto DebugPrint(ModemStatus const & modemStatus) -> void
         (static_cast<unsigned>(modemStatus[6]) << 8U)
             + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
     // NOLINTEND(*magic-numbers)
+}
+
+
+auto SendCommand(std::span<Byte const> data) -> void
+{
+    (void)SendCommand<0>(data);
+}
+
+
+template<std::size_t answerLength>
+auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
+{
+    csGpioPin.Reset();
+    hal::WriteTo(&rfSpi, data, spiTimeout);
+    csGpioPin.Set();
+    WaitForCts();
+    auto answer = std::array<Byte, answerLength>{};
+    if constexpr(answerLength != 0)
+    {
+        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
+    }
+    csGpioPin.Set();
+    return answer;
+}
+
+
+//! @brief Polls the CTS byte until the Si4463 chip is ready for a new command.
+//!
+//! @note This function keeps the CS pin low when it returns.
+// TODO: Refactor the whole waiting for CTS so that the caller of this function does not need to
+// remember to pull the CS pin high afterwards. Maybe rework it into something like
+// WaitForResponse/Answer<answerLength>().
+auto WaitForCts() -> void
+{
+    auto const dataIsReadyValue = 0xFF_b;
+    auto const pollingDelay = 50 * us;
+    do
+    {
+        csGpioPin.Reset();
+        hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
+        auto cts = 0x00_b;
+        hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
+        if(cts == dataIsReadyValue)
+        {
+            break;
+        }
+        csGpioPin.Set();
+        SuspendFor(pollingDelay);
+    } while(true);
+    // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
+    // RF code
+}
+
+
+template<std::size_t extent>
+    requires(extent <= maxNProperties)
+inline auto SetProperties(PropertyGroup propertyGroup,
+                          Byte startIndex,
+                          std::span<Byte const, extent> propertyValues) -> void
+{
+    SendCommand(FlatArray(cmdSetProperty,
+                          static_cast<Byte>(propertyGroup),
+                          static_cast<Byte>(extent),
+                          startIndex,
+                          propertyValues));
 }
 }
 }
