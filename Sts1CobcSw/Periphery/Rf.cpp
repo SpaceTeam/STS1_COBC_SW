@@ -142,9 +142,8 @@ auto SetTxDataLength(std::uint16_t length) -> void;
 auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
 // auto SetModemInterrupts(Byte interruptFlags) -> void;
 auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
-// TODO: Return a Result<void, E> instead
-[[nodiscard]] auto WaitForInterrupt(Duration timeout) -> bool;
-[[nodiscard]] auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool;
+[[nodiscard]] auto WaitForInterrupt(Duration timeout) -> Result<void>;
+[[nodiscard]] auto WaitForInterruptAndPrintStatus(Duration timeout) -> Result<void>;
 
 auto StartTx() -> void;
 auto StartRx() -> void;
@@ -220,80 +219,74 @@ auto SetTxType(TxType txType) -> void
 
 
 // TODO: Do we need to clear all FIFOs here, should be just TX FIFO
-// TODO: Refactor (issue #226)
 // TODO: Pull rfLatchupDisableGpioPin high while sending
 //
 // The RF module only supports packets up to 2^12 bytes
-auto Send(void const * data, std::uint16_t size) -> bool
+auto Send(void const * data, std::uint16_t size) -> Result<void>
 {
-    // TODO: Acc. the datasheet "FIFO hardware does not need to be reset prior to use"
-    ResetFifos();
-    // TODO: Check if we can just set the length in START_TX
-    SetTxDataLength(size);
-    SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt);
-    auto dataSpan = std::span(static_cast<Byte const *>(data), size);
-    auto dataIndex = 0U;
-    auto chunkSize = txFifoSize;
-    while(dataIndex + chunkSize < size)
+    auto result = [&]() -> Result<void>
     {
-        WriteToFifo(dataSpan.subspan(dataIndex, chunkSize));
+        // TODO: Acc. the datasheet "FIFO hardware does not need to be reset prior to use"
+        ResetFifos();
+        // TODO: Check if we can just set the length in START_TX
+        SetTxDataLength(size);
+        SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt);
+        auto dataSpan = std::span(static_cast<Byte const *>(data), size);
+        auto dataIndex = 0U;
+        auto chunkSize = txFifoSize;
+        while(dataIndex + chunkSize < size)
+        {
+            WriteToFifo(dataSpan.subspan(dataIndex, chunkSize));
+            ReadAndClearInterruptStatus();
+            if(dataIndex == 0)
+            {
+                StartTx();
+            }
+            dataIndex += chunkSize;
+            OUTCOME_TRY(WaitForInterrupt(interruptTimeout));
+            chunkSize = ReadFreeTxFifoSpace();
+        }
+        SetPacketHandlerInterrupts(packetSentInterrupt);
         ReadAndClearInterruptStatus();
-        if(dataIndex == 0)
-        {
-            StartTx();
-        }
-        dataIndex += chunkSize;
-        auto interruptHappened = WaitForInterrupt(interruptTimeout);
-        if(not interruptHappened)
-        {
-            EnterStandby();
-            return false;
-        }
-        chunkSize = ReadFreeTxFifoSpace();
-    }
-    SetPacketHandlerInterrupts(packetSentInterrupt);
-    ReadAndClearInterruptStatus();
-    WriteToFifo(dataSpan.subspan(dataIndex));
-    auto interruptHappened = WaitForInterrupt(interruptTimeout);
+        WriteToFifo(dataSpan.subspan(dataIndex));
+        OUTCOME_TRY(WaitForInterrupt(interruptTimeout));
+        return outcome_v2::success();
+    }();
     EnterStandby();
-    return interruptHappened;
+    return result;
 }
 
 
 // TODO: Receive more than one FIFO length
-auto ReceiveTestData() -> std::array<Byte, maxRxSize>
+auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>
 {
-    // TODO: Acc. the datasheet "FIFO hardware does not need to be reset prior to use"
-    ResetFifos();
-    // Enable RX FIFO almost full interrupt as well as preamble and sync detect interrupts
-    SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt);
-    // TODO: Why are these interrupts commented out?
-    // SetModemInterrupts(preambleDetectInterrupt | syncDetectInterrupt);
-    ReadAndClearInterruptStatus();
-    StartRx();
-    auto interruptHappened = WaitForInterruptAndPrintStatus(interruptTimeout);
-    if(not interruptHappened)
+    auto result = []() -> Result<std::array<Byte, maxRxSize>>
     {
-        EnterStandby();
-        return {};
-    }
-    auto modemStatus = ReadModemStatus();
-    DebugPrint(modemStatus);
-    auto rxBuffer = std::array<Byte, maxRxSize>{};
-    static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
-    ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
-    DEBUG_PRINT("Retrieved first %d bytes from FIFO\n", chunkSize);
-    ReadAndClearInterruptStatus();
-    interruptHappened = WaitForInterrupt(interruptTimeout);
-    if(not interruptHappened)
-    {
-        EnterStandby();
+        // TODO: Acc. the datasheet "FIFO hardware does not need to be reset prior to use"
+        ResetFifos();
+        // Enable RX FIFO almost full interrupt as well as preamble and sync detect interrupts
+        SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt);
+        // TODO: Why are these interrupts commented out?
+        // SetModemInterrupts(preambleDetectInterrupt | syncDetectInterrupt);
+        ReadAndClearInterruptStatus();
+        StartRx();
+        OUTCOME_TRY(WaitForInterruptAndPrintStatus(interruptTimeout));
+        auto modemStatus = ReadModemStatus();
+        DebugPrint(modemStatus);
+        auto rxBuffer = std::array<Byte, maxRxSize>{};
+        static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
+        ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
+        DEBUG_PRINT("Retrieved first %d bytes from FIFO\n", chunkSize);
+        ReadAndClearInterruptStatus();
+        // TODO: If a timeout occures after some but not all data has been received, should we
+        // return an error or the received data?
+        OUTCOME_TRY(WaitForInterrupt(interruptTimeout));
+        ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
         return rxBuffer;
-    }
-    ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
+    }();
     EnterStandby();
     ReadAndClearInterruptStatus();
-    return rxBuffer;
+    return result;
 }
 
 
@@ -989,7 +982,7 @@ auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLeng
 
 
 // TODO: Enable an external interrupt for the NIRQ pin and use that instead
-auto WaitForInterrupt(Duration timeout) -> bool
+auto WaitForInterrupt(Duration timeout) -> Result<void>
 {
     auto startTime = CurrentRodosTime();
     // TODO: Wait more intelligently by computing the estimated time t_0 it takes to send
@@ -1000,15 +993,15 @@ auto WaitForInterrupt(Duration timeout) -> bool
     {
         if(CurrentRodosTime() - startTime > timeout)
         {
-            return false;
+            return ErrorCode::timeout;
         }
         SuspendFor(nirqPollingInterval);
     }
-    return true;
+    return outcome_v2::success();
 }
 
 
-auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool
+auto WaitForInterruptAndPrintStatus(Duration timeout) -> Result<void>
 {
     static constexpr auto printInterval = 200 * ms;
     auto i = 0U;
@@ -1017,7 +1010,7 @@ auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool
     {
         if(CurrentRodosTime() - startTime > timeout)
         {
-            return false;
+            return ErrorCode::timeout;
         }
         // if(nirqGpioPin.Read() == hal::PinState::reset)
         // {
@@ -1063,7 +1056,7 @@ auto WaitForInterruptAndPrintStatus(Duration timeout) -> bool
         SuspendFor(nirqPollingInterval);
         i++;
     }
-    return true;
+    return outcome_v2::success();
 }
 
 
@@ -1118,7 +1111,6 @@ auto ResetFifos() -> void
 }
 
 
-// TODO: Refactor (issue #226)
 auto WriteToFifo(std::span<Byte const> data) -> void
 {
     csGpioPin.Reset();
