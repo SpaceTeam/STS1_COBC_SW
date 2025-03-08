@@ -107,6 +107,7 @@ constexpr auto postChipSelectDelay = 20 * us;
 constexpr auto preChipDeselectDelay = 2 * us;
 
 constexpr auto interruptTimeout = 1 * s;
+constexpr auto rxTimeout = 5 * s;
 constexpr auto nirqPollingInterval = 10 * us;
 
 constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settles after power up
@@ -270,7 +271,7 @@ auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>
         // SetModemInterrupts(preambleDetectInterrupt | syncDetectInterrupt);
         ReadAndClearInterruptStatus();
         StartRx();
-        OUTCOME_TRY(WaitForInterruptAndPrintStatus(interruptTimeout));
+        OUTCOME_TRY(WaitForInterruptAndPrintStatus(rxTimeout));
         auto modemStatus = ReadModemStatus();
         DebugPrint(modemStatus);
         auto rxBuffer = std::array<Byte, maxRxSize>{};
@@ -280,7 +281,7 @@ auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>
         ReadAndClearInterruptStatus();
         // TODO: If a timeout occures after some but not all data has been received, should we
         // return an error or the received data?
-        OUTCOME_TRY(WaitForInterrupt(interruptTimeout));
+        OUTCOME_TRY(WaitForInterrupt(rxTimeout));
         ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
         return rxBuffer;
     }();
@@ -1081,7 +1082,7 @@ auto StartTx() -> void
 auto StartRx() -> void
 {
     static constexpr auto channel = 0x00_b;
-    // [0]: START: 0b0 -> Start TX immediately
+    // [0]: START: 0b0 -> Start RX immediately
     static constexpr auto condition = 0x00_b;
     // RX_LEN = 0 -> Configuration of the packet handler fields is used
     static constexpr auto rxLen = std::array{0x00_b, 0x00_b};
