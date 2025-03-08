@@ -42,8 +42,14 @@ private:
         PRINTF("\n");
         PRINTF("Waiting to receive test data\n");
         DisableRfLatchupProtection();
-        auto receivedData = rf::ReceiveTestData();
+        auto receiveTestDataResult = rf::ReceiveTestData();
         EnableRfLatchupProtection();
+        if(receiveTestDataResult.has_error())
+        {
+            PRINTF("Error: %i\n", static_cast<int>(receiveTestDataResult.error()));
+            return;
+        }
+        auto receivedData = receiveTestDataResult.value();
         PRINTF("Received data:");
         static constexpr auto valuesPerLine = 100 / 5;
         for(auto i = 0U; i < receivedData.size(); ++i)
