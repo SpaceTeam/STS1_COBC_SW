@@ -19,6 +19,8 @@ TEST_CASE("Booleans")
 {
     CHECK(true == true);
     CHECK(true == false);
+    CHECK(false);
+    REQUIRE(false);
 }
 
 
