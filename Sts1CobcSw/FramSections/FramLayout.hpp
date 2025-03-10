@@ -35,19 +35,29 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"nResetsSinceRf", std::uint8_t>,
                         PersistentVariableInfo<"activeSecondaryFwPartition", std::int8_t>,
                         PersistentVariableInfo<"backupSecondaryFwPartition", std::int8_t>,
-                        // COBC state
+                        // Housekeeping
                         PersistentVariableInfo<"txIsOn", bool>,
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
-                        PersistentVariableInfo<"eduProgramQueueIndex", std::uint8_t>,
-                        // Housekeeping
                         PersistentVariableInfo<"realTime", RealTime>,
                         PersistentVariableInfo<"realTimeOffset", Duration>,
+                        PersistentVariableInfo<"nFirmwareChecksumErrors", std::uint8_t>,
                         PersistentVariableInfo<"epsIsWorking", bool>,
                         PersistentVariableInfo<"flashIsWorking", bool>,
                         PersistentVariableInfo<"rfIsWorking", bool>,
                         PersistentVariableInfo<"nFlashErrors", std::uint8_t>,
                         PersistentVariableInfo<"nRfErrors", std::uint8_t>,
                         PersistentVariableInfo<"nFileSystemErrors", std::uint8_t>,
+                        // EDU
                         PersistentVariableInfo<"eduShouldBePowered", bool>,
-                        PersistentVariableInfo<"nEduCommunicationErrors", std::uint8_t>>{};
+                        PersistentVariableInfo<"newEduResultIsAvailable", bool>,
+                        PersistentVariableInfo<"eduProgramQueueIndex", std::uint8_t>,
+                        PersistentVariableInfo<"nEduCommunicationErrors", std::uint8_t>,
+                        // Communication
+                        PersistentVariableInfo<"nCorrectableUplinkErrors", std::uint16_t>,
+                        PersistentVariableInfo<"nUncorrectableUplinkErrors", std::uint16_t>,
+                        PersistentVariableInfo<"nGoodTransferFrames", std::uint16_t>,
+                        PersistentVariableInfo<"nBadTransferFrames", std::uint16_t>,
+                        PersistentVariableInfo<"lastTelecommandId", std::uint16_t>,
+                        PersistentVariableInfo<"lastTelecommandIdWasInvalid", bool>,
+                        PersistentVariableInfo<"lastTelecommandArgumentsWereInvalid", bool>>{};
 }
