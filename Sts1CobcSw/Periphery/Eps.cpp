@@ -11,75 +11,80 @@
 
 #include <strong_type/difference.hpp>
 
+#include <array>
 #include <bit>
 #include <cstddef>
 
 
+// The following tables are taken from the wiki page "EPS - Electrical Power Supply" (11.03.2025)
+//
+// ADC4 (CS1):
+//
+// | Pin   | Measured value                |
+// | ----- | ----------------------------- |
+// | AIN0  | Panel Y- solar cell 1 voltage |
+// | AIN1  | Panel Y- solar cell 2 voltage |
+// | AIN2  | Panel Y+ solar cell 1 voltage |
+// | AIN3  | Panel Y+ solar cell 2 voltage |
+// | AIN4  | Panel Z- solar cell 1 voltage |
+// | AIN5  | Panel Z+ solar cell 1 voltage |
+// | AIN6  | Panel X+ solar cell 1 voltage |
+// | AIN7  | Panel X+ solar cell 2 voltage |
+// | AIN8  | Panel Y- solar cell 1 current |
+// | AIN9  | Panel Y- solar cell 2 current |
+// | AIN10 | Panel Y+ solar cell 1 current |
+// | AIN11 | Panel Y+ solar cell 2 current |
+// | AIN12 | Panel Z- solar cell 1 current |
+// | AIN13 | Panel Z+ solar cell 1 current |
+// | AIN14 | Panel X+ solar cell 1 current |
+// | AIN15 | Panel X+ solar cell 2 current |
+//
+// ADC5 (CS2):
+//
+// | Pin   | Measured Value              |
+// | ----- | --------------------------- |
+// | AIN0  | Battery pack voltage        |
+// | AIN1  | Battery center tap voltage  |
+// | AIN2  | Battery pack current        |
+// | AIN3  | Battery temperature         |
+// | AIN4  | Panel Y- temperature        |
+// | AIN5  | Panel Y+ temperature        |
+// | AIN6  | Panel Z- temperature        |
+// | AIN7  | Panel Z+ temperature        |
+// | AIN8  | Panel X+ temperature        |
+// | AIN9  | EPS output current to VBUS  |
+// | AIN10 | GND                         |
+// | AIN11 | GND                         |
+// | AIN12 | GND                         |
+// | AIN13 | GND                         |
+// | AIN14 | GND                         |
+// | AIN15 | GND                         |
+//
+// ADC6 (CS3):
+//
+// | Pin   | Measured Value          |
+// | ----- | ----------------------- |
+// | AIN0  | MPPT bus current        |
+// | AIN1  | Panel Z- MPPT 1 current |
+// | AIN2  | Panel Y- MPPT 2 current |
+// | AIN3  | Panel Y+ MPPT 1 current |
+// | AIN4  | Panel Y+ MPPT 2 current |
+// | AIN5  | Panel Y- MPPT 1 current |
+// | AIN6  | Panel Z+ MPPT 1 current |
+// | AIN7  | Panel X+ MPPT 1 current |
+// | AIN8  | Panel X+ MPPT 2 current |
+// | AIN9  | MPPT bus voltage        |
+// | AIN10 | GND                     |
+// | AIN11 | GND                     |
+// | AIN12 | GND                     |
+// | AIN13 | GND                     |
+// | AIN14 | GND                     |
+// | AIN15 | GND                     |
+
 namespace sts1cobcsw::eps
 {
-// TODO: ask David F.
-// STS_EPS_ADCS schematics do not match Wiki description
-// EPS ADC channel info:
-// Pin   | ADC4 (CS1)
-//--------------------------------
-// AIN0  | Panel Y+ Cell 1 Voltage
-// AIN1  | Panel Y+ Cell 2 Voltage
-// AIN2  | Panel Y- Cell 1 Voltage
-// AIN3  | Panel Y- Cell 2 Voltage
-// AIN4  | Panel X+ Cell 1 Voltage
-// AIN5  | Panel X- Cell 1 Voltage
-// AIN6  | Panel Z- Cell 1 Voltage
-// AIN7  | Panel Z- Cell 2 Voltage
-// AIN8  | Panel Y+ Cell 1 Current
-// AIN9  | Panel Y+ Cell 2 Current
-// AIN10 | Panel Y- Cell 1 Current
-// AIN11 | Panel Y- Cell 2 Current
-// AIN12 | Panel X+ Cell 1 Current
-// AIN13 | Panel X- Cell 1 Current
-// AIN14 | Panel Z- Cell 1 Current
-// AIN15 | Panel Z- Cell 2 Current
-
-// Pin   | ADC5 (CS2)
-//--------------------------------
-// AIN0  | BATT_SCALED
-// AIN1  | Battery Center Tap
-// AIN2  | Battery Pack Current
-// AIN3  | Battery Temperature
-// AIN4  | Panel Y+ Temperature
-// AIN5  | Panel Y- Temperature
-// AIN6  | Panel X+ Temperature
-// AIN7  | Panel X- Temperature
-// AIN8  | Panel Z- Temperature
-// AIN9  | VOUT_I
-// AIN10 | GND
-// AIN11 | GND
-// AIN12 | GND
-// AIN13 | GND
-// AIN14 | GND
-// AIN15 | BATT_RAW_SCALED
-
-// Pin   | ADC6 (CS3)
-//--------------------------------
-// AIN0  | MPPT Bus Current
-// AIN1  | Panel X+ MPPT 1 Current
-// AIN2  | Panel Y+ MPPT 2 Current
-// AIN3  | Panel Y- MPPT 1 Current
-// AIN4  | Panel Y- MPPT 2 Current
-// AIN5  | Panel Y+ MPPT 1 Current
-// AIN6  | Panel X- MPPT 1 Current
-// AIN7  | Panel Z- MPPT 1 Current
-// AIN8  | Panel Z- MPPT 2 Current
-// AIN9  | MPPT Bus Voltage
-// AIN10 | GND
-// AIN11 | GND
-// AIN12 | GND
-// AIN13 | GND
-// AIN14 | GND
-// AIN15 | GND
-
-using AdcValues = std::array<AdcValue, nChannels>;
-
-
+namespace
+{
 enum class ResetType
 {
     registers,
@@ -88,6 +93,9 @@ enum class ResetType
 
 
 // --- Private globals ---
+
+inline constexpr auto nChannels = 16U;
+using AdcValues = std::array<AdcValue, nChannels>;
 
 constexpr auto spiTimeout = 1 * ms;
 
@@ -102,6 +110,7 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
 auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void;
 auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues;
 auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
+}
 
 
 // --- Public function definitions ---
@@ -130,12 +139,51 @@ auto Initialize() -> void
 }
 
 
-auto Read() -> SensorValues
+auto Read() -> SensorData
 {
     auto adc4Values = ReadAdc(&adc4CsGpioPin);
     auto adc5Values = ReadAdc(&adc5CsGpioPin);
     auto adc6Values = ReadAdc(&adc6CsGpioPin);
-    return FlatArray(adc4Values, adc5Values, adc6Values);
+    // NOLINTBEGIN(*magic-numbers)
+    return SensorData{.panelYMinusSolarCell1Voltage = adc4Values[0],
+                      .panelYMinusSolarCell2Voltage = adc4Values[1],
+                      .panelYPlusSolarCell1Voltage = adc4Values[2],
+                      .panelYPlusSolarCell2Voltage = adc4Values[3],
+                      .panelZMinusSolarCell1Voltage = adc4Values[4],
+                      .panelZPlusSolarCell1Voltage = adc4Values[5],
+                      .panelXPlusSolarCell1Voltage = adc4Values[6],
+                      .panelXPlusSolarCell2Voltage = adc4Values[7],
+                      .panelYMinusSolarCell1Current = adc4Values[8],
+                      .panelYMinusSolarCell2Current = adc4Values[9],
+                      .panelYPlusSolarCell1Current = adc4Values[10],
+                      .panelYPlusSolarCell2Current = adc4Values[11],
+                      .panelZMinusSolarCell1Current = adc4Values[12],
+                      .panelZPlusSolarCell1Current = adc4Values[13],
+                      .panelXPlusSolarCell1Current = adc4Values[14],
+                      .panelXPlusSolarCell2Current = adc4Values[15],
+
+                      .batteryPackVoltage = adc5Values[0],
+                      .batteryCenterTapVoltage = adc5Values[1],
+                      .batteryPackCurrent = adc5Values[2],
+                      .batteryTemperature = adc5Values[3],
+                      .panelYMinusTemperature = adc5Values[4],
+                      .panelYPlusTemperature = adc5Values[5],
+                      .panelZMinusTemperature = adc5Values[6],
+                      .panelZPlusTemperature = adc5Values[7],
+                      .panelXPlusTemperature = adc5Values[8],
+                      .epsOutputCurrentToVbus = adc5Values[9],
+
+                      .mpptBusCurrent = adc6Values[0],
+                      .panelYMinusMppt1Current = adc6Values[1],
+                      .panelYMinusMppt2Current = adc6Values[2],
+                      .panelYPlusMppt1Current = adc6Values[3],
+                      .panelYPlusMppt2Current = adc6Values[4],
+                      .panelZMinusMppt1Current = adc6Values[5],
+                      .panelZPlusMppt1Current = adc6Values[6],
+                      .panelXPlusMppt1Current = adc6Values[7],
+                      .panelXPlusMppt2Current = adc6Values[8],
+                      .mpptBusVoltage = adc6Values[9]};
+    // NOLINTEND(*magic-numbers)
 }
 
 
@@ -157,6 +205,8 @@ auto ClearFifos() -> void
 
 // --- Private function definitions ---
 
+namespace
+{
 auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
 {
     // Setup register values
@@ -251,5 +301,6 @@ auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void
     adcCsPin->Reset();
     WriteTo(&framEpsSpi, Span(data), spiTimeout);
     adcCsPin->Set();
+}
 }
 }
