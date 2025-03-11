@@ -4,14 +4,12 @@
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <strong_type/difference.hpp>
 
-#include <array>
+#include <algorithm>
 #include <bit>
 #include <cstddef>
 
@@ -85,6 +83,9 @@ namespace sts1cobcsw::eps
 {
 namespace
 {
+using AdcValues = std::array<AdcValue, nChannels>;
+
+
 enum class ResetType
 {
     registers,
@@ -93,9 +94,6 @@ enum class ResetType
 
 
 // --- Private globals ---
-
-inline constexpr auto nChannels = 16U;
-using AdcValues = std::array<AdcValue, nChannels>;
 
 constexpr auto spiTimeout = 1 * ms;
 
@@ -109,13 +107,13 @@ auto adc6CsGpioPin = hal::GpioPin(hal::epsAdc6CsPin);
 auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
 auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void;
 auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues;
-auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
+auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 }
 
 
 // --- Public function definitions ---
 
-auto Initialize() -> void
+auto InitializeAdcs() -> void
 {
     adc4CsGpioPin.Direction(hal::PinDirection::out);
     adc4CsGpioPin.Set();
@@ -139,67 +137,33 @@ auto Initialize() -> void
 }
 
 
-auto Read() -> SensorData
+auto ReadAdcs() -> AdcData
 {
-    auto adc4Values = ReadAdc(&adc4CsGpioPin);
-    auto adc5Values = ReadAdc(&adc5CsGpioPin);
-    auto adc6Values = ReadAdc(&adc6CsGpioPin);
-    // NOLINTBEGIN(*magic-numbers)
-    return SensorData{.panelYMinusSolarCell1Voltage = adc4Values[0],
-                      .panelYMinusSolarCell2Voltage = adc4Values[1],
-                      .panelYPlusSolarCell1Voltage = adc4Values[2],
-                      .panelYPlusSolarCell2Voltage = adc4Values[3],
-                      .panelZMinusSolarCell1Voltage = adc4Values[4],
-                      .panelZPlusSolarCell1Voltage = adc4Values[5],
-                      .panelXPlusSolarCell1Voltage = adc4Values[6],
-                      .panelXPlusSolarCell2Voltage = adc4Values[7],
-                      .panelYMinusSolarCell1Current = adc4Values[8],
-                      .panelYMinusSolarCell2Current = adc4Values[9],
-                      .panelYPlusSolarCell1Current = adc4Values[10],
-                      .panelYPlusSolarCell2Current = adc4Values[11],
-                      .panelZMinusSolarCell1Current = adc4Values[12],
-                      .panelZPlusSolarCell1Current = adc4Values[13],
-                      .panelXPlusSolarCell1Current = adc4Values[14],
-                      .panelXPlusSolarCell2Current = adc4Values[15],
-
-                      .batteryPackVoltage = adc5Values[0],
-                      .batteryCenterTapVoltage = adc5Values[1],
-                      .batteryPackCurrent = adc5Values[2],
-                      .batteryTemperature = adc5Values[3],
-                      .panelYMinusTemperature = adc5Values[4],
-                      .panelYPlusTemperature = adc5Values[5],
-                      .panelZMinusTemperature = adc5Values[6],
-                      .panelZPlusTemperature = adc5Values[7],
-                      .panelXPlusTemperature = adc5Values[8],
-                      .epsOutputCurrentToVbus = adc5Values[9],
-
-                      .mpptBusCurrent = adc6Values[0],
-                      .panelYMinusMppt1Current = adc6Values[1],
-                      .panelYMinusMppt2Current = adc6Values[2],
-                      .panelYPlusMppt1Current = adc6Values[3],
-                      .panelYPlusMppt2Current = adc6Values[4],
-                      .panelZMinusMppt1Current = adc6Values[5],
-                      .panelZPlusMppt1Current = adc6Values[6],
-                      .panelXPlusMppt1Current = adc6Values[7],
-                      .panelXPlusMppt2Current = adc6Values[8],
-                      .mpptBusVoltage = adc6Values[9]};
-    // NOLINTEND(*magic-numbers)
+    auto adcData = AdcData{};
+    adcData.adc4 = ReadAdc(&adc4CsGpioPin);
+    auto adc5Data = ReadAdc(&adc5CsGpioPin);
+    static_assert(adc5Data.size() >= adcData.adc5.size());
+    std::copy_n(adc5Data.begin(), adcData.adc5.size(), adcData.adc5.begin());
+    auto adc6Data = ReadAdc(&adc6CsGpioPin);
+    static_assert(adc6Data.size() >= adcData.adc6.size());
+    std::copy_n(adc6Data.begin(), adcData.adc6.size(), adcData.adc6.begin());
+    return adcData;
 }
 
 
 auto ResetAdcRegisters() -> void
 {
-    Reset(&adc4CsGpioPin, ResetType::registers);
-    Reset(&adc5CsGpioPin, ResetType::registers);
-    Reset(&adc6CsGpioPin, ResetType::registers);
+    ResetAdc(&adc4CsGpioPin, ResetType::registers);
+    ResetAdc(&adc5CsGpioPin, ResetType::registers);
+    ResetAdc(&adc6CsGpioPin, ResetType::registers);
 }
 
 
-auto ClearFifos() -> void
+auto ClearAdcFifos() -> void
 {
-    Reset(&adc4CsGpioPin, ResetType::fifo);
-    Reset(&adc5CsGpioPin, ResetType::fifo);
-    Reset(&adc6CsGpioPin, ResetType::fifo);
+    ResetAdc(&adc4CsGpioPin, ResetType::fifo);
+    ResetAdc(&adc5CsGpioPin, ResetType::fifo);
+    ResetAdc(&adc6CsGpioPin, ResetType::fifo);
 }
 
 
@@ -290,7 +254,7 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
 
 
 // Reset either ADC registers to power-up configuration or clear the FIFO
-auto Reset(hal::GpioPin * adcCsPin, ResetType resetType) -> void
+auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void
 {
     // Reset register values
     // [7:4]: Register selection bits = 0b0001

@@ -51,8 +51,8 @@ private:
             DEBUG_PRINT(" failed to read correct FRAM device ID");
             fram::framIsWorking.Store(false);
         }
-        eps::Initialize();
-        (void)eps::Read();
+        eps::InitializeAdcs();
+        (void)eps::ReadAdcs();
         persistentVariables.template Store<"epsIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
