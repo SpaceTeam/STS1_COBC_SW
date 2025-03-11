@@ -10,5 +10,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                                      TemperatureSensor.cpp
     )
 else()
-    target_sources(Sts1CobcSw_Periphery PRIVATE FlashMock.cpp FramMock.cpp SpiMocks.cpp)
+    target_sources(
+        Sts1CobcSw_Periphery PRIVATE FlashMock.cpp FramMock.cpp SpiMocks.cpp
+                                     TemperatureSensorStubs.cpp
+    )
 endif()
