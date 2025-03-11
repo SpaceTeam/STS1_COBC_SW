@@ -10,7 +10,6 @@ RODOS::CommBuffer<bool> eduIsAliveBufferForPowerManagement{};
 RODOS::CommBuffer<bool> eduIsAliveBufferForCommunicationError{};
 RODOS::CommBuffer<bool> eduIsAliveBufferForListener{};
 RODOS::CommBuffer<bool> eduIsAliveBufferForTelemetry{};
-
 RODOS::Subscriber eduIsAliveSubscriberForPowerManagement(eduIsAliveTopic,
                                                          eduIsAliveBufferForPowerManagement,
                                                          "eduIsAliveSubscriber");
@@ -29,4 +28,20 @@ RODOS::CommBuffer<Duration> nextProgramStartDelayBuffer{};
 RODOS::Subscriber nextProgramStartDelaySubscriber(nextProgramStartDelayTopic,
                                                   nextProgramStartDelayBuffer,
                                                   "nextProgramStartDelaySubscriber");
+
+RODOS::Topic<ProgramId> programIdOfCurrentEduProgramQueueEntryTopic(
+    -1, "programIdOfCurrentEduProgramQueueEntryTopic");
+RODOS::CommBuffer<ProgramId> programIdOfCurrentEduProgramQueueEntryBuffer{};
+RODOS::Subscriber programIdOfCurrentEduProgramQueueEntrySubscriber(
+    programIdOfCurrentEduProgramQueueEntryTopic,
+    programIdOfCurrentEduProgramQueueEntryBuffer,
+    "programIdOfCurrentEduProgramQueueEntrySubscriber");
+
+RODOS::Topic<std::int32_t> rxBaudRateTopic(-1, "rxBaudRateTopic");
+RODOS::CommBuffer<std::int32_t> rxBaudRateBuffer{};
+RODOS::Subscriber rxBaudRateSubscriber(rxBaudRateTopic, rxBaudRateBuffer, "rxBaudRateSubscriber");
+
+RODOS::Topic<std::int32_t> txBaudRateTopic(-1, "txBaudRateTopic");
+RODOS::CommBuffer<std::int32_t> txBaudRateBuffer{};
+RODOS::Subscriber txBaudRateSubscriber(txBaudRateTopic, txBaudRateBuffer, "txBaudRateSubscriber");
 }

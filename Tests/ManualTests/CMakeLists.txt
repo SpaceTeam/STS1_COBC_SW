@@ -28,7 +28,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(Eps)
     target_link_libraries(
-        Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Periphery
+        Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
                                     Sts1CobcSwTests::HardwareSetup
     )
 

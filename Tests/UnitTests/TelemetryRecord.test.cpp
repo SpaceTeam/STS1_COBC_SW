@@ -23,47 +23,48 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
 {
     SECTION("Example record is serialized and deserialized correctly")
     {
-        static constexpr auto originalRecord =
-            TelemetryRecord{.fwChecksumsAreOk = true,
-                            .eduShouldBePowered = true,
-                            .eduHeartBeats = true,
-                            .newResultIsAvailable = true,
-                            .antennasShouldBeDeployed = true,
-                            .framIsWorking = true,
-                            .epsIsWorking = true,
-                            .flashIsWorking = true,
-                            .rfIsWorking = true,
-                            .lastTeleCommandIdWasInvalid = true,
-                            .lastTeleCommandArgumentsWereInvalid = true,
-                            .nResetsSinceRf = 1U,
-                            .activeSecondaryFwPartition = 2,
-                            .backupSecondaryFwPartition = 3,
-                            .eduProgramQueueIndex = 4,
-                            .programIdOfCurrentEduProgramQueueEntry = ProgramId(5),
-                            .nEduCommunicationErrors = 7U,
-                            .nTotalResets = 8U,
-                            .lastResetReason = 9U,
-                            .rodosTimeInSeconds = 10,
-                            .realTime = RealTime(11),
-                            .nFlashErrors = 12U,
-                            .nRfErrors = 13U,
-                            .nFileSystemErrors = 14U,
-                            .batteryPackVoltage = 15U,
-                            .batteryCenterTapVoltage = 16U,
-                            .batteryTemperature = 17U,
-                            .cobcTemperature = 18U,
-                            .cubeSatBusVoltage = 19U,
-                            .sidepanelXPlusTemperature = 20U,
-                            .sidepanelYPlusTemperature = 21U,
-                            .sidepanelYMinusTemperature = 22U,
-                            .sidepanelZPlusTemperature = 23U,
-                            .sidepanelZMinusTemperature = 24U,
-                            .rfBaudRate = 25U,
-                            .nCorrectableUplinkErrors = 26U,
-                            .nUncorrectableUplinkErrors = 27U,
-                            .nBadRfpackets = 28U,
-                            .nGoodRfpackets = 29U,
-                            .lastReceivedCommandId = 30U};
+        static constexpr auto originalRecord = TelemetryRecord{
+            .eduShouldBePowered = true,
+            .eduIsAlive = true,
+            .newEduResultIsAvailable = true,
+            .antennasShouldBeDeployed = true,
+            .framIsWorking = true,
+            .epsIsWorking = true,
+            .flashIsWorking = true,
+            .rfIsWorking = true,
+            .lastTelecommandIdWasInvalid = true,
+            .lastTelecommandArgumentsWereInvalid = true,
+            .nTotalResets = 1U,
+            .nResetsSinceRf = 2U,
+            .activeSecondaryFwPartition = 3,
+            .backupSecondaryFwPartition = 4,
+            .eduProgramQueueIndex = 5U,
+            .programIdOfCurrentEduProgramQueueEntry = ProgramId(6),
+            .nEduCommunicationErrors = 7U,
+            .lastResetReason = 8U,
+            .rodosTimeInSeconds = 9,
+            .realTime = RealTime(10),
+            .nFirmwareChecksumErrors = 11U,
+            .nFlashErrors = 12U,
+            .nRfErrors = 13U,
+            .nFileSystemErrors = 14U,
+            .cobcTemperature = 15,
+            .rfTemperature = 16,
+ // clang-format off
+            .epsAdcData = {
+                .adc4 = {
+                    17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U, 25U, 26U, 27U, 28U, 29U, 30U, 31U, 32U},
+                .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
+                .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
+  // clang-format on
+            .rxBaudRate = 53,
+            .txBaudRate = 54,
+            .nCorrectableUplinkErrors = 55U,
+            .nUncorrectableUplinkErrors = 56U,
+            .nGoodTransferFrames = 57U,
+            .nBadTransferFrames = 58U,
+            .lastTelecommandId = 59U
+        };
         auto serializedRecord = Serialize(originalRecord);
         auto deserializedRecord = Deserialize<TelemetryRecord>(serializedRecord);
         CHECK(originalRecord == deserializedRecord);
@@ -71,8 +72,8 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
 
     SECTION("All booleans are serialized and deserialized correctly")
     {
-        static constexpr auto nBooleans1 = 4U;
-        static constexpr auto nBooleans2 = 7U;
+        static constexpr auto nBooleans1 = 8U;
+        static constexpr auto nBooleans2 = 2U;
         static constexpr auto nBooleans = nBooleans1 + nBooleans2;
         // We loop over all records where a single boolean set to true
         for(auto i = 0U; i < nBooleans; ++i)
@@ -80,17 +81,16 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             auto booleans1 = static_cast<std::uint8_t>((1U << i) & ((1U << nBooleans1) - 1U));
             auto booleans2 = static_cast<std::uint8_t>((1U << i) >> nBooleans1);
             auto originalRecord = TelemetryRecord{
-                .fwChecksumsAreOk = static_cast<bool>(booleans1 & 1U),
-                .eduShouldBePowered = static_cast<bool>(booleans1 & (1U << 1U)),
-                .eduHeartBeats = static_cast<bool>(booleans1 & (1U << 2U)),
-                .newResultIsAvailable = static_cast<bool>(booleans1 & (1U << 3U)),
-                .antennasShouldBeDeployed = static_cast<bool>(booleans2 & 1U),
-                .framIsWorking = static_cast<bool>(booleans2 & (1U << 1U)),
-                .epsIsWorking = static_cast<bool>(booleans2 & (1U << 2U)),
-                .flashIsWorking = static_cast<bool>(booleans2 & (1U << 3U)),
-                .rfIsWorking = static_cast<bool>(booleans2 & (1U << 4U)),
-                .lastTeleCommandIdWasInvalid = static_cast<bool>(booleans2 & (1U << 5U)),
-                .lastTeleCommandArgumentsWereInvalid = static_cast<bool>(booleans2 & (1U << 6U))};
+                .eduShouldBePowered = static_cast<bool>(booleans1 & (1U << 0U)),
+                .eduIsAlive = static_cast<bool>(booleans1 & (1U << 1U)),
+                .newEduResultIsAvailable = static_cast<bool>(booleans1 & (1U << 2U)),
+                .antennasShouldBeDeployed = static_cast<bool>(booleans1 & 3U),
+                .framIsWorking = static_cast<bool>(booleans1 & (1U << 4U)),
+                .epsIsWorking = static_cast<bool>(booleans1 & (1U << 5U)),
+                .flashIsWorking = static_cast<bool>(booleans1 & (1U << 6U)),
+                .rfIsWorking = static_cast<bool>(booleans1 & (1U << 7U)),
+                .lastTelecommandIdWasInvalid = static_cast<bool>(booleans2 & (1U << 0U)),
+                .lastTelecommandArgumentsWereInvalid = static_cast<bool>(booleans2 & (1U << 1U))};
             auto serializedRecord = Serialize(originalRecord);
             auto deserializedRecord = Deserialize<TelemetryRecord>(serializedRecord);
             CHECK(originalRecord == deserializedRecord);
