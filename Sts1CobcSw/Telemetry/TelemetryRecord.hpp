@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
@@ -48,17 +49,9 @@ struct TelemetryRecord
     std::uint8_t nFileSystemErrors = 0U;
 
     // Sensor data
-    std::uint8_t batteryPackVoltage = 0U;
-    std::uint8_t batteryCenterTapVoltage = 0U;
-    std::uint8_t batteryTemperature = 0U;
     std::uint16_t cobcTemperature = 0U;
     std::uint16_t rfTemperature = 0U;
-    std::uint8_t cubeSatBusVoltage = 0U;
-    std::uint8_t sidepanelXPlusTemperature = 0U;
-    std::uint8_t sidepanelYPlusTemperature = 0U;
-    std::uint8_t sidepanelYMinusTemperature = 0U;
-    std::uint8_t sidepanelZPlusTemperature = 0U;
-    std::uint8_t sidepanelZMinusTemperature = 0U;
+    eps::AdcData epsAdcData = {};
 
     // Communication
     std::int32_t rxBaudRate = 0;
@@ -95,17 +88,9 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
         decltype(TelemetryRecord::nRfErrors),
         decltype(TelemetryRecord::nFileSystemErrors),
         // Sensor data
-        decltype(TelemetryRecord::batteryPackVoltage),
-        decltype(TelemetryRecord::batteryCenterTapVoltage),
-        decltype(TelemetryRecord::batteryTemperature),
         decltype(TelemetryRecord::cobcTemperature),
         decltype(TelemetryRecord::rfTemperature),
-        decltype(TelemetryRecord::cubeSatBusVoltage),
-        decltype(TelemetryRecord::sidepanelXPlusTemperature),
-        decltype(TelemetryRecord::sidepanelYPlusTemperature),
-        decltype(TelemetryRecord::sidepanelYMinusTemperature),
-        decltype(TelemetryRecord::sidepanelZPlusTemperature),
-        decltype(TelemetryRecord::sidepanelZMinusTemperature),
+        decltype(TelemetryRecord::epsAdcData),
         // Communication
         decltype(TelemetryRecord::rxBaudRate),
         decltype(TelemetryRecord::txBaudRate),

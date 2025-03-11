@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
@@ -56,7 +57,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .programIdOfCurrentEduProgramQueueEntry = programIdOfCurrentEduProgramQueueEntry,
         .nEduCommunicationErrors = persistentVariables.Load<"nEduCommunicationErrors">(),
         // Housekeeping
-        .lastResetReason = 0,  // TODO: Get with RCC_GetFlagStatus() (needs to be called in main)
+        .lastResetReason = 0U,  // TODO: Get with RCC_GetFlagStatus() (needs to be called in main)
         .rodosTimeInSeconds = static_cast<std::int32_t>((CurrentRodosTime() - RodosTime{}) / s),
         .realTime = CurrentRealTime(),
         .nFirmwareChecksumErrors = persistentVariables.Load<"nFirmwareChecksumErrors">(),
@@ -64,17 +65,9 @@ auto CollectTelemetryData() -> TelemetryRecord
         .nRfErrors = persistentVariables.Load<"nRfErrors">(),
         .nFileSystemErrors = persistentVariables.Load<"nFileSystemErrors">(),
         // Sensor data
-        .batteryPackVoltage = 0,  // TODO: Add topic for EPS sensor data once we have a struct
-        .batteryCenterTapVoltage = 0,
-        .batteryTemperature = 0,
-        .cobcTemperature = 0,
+        .cobcTemperature = 0U,  // TODO: Get from internal ADC
         .rfTemperature = rftemperaturesensor::Read(),
-        .cubeSatBusVoltage = 0,
-        .sidepanelXPlusTemperature = 0,
-        .sidepanelYPlusTemperature = 0,
-        .sidepanelYMinusTemperature = 0,
-        .sidepanelZPlusTemperature = 0,
-        .sidepanelZMinusTemperature = 0,
+        .epsAdcData = eps::ReadAdcs(),
         // Communication
         .rxBaudRate = rxBaudRate,
         .txBaudRate = txBaudRate,
