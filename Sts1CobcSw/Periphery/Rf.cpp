@@ -279,7 +279,7 @@ auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>
         ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
         DEBUG_PRINT("Retrieved first %d bytes from FIFO\n", chunkSize);
         ReadAndClearInterruptStatus();
-        // TODO: If a timeout occures after some but not all data has been received, should we
+        // TODO: If a timeout occurs after some but not all data has been received, should we
         // return an error or the received data?
         OUTCOME_TRY(WaitForInterrupt(rxTimeout));
         ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
@@ -423,7 +423,7 @@ auto ApplyPatch() -> void
 auto PowerUp() -> void
 {
     static constexpr auto bootOptions = 0x81_b;
-    static constexpr auto xtalOptions = 0x00_b;
+    static constexpr auto xtalOptions = 0x01_b;          // use external oscillator
     static constexpr std::uint32_t xoFreq = 26'000'000;  // MHz
     SendCommand(FlatArray(
         cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
