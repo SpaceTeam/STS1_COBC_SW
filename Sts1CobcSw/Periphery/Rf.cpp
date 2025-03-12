@@ -423,7 +423,7 @@ auto ApplyPatch() -> void
 auto PowerUp() -> void
 {
     static constexpr auto bootOptions = 0x81_b;
-    static constexpr auto xtalOptions = 0x00_b;
+    static constexpr auto xtalOptions = 0x01_b; // use external oscillator
     static constexpr std::uint32_t xoFreq = 26'000'000;  // MHz
     SendCommand(FlatArray(
         cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
