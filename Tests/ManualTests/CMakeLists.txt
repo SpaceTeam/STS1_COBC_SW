@@ -49,6 +49,18 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSwTests::HardwareSetup
     )
 
+    add_test_program(RfReceive)
+    target_link_libraries(
+        Sts1CobcSwTests_RfReceive PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery
+                                          Sts1CobcSwTests::HardwareSetup
+    )
+
+    add_test_program(RfSend)
+    target_link_libraries(
+        Sts1CobcSwTests_RfSend PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery
+                                       Sts1CobcSw_Utility Sts1CobcSwTests::HardwareSetup
+    )
+
     add_test_program(SpiSupervisor)
     target_sources(
         Sts1CobcSwTests_SpiSupervisor
