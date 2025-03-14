@@ -24,4 +24,16 @@ inline auto SuspendFor(Duration duration) -> void
 {
     RODOS::AT(RODOS::NOW() + value_of(duration));
 }
+
+
+inline auto BusyWaitUntil(RodosTime time) -> void
+{
+    RODOS::BUSY_WAITING_UNTIL(value_of(time));
+}
+
+
+inline auto BusyWaitFor(Duration duration) -> void
+{
+    RODOS::BUSY_WAITING_UNTIL(RODOS::NOW() + value_of(duration));
+}
 }

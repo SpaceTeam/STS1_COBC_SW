@@ -22,15 +22,11 @@ on:
 
 jobs:
   format-and-spell-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.8"
 
     - name: Format check
       run: cmake -P cmake/format.cmake
@@ -42,7 +38,7 @@ jobs:
   coverage:
     needs: format-and-spell-check
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
@@ -70,7 +66,7 @@ jobs:
   sanitize:
     needs: format-and-spell-check
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
@@ -96,7 +92,7 @@ jobs:
   build-cobc:
     needs: format-and-spell-check
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: tuwienspaceteam/sts1-cobc:1.12.0
 
     steps:
@@ -146,7 +142,7 @@ jobs:
   test:
     needs: format-and-spell-check
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
 
     steps:
@@ -166,7 +162,7 @@ jobs:
     # Deploy docs only when builds and tests succeed
     needs: [sanitize, build-cobc, test]
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     if: github.event_name == 'release'
       && github.repository_owner == 'SpaceTeam'

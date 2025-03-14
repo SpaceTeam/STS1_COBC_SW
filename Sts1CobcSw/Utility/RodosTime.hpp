@@ -24,6 +24,8 @@ constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
 [[nodiscard]] auto CurrentRodosTime() -> RodosTime;
 auto SuspendUntil(RodosTime time) -> void;
 auto SuspendFor(Duration duration) -> void;
+auto BusyWaitUntil(RodosTime time) -> void;
+auto BusyWaitFor(Duration duration) -> void;
 }
 
 
