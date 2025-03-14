@@ -3,6 +3,8 @@
 
 #include <littlefs/lfs.h>
 
+#include <etl/to_string.h>
+
 
 namespace sts1cobcsw::fs
 {
@@ -40,6 +42,272 @@ auto Unmount() -> Result<void>
         return static_cast<ErrorCode>(error);
     }
     return outcome_v2::success();
+}
+
+auto CreateDirectory(Path const & path) -> Result<void>
+{
+    auto error = lfs_mkdir(&lfs, path.c_str());
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes of lfs_mkdir
+}
+
+
+auto Remove(Path const & path) -> Result<void>
+{
+    auto info = lfs_info{};
+    auto error = lfs_stat(&lfs, Path(path).append(".lock").c_str(), &info);
+    auto lockFileExists = error == 0;  // TODO: check if file is open
+    if(lockFileExists)
+    {
+        return ErrorCode::fileLocked;
+    }
+    error = lfs_remove(&lfs, path.c_str());
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes for lfs_remove
+}
+
+
+auto ForceRemove(Path const & path) -> Result<void>
+{
+    // TODO: remove lock file
+    auto error = lfs_remove(&lfs, Path(path).append(".lock").c_str());
+    if(error == 0 || error == LFS_ERR_NOENT)
+    {
+        return Remove(path);
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes for lfs_remove
+}
+
+// TODO: add offset for larger dirs?
+auto Ls(Path const & path) -> Result<DirectoryOutput>
+{
+    auto directory = lfs_dir_t{};
+    auto error = lfs_dir_open(&lfs, &directory, path.c_str());
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+
+    DirectoryOutput results{};
+
+    auto info = lfs_info{};
+    while(true)
+    {
+        if(results.full())
+        {
+            break;
+        }
+
+        int const result = lfs_dir_read(&lfs, &directory, &info);
+        if(result < 0)
+        {
+            // Return error or write error code for this file and continue?
+            return static_cast<ErrorCode>(error);
+        }
+        if(result == 0)
+        {
+            // End of directory
+            break;
+        }
+
+        auto fileInfo = etl::string<lsOutputSize>{};
+        switch(info.type)
+        {
+            case LFS_TYPE_REG:
+            {
+                fileInfo.append("reg ");
+                break;
+            }
+            case LFS_TYPE_DIR:
+            {
+                fileInfo.append("dir ");
+                break;
+            }
+            default:
+            {
+                fileInfo.append("?   ");
+                break;
+            }
+        }
+        etl::to_string(info.size, fileInfo, /*append=*/true);
+        fileInfo.append(" B ");
+        fileInfo.append(&(info.name[0]));
+        fileInfo.append("\n");
+
+        results.push_back(fileInfo);
+    }
+
+    return results;
+}
+
+
+auto MakeIterator(Path const & path) -> Result<DirectoryIterator>
+{
+    auto iterator = DirectoryIterator();
+    auto error = lfs_dir_open(&lfs, &iterator.lfsDirectory_, path.c_str());
+    if(error == 0)
+    {
+        iterator.path_ = path;
+        iterator.isOpen_ = true;
+        iterator.endIsReached_ = false;
+        iterator.ReadNextDirectoryEntry();
+        return iterator;
+    }
+    return static_cast<ErrorCode>(error);
+}
+
+
+DirectoryIterator::DirectoryIterator(DirectoryIterator && other) noexcept
+{
+    MoveConstructFrom(&other);
+}
+
+
+auto DirectoryIterator::operator=(DirectoryIterator && other) noexcept -> DirectoryIterator &
+{
+    if(this != &other)
+    {
+        MoveConstructFrom(&other);
+    }
+    return *this;
+}
+
+
+DirectoryIterator::~DirectoryIterator()
+{
+    if(isOpen_)
+    {
+        (void)lfs_dir_close(&lfs, &lfsDirectory_);
+    }
+}
+
+
+auto DirectoryIterator::operator++() -> DirectoryIterator &
+{
+    ReadNextDirectoryEntry();
+    return *this;
+}
+
+
+auto DirectoryIterator::operator*() const -> Result<DirectoryInfo>
+{
+    if(not isOpen_ || endIsReached_)
+    {
+        // TODO: Is this really the right error code?
+        return ErrorCode::noDirectoryEntry;
+    }
+    if(lfsFileErrorCode_ > 0)
+    {
+        return lfsInfo_;
+    }
+    return static_cast<ErrorCode>(lfsFileErrorCode_);
+}
+
+
+auto DirectoryIterator::operator==(DirectoryIterator const & other) const -> bool
+{
+    if(path_ != other.path_)
+    {
+        return false;
+    }
+    if(endIsReached_ != other.endIsReached_)
+    {
+        return false;
+    }
+    // If they both are at the end -> equal (when created with end() lfsDirectory_ is never opened)
+    if(endIsReached_)
+    {
+        return true;
+    }
+    // If one lfs_dir is not open, we can't make sure they are equal -> end to avoid going out of
+    // bound (range based for-loop)
+    if(not isOpen_ || not other.isOpen_)
+    {
+        return true;
+    }
+    return lfsDirectory_.pos == other.lfsDirectory_.pos;
+}
+
+
+auto DirectoryIterator::operator!=(DirectoryIterator const & other) const -> bool
+{
+    return not(*this == other);
+}
+
+
+auto DirectoryIterator::begin() const -> DirectoryIterator
+{
+    // TODO: Just return *this, once we have copy operations
+    auto makeIteratorResult = MakeIterator(path_);
+    if(makeIteratorResult.has_error())
+    {
+        return end();
+    }
+    return std::move(makeIteratorResult.value());
+}
+
+
+auto DirectoryIterator::end() const -> DirectoryIterator
+{
+    auto iterator = DirectoryIterator{};
+    // TODO: end() should return a default constructed iterator
+    iterator.isOpen_ = false;
+    iterator.endIsReached_ = true;
+    iterator.path_ = path_;
+    return iterator;
+}
+
+
+auto DirectoryIterator::MoveConstructFrom(DirectoryIterator * other) noexcept -> void
+{
+    path_ = other->path_;
+    if(other->endIsReached_ || not other->isOpen_)
+    {
+        isOpen_ = false;
+        endIsReached_ = true;
+        return;
+    }
+    auto error = lfs_dir_open(&lfs, &lfsDirectory_, path_.c_str());
+    if(error != 0)
+    {
+        isOpen_ = false;
+        endIsReached_ = true;
+        return;
+    }
+    isOpen_ = true;
+    endIsReached_ = false;
+    while(lfsDirectory_.pos != other->lfsDirectory_.pos)
+    {
+        ReadNextDirectoryEntry();
+        if(lfsFileErrorCode_ < 0)
+        {
+            isOpen_ = false;
+            endIsReached_ = true;
+            break;
+        }
+    }
+}
+
+
+auto DirectoryIterator::ReadNextDirectoryEntry() -> void
+{
+    if(not isOpen_ || endIsReached_)
+    {
+        return;
+    }
+    lfsFileErrorCode_ = lfs_dir_read(&lfs, &lfsDirectory_, &lfsInfo_);
+    if(lfsFileErrorCode_ == 0)
+    {
+        endIsReached_ = true;
+        // TODO: Close the directory here. This should allow us to get rid of endIsReached_ (and
+        // maybe isOpen_?).
+    }
 }
 
 
@@ -120,6 +388,25 @@ auto File::Close() const -> Result<void>
         return static_cast<ErrorCode>(error);
     }
     return CloseAndKeepLockFile();
+}
+
+
+auto File::Flush() -> Result<void>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_WRONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto error = lfs_file_sync(&lfs, &lfsFile_);
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);  // TODO: check error codes for lfs_file_sync
 }
 
 
