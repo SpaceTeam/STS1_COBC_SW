@@ -47,7 +47,7 @@ TEST_CASE("LfsWrapper without data corruption")
     auto createDirResult = fs::CreateDirectory(nonExistingPath);
     CHECK(createDirResult.has_error());
 
-    // dir does not exist
+    // Dir does not exist
     auto iteratorResult = fs::MakeIterator(nonExistingPath);
     CHECK(iteratorResult.has_error());
     CHECK(iteratorResult.error() == sts1cobcsw::ErrorCode::noDirectoryEntry);
@@ -101,35 +101,35 @@ TEST_CASE("LfsWrapper without data corruption")
     auto & dirIterator = iteratorResult.value();
     CHECK(dirIterator != dirIterator.end());
 
-    // entry 0: 0Byte .
+    // Entry 0: 0 byte "."
     auto entryResult = *dirIterator;
     CHECK(not entryResult.has_error());
     auto entry = entryResult.value();
     CHECK(entry.size == static_cast<lfs_size_t>(0));
     ++dirIterator;
 
-    // entry 1: 0Byte ..
+    // Entry 1: 0 byte ".."
     entryResult = *dirIterator;
     CHECK(not entryResult.has_error());
     entry = entryResult.value();
     CHECK(entry.size == static_cast<lfs_size_t>(0));
     ++dirIterator;
 
-    // entry 2: 0Byte MyFile.lock
+    // Entry 2: 0 byte "MyFile.lock"
     entryResult = *dirIterator;
     CHECK(not entryResult.has_error());
     entry = entryResult.value();
     CHECK(entry.size == static_cast<lfs_size_t>(0));
     ++dirIterator;
 
-    // entry 3: 4Byte MyFile
+    // Entry 3: 4 Byte "MyFile"
     entryResult = *dirIterator;
     CHECK(not entryResult.has_error());
     entry = entryResult.value();
     CHECK(entry.size == static_cast<lfs_size_t>(4));
     ++dirIterator;
 
-    // should fail because we are at the end of the dir
+    // Should fail because we are at the end of the directory
     entryResult = *dirIterator;
     CHECK(entryResult.has_error());
     CHECK(dirIterator == dirIterator.end());

@@ -84,16 +84,15 @@ auto ForceRemove(Path const & path) -> Result<void>
 
 auto MakeIterator(Path const & path) -> Result<DirectoryIterator>
 {
-    auto directory = DirectoryIterator();
-
-    auto error = lfs_dir_open(&lfs, &directory.lfsDirectory_, path.c_str());
+    auto iterator = DirectoryIterator();
+    auto error = lfs_dir_open(&lfs, &iterator.lfsDirectory_, path.c_str());
     if(error == 0)
     {
-        directory.path_ = path;
-        directory.isOpen_ = true;
-        directory.isEndReached_ = false;
-        directory.OpenNextFile();
-        return directory;
+        iterator.path_ = path;
+        iterator.isOpen_ = true;
+        iterator.endIsReached_ = false;
+        iterator.ReadNextDirectoryEntry();
+        return iterator;
     }
     return static_cast<ErrorCode>(error);
 }
@@ -119,30 +118,29 @@ DirectoryIterator::~DirectoryIterator()
 {
     if(isOpen_)
     {
-        std::ignore = lfs_dir_close(&lfs, &lfsDirectory_);
+        (void)lfs_dir_close(&lfs, &lfsDirectory_);
     }
 }
 
 
 auto DirectoryIterator::operator++() -> DirectoryIterator &
 {
-    OpenNextFile();
+    ReadNextDirectoryEntry();
     return *this;
 }
 
 
 auto DirectoryIterator::operator*() const -> Result<DirectoryInfo>
 {
-    if(not isOpen_ || isEndReached_)
+    if(not isOpen_ || endIsReached_)
     {
+        // TODO: Is this really the right error code?
         return ErrorCode::noDirectoryEntry;
     }
-
     if(lfsFileErrorCode_ > 0)
     {
-        return lfsFile_;
+        return lfsInfo_;
     }
-
     return static_cast<ErrorCode>(lfsFileErrorCode_);
 }
 
@@ -153,25 +151,21 @@ auto DirectoryIterator::operator==(DirectoryIterator const & other) const -> boo
     {
         return false;
     }
-
-    if(isEndReached_ != other.isEndReached_)
+    if(endIsReached_ != other.endIsReached_)
     {
         return false;
     }
-
-    // if they both are at the end -> equal (when created with end() lfsDirectory_ is never opened)
-    if(isEndReached_)
+    // If they both are at the end -> equal (when created with end() lfsDirectory_ is never opened)
+    if(endIsReached_)
     {
         return true;
     }
-
-    // if one lfs_dir is not open, we can't make sure they are equal -> end to avoid going out of
+    // If one lfs_dir is not open, we can't make sure they are equal -> end to avoid going out of
     // bound (range based for-loop)
     if(not isOpen_ || not other.isOpen_)
     {
         return true;
     }
-
     return lfsDirectory_.pos == other.lfsDirectory_.pos;
 }
 
@@ -182,78 +176,72 @@ auto DirectoryIterator::operator!=(DirectoryIterator const & other) const -> boo
 }
 
 
-auto DirectoryIterator::begin() -> DirectoryIterator
+auto DirectoryIterator::begin() const -> DirectoryIterator
 {
-    auto directoryResult = MakeIterator(path_);
-
-    if(directoryResult.has_error())
+    // TODO: Just return *this, once we have copy operations
+    auto makeIteratorResult = MakeIterator(path_);
+    if(makeIteratorResult.has_error())
     {
         return end();
     }
-
-    return std::move(directoryResult.value());
+    return std::move(makeIteratorResult.value());
 }
 
 
-auto DirectoryIterator::end() -> DirectoryIterator
+auto DirectoryIterator::end() const -> DirectoryIterator
 {
-    auto directory = DirectoryIterator();
-
-    directory.isOpen_ = false;
-    directory.isEndReached_ = true;
-    directory.path_ = path_;
-    return directory;
+    auto iterator = DirectoryIterator{};
+    // TODO: end() should return a default constructed iterator
+    iterator.isOpen_ = false;
+    iterator.endIsReached_ = true;
+    iterator.path_ = path_;
+    return iterator;
 }
 
 
 auto DirectoryIterator::MoveConstructFrom(DirectoryIterator * other) noexcept -> void
 {
     path_ = other->path_;
-
-    if(other->isEndReached_ || not other->isOpen_)
+    if(other->endIsReached_ || not other->isOpen_)
     {
         isOpen_ = false;
-        isEndReached_ = true;
+        endIsReached_ = true;
+        return;
     }
-    else
+    auto error = lfs_dir_open(&lfs, &lfsDirectory_, path_.c_str());
+    if(error != 0)
     {
-        auto error = lfs_dir_open(&lfs, &lfsDirectory_, path_.c_str());
-        if(error == 0)
-        {
-            isOpen_ = true;
-            isEndReached_ = false;
-            // TODO: find a way to copy lfs_dir without looping over all previous files
-            while(lfsDirectory_.pos != other->lfsDirectory_.pos)
-            {
-                OpenNextFile();
-                if(lfsFileErrorCode_ < 0)
-                {
-                    isOpen_ = false;
-                    isEndReached_ = true;
-                    break;
-                }
-            }
-        }
-        else
+        isOpen_ = false;
+        endIsReached_ = true;
+        return;
+    }
+    isOpen_ = true;
+    endIsReached_ = false;
+    while(lfsDirectory_.pos != other->lfsDirectory_.pos)
+    {
+        ReadNextDirectoryEntry();
+        if(lfsFileErrorCode_ < 0)
         {
             isOpen_ = false;
-            isEndReached_ = true;
+            endIsReached_ = true;
+            break;
         }
     }
 }
 
 
-auto DirectoryIterator::OpenNextFile() -> void
+auto DirectoryIterator::ReadNextDirectoryEntry() -> void
 {
-    if(not isOpen_ || isEndReached_)
+    if(not isOpen_ || endIsReached_)
     {
         return;
     }
-
-    lfsFileErrorCode_ = lfs_dir_read(&lfs, &lfsDirectory_, &lfsFile_);
+    lfsFileErrorCode_ = lfs_dir_read(&lfs, &lfsDirectory_, &lfsInfo_);
     if(lfsFileErrorCode_ == 0)
     {
-        isEndReached_ = true;
+        endIsReached_ = true;
+        // TODO: Close the directory here. This should allow us to get rid of endIsReached_ (and
+        // maybe isOpen_?).
     }
 }
 
