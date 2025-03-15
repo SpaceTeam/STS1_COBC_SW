@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <littlefs/lfs.h>
+
 #include <rodos_no_using_namespace.h>
 
 #if defined(SYSTEM_ERROR2_NOT_POSIX)
@@ -9,6 +11,43 @@
 #endif
 
 #include <outcome-experimental.hpp>  // IWYU pragma: export
+
+
+namespace sts1cobcsw
+{
+enum class ErrorCode
+{
+    // Littlefs (negative values)
+    io = LFS_ERR_IO,                    // Error during device operation
+    corrupt = LFS_ERR_CORRUPT,          // Corrupted
+    noDirectoryEntry = LFS_ERR_NOENT,   // No directory entry
+    alreadyExists = LFS_ERR_EXIST,      // Entry already exists
+    notADirectory = LFS_ERR_NOTDIR,     // Entry is not a dir
+    isADirectory = LFS_ERR_ISDIR,       // Entry is a dir
+    notEmpty = LFS_ERR_NOTEMPTY,        // Dir is not empty
+    badFileNumber = LFS_ERR_BADF,       // Bad file number
+    tooLarge = LFS_ERR_FBIG,            // File too large
+    invalidParameter = LFS_ERR_INVAL,   // Invalid parameter
+    noSpace = LFS_ERR_NOSPC,            // No space left on device
+    noMemory = LFS_ERR_NOMEM,           // No more memory available
+    noAttribute = LFS_ERR_NOATTR,       // No data/attr available
+    nameTooLong = LFS_ERR_NAMETOOLONG,  // File name too long
+    // General (from here on positive values)
+    timeout = 1,
+    // File system
+    fileNotOpen,
+    unsupportedOperation,
+    fileLocked,
+    // EDU
+    invalidAnswer,
+    nack,
+    tooManyNacks,
+    wrongChecksum,
+    dataPacketTooLong,
+    invalidStatusType,
+    invalidLength,
+    tooManyDataPackets,
+};
 
 
 struct RebootPolicy : outcome_v2::experimental::policy::base
@@ -53,3 +92,8 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         }
     }
 };
+
+
+template<typename T>
+using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolicy>;
+}

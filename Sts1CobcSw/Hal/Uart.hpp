@@ -13,16 +13,6 @@
 
 namespace sts1cobcsw::hal
 {
-enum class ErrorCode
-{
-    timeout = 1
-};
-
-
-template<typename T>
-using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolicy>;
-
-
 auto Initialize(RODOS::HAL_UART * uart, std::uint32_t baudRate) -> void;
 auto Deinitialize(RODOS::HAL_UART * uart) -> void;
 

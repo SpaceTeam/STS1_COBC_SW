@@ -7,9 +7,6 @@
 
 namespace sts1cobcsw::edu
 {
-template<typename T>
-using Result = outcome_v2::experimental::status_result<T, edu::ErrorCode, RebootPolicy>;
-
 auto Initialize() -> void;
 auto TurnOn() -> void;
 auto TurnOff() -> void;

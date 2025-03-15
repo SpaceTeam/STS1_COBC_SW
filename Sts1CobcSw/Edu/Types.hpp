@@ -17,21 +17,6 @@ namespace edu
 using sts1cobcsw::operator""_b;
 
 
-enum class ErrorCode
-{
-    timeout = 1,
-    invalidAnswer,
-    nack,
-    tooManyNacks,
-    wrongChecksum,
-    dataPacketTooLong,
-    invalidStatusType,
-    invalidLength,
-    tooManyDataPackets,
-    fileSystemError
-};
-
-
 enum class ProgramStatus : std::uint8_t
 {
     programRunning,

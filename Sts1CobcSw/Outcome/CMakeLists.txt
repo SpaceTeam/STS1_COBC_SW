@@ -1,4 +1,4 @@
-target_link_libraries(Sts1CobcSw_Outcome INTERFACE rodos::without_main_on_linux)
+target_link_libraries(Sts1CobcSw_Outcome INTERFACE rodos::without_main_on_linux littlefs::littlefs)
 
 # This is an ugly hack to get the right include directories for Outcome because it is not properly
 # installed with CMake

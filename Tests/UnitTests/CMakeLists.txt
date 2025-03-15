@@ -33,8 +33,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(Flash)
     target_link_libraries(
-        Sts1CobcSwTests_Flash PRIVATE Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
-                                      strong_type::strong_type Sts1CobcSwTests::CatchRodos
+        Sts1CobcSwTests_Flash
+        PRIVATE Sts1CobcSw_Outcome Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+                strong_type::strong_type Sts1CobcSwTests::CatchRodos
     )
 
     add_test_program(WholeFram)
