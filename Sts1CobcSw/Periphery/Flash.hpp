@@ -23,16 +23,6 @@ struct JedecId
 };
 
 
-enum class ErrorCode
-{
-    timeout = 1
-};
-
-
-template<typename T>
-using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolicy>;
-
-
 [[maybe_unused]] constexpr std::size_t pageSize = 256;                 // bytes
 [[maybe_unused]] constexpr std::size_t sectorSize = 4 * 1024;          // bytes
 [[maybe_unused]] constexpr std::size_t smallBlockSize = 32 * 1024;     // bytes

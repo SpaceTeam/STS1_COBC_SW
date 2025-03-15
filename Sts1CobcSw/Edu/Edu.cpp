@@ -111,23 +111,27 @@ auto TurnOff() -> void
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
+    // TODO: Use fs::Open() and OUTCOME_TRY instead
     auto errorCode = fs::deprecated::OpenProgramFile(data.programId, 0);
     DEBUG_PRINT("Pretending to open the file ...\n");
     if(errorCode != 0)
     {
-        return ErrorCode::fileSystemError;
+        // This is just a random error code, OUTCOME_TRY will return the correct one
+        return ErrorCode::io;
     }
 
     // TODO: Check if program file is not too large
     while(true)
     {
+        // TODO: Use File::Read() and OUTCOME_TRY instead
         errorCode = fs::deprecated::ReadProgramFile(&cepDataBuffer);
         DEBUG_PRINT("Pretending to read %d bytes from the file system ...\n",
                     static_cast<int>(cepDataBuffer.size()));
         if(errorCode != 0)
         {
             fs::deprecated::CloseProgramFile();
-            return ErrorCode::fileSystemError;
+            // This is just a random error code, OUTCOME_TRY will return the correct one
+            return ErrorCode::io;
         }
         if(cepDataBuffer.empty())
         {
@@ -141,12 +145,15 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         }
     }
 
+    // TODO: Remove this since ~File() automatically closes the file
     errorCode = fs::deprecated::CloseProgramFile();
     DEBUG_PRINT("Pretending to close the file ...\n");
     if(errorCode != 0)
     {
-        return ErrorCode::fileSystemError;
+        // This is just a random error code, OUTCOME_TRY will return the correct one
+        return ErrorCode::io;
     }
+
     return WaitForAck();
 }
 
@@ -362,23 +369,16 @@ auto SendDataPacket(std::span<Byte const> data) -> Result<void>
 }
 
 
+// TODO: This function became so simple that it might not be necessary anymore
 auto SendCommand(Byte commandId) -> Result<void>
 {
-    OUTCOME_TRY(Send(Span(commandId)));
-    return outcome_v2::success();
+    return Send(Span(commandId));
 }
 
 
-// This function is mainly here for converting error codes and ensuring that all send operations use
-// a timeout.
 auto Send(std::span<Byte const> data) -> Result<void>
 {
-    auto writeToResult = hal::WriteTo(&uart, data, sendTimeout);
-    if(writeToResult.has_error())
-    {
-        return ErrorCode::timeout;
-    }
-    return outcome_v2::success();
+    return hal::WriteTo(&uart, data, sendTimeout);
 }
 
 
@@ -453,12 +453,7 @@ auto Receive(std::span<Byte> data) -> Result<void>
     {
         return ErrorCode::dataPacketTooLong;
     }
-    auto readFromResult = hal::ReadFrom(&uart, data, receiveTimeout);
-    if(readFromResult.has_error())
-    {
-        return ErrorCode::timeout;
-    }
-    return outcome_v2::success();
+    return hal::ReadFrom(&uart, data, receiveTimeout);
 }
 
 

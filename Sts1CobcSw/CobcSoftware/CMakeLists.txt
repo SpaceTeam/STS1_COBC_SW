@@ -23,6 +23,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Edu
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
+                Sts1CobcSw_Outcome
                 Sts1CobcSw_Periphery
                 Sts1CobcSw_ProgramId
                 Sts1CobcSw_Serial
