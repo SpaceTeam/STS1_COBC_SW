@@ -44,4 +44,8 @@ RODOS::Subscriber rxBaudRateSubscriber(rxBaudRateTopic, rxBaudRateBuffer, "rxBau
 RODOS::Topic<std::int32_t> txBaudRateTopic(-1, "txBaudRateTopic");
 RODOS::CommBuffer<std::int32_t> txBaudRateBuffer{};
 RODOS::Subscriber txBaudRateSubscriber(txBaudRateTopic, txBaudRateBuffer, "txBaudRateSubscriber");
+
+RODOS::Topic<TelemetryRecord> telemetryTopic(-1, "telemetryTopic");
+RODOS::CommBuffer<TelemetryRecord> telemetryBuffer{};
+RODOS::Subscriber telemetrySubscriber(telemetryTopic, telemetryBuffer, "telemetrySubscriber");
 }

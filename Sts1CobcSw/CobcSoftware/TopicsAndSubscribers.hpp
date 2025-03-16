@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
+#include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -30,4 +31,8 @@ extern RODOS::CommBuffer<std::int32_t> rxBaudRateBuffer;
 
 extern RODOS::Topic<std::int32_t> txBaudRateTopic;
 extern RODOS::CommBuffer<std::int32_t> txBaudRateBuffer;
+
+extern RODOS::Topic<TelemetryRecord> telemetryTopic;
+// TODO: Look for a less memory-intensive solution than a CommBuffer
+extern RODOS::CommBuffer<TelemetryRecord> telemetryBuffer;
 }

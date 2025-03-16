@@ -16,4 +16,6 @@ inline constexpr auto eduCommunicationErrorThreadPriority = 400;
 inline constexpr auto eduPowerManagementThreadPriority = 500;
 inline constexpr auto eduHeartbeatThreadPriority = 600;
 inline constexpr auto spiStartupTestAndSupervisorThreadPriority = MAX_THREAD_PRIORITY;
+inline constexpr auto telemetryThreadPriority = 200;        // TODO: Find a better value
+inline constexpr auto rfCommunicationThreadPriority = 200;  // TODO: Find a better value
 }
