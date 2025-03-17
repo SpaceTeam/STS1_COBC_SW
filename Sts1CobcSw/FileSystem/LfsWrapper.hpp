@@ -54,7 +54,7 @@ public:
 
     // NOLINTBEGIN(readability*)
     [[nodiscard]] auto begin() const -> DirectoryIterator;
-    [[nodiscard]] auto end() const -> DirectoryIterator;
+    [[nodiscard]] static auto end() -> DirectoryIterator;
     // NOLINTEND(readability*)
 
 
@@ -66,7 +66,6 @@ private:
     Path path_ = "";
     lfs_dir_t lfsDirectory_ = {};
     bool isOpen_ = false;
-    bool endIsReached_ = false;
     lfs_info lfsInfo_ = {};
     int lfsFileErrorCode_ = 0;
 };
