@@ -127,12 +127,32 @@ TEST_CASE("LfsWrapper without data corruption")
     CHECK(not entryResult.has_error());
     entry = entryResult.value();
     CHECK(entry.size == static_cast<lfs_size_t>(4));
+
+    auto dirIteratorCopy = dirIterator;
     ++dirIterator;
 
     // Should fail because we are at the end of the directory
     entryResult = *dirIterator;
     CHECK(entryResult.has_error());
     CHECK(dirIterator == dirIterator.end());
+
+    // The copied iterator should still be at entry 3: 4 Byte "MyFile"
+    entryResult = *dirIteratorCopy;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(4));
+
+    auto secondDirIteratorCopy{dirIteratorCopy};
+    CHECK(secondDirIteratorCopy == dirIteratorCopy);
+
+    int entryCount = 0;
+    for(auto forEntryResult : dirIterator)
+    {
+        CHECK(not forEntryResult.has_error());
+        entryCount++;
+    }
+    // Range based for loop should go over all 4 entries
+    CHECK(entryCount == 4);
 
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());
