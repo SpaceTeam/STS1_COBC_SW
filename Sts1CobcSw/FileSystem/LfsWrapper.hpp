@@ -62,10 +62,9 @@ public:
     [[nodiscard]] static auto end() -> DirectoryIterator;
     // NOLINTEND(readability*)
 
-    // TODO: Enable and implement copy constructor and copy assignment operator
-    DirectoryIterator(DirectoryIterator const &) = delete;
+    DirectoryIterator(DirectoryIterator const & other) noexcept;
     DirectoryIterator(DirectoryIterator && other) noexcept;
-    auto operator=(DirectoryIterator const &) -> DirectoryIterator & = delete;
+    auto operator=(DirectoryIterator const & other) noexcept -> DirectoryIterator &;
     auto operator=(DirectoryIterator && other) noexcept -> DirectoryIterator &;
     ~DirectoryIterator();
 
@@ -79,7 +78,7 @@ public:
 
 private:
     DirectoryIterator() = default;
-    auto MoveConstructFrom(DirectoryIterator * other) noexcept -> void;
+    auto CopyConstructFrom(DirectoryIterator const * other) noexcept -> void;
     auto ReadNextDirectoryEntry() -> void;
 
     Path path_ = "";

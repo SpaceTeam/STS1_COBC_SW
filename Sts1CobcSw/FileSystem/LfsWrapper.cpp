@@ -100,9 +100,25 @@ auto MakeIterator(Path const & path) -> Result<DirectoryIterator>
 }
 
 
+DirectoryIterator::DirectoryIterator(DirectoryIterator const & other) noexcept
+{
+    CopyConstructFrom(&other);
+}
+
+
 DirectoryIterator::DirectoryIterator(DirectoryIterator && other) noexcept
 {
-    MoveConstructFrom(&other);
+    CopyConstructFrom(&other);
+}
+
+
+auto DirectoryIterator::operator=(DirectoryIterator const & other) noexcept -> DirectoryIterator &
+{
+    if(this != &other)
+    {
+        CopyConstructFrom(&other);
+    }
+    return *this;
 }
 
 
@@ -110,7 +126,7 @@ auto DirectoryIterator::operator=(DirectoryIterator && other) noexcept -> Direct
 {
     if(this != &other)
     {
-        MoveConstructFrom(&other);
+        CopyConstructFrom(&other);
     }
     return *this;
 }
@@ -174,13 +190,7 @@ auto DirectoryIterator::operator!=(DirectoryIterator const & other) const -> boo
 
 auto DirectoryIterator::begin() const -> DirectoryIterator
 {
-    // TODO: Just return *this, once we have copy operations
-    auto makeIteratorResult = MakeIterator(path_);
-    if(makeIteratorResult.has_error())
-    {
-        return end();
-    }
-    return std::move(makeIteratorResult.value());
+    return *this;
 }
 
 
@@ -190,7 +200,7 @@ auto DirectoryIterator::end() -> DirectoryIterator
 }
 
 
-auto DirectoryIterator::MoveConstructFrom(DirectoryIterator * other) noexcept -> void
+auto DirectoryIterator::CopyConstructFrom(DirectoryIterator const * other) noexcept -> void
 {
     path_ = other->path_;
     if(not other->isOpen_)

@@ -127,6 +127,8 @@ TEST_CASE("LfsWrapper without data corruption")
     CHECK(not entryResult.has_error());
     entry = entryResult.value();
     CHECK(entry.size == static_cast<lfs_size_t>(4));
+
+    auto dirIteratorCopy = dirIterator;
     ++dirIterator;
 
     // Should fail because we are at the end of the directory
@@ -134,6 +136,15 @@ TEST_CASE("LfsWrapper without data corruption")
     CHECK(entryResult.has_error());
     CHECK(dirIterator == dirIterator.end());
 
+    // The copied iterator should still be at entry 3: 4 Byte "MyFile"
+    CHECK(dirIteratorCopy != dirIterator.end());
+    entryResult = *dirIteratorCopy;
+    CHECK(not entryResult.has_error());
+    entry = entryResult.value();
+    CHECK(entry.size == static_cast<lfs_size_t>(4));
+
+    auto secondDirIteratorCopy{dirIteratorCopy};
+    CHECK(secondDirIteratorCopy == dirIteratorCopy);
 
     int entryCount = 0;
     iteratorResult = fs::MakeIterator(dirPath);
