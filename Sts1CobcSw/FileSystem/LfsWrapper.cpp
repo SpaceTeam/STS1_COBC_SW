@@ -3,6 +3,9 @@
 
 #include <littlefs/lfs.h>
 
+#include <etl/string.h>
+#include <etl/to_string.h>
+
 
 namespace sts1cobcsw::fs
 {
@@ -90,7 +93,6 @@ auto MakeIterator(Path const & path) -> Result<DirectoryIterator>
     {
         iterator.path_ = path;
         iterator.isOpen_ = true;
-        iterator.endIsReached_ = false;
         iterator.ReadNextDirectoryEntry();
         return iterator;
     }
@@ -132,14 +134,14 @@ auto DirectoryIterator::operator++() -> DirectoryIterator &
 
 auto DirectoryIterator::operator*() const -> Result<DirectoryInfo>
 {
-    if(not isOpen_ || endIsReached_)
+    if(not isOpen_)
     {
-        // TODO: Is this really the right error code?
+        // Dereferencing an iterator after end or when an error occurred is undefined behavior
         return ErrorCode::noDirectoryEntry;
     }
     if(lfsFileErrorCode_ > 0)
     {
-        return lfsInfo_;
+        return directoryInfo_;
     }
     return static_cast<ErrorCode>(lfsFileErrorCode_);
 }
@@ -147,24 +149,18 @@ auto DirectoryIterator::operator*() const -> Result<DirectoryInfo>
 
 auto DirectoryIterator::operator==(DirectoryIterator const & other) const -> bool
 {
+    // If one still has a open lfs_dir and the other not -> end not reached -> not equal
+    if((isOpen_ && not other.isOpen_) || (not isOpen_ && other.isOpen_))
+    {
+        return false;
+    }
+    if(not isOpen_ && not other.isOpen_)
+    {
+        return true;
+    }
     if(path_ != other.path_)
     {
         return false;
-    }
-    if(endIsReached_ != other.endIsReached_)
-    {
-        return false;
-    }
-    // If they both are at the end -> equal (when created with end() lfsDirectory_ is never opened)
-    if(endIsReached_)
-    {
-        return true;
-    }
-    // If one lfs_dir is not open, we can't make sure they are equal -> end to avoid going out of
-    // bound (range based for-loop)
-    if(not isOpen_ || not other.isOpen_)
-    {
-        return true;
     }
     return lfsDirectory_.pos == other.lfsDirectory_.pos;
 }
@@ -188,42 +184,33 @@ auto DirectoryIterator::begin() const -> DirectoryIterator
 }
 
 
-auto DirectoryIterator::end() const -> DirectoryIterator
+auto DirectoryIterator::end() -> DirectoryIterator
 {
-    auto iterator = DirectoryIterator{};
-    // TODO: end() should return a default constructed iterator
-    iterator.isOpen_ = false;
-    iterator.endIsReached_ = true;
-    iterator.path_ = path_;
-    return iterator;
+    return DirectoryIterator{};
 }
 
 
 auto DirectoryIterator::MoveConstructFrom(DirectoryIterator * other) noexcept -> void
 {
     path_ = other->path_;
-    if(other->endIsReached_ || not other->isOpen_)
+    if(not other->isOpen_)
     {
         isOpen_ = false;
-        endIsReached_ = true;
         return;
     }
     auto error = lfs_dir_open(&lfs, &lfsDirectory_, path_.c_str());
     if(error != 0)
     {
         isOpen_ = false;
-        endIsReached_ = true;
         return;
     }
     isOpen_ = true;
-    endIsReached_ = false;
     while(lfsDirectory_.pos != other->lfsDirectory_.pos)
     {
         ReadNextDirectoryEntry();
         if(lfsFileErrorCode_ < 0)
         {
             isOpen_ = false;
-            endIsReached_ = true;
             break;
         }
     }
@@ -232,16 +219,20 @@ auto DirectoryIterator::MoveConstructFrom(DirectoryIterator * other) noexcept ->
 
 auto DirectoryIterator::ReadNextDirectoryEntry() -> void
 {
-    if(not isOpen_ || endIsReached_)
+    if(not isOpen_)
     {
         return;
     }
-    lfsFileErrorCode_ = lfs_dir_read(&lfs, &lfsDirectory_, &lfsInfo_);
+    lfs_info lfsInfo{};
+    lfsFileErrorCode_ = lfs_dir_read(&lfs, &lfsDirectory_, &lfsInfo);
+    directoryInfo_.name = etl::make_string(lfsInfo.name);
+    directoryInfo_.size = lfsInfo.size;
+    directoryInfo_.type = static_cast<DirectoryInfo::EntryType>(lfsInfo.type);
+
     if(lfsFileErrorCode_ == 0)
     {
-        endIsReached_ = true;
-        // TODO: Close the directory here. This should allow us to get rid of endIsReached_ (and
-        // maybe isOpen_?).
+        isOpen_ = false;
+        (void)lfs_dir_close(&lfs, &lfsDirectory_);
     }
 }
 

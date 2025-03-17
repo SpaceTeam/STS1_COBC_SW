@@ -11,14 +11,13 @@
 
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <span>
 
 
 namespace sts1cobcsw::fs
 {
 using Path = etl::string<maxPathLength>;
-// TODO: Create our own struct using Path and an enum class for the entry type
-using DirectoryInfo = lfs_info;
 
 
 class File;
@@ -34,10 +33,35 @@ class DirectoryIterator;
 [[nodiscard]] auto MakeIterator(Path const & path) -> Result<DirectoryIterator>;
 
 
+struct DirectoryInfo
+{
+    enum class EntryType
+    {
+        file = LFS_TYPE_REG,
+        directory = LFS_TYPE_DIR,
+    };
+
+    EntryType type;
+    uint32_t size;
+    Path name;
+};
+
+
 // TODO: Move this class to a separate file
 class DirectoryIterator
 {
 public:
+    // NOLINTBEGIN(readability*)
+    using value_type = DirectoryInfo;
+    using difference_type = std::ptrdiff_t;  // Default difference_type when distance measurable
+    using pointer = DirectoryInfo const *;
+    using reference = DirectoryInfo const &;
+    using iterator_category = std::input_iterator_tag;
+
+    [[nodiscard]] auto begin() const -> DirectoryIterator;
+    [[nodiscard]] static auto end() -> DirectoryIterator;
+    // NOLINTEND(readability*)
+
     // TODO: Enable and implement copy constructor and copy assignment operator
     DirectoryIterator(DirectoryIterator const &) = delete;
     DirectoryIterator(DirectoryIterator && other) noexcept;
@@ -47,16 +71,11 @@ public:
 
     friend auto MakeIterator(Path const & path) -> Result<DirectoryIterator>;
 
+    // Post-increment requires copy -> too expensiv for input_iterator
     auto operator++() -> DirectoryIterator &;                        // Pre-increment
     auto operator*() const -> Result<DirectoryInfo>;                 // Dereference
     auto operator==(DirectoryIterator const & other) const -> bool;  // Equality check
     auto operator!=(DirectoryIterator const & other) const -> bool;  // Equality check
-
-    // NOLINTBEGIN(readability*)
-    [[nodiscard]] auto begin() const -> DirectoryIterator;
-    [[nodiscard]] auto end() const -> DirectoryIterator;
-    // NOLINTEND(readability*)
-
 
 private:
     DirectoryIterator() = default;
@@ -66,8 +85,7 @@ private:
     Path path_ = "";
     lfs_dir_t lfsDirectory_ = {};
     bool isOpen_ = false;
-    bool endIsReached_ = false;
-    lfs_info lfsInfo_ = {};
+    DirectoryInfo directoryInfo_ = {};
     int lfsFileErrorCode_ = 0;
 };
 

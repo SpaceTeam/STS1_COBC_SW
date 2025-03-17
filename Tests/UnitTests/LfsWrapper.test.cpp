@@ -134,6 +134,18 @@ TEST_CASE("LfsWrapper without data corruption")
     CHECK(entryResult.has_error());
     CHECK(dirIterator == dirIterator.end());
 
+
+    int entryCount = 0;
+    iteratorResult = fs::MakeIterator(dirPath);
+    CHECK(not iteratorResult.has_error());
+    for(auto forEntryResult : iteratorResult.value())
+    {
+        CHECK(not forEntryResult.has_error());
+        entryCount++;
+    }
+    // Range based for loop should go over all 4 entries
+    CHECK(entryCount == 4);
+
     auto closeResult = writeableFile.Close();
     CHECK(not closeResult.has_error());
 
