@@ -63,8 +63,8 @@
   { include: ["\"Sts1CobcSw/Utility/RodosTime.ipp\"",                   "private", "<Sts1CobcSw/Utility/RodosTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",                        "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.ipp\"",               "private", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/TimeTypes.ipp\"",                   "private", "<Sts1CobcSw/Utility/TimeTypes.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.ipp\"",                "private", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Vocabulary/TimeTypes.ipp\"",                "private", "<Sts1CobcSw/Vocabulary/TimeTypes.hpp>", "public"] },
 
   # Include all our headers with <> instead of ""
   { include: ["\"Sts1CobcSw/CobcSoftware/CommandParser.hpp\"",                     "public", "<Sts1CobcSw/CobcSoftware/CommandParser.hpp>", "public"] },
@@ -121,8 +121,8 @@
   { include: ["\"Sts1CobcSw/Utility/RodosTime.hpp\"",                              "public", "<Sts1CobcSw/Utility/RodosTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                                   "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",                          "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/TimeTypes.hpp\"",                              "public", "<Sts1CobcSw/Utility/TimeTypes.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.hpp\"",                           "public", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Vocabulary/TimeTypes.hpp\"",                           "public", "<Sts1CobcSw/Vocabulary/TimeTypes.hpp>", "public"] },
 
   # Fixing iwyu bug where <tuple> is required to be include for array symbol
   # unfortunately, the `symbol` directive does not work

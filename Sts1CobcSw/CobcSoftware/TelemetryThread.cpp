@@ -12,8 +12,8 @@
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/RealTime.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>

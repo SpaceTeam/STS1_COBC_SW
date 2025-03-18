@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
 
 #include <cstddef>
 #include <cstdint>

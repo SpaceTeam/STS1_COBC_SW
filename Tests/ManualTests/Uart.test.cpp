@@ -11,7 +11,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>

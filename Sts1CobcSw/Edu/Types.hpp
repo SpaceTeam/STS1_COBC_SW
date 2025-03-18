@@ -3,8 +3,8 @@
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
 
 #include <cstddef>
 #include <cstdint>

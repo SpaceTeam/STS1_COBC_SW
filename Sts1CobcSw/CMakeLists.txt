@@ -1,3 +1,4 @@
+add_subdirectory(CobcSoftware)
 add_subdirectory(Edu)
 add_subdirectory(FileSystem)
 add_subdirectory(FramSections)
@@ -7,7 +8,7 @@ add_subdirectory(Periphery)
 add_subdirectory(Serial)
 add_subdirectory(Telemetry)
 add_subdirectory(Utility)
-add_subdirectory(CobcSoftware)
+add_subdirectory(Vocabulary)
 
 target_sources(Sts1CobcSw_Dummy PRIVATE Dummy.cpp)
 target_link_libraries(Sts1CobcSw_Dummy PUBLIC etl::etl Sts1CobcSw_Utility)

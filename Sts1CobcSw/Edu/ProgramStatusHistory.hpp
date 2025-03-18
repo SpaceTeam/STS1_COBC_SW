@@ -5,8 +5,8 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
 
 
 namespace sts1cobcsw::edu

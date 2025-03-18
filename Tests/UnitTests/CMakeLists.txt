@@ -156,8 +156,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(TelemetryRecord)
     target_link_libraries(
-        Sts1CobcSwTests_TelemetryRecord PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial
-                                                Sts1CobcSw_Telemetry
+        Sts1CobcSwTests_TelemetryRecord
+        PRIVATE Catch2::Catch2WithMain strong_type::strong_type Sts1CobcSw_Edu Sts1CobcSw_Serial
+                Sts1CobcSw_Telemetry Sts1CobcSw_Vocabulary
     )
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
 endif()
