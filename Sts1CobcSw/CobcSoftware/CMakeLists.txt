@@ -10,9 +10,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 EduProgramQueueThread.cpp
                 FlashStartupTestThread.cpp
                 FramEpsStartupTestThread.cpp
+                RfCommunicationThread.cpp
                 RfStartupTestThread.cpp
                 SpiStartupTestAndSupervisorThread.cpp
-                TelemetryCollection.cpp
+                TelemetryThread.cpp
                 TopicsAndSubscribers.cpp
     )
     target_link_libraries(

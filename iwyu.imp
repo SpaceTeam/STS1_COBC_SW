@@ -100,6 +100,8 @@
   { include: ["\"Sts1CobcSw/ProgramId/ProgramId.hpp\"",                 "public", "<Sts1CobcSw/ProgramId/ProgramId.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Byte.hpp\"",                         "public", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.hpp\"",                       "public", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Telemetry/TelemetryMemory.hpp\"",           "public", "<Sts1CobcSw/Telemetry/TelemetryMemory.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Telemetry/TelemetryRecord.hpp\"",           "public", "<Sts1CobcSw/Telemetry/TelemetryRecord.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Crc32Hardware.hpp\"",               "public", "<Sts1CobcSw/Utility/Crc32Hardware.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Crc32Software.hpp\"",               "public", "<Sts1CobcSw/Utility/Crc32Software.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/DebugPrint.hpp\"",                  "public", "<Sts1CobcSw/Utility/DebugPrint.hpp>", "public"] },

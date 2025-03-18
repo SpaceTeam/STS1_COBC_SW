@@ -1,11 +1,14 @@
-#include <Sts1CobcSw/CobcSoftware/TelemetryCollection.hpp>
+#include <Sts1CobcSw/CobcSoftware/RfCommunicationThread.hpp>
+#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
 #include <Sts1CobcSw/ProgramId/ProgramId.hpp>
+#include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/RealTime.hpp>
@@ -23,6 +26,41 @@
 
 namespace sts1cobcsw
 {
+constexpr auto stackSize = 4'000U;
+constexpr auto telemetryThreadPeriod = 30 * s;
+
+
+[[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
+
+
+class TelemetryThread : public RODOS::StaticThread<stackSize>
+{
+public:
+    TelemetryThread() : StaticThread("TelemetryThread", telemetryThreadPriority)
+    {
+    }
+
+
+private:
+    void init() override
+    {
+    }
+
+
+    void run() override
+    {
+        TIME_LOOP(0, value_of(telemetryThreadPeriod))
+        {
+            persistentVariables.template Store<"realTime">(CurrentRealTime());
+            auto telemetryRecord = CollectTelemetryData();
+            telemetryMemory.PushBack(telemetryRecord);
+            telemetryTopic.publish(telemetryRecord);
+            ResumeRfCommunicationThread();
+        }
+    }
+} telemetryThread;
+
+
 auto CollectTelemetryData() -> TelemetryRecord
 {
     auto eduIsAlive = false;
