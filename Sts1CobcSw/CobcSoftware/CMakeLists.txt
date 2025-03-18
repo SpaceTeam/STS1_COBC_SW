@@ -13,7 +13,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 RfCommunicationThread.cpp
                 RfStartupTestThread.cpp
                 SpiStartupTestAndSupervisorThread.cpp
-                TelemetryCollection.cpp
                 TelemetryThread.cpp
                 TopicsAndSubscribers.cpp
     )
