@@ -1,9 +1,9 @@
 #pragma once
 
 
-#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 
 #include <rodos_no_using_namespace.h>
 

@@ -1,8 +1,8 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/ProgramId/ProgramId.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <strong_type/type.hpp>

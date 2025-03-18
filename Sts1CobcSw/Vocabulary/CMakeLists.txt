@@ -1,0 +1,1 @@
+target_link_libraries(Sts1CobcSw_Vocabulary INTERFACE strong_type::strong_type Sts1CobcSw_Serial)

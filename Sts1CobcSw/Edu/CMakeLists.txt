@@ -1,7 +1,7 @@
 target_sources(Sts1CobcSw_Edu PRIVATE ProgramStatusHistory.cpp)
 target_link_libraries(
     Sts1CobcSw_Edu PUBLIC rodos::without_main_on_linux etl::etl Sts1CobcSw_FramSections
-                          Sts1CobcSw_Outcome Sts1CobcSw_ProgramId Sts1CobcSw_Serial
+                          Sts1CobcSw_Outcome Sts1CobcSw_Serial Sts1CobcSw_Vocabulary
 )
 target_link_libraries(Sts1CobcSw_Edu PRIVATE Sts1CobcSw_Utility)
 

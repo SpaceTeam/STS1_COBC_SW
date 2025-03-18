@@ -21,10 +21,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Edu
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Outcome
-                Sts1CobcSw_ProgramId
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
                 Sts1CobcSwTests::HardwareSetup
+                Sts1CobcSw_Vocabulary
     )
 
     add_test_program(Eps)
