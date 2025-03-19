@@ -191,12 +191,6 @@ cmake --build build/linux-x86 -t Tests
 ctest --preset=dev-linux-x86
 ~~~
 
-To run a dummy program on Linux execute
-
-~~~shell
-./build/linux-x86/HelloDummy
-~~~
-
 To cross-compile for the COBC run
 
 ~~~shell
