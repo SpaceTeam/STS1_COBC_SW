@@ -5,7 +5,7 @@
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
 
 #include <rodos/api/rodos-semaphore.h>
 #include <rodos/api/timemodel.h>

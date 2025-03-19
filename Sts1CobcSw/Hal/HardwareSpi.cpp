@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Hal/HardwareSpi.hpp>
+#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <strong_type/affine_point.hpp>
 

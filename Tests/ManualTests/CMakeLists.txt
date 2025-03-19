@@ -67,6 +67,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::HardwareSetup
     )
 
@@ -87,7 +88,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_link_libraries(
         Sts1CobcSwTests_Watchdog
         PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Hal Sts1CobcSw_Utility
-                Sts1CobcSwTests::HardwareSetupWithoutWatchdog
+                Sts1CobcSw_Vocabulary Sts1CobcSwTests::HardwareSetupWithoutWatchdog
     )
 endif()
 

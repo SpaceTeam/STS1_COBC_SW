@@ -5,6 +5,8 @@
 
 #include <strong_type/type.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 
 namespace sts1cobcsw
 {

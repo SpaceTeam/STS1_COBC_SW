@@ -2,7 +2,6 @@
 
 
 #include <Sts1CobcSw/Hal/Spi.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
 
 #include <rodos_no_using_namespace.h>
