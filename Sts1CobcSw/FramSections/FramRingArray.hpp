@@ -9,7 +9,7 @@
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos/api/rodos-semaphore.h>
 

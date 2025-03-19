@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/RealTime.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/type.hpp>
 

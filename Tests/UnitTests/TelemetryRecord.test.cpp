@@ -2,7 +2,7 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <strong_type/type.hpp>

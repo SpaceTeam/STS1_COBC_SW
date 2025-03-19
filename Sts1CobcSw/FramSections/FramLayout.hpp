@@ -7,7 +7,7 @@
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 
 namespace sts1cobcsw

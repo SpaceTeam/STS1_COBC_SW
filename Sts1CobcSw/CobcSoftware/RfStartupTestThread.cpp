@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/Periphery/Rf.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 

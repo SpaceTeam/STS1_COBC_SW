@@ -65,4 +65,4 @@ template<std::endian endianness>
 }
 
 
-#include <Sts1CobcSw/Vocabulary/TimeTypes.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Vocabulary/Time.ipp>  // IWYU pragma: keep

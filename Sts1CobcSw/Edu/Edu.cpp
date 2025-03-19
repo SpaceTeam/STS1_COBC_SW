@@ -12,7 +12,7 @@
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
 

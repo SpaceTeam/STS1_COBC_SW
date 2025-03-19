@@ -3,7 +3,7 @@
 
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 

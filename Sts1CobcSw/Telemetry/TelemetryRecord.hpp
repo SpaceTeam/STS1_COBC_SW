@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
-#include <Sts1CobcSw/Vocabulary/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <bit>
 #include <cstddef>
