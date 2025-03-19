@@ -3,7 +3,7 @@
 
 #include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/type.hpp>
 

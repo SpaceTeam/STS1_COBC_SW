@@ -14,8 +14,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     target_link_libraries(
         Sts1CobcSwTests_SpiSupervisor
-        PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Hal Sts1CobcSw_Periphery
-                Sts1CobcSw_Serial Sts1CobcSw_Utility
+        PRIVATE rodos::rodos
+                Sts1CobcSw_FramSections
+                Sts1CobcSw_Hal
+                Sts1CobcSw_Periphery
+                Sts1CobcSw_RodosTime
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Utility
     )
 endif()
 

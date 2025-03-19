@@ -3,7 +3,7 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
 

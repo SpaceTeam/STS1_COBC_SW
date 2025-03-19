@@ -11,11 +11,11 @@
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/ProgramId/ProgramId.hpp>  // IWYU pragma: keep
+#include <Sts1CobcSw/RealTime/RealTime.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
-#include <Sts1CobcSw/Utility/RealTime.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
-#include <Sts1CobcSw/Utility/TimeTypes.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>

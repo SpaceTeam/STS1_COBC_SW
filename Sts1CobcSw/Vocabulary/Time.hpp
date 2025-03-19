@@ -9,6 +9,8 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
+#include <rodos/api/timemodel.h>
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -31,6 +33,19 @@ using RealTime = strong::type<std::int32_t,
                               strong::strongly_ordered>;
 
 
+// NOLINTBEGIN(readability-identifier-length)
+constexpr auto s = Duration(RODOS::SECONDS);
+constexpr auto ms = Duration(RODOS::MILLISECONDS);
+constexpr auto us = Duration(RODOS::MICROSECONDS);
+constexpr auto ns = Duration(RODOS::NANOSECONDS);
+constexpr auto min = Duration(RODOS::MINUTES);
+constexpr auto h = Duration(RODOS::HOURS);
+// NOLINTEND(readability-identifier-length)
+constexpr auto days = Duration(RODOS::DAYS);
+constexpr auto weeks = Duration(RODOS::WEEKS);
+constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
+
+
 template<>
 inline constexpr std::size_t serialSize<RealTime> =
     totalSerialSize<strong::underlying_type_t<RealTime>>;
@@ -50,4 +65,4 @@ template<std::endian endianness>
 }
 
 
-#include <Sts1CobcSw/Utility/TimeTypes.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Vocabulary/Time.ipp>  // IWYU pragma: keep

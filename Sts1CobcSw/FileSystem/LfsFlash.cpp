@@ -3,8 +3,8 @@
 
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
 
 #include <strong_type/difference.hpp>
 

@@ -26,18 +26,18 @@ find_package_and_notify(strong_type)
 
 # ---- Declare targets ----
 
-add_library(Sts1CobcSw_Dummy STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
 add_library(Sts1CobcSw_FramSections INTERFACE)
 add_library(Sts1CobcSw_Hal STATIC)
 add_library(Sts1CobcSw_Outcome INTERFACE)
-add_library(Sts1CobcSw_ProgramId INTERFACE)
 add_library(Sts1CobcSw_Periphery STATIC)
+add_library(Sts1CobcSw_RealTime INTERFACE)
+add_library(Sts1CobcSw_RodosTime INTERFACE)
 add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Telemetry STATIC)
 add_library(Sts1CobcSw_Utility STATIC)
-add_program(HelloDummy)
+add_library(Sts1CobcSw_Vocabulary INTERFACE)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_program(CobcSoftware)

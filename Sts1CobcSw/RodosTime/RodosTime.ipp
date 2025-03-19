@@ -1,9 +1,11 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 
 #include <strong_type/type.hpp>
+
+#include <rodos_no_using_namespace.h>
 
 
 namespace sts1cobcsw

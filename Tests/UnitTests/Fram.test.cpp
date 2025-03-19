@@ -5,8 +5,8 @@
     #include <Sts1CobcSw/Periphery/FramMock.hpp>
 #endif
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>

@@ -2,8 +2,14 @@
 
 add_test_program(Fram)
 target_link_libraries(
-    Sts1CobcSwTests_Fram PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Periphery
-                                 Sts1CobcSw_Serial Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+    Sts1CobcSwTests_Fram
+    PRIVATE rodos::rodos
+            strong_type::strong_type
+            Sts1CobcSw_Periphery
+            Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
+            Sts1CobcSw_Vocabulary
+            Sts1CobcSwTests::CatchRodos
 )
 add_test(NAME Fram COMMAND Sts1CobcSwTests_Fram)
 
@@ -34,14 +40,20 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(Flash)
     target_link_libraries(
         Sts1CobcSwTests_Flash
-        PRIVATE Sts1CobcSw_Outcome Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
-                strong_type::strong_type Sts1CobcSwTests::CatchRodos
+        PRIVATE Sts1CobcSw_Outcome
+                Sts1CobcSw_Periphery
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
+                strong_type::strong_type
+                Sts1CobcSwTests::CatchRodos
     )
 
     add_test_program(WholeFram)
     target_link_libraries(
-        Sts1CobcSwTests_WholeFram PRIVATE Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
-                                          strong_type::strong_type Sts1CobcSwTests::CatchRodos
+        Sts1CobcSwTests_WholeFram
+        PRIVATE strong_type::strong_type Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos
     )
 
     add_test_program(Rf)
@@ -156,8 +168,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(TelemetryRecord)
     target_link_libraries(
-        Sts1CobcSwTests_TelemetryRecord PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial
-                                                Sts1CobcSw_Telemetry
+        Sts1CobcSwTests_TelemetryRecord
+        PRIVATE Catch2::Catch2WithMain strong_type::strong_type Sts1CobcSw_Edu Sts1CobcSw_Serial
+                Sts1CobcSw_Telemetry Sts1CobcSw_Vocabulary
     )
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
 endif()

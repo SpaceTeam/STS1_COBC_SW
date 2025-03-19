@@ -29,4 +29,4 @@ template<std::endian endianness>
 }
 
 
-#include <Sts1CobcSw/ProgramId/ProgramId.ipp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.ipp>  // IWYU pragma: keep
