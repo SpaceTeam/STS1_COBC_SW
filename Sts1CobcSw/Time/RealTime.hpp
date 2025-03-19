@@ -3,6 +3,11 @@
 
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <cinttypes>
+
+
+#define DEBUG_PRINT_REAL_TIME() DEBUG_PRINT("Real time: %" PRIi32 "\n", value_of(CurrentRealTime()))
+
 
 namespace sts1cobcsw
 {

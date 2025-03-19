@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/Time/RealTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
 #include <strong_type/type.hpp>
