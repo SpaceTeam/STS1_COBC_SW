@@ -47,7 +47,7 @@ auto SetWriteEnableLatch() -> void;
 
 auto Initialize() -> void
 {
-    csGpioPin.Direction(hal::PinDirection::out);
+    csGpioPin.SetDirection(hal::PinDirection::out);
     csGpioPin.Set();
 
     auto const baudRate = 6'000'000;

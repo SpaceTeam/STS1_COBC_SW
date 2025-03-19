@@ -39,7 +39,7 @@ public:
 private:
     void init() override
     {
-        epsBatteryGoodGpioPin.Direction(hal::PinDirection::in);
+        epsBatteryGoodGpioPin.SetDirection(hal::PinDirection::in);
     }
 
 

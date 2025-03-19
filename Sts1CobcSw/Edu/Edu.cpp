@@ -86,7 +86,7 @@ auto FlushUartReceiveBuffer() -> void;
 //! @brief  Must be called in an init() function of a thread.
 auto Initialize() -> void
 {
-    eduEnableGpioPin.Direction(hal::PinDirection::out);
+    eduEnableGpioPin.SetDirection(hal::PinDirection::out);
     persistentVariables.template Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
 }
 

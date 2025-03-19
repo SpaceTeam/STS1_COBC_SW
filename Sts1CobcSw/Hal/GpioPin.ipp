@@ -11,14 +11,14 @@ inline GpioPin::GpioPin(RODOS::GPIO_PIN pinIndex) : pin_(pinIndex)
 }
 
 
-inline auto GpioPin::Direction(PinDirection pinDirection) -> void
+inline auto GpioPin::SetDirection(PinDirection pinDirection) -> void
 {
     pin_.reset();
     pin_.init(pinDirection == PinDirection::out, 1, 0);
 }
 
 
-inline auto GpioPin::OutputType(PinOutputType pinOutputType) -> void
+inline auto GpioPin::SetOutputType(PinOutputType pinOutputType) -> void
 {
     pin_.config(RODOS::GPIO_CFG_OPENDRAIN_ENABLE,
                 pinOutputType == PinOutputType::openDrain ? 1U : 0U);
@@ -37,8 +37,38 @@ inline auto GpioPin::Reset() -> void
 }
 
 
+inline auto GpioPin::EnableInterrupts() -> void
+{
+    pin_.interruptEnable(true);
+}
+
+
+inline auto GpioPin::DisableInterrupts() -> void
+{
+    pin_.interruptEnable(false);
+}
+
+
+inline auto GpioPin::ResetInterruptStatus() -> void
+{
+    pin_.resetInterruptEventStatus();
+}
+
+
 inline auto GpioPin::Read() const -> PinState
 {
     return pin_.readPins() == 0 ? PinState::reset : PinState::set;
+}
+
+
+inline auto GpioPin::InterruptOccurred() const -> bool
+{
+    return pin_.isDataReady();
+}
+
+
+inline auto GpioPin::GpioEventReceiver::SetInterruptHandler(void (*handler)()) -> void
+{
+    interruptHandler_ = handler;
 }
 }

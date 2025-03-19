@@ -24,7 +24,7 @@ private:
     {
         InitializeRfLatchupDisablePins();
 #ifdef USE_WATCHDOG
-        watchdogClearGpio.Direction(hal::PinDirection::out);
+        watchdogClearGpio.SetDirection(hal::PinDirection::out);
 #endif
     }
 

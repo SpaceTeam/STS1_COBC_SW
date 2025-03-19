@@ -26,11 +26,11 @@ auto InitializeRfLatchupDisablePins() -> void
 {
 #ifndef __linux__
     #if HW_VERSION >= 27 and HW_VERSION < 30
-    rfLatchupDisableGpioPin.Direction(hal::PinDirection::out);
+    rfLatchupDisableGpioPin.SetDirection(hal::PinDirection::out);
     #endif
     #if HW_VERSION >= 30
-    rfLatchupDisableGpioPin1.Direction(hal::PinDirection::out);
-    rfLatchupDisableGpioPin2.Direction(hal::PinDirection::out);
+    rfLatchupDisableGpioPin1.SetDirection(hal::PinDirection::out);
+    rfLatchupDisableGpioPin2.SetDirection(hal::PinDirection::out);
     #endif
 #endif
 }

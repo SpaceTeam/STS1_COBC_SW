@@ -40,9 +40,9 @@ public:
 private:
     void init() override
     {
-        eduHeartbeatGpioPin.Direction(hal::PinDirection::in);
-        ledGpioPin.Direction(hal::PinDirection::out);
-        epsChargingGpioPin.Direction(hal::PinDirection::out);
+        eduHeartbeatGpioPin.SetDirection(hal::PinDirection::in);
+        ledGpioPin.SetDirection(hal::PinDirection::out);
+        epsChargingGpioPin.SetDirection(hal::PinDirection::out);
         ledGpioPin.Reset();
         epsChargingGpioPin.Reset();
         // edu.Initialize();

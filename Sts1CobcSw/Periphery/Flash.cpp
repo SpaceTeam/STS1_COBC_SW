@@ -90,9 +90,9 @@ template<std::endian endianness>
 
 auto Initialize() -> void
 {
-    csGpioPin.Direction(hal::PinDirection::out);
+    csGpioPin.SetDirection(hal::PinDirection::out);
     csGpioPin.Set();
-    writeProtectionGpioPin.Direction(hal::PinDirection::out);
+    writeProtectionGpioPin.SetDirection(hal::PinDirection::out);
     writeProtectionGpioPin.Set();
     auto const baudRate = 48'000'000;
     Initialize(&flashSpi, baudRate);

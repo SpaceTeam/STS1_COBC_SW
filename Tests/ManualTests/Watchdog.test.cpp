@@ -17,7 +17,7 @@ class WatchdogTest : public RODOS::StaticThread<>
 {
     void init() override
     {
-        led1Gpio.Direction(hal::PinDirection::out);
+        led1Gpio.SetDirection(hal::PinDirection::out);
     }
 
 
