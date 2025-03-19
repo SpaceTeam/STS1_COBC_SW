@@ -26,9 +26,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_Periphery
+                Sts1CobcSw_RealTime
+                Sts1CobcSw_RodosTime
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Telemetry
-                Sts1CobcSw_Time
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
     )

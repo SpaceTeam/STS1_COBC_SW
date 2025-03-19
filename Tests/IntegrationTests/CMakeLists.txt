@@ -18,8 +18,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Periphery
+                Sts1CobcSw_RodosTime
                 Sts1CobcSw_Serial
-                Sts1CobcSw_Time
                 Sts1CobcSw_Utility
     )
 endif()

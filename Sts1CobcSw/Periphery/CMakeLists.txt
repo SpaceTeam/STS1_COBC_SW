@@ -9,7 +9,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSw_Periphery PRIVATE Eps.cpp Flash.cpp Fram.cpp Rf.cpp Spis.cpp
                                      TemperatureSensor.cpp
     )
-    target_link_libraries(Sts1CobcSw_Periphery PRIVATE Sts1CobcSw_Time)
+    target_link_libraries(Sts1CobcSw_Periphery PRIVATE Sts1CobcSw_RodosTime)
 else()
     target_sources(
         Sts1CobcSw_Periphery PRIVATE EpsStubs.cpp FlashMock.cpp FramMock.cpp SpiMocks.cpp

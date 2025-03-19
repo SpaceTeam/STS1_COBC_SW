@@ -17,4 +17,4 @@ namespace sts1cobcsw
 }
 
 
-#include <Sts1CobcSw/Time/RealTime.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/RealTime/RealTime.ipp>  // IWYU pragma: keep
