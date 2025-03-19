@@ -116,11 +116,11 @@ auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
 auto InitializeAdcs() -> void
 {
-    adc4CsGpioPin.Direction(hal::PinDirection::out);
+    adc4CsGpioPin.SetDirection(hal::PinDirection::out);
     adc4CsGpioPin.Set();
-    adc5CsGpioPin.Direction(hal::PinDirection::out);
+    adc5CsGpioPin.SetDirection(hal::PinDirection::out);
     adc5CsGpioPin.Set();
-    adc6CsGpioPin.Direction(hal::PinDirection::out);
+    adc6CsGpioPin.SetDirection(hal::PinDirection::out);
     adc6CsGpioPin.Set();
 
     static constexpr auto baudrate = 6'000'000;

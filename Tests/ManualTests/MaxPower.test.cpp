@@ -45,8 +45,8 @@ public:
 private:
     void init() override
     {
-        led1GpioPin.Direction(hal::PinDirection::out);
-        led2GpioPin.Direction(hal::PinDirection::out);
+        led1GpioPin.SetDirection(hal::PinDirection::out);
+        led2GpioPin.SetDirection(hal::PinDirection::out);
     }
 
 

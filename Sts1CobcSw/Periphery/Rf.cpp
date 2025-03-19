@@ -164,21 +164,21 @@ auto SetTxType(TxType txType) -> void
 
 auto InitializeGpiosAndSpi() -> void
 {
-    csGpioPin.Direction(hal::PinDirection::out);
+    csGpioPin.SetDirection(hal::PinDirection::out);
 #if HW_VERSION >= 30
-    csGpioPin.OutputType(hal::PinOutputType::openDrain);
+    csGpioPin.SetOutputType(hal::PinOutputType::openDrain);
 #else
-    csGpioPin.OutputType(hal::PinOutputType::pushPull);
+    csGpioPin.SetOutputType(hal::PinOutputType::pushPull);
 #endif
     csGpioPin.Set();
-    nirqGpioPin.Direction(hal::PinDirection::in);
-    sdnGpioPin.Direction(hal::PinDirection::out);
+    nirqGpioPin.SetDirection(hal::PinDirection::in);
+    sdnGpioPin.SetDirection(hal::PinDirection::out);
     sdnGpioPin.Set();
-    gpio0GpioPin.Direction(hal::PinDirection::out);
+    gpio0GpioPin.SetDirection(hal::PinDirection::out);
     gpio0GpioPin.Reset();
-    paEnablePin.Direction(hal::PinDirection::out);
+    paEnablePin.SetDirection(hal::PinDirection::out);
     paEnablePin.Reset();
-    watchdogResetGpioPin.Direction(hal::PinDirection::out);
+    watchdogResetGpioPin.SetDirection(hal::PinDirection::out);
     // The watchdog must be reset at least once to enable the RF module
     watchdogResetGpioPin.Reset();
     SuspendFor(watchDogResetPinDelay);

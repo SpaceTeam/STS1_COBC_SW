@@ -47,17 +47,18 @@ public:
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     GpioPin(RODOS::GPIO_PIN pinIndex);
 
-    // TODO: Rename Direction(), ... to SetDirection(), ...
-    auto Direction(PinDirection pinDirection) -> void;
-    auto OutputType(PinOutputType pinOutputType) -> void;
+    auto SetDirection(PinDirection pinDirection) -> void;
+    auto SetOutputType(PinOutputType pinOutputType) -> void;
     auto Set() -> void;
     auto Reset() -> void;
+
     auto SetInterruptSensitivity(InterruptSensitivity interruptSensitivity) -> void;
     auto EnableInterrupts() -> void;
     auto DisableInterrupts() -> void;
     auto ResetInterruptStatus() -> void;
     auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
     auto SetInterruptHandler(void (*handler)()) -> void;
+
     [[nodiscard]] auto Read() const -> PinState;
     [[nodiscard]] auto InterruptOccurred() const -> bool;
 

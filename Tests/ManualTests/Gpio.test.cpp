@@ -31,7 +31,7 @@ private:
     {
         for(auto & pin : ledPins)
         {
-            pin.Direction(hal::PinDirection::out);
+            pin.SetDirection(hal::PinDirection::out);
         }
     }
 
@@ -65,7 +65,7 @@ public:
 private:
     void init() override
     {
-        uciUartRxGpioPin.Direction(hal::PinDirection::in);
+        uciUartRxGpioPin.SetDirection(hal::PinDirection::in);
         uciUartRxGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::fallingEdge);
     }
 

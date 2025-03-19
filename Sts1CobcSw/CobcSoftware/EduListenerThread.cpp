@@ -35,7 +35,7 @@ public:
 private:
     void init() override
     {
-        eduUpdateGpioPin.Direction(hal::PinDirection::in);
+        eduUpdateGpioPin.SetDirection(hal::PinDirection::in);
     }
 
 

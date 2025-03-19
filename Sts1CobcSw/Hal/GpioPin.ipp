@@ -11,14 +11,14 @@ inline GpioPin::GpioPin(RODOS::GPIO_PIN pinIndex) : pin_(pinIndex)
 }
 
 
-inline auto GpioPin::Direction(PinDirection pinDirection) -> void
+inline auto GpioPin::SetDirection(PinDirection pinDirection) -> void
 {
     pin_.reset();
     pin_.init(pinDirection == PinDirection::out, 1, 0);
 }
 
 
-inline auto GpioPin::OutputType(PinOutputType pinOutputType) -> void
+inline auto GpioPin::SetOutputType(PinOutputType pinOutputType) -> void
 {
     pin_.config(RODOS::GPIO_CFG_OPENDRAIN_ENABLE,
                 pinOutputType == PinOutputType::openDrain ? 1U : 0U);
