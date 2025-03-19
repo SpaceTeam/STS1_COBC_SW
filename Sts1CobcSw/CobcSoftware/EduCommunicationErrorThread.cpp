@@ -4,8 +4,8 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Time/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>

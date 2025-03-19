@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/Time/RodosTime.hpp>
 
 #include <strong_type/type.hpp>
 

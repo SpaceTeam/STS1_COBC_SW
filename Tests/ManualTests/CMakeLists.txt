@@ -22,7 +22,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_Serial
-                Sts1CobcSw_Utility
+                Sts1CobcSw_Time
                 Sts1CobcSwTests::HardwareSetup
                 Sts1CobcSw_Vocabulary
     )
@@ -46,6 +46,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial
+                Sts1CobcSw_Time
                 Sts1CobcSw_Utility
                 Sts1CobcSwTests::HardwareSetup
     )
@@ -66,6 +67,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial
+                Sts1CobcSw_Time
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::HardwareSetup
@@ -80,14 +82,19 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(Uart)
     target_link_libraries(
         Sts1CobcSwTests_Uart
-        PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Hal Sts1CobcSw_Serial
-                Sts1CobcSw_Utility Sts1CobcSwTests::HardwareSetup
+        PRIVATE rodos::rodos
+                strong_type::strong_type
+                Sts1CobcSw_Hal
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Time
+                Sts1CobcSw_Utility
+                Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(Watchdog)
     target_link_libraries(
         Sts1CobcSwTests_Watchdog
-        PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Hal Sts1CobcSw_Utility
+        PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Hal Sts1CobcSw_Time
                 Sts1CobcSw_Vocabulary Sts1CobcSwTests::HardwareSetupWithoutWatchdog
     )
 endif()

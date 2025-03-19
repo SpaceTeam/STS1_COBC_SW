@@ -2,8 +2,8 @@
 
 
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/Utility/RealTime.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/Time/RealTime.hpp>
+#include <Sts1CobcSw/Time/RodosTime.hpp>
 
 #include <strong_type/type.hpp>
 

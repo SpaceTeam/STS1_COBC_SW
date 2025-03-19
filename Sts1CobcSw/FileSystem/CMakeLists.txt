@@ -6,7 +6,9 @@ target_link_libraries(
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(Sts1CobcSw_FileSystem PRIVATE FileSystem.cpp LfsFlash.cpp)
-    target_link_libraries(Sts1CobcSw_FileSystem PRIVATE rodos::rodos Sts1CobcSw_Periphery)
+    target_link_libraries(
+        Sts1CobcSw_FileSystem PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Time
+    )
 else()
     target_sources(Sts1CobcSw_FileSystem PRIVATE LfsRam.cpp)
     target_link_libraries(Sts1CobcSw_FileSystem PRIVATE rodos::without_main_on_linux)

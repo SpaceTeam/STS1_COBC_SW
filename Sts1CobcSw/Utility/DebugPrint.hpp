@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Utility/RealTime.hpp>
+#include <Sts1CobcSw/Time/RealTime.hpp>
 
 #include <rodos_no_using_namespace.h>
 

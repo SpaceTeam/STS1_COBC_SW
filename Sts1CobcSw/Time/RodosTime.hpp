@@ -14,4 +14,4 @@ auto BusyWaitFor(Duration duration) -> void;
 }
 
 
-#include <Sts1CobcSw/Utility/RodosTime.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Time/RodosTime.ipp>  // IWYU pragma: keep

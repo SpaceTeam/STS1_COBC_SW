@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/Periphery/Eps.hpp>
 #include <Sts1CobcSw/Periphery/Spis.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
+#include <Sts1CobcSw/Time/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 

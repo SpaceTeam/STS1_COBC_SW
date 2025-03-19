@@ -9,9 +9,9 @@
 #include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Time/RealTime.hpp>
+#include <Sts1CobcSw/Time/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
-#include <Sts1CobcSw/Utility/RealTime.hpp>
-#include <Sts1CobcSw/Utility/RodosTime.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
