@@ -435,6 +435,21 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
 }
 
 
+[[nodiscard]] auto File::Seek(int offset, unsigned int flag) -> Result<int>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    auto error = lfs_file_seek(&lfs, &lfsFile_, offset, static_cast<int>(flag));
+    if(error != 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    return error;
+}
+
+
 auto File::CloseAndKeepLockFile() const -> Result<void>
 {
     if(not isOpen_)

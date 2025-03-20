@@ -105,6 +105,7 @@ public:
     [[nodiscard]] auto Read(std::span<Byte, extent> data) const -> Result<int>;
     template<std::size_t extent>
     [[nodiscard]] auto Write(std::span<const Byte, extent> data) -> Result<int>;
+    [[nodiscard]] auto Seek(int offset, unsigned int flag) -> Result<int>;
     [[nodiscard]] auto Size() const -> Result<int>;
     [[nodiscard]] auto Close() const -> Result<void>;
     [[nodiscard]] auto Flush() -> Result<void>;
