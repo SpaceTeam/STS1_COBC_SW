@@ -84,6 +84,20 @@ TEST_CASE("LfsWrapper without data corruption")
     CHECK(not flushResult.has_error());
     CHECK(VerifyDataInMemory(writeData));
 
+    // Seek() with a negative offset and LFS_SEEK_SET is not allowed
+    auto seekResult = writeableFile.Seek(-static_cast<int>(sizeof(writeData[0])), LFS_SEEK_SET);
+    CHECK(seekResult.has_error());
+    CHECK(seekResult.error() == sts1cobcsw::ErrorCode::invalidParameter);
+
+    seekResult = writeableFile.Seek(0, LFS_SEEK_SET);
+    CHECK(not seekResult.has_error());
+    CHECK(seekResult.value() == 0);
+
+    // Rewrite data from beginning -> data should still be the same in the file
+    writeResult = writeableFile.Write(Span(writeData));
+    CHECK(writeResult.has_value());
+    CHECK(writeResult.value() == static_cast<int>(writeData.size()));
+
     // Remove should fail because the file is opened
     auto removeResult = fs::Remove(filePath);
     CHECK(removeResult.has_error());
@@ -160,6 +174,10 @@ TEST_CASE("LfsWrapper without data corruption")
     // Flush() should fail because the file is closed
     flushResult = writeableFile.Flush();
     CHECK(flushResult.has_error());
+
+    // Seek() should fail because the file is closed
+    seekResult = writeableFile.Seek(0, LFS_SEEK_SET);
+    CHECK(seekResult.has_error());
 
     openResult = fs::Open(filePath, LFS_O_RDONLY);
     CHECK(openResult.has_value());
