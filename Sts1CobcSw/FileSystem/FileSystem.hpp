@@ -138,4 +138,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/FileSystem/LfsWrapper.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FileSystem/FileSystem.ipp>  // IWYU pragma: keep

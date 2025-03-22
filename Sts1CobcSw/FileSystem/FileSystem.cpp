@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 
 #include <littlefs/lfs.h>

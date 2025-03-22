@@ -47,7 +47,7 @@
 
   # Instead of all our .ipp files include the .hpp ones
   { include: ["\"Sts1CobcSw/Edu/Types.ipp\"",                           "private", "<Sts1CobcSw/Edu/Types.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/FileSystem/LfsWrapper.ipp\"",               "private", "<Sts1CobcSw/FileSystem/LfsWrapper.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.ipp\"",               "private", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramVector.ipp\"",             "private", "<Sts1CobcSw/FramSections/FramVector.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramRingArray.ipp\"",          "private", "<Sts1CobcSw/FramSections/FramRingArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/PersistentVariables.ipp\"",    "private", "<Sts1CobcSw/FramSections/PersistentVariables.hpp>", "public"] },
@@ -84,7 +84,7 @@
   { include: ["\"Sts1CobcSw/Edu/Types.hpp\"",                                      "public", "<Sts1CobcSw/Edu/Types.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FileSystem/ErrorsAndResult.hpp\"",                     "public", "<Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp\"",                     "public", "<Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/FileSystem/LfsWrapper.hpp\"",                          "public", "<Sts1CobcSw/FileSystem/LfsWrapper.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"",                          "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramLayout.hpp\"",                        "public", "<Sts1CobcSw/FramSections/FramLayout.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramRingArray.hpp\"",                     "public", "<Sts1CobcSw/FramSections/FramRingArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramVector.hpp\"",                        "public", "<Sts1CobcSw/FramSections/FramVector.hpp>", "public"] },

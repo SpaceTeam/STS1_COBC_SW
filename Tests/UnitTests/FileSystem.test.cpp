@@ -5,7 +5,7 @@
 #ifdef __linux__
     #include <Sts1CobcSw/FileSystem/LfsRam.hpp>
 #endif
-#include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
@@ -38,7 +38,7 @@ auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -
 }
 
 
-TEST_CASE("LfsWrapper without data corruption")
+TEST_CASE("FileSystem without data corruption")
 {
     fs::Initialize();
     auto mountResult = fs::Mount();
@@ -277,7 +277,7 @@ TEST_CASE("LfsWrapper without data corruption")
 
 
 #ifdef __linux__
-TEST_CASE("LfsWrapper with data corruption")
+TEST_CASE("FileSystem with data corruption")
 {
     fs::Initialize();
 
