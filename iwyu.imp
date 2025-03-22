@@ -42,7 +42,8 @@
   { include: ["<ringbuffer.h>", "private", "<rodos/support/support-libs/ringbuffer.h>", "public"] },
 
   # Mappings for the ETL
-  { include: ["<etl/basic_string.h>", "private", "<etl/string.h>", "public"] },
+  { include: ["<etl/basic_string.h>",      "private", "<etl/string.h>", "public"] },
+  { include: ["<etl/basic_format_spec.h>", "private", "<etl/format_spec.h>", "public"] },
 
   # Instead of all our .ipp files include the .hpp ones
   { include: ["\"Sts1CobcSw/Edu/Types.ipp\"",                           "private", "<Sts1CobcSw/Edu/Types.hpp>", "public"] },

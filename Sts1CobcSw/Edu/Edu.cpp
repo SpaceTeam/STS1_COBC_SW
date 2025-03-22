@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -12,16 +12,23 @@
 #include <Sts1CobcSw/Utility/Crc32Software.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
+
+#include <littlefs/lfs.h>
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/format_spec.h>
+#include <etl/to_string.h>
 #include <etl/vector.h>
 
 #include <array>
 #include <cstdint>
+#include <limits>
 #include <span>
 
 
@@ -112,28 +119,17 @@ auto TurnOff() -> void
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    // TODO: Use fs::Open() and OUTCOME_TRY instead
-    auto errorCode = fs::deprecated::OpenProgramFile(data.programId, 0);
-    DEBUG_PRINT("Pretending to open the file ...\n");
-    if(errorCode != 0)
-    {
-        // This is just a random error code, OUTCOME_TRY will return the correct one
-        return ErrorCode::io;
-    }
-
+    auto path = fs::Path("programs/");
+    static constexpr auto width =
+        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
+    etl::to_string(
+        value_of(data.programId), path, etl::format_spec().width(width).fill('0'), /*append=*/true);
+    // NOLINTNEXTLINE(*signed-bitwise)
+    OUTCOME_TRY(auto file, fs::Open(path, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));
     // TODO: Check if program file is not too large
     while(true)
     {
-        // TODO: Use File::Read() and OUTCOME_TRY instead
-        errorCode = fs::deprecated::ReadProgramFile(&cepDataBuffer);
-        DEBUG_PRINT("Pretending to read %d bytes from the file system ...\n",
-                    static_cast<int>(cepDataBuffer.size()));
-        if(errorCode != 0)
-        {
-            fs::deprecated::CloseProgramFile();
-            // This is just a random error code, OUTCOME_TRY will return the correct one
-            return ErrorCode::io;
-        }
+        OUTCOME_TRY(file.Read(Span(&cepDataBuffer)));
         if(cepDataBuffer.empty())
         {
             break;
@@ -141,20 +137,10 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         auto sendDataPacketResult = SendDataPacket(Span(cepDataBuffer));
         if(sendDataPacketResult.has_error())
         {
-            fs::deprecated::CloseProgramFile();
+            // TODO: Why not return the error from SendDataPacket here, i.e., use OUTCOME_TRY?
             return ErrorCode::nack;
         }
     }
-
-    // TODO: Remove this since ~File() automatically closes the file
-    errorCode = fs::deprecated::CloseProgramFile();
-    DEBUG_PRINT("Pretending to close the file ...\n");
-    if(errorCode != 0)
-    {
-        // This is just a random error code, OUTCOME_TRY will return the correct one
-        return ErrorCode::io;
-    }
-
     return WaitForAck();
 }
 

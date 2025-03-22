@@ -8,8 +8,8 @@ target_link_libraries(Sts1CobcSw_Edu PRIVATE Sts1CobcSw_Utility)
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(Sts1CobcSw_Edu PRIVATE Edu.cpp)
     target_link_libraries(
-        Sts1CobcSw_Edu PRIVATE Sts1CobcSw_FileSystem Sts1CobcSw_Hal Sts1CobcSw_Periphery
-                               Sts1CobcSw_RodosTime
+        Sts1CobcSw_Edu PRIVATE littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Hal
+                               Sts1CobcSw_Periphery Sts1CobcSw_RodosTime
     )
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
