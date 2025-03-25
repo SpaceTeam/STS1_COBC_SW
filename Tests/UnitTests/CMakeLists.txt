@@ -16,8 +16,13 @@ add_test(NAME Fram COMMAND Sts1CobcSwTests_Fram)
 add_test_program(LfsWrapper)
 target_link_libraries(
     Sts1CobcSwTests_LfsWrapper
-    PRIVATE etl::etl littlefs::littlefs Sts1CobcSw_FileSystem Sts1CobcSw_Serial Sts1CobcSw_Utility
+    PRIVATE etl::etl
+            littlefs::littlefs
+            Sts1CobcSw_FileSystem
+            Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
             Sts1CobcSwTests::CatchRodos
+            Sts1CobcSwTests::Utility
 )
 add_test(NAME LfsWrapper COMMAND Sts1CobcSwTests_LfsWrapper)
 

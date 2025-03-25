@@ -20,7 +20,7 @@ enum class ErrorCode
     // Littlefs (negative values)
     io = LFS_ERR_IO,                    // Error during device operation
     corrupt = LFS_ERR_CORRUPT,          // Corrupted
-    noDirectoryEntry = LFS_ERR_NOENT,   // No directory entry
+    notFound = LFS_ERR_NOENT,           // No directory entry (I think this means "entry not found")
     alreadyExists = LFS_ERR_EXIST,      // Entry already exists
     notADirectory = LFS_ERR_NOTDIR,     // Entry is not a dir
     isADirectory = LFS_ERR_ISDIR,       // Entry is a dir
