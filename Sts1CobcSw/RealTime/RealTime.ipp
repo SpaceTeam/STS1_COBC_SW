@@ -12,7 +12,7 @@
 
 namespace sts1cobcsw
 {
-inline auto CurrentRealTime() -> RealTime
+Enline auto CurrentRealTime() -> RealTime
 {
     return ToRealTime(CurrentRodosTime());
 }
@@ -24,10 +24,26 @@ inline auto ToRodosTime(RealTime realTime) -> RodosTime
          - persistentVariables.template Load<"realTimeOffset">();
 }
 
-
 inline auto ToRealTime(RodosTime rodosTime) -> RealTime
 {
     return RealTime(value_of(rodosTime + persistentVariables.template Load<"realTimeOffset">())
                     / RODOS::SECONDS);
 }
+
+
+auto UpdateRealTimeOffset(RealTime teleTimeStamp, std::int32_t rxBaudRate) -> void
+{
+    static constexpr auto teleCommandSizeBytes = 383;
+    static constexpr auto bitsPerByte = 8;
+
+    auto transmissionTimeSeconds =
+        static_cast<double>(teleCommandSizeBytes * bitsPerByte) / static_cast<double>(rxBaudRate);
+    auto transmissionDuration = Duration(transmissionTimeSeconds * RODOS::SECONDS);
+
+    auto newRealTimeOffset =
+        teleTimeStamp * RODOS::SECONDS + transmissionDuration - CurrentRodosTime;
+
+    persistentVariables.template Store<"realTimeOffset">(newRealTimeOffset);
+}
+
 }
