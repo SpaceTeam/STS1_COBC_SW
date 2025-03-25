@@ -1,4 +1,3 @@
-#include <Tests/CatchRodos/Stringification.hpp>
 #include <Tests/CatchRodos/Vocabulary.hpp>
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>

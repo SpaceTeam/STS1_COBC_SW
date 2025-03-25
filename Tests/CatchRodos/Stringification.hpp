@@ -3,6 +3,7 @@
 
 #include <Tests/CatchRodos/Vocabulary.hpp>
 
+#include <etl/format_spec.h>
 #include <etl/to_string.h>
 #include <etl/vector.h>
 

@@ -122,6 +122,14 @@
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",                          "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.hpp\"",                           "public", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/Time.hpp\"",                                "public", "<Sts1CobcSw/Vocabulary/Time.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/Assertion.hpp\"",                                "public", "<Tests/CatchRodos/Assertion.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/AssertionDecomposition.hpp\"",                   "public", "<Tests/CatchRodos/AssertionDecomposition.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/Stringification.hpp\"",                          "public", "<Tests/CatchRodos/Stringification.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/TestMacros.hpp\"",                               "public", "<Tests/CatchRodos/TestMacros.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/TestRegistration.hpp\"",                         "public", "<Tests/CatchRodos/TestRegistration.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/TestReporter.hpp\"",                             "public", "<Tests/CatchRodos/TestReporter.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/Vocabulary.hpp\"",                               "public", "<Tests/CatchRodos/Vocabulary.hpp>", "public"] },
+  { include: ["\"Tests/Utility/Stringification.hpp\"",                             "public", "<Tests/Utility/Stringification.hpp>", "public"] },
 
   # Fixing iwyu bug where <tuple> is required to be include for array symbol
   # unfortunately, the `symbol` directive does not work

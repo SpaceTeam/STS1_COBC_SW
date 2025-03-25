@@ -1,5 +1,4 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
-#include <Tests/Utility/Stringification.hpp>
 
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #ifdef __linux__
@@ -12,6 +11,7 @@
 
 #include <littlefs/lfs.h>
 
+#include <etl/string.h>
 #include <etl/to_string.h>
 
 #include <algorithm>

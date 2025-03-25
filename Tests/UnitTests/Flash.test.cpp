@@ -7,7 +7,6 @@
 
 #include <strong_type/difference.hpp>
 
-#include <algorithm>
 #include <array>
 
 
