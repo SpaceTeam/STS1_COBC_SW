@@ -1,10 +1,12 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/File.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #ifdef __linux__
     #include <Sts1CobcSw/FileSystem/LfsRam.hpp>
 #endif
-#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
