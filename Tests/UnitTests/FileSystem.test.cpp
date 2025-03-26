@@ -33,7 +33,8 @@ using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 namespace
 {
-auto VerifyDataInMemory(std::span<const sts1cobcsw::Byte> dataToCheck) -> bool;
+auto CheckIfDataIsInMemory(std::span<const sts1cobcsw::Byte> dataToCheck) -> void;
+auto CheckIfDataIsNotInMemory(std::span<const sts1cobcsw::Byte> dataToCheck) -> void;
 #ifdef __linux__
 auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool;
 #endif
@@ -83,10 +84,10 @@ TEST_CASE("FileSystem without data corruption")
     CHECK(readResult.has_error());
     CHECK(readResult.error() == ErrorCode::unsupportedOperation);
 
-    CHECK(not VerifyDataInMemory(writeData));
+    CheckIfDataIsNotInMemory(writeData);
     auto flushResult = writeableFile.Flush();
     CHECK(not flushResult.has_error());
-    CHECK(VerifyDataInMemory(writeData));
+    CheckIfDataIsInMemory(writeData);
 
     auto seekResult = writeableFile.SeekAbsolute(-2);
     CHECK(seekResult.has_error());
@@ -390,14 +391,23 @@ TEST_CASE("FileSystem with data corruption")
 
 namespace
 {
-auto VerifyDataInMemory([[maybe_unused]] std::span<const sts1cobcsw::Byte> dataToCheck) -> bool
+auto CheckIfDataIsInMemory([[maybe_unused]] std::span<const sts1cobcsw::Byte> dataToCheck) -> void
 {
 #ifdef __linux__
     auto it =
         std::search(fs::memory.begin(), fs::memory.end(), dataToCheck.begin(), dataToCheck.end());
-    return static_cast<bool>(it != fs::memory.end());
-#else
-    return true;
+    CHECK(it != fs::memory.end());
+#endif
+}
+
+
+auto CheckIfDataIsNotInMemory([[maybe_unused]] std::span<const sts1cobcsw::Byte> dataToCheck)
+    -> void
+{
+#ifdef __linux__
+    auto it =
+        std::search(fs::memory.begin(), fs::memory.end(), dataToCheck.begin(), dataToCheck.end());
+    CHECK(it == fs::memory.end());
 #endif
 }
 
