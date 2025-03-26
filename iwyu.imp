@@ -42,12 +42,12 @@
   { include: ["<ringbuffer.h>", "private", "<rodos/support/support-libs/ringbuffer.h>", "public"] },
 
   # Mappings for the ETL
-  { include: ["<etl/basic_string.h>", "private", "<etl/string.h>", "public"] },
+  { include: ["<etl/basic_string.h>",      "private", "<etl/string.h>", "public"] },
+  { include: ["<etl/basic_format_spec.h>", "private", "<etl/format_spec.h>", "public"] },
 
   # Instead of all our .ipp files include the .hpp ones
   { include: ["\"Sts1CobcSw/Edu/Types.ipp\"",                           "private", "<Sts1CobcSw/Edu/Types.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.ipp\"",               "private", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/FileSystem/LfsWrapper.ipp\"",               "private", "<Sts1CobcSw/FileSystem/LfsWrapper.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FileSystem/File.ipp\"",                     "private", "<Sts1CobcSw/FileSystem/File.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramVector.ipp\"",             "private", "<Sts1CobcSw/FramSections/FramVector.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramRingArray.ipp\"",          "private", "<Sts1CobcSw/FramSections/FramRingArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/PersistentVariables.ipp\"",    "private", "<Sts1CobcSw/FramSections/PersistentVariables.hpp>", "public"] },
@@ -83,9 +83,10 @@
   { include: ["\"Sts1CobcSw/Edu/ProgramStatusHistory.hpp\"",                       "public", "<Sts1CobcSw/Edu/ProgramStatusHistory.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Edu/Types.hpp\"",                                      "public", "<Sts1CobcSw/Edu/Types.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FileSystem/ErrorsAndResult.hpp\"",                     "public", "<Sts1CobcSw/FileSystem/ErrorsAndResult.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"",                          "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp\"",                     "public", "<Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/FileSystem/LfsWrapper.hpp\"",                          "public", "<Sts1CobcSw/FileSystem/LfsWrapper.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FileSystem/DirectoryIterator.hpp\"",                   "public", "<Sts1CobcSw/FileSystem/DirectoryIterator.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FileSystem/File.hpp\"",                                "public", "<Sts1CobcSw/FileSystem/File.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/FileSystem/FileSystem.hpp\"",                          "public", "<Sts1CobcSw/FileSystem/FileSystem.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramLayout.hpp\"",                        "public", "<Sts1CobcSw/FramSections/FramLayout.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramRingArray.hpp\"",                     "public", "<Sts1CobcSw/FramSections/FramRingArray.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/FramSections/FramVector.hpp\"",                        "public", "<Sts1CobcSw/FramSections/FramVector.hpp>", "public"] },
@@ -123,6 +124,14 @@
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",                          "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.hpp\"",                           "public", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/Time.hpp\"",                                "public", "<Sts1CobcSw/Vocabulary/Time.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/Assertion.hpp\"",                                "public", "<Tests/CatchRodos/Assertion.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/AssertionDecomposition.hpp\"",                   "public", "<Tests/CatchRodos/AssertionDecomposition.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/Stringification.hpp\"",                          "public", "<Tests/CatchRodos/Stringification.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/TestMacros.hpp\"",                               "public", "<Tests/CatchRodos/TestMacros.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/TestRegistration.hpp\"",                         "public", "<Tests/CatchRodos/TestRegistration.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/TestReporter.hpp\"",                             "public", "<Tests/CatchRodos/TestReporter.hpp>", "public"] },
+  { include: ["\"Tests/CatchRodos/Vocabulary.hpp\"",                               "public", "<Tests/CatchRodos/Vocabulary.hpp>", "public"] },
+  { include: ["\"Tests/Utility/Stringification.hpp\"",                             "public", "<Tests/Utility/Stringification.hpp>", "public"] },
 
   # Fixing iwyu bug where <tuple> is required to be include for array symbol
   # unfortunately, the `symbol` directive does not work

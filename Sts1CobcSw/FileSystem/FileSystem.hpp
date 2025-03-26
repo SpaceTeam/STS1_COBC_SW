@@ -1,53 +1,28 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 
 #include <littlefs/lfs.h>
 
-#include <etl/vector.h>
-
-#include <cstddef>
+#include <etl/string.h>
 
 
-namespace sts1cobcsw::fs::deprecated
+namespace sts1cobcsw::fs
+{
+using Path = etl::string<maxPathLength>;
+
+
+[[nodiscard]] auto Mount() -> Result<void>;
+[[nodiscard]] auto Unmount() -> Result<void>;
+[[nodiscard]] auto CreateDirectory(Path const & path) -> Result<void>;
+[[nodiscard]] auto Remove(Path const & path) -> Result<void>;
+[[nodiscard]] auto ForceRemove(Path const & path) -> Result<void>;
+
+
+namespace internal
 {
 extern lfs_t lfs;
-extern lfs_file_t lfsFile;
-extern const lfs_config lfsConfig;
-
-
-// Must not be called in a thread's init() function since HardwareSpi::DoInitialize() uses a
-// semaphore that doesn't work correctly there.
-auto Initialize() -> void;
-auto Format() -> int;
-auto Mount() -> int;
-auto Unmount() -> int;
-
-// File stuff
-auto OpenProgramFile(ProgramId programId, int flags) -> int;
-auto CloseProgramFile() -> int;
-template<std::size_t size>
-auto ReadProgramFile(etl::vector<Byte, size> * buffer) -> int;
-
-auto OpenFile(char const * path, int flags) -> int;
-auto CloseFile() -> int;
-auto FileSize() -> int;
-template<typename T>
-auto ReadFromFile(T * t) -> int;
-template<typename T>
-auto WriteToFile(T const & t) -> int;
-
-// Directory stuff
-auto CreateDirectory(char const * path) -> int;
-
-// Other stuff
-auto Remove(char const * path) -> int;
-auto Ls(char const * path) -> int;
-// TODO: Implement cat
-// TODO: Implement simple hexdump
 }
-
-
-#include <Sts1CobcSw/FileSystem/FileSystem.ipp>  // IWYU pragma: keep
+}

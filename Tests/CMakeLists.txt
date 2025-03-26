@@ -17,6 +17,7 @@ add_subdirectory(CatchRodos EXCLUDE_FROM_ALL)
 # just does not do anything. This simplifies the CMake code for tests that can be built for both
 # targets.
 add_subdirectory(HardwareSetup EXCLUDE_FROM_ALL)
+add_subdirectory(Utility EXCLUDE_FROM_ALL)
 
 # ---- Tests ----
 

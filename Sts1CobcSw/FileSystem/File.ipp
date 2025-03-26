@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
+
+#include <Sts1CobcSw/FileSystem/File.hpp>
 
 
 namespace sts1cobcsw::fs

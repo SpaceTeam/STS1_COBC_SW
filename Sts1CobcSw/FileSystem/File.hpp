@@ -1,13 +1,11 @@
 #pragma once
 
-
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <littlefs/lfs.h>
-
-#include <etl/string.h>
 
 #include <array>
 #include <cstddef>
@@ -16,17 +14,6 @@
 
 namespace sts1cobcsw::fs
 {
-using Path = etl::string<maxPathLength>;
-
-class File;
-
-
-[[nodiscard]] auto Mount() -> Result<void>;
-[[nodiscard]] auto Unmount() -> Result<void>;
-[[nodiscard]] auto Open(Path const & path, unsigned int flags) -> Result<File>;
-
-
-// TODO: Consider moving this class to a separate file
 class File
 {
 public:
@@ -42,8 +29,11 @@ public:
     [[nodiscard]] auto Read(std::span<Byte, extent> data) const -> Result<int>;
     template<std::size_t extent>
     [[nodiscard]] auto Write(std::span<const Byte, extent> data) -> Result<int>;
+    [[nodiscard]] auto SeekAbsolute(int offset) -> Result<int>;
+    [[nodiscard]] auto SeekRelative(int offset) -> Result<int>;
     [[nodiscard]] auto Size() const -> Result<int>;
     [[nodiscard]] auto Close() const -> Result<void>;
+    [[nodiscard]] auto Flush() -> Result<void>;
 
 
 private:
@@ -53,6 +43,7 @@ private:
     [[nodiscard]] auto CreateLockFile() const noexcept -> Result<void>;
     [[nodiscard]] auto Read(void * buffer, std::size_t size) const -> Result<int>;
     [[nodiscard]] auto Write(void const * buffer, std::size_t size) -> Result<int>;
+    [[nodiscard]] auto Seek(int offset, int whence) -> Result<int>;
     [[nodiscard]] auto CloseAndKeepLockFile() const -> Result<void>;
 
     Path path_ = "";
@@ -63,7 +54,10 @@ private:
     std::array<Byte, lfsCacheSize> buffer_ = {};
     lfs_file_config lfsFileConfig_ = {.buffer = buffer_.data()};
 };
+
+
+[[nodiscard]] auto Open(Path const & path, unsigned int flags) -> Result<File>;
 }
 
 
-#include <Sts1CobcSw/FileSystem/LfsWrapper.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/FileSystem/File.ipp>  // IWYU pragma: keep

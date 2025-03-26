@@ -1,45 +1,37 @@
-#include <Sts1CobcSw/FileSystem/LfsWrapper.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
-
-#include <littlefs/lfs.h>
+#include <Sts1CobcSw/FileSystem/File.hpp>
 
 
 namespace sts1cobcsw::fs
 {
-auto lfs = lfs_t{};
-
-
-// FIXME: For some reason this allocates 1024 bytes on the heap. With LFS_NO_MALLOC defined, it
-// crashes with a SEGFAULT.
-auto Mount() -> Result<void>
+namespace
 {
-    auto error = lfs_mount(&lfs, &lfsConfig);
-    if(error == 0)
-    {
-        return outcome_v2::success();
-    }
-    error = lfs_format(&lfs, &lfsConfig);
-    if(error != 0)
-    {
-        return static_cast<ErrorCode>(error);
-    }
-    error = lfs_mount(&lfs, &lfsConfig);
-    if(error == 0)
-    {
-        return outcome_v2::success();
-    }
-    return static_cast<ErrorCode>(error);
+auto & lfs = internal::lfs;
 }
 
 
-auto Unmount() -> Result<void>
+File::File(File && other) noexcept
 {
-    auto error = lfs_unmount(&lfs);
-    if(error != 0)
+    MoveConstructFrom(&other);
+}
+
+
+auto File::operator=(File && other) noexcept -> File &
+{
+    if(this != &other)
     {
-        return static_cast<ErrorCode>(error);
+        MoveConstructFrom(&other);
     }
-    return outcome_v2::success();
+    return *this;
+}
+
+
+File::~File()
+{
+    // Only close the file if it is not in a default initialized or moved-from state
+    if(not path_.empty())
+    {
+        (void)Close();
+    }
 }
 
 
@@ -67,29 +59,15 @@ auto Open(Path const & path, unsigned int flags) -> Result<File>
 }
 
 
-File::File(File && other) noexcept
+auto File::SeekAbsolute(int offset) -> Result<int>
 {
-    MoveConstructFrom(&other);
+    return Seek(offset, LFS_SEEK_SET);
 }
 
 
-auto File::operator=(File && other) noexcept -> File &
+auto File::SeekRelative(int offset) -> Result<int>
 {
-    if(this != &other)
-    {
-        MoveConstructFrom(&other);
-    }
-    return *this;
-}
-
-
-File::~File()
-{
-    // Only close the file if it is not in a default initialized or moved-from state
-    if(not path_.empty())
-    {
-        (void)Close();
-    }
+    return Seek(offset, LFS_SEEK_CUR);
 }
 
 
@@ -120,6 +98,25 @@ auto File::Close() const -> Result<void>
         return static_cast<ErrorCode>(error);
     }
     return CloseAndKeepLockFile();
+}
+
+
+auto File::Flush() -> Result<void>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_WRONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto error = lfs_file_sync(&lfs, &lfsFile_);
+    if(error == 0)
+    {
+        return outcome_v2::success();
+    }
+    return static_cast<ErrorCode>(error);
 }
 
 
@@ -209,6 +206,21 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
         return nWrittenBytes;
     }
     return static_cast<ErrorCode>(nWrittenBytes);
+}
+
+
+[[nodiscard]] auto File::Seek(int offset, int whence) -> Result<int>
+{
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    auto errorOrNewPosition = lfs_file_seek(&lfs, &lfsFile_, offset, whence);
+    if(errorOrNewPosition < 0)
+    {
+        return static_cast<ErrorCode>(errorOrNewPosition);
+    }
+    return errorOrNewPosition;
 }
 
 
