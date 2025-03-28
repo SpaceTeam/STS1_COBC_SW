@@ -164,7 +164,7 @@ TEST_CASE("TRY macro")
 
     // Test failure
     auto result3 = Add(1, "3.14");
-    CHECK(not result3.has_value());
+    CHECK(result3.has_value() == false);
     CHECK(result3.has_error());
     CHECK(result3.error() == ConversionErrc::illegalChar);
 

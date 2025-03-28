@@ -86,26 +86,26 @@ TEST_CASE("FramVector")
     {
         CHECK(charVector1.Size() == 0U);
         CHECK(charVector1.IsEmpty());
-        CHECK(not charVector1.IsFull());
+        CHECK(charVector1.IsFull() == false);
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
         CHECK(charVector1.Get(0) == 0x00);
 
         charVector1.PushBack(0x61);
         CHECK(charVector1.Size() == 1U);
-        CHECK(not charVector1.IsEmpty());
-        CHECK(not charVector1.IsFull());
+        CHECK(charVector1.IsEmpty() == false);
+        CHECK(charVector1.IsFull() == false);
         CHECK(charVector1.Get(0) == 0x61);
 
         charVector1.PushBack(0x62);
         CHECK(charVector1.Size() == 2U);
-        CHECK(not charVector1.IsEmpty());
-        CHECK(not charVector1.IsFull());
+        CHECK(charVector1.IsEmpty() == false);
+        CHECK(charVector1.IsFull() == false);
         CHECK(charVector1.Get(1) == 0x62);
 
         charVector1.PushBack(0x63);
         CHECK(charVector1.Size() == 3U);
-        CHECK(not charVector1.IsEmpty());
+        CHECK(charVector1.IsEmpty() == false);
         CHECK(charVector1.IsFull());
         CHECK(charVector1.Get(2) == 0x63);
 
@@ -138,20 +138,20 @@ TEST_CASE("FramVector")
 
         CHECK(charVector2.Size() == 0U);
         CHECK(charVector2.IsEmpty());
-        CHECK(not charVector2.IsFull());
+        CHECK(charVector2.IsFull() == false);
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
         CHECK(charVector2.Get(0) == 0x00);
 
         charVector2.PushBack(11);
         CHECK(charVector2.Size() == 1U);
-        CHECK(not charVector2.IsEmpty());
-        CHECK(not charVector2.IsFull());
+        CHECK(charVector2.IsEmpty() == false);
+        CHECK(charVector2.IsFull() == false);
         CHECK(charVector2.Get(0) == 11);
 
         charVector2.PushBack(12);
         CHECK(charVector2.Size() == 2U);
-        CHECK(not charVector2.IsEmpty());
+        CHECK(charVector2.IsEmpty() == false);
         CHECK(charVector2.IsFull());
         CHECK(charVector2.Get(1) == 12);
 
@@ -187,7 +187,7 @@ TEST_CASE("FramVector")
 
         CHECK(sVector.Size() == 0U);
         CHECK(sVector.IsEmpty());
-        CHECK(not sVector.IsFull());
+        CHECK(sVector.IsFull() == false);
         // Reading from an empty vector prints a debug message and returns a default-constructed
         // value
         CHECK(sVector.Get(0) == S{});

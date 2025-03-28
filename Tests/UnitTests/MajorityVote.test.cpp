@@ -26,5 +26,5 @@ TEST_CASE("Majority vote")
     CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
 
     voteResult = ComputeMajorityVote(17, 173, -2);
-    CHECK(not voteResult.has_value());
+    CHECK(voteResult.has_value() == false);
 }

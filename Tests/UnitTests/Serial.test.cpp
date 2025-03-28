@@ -44,12 +44,12 @@ TEST_CASE("TriviallySerializable")
     CHECK(TriviallySerializable<double>);
     CHECK(TriviallySerializable<bool>);
     // Pointers and arrays are not TriviallySerializable
-    CHECK(not TriviallySerializable<char *>);
-    CHECK(not TriviallySerializable<int[]>);  // NOLINT
-    CHECK(not TriviallySerializable<std::array<double, 3>>);
+    CHECK(TriviallySerializable<char *> == false);
+    CHECK(TriviallySerializable<int[]> == false);  // NOLINT
+    CHECK(TriviallySerializable<std::array<double, 3>> == false);
     // User-defined types aren't either
-    CHECK(not TriviallySerializable<EmptyStruct>);
-    CHECK(not TriviallySerializable<SingleInt32>);
+    CHECK(TriviallySerializable<EmptyStruct> == false);
+    CHECK(TriviallySerializable<SingleInt32> == false);
 }
 
 
@@ -77,14 +77,14 @@ TEST_CASE("HasEndianness")
     CHECK(HasEndianness<unsigned long>);
     CHECK(HasEndianness<bool>);
     // Floats, type_safe bools, pointers, and arrays are not HasEndianness
-    CHECK(not HasEndianness<float>);
-    CHECK(not HasEndianness<double>);
-    CHECK(not HasEndianness<char *>);
-    CHECK(not HasEndianness<int[]>);  // NOLINT
-    CHECK(not HasEndianness<std::array<double, 3>>);
+    CHECK(HasEndianness<float> == false);
+    CHECK(HasEndianness<double> == false);
+    CHECK(HasEndianness<char *> == false);
+    CHECK(HasEndianness<int[]> == false);  // NOLINT
+    CHECK(HasEndianness<std::array<double, 3>> == false);
     // User-defined types aren't either
-    CHECK(not HasEndianness<EmptyStruct>);
-    CHECK(not HasEndianness<SingleInt32>);
+    CHECK(HasEndianness<EmptyStruct> == false);
+    CHECK(HasEndianness<SingleInt32> == false);
 }
 
 
