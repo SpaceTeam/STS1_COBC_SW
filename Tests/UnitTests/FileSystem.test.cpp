@@ -45,7 +45,7 @@ TEST_CASE("FileSystem without data corruption")
 {
     fs::Initialize();
     auto mountResult = fs::Mount();
-    REQUIRE(not mountResult.has_error());
+    REQUIRE(mountResult.has_error() == false);
 
     auto nonExistingPath = fs::Path("/Path/To/Wrong");
     auto createDirResult = fs::CreateDirectory(nonExistingPath);
@@ -58,7 +58,7 @@ TEST_CASE("FileSystem without data corruption")
 
     auto dirPath = fs::Path("/MyDir");
     createDirResult = fs::CreateDirectory(dirPath);
-    CHECK(not createDirResult.has_error());
+    CHECK(createDirResult.has_error() == false);
 
     auto filePath = fs::Path("/MyDir/MyFile");
     auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
@@ -86,7 +86,7 @@ TEST_CASE("FileSystem without data corruption")
 
     CheckIfDataIsNotInMemory(writeData);
     auto flushResult = writeableFile.Flush();
-    CHECK(not flushResult.has_error());
+    CHECK(flushResult.has_error() == false);
     CheckIfDataIsInMemory(writeData);
 
     auto seekResult = writeableFile.SeekAbsolute(-2);
@@ -94,11 +94,11 @@ TEST_CASE("FileSystem without data corruption")
     CHECK(seekResult.error() == ErrorCode::invalidParameter);
 
     seekResult = writeableFile.SeekRelative(-3);
-    CHECK(not seekResult.has_error());
+    CHECK(seekResult.has_error() == false);
     CHECK(seekResult.value() == 1);
 
     seekResult = writeableFile.SeekAbsolute(3);
-    CHECK(not seekResult.has_error());
+    CHECK(seekResult.has_error() == false);
     CHECK(seekResult.value() == 3);
 
     writeResult = writeableFile.Write(Span(0x12_b));
@@ -118,13 +118,13 @@ TEST_CASE("FileSystem without data corruption")
     CHECK(removeResult.error() == ErrorCode::notFound);
 
     makeIteratorResult = fs::MakeIterator(dirPath);
-    CHECK(not makeIteratorResult.has_error());
+    CHECK(makeIteratorResult.has_error() == false);
     auto & dirIterator = makeIteratorResult.value();
     CHECK(dirIterator != dirIterator.end());
 
     // Entry 0: 0 B, "."
     auto entryResult = *dirIterator;
-    CHECK(not entryResult.has_error());
+    CHECK(entryResult.has_error() == false);
     auto entry = entryResult.value();
     CHECK(entry.type == fs::EntryType::directory);
     CHECK(entry.name == ".");
@@ -133,7 +133,7 @@ TEST_CASE("FileSystem without data corruption")
 
     // Entry 1: 0 B, ".."
     entryResult = *dirIterator;
-    CHECK(not entryResult.has_error());
+    CHECK(entryResult.has_error() == false);
     entry = entryResult.value();
     CHECK(entry.type == fs::EntryType::directory);
     CHECK(entry.name == "..");
@@ -142,7 +142,7 @@ TEST_CASE("FileSystem without data corruption")
 
     // Entry 2: 0 B, "MyFile.lock"
     entryResult = *dirIterator;
-    CHECK(not entryResult.has_error());
+    CHECK(entryResult.has_error() == false);
     entry = entryResult.value();
     CHECK(entry.type == fs::EntryType::file);
     CHECK(entry.name == "MyFile.lock");
@@ -151,7 +151,7 @@ TEST_CASE("FileSystem without data corruption")
 
     // Entry 3: 4 B, "MyFile"
     entryResult = *dirIterator;
-    CHECK(not entryResult.has_error());
+    CHECK(entryResult.has_error() == false);
     entry = entryResult.value();
     CHECK(entry.type == fs::EntryType::file);
     CHECK(entry.name == "MyFile");
@@ -169,7 +169,7 @@ TEST_CASE("FileSystem without data corruption")
     // The copied iterator should still be at entry 3: 4 B, "MyFile"
     CHECK(dirIteratorCopy != dirIterator.end());
     entryResult = *dirIteratorCopy;
-    CHECK(not entryResult.has_error());
+    CHECK(entryResult.has_error() == false);
     entry = entryResult.value();
     CHECK(entry.type == fs::EntryType::file);
     CHECK(entry.name == "MyFile");
@@ -180,22 +180,22 @@ TEST_CASE("FileSystem without data corruption")
 
     auto nEntries = 0;
     makeIteratorResult = fs::MakeIterator(dirPath);
-    CHECK(not makeIteratorResult.has_error());
+    CHECK(makeIteratorResult.has_error() == false);
     for(auto const & forEntryResult : makeIteratorResult.value())
     {
-        CHECK(not forEntryResult.has_error());
+        CHECK(forEntryResult.has_error() == false);
         nEntries++;
     }
     CHECK(nEntries == 4);
 
     makeIteratorResult = fs::MakeIterator(dirPath);
-    CHECK(not makeIteratorResult.has_error());
+    CHECK(makeIteratorResult.has_error() == false);
     dirIterator = makeIteratorResult.value();
     nEntries = std::distance(dirIterator, dirIterator.end());
     CHECK(nEntries == 4);
 
     auto closeResult = writeableFile.Close();
-    CHECK(not closeResult.has_error());
+    CHECK(closeResult.has_error() == false);
 
     sizeResult = writeableFile.Size();
     CHECK(sizeResult.has_error());
@@ -223,11 +223,11 @@ TEST_CASE("FileSystem without data corruption")
     CHECK(readData == (std::array{0xAA_b, 0xBB_b, 0xCC_b, 0x12_b}));
 
     seekResult = readableFile.SeekRelative(-1);
-    CHECK(not seekResult.has_error());
+    CHECK(seekResult.has_error() == false);
     CHECK(seekResult.value() == 3);
 
     seekResult = readableFile.SeekAbsolute(2);
-    CHECK(not seekResult.has_error());
+    CHECK(seekResult.has_error() == false);
     CHECK(seekResult.value() == 2);
 
     readData = {};
@@ -247,10 +247,10 @@ TEST_CASE("FileSystem without data corruption")
     CHECK(flushResult.error() == ErrorCode::unsupportedOperation);
 
     closeResult = readableFile.Close();
-    CHECK(not closeResult.has_error());
+    CHECK(closeResult.has_error() == false);
 
     removeResult = fs::Remove(filePath);
-    CHECK(not removeResult.has_error());
+    CHECK(removeResult.has_error() == false);
 
     openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
     CHECK(openResult.has_value());
@@ -261,21 +261,21 @@ TEST_CASE("FileSystem without data corruption")
     CHECK(sizeResult.value() == 0);
 
     writeResult = deletedFile.Write(Span(writeData));
-    CHECK(not writeResult.has_error());
+    CHECK(writeResult.has_error() == false);
 
     // ForceRemove() works even if the file is open
     removeResult = fs::ForceRemove(filePath);
-    CHECK(not removeResult.has_error());
+    CHECK(removeResult.has_error() == false);
 
     closeResult = deletedFile.Close();
     CHECK(closeResult.has_error());
     CHECK(closeResult.error() == ErrorCode::notFound);
 
     removeResult = fs::Remove(dirPath);
-    CHECK(not removeResult.has_error());
+    CHECK(removeResult.has_error() == false);
 
     auto unmountResult = fs::Unmount();
-    CHECK(not unmountResult.has_error());
+    CHECK(unmountResult.has_error() == false);
 }
 
 
@@ -287,7 +287,7 @@ TEST_CASE("FileSystem with data corruption")
     // Test with faulty write
     {
         auto mountResult = fs::Mount();
-        CHECK(not mountResult.has_error());
+        CHECK(mountResult.has_error() == false);
 
         auto filePath = fs::Path("/FaultyWrite");
         auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
@@ -314,7 +314,7 @@ TEST_CASE("FileSystem with data corruption")
         CHECK(writeResult.value() == static_cast<int>(writeData.size()));
 
         auto closeResult = file.Close();
-        CHECK(not closeResult.has_error());
+        CHECK(closeResult.has_error() == false);
         // Reset the program finished handler after closing the file because that is when the data
         // is really written to memory
         fs::SetProgramFinishedHandler(nullptr);
@@ -330,16 +330,16 @@ TEST_CASE("FileSystem with data corruption")
         CHECK(readData == writeData);
 
         closeResult = corruptedFile.Close();
-        CHECK(not closeResult.has_error());
+        CHECK(closeResult.has_error() == false);
         auto unmountResult = fs::Unmount();
-        CHECK(not unmountResult.has_error());
+        CHECK(unmountResult.has_error() == false);
     }
 
     // Test with bit flip (once while mounted and once while unmounted)
     for(auto i = 0; i < 2; ++i)
     {
         auto mountResult = fs::Mount();
-        CHECK(not mountResult.has_error());
+        CHECK(mountResult.has_error() == false);
 
         auto filePath = fs::Path("/BitFlip");
         etl::to_string(i, filePath, /*append=*/true);
@@ -353,21 +353,21 @@ TEST_CASE("FileSystem with data corruption")
         CHECK(writeResult.value() == static_cast<int>(writeData.size()));
 
         auto closeResult = file.Close();
-        CHECK(not closeResult.has_error());
+        CHECK(closeResult.has_error() == false);
         if(i == 0)
         {
             auto unmountResult = fs::Unmount();
-            CHECK(not unmountResult.has_error());
+            CHECK(unmountResult.has_error() == false);
         }
         auto dataWasFoundAndCorrupted = TryToCorruptDataInMemory(writeData);
         CHECK(dataWasFoundAndCorrupted);
         if(i == 0)
         {
             auto corruptedMountResult = fs::Mount();
-            CHECK(not corruptedMountResult.has_error());
+            CHECK(corruptedMountResult.has_error() == false);
         }
         openResult = fs::Open(filePath, LFS_O_RDONLY);
-        CHECK(not openResult.has_error());
+        CHECK(openResult.has_error() == false);
         auto & corruptedFile = openResult.value();
 
         // File is empty, but it can be read (i.e. Read() does not fail)
@@ -381,9 +381,9 @@ TEST_CASE("FileSystem with data corruption")
         CHECK(readData != writeData);
 
         closeResult = corruptedFile.Close();
-        CHECK(not closeResult.has_error());
+        CHECK(closeResult.has_error() == false);
         auto unmountResult = fs::Unmount();
-        CHECK(not unmountResult.has_error());
+        CHECK(unmountResult.has_error() == false);
     }
 }
 #endif
