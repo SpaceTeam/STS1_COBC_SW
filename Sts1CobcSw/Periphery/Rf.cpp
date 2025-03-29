@@ -103,8 +103,6 @@ constexpr auto rxFifoThreshold = 32_b;  // When to trigger RX FIFO almost full i
 
 // TODO: Check this and write a good comment
 constexpr auto spiTimeout = 1 * ms;
-constexpr auto postChipSelectDelay = 20 * us;
-constexpr auto preChipDeselectDelay = 2 * us;
 
 constexpr auto interruptTimeout = 1 * s;
 constexpr auto rxTimeout = 5 * s;
@@ -161,6 +159,8 @@ auto DebugPrint(ModemStatus const & modemStatus) -> void;
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
+auto SelectChip() -> void;
+auto DeselectChip() -> void;
 auto WaitForCts() -> void;
 template<std::size_t extent>
     requires(extent <= maxNProperties)
@@ -1114,29 +1114,24 @@ auto ResetFifos() -> void
 
 auto WriteToFifo(std::span<Byte const> data) -> void
 {
-    csGpioPin.Reset();
-    // TODO: Are those delays really necessary? I have never used or seen them.
-    SuspendFor(postChipSelectDelay);
+    SelectChip();
     WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
     WriteTo(&rfSpi, data, spiTimeout);
-    SuspendFor(preChipDeselectDelay);
-    csGpioPin.Set();
+    DeselectChip();
     WaitForCts();
-    csGpioPin.Set();
+    DeselectChip();
 }
 
 
 auto ReadFromFifo(std::span<Byte> data) -> void
 {
-    csGpioPin.Reset();
-    SuspendFor(postChipSelectDelay);
+    SelectChip();
     // auto buf = std::to_array<std::uint8_t>({0x77});
     // spi.write(std::data(buf), std::size(buf));
     WriteTo(&rfSpi, Span(cmdReadRxFifo), spiTimeout);
     // spi.read(data, length);
     ReadFrom(&rfSpi, data, spiTimeout);
-    SuspendFor(preChipDeselectDelay);
-    csGpioPin.Set();
+    DeselectChip();
 }
 
 
@@ -1180,17 +1175,33 @@ auto SendCommand(std::span<Byte const> data) -> void
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
-    csGpioPin.Reset();
+    SelectChip();
     hal::WriteTo(&rfSpi, data, spiTimeout);
-    csGpioPin.Set();
+    DeselectChip();
     WaitForCts();
     auto answer = std::array<Byte, answerLength>{};
     if constexpr(answerLength != 0)
     {
         hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
     }
-    csGpioPin.Set();
+    DeselectChip();
     return answer;
+}
+
+
+auto SelectChip() -> void
+{
+    static constexpr auto postChipSelectionDelay = 20 * ns;
+    csGpioPin.Reset();
+    BusyWaitFor(postChipSelectionDelay);
+}
+
+
+auto DeselectChip() -> void
+{
+    static constexpr auto preChipDeselectionDelay = 50 * ns;
+    BusyWaitFor(preChipDeselectionDelay);
+    csGpioPin.Set();
 }
 
 
@@ -1206,7 +1217,7 @@ auto WaitForCts() -> void
     auto const pollingDelay = 50 * us;
     do
     {
-        csGpioPin.Reset();
+        SelectChip();
         hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
         hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
@@ -1214,8 +1225,8 @@ auto WaitForCts() -> void
         {
             break;
         }
-        csGpioPin.Set();
-        SuspendFor(pollingDelay);
+        DeselectChip();
+        BusyWaitFor(pollingDelay);
     } while(true);
     // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
     // RF code
