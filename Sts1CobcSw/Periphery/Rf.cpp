@@ -103,8 +103,9 @@ constexpr auto rxFifoThreshold = 32_b;  // When to trigger RX FIFO almost full i
 
 constexpr auto interruptTimeout = 1 * s;
 constexpr auto rxTimeout = 5 * s;
-constexpr auto pollingInterval = 10 * us;
 constexpr auto spiTimeout = 1 * ms;
+constexpr auto ctsTimeout = 1 * ms;
+constexpr auto pollingInterval = 10 * us;
 
 constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settles after power up
 constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to finish
@@ -156,10 +157,12 @@ auto DebugPrint(ModemStatus const & modemStatus) -> void;
 
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
+[[nodiscard]] auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
 auto SelectChip() -> void;
 auto DeselectChip() -> void;
-auto WaitForCts() -> void;
+[[nodiscard]] auto BusyWaitForCts(Duration timeout) -> Result<void>;
+template<std::size_t answerLength>
+[[nodiscard]] auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>;
 template<std::size_t extent>
     requires(extent <= maxNProperties)
 auto SetProperties(PropertyGroup propertyGroup,
@@ -1119,8 +1122,8 @@ auto WriteToFifo(std::span<Byte const> data) -> void
     WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
     WriteTo(&rfSpi, data, spiTimeout);
     DeselectChip();
-    WaitForCts();
-    DeselectChip();
+    // TODO: What do we do in case of a timeout?
+    (void)BusyWaitForCts(ctsTimeout);
 }
 
 
@@ -1179,14 +1182,13 @@ auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
     SelectChip();
     hal::WriteTo(&rfSpi, data, spiTimeout);
     DeselectChip();
-    WaitForCts();
-    auto answer = std::array<Byte, answerLength>{};
-    if constexpr(answerLength != 0)
+    auto busyWaitForAnswerResult = BusyWaitForAnswer<answerLength>(ctsTimeout);
+    if(busyWaitForAnswerResult.has_error())
     {
-        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
+        // TODO: What do we do in case of a timeout?
+        return {};
     }
-    DeselectChip();
-    return answer;
+    return busyWaitForAnswerResult.value();
 }
 
 
@@ -1206,17 +1208,20 @@ auto DeselectChip() -> void
 }
 
 
-//! @brief Polls the CTS byte until the Si4463 chip is ready for a new command.
-//!
-//! @note This function keeps the CS pin low when it returns.
-// TODO: Refactor the whole waiting for CTS so that the caller of this function does not need to
-// remember to pull the CS pin high afterwards. Maybe rework it into something like
-// WaitForResponse/Answer<answerLength>().
-auto WaitForCts() -> void
+auto BusyWaitForCts(Duration timeout) -> Result<void>
 {
-    auto const dataIsReadyValue = 0xFF_b;
-    auto const pollingDelay = 50 * us;
-    do
+    OUTCOME_TRY(BusyWaitForAnswer<0>(timeout));
+    return outcome_v2::success();
+}
+
+
+template<std::size_t answerLength>
+auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>
+{
+    static constexpr auto dataIsReadyValue = 0xFF_b;
+    auto nextPollingTime = CurrentRodosTime();
+    auto deadline = nextPollingTime + timeout;
+    while(true)
     {
         SelectChip();
         hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
@@ -1227,10 +1232,20 @@ auto WaitForCts() -> void
             break;
         }
         DeselectChip();
-        BusyWaitFor(pollingDelay);
-    } while(true);
-    // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
-    // RF code
+        nextPollingTime += pollingInterval;
+        BusyWaitUntil(nextPollingTime);
+        if(CurrentRodosTime() > deadline)
+        {
+            return ErrorCode::timeout;
+        }
+    }
+    auto answer = std::array<Byte, answerLength>{};
+    if constexpr(answerLength > 0)
+    {
+        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
+    }
+    DeselectChip();
+    return answer;
 }
 
 
