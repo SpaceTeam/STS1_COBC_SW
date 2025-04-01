@@ -47,6 +47,9 @@ enum class ErrorCode
     invalidStatusType,
     invalidLength,
     tooManyDataPackets,
+    // SingleBuffer
+    full,
+    empty,
 };
 
 

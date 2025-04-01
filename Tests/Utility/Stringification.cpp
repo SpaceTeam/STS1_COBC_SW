@@ -86,6 +86,12 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
         case ErrorCode::tooManyDataPackets:
             Append(string, "ErrorCode::tooManyDataPackets");
             break;
+        case ErrorCode::full:
+            Append(string, "ErrorCode::full");
+            break;
+        case ErrorCode::empty:
+            Append(string, "ErrorCode::empty");
+            break;
     }
 }
 }

@@ -147,6 +147,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
     catch_discover_tests(Sts1CobcSwTests_Serial)
 
+    add_test_program(SingleBuffer)
+    target_link_libraries(
+        Sts1CobcSwTests_SingleBuffer
+        PRIVATE strong_type::strong_type Sts1CobcSwTests::CatchRodos Sts1CobcSw_Outcome
+                Sts1CobcSw_SingleBuffer Sts1CobcSw_Vocabulary
+    )
+    add_test(NAME SingleBuffer COMMAND Sts1CobcSwTests_SingleBuffer)
+
     add_test_program(Span)
     target_link_libraries(Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
     catch_discover_tests(Sts1CobcSwTests_Span)
