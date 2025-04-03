@@ -6,6 +6,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_golden_test(HelloWorld)
     target_link_libraries(Sts1CobcSwTests_HelloWorld PRIVATE rodos::rodos)
 
+    add_test_program(SingleBufferMultiThreaded)
+    target_link_libraries(
+        Sts1CobcSwTests_SingleBufferMultiThreaded PRIVATE rodos::rodos Sts1CobcSw_SingleBuffer
+                                                          Sts1CobcSw_RodosTime
+    )
+    add_test(NAME SingleBufferMultiThreaded COMMAND Sts1CobcSwTests_SingleBufferMultiThreaded)
+
     add_golden_test(SpiSupervisor)
     target_sources(
         Sts1CobcSwTests_SpiSupervisor

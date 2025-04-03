@@ -58,6 +58,7 @@
   { include: ["\"Sts1CobcSw/Periphery/Fram.ipp\"",                      "private", "<Sts1CobcSw/Periphery/Fram.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Byte.ipp\"",                         "private", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",                       "private", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/SingleBuffer/SingleBuffer.ipp\"",           "private", "<Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RealTime/RealTime.ipp\"",                   "private", "<Sts1CobcSw/RealTime/RealTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RodosTime/RodosTime.ipp\"",                 "private", "<Sts1CobcSw/RodosTime/RodosTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/ErrorDetectionAndCorrection.ipp\"", "private", "<Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>", "public"] },

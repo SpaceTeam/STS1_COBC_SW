@@ -47,6 +47,9 @@ enum class ErrorCode
     invalidStatusType,
     invalidLength,
     tooManyDataPackets,
+    // SingleBuffer
+    full,
+    empty,
 };
 
 
@@ -62,7 +65,13 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         {
             RODOS::PRINTF(
                 "Error: The value is not present. Performing hardware reset and reboot.\n");
+#ifdef __linux__
+            RODOS::isShuttingDown = true;
+            // NOLINTNEXTLINE(concurrency-mt-unsafe)
+            std::exit(-1);
+#else
             RODOS::hwResetAndReboot();
+#endif
         }
     }
 
@@ -76,7 +85,13 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         {
             RODOS::PRINTF(
                 "Error: The error is not present. Performing hardware reset and reboot.\n");
+#ifdef __linux__
+            RODOS::isShuttingDown = true;
+            // NOLINTNEXTLINE(concurrency-mt-unsafe)
+            std::exit(-1);
+#else
             RODOS::hwResetAndReboot();
+#endif
         }
     }
 
@@ -88,7 +103,13 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         {
             RODOS::PRINTF(
                 "Error: The exception is not present. Performing hardware reset and reboot.\n");
+#ifdef __linux__
+            RODOS::isShuttingDown = true;
+            // NOLINTNEXTLINE(concurrency-mt-unsafe)
+            std::exit(-1);
+#else
             RODOS::hwResetAndReboot();
+#endif
         }
     }
 };
