@@ -6,9 +6,9 @@
 namespace rf = sts1cobcsw::rf;
 
 
-TEST_CASE("RF module")
+TEST_CASE("Check RF part number")
 {
-    rf::Initialize(rf::TxType::morse);
+    rf::Initialize(rf::TxType::packet);
     auto partNumber = rf::ReadPartNumber();
     CHECK(partNumber == rf::correctPartNumber);
 }
