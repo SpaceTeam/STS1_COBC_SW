@@ -1,7 +1,12 @@
 target_link_libraries(
     Sts1CobcSw_Periphery
-    PUBLIC rodos::without_main_on_linux strong_type::strong_type Sts1CobcSw_Hal Sts1CobcSw_Outcome
-           Sts1CobcSw_Serial Sts1CobcSw_Utility
+    PUBLIC rodos::without_main_on_linux
+           strong_type::strong_type
+           Sts1CobcSw_Hal
+           Sts1CobcSw_Outcome
+           Sts1CobcSw_Serial
+           Sts1CobcSw_Utility
+           Sts1CobcSw_Vocabulary
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
