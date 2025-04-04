@@ -126,7 +126,6 @@ private:
         PRINTF("Sending a %i bytes long test message %u time(s)\n",
                static_cast<int>(message.size()),
                n);
-        DisableRfLatchupProtection();
         for(auto i = 0U; i < n; ++i)
         {
             led1GpioPin.Set();
@@ -144,7 +143,6 @@ private:
             led1GpioPin.Reset();
             SuspendFor(400 * ms);
         }
-        EnableRfLatchupProtection();
         PRINTF("-> done\n");
 
         auto totalLength = message.size() * n;
@@ -156,7 +154,6 @@ private:
                n,
                static_cast<int>(message.size()));
         rf::SetTxDataLength(static_cast<std::uint16_t>(message.size() * n));
-        DisableRfLatchupProtection();
         [&]()
         {
             for(auto i = 0U; i < n; ++i)
@@ -181,7 +178,6 @@ private:
         }();
         led1GpioPin.Reset();
         rf::EnterStandbyMode();
-        EnableRfLatchupProtection();
         PRINTF("-> done\n");
     }
 } rfSendTest;
