@@ -15,8 +15,6 @@ enum class TxType
 
 inline constexpr auto correctPartNumber = 0x4463;
 
-extern bool rfIsWorking;
-
 
 auto Initialize(TxType txType) -> void;
 auto ReadPartNumber() -> std::uint16_t;
