@@ -120,10 +120,17 @@ auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
 auto gpio0GpioPin = hal::GpioPin(hal::rfGpio0Pin);
 auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
-auto isInTxMode = false;
-
+#if 27 <= HW_VERSION and HW_VERSION < 30
+auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
+#endif
+#if 30 <= HW_VERSION
+auto rfLatchupDisableGpioPin1 = hal::GpioPin(hal::rfLatchupDisablePin1);
+auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
+#endif
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
+
+auto isInTxMode = false;
 
 
 using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
@@ -135,6 +142,9 @@ auto InitializeGpiosAndSpi() -> void;
 auto ApplyPatch() -> void;
 auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
+
+auto EnableRfLatchupProtection() -> void;
+auto DisableRfLatchupProtection() -> void;
 
 auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
 // auto SetModemInterrupts(Byte interruptFlags) -> void;
@@ -194,6 +204,7 @@ auto EnterStandbyMode() -> void
     static constexpr auto standbyMode = 0x01_b;
     SendCommand(Span({cmdChangeState, standbyMode}));
     isInTxMode = false;
+    EnableRfLatchupProtection();
 }
 
 
@@ -234,7 +245,6 @@ auto SetTxDataLength(std::uint16_t length) -> void
 }
 
 
-// TODO: Pull rfLatchupDisableGpioPin high while sending
 auto SendAndWait(std::span<Byte const> data) -> Result<void>
 {
     SetTxDataLength(static_cast<std::uint16_t>(data.size()));
@@ -257,6 +267,7 @@ auto SendAndContinue(std::span<Byte const> data) -> Result<void>
     if(not isInTxMode)
     {
         ResetFifos();
+        DisableRfLatchupProtection();
     }
     SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt);
     auto dataIndex = 0U;
@@ -306,6 +317,7 @@ auto SuspendUntilDataSent(Duration timeout) -> Result<void>
     }();
     // We won't stay in TX mode, no matter if the transmission was completed successfully or not.
     isInTxMode = false;
+    EnableRfLatchupProtection();
     return result;
 }
 
@@ -364,6 +376,14 @@ auto InitializeGpiosAndSpi() -> void
     gpio0GpioPin.Reset();
     paEnablePin.SetDirection(hal::PinDirection::out);
     paEnablePin.Reset();
+#if 27 <= HW_VERSION and HW_VERSION < 30
+    rfLatchupDisableGpioPin.SetDirection(hal::PinDirection::out);
+#endif
+#if 30 <= HW_VERSION
+    rfLatchupDisableGpioPin1.SetDirection(hal::PinDirection::out);
+    rfLatchupDisableGpioPin2.SetDirection(hal::PinDirection::out);
+#endif
+    EnableRfLatchupProtection();
     watchdogResetGpioPin.SetDirection(hal::PinDirection::out);
     // The watchdog must be fed regularely for the TX to work. Even without the watchdog timer on
     // the PCB it needs to be triggered at least once after boot to enable the TX.
@@ -1006,6 +1026,30 @@ auto Configure(TxType txType) -> void
 }
 
 
+auto EnableRfLatchupProtection() -> void
+{
+#if 27 <= HW_VERSION and HW_VERSION < 30
+    rfLatchupDisableGpioPin.Reset();
+#endif
+#if 30 <= HW_VERSION
+    rfLatchupDisableGpioPin1.Reset();
+    rfLatchupDisableGpioPin2.Reset();
+#endif
+}
+
+
+auto DisableRfLatchupProtection() -> void
+{
+#if 27 <= HW_VERSION and HW_VERSION < 30
+    rfLatchupDisableGpioPin.Set();
+#endif
+#if 30 <= HW_VERSION
+    rfLatchupDisableGpioPin1.Set();
+    rfLatchupDisableGpioPin2.Set();
+#endif
+}
+
+
 auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void
 {
     static constexpr auto iIntCtlPhEnable = 0x01_b;
@@ -1114,7 +1158,6 @@ auto SuspendUntilInterruptAndPrintStatus(Duration timeout) -> Result<void>
 }
 
 
-// TODO: Pull rfLatchupDisableGpioPin high while sending
 auto StartTx() -> void
 {
     static constexpr auto channel = 0x00_b;
