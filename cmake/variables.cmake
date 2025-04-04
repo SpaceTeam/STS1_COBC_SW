@@ -25,7 +25,7 @@ endif()
 
 # ---- Other variables ----
 
-set(HW_VERSION 27 CACHE STRING "Hardware version")
+set(HW_VERSION 30 CACHE STRING "Hardware version")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Sanitize")
     set(EXTRA_SANITIZER_STACK_SIZE 20000)
