@@ -41,7 +41,7 @@ Checks: "*,\
   "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
+#AnalyzeTemporaryDtors: false
 FormatStyle: none
 CheckOptions:
   - key: 'bugprone-argument-comment.StrictMode'
