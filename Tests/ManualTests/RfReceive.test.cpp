@@ -41,9 +41,7 @@ private:
 
         PRINTF("\n");
         PRINTF("Waiting to receive test data\n");
-        DisableRfLatchupProtection();
         auto receiveTestDataResult = rf::ReceiveTestData();
-        EnableRfLatchupProtection();
         if(receiveTestDataResult.has_error())
         {
             PRINTF("Error: %i\n", static_cast<int>(receiveTestDataResult.error()));
