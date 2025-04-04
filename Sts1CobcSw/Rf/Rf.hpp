@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <array>
 #include <cstdint>
 #include <span>
 
@@ -19,6 +20,7 @@ enum class TxType
 
 
 inline constexpr auto correctPartNumber = 0x4463;
+inline constexpr auto maxRxSize = 1024;
 inline constexpr auto maxTxDataLength = (1U << 13U) - 1U;
 
 
@@ -30,4 +32,5 @@ auto SetTxDataLength(std::uint16_t length) -> void;
 [[nodiscard]] auto SendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto SendAndContinue(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto SuspendUntilDataSent(Duration timeout) -> Result<void>;
+[[nodiscard]] auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>;
 }
