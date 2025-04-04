@@ -57,6 +57,7 @@ public:
     auto DisableInterrupts() -> void;
     auto ResetInterruptStatus() -> void;
     auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
+    auto SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>;
     auto SetInterruptHandler(void (*handler)()) -> void;
 
     [[nodiscard]] auto Read() const -> PinState;

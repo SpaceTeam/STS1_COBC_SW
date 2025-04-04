@@ -26,6 +26,17 @@ auto GpioPin::SuspendUntilInterrupt(Duration timeout) -> Result<void>
 }
 
 
+auto GpioPin::SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>
+{
+    pin_.suspendUntilDataReady(value_of(reactivationTime));
+    if(CurrentRodosTime() >= reactivationTime)
+    {
+        return ErrorCode::timeout;
+    }
+    return outcome_v2::success();
+}
+
+
 auto GpioPin::SetInterruptHandler(void (*handler)()) -> void
 {
     if(handler == nullptr)
