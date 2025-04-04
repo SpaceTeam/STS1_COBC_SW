@@ -187,7 +187,7 @@ auto Initialize(TxType txType) -> void
     ApplyPatch();
     PowerUp();
     Configure(txType);
-    // Power amplifier should only be turned on after the configuration is done
+    // TODO: Turn on power amplifier only if persistent variable txIsOn/txIsEnabled is true
     paEnablePin.Set();
 }
 
@@ -333,6 +333,7 @@ auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>
         // TODO: Why are these interrupts commented out?
         // SetModemInterrupts(preambleDetectInterrupt | syncDetectInterrupt);
         ReadAndClearInterruptStatus();
+        DisableRfLatchupProtection();
         StartRx();
         OUTCOME_TRY(SuspendUntilInterruptAndPrintStatus(rxTimeout));
         auto modemStatus = ReadModemStatus();
