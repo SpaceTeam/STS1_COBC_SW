@@ -8,17 +8,18 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
@@ -50,22 +51,59 @@ enum class PropertyGroup : std::uint8_t
 
 // --- Private globals ---
 
-// Si4463 commands
-constexpr auto cmdPartInfo = 0x01_b;
-constexpr auto cmdPowerUp = 0x02_b;
-constexpr auto cmdSetProperty = 0x11_b;
-constexpr auto cmdGpioPinCfg = 0x13_b;
-constexpr auto cmdReadCmdBuff = 0x44_b;
+// Commands
+[[maybe_unused]] constexpr auto cmdPartInfo = 0x01_b;
+[[maybe_unused]] constexpr auto cmdPowerUp = 0x02_b;
+[[maybe_unused]] constexpr auto cmdFuncInfo = 0x11_b;
+[[maybe_unused]] constexpr auto cmdSetProperty = 0x11_b;
+[[maybe_unused]] constexpr auto cmdGpioPinCfg = 0x13_b;
+[[maybe_unused]] constexpr auto cmdFifoInfo = 0x15_b;
+[[maybe_unused]] constexpr auto cmdGetIntStatus = 0x20_b;
+[[maybe_unused]] constexpr auto cmdGetModemStatus = 0x22_b;
+[[maybe_unused]] constexpr auto cmdStartTx = 0x31_b;
+[[maybe_unused]] constexpr auto cmdStartRx = 0x32_b;
+[[maybe_unused]] constexpr auto cmdRequestDeviceState = 0x33_b;
+[[maybe_unused]] constexpr auto cmdChangeState = 0x34_b;
+[[maybe_unused]] constexpr auto cmdReadCmdBuff = 0x44_b;
+[[maybe_unused]] constexpr auto cmdWriteTxFifo = 0x66_b;
+[[maybe_unused]] constexpr auto cmdReadRxFifo = 0x77_b;
 
 // Command answer lengths
 //
 // TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
 // this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
 // instead.
-constexpr auto partInfoAnswerLength = 8U;
+[[maybe_unused]] constexpr auto partInfoAnswerLength = 8U;
+[[maybe_unused]] constexpr auto fifoInfoAnswerLength = 2U;
+[[maybe_unused]] constexpr auto interruptStatusAnswerLength = 8U;
+[[maybe_unused]] constexpr auto modemStatusAnswerLength = 8U;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
+// Packet handler interrupt flags
+[[maybe_unused]] constexpr auto noInterrupts = 0x00_b;
+[[maybe_unused]] constexpr auto rxFifoAlmostFullInterrupt = Byte{1U << 0U};
+[[maybe_unused]] constexpr auto txFifoAlmostEmptyInterrupt = Byte{1U << 1U};
+[[maybe_unused]] constexpr auto crcErrorInterrupt = Byte{1U << 3U};
+[[maybe_unused]] constexpr auto packetRxInterrupt = Byte{1U << 4U};
+[[maybe_unused]] constexpr auto packetSentInterrupt = Byte{1U << 5U};
+[[maybe_unused]] constexpr auto filterMissInterrupt = Byte{1U << 6U};
+[[maybe_unused]] constexpr auto filterMatchInterrupt = Byte{1U << 7U};
+
+// Modem interrupt flags
+[[maybe_unused]] constexpr auto syncDetectInterrupt = Byte{1U << 0U};
+[[maybe_unused]] constexpr auto preambleDetectInterrupt = Byte{1U << 1U};
+[[maybe_unused]] constexpr auto invalidPreambleInterrupt = Byte{1U << 2U};
+[[maybe_unused]] constexpr auto rssiInterrupt = Byte{1U << 3U};
+[[maybe_unused]] constexpr auto rssiJumpInterrupt = Byte{1U << 4U};
+[[maybe_unused]] constexpr auto invalidSyncInterrupt = Byte{1U << 5U};
+
+[[maybe_unused]] constexpr auto txFifoSize = 64U;
+constexpr auto txFifoThreshold = 48_b;  // Free space that triggers TX FIFO almost empty interrupt
+constexpr auto rxFifoThreshold = 32_b;  // Stored bytes trigger RX FIFO almost full interrupt
+
+// TODO: Split into fifoAlmostEmptyTimeout and dataSentTimeout and use shorter timeouts for both
+constexpr auto interruptTimeout = 1 * s;
 constexpr auto spiTimeout = 1 * ms;
 constexpr auto ctsTimeout = 100 * ms;
 constexpr auto pollingInterval = 10 * us;
@@ -75,20 +113,19 @@ constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to 
 // Delay for the sequence reset -> pause -> set -> pause -> reset during initialization
 constexpr auto watchDogResetPinDelay = 1 * ms;
 
-// Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
-constexpr auto txFifoThreshold = 32_b;
-// Trigger RX FIFO almost full interrupt when 48/64 bytes are filled
-constexpr auto rxFifoThreshold = 48_b;
-
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
 auto gpio0GpioPin = hal::GpioPin(hal::rfGpio0Pin);
 auto gpio1GpioPin = hal::GpioPin(hal::rfGpio1Pin);
 auto paEnablePin = hal::GpioPin(hal::rfPaEnablePin);
+auto isInTxMode = false;
 
 // TODO: This should probably be somewhere else as it is not directly related to the RF module
 auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
+
+
+using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
 
 
 // --- Private function declarations ---
@@ -97,6 +134,18 @@ auto InitializeGpiosAndSpi() -> void;
 auto ApplyPatch() -> void;
 auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
+
+auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
+// auto SetModemInterrupts(Byte interruptFlags) -> void;
+auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
+[[nodiscard]] auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
+
+auto StartTx() -> void;
+
+auto ResetFifos() -> void;
+auto WriteToFifo(std::span<Byte const> data) -> void;
+auto ReadFreeTxFifoSpace() -> std::uint8_t;
+
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
 [[nodiscard]] auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
@@ -133,6 +182,14 @@ auto ReadPartNumber() -> std::uint16_t
 }
 
 
+auto EnterStandbyMode() -> void
+{
+    static constexpr auto standbyMode = 0x01_b;
+    SendCommand(Span({cmdChangeState, standbyMode}));
+    isInTxMode = false;
+}
+
+
 auto SetTxType(TxType txType) -> void
 {
     // Constants for setting the TX type (morse, 2GFSK)
@@ -162,6 +219,90 @@ auto SetTxType(TxType txType) -> void
 }
 
 
+// Must be called before SendAndContinue()
+auto SetTxDataLength(std::uint16_t length) -> void
+{
+    static constexpr auto iPktField1Length = 0x0D_b;
+    SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
+}
+
+
+// TODO: Pull rfLatchupDisableGpioPin high while sending
+auto SendAndWait(std::span<Byte const> data) -> Result<void>
+{
+    SetTxDataLength(static_cast<std::uint16_t>(data.size()));
+    auto result = [&]() -> Result<void>
+    {
+        OUTCOME_TRY(SendAndContinue(data));
+        auto suspendUntilInterruptResult = SuspendUntilDataSent(interruptTimeout);
+        SetPacketHandlerInterrupts(noInterrupts);
+        return suspendUntilInterruptResult;
+    }();
+    EnterStandbyMode();
+    return result;
+}
+
+
+// Send the data to the RF module and return as soon as the last chunk was written to the FIFO. This
+// allows sending multiple data packets without interruption.
+auto SendAndContinue(std::span<Byte const> data) -> Result<void>
+{
+    if(not isInTxMode)
+    {
+        ResetFifos();
+    }
+    SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt);
+    auto dataIndex = 0U;
+    auto result = [&]() -> Result<void>
+    {
+        auto chunkSize = ReadFreeTxFifoSpace();
+        while(dataIndex + chunkSize < static_cast<unsigned int>(data.size()))
+        {
+            WriteToFifo(data.subspan(dataIndex, chunkSize));
+            ReadAndClearInterruptStatus();
+            if(not isInTxMode)
+            {
+                StartTx();
+            }
+            dataIndex += chunkSize;
+            OUTCOME_TRY(SuspendUntilInterrupt(interruptTimeout));
+            chunkSize = ReadFreeTxFifoSpace();
+        }
+        return outcome_v2::success();
+    }();
+    SetPacketHandlerInterrupts(noInterrupts);
+    if(result.has_error())
+    {
+        return result;
+    }
+    WriteToFifo(data.subspan(dataIndex));
+    if(not isInTxMode)
+    {
+        StartTx();
+    }
+    return outcome_v2::success();
+}
+
+
+auto SuspendUntilDataSent(Duration timeout) -> Result<void>
+{
+    SetPacketHandlerInterrupts(packetSentInterrupt);
+    static constexpr auto iPacketHandlerStatus = 3;
+    auto packetHandlerStatus = ReadAndClearInterruptStatus()[iPacketHandlerStatus];
+    auto result = [&]() -> Result<void>
+    {
+        if((packetHandlerStatus & packetSentInterrupt) == 0x00_b)
+        {
+            OUTCOME_TRY(SuspendUntilInterrupt(timeout));
+        }
+        return outcome_v2::success();
+    }();
+    // We won't stay in TX mode, no matter if the transmission was completed successfully or not.
+    isInTxMode = false;
+    return result;
+}
+
+
 // --- Private function definitions ---
 
 namespace
@@ -176,6 +317,8 @@ auto InitializeGpiosAndSpi() -> void
 #endif
     csGpioPin.Set();
     nirqGpioPin.SetDirection(hal::PinDirection::in);
+    nirqGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::fallingEdge);
+    nirqGpioPin.DisableInterrupts();
     sdnGpioPin.SetDirection(hal::PinDirection::out);
     sdnGpioPin.Set();
     gpio0GpioPin.SetDirection(hal::PinDirection::out);
@@ -821,6 +964,90 @@ auto Configure(TxType txType) -> void
     // Split FIFO and guaranteed sequencer mode
     // static constexpr auto newGlobalConfig = 0x40_b;
     // SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
+}
+
+
+auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void
+{
+    static constexpr auto iIntCtlPhEnable = 0x01_b;
+    SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(interruptFlags));
+}
+
+
+// auto SetModemInterrupts(Byte interruptFlags) -> void
+// {
+//     static constexpr auto iIntCtlModemEnable = 0x02_b;
+//     SetProperties(PropertyGroup::intCtl, iIntCtlModemEnable, Span(interruptFlags));
+// }
+
+
+auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>
+{
+    return SendCommand<interruptStatusAnswerLength>(
+        Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
+}
+
+
+// Do not return until the NIRQ pin is set or the timeout is reached.
+auto SuspendUntilInterrupt(Duration timeout) -> Result<void>
+{
+    nirqGpioPin.EnableInterrupts();
+    nirqGpioPin.ResetInterruptStatus();
+    auto result = [&]() -> Result<void>
+    {
+        auto reactivationTime = CurrentRodosTime() + timeout;
+        while(nirqGpioPin.Read() == hal::PinState::set)
+        {
+            OUTCOME_TRY(nirqGpioPin.SuspendUntilInterrupt(reactivationTime));
+        }
+        return outcome_v2::success();
+    }();
+    nirqGpioPin.DisableInterrupts();
+    return result;
+}
+
+
+// TODO: Pull rfLatchupDisableGpioPin high while sending
+auto StartTx() -> void
+{
+    static constexpr auto channel = 0x00_b;
+    // [7:4]: TXCOMPLETE_STATE = 0b0011 -> READY state
+    // [3]: UPDATE = 0b0 -> Use TX parameters to enter TX mode
+    // [2]: RETRANSMIT = 0b0 -> Send from TX FIFO, not last packet
+    // [1:0]: START = 0b0 -> Start TX immediately
+    static constexpr auto condition = 0x30_b;
+    // Length is set in SetTxDataLength(), not in StartTx()
+    static constexpr auto txLen = std::array{0x00_b, 0x00_b};
+    static constexpr auto txDelay = 0x00_b;
+    static constexpr auto numRepeat = 0x00_b;
+    SendCommand(Span(FlatArray(cmdStartTx, channel, condition, txLen, txDelay, numRepeat)));
+    isInTxMode = true;
+}
+
+
+auto ResetFifos() -> void
+{
+    static constexpr auto resetBothFifos = 0b11_b;
+    SendCommand(Span({cmdFifoInfo, resetBothFifos}));
+}
+
+
+auto WriteToFifo(std::span<Byte const> data) -> void
+{
+    SelectChip();
+    WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
+    WriteTo(&rfSpi, data, spiTimeout);
+    DeselectChip();
+    // TODO: What do we do in case of a timeout?
+    // TODO: Wouldn't it be more efficient to wait for CTS before writing instead of after it?
+    (void)BusyWaitForCts(ctsTimeout);
+}
+
+
+auto ReadFreeTxFifoSpace() -> std::uint8_t
+{
+    auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+    return static_cast<std::uint8_t>(fifoInfo[1]);
 }
 
 
