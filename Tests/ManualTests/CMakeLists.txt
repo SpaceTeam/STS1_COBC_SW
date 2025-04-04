@@ -55,7 +55,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(RfReceive)
     target_link_libraries(
         Sts1CobcSwTests_RfReceive PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery
-                                          Sts1CobcSwTests::HardwareSetup
+                                          Sts1CobcSw_Utility Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(RfSend)
