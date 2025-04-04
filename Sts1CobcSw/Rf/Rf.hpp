@@ -33,4 +33,5 @@ auto SetTxDataLength(std::uint16_t length) -> void;
 [[nodiscard]] auto SendAndContinue(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto SuspendUntilDataSent(Duration timeout) -> Result<void>;
 [[nodiscard]] auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>;
+[[nodiscard]] auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>;
 }
