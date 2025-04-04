@@ -99,8 +99,9 @@ constexpr auto maxNProperties = 12;
 [[maybe_unused]] constexpr auto invalidSyncInterrupt = Byte{1U << 5U};
 
 [[maybe_unused]] constexpr auto txFifoSize = 64U;
-constexpr auto txFifoThreshold = 48_b;  // Free space that triggers TX FIFO almost empty interrupt
-constexpr auto rxFifoThreshold = 32_b;  // Stored bytes trigger RX FIFO almost full interrupt
+[[maybe_unused]] constexpr auto rxFifoSize = 64U;
+constexpr auto txFifoThreshold = 48U;  // Free space that triggers TX FIFO almost empty interrupt
+constexpr auto rxFifoThreshold = 32U;  // Stored bytes trigger RX FIFO almost full interrupt
 
 // TODO: Split into fifoAlmostEmptyTimeout and dataSentTimeout and use shorter timeouts for both
 constexpr auto interruptTimeout = 1 * s;
@@ -146,9 +147,11 @@ auto Configure(TxType txType) -> void;
 auto EnableRfLatchupProtection() -> void;
 auto DisableRfLatchupProtection() -> void;
 
+auto SetRxFifoThreshold(Byte threshold) -> void;
 auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
 // auto SetModemInterrupts(Byte interruptFlags) -> void;
 auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
+[[nodiscard]] auto SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>;
 [[nodiscard]] auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
 [[nodiscard]] auto SuspendUntilInterruptAndPrintStatus(Duration timeout) -> Result<void>;
 
@@ -158,8 +161,9 @@ auto StartRx() -> void;
 auto ResetFifos() -> void;
 auto WriteToFifo(std::span<Byte const> data) -> void;
 auto ReadFromFifo(std::span<Byte> data) -> void;
-
 auto ReadFreeTxFifoSpace() -> std::uint8_t;
+auto ReadRxFifoFillLevel() -> std::uint8_t;
+
 auto ReadModemStatus() -> ModemStatus;
 auto DebugPrint(ModemStatus const & modemStatus) -> void;
 
@@ -348,6 +352,43 @@ auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>
         OUTCOME_TRY(SuspendUntilInterrupt(rxTimeout));
         ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
         return rxBuffer;
+    }();
+    EnterStandbyMode();
+    ReadAndClearInterruptStatus();
+    return result;
+}
+
+
+auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
+{
+    auto result = [&]() -> Result<void>
+    {
+        ResetFifos();
+        SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt);
+        ReadAndClearInterruptStatus();
+        DisableRfLatchupProtection();
+        auto reactivationTime = CurrentRodosTime() + timeout;
+        StartRx();
+        auto dataIndex = 0U;
+        while(dataIndex + rxFifoThreshold < static_cast<unsigned int>(data.size()))
+        {
+            OUTCOME_TRY(SuspendUntilInterrupt(reactivationTime));
+            ReadFromFifo(data.subspan(dataIndex, rxFifoThreshold));
+            ReadAndClearInterruptStatus();
+            dataIndex += rxFifoThreshold;
+        }
+        auto remainingData = data.subspan(dataIndex);
+        SetRxFifoThreshold(static_cast<Byte>(remainingData.size()));
+        // TODO: Check if the remaining bytes were already received while reading the last
+        // rxFifoThreshold bytes
+        auto fillLevel = ReadRxFifoFillLevel();
+        if(fillLevel < remainingData.size())
+        {
+            OUTCOME_TRY(SuspendUntilInterrupt(reactivationTime));
+        }
+        ReadFromFifo(remainingData);
+        SetRxFifoThreshold(static_cast<Byte>(rxFifoThreshold));
+        return outcome_v2::success();
     }();
     EnterStandbyMode();
     ReadAndClearInterruptStatus();
@@ -620,8 +661,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto pktLen = 0x60_b;
     static constexpr auto pktLenFieldSource = 0x00_b;
     static constexpr auto pktLenAdjust = 0x00_b;
-    static constexpr auto pktTxThreshold = txFifoThreshold;
-    static constexpr auto pktRxThreshold = rxFifoThreshold;
+    static constexpr auto pktTxThreshold = static_cast<Byte>(txFifoThreshold);
+    static constexpr auto pktRxThreshold = static_cast<Byte>(rxFifoThreshold);
     static constexpr auto pktField1Length = std::array{0x00_b, 0x01_b};
     static constexpr auto pktField1Config = 0x00_b;
     static constexpr auto pktField1CrcConfig = 0x00_b;
@@ -1051,6 +1092,13 @@ auto DisableRfLatchupProtection() -> void
 }
 
 
+auto SetRxFifoThreshold(Byte threshold) -> void
+{
+    static constexpr auto iFifoThreshold = 0x0c_b;
+    SetProperties(PropertyGroup::pkt, iFifoThreshold, Span({threshold}));
+}
+
+
 auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void
 {
     static constexpr auto iIntCtlPhEnable = 0x01_b;
@@ -1072,14 +1120,13 @@ auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLeng
 }
 
 
-// Do not return until the NIRQ pin is set or the timeout is reached.
-auto SuspendUntilInterrupt(Duration timeout) -> Result<void>
+// Do not return until the NIRQ pin is set or the reactivationTime is reached
+auto SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>
 {
     nirqGpioPin.EnableInterrupts();
     nirqGpioPin.ResetInterruptStatus();
     auto result = [&]() -> Result<void>
     {
-        auto reactivationTime = CurrentRodosTime() + timeout;
         while(nirqGpioPin.Read() == hal::PinState::set)
         {
             OUTCOME_TRY(nirqGpioPin.SuspendUntilInterrupt(reactivationTime));
@@ -1088,6 +1135,14 @@ auto SuspendUntilInterrupt(Duration timeout) -> Result<void>
     }();
     nirqGpioPin.DisableInterrupts();
     return result;
+}
+
+
+// Do not return until the NIRQ pin is set or the timeout is reached
+auto SuspendUntilInterrupt(Duration timeout) -> Result<void>
+{
+    auto reactivationTime = CurrentRodosTime() + timeout;
+    return SuspendUntilInterrupt(reactivationTime);
 }
 
 
@@ -1230,6 +1285,13 @@ auto ReadFreeTxFifoSpace() -> std::uint8_t
 {
     auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
     return static_cast<std::uint8_t>(fifoInfo[1]);
+}
+
+
+auto ReadRxFifoFillLevel() -> std::uint8_t
+{
+    auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+    return static_cast<std::uint8_t>(fifoInfo[0]);
 }
 
 
