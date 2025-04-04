@@ -8,6 +8,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -25,6 +26,8 @@
 
 
 namespace sts1cobcsw::rf
+{
+namespace
 {
 enum class PropertyGroup : std::uint8_t
 {
@@ -45,11 +48,6 @@ enum class PropertyGroup : std::uint8_t
 };
 
 
-// --- Public globals ---
-
-bool rfIsWorking = true;
-
-
 // --- Private globals ---
 
 // Si4463 commands
@@ -68,14 +66,14 @@ constexpr auto partInfoAnswerLength = 8U;
 // Max. number of properties that can be set in a single command
 constexpr auto maxNProperties = 12;
 
-// Delay to wait for power on reset to finish
-constexpr auto porRunningDelay = 20 * ms;
-// Time until PoR circuit settles after applying power
-constexpr auto porCircuitSettleDelay = 100 * ms;
-// Delay for the sequence reset -> pause -> set -> pause -> reset in initialization
-constexpr auto watchDogResetPinDelay = 1 * ms;
-// TODO: Check this and write a good comment
 constexpr auto spiTimeout = 1 * ms;
+constexpr auto ctsTimeout = 100 * ms;
+constexpr auto pollingInterval = 10 * us;
+
+constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settles after power up
+constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to finish
+// Delay for the sequence reset -> pause -> set -> pause -> reset during initialization
+constexpr auto watchDogResetPinDelay = 1 * ms;
 
 // Trigger TX FIFO almost empty interrupt when 32/64 bytes are empty
 constexpr auto txFifoThreshold = 32_b;
@@ -100,22 +98,24 @@ auto PowerUp() -> void;
 auto Configure(TxType txType) -> void;
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
-auto WaitForCts() -> void;
+[[nodiscard]] auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
+auto SelectChip() -> void;
+auto DeselectChip() -> void;
+[[nodiscard]] auto BusyWaitForCts(Duration timeout) -> Result<void>;
+template<std::size_t answerLength>
+[[nodiscard]] auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>;
 template<std::size_t extent>
     requires(extent <= maxNProperties)
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const, extent> propertyValues) -> void;
+}
 
 
 // --- Public function definitions ---
 
 auto Initialize(TxType txType) -> void
 {
-    // TODO: Don't forget that WDT_Clear has to be triggered regularely for the TX to work! (even
-    // without the watchdog timer on the PCB it needs to be triggered at least once after boot to
-    // enable the TX)
     InitializeGpiosAndSpi();
     PowerUp();
     Configure(txType);
@@ -162,6 +162,8 @@ auto SetTxType(TxType txType) -> void
 
 // --- Private function definitions ---
 
+namespace
+{
 auto InitializeGpiosAndSpi() -> void
 {
     csGpioPin.SetDirection(hal::PinDirection::out);
@@ -179,7 +181,8 @@ auto InitializeGpiosAndSpi() -> void
     paEnablePin.SetDirection(hal::PinDirection::out);
     paEnablePin.Reset();
     watchdogResetGpioPin.SetDirection(hal::PinDirection::out);
-    // The watchdog must be reset at least once to enable the RF module
+    // The watchdog must be fed regularely for the TX to work. Even without the watchdog timer on
+    // the PCB it needs to be triggered at least once after boot to enable the TX.
     watchdogResetGpioPin.Reset();
     SuspendFor(watchDogResetPinDelay);
     watchdogResetGpioPin.Set();
@@ -227,14 +230,14 @@ auto Configure(TxType txType) -> void
     static constexpr auto sdoConfig = 0x4B_b;
     // GPIOs configured as outputs will have highest drive strength
     static constexpr auto genConfig = 0x00_b;
-    SendCommand<7>(Span({cmdGpioPinCfg,
-                         gpio0Config,
-                         gpio1Config,
-                         gpio2Config,
-                         gpio3Config,
-                         nirqConfig,
-                         sdoConfig,
-                         genConfig}));
+    SendCommand(Span({cmdGpioPinCfg,
+                      gpio0Config,
+                      gpio1Config,
+                      gpio2Config,
+                      gpio3Config,
+                      nirqConfig,
+                      sdoConfig,
+                      genConfig}));
 
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
@@ -774,33 +777,51 @@ auto SendCommand(std::span<Byte const> data) -> void
 template<std::size_t answerLength>
 auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
 {
-    csGpioPin.Reset();
+    SelectChip();
     hal::WriteTo(&rfSpi, data, spiTimeout);
-    csGpioPin.Set();
-    WaitForCts();
-    auto answer = std::array<Byte, answerLength>{};
-    if constexpr(answerLength != 0)
+    DeselectChip();
+    auto busyWaitForAnswerResult = BusyWaitForAnswer<answerLength>(ctsTimeout);
+    if(busyWaitForAnswerResult.has_error())
     {
-        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
+        // TODO: What do we do in case of a timeout?
+        return {};
     }
-    csGpioPin.Set();
-    return answer;
+    return busyWaitForAnswerResult.value();
 }
 
 
-//! @brief Polls the CTS byte until the Si4463 chip is ready for a new command.
-//!
-//! @note This function keeps the CS pin low when it returns.
-// TODO: Refactor the whole waiting for CTS so that the caller of this function does not need to
-// remember to pull the CS pin high afterwards. Maybe rework it into something like
-// WaitForResponse/Answer<answerLength>().
-auto WaitForCts() -> void
+auto SelectChip() -> void
 {
-    auto const dataIsReadyValue = 0xFF_b;
-    auto const pollingDelay = 50 * us;
-    do
+    static constexpr auto postChipSelectionDelay = 20 * ns;
+    csGpioPin.Reset();
+    BusyWaitFor(postChipSelectionDelay);
+}
+
+
+auto DeselectChip() -> void
+{
+    static constexpr auto preChipDeselectionDelay = 50 * ns;
+    BusyWaitFor(preChipDeselectionDelay);
+    csGpioPin.Set();
+}
+
+
+auto BusyWaitForCts(Duration timeout) -> Result<void>
+{
+    OUTCOME_TRY(BusyWaitForAnswer<0>(timeout));
+    return outcome_v2::success();
+}
+
+
+template<std::size_t answerLength>
+auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>
+{
+    static constexpr auto dataIsReadyValue = 0xFF_b;
+    auto nextPollingTime = CurrentRodosTime();
+    auto deadline = nextPollingTime + timeout;
+    while(true)
     {
-        csGpioPin.Reset();
+        SelectChip();
         hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
         auto cts = 0x00_b;
         hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
@@ -808,11 +829,21 @@ auto WaitForCts() -> void
         {
             break;
         }
-        csGpioPin.Set();
-        SuspendFor(pollingDelay);
-    } while(true);
-    // TODO: We need to get rid of this infinite loop once we do proper error handling for the whole
-    // RF code
+        DeselectChip();
+        nextPollingTime += pollingInterval;
+        BusyWaitUntil(nextPollingTime);
+        if(CurrentRodosTime() > deadline)
+        {
+            return ErrorCode::timeout;
+        }
+    }
+    auto answer = std::array<Byte, answerLength>{};
+    if constexpr(answerLength > 0)
+    {
+        hal::ReadFrom(&rfSpi, Span(&answer), spiTimeout);
+    }
+    DeselectChip();
+    return answer;
 }
 
 
@@ -827,5 +858,6 @@ inline auto SetProperties(PropertyGroup propertyGroup,
                           static_cast<Byte>(extent),
                           startIndex,
                           propertyValues));
+}
 }
 }
