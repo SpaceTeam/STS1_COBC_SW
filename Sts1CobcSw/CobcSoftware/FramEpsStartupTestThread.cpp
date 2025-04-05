@@ -53,8 +53,15 @@ private:
             fram::framIsWorking.Store(false);
         }
         eps::InitializeAdcs();
-        (void)eps::ReadAdcs();
-        persistentVariables.template Store<"epsIsWorking">(true);
+        auto adcData = eps::ReadAdcs();
+        if(adcData == AdcData{})
+        {
+            persistentVariables.template Store<"epsIsWorking">(false);
+        }
+        else
+        {
+            persistentVariables.template Store<"epsIsWorking">(true);
+        }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
