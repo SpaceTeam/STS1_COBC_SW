@@ -140,6 +140,10 @@ auto InitializeAdcs() -> void
 
 auto ReadAdcs() -> AdcData
 {
+    if(not persistentVariales.Load<"epsIsWorking">)
+    {
+        return AdcData{};
+    }
     auto adcData = AdcData{};
     adcData.adc4 = ReadAdc(&adc4CsGpioPin);
     auto adc5Data = ReadAdc(&adc5CsGpioPin);
