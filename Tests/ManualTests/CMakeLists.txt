@@ -30,8 +30,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(Eps)
     target_link_libraries(
-        Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Sensors Sts1CobcSw_Serial
-                                    Sts1CobcSwTests::HardwareSetup
+        Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Sensors
+                                    Sts1CobcSw_Serial Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(Gpio)

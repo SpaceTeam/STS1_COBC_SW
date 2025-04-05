@@ -52,9 +52,17 @@ private:
             DEBUG_PRINT(" failed to read correct FRAM device ID");
             fram::framIsWorking.Store(false);
         }
-        eps::InitializeAdcs();
-        (void)eps::ReadAdcs();
         persistentVariables.template Store<"epsIsWorking">(true);
+        eps::InitializeAdcs();
+        auto adcData = eps::ReadAdcs();
+        if(adcData == eps::AdcData{})
+        {
+            persistentVariables.template Store<"epsIsWorking">(false);
+        }
+        else
+        {
+            persistentVariables.template Store<"epsIsWorking">(true);
+        }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }

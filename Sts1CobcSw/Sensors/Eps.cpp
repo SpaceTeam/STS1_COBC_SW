@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
@@ -116,6 +118,10 @@ auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
 auto InitializeAdcs() -> void
 {
+    if(not persistentVariables.template Load<"epsIsWorking">())
+    {
+        return;
+    }
     adc4CsGpioPin.SetDirection(hal::PinDirection::out);
     adc4CsGpioPin.Set();
     adc5CsGpioPin.SetDirection(hal::PinDirection::out);
@@ -140,6 +146,10 @@ auto InitializeAdcs() -> void
 
 auto ReadAdcs() -> AdcData
 {
+    if(not persistentVariables.template Load<"epsIsWorking">())
+    {
+        return AdcData{};
+    }
     auto adcData = AdcData{};
     adcData.adc4 = ReadAdc(&adc4CsGpioPin);
     auto adc5Data = ReadAdc(&adc5CsGpioPin);
@@ -154,6 +164,10 @@ auto ReadAdcs() -> AdcData
 
 auto ResetAdcRegisters() -> void
 {
+    if(not persistentVariables.template Load<"epsIsWorking">())
+    {
+        return;
+    }
     ResetAdc(&adc4CsGpioPin, ResetType::registers);
     ResetAdc(&adc5CsGpioPin, ResetType::registers);
     ResetAdc(&adc6CsGpioPin, ResetType::registers);
@@ -162,6 +176,10 @@ auto ResetAdcRegisters() -> void
 
 auto ClearAdcFifos() -> void
 {
+    if(not persistentVariables.template Load<"epsIsWorking">())
+    {
+        return;
+    }
     ResetAdc(&adc4CsGpioPin, ResetType::fifo);
     ResetAdc(&adc5CsGpioPin, ResetType::fifo);
     ResetAdc(&adc6CsGpioPin, ResetType::fifo);
