@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/Flash.hpp>
+#include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 

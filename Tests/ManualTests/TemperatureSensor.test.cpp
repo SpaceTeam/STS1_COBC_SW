@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
+#include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>
 
 #include <rodos_no_using_namespace.h>
 

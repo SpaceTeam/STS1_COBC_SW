@@ -1,9 +1,9 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/Fram/Fram.hpp>
+#include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>

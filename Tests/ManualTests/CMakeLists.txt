@@ -3,8 +3,9 @@
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(DeviceIds)
     target_link_libraries(
-        Sts1CobcSwTests_DeviceIds PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Periphery
-                                          Sts1CobcSwTests::HardwareSetup
+        Sts1CobcSwTests_DeviceIds
+        PRIVATE rodos::rodos Sts1CobcSw_Flash Sts1CobcSw_Fram Sts1CobcSw_Hal Sts1CobcSw_Rf
+                Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(DisableRfLatchupProtection DisableRfLatchupProtection)
@@ -29,7 +30,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(Eps)
     target_link_libraries(
-        Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Periphery Sts1CobcSw_Serial
+        Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_Sensors Sts1CobcSw_Serial
                                     Sts1CobcSwTests::HardwareSetup
     )
 
@@ -44,11 +45,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSwTests_MaxPower
         PRIVATE rodos::rodos
                 strong_type::strong_type
+                Sts1CobcSw_Fram
                 Sts1CobcSw_Hal
-                Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial
-                Sts1CobcSw_RodosTime
                 Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::HardwareSetup
     )
 
@@ -64,11 +65,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSwTests_SpiSupervisor
         PRIVATE rodos::rodos
                 strong_type::strong_type
+                Sts1CobcSw_Flash
+                Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
-                Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial
+                Sts1CobcSw_Rf
                 Sts1CobcSw_RodosTime
+                Sts1CobcSw_Sensors
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::HardwareSetup
@@ -76,7 +80,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(TemperatureSensor)
     target_link_libraries(
-        Sts1CobcSwTests_TemperatureSensor PRIVATE rodos::rodos Sts1CobcSw_Periphery
+        Sts1CobcSwTests_TemperatureSensor PRIVATE rodos::rodos Sts1CobcSw_Sensors
                                                   Sts1CobcSwTests::HardwareSetup
     )
 

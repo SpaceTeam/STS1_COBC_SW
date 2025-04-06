@@ -1,9 +1,9 @@
 #include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
-#include <Sts1CobcSw/Periphery/Flash.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>

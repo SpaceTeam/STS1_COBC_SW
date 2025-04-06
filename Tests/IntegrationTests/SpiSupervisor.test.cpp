@@ -1,9 +1,9 @@
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
+#include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/SpiMock.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/FramMock.hpp>
-#include <Sts1CobcSw/Periphery/Spis.hpp>
+#include <Sts1CobcSw/Hal/Spis.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>

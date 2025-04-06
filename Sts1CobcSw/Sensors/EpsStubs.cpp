@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Periphery/Eps.hpp>
+#include <Sts1CobcSw/Sensors/Eps.hpp>  // IWYU pragma: associated
 
 
 namespace sts1cobcsw::eps

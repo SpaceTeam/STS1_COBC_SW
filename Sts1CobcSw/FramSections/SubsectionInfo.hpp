@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
 

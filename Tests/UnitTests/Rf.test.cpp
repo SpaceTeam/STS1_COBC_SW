@@ -1,6 +1,6 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Rf/Rf.hpp>
 
 
 namespace rf = sts1cobcsw::rf;

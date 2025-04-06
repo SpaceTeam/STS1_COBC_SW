@@ -1,13 +1,13 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>

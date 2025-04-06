@@ -5,7 +5,7 @@ target_link_libraries(
     Sts1CobcSwTests_Fram
     PRIVATE rodos::rodos
             strong_type::strong_type
-            Sts1CobcSw_Periphery
+            Sts1CobcSw_Fram
             Sts1CobcSw_Serial
             Sts1CobcSw_Utility
             Sts1CobcSw_Vocabulary
@@ -45,26 +45,24 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(Flash)
     target_link_libraries(
         Sts1CobcSwTests_Flash
-        PRIVATE Sts1CobcSw_Outcome
-                Sts1CobcSw_Periphery
+        PRIVATE strong_type::strong_type
+                Sts1CobcSw_Flash
+                Sts1CobcSw_Outcome
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
-                strong_type::strong_type
                 Sts1CobcSwTests::CatchRodos
     )
 
     add_test_program(WholeFram)
     target_link_libraries(
         Sts1CobcSwTests_WholeFram
-        PRIVATE strong_type::strong_type Sts1CobcSw_Periphery Sts1CobcSw_Serial Sts1CobcSw_Utility
+        PRIVATE strong_type::strong_type Sts1CobcSw_Fram Sts1CobcSw_Serial Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos
     )
 
     add_test_program(Rf)
-    target_link_libraries(
-        Sts1CobcSwTests_Rf PRIVATE Sts1CobcSw_Periphery Sts1CobcSwTests::CatchRodos
-    )
+    target_link_libraries(Sts1CobcSwTests_Rf PRIVATE Sts1CobcSw_Rf Sts1CobcSwTests::CatchRodos)
 endif()
 
 # ---- Tests only for Linux ----
@@ -89,8 +87,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         Sts1CobcSwTests_FramRingArray
         PRIVATE etl::etl
                 strong_type::strong_type
+                Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
-                Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
                 Sts1CobcSwTests::CatchRodos
@@ -102,8 +100,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         Sts1CobcSwTests_FramVector
         PRIVATE etl::etl
                 strong_type::strong_type
+                Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
-                Sts1CobcSw_Periphery
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
                 Sts1CobcSwTests::CatchRodos
@@ -123,23 +121,22 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(PersistentVariableInfo)
     target_link_libraries(
         Sts1CobcSwTests_PersistentVariableInfo
-        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections Sts1CobcSw_Periphery
-                Sts1CobcSw_Serial Sts1CobcSw_Utility
+        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections Sts1CobcSw_Serial Sts1CobcSw_Utility
     )
     catch_discover_tests(Sts1CobcSwTests_PersistentVariableInfo)
 
     add_test_program(PersistentVariables)
     target_link_libraries(
         Sts1CobcSwTests_PersistentVariables
-        PRIVATE strong_type::strong_type Sts1CobcSw_FramSections Sts1CobcSw_Periphery
-                Sts1CobcSw_Serial Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+        PRIVATE strong_type::strong_type Sts1CobcSw_Fram Sts1CobcSw_FramSections Sts1CobcSw_Serial
+                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 
     add_test_program(Section)
     target_link_libraries(
-        Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
-                                        Sts1CobcSw_Periphery
+        Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain strong_type::strong_type
+                                        Sts1CobcSw_Fram Sts1CobcSw_FramSections
     )
     catch_discover_tests(Sts1CobcSwTests_Section)
 
@@ -167,15 +164,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(SubsectionInfo)
     target_link_libraries(
-        Sts1CobcSwTests_SubsectionInfo PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
-                                               Sts1CobcSw_Periphery Sts1CobcSw_Utility
+        Sts1CobcSwTests_SubsectionInfo
+        PRIVATE Catch2::Catch2WithMain strong_type::strong_type Sts1CobcSw_Fram
+                Sts1CobcSw_FramSections Sts1CobcSw_Utility
     )
     catch_discover_tests(Sts1CobcSwTests_SubsectionInfo)
 
     add_test_program(Subsections)
     target_link_libraries(
-        Sts1CobcSwTests_Subsections PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections
-                                            Sts1CobcSw_Periphery Sts1CobcSw_Utility
+        Sts1CobcSwTests_Subsections
+        PRIVATE Catch2::Catch2WithMain strong_type::strong_type Sts1CobcSw_Fram
+                Sts1CobcSw_FramSections Sts1CobcSw_Utility
     )
     catch_discover_tests(Sts1CobcSwTests_Subsections)
 

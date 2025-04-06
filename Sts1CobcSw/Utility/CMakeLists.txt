@@ -6,7 +6,6 @@ target_link_libraries(
 target_compile_definitions(
     Sts1CobcSw_Utility PUBLIC $<$<CONFIG:Debug,RelWithDebInfo>:ENABLE_DEBUG_PRINT>
 )
-
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(Sts1CobcSw_Utility PRIVATE Crc32Hardware.cpp)
 endif()

@@ -1,11 +1,11 @@
 #include <Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
-#include <Sts1CobcSw/Periphery/Eps.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>

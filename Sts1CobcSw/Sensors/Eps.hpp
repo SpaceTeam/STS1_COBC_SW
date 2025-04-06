@@ -48,4 +48,4 @@ inline constexpr std::size_t serialSize<eps::AdcData> =
 }
 
 
-#include <Sts1CobcSw/Periphery/Eps.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Sensors/Eps.ipp>  // IWYU pragma: keep

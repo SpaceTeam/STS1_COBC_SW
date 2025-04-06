@@ -1,14 +1,14 @@
 #include <Sts1CobcSw/CobcSoftware/RfCommunicationThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
-#include <Sts1CobcSw/Periphery/Eps.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Sensors/Eps.hpp>
+#include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
