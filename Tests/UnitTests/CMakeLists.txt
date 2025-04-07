@@ -19,6 +19,9 @@ target_link_libraries(
     PRIVATE etl::etl
             littlefs::littlefs
             Sts1CobcSw_FileSystem
+            Sts1CobcSw_Fram
+            Sts1CobcSw_FramSections
+            Sts1CobcSw_Outcome
             Sts1CobcSw_Serial
             Sts1CobcSw_Utility
             Sts1CobcSwTests::CatchRodos

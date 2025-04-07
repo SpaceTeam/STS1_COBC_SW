@@ -1,4 +1,5 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
+#include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
@@ -6,7 +7,11 @@
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #ifdef __linux__
     #include <Sts1CobcSw/FileSystem/LfsRam.hpp>
+    #include <Sts1CobcSw/Fram/FramMock.hpp>
 #endif
+#include <Sts1CobcSw/Fram/Fram.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
@@ -25,9 +30,12 @@
 
 
 namespace fs = sts1cobcsw::fs;
+namespace fram = sts1cobcsw::fram;
 
 using sts1cobcsw::ErrorCode;
+using sts1cobcsw::persistentVariables;
 using sts1cobcsw::Span;
+
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 
@@ -41,9 +49,15 @@ auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -
 }
 
 
-TEST_CASE("FileSystem without data corruption")
+TEST_CASE("File system without data corruption")
 {
+#ifdef __linux__
+    fram::ram::SetAllDoFunctions();
+#endif
+    fram::Initialize();
     fs::Initialize();
+    persistentVariables.template Store<"flashIsWorking">(true);
+
     auto mountResult = fs::Mount();
     REQUIRE(mountResult.has_error() == false);
 
@@ -279,10 +293,68 @@ TEST_CASE("FileSystem without data corruption")
 }
 
 
-#ifdef __linux__
-TEST_CASE("FileSystem with data corruption")
+TEST_CASE("File system with flash not working")
 {
+#ifdef __linux__
+    fram::ram::SetAllDoFunctions();
+#endif
+    fram::Initialize();
     fs::Initialize();
+
+    persistentVariables.template Store<"flashIsWorking">(false);
+    auto mountResult = fs::Mount();
+    CHECK(mountResult.has_error());
+    CHECK(mountResult.error() == ErrorCode::io);
+
+    persistentVariables.template Store<"flashIsWorking">(true);
+    mountResult = fs::Mount();
+    REQUIRE(mountResult.has_error() == false);
+
+    persistentVariables.template Store<"flashIsWorking">(false);
+    auto dirPath = fs::Path("/MyDir");
+    auto createDirResult = fs::CreateDirectory(dirPath);
+    CHECK(createDirResult.has_error());
+    CHECK(createDirResult.error() == ErrorCode::io);
+
+    persistentVariables.template Store<"flashIsWorking">(true);
+    createDirResult = fs::CreateDirectory(dirPath);
+    CHECK(createDirResult.has_error() == false);
+
+    auto filePath = fs::Path("/MyDir/MyFile");
+    auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+    CHECK(openResult.has_value());
+    auto & file = openResult.value();
+
+    auto closeResult = file.Close();
+    CHECK(closeResult.has_error() == false);
+
+    persistentVariables.template Store<"flashIsWorking">(false);
+    auto removeResult = fs::Remove(filePath);
+    CHECK(removeResult.has_error());
+    removeResult = fs::ForceRemove(filePath);
+    CHECK(removeResult.has_error());
+
+    persistentVariables.template Store<"flashIsWorking">(true);
+    removeResult = fs::Remove(filePath);
+    CHECK(removeResult.has_error() == false);
+
+    removeResult = fs::Remove(dirPath);
+    CHECK(removeResult.has_error() == false);
+
+    // Unmount should still work, as it only frees up memory
+    persistentVariables.template Store<"flashIsWorking">(false);
+    auto unmountResult = fs::Unmount();
+    CHECK(unmountResult.has_error() == false);
+}
+
+
+#ifdef __linux__
+TEST_CASE("File system with data corruption")
+{
+    fram::ram::SetAllDoFunctions();
+    fram::Initialize();
+    fs::Initialize();
+    persistentVariables.template Store<"flashIsWorking">(true);
 
     // Test with faulty write
     {
