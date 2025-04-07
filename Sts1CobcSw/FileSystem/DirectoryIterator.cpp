@@ -1,4 +1,8 @@
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+
+#include <littlefs/lfs.h>
 
 
 namespace sts1cobcsw::fs
@@ -43,7 +47,7 @@ auto DirectoryIterator::operator=(DirectoryIterator && other) noexcept -> Direct
 
 DirectoryIterator::~DirectoryIterator()
 {
-    if(not path_.empty())
+    if(persistentVariables.template Load<"flashIsWorking">() and not path_.empty())
     {
         (void)lfs_dir_close(&lfs, &lfsDirectory_);
     }
@@ -52,6 +56,10 @@ DirectoryIterator::~DirectoryIterator()
 
 auto MakeIterator(Path const & path) -> Result<DirectoryIterator>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     auto iterator = DirectoryIterator{};
     auto error = lfs_dir_open(&lfs, &iterator.lfsDirectory_, path.c_str());
     if(error == 0)
@@ -76,7 +84,15 @@ auto operator==(DirectoryIterator const & lhs, DirectoryIterator const & rhs) ->
 
 auto DirectoryIterator::operator++() -> DirectoryIterator &
 {
-    ReadNextDirectoryEntry();
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        lfsErrorCode_ = LFS_ERR_IO;
+        ResetEverythingExceptErrorCode();
+    }
+    else
+    {
+        ReadNextDirectoryEntry();
+    }
     return *this;
 }
 
@@ -110,19 +126,26 @@ auto DirectoryIterator::end() -> DirectoryIterator
 
 auto DirectoryIterator::CopyConstructFrom(DirectoryIterator const * other) noexcept -> void
 {
-    if(not path_.empty())
+    if(persistentVariables.template Load<"flashIsWorking">())
     {
-        (void)lfs_dir_close(&lfs, &lfsDirectory_);
+        if(not path_.empty())
+        {
+            (void)lfs_dir_close(&lfs, &lfsDirectory_);
+        }
+        path_ = other->path_;
+        lfsDirectory_ = other->lfsDirectory_;
+        directoryInfo_ = other->directoryInfo_;
+        lfsErrorCode_ = other->lfsErrorCode_;
+        if(path_.empty())
+        {
+            return;
+        }
+        lfsErrorCode_ = lfs_dir_open(&lfs, &lfsDirectory_, path_.c_str());
     }
-    path_ = other->path_;
-    lfsDirectory_ = other->lfsDirectory_;
-    directoryInfo_ = other->directoryInfo_;
-    lfsErrorCode_ = other->lfsErrorCode_;
-    if(path_.empty())
+    else
     {
-        return;
+        lfsErrorCode_ = LFS_ERR_IO;
     }
-    lfsErrorCode_ = lfs_dir_open(&lfs, &lfsDirectory_, path_.c_str());
     if(lfsErrorCode_ != 0)
     {
         ResetEverythingExceptErrorCode();
@@ -147,18 +170,20 @@ auto DirectoryIterator::ReadNextDirectoryEntry() -> void
     }
     auto lfsInfo = lfs_info{};
     lfsErrorCode_ = lfs_dir_read(&lfs, &lfsDirectory_, &lfsInfo);
-    directoryInfo_.name = etl::make_string(lfsInfo.name);
-    directoryInfo_.size = lfsInfo.size;
-    directoryInfo_.type = lfsInfo.type == LFS_TYPE_REG ? EntryType::file : EntryType::directory;
     // If lfsErrorCode_ == 0 we are at the end of the directory, if lfsErrorCode_ < 0 an error
-    // occurred. In both cases we can't iterate any further so we close the directory and go into an
-    // end-iterator-like state, i.e., we reset everything except the error code. These states all
-    // compare equal to the end iterator (see operator==()) thereby stopping iteration.
+    // occurred. In both cases we can't iterate any further so we close the directory and go
+    // into an end-iterator-like state, i.e., we reset everything except the error code. These
+    // states all compare equal to the end iterator (see operator==()) thereby stopping
+    // iteration.
     if(lfsErrorCode_ <= 0)
     {
         (void)lfs_dir_close(&lfs, &lfsDirectory_);
         ResetEverythingExceptErrorCode();
+        return;
     }
+    directoryInfo_.name = etl::make_string(lfsInfo.name);
+    directoryInfo_.size = lfsInfo.size;
+    directoryInfo_.type = lfsInfo.type == LFS_TYPE_REG ? EntryType::file : EntryType::directory;
 }
 
 

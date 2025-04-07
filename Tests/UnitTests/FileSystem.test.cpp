@@ -329,6 +329,35 @@ TEST_CASE("File system with flash not working")
     CHECK(closeResult.has_error() == false);
 
     persistentVariables.template Store<"flashIsWorking">(false);
+    auto makeIteratorResult = fs::MakeIterator(dirPath);
+    CHECK(makeIteratorResult.has_error());
+    CHECK(makeIteratorResult.error() == ErrorCode::io);
+
+    persistentVariables.template Store<"flashIsWorking">(true);
+    makeIteratorResult = fs::MakeIterator(dirPath);
+    CHECK(makeIteratorResult.has_value());
+    auto & iterator = makeIteratorResult.value();
+
+    auto dereferenceResult = *iterator;
+    CHECK(dereferenceResult.has_value());
+    persistentVariables.template Store<"flashIsWorking">(false);
+    // Dereferencing works even when flashIsWorking is false, because the iterator already read the
+    // directory info when it was created or incremented
+    dereferenceResult = *iterator;
+    CHECK(dereferenceResult.has_value());
+
+    auto iteratorCopy = iterator;
+    CHECK(iteratorCopy == iterator.end());
+    dereferenceResult = *iteratorCopy;
+    CHECK(dereferenceResult.has_error());
+    CHECK(dereferenceResult.error() == ErrorCode::io);
+
+    ++iterator;
+    CHECK(iterator == iterator.end());
+    dereferenceResult = *iterator;
+    CHECK(dereferenceResult.has_error());
+    CHECK(dereferenceResult.error() == ErrorCode::io);
+
     auto removeResult = fs::Remove(filePath);
     CHECK(removeResult.has_error());
     removeResult = fs::ForceRemove(filePath);
