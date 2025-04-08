@@ -118,7 +118,8 @@ private:
         PRINTF("\nRF test\n\n");
 
         rf::Initialize(rf::TxType::packet);
-        PRINTF("RF module initialized\n");
+        rf::EnableTx();
+        PRINTF("RF module initialized, TX enabled\n");
 
         auto n = 10U;
         auto message = dataWithoutCc;
