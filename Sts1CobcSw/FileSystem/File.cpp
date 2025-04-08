@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/FileSystem/File.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 
 
 namespace sts1cobcsw::fs
@@ -37,6 +38,10 @@ File::~File()
 
 auto Open(Path const & path, unsigned int flags) -> Result<File>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     auto file = File();
     // We need to create a temporary with Path(path) here since append() modifies the object and we
     // don't want to change the original path
@@ -73,6 +78,10 @@ auto File::SeekRelative(int offset) -> Result<int>
 
 auto File::Size() const -> Result<int>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     if(not isOpen_)
     {
         return ErrorCode::fileNotOpen;
@@ -88,6 +97,10 @@ auto File::Size() const -> Result<int>
 
 auto File::Close() const -> Result<void>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     if(not isOpen_)
     {
         return outcome_v2::success();
@@ -103,6 +116,10 @@ auto File::Close() const -> Result<void>
 
 auto File::Flush() -> Result<void>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     if(not isOpen_)
     {
         return ErrorCode::fileNotOpen;
@@ -125,21 +142,28 @@ auto File::Flush() -> Result<void>
 // file more often.
 auto File::MoveConstructFrom(File * other) noexcept -> void
 {
+    path_ = other->path_;
+    lockFilePath_ = other->lockFilePath_;
+    openFlags_ = other->openFlags_;
+    lfsFile_ = other->lfsFile_;
+    isOpen_ = other->isOpen_;
     if(other->path_.empty())
     {
         return;
     }
-    auto error = lfs_file_opencfg(&lfs,
-                                  &lfsFile_,
-                                  other->path_.c_str(),
-                                  static_cast<int>(other->openFlags_),
-                                  &lfsFileConfig_);
-    if(error == 0)
+    if(persistentVariables.template Load<"flashIsWorking">())
     {
-        path_ = other->path_;
-        lockFilePath_ = other->lockFilePath_;
-        openFlags_ = other->openFlags_;
-        isOpen_ = true;
+        auto error = lfs_file_opencfg(
+            &lfs, &lfsFile_, path_.c_str(), static_cast<int>(openFlags_), &lfsFileConfig_);
+        isOpen_ = error == 0;
+    }
+    else
+    {
+        path_ = "";
+        lockFilePath_ = "";
+        openFlags_ = 0;
+        lfsFile_ = {};
+        isOpen_ = false;
     }
     (void)other->CloseAndKeepLockFile();
     other->path_ = "";
@@ -173,6 +197,10 @@ auto File::CreateLockFile() const noexcept -> Result<void>
 
 auto File::Read(void * buffer, std::size_t size) const -> Result<int>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     if(not isOpen_)
     {
         return ErrorCode::fileNotOpen;
@@ -192,6 +220,10 @@ auto File::Read(void * buffer, std::size_t size) const -> Result<int>
 
 auto File::Write(void const * buffer, std::size_t size) -> Result<int>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     if(not isOpen_)
     {
         return ErrorCode::fileNotOpen;
@@ -211,6 +243,10 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
 
 [[nodiscard]] auto File::Seek(int offset, int whence) -> Result<int>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     if(not isOpen_)
     {
         return ErrorCode::fileNotOpen;
@@ -230,6 +266,7 @@ auto File::CloseAndKeepLockFile() const -> Result<void>
     {
         return outcome_v2::success();
     }
+    // lfs_file_close frees buffers and needs to be called even when flashIsWorking == false
     auto error = lfs_file_close(&lfs, &lfsFile_);
     if(error != 0)
     {

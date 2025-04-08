@@ -320,15 +320,42 @@ TEST_CASE("File system with flash not working")
     createDirResult = fs::CreateDirectory(dirPath);
     CHECK(createDirResult.has_error() == false);
 
+    persistentVariables.template Store<"flashIsWorking">(false);
     auto filePath = fs::Path("/MyDir/MyFile");
-    auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
+    auto openResult = fs::Open(filePath, LFS_O_RDWR | LFS_O_CREAT);
+    CHECK(openResult.has_error());
+    CHECK(openResult.error() == ErrorCode::io);
+
+    persistentVariables.template Store<"flashIsWorking">(true);
+    openResult = fs::Open(filePath, LFS_O_RDWR | LFS_O_CREAT);
     CHECK(openResult.has_value());
     auto & file = openResult.value();
 
-    auto closeResult = file.Close();
-    CHECK(closeResult.has_error() == false);
-
     persistentVariables.template Store<"flashIsWorking">(false);
+    auto flushResult = file.Flush();
+    CHECK(flushResult.has_error());
+    CHECK(flushResult.error() == ErrorCode::io);
+
+    auto seekResult = file.SeekAbsolute(0);
+    CHECK(seekResult.has_error());
+    CHECK(seekResult.error() == ErrorCode::io);
+
+    seekResult = file.SeekRelative(0);
+    CHECK(seekResult.has_error());
+    CHECK(seekResult.error() == ErrorCode::io);
+
+    auto data = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
+    auto writeResult = file.Write(Span(data));
+    CHECK(writeResult.has_error());
+    CHECK(writeResult.error() == ErrorCode::io);
+    auto readResult = file.Read(Span(&data));
+    CHECK(readResult.has_error());
+    CHECK(readResult.error() == ErrorCode::io);
+
+    auto sizeResult = file.Size();
+    CHECK(sizeResult.has_error());
+    CHECK(sizeResult.error() == ErrorCode::io);
+
     auto makeIteratorResult = fs::MakeIterator(dirPath);
     CHECK(makeIteratorResult.has_error());
     CHECK(makeIteratorResult.error() == ErrorCode::io);
@@ -360,11 +387,15 @@ TEST_CASE("File system with flash not working")
 
     auto removeResult = fs::Remove(filePath);
     CHECK(removeResult.has_error());
+    CHECK(removeResult.error() == ErrorCode::io);
     removeResult = fs::ForceRemove(filePath);
     CHECK(removeResult.has_error());
+    CHECK(removeResult.error() == ErrorCode::io);
 
+    // We need to use ForceRemove() because the lock file is not removed, when the file is moved
+    // while flashIsWorking == false
     persistentVariables.template Store<"flashIsWorking">(true);
-    removeResult = fs::Remove(filePath);
+    removeResult = fs::ForceRemove(filePath);
     CHECK(removeResult.has_error() == false);
 
     removeResult = fs::Remove(dirPath);
