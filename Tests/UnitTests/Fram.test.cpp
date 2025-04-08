@@ -1,8 +1,8 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <Sts1CobcSw/Periphery/Fram.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #ifdef __linux__
-    #include <Sts1CobcSw/Periphery/FramMock.hpp>
+    #include <Sts1CobcSw/Fram/FramMock.hpp>
 #endif
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>

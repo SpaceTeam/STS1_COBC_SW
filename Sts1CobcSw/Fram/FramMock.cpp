@@ -1,5 +1,5 @@
-#include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/FramMock.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
+#include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/type.hpp>

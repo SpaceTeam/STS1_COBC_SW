@@ -2,7 +2,7 @@
 //! @brief "Driver" for the temperature sensor TMP36xS
 
 
-#include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>
+#include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>
 
 #include <rodos_no_using_namespace.h>
 

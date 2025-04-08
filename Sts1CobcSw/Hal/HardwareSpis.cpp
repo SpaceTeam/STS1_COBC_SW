@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Hal/HardwareSpi.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Periphery/Spis.hpp>
+#include <Sts1CobcSw/Hal/Spis.hpp>  // IWYU pragma: associated
 
 
 namespace sts1cobcsw

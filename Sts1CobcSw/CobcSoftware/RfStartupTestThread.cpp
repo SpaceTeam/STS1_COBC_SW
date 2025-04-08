@@ -3,7 +3,7 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
-#include <Sts1CobcSw/Periphery/Rf.hpp>
+#include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>

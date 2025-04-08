@@ -1,5 +1,5 @@
+#include <Sts1CobcSw/Flash/FlashMock.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/Periphery/FlashMock.hpp>
 
 
 namespace sts1cobcsw::flash

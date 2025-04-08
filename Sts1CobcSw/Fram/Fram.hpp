@@ -64,4 +64,4 @@ auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout
 }
 
 
-#include <Sts1CobcSw/Periphery/Fram.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Fram/Fram.ipp>  // IWYU pragma: keep

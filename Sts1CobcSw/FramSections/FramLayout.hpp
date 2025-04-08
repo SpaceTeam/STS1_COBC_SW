@@ -1,11 +1,11 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 

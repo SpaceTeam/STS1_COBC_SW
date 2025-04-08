@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/Hal/SpiMock.hpp>
-#include <Sts1CobcSw/Periphery/Spis.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/Hal/Spis.hpp>  // IWYU pragma: associated
 
 
 namespace sts1cobcsw

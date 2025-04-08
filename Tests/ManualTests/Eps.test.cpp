@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Periphery/Eps.hpp>
+#include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <rodos_no_using_namespace.h>

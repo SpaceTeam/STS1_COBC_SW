@@ -1,10 +1,10 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos/api/rodos-semaphore.h>

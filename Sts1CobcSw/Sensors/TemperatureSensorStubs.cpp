@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Periphery/TemperatureSensor.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>  // IWYU pragma: associated
 
 
 namespace sts1cobcsw::rftemperaturesensor

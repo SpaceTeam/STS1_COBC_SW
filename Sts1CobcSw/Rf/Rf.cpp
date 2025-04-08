@@ -7,8 +7,8 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
-#include <Sts1CobcSw/Periphery/Rf.hpp>
-#include <Sts1CobcSw/Periphery/Spis.hpp>
+#include <Sts1CobcSw/Hal/Spis.hpp>
+#include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>

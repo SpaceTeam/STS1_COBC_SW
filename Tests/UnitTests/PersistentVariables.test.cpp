@@ -1,10 +1,10 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/Fram/Fram.hpp>
+#include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
-#include <Sts1CobcSw/Periphery/Fram.hpp>
-#include <Sts1CobcSw/Periphery/FramMock.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
