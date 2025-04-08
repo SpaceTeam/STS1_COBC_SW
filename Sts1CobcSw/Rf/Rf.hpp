@@ -25,6 +25,8 @@ inline constexpr auto maxTxDataLength = (1U << 13U) - 1U;
 
 
 auto Initialize(TxType txType) -> void;
+auto EnableTx() -> void;
+auto DisableTx() -> void;
 auto ReadPartNumber() -> std::uint16_t;
 auto EnterStandbyMode() -> void;
 auto SetTxType(TxType txType) -> void;

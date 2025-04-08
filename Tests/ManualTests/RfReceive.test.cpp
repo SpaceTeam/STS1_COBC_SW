@@ -41,7 +41,8 @@ private:
         PRINTF("\nRF receive test\n\n");
 
         rf::Initialize(rf::TxType::packet);
-        PRINTF("RF module initialized\n");
+        rf::DisableTx();
+        PRINTF("RF module initialized, TX disabled\n");
 
         PRINTF("\n");
         PRINTF("Waiting to receive test data\n");
@@ -53,7 +54,7 @@ private:
         else
         {
             auto & receivedTestData = receiveTestDataResult.value();
-            PRINTF("Received data:");
+            PRINTF("Received data:\n");
             Print(Span(receivedTestData));
             PRINTF("-> done\n");
         }
@@ -71,7 +72,7 @@ private:
             PRINTF("Error: %i\n", static_cast<int>(receiveResult.error()));
             return;
         }
-        PRINTF("Received data:");
+        PRINTF("Received data:\n");
         Print(Span(receivedData));
         PRINTF("-> done\n");
     }

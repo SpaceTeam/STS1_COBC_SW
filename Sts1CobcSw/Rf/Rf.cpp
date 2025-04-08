@@ -191,8 +191,20 @@ auto Initialize(TxType txType) -> void
     ApplyPatch();
     PowerUp();
     Configure(txType);
-    // TODO: Turn on power amplifier only if persistent variable txIsOn/txIsEnabled is true
+    // The user is responsible for disabling TX if the related persistent variable is false
+    EnableTx();
+}
+
+
+auto EnableTx() -> void
+{
     paEnablePin.Set();
+}
+
+
+auto DisableTx() -> void
+{
+    paEnablePin.Reset();
 }
 
 
