@@ -108,6 +108,8 @@ auto File::Close() const -> Result<void>
     auto error = lfs_remove(&lfs, lockFilePath_.c_str());
     if(error != 0)
     {
+        // Close file even when removing the lock file failed, otherwise we could leak memory
+        (void)CloseAndKeepLockFile();
         return static_cast<ErrorCode>(error);
     }
     return CloseAndKeepLockFile();
