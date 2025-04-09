@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 
 #include <etl/to_string.h>
 
@@ -20,6 +21,10 @@ auto & lfs = internal::lfs;
 // crashes with a SEGFAULT.
 auto Mount() -> Result<void>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     auto error = lfs_mount(&lfs, &lfsConfig);
     if(error == 0)
     {
@@ -41,6 +46,7 @@ auto Mount() -> Result<void>
 
 auto Unmount() -> Result<void>
 {
+    // Allow unmount when flash is not working since it only frees memory
     auto error = lfs_unmount(&lfs);
     if(error != 0)
     {
@@ -52,6 +58,10 @@ auto Unmount() -> Result<void>
 
 auto CreateDirectory(Path const & path) -> Result<void>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     auto error = lfs_mkdir(&lfs, path.c_str());
     if(error == 0)
     {
@@ -63,6 +73,10 @@ auto CreateDirectory(Path const & path) -> Result<void>
 
 auto Remove(Path const & path) -> Result<void>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     auto info = lfs_info{};
     auto error = lfs_stat(&lfs, Path(path).append(".lock").c_str(), &info);
     auto lockFileExists = error == 0;
@@ -81,6 +95,10 @@ auto Remove(Path const & path) -> Result<void>
 
 auto ForceRemove(Path const & path) -> Result<void>
 {
+    if(not persistentVariables.template Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
     auto error = lfs_remove(&lfs, Path(path).append(".lock").c_str());
     if(error == 0 || error == LFS_ERR_NOENT)
     {
