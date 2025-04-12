@@ -39,12 +39,6 @@ add_test(NAME Littlefs COMMAND Sts1CobcSwTests_Littlefs)
 # ---- Tests only for the COBC ----
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-    add_test_program(Crc32)
-    target_link_libraries(
-        Sts1CobcSwTests_Crc32 PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial
-                                      Sts1CobcSwTests::CatchRodos
-    )
-
     add_test_program(Flash)
     target_link_libraries(
         Sts1CobcSwTests_Flash

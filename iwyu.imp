@@ -116,7 +116,6 @@
   { include: ["\"Sts1CobcSw/Telemetry/TelemetryRecord.hpp\"",                      "public", "<Sts1CobcSw/Telemetry/TelemetryRecord.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RealTime/RealTime.hpp\"",                              "public", "<Sts1CobcSw/RealTime/RealTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RodosTime/RodosTime.hpp\"",                            "public", "<Sts1CobcSw/RodosTime/RodosTime.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Utility/Crc32Hardware.hpp\"",                          "public", "<Sts1CobcSw/Utility/Crc32Hardware.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Crc32Software.hpp\"",                          "public", "<Sts1CobcSw/Utility/Crc32Software.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/DebugPrint.hpp\"",                             "public", "<Sts1CobcSw/Utility/DebugPrint.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp\"",            "public", "<Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>", "public"] },
