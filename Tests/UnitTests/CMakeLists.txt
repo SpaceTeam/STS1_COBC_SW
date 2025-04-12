@@ -1,5 +1,11 @@
 # ---- Tests for Linux and the COBC ----
 
+add_test_program(Crc32)
+target_link_libraries(
+    Sts1CobcSwTests_Crc32 PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
+)
+add_test(NAME Crc32 COMMAND Sts1CobcSwTests_Crc32)
+
 add_test_program(Fram)
 target_link_libraries(
     Sts1CobcSwTests_Fram
