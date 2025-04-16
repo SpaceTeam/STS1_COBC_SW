@@ -44,21 +44,6 @@ private:
         rf::DisableTx();
         PRINTF("RF module initialized, TX disabled\n");
 
-        PRINTF("\n");
-        PRINTF("Waiting to receive test data\n");
-        auto receiveTestDataResult = rf::ReceiveTestData();
-        if(receiveTestDataResult.has_error())
-        {
-            PRINTF("Error: %i\n", static_cast<int>(receiveTestDataResult.error()));
-        }
-        else
-        {
-            auto & receivedTestData = receiveTestDataResult.value();
-            PRINTF("Received data:\n");
-            Print(Span(receivedTestData));
-            PRINTF("-> done\n");
-        }
-
         // A fully encoded transfer frame is 255 * 1.5 = 382.5 -> 383 bytes long
         auto receivedData = std::array<Byte, 383>{};
         static constexpr auto rxTimeout = 5 * s;
