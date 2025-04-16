@@ -105,7 +105,6 @@ constexpr auto rxFifoThreshold = 32U;  // Stored bytes trigger RX FIFO almost fu
 
 // TODO: Split into fifoAlmostEmptyTimeout and dataSentTimeout and use shorter timeouts for both
 constexpr auto interruptTimeout = 1 * s;
-constexpr auto rxTimeout = 5 * s;
 constexpr auto spiTimeout = 1 * ms;
 constexpr auto ctsTimeout = 100 * ms;
 constexpr auto pollingInterval = 10 * us;
@@ -153,7 +152,6 @@ auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
 auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
 [[nodiscard]] auto SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>;
 [[nodiscard]] auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
-[[nodiscard]] auto SuspendUntilInterruptAndPrintStatus(Duration timeout) -> Result<void>;
 
 auto StartTx() -> void;
 auto StartRx() -> void;
@@ -164,8 +162,8 @@ auto ReadFromFifo(std::span<Byte> data) -> void;
 auto ReadFreeTxFifoSpace() -> std::uint8_t;
 auto ReadRxFifoFillLevel() -> std::uint8_t;
 
+auto DebugPrintModemStatus() -> void;
 auto ReadModemStatus() -> ModemStatus;
-auto DebugPrint(ModemStatus const & modemStatus) -> void;
 
 auto SendCommand(std::span<Byte const> data) -> void;
 template<std::size_t answerLength>
@@ -338,39 +336,6 @@ auto SuspendUntilDataSent(Duration timeout) -> Result<void>
 }
 
 
-// TODO: Receive more than one FIFO length
-auto ReceiveTestData() -> Result<std::array<Byte, maxRxSize>>
-{
-    auto result = []() -> Result<std::array<Byte, maxRxSize>>
-    {
-        ResetFifos();
-        // Enable RX FIFO almost full interrupt as well as preamble and sync detect interrupts
-        SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt);
-        // TODO: Why are these interrupts commented out?
-        // SetModemInterrupts(preambleDetectInterrupt | syncDetectInterrupt);
-        ReadAndClearInterruptStatus();
-        DisableRfLatchupProtection();
-        StartRx();
-        OUTCOME_TRY(SuspendUntilInterruptAndPrintStatus(rxTimeout));
-        auto modemStatus = ReadModemStatus();
-        DebugPrint(modemStatus);
-        auto rxBuffer = std::array<Byte, maxRxSize>{};
-        static constexpr auto chunkSize = static_cast<unsigned int>(rxFifoThreshold);
-        ReadFromFifo(Span(&rxBuffer).first<chunkSize>());
-        DEBUG_PRINT("Retrieved first %d bytes from FIFO\n", chunkSize);
-        ReadAndClearInterruptStatus();
-        // TODO: If a timeout occurs after some but not all data has been received, should we
-        // return an error or the received data?
-        OUTCOME_TRY(SuspendUntilInterrupt(rxTimeout));
-        ReadFromFifo(Span(&rxBuffer).subspan<chunkSize, chunkSize>());
-        return rxBuffer;
-    }();
-    EnterStandbyMode();
-    ReadAndClearInterruptStatus();
-    return result;
-}
-
-
 auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
 {
     auto result = [&]() -> Result<void>
@@ -381,18 +346,18 @@ auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
         DisableRfLatchupProtection();
         auto reactivationTime = CurrentRodosTime() + timeout;
         StartRx();
+        DebugPrintModemStatus();
         auto dataIndex = 0U;
         while(dataIndex + rxFifoThreshold < static_cast<unsigned int>(data.size()))
         {
             OUTCOME_TRY(SuspendUntilInterrupt(reactivationTime));
+            DebugPrintModemStatus();
             ReadFromFifo(data.subspan(dataIndex, rxFifoThreshold));
             ReadAndClearInterruptStatus();
             dataIndex += rxFifoThreshold;
         }
         auto remainingData = data.subspan(dataIndex);
         SetRxFifoThreshold(static_cast<Byte>(remainingData.size()));
-        // TODO: Check if the remaining bytes were already received while reading the last
-        // rxFifoThreshold bytes
         auto fillLevel = ReadRxFifoFillLevel();
         if(fillLevel < remainingData.size())
         {
@@ -1158,74 +1123,6 @@ auto SuspendUntilInterrupt(Duration timeout) -> Result<void>
 }
 
 
-auto SuspendUntilInterruptAndPrintStatus(Duration timeout) -> Result<void>
-{
-    static constexpr auto printInterval = 200 * ms;
-    auto now = CurrentRodosTime();
-    auto nextPrintTime = now + printInterval;
-    auto deadline = now + timeout;
-    nirqGpioPin.EnableInterrupts();
-    nirqGpioPin.ResetInterruptStatus();
-    auto result = [&]() -> Result<void>
-    {
-        while(nirqGpioPin.Read() == hal::PinState::set)
-        {
-            now = CurrentRodosTime();
-            timeout = std::min(nextPrintTime - now, deadline - now);
-            (void)nirqGpioPin.SuspendUntilInterrupt(timeout);
-            now = CurrentRodosTime();
-            if(now > deadline)
-            {
-                return ErrorCode::timeout;
-            }
-            // if(nirqGpioPin.Read() == hal::PinState::reset)
-            // {
-            //     auto interruptStatus = ReadAndClearInterrupts();
-            //     auto preambleOrSyncWasDetected = (interruptStatus[4] & 0b11_b) != 0_b;
-            //     if(preambleOrSyncWasDetected)
-            //     {
-            //         auto modemStatus = ReadModemStatus();
-            //         DEBUG_PRINT("Modem status: %02x %02x %d %d %d %d %d\n",
-            //                     static_cast<int>(modemStatus[0]),
-            //                     static_cast<int>(modemStatus[1]),
-            //                     static_cast<int>(modemStatus[2]),
-            //                     static_cast<int>(modemStatus[3]),
-            //                     static_cast<int>(modemStatus[4]),
-            //                     static_cast<int>(modemStatus[5]),
-            //                     (static_cast<unsigned>(modemStatus[6]) << 8U)
-            //                         + static_cast<unsigned>(modemStatus[7]));
-            //     }
-            //     auto rxFifoIsAlmostFull = (interruptStatus[2] & 1_b) != 0_b;
-            //     if(rxFifoIsAlmostFull)
-            //     {
-            //         break;
-            //     }
-            // }
-            if(now > nextPrintTime)
-            {
-                DebugPrint(ReadModemStatus());
-                [[maybe_unused]] auto fifoInfo =
-                    SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
-                DEBUG_PRINT("RX FiFo Count: %d\n", static_cast<int>(fifoInfo[0]));  // RX FiFo Count
-                // auto intStatus = SendCommand<interruptStatusAnswerLength>(
-                //     Span({cmdGetIntStatus, 0xFF_b, 0xFF_b, 0xFF_b}));
-                // DEBUG_PRINT("Interrupt status: %02x %02x %02x %02x %02x %02x\n",
-                //             static_cast<std::uint8_t>(intStatus[2]),
-                //             static_cast<std::uint8_t>(intStatus[3]),
-                //             static_cast<std::uint8_t>(intStatus[4]),
-                //             static_cast<std::uint8_t>(intStatus[5]),
-                //             static_cast<std::uint8_t>(intStatus[6]),
-                //             static_cast<std::uint8_t>(intStatus[7]));
-                nextPrintTime += printInterval;
-            }
-        }
-        return outcome_v2::success();
-    }();
-    nirqGpioPin.DisableInterrupts();
-    return result;
-}
-
-
 auto StartTx() -> void
 {
     static constexpr auto channel = 0x00_b;
@@ -1307,18 +1204,14 @@ auto ReadRxFifoFillLevel() -> std::uint8_t
 }
 
 
-auto ReadModemStatus() -> ModemStatus
+auto DebugPrintModemStatus() -> void
 {
-    return SendCommand<modemStatusAnswerLength>(Span(cmdGetModemStatus));
-}
-
-
-auto DebugPrint([[maybe_unused]] ModemStatus const & modemStatus) -> void
-{
+#ifdef ENABLE_DEBUG_PRINT
+    auto modemStatus = ReadModemStatus();
     // NOLINTBEGIN(*magic-numbers)
     DEBUG_PRINT(
         "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
-        "%6.1fdBm, Latched RSSI: %6.1fdBm, AFC Frequency Offset: %6d, ",
+        "%4.1fdBm, Latched RSSI: %4.1fdBm, AFC Frequency Offset: %6d\n",
         static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
         static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
         (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
@@ -1327,7 +1220,14 @@ auto DebugPrint([[maybe_unused]] ModemStatus const & modemStatus) -> void
         // static_cast<int>(modemStatus[5]), // ANT2 RSSI
         (static_cast<unsigned>(modemStatus[6]) << 8U)
             + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
-    // NOLINTEND(*magic-numbers)
+// NOLINTEND(*magic-numbers)
+#endif
+}
+
+
+[[maybe_unused]] auto ReadModemStatus() -> ModemStatus
+{
+    return SendCommand<modemStatusAnswerLength>(Span(cmdGetModemStatus));
 }
 
 
