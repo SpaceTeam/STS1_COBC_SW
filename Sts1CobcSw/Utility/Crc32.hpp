@@ -9,7 +9,7 @@
 
 namespace sts1cobcsw::utility
 {
-auto InitializeCrc32Hardware() -> void;
 [[nodiscard]] auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t;
-[[nodiscard]] auto ComputeCrc32Blocking(std::span<std::uint32_t const> data) -> std::uint32_t;
+[[nodiscard]] auto ComputeCrc32(std::uint32_t previousCrc32, std::span<Byte const> data)
+    -> std::uint32_t;
 }
