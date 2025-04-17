@@ -117,7 +117,7 @@ struct TmTransferFrame
     DataField dataField;
 
     template<typename Packet>
-    [[nodiscard]] auto TryToAdd(Packet const & packet) -> bool
+    [[nodiscard]] auto Add(Packet const & packet) -> bool
     {
         if(dataField.available() >= packet.Size())
         {
@@ -158,7 +158,7 @@ auto TestOwning() -> void
         .primaryHeader = {.spacecraftId = spacecraftId, .vcid = pusVcid},
         .dataField = {},
     };
-    (void)frame.TryToAdd(packet);
+    (void)frame.Add(packet);
     frame.Finish();
     // auto encodedFrame = Encode(frame);
     // rf::SendAndWait(Span(encodedFrame));
@@ -304,5 +304,142 @@ auto TestBuffer() -> void
     // auto encodedFrame = Encode(frame);
     // rf::SendAndWait(Span(encodedFrame));
 }
+}
+
+
+// Frame gets a view of a single global buffer into which it directly serializes its data; Packets
+// and Messages are types that implement WriteTo/AddTo(); Frame::Add() calls those functions to
+// write the data right into the buffer -> The data of the message lies in memory only once in that
+// single global buffer.
+namespace writers
+{
+// clang-format off
+// template<typename T>
+// concept Payload = requires(T const & t, etl::vector_ext<Byte> * dataField)
+// {
+//     { t.Size() } -> std::same_as<std::size_t>;
+//     // TODO: Think about returning a Result<void> instead
+//     { t.WriteTo(dataField) } -> std::same_as<void>;
+// };
+// clang-format on
+
+class Payload
+{
+public:
+    Payload(Payload const &) = default;
+    Payload(Payload &&) = default;
+    auto operator=(Payload const &) -> Payload & = default;
+    auto operator=(Payload &&) -> Payload & = default;
+    virtual ~Payload() = default;
+
+    auto WriteTo(etl::vector_ext<Byte> * dataField) const -> void
+    {
+        // TODO: Think about checking if the dataField is large enough and whether to assert or
+        // return a Result<void>
+        DoWriteTo(dataField);
+    }
+
+    [[nodiscard]] auto Size() const -> std::size_t
+    {
+        return DoSize();
+    }
+
+
+private:
+    virtual auto DoWriteTo(etl::vector_ext<Byte> * dataField) const -> void = 0;
+    [[nodiscard]] virtual auto DoSize() const -> std::size_t = 0;
+};
+
+
+class TmTransferFrame
+{
+public:
+    explicit TmTransferFrame(std::span<Byte, tm::transferFrameLength> buffer) : buffer_(buffer)
+    {
+    }
+
+    auto Start(std::uint16_t spacecraftId, std::uint8_t vcid) -> void
+    {
+        primaryHeader_.spacecraftId = spacecraftId;
+        primaryHeader_.vcid = vcid;
+        // TODO: Maybe fill with idleData instead?
+        std::fill(buffer_.begin(), buffer_.end(), 0x00_b);
+        dataField_.clear();  // Reset size to 0
+    }
+
+    auto Add(Payload const & payload) -> bool
+    {
+        if(dataField_.available() >= payload.Size())
+        {
+            payload.WriteTo(&dataField_);
+            return true;
+        }
+        return false;
+    }
+
+    auto Finish() -> void
+    {
+        // TODO: Set master channel and virtual channel frame counts
+        auto serializedHeader =
+            FlatArray(Serialize(primaryHeader_.spacecraftId), Serialize(primaryHeader_.vcid));
+        std::copy(serializedHeader.begin(), serializedHeader.end(), buffer_.begin());
+        // TODO: Properly fill the remaining space with an idle packet
+        dataField_.resize(dataField_.max_size(), idleData);
+    }
+
+
+private:
+    struct PrimaryHeader
+    {
+        std::uint16_t spacecraftId = 0;
+        std::uint16_t vcid = 0;
+    };
+    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderLength);
+
+    PrimaryHeader primaryHeader_;
+    std::span<Byte, tm::transferFrameLength> buffer_;
+    etl::vector_ext<Byte> dataField_ = etl::vector_ext<Byte>(
+        buffer_.data() + tm::transferFrameHeaderLength, tm::transferFrameDataFieldLength);
+};
+
+
+class SpacePacket
+{
+public:
+    explicit SpacePacket(Payload payload) : payload_(payload)
+    {
+    }
+
+    auto WriteTo(etl::vector_ext<Byte> * dataField)
+    {
+    }
+
+    // auto Start() -> void
+    // {
+    //     packetBegin_ = buffer_.end();
+    //     buffer_.resize(buffer_.size() + spacePacketHeaderLength);
+    // }
+
+    // auto Finish() -> void
+    // {
+    //     primaryHeader_.dataLength =
+    //         static_cast<std::uint16_t>(buffer_.end() - packetBegin_ - spacePacketHeaderLength);
+    //     auto serializedHeader =
+    //         FlatArray(Serialize(primaryHeader_.apid), Serialize(primaryHeader_.dataLength));
+    //     std::copy(serializedHeader.begin(), serializedHeader.end(), packetBegin_);
+    // }
+
+
+private:
+    struct PrimaryHeader
+    {
+        std::uint16_t apid = 0;
+        std::uint16_t dataLength = 0;
+    };
+    static_assert(sizeof(PrimaryHeader) == spacePacketHeaderLength);
+
+    PrimaryHeader primaryHeader_;
+    Payload const & payload_;
+};
 }
 }
