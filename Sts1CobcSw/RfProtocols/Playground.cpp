@@ -441,4 +441,229 @@ private:
     Payload const & payload_;
 };
 }
+
+
+namespace owningandnonowning
+{
+class Payload
+{
+public:
+    Payload() = default;
+    virtual ~Payload() = default;
+
+protected:
+    Payload(Payload const &) = default;
+    Payload(Payload &&) = default;
+    auto operator=(Payload const &) -> Payload & = default;
+    auto operator=(Payload &&) -> Payload & = default;
+
+public:
+    // TODO: Think about renaming this to AddTo()
+    auto WriteTo(etl::ivector<Byte> * dataField) const -> Result<void>
+    {
+        if(dataField->available() < DoSize())
+        {
+            // TODO: Think about what error to return here
+            return ErrorCode::tooLarge;
+        }
+        DoWriteTo(dataField);
+        return outcome_v2::success();
+    }
+
+    [[nodiscard]] auto Size() const -> std::uint16_t
+    {
+        return DoSize();
+    }
+
+
+private:
+    // Pre: dataField->available() >= Size()
+    virtual auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void = 0;
+    [[nodiscard]] virtual auto DoSize() const -> std::uint16_t = 0;
+};
+
+
+class TmTransferFrame
+{
+public:
+    explicit TmTransferFrame(std::span<Byte, tm::transferFrameSize> buffer) : buffer_(buffer)
+    {
+    }
+
+    auto StartNew(std::uint16_t spacecraftId, std::uint8_t vcid) -> void
+    {
+        primaryHeader_.spacecraftId = spacecraftId;
+        primaryHeader_.vcid = vcid;
+        // TODO: Maybe fill with idleData instead?
+        std::fill(buffer_.begin(), buffer_.end(), 0x00_b);
+        dataField_.clear();  // Reset size to 0
+    }
+
+    [[nodiscard]] auto GetDataField() -> etl::vector_ext<Byte> &
+    {
+        return dataField_;
+    }
+
+    [[nodiscard]] auto Add(Payload const & payload) -> Result<void>
+    {
+        return payload.WriteTo(&dataField_);
+    }
+
+    auto Finish() -> void
+    {
+        // TODO: Set master channel and virtual channel frame counts
+        auto serializedHeader =
+            FlatArray(Serialize(primaryHeader_.spacecraftId), Serialize(primaryHeader_.vcid));
+        std::copy(serializedHeader.begin(), serializedHeader.end(), buffer_.begin());
+        // TODO: Properly fill the remaining space with an idle packet
+        dataField_.resize(dataField_.max_size(), idleData);
+    }
+
+
+private:
+    struct PrimaryHeader
+    {
+        std::uint16_t spacecraftId = 0;
+        std::uint16_t vcid = 0;
+    };
+    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderSize);
+
+    PrimaryHeader primaryHeader_;
+    std::span<Byte, tm::transferFrameSize> buffer_;
+    etl::vector_ext<Byte> dataField_ = etl::vector_ext<Byte>(
+        buffer_.data() + tm::transferFrameHeaderSize, tm::transferFrameDataFieldSize);
+};
+
+
+struct SpacePacketPrimaryHeader
+{
+    std::uint16_t apid = 0;
+    std::uint16_t dataFieldSize = 0;
+};
+
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, SpacePacketPrimaryHeader const & header) -> void *
+{
+    destination = sts1cobcsw::SerializeTo<endianness>(destination, header.apid);
+    destination = sts1cobcsw::SerializeTo<endianness>(destination, header.dataFieldSize);
+    return destination;
+}
+}
+
+template<>
+inline constexpr auto serialSize<owningandnonowning::SpacePacketPrimaryHeader> =
+    totalSerialSize<decltype(owningandnonowning::SpacePacketPrimaryHeader::apid),
+                    decltype(owningandnonowning::SpacePacketPrimaryHeader::dataFieldSize)>;
+static_assert(serialSize<owningandnonowning::SpacePacketPrimaryHeader>
+              == spacePacketPrimaryHeaderSize);
+
+
+namespace owningandnonowning
+{
+[[nodiscard]] auto AddSpacePacket(etl::ivector<Byte> * dataField,
+                                  std::uint16_t apid,
+                                  Payload const & payload) -> Result<void>
+{
+    if(dataField->available() < spacePacketPrimaryHeaderSize + payload.Size())
+    {
+        // TODO: Think about which error code to return. Maybe add a new one for this case.
+        return ErrorCode::tooLarge;
+    }
+    auto primaryHeader = SpacePacketPrimaryHeader{.apid = apid, .dataFieldSize = payload.Size()};
+    auto * packetBegin = dataField->data() + dataField->size();
+    dataField->resize(dataField->size() + spacePacketPrimaryHeaderSize);
+    (void)SerializeTo<defaultEndianness>(packetBegin, primaryHeader);
+    return payload.WriteTo(dataField);
+}
+
+
+class SpacePacket : public Payload
+{
+public:
+    friend auto MakeSpacePacket(std::uint16_t apid, Payload const & payload) -> Result<SpacePacket>
+    {
+        auto packet = SpacePacket{};
+        OUTCOME_TRY(AddSpacePacket(&packet.buffer_, apid, payload));
+        return packet;
+    }
+
+
+private:
+    SpacePacket() = default;
+
+    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override
+    {
+        dataField->insert(dataField->end(), buffer_.begin(), buffer_.end());
+    }
+
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override
+    {
+        return static_cast<std::uint16_t>(buffer_.size());
+    }
+
+    etl::vector<Byte, maxSpacePacketSize> buffer_;
+};
+
+
+auto MakeSpacePacket(std::uint16_t apid, Payload const & payload) -> Result<SpacePacket>;
+
+
+class Nack : public Payload
+{
+public:
+    explicit constexpr Nack(ErrorCode errorCode) : errorCode_(errorCode)
+    {
+    }
+
+
+private:
+    static constexpr auto id = 0x02_b;
+    ErrorCode errorCode_;
+
+    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override
+    {
+        dataField->push_back(id);
+        auto * messageBegin = dataField->data() + dataField->size();
+        dataField->resize(dataField->size() + totalSerialSize<ErrorCode>);
+        (void)SerializeTo<defaultEndianness>(messageBegin, errorCode_);
+    }
+
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override
+    {
+        return totalSerialSize<decltype(id), ErrorCode>;
+    }
+};
+
+
+auto TestOwningAndNonOwning() -> Result<void>
+{
+    auto eccBlock = ecc::Block{};
+    auto frame = TmTransferFrame(Span(&eccBlock).first<tm::transferFrameSize>());
+    frame.StartNew(spacecraftId, pusVcid);
+    auto message1 = Nack(ErrorCode::fileLocked);
+    auto message2 = Nack(ErrorCode::io);
+    static_assert(sizeof(message1) == 8);
+    OUTCOME_TRY(AddSpacePacket(&frame.GetDataField(), apid, message1));
+    OUTCOME_TRY(auto packet1, MakeSpacePacket(apid, message2));
+    static_assert(sizeof(packet1)
+                  == sizeof(etl::vector<Byte, maxSpacePacketSize>) + sizeof(void *));
+    auto packet2 = packet1;
+    (void)frame.Add(packet1);
+    (void)frame.Add(packet2);
+
+    frame.Finish();
+
+    // Test copying
+    Payload * pl1 = &message1;
+    Payload * pl2 = &message2;
+    // *pl1 = *pl2;
+    // *pl1 = message2;
+    // message2 = *pl1;
+    message1 = message2;
+
+
+    return outcome_v2::success();
+}
+}
 }
