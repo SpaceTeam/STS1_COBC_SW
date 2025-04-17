@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
@@ -30,6 +32,7 @@ private:
         PRINTF("\nEPS test\n\n");
 
         PRINTF("\n");
+        persistentVariables.template Store<"epsIsWorking">(true);
         eps::InitializeAdcs();
         PRINTF("EPS ADCs initialized\n");
 
