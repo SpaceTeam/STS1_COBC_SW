@@ -36,26 +36,25 @@ inline constexpr std::uint16_t apid = 0b000'1100'1100;  // 11 bit
 namespace ecc
 {
 // RS(255, 223)
-inline constexpr auto blockLength = 255;
-inline constexpr auto messageLength = 223;
+inline constexpr auto blockSize = 255;
+inline constexpr auto messageSize = 223;
 inline constexpr auto nParitySymbols = 32;
-static_assert(nParitySymbols == blockLength - messageLength);
+static_assert(nParitySymbols == blockSize - messageSize);
 
-using Block = std::array<Byte, blockLength>;
+using Block = std::array<Byte, blockSize>;
 }
 
 namespace tm
 {
-inline constexpr auto transferFrameLength = ecc::messageLength;
-inline constexpr auto transferFrameHeaderLength = 4;
-inline constexpr auto transferFrameDataFieldLength =
-    transferFrameLength - transferFrameHeaderLength;
+inline constexpr auto transferFrameSize = ecc::messageSize;
+inline constexpr auto transferFrameHeaderSize = 4;
+inline constexpr auto transferFrameDataFieldSize = transferFrameSize - transferFrameHeaderSize;
 }
 
-inline constexpr auto maxSpacePacketLength = tm::transferFrameDataFieldLength;
-inline constexpr auto spacePacketHeaderLength = 4;
-inline constexpr auto maxSpacePacketDataFieldLength =
-    maxSpacePacketLength - spacePacketHeaderLength;
+inline constexpr auto maxSpacePacketSize = tm::transferFrameDataFieldSize;
+inline constexpr auto spacePacketPrimaryHeaderSize = 4;
+inline constexpr auto maxSpacePacketDataFieldSize =
+    maxSpacePacketSize - spacePacketPrimaryHeaderSize;
 
 inline constexpr std::uint16_t idlePacketApid = 0x7FFF;
 inline constexpr auto idleData = 0x55_b;
@@ -72,8 +71,8 @@ struct SpacePacket
         std::uint16_t apid;
         std::uint16_t dataLength = 0;
     };
-    static_assert(sizeof(PrimaryHeader) == spacePacketHeaderLength);
-    using DataField = etl::vector<Byte, maxSpacePacketDataFieldLength>;
+    static_assert(sizeof(PrimaryHeader) == spacePacketPrimaryHeaderSize);
+    using DataField = etl::vector<Byte, maxSpacePacketDataFieldSize>;
 
     PrimaryHeader primaryHeader;
     DataField dataField;
@@ -102,7 +101,7 @@ auto Ack() -> SpacePacket::DataField
 }
 
 
-template<void (*idlePacketFiller)(etl::vector<Byte, tm::transferFrameDataFieldLength> & dataField)>
+template<void (*idlePacketFiller)(etl::vector<Byte, tm::transferFrameDataFieldSize> & dataField)>
 struct TmTransferFrame
 {
     struct PrimaryHeader
@@ -110,8 +109,8 @@ struct TmTransferFrame
         std::uint16_t spacecraftId = 0;
         std::uint16_t vcid = 0;
     };
-    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderLength);
-    using DataField = etl::vector<Byte, tm::transferFrameDataFieldLength>;
+    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderSize);
+    using DataField = etl::vector<Byte, tm::transferFrameDataFieldSize>;
 
     PrimaryHeader primaryHeader;
     DataField dataField;
@@ -135,7 +134,7 @@ struct TmTransferFrame
 
     auto SerializeTo(std::span<Byte> buffer) const -> void
     {
-        assert(buffer.size() >= tm::transferFrameLength);
+        assert(buffer.size() >= tm::transferFrameSize);
         auto serializedHeader =
             FlatArray(Serialize(primaryHeader.spacecraftId), Serialize(primaryHeader.vcid));
         std::copy(serializedHeader.begin(), serializedHeader.end(), buffer.begin());
@@ -143,7 +142,7 @@ struct TmTransferFrame
     }
 };
 
-auto FillWithIdleData(etl::vector<Byte, tm::transferFrameDataFieldLength> & dataField)
+auto FillWithIdleData(etl::vector<Byte, tm::transferFrameDataFieldSize> & dataField)
 {
     dataField.insert(dataField.end(), dataField.available(), idleData);
 }
@@ -180,7 +179,7 @@ namespace buffer
 class TmTransferFrame
 {
 public:
-    explicit TmTransferFrame(std::span<Byte, tm::transferFrameLength> buffer) : buffer_(buffer)
+    explicit TmTransferFrame(std::span<Byte, tm::transferFrameSize> buffer) : buffer_(buffer)
     {
     }
 
@@ -220,12 +219,12 @@ private:
         std::uint16_t spacecraftId = 0;
         std::uint16_t vcid = 0;
     };
-    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderLength);
+    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderSize);
 
     PrimaryHeader primaryHeader_;
-    std::span<Byte, tm::transferFrameLength> buffer_;
+    std::span<Byte, tm::transferFrameSize> buffer_;
     etl::vector_ext<Byte> dataField_ = etl::vector_ext<Byte>(
-        buffer_.data() + tm::transferFrameHeaderLength, tm::transferFrameDataFieldLength);
+        buffer_.data() + tm::transferFrameHeaderSize, tm::transferFrameDataFieldSize);
 };
 
 
@@ -239,13 +238,13 @@ public:
     auto Start() -> void
     {
         packetBegin_ = buffer_.end();
-        buffer_.resize(buffer_.size() + spacePacketHeaderLength);
+        buffer_.resize(buffer_.size() + spacePacketPrimaryHeaderSize);
     }
 
     auto Finish() -> void
     {
         primaryHeader_.dataLength =
-            static_cast<std::uint16_t>(buffer_.end() - packetBegin_ - spacePacketHeaderLength);
+            static_cast<std::uint16_t>(buffer_.end() - packetBegin_ - spacePacketPrimaryHeaderSize);
         auto serializedHeader =
             FlatArray(Serialize(primaryHeader_.apid), Serialize(primaryHeader_.dataLength));
         std::copy(serializedHeader.begin(), serializedHeader.end(), packetBegin_);
@@ -268,7 +267,7 @@ private:
         std::uint16_t apid = 0;
         std::uint16_t dataLength = 0;
     };
-    static_assert(sizeof(PrimaryHeader) == spacePacketHeaderLength);
+    static_assert(sizeof(PrimaryHeader) == spacePacketPrimaryHeaderSize);
 
     PrimaryHeader primaryHeader_;
     etl::vector_ext<Byte> & buffer_;
@@ -294,7 +293,7 @@ auto AppendNack(etl::vector_ext<Byte> * buffer, ErrorCode errorCode) -> void
 auto TestBuffer() -> void
 {
     auto eccBlock = ecc::Block{};
-    auto frame = TmTransferFrame(Span(&eccBlock).first<tm::transferFrameLength>());
+    auto frame = TmTransferFrame(Span(&eccBlock).first<tm::transferFrameSize>());
     frame.Start(spacecraftId, pusVcid);
     auto packet = SpacePacket(&frame.GetDataField());
     packet.Start();
@@ -354,7 +353,7 @@ private:
 class TmTransferFrame
 {
 public:
-    explicit TmTransferFrame(std::span<Byte, tm::transferFrameLength> buffer) : buffer_(buffer)
+    explicit TmTransferFrame(std::span<Byte, tm::transferFrameSize> buffer) : buffer_(buffer)
     {
     }
 
@@ -394,12 +393,12 @@ private:
         std::uint16_t spacecraftId = 0;
         std::uint16_t vcid = 0;
     };
-    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderLength);
+    static_assert(sizeof(PrimaryHeader) == tm::transferFrameHeaderSize);
 
     PrimaryHeader primaryHeader_;
-    std::span<Byte, tm::transferFrameLength> buffer_;
+    std::span<Byte, tm::transferFrameSize> buffer_;
     etl::vector_ext<Byte> dataField_ = etl::vector_ext<Byte>(
-        buffer_.data() + tm::transferFrameHeaderLength, tm::transferFrameDataFieldLength);
+        buffer_.data() + tm::transferFrameHeaderSize, tm::transferFrameDataFieldSize);
 };
 
 
@@ -436,7 +435,7 @@ private:
         std::uint16_t apid = 0;
         std::uint16_t dataLength = 0;
     };
-    static_assert(sizeof(PrimaryHeader) == spacePacketHeaderLength);
+    static_assert(sizeof(PrimaryHeader) == spacePacketPrimaryHeaderSize);
 
     PrimaryHeader primaryHeader_;
     Payload const & payload_;
