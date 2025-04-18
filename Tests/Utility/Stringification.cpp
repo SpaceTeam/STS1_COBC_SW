@@ -92,6 +92,9 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
         case ErrorCode::empty:
             Append(string, "ErrorCode::empty");
             break;
+        case ErrorCode::invalidValue:
+            Append(string, "ErrorCode::invalidValue");
+            break;
     }
 }
 }

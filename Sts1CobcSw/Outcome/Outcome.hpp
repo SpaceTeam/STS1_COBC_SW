@@ -50,6 +50,8 @@ enum class ErrorCode : std::int8_t
     // SingleBuffer
     full,
     empty,
+    // RF protocols
+    invalidValue,
 };
 
 
