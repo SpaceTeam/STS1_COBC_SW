@@ -64,8 +64,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos
     )
 
-    add_test_program(Rf)
-    target_link_libraries(Sts1CobcSwTests_Rf PRIVATE Sts1CobcSw_Rf Sts1CobcSwTests::CatchRodos)
+    add_test_program(RfPartNumber)
+    target_link_libraries(
+        Sts1CobcSwTests_RfPartNumber PRIVATE Sts1CobcSw_Rf Sts1CobcSwTests::CatchRodos
+    )
 endif()
 
 # ---- Tests only for Linux ----
