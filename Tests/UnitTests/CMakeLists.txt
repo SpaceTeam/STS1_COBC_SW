@@ -120,6 +120,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME Id COMMAND Sts1CobcSwTests_Id)
 
+    add_test_program(IdCounters)
+    target_link_libraries(
+        Sts1CobcSwTests_IdCounters PRIVATE Sts1CobcSw_RfProtocols Sts1CobcSwTests::CatchRodos
+    )
+    add_test(NAME IdCounters COMMAND Sts1CobcSwTests_IdCounters)
+
     add_test_program(MajorityVote)
     target_link_libraries(
         Sts1CobcSwTests_MajorityVote PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
