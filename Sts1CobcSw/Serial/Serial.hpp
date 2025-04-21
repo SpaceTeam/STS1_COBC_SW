@@ -14,6 +14,8 @@
 
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
+
 
 // We need std::byteswap which is C++23 but for some reason clang-tidy crashes when using C++23, so
 // we use the ETL version
@@ -23,6 +25,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <span>
 #include <type_traits>
 
@@ -48,11 +51,18 @@ template<typename T, std::size_t size>
     requires(serialSize<T> != 0)
 inline constexpr std::size_t serialSize<std::array<T, size>> = serialSize<T> * size;
 
+template<AUInt T>
+inline constexpr std::size_t serialSize<T> = serialSize<SmallestUnsignedType<T::size>>;
+
 // Prefer using totalSerialSize<> over serialSize<> whenever possible since it ensures that the size
 // is not 0
 template<typename... Ts>
     requires((serialSize<Ts> != 0) and ...)
 inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
+
+template<std::size_t... nBits>
+inline constexpr std::size_t totalSerialSize<UInt<nBits>...> =
+    ((nBits + ...) + CHAR_BIT - 1) / CHAR_BIT;  // Round up to the next byte
 
 inline constexpr auto defaultEndianness = std::endian::little;
 
@@ -85,6 +95,11 @@ template<std::endian endianness, TriviallySerializable T>
 template<std::endian endianness, typename T, std::size_t size>
 [[nodiscard]] auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *;
 
+// Serializing UInt<>s is only implemented for big endian with MSB first
+template<std::endian endianness, std::size_t... nBits>
+    requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
+[[nodiscard]] auto SerializeTo(void * destination, UInt<nBits>... uInts) -> void *;
+
 // Must be overloaded for user-defined types to be deserializable
 template<std::endian endianness, TriviallySerializable T>
 [[nodiscard]] auto DeserializeFrom(void const * source, T * t) -> void const *;
@@ -92,6 +107,11 @@ template<std::endian endianness, TriviallySerializable T>
 template<std::endian endianness, typename T, std::size_t size>
 [[nodiscard]] auto DeserializeFrom(void const * source, std::array<T, size> * array)
     -> void const *;
+
+// Deserializing UInt<>s is only implemented for big endian with MSB first
+template<std::endian endianness, std::size_t... nBits>
+    requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
+[[nodiscard]] auto DeserializeFrom(void const * source, UInt<nBits> *... uInts) -> void const *;
 
 template<HasEndianness T>
 [[nodiscard]] constexpr auto ReverseBytes(T t) -> T;

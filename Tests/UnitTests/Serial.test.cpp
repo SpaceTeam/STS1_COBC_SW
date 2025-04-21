@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -16,9 +17,31 @@ using sts1cobcsw::Byte;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 using sts1cobcsw::Deserialize;
 using sts1cobcsw::Serialize;
+using sts1cobcsw::serialSize;
+using sts1cobcsw::totalSerialSize;
+using sts1cobcsw::UInt;
 
 
-TEST_CASE("TriviallySerializable")
+static_assert(serialSize<UInt<0>> == 1);
+static_assert(serialSize<UInt<1>> == 1);
+static_assert(serialSize<UInt<8>> == 1);
+static_assert(serialSize<UInt<9>> == 2);
+static_assert(serialSize<UInt<16>> == 2);
+static_assert(serialSize<UInt<17>> == 4);
+static_assert(serialSize<UInt<32>> == 4);
+static_assert(serialSize<UInt<33>> == 8);
+static_assert(serialSize<UInt<64>> == 8);
+
+static_assert(totalSerialSize<UInt<0>, UInt<1>, UInt<2>, UInt<3>> == 1);
+static_assert(totalSerialSize<UInt<0>, UInt<1>, UInt<2>, UInt<3>, UInt<4>> == 2);
+static_assert(totalSerialSize<UInt<16>, UInt<1>> == 3);
+static_assert(totalSerialSize<UInt<16>, UInt<8>, UInt<2>> == 4);
+static_assert(totalSerialSize<UInt<32>, UInt<3>> == 5);
+static_assert(totalSerialSize<UInt<32>, UInt<8>, UInt<4>> == 6);
+static_assert(totalSerialSize<UInt<64>, UInt<1>> == 9);
+
+
+TEST_CASE("TriviallySerializable")  // NOLINT(cert-err58-cpp)
 {
     using sts1cobcsw::TriviallySerializable;
 
@@ -47,7 +70,10 @@ TEST_CASE("TriviallySerializable")
     CHECK(TriviallySerializable<char *> == false);
     CHECK(TriviallySerializable<int[]> == false);  // NOLINT
     CHECK(TriviallySerializable<std::array<double, 3>> == false);
-    // User-defined types aren't either
+    // UInt<> and user-defined types aren't either
+    CHECK(TriviallySerializable<UInt<0>> == false);
+    CHECK(TriviallySerializable<UInt<1>> == false);
+    CHECK(TriviallySerializable<UInt<64>> == false);
     CHECK(TriviallySerializable<EmptyStruct> == false);
     CHECK(TriviallySerializable<SingleInt32> == false);
 }
@@ -82,7 +108,10 @@ TEST_CASE("HasEndianness")
     CHECK(HasEndianness<char *> == false);
     CHECK(HasEndianness<int[]> == false);  // NOLINT
     CHECK(HasEndianness<std::array<double, 3>> == false);
-    // User-defined types aren't either
+    // UInt<> and user-defined types aren't either
+    CHECK(HasEndianness<UInt<0>> == false);
+    CHECK(HasEndianness<UInt<1>> == false);
+    CHECK(HasEndianness<UInt<64>> == false);
     CHECK(HasEndianness<EmptyStruct> == false);
     CHECK(HasEndianness<SingleInt32> == false);
 }
@@ -199,6 +228,16 @@ TEST_CASE("Serialize std::array (big endian)")
 }
 
 
+TEST_CASE("Serialize UInts (big endian)")
+{
+    auto buffer = std::array<Byte, 2>{};
+    (void)SerializeTo<std::endian::big>(
+        &buffer, UInt<1>(1), UInt<2>(0), UInt<3>(0b111), UInt<4>(0), UInt<5>(0b1'1111), UInt<1>(0));
+    CHECK(buffer[0] == 0b1001'1100_b);
+    CHECK(buffer[1] == 0b0011'1110_b);
+}
+
+
 TEST_CASE("Deserialize TriviallySerializable types (default endian)")
 {
     auto buffer = std::array{0x01_b, 0x02_b, 0x03_b, 0x04_b};
@@ -262,6 +301,37 @@ TEST_CASE("Deserialize std::array (big endian)")
 
     auto uint64Array = Deserialize<std::endian::big, std::array<std::uint64_t, 1>>(buffer);
     CHECK(uint64Array[0] == 0x000200040006FFFEU);
+}
+
+
+TEST_CASE("Deserialize UInts (big endian)")
+{
+    auto uint1 = UInt<1>{};
+    auto uint2 = UInt<2>{};
+    auto uint3 = UInt<3>{};
+    auto uint4 = UInt<4>{};
+    auto uint5 = UInt<5>{};
+    auto uint6 = UInt<1>{};
+
+    auto buffer = std::array{0b1001'1100_b, 0b0011'1110_b};
+    (void)DeserializeFrom<std::endian::big>(
+        buffer.data(), &uint1, &uint2, &uint3, &uint4, &uint5, &uint6);
+    CHECK(uint1.ToUnderlying() == 1);
+    CHECK(uint2.ToUnderlying() == 0);
+    CHECK(uint3.ToUnderlying() == 0b111);
+    CHECK(uint4.ToUnderlying() == 0);
+    CHECK(uint5.ToUnderlying() == 0b1'1111);
+    CHECK(uint6.ToUnderlying() == 0);
+
+    buffer = {0b0110'0011_b, 0b1100'0001_b};
+    (void)DeserializeFrom<std::endian::big>(
+        buffer.data(), &uint1, &uint2, &uint3, &uint4, &uint5, &uint6);
+    CHECK(uint1.ToUnderlying() == 0);
+    CHECK(uint2.ToUnderlying() == 0b11);
+    CHECK(uint3.ToUnderlying() == 0);
+    CHECK(uint4.ToUnderlying() == 0b1111);
+    CHECK(uint5.ToUnderlying() == 0);
+    CHECK(uint6.ToUnderlying() == 0b1);
 }
 
 
