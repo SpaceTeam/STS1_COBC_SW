@@ -190,6 +190,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_Telemetry Sts1CobcSw_Vocabulary
     )
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
+
+    add_test_program(UInt)
+    target_link_libraries(Sts1CobcSwTests_UInt PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
+    catch_discover_tests(Sts1CobcSwTests_UInt)
 endif()
 
 # ---- All COBC tests in one target ----
