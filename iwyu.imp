@@ -112,6 +112,7 @@
   { include: ["\"Sts1CobcSw/Rf/Rf.hpp\"",                                          "public", "<Sts1CobcSw/Rf/Rf.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/Id.hpp\"",                                 "public", "<Sts1CobcSw/RfProtocols/Id.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/IdCounters.hpp\"",                         "public", "<Sts1CobcSw/RfProtocols/IdCounters.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/RfProtocols/Payload.hpp\"",                            "public", "<Sts1CobcSw/RfProtocols/Payload.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Spis.hpp\"",                                       "public", "<Sts1CobcSw/Hal/Spis.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Byte.hpp\"",                                    "public", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.hpp\"",                                  "public", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
