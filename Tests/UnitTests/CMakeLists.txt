@@ -165,8 +165,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(SingleBuffer)
     target_link_libraries(
         Sts1CobcSwTests_SingleBuffer
-        PRIVATE strong_type::strong_type Sts1CobcSwTests::CatchRodos Sts1CobcSw_Outcome
-                Sts1CobcSw_SingleBuffer Sts1CobcSw_Vocabulary
+        PRIVATE strong_type::strong_type Sts1CobcSw_Outcome Sts1CobcSw_SingleBuffer
+                Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME SingleBuffer COMMAND Sts1CobcSwTests_SingleBuffer)
 
@@ -203,6 +203,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_Telemetry Sts1CobcSw_Vocabulary
     )
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
+
+    add_test_program(TmTransferFrame)
+    target_link_libraries(
+        Sts1CobcSwTests_TmTransferFrame
+        PRIVATE etl::etl Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+    )
+    add_test(NAME TmTransferFrame COMMAND Sts1CobcSwTests_TmTransferFrame)
 
     add_test_program(UInt)
     target_link_libraries(Sts1CobcSwTests_UInt PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
