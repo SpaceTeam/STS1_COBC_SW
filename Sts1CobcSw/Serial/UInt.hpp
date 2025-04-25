@@ -59,11 +59,18 @@ struct UInt
 };
 
 
+namespace internal
+{
 template<typename T>
-inline constexpr auto isAUInt = false;
+inline constexpr auto isAUIntHelper = false;
 
 template<std::size_t nBits>
-inline constexpr auto isAUInt<UInt<nBits>> = true;
+inline constexpr auto isAUIntHelper<UInt<nBits>> = true;
+}
+
+
+template<typename T>
+inline constexpr auto isAUInt = internal::isAUIntHelper<std::remove_cvref_t<T>>;
 
 
 template<typename T>
