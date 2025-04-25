@@ -54,15 +54,21 @@ inline constexpr std::size_t serialSize<std::array<T, size>> = serialSize<T> * s
 template<AUInt T>
 inline constexpr std::size_t serialSize<T> = serialSize<SmallestUnsignedType<T::size>>;
 
+namespace internal
+{
+template<typename... Ts>
+    requires((serialSize<Ts> != 0) and ...)
+inline constexpr std::size_t totalSerialSizeHelper = (serialSize<Ts> + ...);
+
+template<std::size_t... nBits>
+inline constexpr std::size_t totalSerialSizeHelper<UInt<nBits>...> =
+    ((nBits + ...) + CHAR_BIT - 1) / CHAR_BIT;  // Round up to the next byte
+}
+
 // Prefer using totalSerialSize<> over serialSize<> whenever possible since it ensures that the size
 // is not 0
 template<typename... Ts>
-    requires((serialSize<Ts> != 0) and ...)
-inline constexpr std::size_t totalSerialSize = (serialSize<Ts> + ...);
-
-template<std::size_t... nBits>
-inline constexpr std::size_t totalSerialSize<UInt<nBits>...> =
-    ((nBits + ...) + CHAR_BIT - 1) / CHAR_BIT;  // Round up to the next byte
+inline constexpr auto totalSerialSize = internal::totalSerialSizeHelper<std::remove_cvref_t<Ts>...>;
 
 inline constexpr auto defaultEndianness = std::endian::little;
 

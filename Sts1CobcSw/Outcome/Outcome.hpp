@@ -50,6 +50,8 @@ enum class ErrorCode
     // SingleBuffer
     full,
     empty,
+    // RF protocols
+    invalidValue,
 };
 
 

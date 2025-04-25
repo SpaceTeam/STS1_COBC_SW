@@ -22,12 +22,11 @@ using SmallestUnsignedType =
 // NOLINTEND(*magic-numbers)
 
 
-// This class template and its member functions are so simple that I didn't add an .ipp file
+// This template and its member functions are so simple that I didn't add an .ipp file
 template<std::size_t nBits>
     requires(nBits <= std::numeric_limits<std::uint64_t>::digits)
-class UInt
+struct UInt
 {
-public:
     using UnderlyingType = SmallestUnsignedType<nBits>;
 
     static constexpr auto size = nBits;
@@ -36,7 +35,8 @@ public:
                                    : (1ULL << nBits) - 1ULL;
 
     constexpr UInt() = default;
-    constexpr UInt(UnderlyingType value) : value_(value & mask)  // NOLINT(*explicit*)
+    // NOLINTNEXTLINE(*explicit*)
+    constexpr UInt(UnderlyingType value) : valueIsAnImplementationDetail(value & mask)
     {
     }
 
@@ -44,26 +44,33 @@ public:
     template<std::size_t rightNBits>
     friend constexpr auto operator==(UInt const & lhs, UInt<rightNBits> const & rhs) -> bool
     {
-        return lhs.value_ == rhs.ToUnderlying();
+        return lhs.valueIsAnImplementationDetail == rhs.ToUnderlying();
     }
 
 
     [[nodiscard]] constexpr auto ToUnderlying() const -> UnderlyingType
     {
-        return value_;
+        return valueIsAnImplementationDetail;
     }
 
 
-private:
-    UnderlyingType value_ = {};
+    // Must be public for UInt<> to be a structural type and therefore usable as an NTTP
+    UnderlyingType valueIsAnImplementationDetail = {};
 };
 
 
+namespace internal
+{
 template<typename T>
-inline constexpr auto isAUInt = false;
+inline constexpr auto isAUIntHelper = false;
 
 template<std::size_t nBits>
-inline constexpr auto isAUInt<UInt<nBits>> = true;
+inline constexpr auto isAUIntHelper<UInt<nBits>> = true;
+}
+
+
+template<typename T>
+inline constexpr auto isAUInt = internal::isAUIntHelper<std::remove_cvref_t<T>>;
 
 
 template<typename T>
