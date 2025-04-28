@@ -5,16 +5,15 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <cstdint>
-#include <span>
 
 
 namespace sts1cobcsw::utility
 {
 enum class Partition : std::uintptr_t
 {
-    primary = 0x8020000ULL,
-    secondary1 = 0x8040000ULL,
-    secondary2 = 0x8060000ULL
+    primary = 0x802'0000ULL,
+    secondary1 = 0x804'0000ULL,
+    secondary2 = 0x806'0000ULL
 };
 
 

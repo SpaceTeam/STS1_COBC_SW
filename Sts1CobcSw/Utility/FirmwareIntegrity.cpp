@@ -5,19 +5,19 @@
 
 namespace sts1cobcsw::utility
 {
-constexpr auto maxFirmwareLength = 0x20000ULL;
+constexpr auto maxFirmwareLength = 0x2'0000ULL;
 
+
+// Partition structure:
+// - Length: without CRC at the end, 4 bytes in little endian
+// - Data
+// - Checksum: CRC-32 over length + data in little endian
 auto CheckFirmwareIntegrity(Partition partition) -> Result<void>
 {
-    // Partition structure:
-    // First 4 Bytes length without crc at the end in little endian
-    // Partition data
-    // 4 Byte crc over length and partition data with initial Value 0x00 in little endian
-
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
-    auto * startPointer = reinterpret_cast<void *>(partition);
+    auto * startAddress = reinterpret_cast<void *>(partition);
     auto length = 0U;
-    std::memcpy(&length, startPointer, sizeof(length));
+    std::memcpy(&length, startAddress, sizeof(length));
     if(length > maxFirmwareLength)
     {
         return ErrorCode::invalidLength;
@@ -26,11 +26,10 @@ auto CheckFirmwareIntegrity(Partition partition) -> Result<void>
     {
         return ErrorCode::empty;
     }
-    // Add last 4 bytes for existing crc32 at the end of the partition
-    auto firmwareSpan = std::span<Byte const>{static_cast<Byte const *>(startPointer), length + 4};
-
-    // Using same crc logic and initial value as the bootloader uses
-    if(utility::ComputeCrc32(0x00U, firmwareSpan) != 0x00U)
+    // Computing checksum over length + data + CRC-32 should be 0
+    auto firmwareSpan = std::span<Byte const>{static_cast<Byte const *>(startAddress), length + 4};
+    auto crc = utility::ComputeCrc32(firmwareSpan);
+    if(crc != 0)
     {
         return ErrorCode::corrupt;
     }
