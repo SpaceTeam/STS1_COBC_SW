@@ -52,6 +52,10 @@ enum class ErrorCode
     empty,
     // RF protocols
     invalidValue,
+    bufferTooSmall,
+    invalidSpacePacket,  // TODO: Maybe use a more general invalidHeader or invalidPdu
+    // TODO: Rework the EDU and RF protocol errors into a smaller set of coherent codes that can be
+    // used for both
 };
 
 

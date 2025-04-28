@@ -170,6 +170,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME SingleBuffer COMMAND Sts1CobcSwTests_SingleBuffer)
 
+    add_test_program(SpacePacket)
+    target_link_libraries(
+        Sts1CobcSwTests_SpacePacket
+        PRIVATE etl::etl Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+    )
+    add_test(NAME SpacePacket COMMAND Sts1CobcSwTests_SpacePacket)
+
     add_test_program(Span)
     target_link_libraries(Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
     catch_discover_tests(Sts1CobcSwTests_Span)
