@@ -59,14 +59,22 @@ inline constexpr auto cfdpVcid = Vcid::Make<0b101>();
 
 // --- Space Packet Protocol ---
 
+struct PacketType  // I use a struct instead of a namespace because I don't like "packettype"
+{
+    static constexpr auto telemetry = UInt<1>(0);
+    static constexpr auto telecommand = UInt<1>(1);
+};
+
+
 inline constexpr auto packetVersionNumber = UInt<3>(0);
 inline constexpr auto maxPacketLength = tm::transferFrameDataLength;
-inline constexpr auto packetPrimaryHeaderLength = 4;
+inline constexpr auto packetPrimaryHeaderLength = 6U;
 inline constexpr auto maxPacketDataLength = maxPacketLength - packetPrimaryHeaderLength;
 
-using Apid = Id<UInt<11>, 0b000'1100'1100, 0x7FFF>;  // NOLINT(*magic-numbers)
+using Apid = Id<UInt<11>, 0, 0b000'1100'1100, 0x7FF>;  // NOLINT(*magic-numbers)
+inline constexpr auto invalidApid = Apid::Make<0>();
 inline constexpr auto normalApid = Apid::Make<0b000'1100'1100>();
-inline constexpr auto idlePacketApid = Apid::Make<0x7FFF>();
+inline constexpr auto idlePacketApid = Apid::Make<0x7FF>();
 
 inline constexpr auto idleData = 0x55_b;
 }

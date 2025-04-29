@@ -2,6 +2,7 @@
 
 
 #include <climits>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -45,6 +46,12 @@ struct UInt
     friend constexpr auto operator==(UInt const & lhs, UInt<rightNBits> const & rhs) -> bool
     {
         return lhs.valueIsAnImplementationDetail == rhs.ToUnderlying();
+    }
+
+
+    friend constexpr auto operator==(UInt const & lhs, std::integral auto rhs) -> bool
+    {
+        return lhs.valueIsAnImplementationDetail == rhs;
     }
 
 

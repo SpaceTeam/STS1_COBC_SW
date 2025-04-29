@@ -95,6 +95,12 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
         case ErrorCode::invalidValue:
             Append(string, "ErrorCode::invalidValue");
             break;
+        case ErrorCode::bufferTooSmall:
+            Append(string, "ErrorCode::bufferTooSmall");
+            break;
+        case ErrorCode::invalidSpacePacket:
+            Append(string, "ErrorCode::invalidSpacePacket");
+            break;
     }
 }
 }

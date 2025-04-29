@@ -14,6 +14,8 @@ template<typename T, T... validIdValues>
 class Id
 {
 public:
+    using ValueType = T;
+
     static constexpr auto validValues = std::array{validIdValues...};
 
     explicit constexpr Id();
