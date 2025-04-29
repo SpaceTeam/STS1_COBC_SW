@@ -101,6 +101,9 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
         case ErrorCode::invalidSpacePacket:
             Append(string, "ErrorCode::invalidSpacePacket");
             break;
+        case ErrorCode::invalidPayload:
+            Append(string, "ErrorCode::invalidPayload");
+            break;
     }
 }
 }
