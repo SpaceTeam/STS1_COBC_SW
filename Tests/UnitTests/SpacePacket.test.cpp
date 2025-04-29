@@ -59,7 +59,7 @@ TEST_CASE("Adding Space Packets")
     CHECK(dataField[2] == 0b1100'0000_b);  // Sequence flags, packet sequence count
     CHECK(dataField[3] == 0_b);            // Packet sequence count
     CHECK(dataField[4] == 0_b);            // Packet data length (high byte)
-    CHECK(dataField[5] == 10_b);           // Packet data length (low byte)
+    CHECK(dataField[5] == 9_b);            // Packet data length (low byte)
     auto packetDataField = std::span(dataField).subspan(sts1cobcsw::packetPrimaryHeaderLength);
     for(auto byte : packetDataField)
     {
@@ -77,7 +77,7 @@ TEST_CASE("Adding Space Packets")
     CHECK(dataField[2] == 0b1100'0000_b);  // Sequence flags, packet sequence count
     CHECK(dataField[3] == 1_b);            // Packet sequence count
     CHECK(dataField[4] == 0_b);            // Packet data length (high byte)
-    CHECK(dataField[5] == 13_b);           // Packet data length (low byte)
+    CHECK(dataField[5] == 12_b);           // Packet data length (low byte)
     packetDataField = std::span(dataField).subspan(sts1cobcsw::packetPrimaryHeaderLength);
     for(auto byte : packetDataField)
     {
@@ -95,12 +95,20 @@ TEST_CASE("Adding Space Packets")
     CHECK(dataField[2] == 0b1100'0000_b);  // Sequence flags, packet sequence count
     CHECK(dataField[3] == 0_b);            // Packet sequence count
     CHECK(dataField[4] == 0_b);            // Packet data length (high byte)
-    CHECK(dataField[5] == 5_b);            // Packet data length (low byte)
+    CHECK(dataField[5] == 4_b);            // Packet data length (low byte)
     packetDataField = std::span(dataField).subspan(sts1cobcsw::packetPrimaryHeaderLength);
     for(auto byte : packetDataField)
     {
         CHECK(byte == 0xA1_b);
     }
+
+    dataField.clear();
+    payload = TestPayload(0xFF_b, 0);
+    addSpacePacketResult =
+        sts1cobcsw::AddSpacePacketTo(&dataField, false, sts1cobcsw::normalApid, payload);
+    CHECK(addSpacePacketResult.has_error());
+    CHECK(addSpacePacketResult.error() == ErrorCode::invalidPayload);
+    CHECK(dataField.size() == 0U);
 
     dataField.clear();
     payload = TestPayload(0xFF_b, sts1cobcsw::maxPacketDataLength + 1);
@@ -121,7 +129,7 @@ TEST_CASE("Parsing Space Packets")
     buffer[2] = 0b1100'0000_b;  // Sequence flags, packet sequence count
     buffer[3] = 123_b;          // Packet sequence count
     buffer[4] = 0_b;            // Packet data length (high byte)
-    buffer[5] = 1_b;            // Packet data length (low byte)
+    buffer[5] = 0_b;            // Packet data length (low byte)
     buffer.push_back(0xAB_b);
     auto parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
     CHECK(parseResult.has_value());
@@ -132,7 +140,7 @@ TEST_CASE("Parsing Space Packets")
     CHECK(packet.primaryHeader.apid == sts1cobcsw::normalApid);
     CHECK(packet.primaryHeader.sequenceFlags == 0b11);
     CHECK(packet.primaryHeader.packetSequenceCount == 123);
-    CHECK(packet.primaryHeader.packetDataLength == 1);
+    CHECK(packet.primaryHeader.packetDataLength == 0);
     CHECK(packet.dataField.size() == 1U);
     CHECK(packet.dataField[0] == 0xAB_b);
 
@@ -141,7 +149,7 @@ TEST_CASE("Parsing Space Packets")
     buffer[2] = 0b1100'0100_b;  // Sequence flags, packet sequence count
     buffer[3] = 26_b;           // Packet sequence count
     buffer[4] = 0_b;            // Packet data length (high byte)
-    buffer[5] = 2_b;            // Packet data length (low byte)
+    buffer[5] = 1_b;            // Packet data length (low byte)
     buffer.push_back(0x12_b);
     parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
     CHECK(parseResult.has_value());
@@ -152,7 +160,7 @@ TEST_CASE("Parsing Space Packets")
     CHECK(packet.primaryHeader.apid == sts1cobcsw::idlePacketApid);
     CHECK(packet.primaryHeader.sequenceFlags == 0b11);
     CHECK(packet.primaryHeader.packetSequenceCount == 1024 + 26);
-    CHECK(packet.primaryHeader.packetDataLength == 2);
+    CHECK(packet.primaryHeader.packetDataLength == 1);
     CHECK(packet.dataField.size() == 2U);
     CHECK(packet.dataField[0] == 0xAB_b);
     CHECK(packet.dataField[1] == 0x12_b);

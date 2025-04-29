@@ -15,6 +15,11 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
                       Apid apid,
                       Payload const & payload) -> Result<void>
 {
+    if(payload.Size() == 0)
+    {
+        // TODO: Think about what to return here
+        return ErrorCode::invalidPayload;
+    }
     if(dataField->available()
        < packetPrimaryHeaderLength + static_cast<std::size_t>(payload.Size()))
     {
@@ -22,14 +27,14 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
     }
     auto * packetBegin = dataField->data() + dataField->size();
     dataField->resize(dataField->size() + packetPrimaryHeaderLength);
-    auto primaryHeader =
-        SpacePacketPrimaryHeader{.versionNumber = packetVersionNumber,
-                                 .packetType = PacketType::telemetry,
-                                 .secondaryHeaderFlag = hasSecondaryHeader ? 1 : 0,
-                                 .apid = apid,
-                                 .sequenceFlags = 0b11,
-                                 .packetSequenceCount = packetSequenceCounters.PostIncrement(apid),
-                                 .packetDataLength = payload.Size()};
+    auto primaryHeader = SpacePacketPrimaryHeader{
+        .versionNumber = packetVersionNumber,
+        .packetType = PacketType::telemetry,
+        .secondaryHeaderFlag = hasSecondaryHeader ? 1 : 0,
+        .apid = apid,
+        .sequenceFlags = 0b11,
+        .packetSequenceCount = packetSequenceCounters.PostIncrement(apid),
+        .packetDataLength = static_cast<std::uint16_t>(payload.Size() - 1U)};
     (void)SerializeTo<std::endian::big>(packetBegin, primaryHeader);
     return payload.WriteTo(dataField);
 }
@@ -57,7 +62,7 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     }
     return SpacePacket{
         .primaryHeader = primaryHeader,
-        .dataField = buffer.subspan(packetPrimaryHeaderLength, primaryHeader.packetDataLength)};
+        .dataField = buffer.subspan(packetPrimaryHeaderLength, primaryHeader.packetDataLength + 1)};
 }
 
 
