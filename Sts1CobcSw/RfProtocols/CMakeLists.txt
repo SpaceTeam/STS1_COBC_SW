@@ -1,5 +1,6 @@
 target_sources(
-    Sts1CobcSw_RfProtocols PRIVATE SpacePacket.cpp TcTransferFrame.cpp TmTransferFrame.cpp
+    Sts1CobcSw_RfProtocols PRIVATE MessageTypeIdFields.cpp SpacePacket.cpp TcTransferFrame.cpp
+                                   TmTransferFrame.cpp
 )
 target_link_libraries(
     Sts1CobcSw_RfProtocols PUBLIC etl::etl rodos::without_main_on_linux Sts1CobcSw_Outcome
