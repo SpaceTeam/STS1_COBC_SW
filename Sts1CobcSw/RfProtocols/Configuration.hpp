@@ -50,11 +50,11 @@ inline constexpr auto transferFrameDataLength =
 }
 
 using SpacecraftId = Id<UInt<10>, 0x123>;  // NOLINT(*magic-numbers)
-inline constexpr auto spacecraftId = SpacecraftId::Make<0x123>();
+inline constexpr auto spacecraftId = Make<SpacecraftId, 0x123>();
 
 using Vcid = Id<UInt<3>, 0b011, 0b101>;  // NOLINT(*magic-numbers)
-inline constexpr auto pusVcid = Vcid::Make<0b011>();
-inline constexpr auto cfdpVcid = Vcid::Make<0b101>();
+inline constexpr auto pusVcid = Make<Vcid, 0b011>();
+inline constexpr auto cfdpVcid = Make<Vcid, 0b101>();
 
 
 // --- Space Packet Protocol ---
@@ -71,10 +71,9 @@ inline constexpr auto maxPacketLength = tm::transferFrameDataLength;
 inline constexpr auto packetPrimaryHeaderLength = 6U;
 inline constexpr auto maxPacketDataLength = maxPacketLength - packetPrimaryHeaderLength;
 
-using Apid = Id<UInt<11>, 0, 0b000'1100'1100, 0x7FF>;  // NOLINT(*magic-numbers)
-inline constexpr auto invalidApid = Apid::Make<0>();
-inline constexpr auto normalApid = Apid::Make<0b000'1100'1100>();
-inline constexpr auto idlePacketApid = Apid::Make<0x7FF>();
+using Apid = Id<UInt<11>, 0b000'1100'1100, 0x7FF>;  // NOLINT(*magic-numbers)
+inline constexpr auto normalApid = Make<Apid, 0b000'1100'1100>();
+inline constexpr auto idlePacketApid = Make<Apid, 0x7FF>();
 
 inline constexpr auto idleData = 0x55_b;
 }

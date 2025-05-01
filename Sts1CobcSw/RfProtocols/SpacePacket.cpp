@@ -50,7 +50,7 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     (void)DeserializeFrom<std::endian::big>(buffer.data(), &primaryHeader);
     auto packetIsValid = primaryHeader.versionNumber == packetVersionNumber
                      and primaryHeader.packetType == PacketType::telecommand
-                     and primaryHeader.apid != invalidApid and primaryHeader.sequenceFlags == 0b11;
+                     and IsValid(primaryHeader.apid) and primaryHeader.sequenceFlags == 0b11;
     if(not packetIsValid)
     {
         return ErrorCode::invalidSpacePacket;
@@ -96,16 +96,7 @@ auto DeserializeFrom(void const * source, SpacePacketPrimaryHeader * header) -> 
                                          &apidValue,
                                          &header->sequenceFlags,
                                          &header->packetSequenceCount);
-    // This is ugly but I don't know how to do it better
-    auto makeResult = Apid::Make(apidValue);
-    if(makeResult.has_error())
-    {
-        header->apid = invalidApid;
-    }
-    else
-    {
-        header->apid = makeResult.value();
-    }
+    header->apid = Apid(apidValue);
     source = DeserializeFrom<endianness>(source, &header->packetDataLength);
     return source;
 }
