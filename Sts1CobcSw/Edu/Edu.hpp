@@ -19,4 +19,6 @@ auto TurnOff() -> void;
 [[nodiscard]] auto GetStatus() -> Result<Status>;
 [[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> Result<void>;
 [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> Result<void>;
+
+[[nodiscard]] auto ProgramsAreAvailableOnCobc() -> bool;
 }
