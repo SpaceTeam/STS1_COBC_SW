@@ -12,6 +12,7 @@
 
 namespace sts1cobcsw
 {
+// TODO: Consider moving this into SpacePacket
 struct SpacePacketPrimaryHeader
 {
     UInt<3> versionNumber = sts1cobcsw::packetVersionNumber;
@@ -34,7 +35,7 @@ struct SpacePacket
 
 
 template<>
-inline constexpr auto serialSize<SpacePacketPrimaryHeader> =
+inline constexpr std::size_t serialSize<SpacePacketPrimaryHeader> =
     totalSerialSize<decltype(SpacePacketPrimaryHeader::versionNumber),
                     decltype(SpacePacketPrimaryHeader::packetType),
                     decltype(SpacePacketPrimaryHeader::secondaryHeaderFlag),
