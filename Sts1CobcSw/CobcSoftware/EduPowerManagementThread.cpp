@@ -2,8 +2,10 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
@@ -13,6 +15,8 @@
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+namespace fs = sts1cobcsw::fs;
 
 
 namespace sts1cobcsw
@@ -27,6 +31,36 @@ constexpr auto startDelayLimit = 60 * s;
 
 // TODO: There should be an Eps.hpp/.cpp for this
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
+
+
+auto HasStoredEduPrograms() -> bool
+{
+    auto iteratorResult = fs::MakeIterator(fs::Path("programs/"));
+    if(iteratorResult.has_error())
+    {
+        return false;
+    }
+
+    auto iterator = iteratorResult.value();
+
+    // Check if there's at least one file in the directory
+    for(auto const & entryResult : iterator)
+    {
+        if(entryResult.has_error())
+        {
+            continue;
+        }
+
+        auto const & entry = entryResult.value();
+        if(entry.type == fs::EntryType::file)
+        {
+            return true;
+        }
+    }
+
+    // No program files found
+    return false;
+}
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
@@ -67,7 +101,8 @@ private:
                 if(eduIsAlive)
                 {
                     // TODO: also perform a check about EDU programs on cobc
-                    if((not eduHasUpdate) and (startDelay >= startDelayLimit))
+                    if((not eduHasUpdate) and (startDelay >= startDelayLimit)
+                       and (not HasStoredEduPrograms()))
                     {
                         DEBUG_PRINT("Turning Edu off\n");
                         edu::TurnOff();
