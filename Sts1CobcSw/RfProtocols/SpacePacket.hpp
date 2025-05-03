@@ -12,6 +12,13 @@
 
 namespace sts1cobcsw
 {
+namespace packettype
+{
+constexpr auto telemetry = UInt<1>(0);
+constexpr auto telecommand = UInt<1>(1);
+};
+
+
 // TODO: Consider moving this into SpacePacket
 struct SpacePacketPrimaryHeader
 {
