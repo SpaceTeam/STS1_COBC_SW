@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -36,6 +37,9 @@
 namespace sts1cobcsw::edu
 {
 // --- Globals ---
+
+// Paths
+constexpr auto programsDirectory = "programs/";
 
 // Low-level CEP commands
 constexpr auto cepAck = 0xd7_b;   //! Acknowledging a data packet
@@ -120,7 +124,7 @@ auto TurnOff() -> void
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    auto path = fs::Path("programs/");
+    auto path = fs::Path(programsDirectory);
     static constexpr auto width =
         std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
     etl::to_string(
@@ -143,6 +147,33 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         }
     }
     return WaitForAck();
+}
+
+auto hasStoredPrograms() -> bool
+{
+    auto iteratorResult = fs::MakeIterator(fs::Path(programsDirectory));
+    if(iteratorResult.has_error())
+    {
+        return false;
+    }
+
+    auto iterator = iteratorResult.value();
+
+    for(auto const & entryResult : iterator)
+    {
+        if(entryResult.has_error())
+        {
+            continue;
+        }
+
+        auto const & entry = entryResult.value();
+        if(entry.type == fs::EntryType::file)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 

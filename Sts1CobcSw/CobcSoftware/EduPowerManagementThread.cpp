@@ -33,36 +33,6 @@ constexpr auto startDelayLimit = 60 * s;
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 
 
-auto HasStoredEduPrograms() -> bool
-{
-    auto iteratorResult = fs::MakeIterator(fs::Path("programs/"));
-    if(iteratorResult.has_error())
-    {
-        return false;
-    }
-
-    auto iterator = iteratorResult.value();
-
-    // Check if there's at least one file in the directory
-    for(auto const & entryResult : iterator)
-    {
-        if(entryResult.has_error())
-        {
-            continue;
-        }
-
-        auto const & entry = entryResult.value();
-        if(entry.type == fs::EntryType::file)
-        {
-            return true;
-        }
-    }
-
-    // No program files found
-    return false;
-}
-
-
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
 {
 public:
@@ -100,9 +70,8 @@ private:
                 // Does edu heart beats ?
                 if(eduIsAlive)
                 {
-                    // TODO: also perform a check about EDU programs on cobc
                     if((not eduHasUpdate) and (startDelay >= startDelayLimit)
-                       and (not HasStoredEduPrograms()))
+                       and (not edu::hasStoredPrograms()))
                     {
                         DEBUG_PRINT("Turning Edu off\n");
                         edu::TurnOff();
