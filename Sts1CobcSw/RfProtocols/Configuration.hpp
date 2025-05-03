@@ -59,13 +59,6 @@ inline constexpr auto cfdpVcid = Make<Vcid, 0b101>();
 
 // --- Space Packet Protocol ---
 
-struct PacketType  // I use a struct instead of a namespace because I don't like "packettype"
-{
-    static constexpr auto telemetry = UInt<1>(0);
-    static constexpr auto telecommand = UInt<1>(1);
-};
-
-
 inline constexpr auto packetVersionNumber = UInt<3>(0);
 inline constexpr auto maxPacketLength = tm::transferFrameDataLength;
 inline constexpr auto packetPrimaryHeaderLength = 6U;
