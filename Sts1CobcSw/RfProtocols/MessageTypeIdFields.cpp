@@ -1,0 +1,32 @@
+#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
+
+
+namespace sts1cobcsw
+{
+template<std::endian endianness>
+auto SerializeTo(void * destination, MessageTypeIdFields const & fields) -> void *
+{
+    destination = SerializeTo<endianness>(destination, fields.serviceTypeId);
+    destination = SerializeTo<endianness>(destination, fields.messageSubtypeId);
+    return destination;
+}
+
+
+template auto SerializeTo<std::endian::big>(void *, MessageTypeIdFields const &) -> void *;
+template auto SerializeTo<std::endian::little>(void *, MessageTypeIdFields const &) -> void *;
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, MessageTypeIdFields * fields) -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &fields->serviceTypeId);
+    source = DeserializeFrom<endianness>(source, &fields->messageSubtypeId);
+    return source;
+}
+
+
+template auto DeserializeFrom<std::endian::big>(void const *, MessageTypeIdFields *)
+    -> void const *;
+template auto DeserializeFrom<std::endian::little>(void const *, MessageTypeIdFields *)
+    -> void const *;
+}

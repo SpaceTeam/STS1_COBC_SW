@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
+#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
@@ -77,21 +78,9 @@ using ApplicationProcessUserId = Id<std::uint16_t, 0, 0xAAAA>;  // NOLINT(*magic
 inline constexpr auto invalidApplicationProcessUserId = Make<ApplicationProcessUserId, 0>();
 inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAAAA>();
 
-
 namespace tm
 {
 inline constexpr auto packetPusVersionNumber = UInt<4>(2);
-
-
-struct MessageTypeIdFields
-{
-    std::uint8_t serviceTypeId = 0;
-    std::uint8_t messageSubtypeId = 0;
-
-    friend constexpr auto operator==(MessageTypeIdFields const &, MessageTypeIdFields const &)
-        -> bool = default;
-};
-
 
 // NOLINTBEGIN(*magic-numbers)
 using MessageTypeId = Id<MessageTypeIdFields,
@@ -106,7 +95,6 @@ using MessageTypeId = Id<MessageTypeIdFields,
                          MessageTypeIdFields{23, 13}>;
 // NOLINTEND(*magic-numbers)
 }
-
 
 namespace tc
 {
