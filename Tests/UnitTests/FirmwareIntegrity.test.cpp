@@ -1,4 +1,5 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
+#include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -14,123 +15,193 @@
 #include <etl/vector.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
 
 
-namespace sts1cobcsw
-{
+using sts1cobcsw::Byte;
+using sts1cobcsw::CheckFirmwareIntegrity;
+using sts1cobcsw::ErrorCode;
+
 using sts1cobcsw::operator""_b;
 
+
 #ifndef __linux__
-auto ProgramFlash(std::span<const sts1cobcsw::Byte> data, utility::Partition partition) -> void;
+auto ProgramFlash(std::span<Byte const> data, std::uintptr_t address) -> bool;
 #endif
 
-TEST_CASE("Firmware Integrity Ram")
-{
-    // Length: 11 = 0x0000000B -> 0x0B000000 (Little endian)
-    auto partition = etl::vector<Byte, 20>{
-        0x0B_b, 0x00_b, 0x00_b, 0x00_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b, 0xAB_b, 0xFF_b, 0x10_b};
 
-    auto result = utility::ComputeCrc32(Span(partition));
-    auto serializedCrc = Serialize(result);
-    partition.insert(partition.end(), serializedCrc.begin(), serializedCrc.end());
+TEST_CASE("Firmware integrity RAM")
+{
+    // clang-format off
+    auto data = etl::vector<Byte, 20>{
+        0x0C_b, 0x00_b, 0x00_b, 0x00_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b,
+        0xAB_b, 0xFF_b, 0x10_b, 0x01_b};
+    // clang-format on
+    auto result = sts1cobcsw::utility::ComputeCrc32(sts1cobcsw::Span(data));
+    auto serializedCrc = sts1cobcsw::Serialize(result);
+    data.insert(data.end(), serializedCrc.begin(), serializedCrc.end());
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    auto ramPartitionStartAddress = reinterpret_cast<std::uintptr_t>(partition.data());
-    auto ramPartitionEnum = static_cast<utility::Partition>(ramPartitionStartAddress);
-    auto checkFirmwareResult = utility::CheckFirmwareIntegrity(ramPartitionEnum);
+    auto startAddress = reinterpret_cast<std::uintptr_t>(data.data());
+
+    auto checkFirmwareResult = CheckFirmwareIntegrity(startAddress);
     CHECK(checkFirmwareResult.has_error() == false);
 
     // Content is modified -> CRC is not correct anymore
-    partition[4] = 0xFF_b;
-    checkFirmwareResult = utility::CheckFirmwareIntegrity(ramPartitionEnum);
+    data[4] ^= 0xFF_b;
+    checkFirmwareResult = CheckFirmwareIntegrity(startAddress);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::corrupt);
+    data[4] ^= 0xFF_b;  // Restore original content
 
-    // When the length of the partition is empty, an error is returned
-    partition[0] = 0x00_b;
-    checkFirmwareResult = utility::CheckFirmwareIntegrity(ramPartitionEnum);
-    CHECK(checkFirmwareResult.has_error());
-    CHECK(checkFirmwareResult.error() == ErrorCode::empty);
-
-    // Sector length 0x000000FF -> 0xFF000000 which is larger than allowed (0x20000ULL)
-    partition[3] = 0xFF_b;
-    checkFirmwareResult = utility::CheckFirmwareIntegrity(ramPartitionEnum);
+    // Length must be a multiple of 4
+    data[0] = 0x0B_b;
+    checkFirmwareResult = CheckFirmwareIntegrity(startAddress);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+    data[0] = 0x0A_b;
+    checkFirmwareResult = CheckFirmwareIntegrity(startAddress);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+    data[0] = 0x09_b;
+    checkFirmwareResult = CheckFirmwareIntegrity(startAddress);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+
+    // Length must be >= 4
+    data[0] = 0x03_b;
+    checkFirmwareResult = CheckFirmwareIntegrity(startAddress);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+
+    // Length must be <= 0x20000
+    data[0] = 0x04_b;
+    data[1] = 0x00_b;
+    data[2] = 0x02_b;
+    data[3] = 0x00_b;
+    checkFirmwareResult = CheckFirmwareIntegrity(startAddress);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+
+    // Partition must be aligned to 4 bytes
+    std::rotate(data.rbegin(), data.rbegin() + 1, data.rend());  // Rotate right
+    checkFirmwareResult = CheckFirmwareIntegrity(startAddress + 1);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::misaligned);
 }
 
 
 #ifndef __linux__
-TEST_CASE("Firmware Integrity Flash")
+TEST_CASE("Firmware integrity flash")
 {
-    // Length: 11 = 0x0000000B -> 0x0B000000 (Little endian)
-    auto partition = etl::vector<Byte, 20>{
-        0x0B_b, 0x00_b, 0x00_b, 0x00_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b, 0xAB_b, 0xFF_b, 0x10_b};
+    // clang-format off
+    auto data = etl::vector<Byte, 20>{
+        0x0C_b, 0x00_b, 0x00_b, 0x00_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b,
+        0xAB_b, 0xFF_b, 0x10_b, 0x01_b};
+    // clang-format on
+    auto result = sts1cobcsw::utility::ComputeCrc32(sts1cobcsw::Span(data));
+    auto serializedCrc = sts1cobcsw::Serialize(result);
+    data.insert(data.end(), serializedCrc.begin(), serializedCrc.end());
 
-    auto result = utility::ComputeCrc32(Span(partition));
-    auto serializedCrc = Serialize(result);
-    partition.insert(partition.end(), serializedCrc.begin(), serializedCrc.end());
+    for(auto partition : {sts1cobcsw::primaryPartitionStartAddress,
+                          sts1cobcsw::secondaryPartition1StartAddress,
+                          sts1cobcsw::secondaryPartition2StartAddress})
+    {
+        auto programmingFlashSucceeded = ProgramFlash(data, partition);
+        REQUIRE(programmingFlashSucceeded);
+        auto checkFirmwareResult = CheckFirmwareIntegrity(partition);
+        CHECK(checkFirmwareResult.has_error() == false);
+    }
 
-    auto partitionEnum = utility::Partition::secondary1;
-
-    // Write data to Flash
-    ProgramFlash(partition, partitionEnum);
-    auto checkFirmwareResult = utility::CheckFirmwareIntegrity(partitionEnum);
-    CHECK(checkFirmwareResult.has_error() == false);
+    auto partition = sts1cobcsw::secondaryPartition1StartAddress;
 
     // Content is modified -> CRC is not correct anymore
-    partition[4] = 0xFF_b;
-    ProgramFlash(partition, partitionEnum);
-    checkFirmwareResult = utility::CheckFirmwareIntegrity(partitionEnum);
-    CHECK(checkFirmwareResult.has_error() == true);
-    // CHECK(checkFirmwareResult.error() == ErrorCode::corrupt);
-
-    // When the length of the partition is empty, an error is returned
-    partition[0] = 0x00_b;
-    ProgramFlash(partition, partitionEnum);
-    checkFirmwareResult = utility::CheckFirmwareIntegrity(partitionEnum);
+    data[4] ^= 0xFF_b;
+    auto programmingFlashSucceeded = ProgramFlash(data, partition);
+    REQUIRE(programmingFlashSucceeded);
+    auto checkFirmwareResult = CheckFirmwareIntegrity(partition);
     CHECK(checkFirmwareResult.has_error());
-    CHECK(checkFirmwareResult.error() == ErrorCode::empty);
+    CHECK(checkFirmwareResult.error() == ErrorCode::corrupt);
+    data[4] ^= 0xFF_b;
+    programmingFlashSucceeded = ProgramFlash(data, partition);
+    REQUIRE(programmingFlashSucceeded);
 
-    // Sector length 0x000000FF -> 0xFF000000 which is larger than allowed (0x20000ULL)
-    partition[3] = 0xFF_b;
-    ProgramFlash(partition, partitionEnum);
-    checkFirmwareResult = utility::CheckFirmwareIntegrity(partitionEnum);
+    // Length must be a multiple of 4
+    data[0] = 0x0B_b;
+    programmingFlashSucceeded = ProgramFlash(data, partition);
+    REQUIRE(programmingFlashSucceeded);
+    checkFirmwareResult = CheckFirmwareIntegrity(partition);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+    data[0] = 0x0A_b;
+    programmingFlashSucceeded = ProgramFlash(data, partition);
+    REQUIRE(programmingFlashSucceeded);
+    checkFirmwareResult = CheckFirmwareIntegrity(partition);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+    data[0] = 0x09_b;
+    programmingFlashSucceeded = ProgramFlash(data, partition);
+    REQUIRE(programmingFlashSucceeded);
+    checkFirmwareResult = CheckFirmwareIntegrity(partition);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+
+    // Length must be >= 4
+    data[0] = 0x03_b;
+    programmingFlashSucceeded = ProgramFlash(data, partition);
+    REQUIRE(programmingFlashSucceeded);
+    checkFirmwareResult = CheckFirmwareIntegrity(partition);
+    CHECK(checkFirmwareResult.has_error());
+    CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
+
+    // Length must be <= 0x20000
+    data[0] = 0x04_b;
+    data[1] = 0x00_b;
+    data[2] = 0x02_b;
+    data[3] = 0x00_b;
+    programmingFlashSucceeded = ProgramFlash(data, partition);
+    REQUIRE(programmingFlashSucceeded);
+    checkFirmwareResult = CheckFirmwareIntegrity(partition);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
 }
 
 
-auto ProgramFlash(std::span<const sts1cobcsw::Byte> data, utility::Partition partition) -> void
+auto ProgramFlash(std::span<Byte const> data, std::uintptr_t address) -> bool
 {
     auto flashSector = 0U;
-    switch(partition)
+    switch(address)
     {
-        case utility::Partition::secondary1:
+        case sts1cobcsw::primaryPartitionStartAddress:
+            flashSector = FLASH_Sector_5;
+            break;
+        case sts1cobcsw::secondaryPartition1StartAddress:
             flashSector = FLASH_Sector_6;
             break;
-        case utility::Partition::secondary2:
+        case sts1cobcsw::secondaryPartition2StartAddress:
             flashSector = FLASH_Sector_7;
             break;
         default:
-            CHECK(false);
-            return;  // Don't overwrite own code
+            return false;
     }
-    auto partitionAddress = static_cast<std::uint32_t>(partition);
-
-    // Write data to Flash
     FLASH_Unlock();
     auto resultFlash = FLASH_EraseSector(flashSector, VoltageRange_3);
-    CHECK(resultFlash == FLASH_COMPLETE);
-    for(std::uint32_t offset = 0; offset < data.size(); offset++)
+    if(resultFlash != FLASH_COMPLETE)
     {
-        auto address = static_cast<std::uint32_t>(partitionAddress + offset);
-        auto dataByte = static_cast<std::uint8_t>(data[offset]);
-        resultFlash = FLASH_ProgramByte(address, dataByte);
-        CHECK(resultFlash == FLASH_COMPLETE);
+        return false;
+    }
+    for(auto i = 0U; i < data.size(); ++i)
+    {
+        auto dataByte = static_cast<std::uint8_t>(data[i]);
+        resultFlash = FLASH_ProgramByte(address + i, dataByte);
+        if(resultFlash != FLASH_COMPLETE)
+        {
+            return false;
+        }
     }
     FLASH_Lock();
+    return true;
 }
 #endif
-}

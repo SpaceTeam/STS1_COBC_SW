@@ -2,20 +2,17 @@
 
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <cstdint>
 
 
-namespace sts1cobcsw::utility
+// TODO: Move this to a new folder FirmwareManagement and add ProgramFlash()
+namespace sts1cobcsw
 {
-enum class Partition : std::uintptr_t
-{
-    primary = 0x802'0000ULL,
-    secondary1 = 0x804'0000ULL,
-    secondary2 = 0x806'0000ULL
-};
+inline constexpr std::uintptr_t primaryPartitionStartAddress = 0x0802'0000U;
+inline constexpr std::uintptr_t secondaryPartition1StartAddress = 0x0804'0000U;
+inline constexpr std::uintptr_t secondaryPartition2StartAddress = 0x0806'0000U;
 
 
-[[nodiscard]] auto CheckFirmwareIntegrity(Partition partition) -> Result<void>;
+[[nodiscard]] auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>;
 }
