@@ -39,7 +39,7 @@ TEST_CASE("Firmware integrity RAM")
         0x0C_b, 0x00_b, 0x00_b, 0x00_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b,
         0xAB_b, 0xFF_b, 0x10_b, 0x01_b};
     // clang-format on
-    auto result = sts1cobcsw::utility::ComputeCrc32(sts1cobcsw::Span(data));
+    auto result = sts1cobcsw::ComputeCrc32(sts1cobcsw::Span(data));
     auto serializedCrc = sts1cobcsw::Serialize(result);
     data.insert(data.end(), serializedCrc.begin(), serializedCrc.end());
 
@@ -101,7 +101,7 @@ TEST_CASE("Firmware integrity flash")
         0x0C_b, 0x00_b, 0x00_b, 0x00_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b,
         0xAB_b, 0xFF_b, 0x10_b, 0x01_b};
     // clang-format on
-    auto result = sts1cobcsw::utility::ComputeCrc32(sts1cobcsw::Span(data));
+    auto result = sts1cobcsw::ComputeCrc32(sts1cobcsw::Span(data));
     auto serializedCrc = sts1cobcsw::Serialize(result);
     data.insert(data.end(), serializedCrc.begin(), serializedCrc.end());
 

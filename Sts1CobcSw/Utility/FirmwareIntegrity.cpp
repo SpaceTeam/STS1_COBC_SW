@@ -40,14 +40,14 @@ auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
     auto buffer = etl::vector<Byte, 128>{};  // NOLINT(*magic-numbers)
     buffer.resize(sizeof(length));
     std::ranges::copy(bytes.first<sizeof(length)>(), buffer.begin());
-    auto crc = utility::ComputeCrc32(Span(buffer));
+    auto crc = ComputeCrc32(Span(buffer));
     auto lengthWithChecksum = length + sizeof(crc);
     for(auto i = sizeof(length); i < lengthWithChecksum;)
     {
         auto nBytes = std::min<std::size_t>(lengthWithChecksum - i, buffer.capacity());
         buffer.resize(nBytes);
         std::ranges::copy(bytes.subspan(i, nBytes), buffer.begin());
-        crc = utility::ComputeCrc32(crc, Span(buffer));
+        crc = ComputeCrc32(crc, Span(buffer));
         i += nBytes;
     }
     if(crc != 0)

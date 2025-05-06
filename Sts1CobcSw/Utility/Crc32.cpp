@@ -3,9 +3,9 @@
 #include <littlefs/lfs_util.h>
 
 
-namespace sts1cobcsw::utility
+namespace sts1cobcsw
 {
-constexpr std::uint32_t initialCrc32JamCrcValue = 0xFFFFFFFF;
+constexpr std::uint32_t initialCrc32JamCrcValue = 0xFFFF'FFFF;
 
 
 // Computes the CRC-32/JAMCRC (see

@@ -347,7 +347,7 @@ auto SendDataPacket(std::span<Byte const> data) -> Result<void>
     }
     // Casting the size to uint16_t is safe since it is checked against maxDataLength
     auto length = Serialize(static_cast<std::uint16_t>(data.size()));
-    auto checksum = Serialize(utility::ComputeCrc32(data));
+    auto checksum = Serialize(ComputeCrc32(data));
 
     auto nNacks = 0;
     while(nNacks < maxNNackRetries)
@@ -470,7 +470,7 @@ auto Receive(std::span<Byte> data) -> Result<void>
 // TODO: A parameter pack of spans would be very convenient
 auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>
 {
-    auto computedCrc32 = utility::ComputeCrc32(data);
+    auto computedCrc32 = ComputeCrc32(data);
     OUTCOME_TRY(auto receivedCrc32, Receive<std::uint32_t>());
     if(computedCrc32 != receivedCrc32)
     {
