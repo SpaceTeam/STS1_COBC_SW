@@ -7,7 +7,7 @@
 #include <span>
 
 
-namespace sts1cobcsw::utility
+namespace sts1cobcsw
 {
 [[nodiscard]] auto ComputeCrc32(std::span<Byte const> data) -> std::uint32_t;
 [[nodiscard]] auto ComputeCrc32(std::uint32_t previousCrc32, std::span<Byte const> data)
