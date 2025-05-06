@@ -57,6 +57,8 @@ enum class ErrorCode
     // TODO: Rework the EDU and RF protocol errors into a smaller set of coherent codes that can be
     // used for both
     invalidPayload,
+    // Firmware
+    misaligned,
 };
 
 
