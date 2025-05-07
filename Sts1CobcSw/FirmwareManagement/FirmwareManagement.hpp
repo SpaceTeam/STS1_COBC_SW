@@ -6,7 +6,7 @@
 #include <cstdint>
 
 
-// TODO: Move this to a new folder FirmwareManagement and add ProgramFlash()
+// TODO: Add ProgramFlash()
 namespace sts1cobcsw
 {
 inline constexpr std::uintptr_t primaryPartitionStartAddress = 0x0802'0000U;

@@ -1,0 +1,3 @@
+target_sources(Sts1CobcSw_FirmwareManagement PRIVATE FirmwareManagement.cpp)
+target_link_libraries(Sts1CobcSw_FirmwareManagement PUBLIC Sts1CobcSw_Outcome)
+target_link_libraries(Sts1CobcSw_FirmwareManagement PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial)

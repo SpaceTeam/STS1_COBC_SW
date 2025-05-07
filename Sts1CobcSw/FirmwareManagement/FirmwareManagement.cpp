@@ -1,6 +1,6 @@
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
-#include <Sts1CobcSw/Utility/FirmwareIntegrity.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <etl/vector.h>
