@@ -1,11 +1,11 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
-#include <Sts1CobcSw/Utility/FirmwareIntegrity.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #ifndef __linux__
@@ -32,7 +32,7 @@ auto ProgramFlash(std::span<Byte const> data, std::uintptr_t address) -> bool;
 #endif
 
 
-TEST_CASE("Firmware integrity RAM")
+TEST_CASE("Firmware integrity check RAM")
 {
     // clang-format off
     auto data = etl::vector<Byte, 20>{
@@ -94,7 +94,8 @@ TEST_CASE("Firmware integrity RAM")
 
 
 #ifndef __linux__
-TEST_CASE("Firmware integrity flash")
+// TODO: Do fewer tests because erasing and programming the flash is slow
+TEST_CASE("Firmware integrity check flash")
 {
     // clang-format off
     auto data = etl::vector<Byte, 20>{

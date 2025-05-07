@@ -42,12 +42,19 @@ target_link_libraries(
 )
 add_test(NAME Littlefs COMMAND Sts1CobcSwTests_Littlefs)
 
-add_test_program(FirmwareIntegrity)
+add_test_program(FirmwareManagement)
 target_link_libraries(
-    Sts1CobcSwTests_FirmwareIntegrity PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial
-                                              Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+    Sts1CobcSwTests_FirmwareManagement
+    PRIVATE etl::etl
+            rodos::rodos
+            Sts1CobcSw_FirmwareManagement
+            Sts1CobcSw_Outcome
+            Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
+            Sts1CobcSwTests::CatchRodos
+            Sts1CobcSwTests::Utility
 )
-add_test(NAME FirmwareIntegrity COMMAND Sts1CobcSwTests_FirmwareIntegrity)
+add_test(NAME FirmwareManagement COMMAND Sts1CobcSwTests_FirmwareManagement)
 
 # ---- Tests only for the COBC ----
 
