@@ -2,6 +2,10 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
@@ -11,6 +15,8 @@
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+namespace fs = sts1cobcsw::fs;
 
 
 namespace sts1cobcsw
@@ -56,13 +62,16 @@ private:
 
             auto eduIsAlive = false;
             eduIsAliveBufferForPowerManagement.get(eduIsAlive);
+            auto flashIsWorking = persistentVariables.template Load<"flashIsWorking">();
 
-            if(epsBatteryIsGood)
+            // enough power and filesystem is working
+            if(epsBatteryIsGood and flashIsWorking)
             {
+                // Does edu heart beats ?
                 if(eduIsAlive)
                 {
-                    // TODO: also perform a check about EDU programs on cobc
-                    if((not eduHasUpdate) and (startDelay >= startDelayLimit))
+                    if((not eduHasUpdate) and (startDelay >= startDelayLimit)
+                       and (not edu::hasStoredPrograms()))
                     {
                         DEBUG_PRINT("Turning Edu off\n");
                         edu::TurnOff();
@@ -79,6 +88,7 @@ private:
             }
             else
             {
+                DEBUG_PRINT("Turning Edu off\n");
                 edu::TurnOff();
             }
         }
