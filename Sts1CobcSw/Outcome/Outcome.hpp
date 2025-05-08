@@ -59,6 +59,8 @@ enum class ErrorCode
     invalidPayload,
     // Firmware
     misaligned,
+    eraseFailed,
+    programFailed,
 };
 
 
