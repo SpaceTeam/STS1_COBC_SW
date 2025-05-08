@@ -104,6 +104,15 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
         case ErrorCode::invalidPayload:
             Append(string, "ErrorCode::invalidPayload");
             break;
+        case ErrorCode::misaligned:
+            Append(string, "ErrorCode::misaligned");
+            break;
+        case ErrorCode::eraseFailed:
+            Append(string, "ErrorCode::eraseFailed");
+            break;
+        case ErrorCode::programFailed:
+            Append(string, "ErrorCode::programFailed");
+            break;
     }
 }
 }

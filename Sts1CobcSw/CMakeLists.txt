@@ -1,6 +1,7 @@
 add_subdirectory(CobcSoftware)
 add_subdirectory(Edu)
 add_subdirectory(FileSystem)
+add_subdirectory(FirmwareManagement)
 add_subdirectory(FramSections)
 add_subdirectory(Hal)
 add_subdirectory(Outcome)
