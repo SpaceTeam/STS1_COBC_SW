@@ -1,3 +1,4 @@
+add_subdirectory(Blake2s)
 add_subdirectory(CobcSoftware)
 add_subdirectory(Edu)
 add_subdirectory(FileSystem)

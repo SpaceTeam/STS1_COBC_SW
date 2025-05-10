@@ -26,6 +26,7 @@ find_package_and_notify(strong_type)
 
 # ---- Declare targets ----
 
+add_library(Sts1CobcSw_Blake2s STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
 add_library(Sts1CobcSw_FirmwareManagement STATIC)
