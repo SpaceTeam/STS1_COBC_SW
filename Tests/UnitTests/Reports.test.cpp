@@ -61,7 +61,7 @@ TEST_CASE("Successful verification reports")
 {
     using sts1cobcsw::SuccessfulVerificationReport;
 
-    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
         .packetType = 0,
@@ -149,7 +149,7 @@ TEST_CASE("Failed verification reports")
 {
     using sts1cobcsw::FailedVerificationReport;
 
-    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
         .packetType = 0,
@@ -236,7 +236,7 @@ TEST_CASE("Failed verification reports")
 
 TEST_CASE("Housekeeping parameter report")
 {
-    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto record = sts1cobcsw::TelemetryRecord{
         .eduShouldBePowered = true,
         .eduIsAlive = true,
@@ -327,7 +327,7 @@ TEST_CASE("Parameter value report")
     using sts1cobcsw::ParameterValue;
     using sts1cobcsw::ParameterValueReport;
 
-    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto parameterId = ParameterId::rxBaudRate;
     auto parameterValue = 9600U;
     auto report = ParameterValueReport(parameterId, parameterValue);
@@ -399,7 +399,7 @@ TEST_CASE("File attribute report")
     using sts1cobcsw::FileAttributeReport;
     using sts1cobcsw::FileStatus;
 
-    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto filePath = fs::Path{"/results/12345_67890.zip"};
     auto fileSize = 0xDEADBEEFU;
     auto fileStatus = FileStatus::locked;
