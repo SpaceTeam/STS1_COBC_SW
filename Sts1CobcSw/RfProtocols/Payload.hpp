@@ -15,6 +15,8 @@ class Payload
 {
 public:
     Payload() = default;
+    // TODO: Think about removing this (and the protected SMFs) because we never delete a child of
+    // Payload through a pointer to Payload, because we don't use dynamic memory allocation.
     virtual ~Payload() = default;
 
 

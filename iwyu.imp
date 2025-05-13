@@ -115,6 +115,7 @@
   { include: ["\"Sts1CobcSw/RfProtocols/IdCounters.hpp\"",                         "public", "<Sts1CobcSw/RfProtocols/IdCounters.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp\"",                "public", "<Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/Payload.hpp\"",                            "public", "<Sts1CobcSw/RfProtocols/Payload.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/RfProtocols/Reports.hpp\"",                            "public", "<Sts1CobcSw/RfProtocols/Reports.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/SpacePacket.hpp\"",                        "public", "<Sts1CobcSw/RfProtocols/SpacePacket.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/TcTransferFrame.hpp\"",                    "public", "<Sts1CobcSw/RfProtocols/TcTransferFrame.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/TmSpacePacketSecondaryHeader.hpp\"",       "public", "<Sts1CobcSw/RfProtocols/TmSpacePacketSecondaryHeader.hpp>", "public"] },
