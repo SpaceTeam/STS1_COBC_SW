@@ -18,6 +18,7 @@ namespace sts1cobcsw
 {
 namespace tm
 {
+// TODO: Maybe remove the NTTP and make messageTypeId a normal member variable
 template<MessageTypeId id>
 struct SpacePacketSecondaryHeader
 {
