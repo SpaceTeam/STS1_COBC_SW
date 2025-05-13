@@ -2,6 +2,10 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
@@ -12,19 +16,24 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
+
 
 namespace sts1cobcsw
+{
+namespace
 {
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2'000U;
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
 constexpr auto eduBootTimeMargin = 5 * s;
+constexpr auto eduPowerManagementThreadStartDelay = 15 * s;
 constexpr auto eduPowerManagementThreadPeriod = 2 * s;
 constexpr auto startDelayLimit = 60 * s;
 
-// TODO: There should be an Eps.hpp/.cpp for this
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
+}
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
@@ -45,40 +54,35 @@ private:
 
     void run() override
     {
-        TIME_LOOP(0, value_of(eduPowerManagementThreadPeriod))
+        TIME_LOOP(value_of(eduPowerManagementThreadStartDelay),
+                  value_of(eduPowerManagementThreadPeriod))
         {
-            // DEBUG_PRINT("[EduPowerManagementThread] Start of Loop\n");
-            auto startDelay = Duration(0);
-            nextProgramStartDelayBuffer.get(startDelay);
-
-            auto const epsBatteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
-            auto const eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
-
-            auto eduIsAlive = false;
-            eduIsAliveBufferForPowerManagement.get(eduIsAlive);
-
-            if(epsBatteryIsGood)
+            auto batteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
+            auto flashIsWorking = persistentVariables.template Load<"flashIsWorking">();
+            if(batteryIsGood and flashIsWorking)
             {
-                if(eduIsAlive)
+                auto eduIsAlive = false;
+                eduIsAliveBufferForPowerManagement.get(eduIsAlive);
+                auto startDelay = Duration(0);
+                nextProgramStartDelayBuffer.get(startDelay);
+                auto eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
+                auto noWorkMustBeDoneInTheNearFuture = not eduHasUpdate
+                                                   and not edu::ProgramsAreAvailableOnCobc()
+                                                   and startDelay >= startDelayLimit;
+                if(eduIsAlive and noWorkMustBeDoneInTheNearFuture)
                 {
-                    // TODO: also perform a check about EDU programs on cobc
-                    if((not eduHasUpdate) and (startDelay >= startDelayLimit))
-                    {
-                        DEBUG_PRINT("Turning Edu off\n");
-                        edu::TurnOff();
-                    }
+                    DEBUG_PRINT("Turning EDU off\n");
+                    edu::TurnOff();
                 }
-                else
+                else if(not eduIsAlive and startDelay < (eduBootTime + eduBootTimeMargin))
                 {
-                    if(startDelay < (eduBootTime + eduBootTimeMargin))
-                    {
-                        DEBUG_PRINT("Turning Edu on\n");
-                        edu::TurnOn();
-                    }
+                    DEBUG_PRINT("Turning EDU on\n");
+                    edu::TurnOn();
                 }
             }
             else
             {
+                DEBUG_PRINT("Turning EDU off\n");
                 edu::TurnOff();
             }
         }

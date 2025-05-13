@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -27,6 +28,7 @@
 #include <etl/to_string.h>
 #include <etl/vector.h>
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <limits>
@@ -36,6 +38,9 @@
 namespace sts1cobcsw::edu
 {
 // --- Globals ---
+
+auto const programsDirectory = fs::Path("programs/");
+auto const resultsDirectory = fs::Path("results/");
 
 // Low-level CEP commands
 constexpr auto cepAck = 0xd7_b;   //! Acknowledging a data packet
@@ -120,7 +125,7 @@ auto TurnOff() -> void
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    auto path = fs::Path("programs/");
+    auto path = programsDirectory;
     static constexpr auto width =
         std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
     etl::to_string(
@@ -311,6 +316,23 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     return WaitForAck();
+}
+
+
+auto ProgramsAreAvailableOnCobc() -> bool
+{
+    auto makeIteratorResult = fs::MakeIterator(edu::programsDirectory);
+    if(makeIteratorResult.has_error())
+    {
+        return false;
+    }
+    auto & directoryIterator = makeIteratorResult.value();
+    return std::any_of(directoryIterator.begin(),
+                       directoryIterator.end(),
+                       [](auto const & entryResult) {
+                           return not entryResult.has_error()
+                              and entryResult.value().type == fs::EntryType::file;
+                       });
 }
 
 
