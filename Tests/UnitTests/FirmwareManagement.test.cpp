@@ -11,8 +11,10 @@
 #include <etl/vector.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <span>
 
@@ -32,21 +34,52 @@ auto EraseAndProgram(fw::Partition const & partition, std::span<Byte const> data
 }
 
 
-// TODO: Add tests for Erase() and Program()
-TEST_CASE("Firmware integrity check")
+TEST_CASE("Firmware management: Erase(), Program(), and Read()")
+{
+    auto eraseResult = fw::Erase(fw::primaryPartition.flashSector);
+    REQUIRE(eraseResult.has_error() == false);
+    eraseResult = fw::Erase(fw::secondaryPartition1.flashSector);
+    REQUIRE(eraseResult.has_error() == false);
+    eraseResult = fw::Erase(fw::secondaryPartition2.flashSector);
+    REQUIRE(eraseResult.has_error() == false);
+    auto data = std::array<Byte, 100>{};
+    fw::Read(fw::primaryPartition.startAddress, std::span(data));
+    CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0xFF_b; }));
+    fw::Read(fw::secondaryPartition1.startAddress, std::span(data));
+    CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0xFF_b; }));
+    fw::Read(fw::secondaryPartition2.startAddress, std::span(data));
+    CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0xFF_b; }));
+
+    data.fill(0x00_b);
+    auto programResult = fw::Program(fw::primaryPartition.startAddress, std::span(data));
+    REQUIRE(programResult.has_error() == false);
+    programResult = fw::Program(fw::secondaryPartition1.startAddress, std::span(data));
+    REQUIRE(programResult.has_error() == false);
+    programResult = fw::Program(fw::secondaryPartition2.startAddress, std::span(data));
+    REQUIRE(programResult.has_error() == false);
+    fw::Read(fw::primaryPartition.startAddress, std::span(data));
+    CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0x00_b; }));
+    fw::Read(fw::secondaryPartition1.startAddress, std::span(data));
+    CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0x00_b; }));
+    fw::Read(fw::secondaryPartition2.startAddress, std::span(data));
+    CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0x00_b; }));
+}
+
+
+TEST_CASE("Firmware management: CheckFirmwareIntegrity()")
 {
     // clang-format off
-    auto data = etl::vector<Byte, 20>{
+    auto testFirmware = etl::vector<Byte, 20>{
         0x0C_b, 0x00_b, 0x00_b, 0x00_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b,
         0xAB_b, 0xFF_b, 0x10_b, 0x01_b};
     // clang-format on
-    auto result = sts1cobcsw::ComputeCrc32(sts1cobcsw::Span(data));
+    auto result = sts1cobcsw::ComputeCrc32(sts1cobcsw::Span(testFirmware));
     auto serializedCrc = sts1cobcsw::Serialize(result);
-    data.insert(data.end(), serializedCrc.begin(), serializedCrc.end());
+    testFirmware.insert(testFirmware.end(), serializedCrc.begin(), serializedCrc.end());
 
     for(auto partition : {fw::primaryPartition, fw::secondaryPartition1, fw::secondaryPartition2})
     {
-        auto eraseAndProgramResult = EraseAndProgram(partition, data);
+        auto eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
         REQUIRE(eraseAndProgramResult.has_error() == false);
         auto checkFirmwareResult = fw::CheckFirmwareIntegrity(partition.startAddress);
         CHECK(checkFirmwareResult.has_error() == false);
@@ -55,50 +88,50 @@ TEST_CASE("Firmware integrity check")
     auto partition = fw::secondaryPartition1;
 
     // Content is modified -> CRC is not correct anymore
-    data[4] ^= 0xFF_b;
-    auto eraseAndProgramResult = EraseAndProgram(partition, data);
+    testFirmware[4] ^= 0xFF_b;
+    auto eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
     REQUIRE(eraseAndProgramResult.has_error() == false);
     auto checkFirmwareResult = fw::CheckFirmwareIntegrity(partition.startAddress);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::corrupt);
-    data[4] ^= 0xFF_b;
-    eraseAndProgramResult = EraseAndProgram(partition, data);
+    testFirmware[4] ^= 0xFF_b;
+    eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
     REQUIRE(eraseAndProgramResult.has_error() == false);
 
     // Length must be a multiple of 4
-    data[0] = 0x0B_b;
-    eraseAndProgramResult = EraseAndProgram(partition, data);
+    testFirmware[0] = 0x0B_b;
+    eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
     REQUIRE(eraseAndProgramResult.has_error() == false);
     checkFirmwareResult = fw::CheckFirmwareIntegrity(partition.startAddress);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
-    data[0] = 0x0A_b;
-    eraseAndProgramResult = EraseAndProgram(partition, data);
+    testFirmware[0] = 0x0A_b;
+    eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
     REQUIRE(eraseAndProgramResult.has_error() == false);
     checkFirmwareResult = fw::CheckFirmwareIntegrity(partition.startAddress);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
-    data[0] = 0x09_b;
-    eraseAndProgramResult = EraseAndProgram(partition, data);
+    testFirmware[0] = 0x09_b;
+    eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
     REQUIRE(eraseAndProgramResult.has_error() == false);
     checkFirmwareResult = fw::CheckFirmwareIntegrity(partition.startAddress);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
 
     // Length must be >= 4
-    data[0] = 0x03_b;
-    eraseAndProgramResult = EraseAndProgram(partition, data);
+    testFirmware[0] = 0x03_b;
+    eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
     REQUIRE(eraseAndProgramResult.has_error() == false);
     checkFirmwareResult = fw::CheckFirmwareIntegrity(partition.startAddress);
     CHECK(checkFirmwareResult.has_error());
     CHECK(checkFirmwareResult.error() == ErrorCode::invalidLength);
 
     // Length must be <= 0x20000
-    data[0] = 0x04_b;
-    data[1] = 0x00_b;
-    data[2] = 0x02_b;
-    data[3] = 0x00_b;
-    eraseAndProgramResult = EraseAndProgram(partition, data);
+    testFirmware[0] = 0x04_b;
+    testFirmware[1] = 0x00_b;
+    testFirmware[2] = 0x02_b;
+    testFirmware[3] = 0x00_b;
+    eraseAndProgramResult = EraseAndProgram(partition, testFirmware);
     REQUIRE(eraseAndProgramResult.has_error() == false);
     checkFirmwareResult = fw::CheckFirmwareIntegrity(partition.startAddress);
     CHECK(checkFirmwareResult.has_error());
