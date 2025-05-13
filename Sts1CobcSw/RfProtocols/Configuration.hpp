@@ -6,6 +6,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 
@@ -61,7 +62,8 @@ inline constexpr auto cfdpVcid = Make<Vcid, 0b101>();
 // --- Space Packet Protocol ---
 
 inline constexpr auto packetVersionNumber = UInt<3>(0);
-inline constexpr auto maxPacketLength = tm::transferFrameDataLength;
+inline constexpr auto maxPacketLength =
+    std::max(tm::transferFrameDataLength, tc::transferFrameDataLength);
 inline constexpr auto packetPrimaryHeaderLength = 6U;
 inline constexpr auto maxPacketDataLength = maxPacketLength - packetPrimaryHeaderLength;
 
