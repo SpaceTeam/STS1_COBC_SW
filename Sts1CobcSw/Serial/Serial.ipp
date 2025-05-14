@@ -145,7 +145,7 @@ inline constexpr auto ReverseBytes(T t) -> T
     }
     else if constexpr(std::is_enum_v<T>)
     {
-        return static_cast<T>(etl::byteswap(static_cast<std::underlying_type<T>>(t)));
+        return static_cast<T>(etl::byteswap(static_cast<std::underlying_type_t<T>>(t)));
     }
 }
 }

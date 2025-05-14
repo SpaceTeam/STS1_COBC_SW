@@ -41,48 +41,19 @@ static_assert(totalSerialSize<UInt<32>, UInt<8>, UInt<4>> == 6);
 static_assert(totalSerialSize<UInt<64>, UInt<1>> == 9);
 
 
-TEST_CASE("TriviallySerializable")  // NOLINT(cert-err58-cpp)
-{
-    using sts1cobcsw::TriviallySerializable;
-
-    struct EmptyStruct
-    {
-    };
-    struct SingleInt32
-    {
-        std::int32_t i = 0;
-    };
-
-    // POD types are TriviallySerializable
-    CHECK(TriviallySerializable<std::byte>);
-    CHECK(TriviallySerializable<char>);
-    CHECK(TriviallySerializable<unsigned char>);
-    CHECK(TriviallySerializable<short>);
-    CHECK(TriviallySerializable<unsigned short>);
-    CHECK(TriviallySerializable<int>);
-    CHECK(TriviallySerializable<unsigned int>);
-    CHECK(TriviallySerializable<long>);
-    CHECK(TriviallySerializable<unsigned long>);
-    CHECK(TriviallySerializable<float>);
-    CHECK(TriviallySerializable<double>);
-    CHECK(TriviallySerializable<bool>);
-    // Pointers and arrays are not TriviallySerializable
-    CHECK(TriviallySerializable<char *> == false);
-    CHECK(TriviallySerializable<int[]> == false);  // NOLINT
-    CHECK(TriviallySerializable<std::array<double, 3>> == false);
-    // UInt<> and user-defined types aren't either
-    CHECK(TriviallySerializable<UInt<0>> == false);
-    CHECK(TriviallySerializable<UInt<1>> == false);
-    CHECK(TriviallySerializable<UInt<64>> == false);
-    CHECK(TriviallySerializable<EmptyStruct> == false);
-    CHECK(TriviallySerializable<SingleInt32> == false);
-}
-
-
-TEST_CASE("HasEndianness")
+TEST_CASE("TriviallySerializable and HasEndianness")  // NOLINT(cert-err58-cpp)
 {
     using sts1cobcsw::HasEndianness;
+    using sts1cobcsw::TriviallySerializable;
 
+    enum ClassicEnum
+    {
+        one,
+    };
+    enum class ScopedEnum
+    {
+        one,
+    };
     struct EmptyStruct
     {
     };
@@ -91,29 +62,63 @@ TEST_CASE("HasEndianness")
         std::int32_t i = 0;
     };
 
-    // POD types are HasEndianness
-    CHECK(HasEndianness<std::byte>);
-    CHECK(HasEndianness<char>);
-    CHECK(HasEndianness<unsigned char>);
-    CHECK(HasEndianness<short>);
-    CHECK(HasEndianness<unsigned short>);
-    CHECK(HasEndianness<int>);
-    CHECK(HasEndianness<unsigned int>);
-    CHECK(HasEndianness<long>);
-    CHECK(HasEndianness<unsigned long>);
-    CHECK(HasEndianness<bool>);
-    // Floats, type_safe bools, pointers, and arrays are not HasEndianness
-    CHECK(HasEndianness<float> == false);
-    CHECK(HasEndianness<double> == false);
-    CHECK(HasEndianness<char *> == false);
-    CHECK(HasEndianness<int[]> == false);  // NOLINT
-    CHECK(HasEndianness<std::array<double, 3>> == false);
-    // UInt<> and user-defined types aren't either
-    CHECK(HasEndianness<UInt<0>> == false);
-    CHECK(HasEndianness<UInt<1>> == false);
-    CHECK(HasEndianness<UInt<64>> == false);
-    CHECK(HasEndianness<EmptyStruct> == false);
-    CHECK(HasEndianness<SingleInt32> == false);
+    SECTION("TriviallySerializable")
+    {
+        // POD types and enums are TriviallySerializable
+        STATIC_CHECK(TriviallySerializable<std::byte>);
+        STATIC_CHECK(TriviallySerializable<char>);
+        STATIC_CHECK(TriviallySerializable<unsigned char>);
+        STATIC_CHECK(TriviallySerializable<short>);
+        STATIC_CHECK(TriviallySerializable<unsigned short>);
+        STATIC_CHECK(TriviallySerializable<int>);
+        STATIC_CHECK(TriviallySerializable<unsigned int>);
+        STATIC_CHECK(TriviallySerializable<long>);
+        STATIC_CHECK(TriviallySerializable<unsigned long>);
+        STATIC_CHECK(TriviallySerializable<float>);
+        STATIC_CHECK(TriviallySerializable<double>);
+        STATIC_CHECK(TriviallySerializable<bool>);
+        STATIC_CHECK(TriviallySerializable<ClassicEnum>);
+        STATIC_CHECK(TriviallySerializable<ScopedEnum>);
+        // Pointers and arrays are not TriviallySerializable
+        STATIC_CHECK(TriviallySerializable<char *> == false);
+        STATIC_CHECK(TriviallySerializable<int[]> == false);  // NOLINT
+        STATIC_CHECK(TriviallySerializable<std::array<double, 3>> == false);
+        // UInt<> and user-defined types aren't either
+        STATIC_CHECK(TriviallySerializable<UInt<0>> == false);
+        STATIC_CHECK(TriviallySerializable<UInt<1>> == false);
+        STATIC_CHECK(TriviallySerializable<UInt<64>> == false);
+        STATIC_CHECK(TriviallySerializable<EmptyStruct> == false);
+        STATIC_CHECK(TriviallySerializable<SingleInt32> == false);
+    }
+
+    SECTION("HasEndianness")
+    {
+        // POD types and enums are HasEndianness
+        STATIC_CHECK(HasEndianness<std::byte>);
+        STATIC_CHECK(HasEndianness<char>);
+        STATIC_CHECK(HasEndianness<unsigned char>);
+        STATIC_CHECK(HasEndianness<short>);
+        STATIC_CHECK(HasEndianness<unsigned short>);
+        STATIC_CHECK(HasEndianness<int>);
+        STATIC_CHECK(HasEndianness<unsigned int>);
+        STATIC_CHECK(HasEndianness<long>);
+        STATIC_CHECK(HasEndianness<unsigned long>);
+        STATIC_CHECK(HasEndianness<bool>);
+        STATIC_CHECK(HasEndianness<ClassicEnum>);
+        STATIC_CHECK(HasEndianness<ScopedEnum>);
+        // Floats, type_safe bools, pointers, and arrays are not HasEndianness
+        STATIC_CHECK(HasEndianness<float> == false);
+        STATIC_CHECK(HasEndianness<double> == false);
+        STATIC_CHECK(HasEndianness<char *> == false);
+        STATIC_CHECK(HasEndianness<int[]> == false);  // NOLINT
+        STATIC_CHECK(HasEndianness<std::array<double, 3>> == false);
+        // UInt<> and user-defined types aren't either
+        STATIC_CHECK(HasEndianness<UInt<0>> == false);
+        STATIC_CHECK(HasEndianness<UInt<1>> == false);
+        STATIC_CHECK(HasEndianness<UInt<64>> == false);
+        STATIC_CHECK(HasEndianness<EmptyStruct> == false);
+        STATIC_CHECK(HasEndianness<SingleInt32> == false);
+    }
 }
 
 
@@ -126,12 +131,12 @@ TEST_CASE("Serialize TriviallySerializable types (default endian)")
     auto uint64Buffer = Serialize(static_cast<std::uint64_t>(0x0102030405060708));
     [[maybe_unused]] auto boolBuffer = Serialize(true);  // NOLINT(bugprone-argument-comment)
 
-    CHECK(std::is_same_v<decltype(byteBuffer), std::array<Byte, sizeof(std::byte)>>);
-    CHECK(std::is_same_v<decltype(int8Buffer), std::array<Byte, sizeof(std::int8_t)>>);
-    CHECK(std::is_same_v<decltype(uint16Buffer), std::array<Byte, sizeof(std::uint16_t)>>);
-    CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, sizeof(std::int32_t)>>);
-    CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
-    CHECK(std::is_same_v<decltype(boolBuffer), std::array<Byte, sizeof(bool)>>);
+    STATIC_CHECK(std::is_same_v<decltype(byteBuffer), std::array<Byte, sizeof(std::byte)>>);
+    STATIC_CHECK(std::is_same_v<decltype(int8Buffer), std::array<Byte, sizeof(std::int8_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(uint16Buffer), std::array<Byte, sizeof(std::uint16_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, sizeof(std::int32_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(boolBuffer), std::array<Byte, sizeof(bool)>>);
 
     // CHECK magic can't handle std::byte, so we cast
     CHECK(int(byteBuffer[0]) == 0xAA);
@@ -195,9 +200,10 @@ TEST_CASE("Serialize std::array (default endian)")
     auto int32Buffer = Serialize(std::array<std::int32_t, 2>{0x0809'0A0B, 0x0C0D'0E0F});
     auto uint64Buffer = Serialize(std::array<std::uint64_t, 1>{0x1011'1213'1415'1617});
 
-    CHECK(std::is_same_v<decltype(uint16Buffer), std::array<Byte, 3 * sizeof(std::uint16_t)>>);
-    CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, 2 * sizeof(std::int32_t)>>);
-    CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
+    STATIC_CHECK(
+        std::is_same_v<decltype(uint16Buffer), std::array<Byte, 3 * sizeof(std::uint16_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, 2 * sizeof(std::int32_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
 
     CHECK(uint16Buffer == std::array{0x01_b, 0x00_b, 0x03_b, 0x02_b, 0x05_b, 0x04_b});
     CHECK(int32Buffer
@@ -216,9 +222,10 @@ TEST_CASE("Serialize std::array (big endian)")
     auto uint64Buffer =
         Serialize<std::endian::big>(std::array<std::uint64_t, 1>{0xFEDC'BA98'7654'3210});
 
-    CHECK(std::is_same_v<decltype(uint16Buffer), std::array<Byte, 3 * sizeof(std::uint16_t)>>);
-    CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, 2 * sizeof(std::int32_t)>>);
-    CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
+    STATIC_CHECK(
+        std::is_same_v<decltype(uint16Buffer), std::array<Byte, 3 * sizeof(std::uint16_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(int32Buffer), std::array<Byte, 2 * sizeof(std::int32_t)>>);
+    STATIC_CHECK(std::is_same_v<decltype(uint64Buffer), std::array<Byte, sizeof(std::uint64_t)>>);
 
     CHECK(uint16Buffer == std::array{0xAB_b, 0xCD_b, 0x12_b, 0x34_b, 0xFF_b, 0xEE_b});
     CHECK(int32Buffer
@@ -429,7 +436,7 @@ auto DeserializeFrom(void const * source, S * data) -> void const *
 TEST_CASE("(De-)Serialize user-defined types (default endian)")
 {
     auto sBuffer = Serialize(S{.u16 = 0xABCD, .i32 = 0x12345678});
-    CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
+    STATIC_CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
     // CHECK magic can't handle std::byte, so we cast
     CHECK(int(sBuffer[0]) == 0xCD);
@@ -448,7 +455,7 @@ TEST_CASE("(De-)Serialize user-defined types (default endian)")
 TEST_CASE("(De-)Serialize user-defined types (big endian)")
 {
     auto sBuffer = Serialize<std::endian::big>(S{.u16 = 0xABCD, .i32 = 0x12345678});
-    CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
+    STATIC_CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
     // CHECK magic can't handle std::byte, so we cast
     CHECK(int(sBuffer[0]) == 0xAB);
@@ -470,7 +477,7 @@ TEST_CASE("(De-)Serialize std::array of user-defined types (default endian)")
         S{.u16 = 0xDEAD, .i32 = 0x4433'2211},
         S{.u16 = 0xBEEF, .i32 = 0x1234'5678}
     });
-    CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 * (2 + 4)>>);
+    STATIC_CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 * (2 + 4)>>);
     // clang-format off
     CHECK(sBuffer == std::array{0xAD_b, 0xDE_b, 0x11_b, 0x22_b, 0x33_b, 0x44_b,
                                 0xEF_b, 0xBE_b, 0x78_b, 0x56_b, 0x34_b, 0x12_b});
@@ -490,7 +497,7 @@ TEST_CASE("(De-)Serialize std::array of user-defined types (big endian)")
         S{.u16 = 0xDEAD, .i32 = 0x4433'2211},
         S{.u16 = 0xBEEF, .i32 = 0x1234'5678}
     });
-    CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 * (2 + 4)>>);
+    STATIC_CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 * (2 + 4)>>);
     // clang-format off
     CHECK(sBuffer == std::array{0xDE_b, 0xAD_b, 0x44_b, 0x33_b, 0x22_b, 0x11_b,
                                 0xBE_b, 0xEF_b, 0x12_b, 0x34_b, 0x56_b, 0x78_b});
