@@ -127,6 +127,7 @@
   { include: ["\"Sts1CobcSw/Utility/DebugPrint.hpp\"",                             "public", "<Sts1CobcSw/Utility/DebugPrint.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp\"",            "public", "<Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/FlatArray.hpp\"",                              "public", "<Sts1CobcSw/Utility/FlatArray.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Utility/FirmwareIntegrity.hpp\"",                      "public", "<Sts1CobcSw/Utility/FirmwareIntegrity.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                                   "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",                          "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.hpp\"",                           "public", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },

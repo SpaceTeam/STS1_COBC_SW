@@ -28,6 +28,7 @@ find_package_and_notify(strong_type)
 
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
+add_library(Sts1CobcSw_FirmwareManagement STATIC)
 add_library(Sts1CobcSw_Flash STATIC)
 add_library(Sts1CobcSw_Fram STATIC)
 add_library(Sts1CobcSw_FramSections INTERFACE)
