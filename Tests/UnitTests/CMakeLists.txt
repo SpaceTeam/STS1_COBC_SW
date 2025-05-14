@@ -179,6 +179,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSwTests::CatchRodos
                 Sts1CobcSwTests::Utility
     )
+    add_test(NAME Reports COMMAND Sts1CobcSwTests_Reports)
 
     add_test_program(Section)
     target_link_libraries(

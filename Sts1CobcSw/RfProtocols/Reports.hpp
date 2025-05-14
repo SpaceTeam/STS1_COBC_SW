@@ -32,7 +32,7 @@ struct RequestId
 };
 
 
-// The values are chosen to match the subtype IDs of the failed verfication reports. The IDs of the
+// The values are chosen to match the subtype IDs of the failed verification reports. The IDs of the
 // successful ones are one less. The implementations of the reports rely on this.
 enum class VerificationStage
 {
@@ -95,6 +95,26 @@ private:
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     static constexpr std::uint8_t structureId = 0;
     TelemetryRecord record_;
+
+    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
+class ParameterValueReport : public Payload
+{
+public:
+    ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue);
+    ParameterValueReport(etl::vector<ParameterId, maxNParameters> parameterIds,
+                         etl::vector<ParameterValue, maxNParameters> parameterValues);
+
+
+private:
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{20, 2}>();
+    mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
+    std::uint8_t nParameters_ = 0;
+    etl::vector<ParameterId, maxNParameters> parameterIds_;
+    etl::vector<ParameterValue, maxNParameters> parameterValues_;
 
     auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;

@@ -80,6 +80,17 @@ inline constexpr auto idleData = 0x55_b;
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)
 inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAA33>();
 
+enum class ParameterId : std::uint8_t
+{
+    rxBaudRate = 1,
+    txBaudRate,
+    realTimeOffsetCorrection,
+    newEduResultIsAvailable,
+    eduStartDelayLimit,
+};
+using ParameterValue = std::uint32_t;
+inline constexpr auto maxNParameters = 5U;  // Chosen to be the number of different parameters
+
 namespace tm
 {
 inline constexpr auto packetSecondaryHeaderLength = 11U;

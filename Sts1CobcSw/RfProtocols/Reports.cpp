@@ -3,6 +3,8 @@
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 
 #include <algorithm>
+#include <cassert>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -101,6 +103,47 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
         totalSerialSize<decltype(secondaryHeader_), decltype(structureId), decltype(record_)>);
+}
+
+
+ParameterValueReport::ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue)
+    : nParameters_(1),
+      parameterIds_(decltype(parameterIds_){parameterId}),
+      parameterValues_(decltype(parameterValues_){parameterValue})
+{
+}
+
+
+ParameterValueReport::ParameterValueReport(
+    etl::vector<ParameterId, maxNParameters> parameterIds,
+    etl::vector<ParameterValue, maxNParameters> parameterValues)
+    : nParameters_(static_cast<std::uint8_t>(parameterIds.size())),
+      parameterIds_(std::move(parameterIds)),
+      parameterValues_(std::move(parameterValues))
+{
+    assert(parameterIds_.size() == parameterValues_.size());  // NOLINT(*array*decay)
+}
+
+
+auto ParameterValueReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+{
+    UpdateMessageTypeCounterAndTime(&secondaryHeader_);
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, nParameters_);
+    for(auto i = 0U; i < nParameters_; ++i)
+    {
+        cursor = SerializeTo<ccsdsEndianness>(cursor, parameterIds_[i]);
+        cursor = SerializeTo<ccsdsEndianness>(cursor, parameterValues_[i]);
+    }
+}
+
+
+auto ParameterValueReport::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(
+        totalSerialSize<decltype(secondaryHeader_), decltype(nParameters_)>
+        + nParameters_ * totalSerialSize<ParameterId, ParameterValue>);
 }
 
 

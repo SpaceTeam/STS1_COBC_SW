@@ -35,6 +35,14 @@ using sts1cobcsw::VerificationStage;
 using sts1cobcsw::operator""_b;
 
 
+namespace
+{
+template<typename T, std::size_t offset, std::size_t size>
+    requires(offset + totalSerialSize<T> <= size)
+[[nodiscard]] auto Deserialize(etl::vector<Byte, size> const & vector) -> T;
+}
+
+
 TEST_INIT("Initialize FRAM for reports")
 {
     sts1cobcsw::fram::ram::SetAllDoFunctions();
@@ -71,8 +79,7 @@ TEST_CASE("Successful verification reports")
     CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
     CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
     CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
-    auto timestamp = sts1cobcsw::Deserialize<sts1cobcsw::ccsdsEndianness, sts1cobcsw::RealTime>(
-        Span(dataField).subspan<7, 4>());
+    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
     CHECK(tBeforeWrite <= timestamp);
     CHECK(timestamp <= tAfterWrite);
     // Request ID
@@ -161,8 +168,7 @@ TEST_CASE("Failed verification reports")
     CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
     CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
     CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
-    auto timestamp = sts1cobcsw::Deserialize<sts1cobcsw::ccsdsEndianness, sts1cobcsw::RealTime>(
-        Span(dataField).subspan<7, 4>());
+    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
     CHECK(tBeforeWrite <= timestamp);
     CHECK(timestamp <= tAfterWrite);
     // Request ID
@@ -284,8 +290,7 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
     CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
     CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
-    auto timestamp = sts1cobcsw::Deserialize<sts1cobcsw::ccsdsEndianness, sts1cobcsw::RealTime>(
-        Span(dataField).subspan<7, 4>());
+    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
     CHECK(tBeforeWrite <= timestamp);
     CHECK(timestamp <= tAfterWrite);
     // Structure ID
@@ -307,4 +312,89 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[2] == 25_b);  // Submessage type ID
     CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
     CHECK(dataField[4] == 1_b);   // Message type counter (low byte)
+}
+
+
+TEST_CASE("Parameter value report")
+{
+    using sts1cobcsw::ParameterId;
+    using sts1cobcsw::ParameterValue;
+    using sts1cobcsw::ParameterValueReport;
+
+    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto parameterId = ParameterId::rxBaudRate;
+    auto parameterValue = 9600U;
+    auto report = ParameterValueReport(parameterId, parameterValue);
+    auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
+    auto writeResult = report.WriteTo(&dataField);
+    auto tAfterWrite = sts1cobcsw::CurrentRealTime();
+    CHECK(writeResult.has_error() == false);
+    CHECK(dataField.size() == report.Size());
+    CHECK(report.Size()
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength + 1
+              + totalSerialSize<ParameterId, ParameterValue>));
+    // Packet secondary header
+    CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
+    CHECK(dataField[1] == 20_b);    // Service type ID
+    CHECK(dataField[2] == 2_b);     // Submessage type ID
+    CHECK(dataField[3] == 0_b);     // Message type counter (high byte)
+    CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
+    CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
+    CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
+    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
+    CHECK(tBeforeWrite <= timestamp);
+    CHECK(timestamp <= tAfterWrite);
+    // Number of parameters
+    CHECK(dataField[11] == 1_b);
+    // Parameters
+    CHECK(dataField[12] == static_cast<Byte>(parameterId));
+    CHECK(parameterValue == (Deserialize<ParameterValue, 13>(dataField)));
+
+    dataField.clear();
+    auto parameterIds = etl::vector<ParameterId, sts1cobcsw::maxNParameters>{
+        ParameterId::rxBaudRate, ParameterId::txBaudRate, ParameterId::eduStartDelayLimit};
+    auto parameterValues =
+        etl::vector<ParameterValue, sts1cobcsw::maxNParameters>{9600U, 115200U, 17U};
+    report = ParameterValueReport(parameterIds, parameterValues);
+    writeResult = report.WriteTo(&dataField);
+    CHECK(writeResult.has_error() == false);
+    CHECK(dataField.size() == report.Size());
+    CHECK(report.Size()
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength + 1
+              + parameterIds.size() * totalSerialSize<ParameterId, ParameterValue>));
+    // Packet secondary header
+    CHECK(dataField[1] == 20_b);  // Service type ID
+    CHECK(dataField[2] == 2_b);   // Submessage type ID
+    CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
+    CHECK(dataField[4] == 1_b);   // Message type counter (low byte)
+    // Number of parameters
+    CHECK(dataField[11] == 3_b);
+    // Parameters
+    CHECK(dataField[12] == static_cast<Byte>(ParameterId::rxBaudRate));
+    CHECK(parameterValues[0] == (Deserialize<ParameterValue, 13>(dataField)));
+    CHECK(dataField[17] == static_cast<Byte>(ParameterId::txBaudRate));
+    CHECK(parameterValues[1] == (Deserialize<ParameterValue, 18>(dataField)));
+    CHECK(dataField[22] == static_cast<Byte>(ParameterId::eduStartDelayLimit));
+    CHECK(parameterValues[2] == (Deserialize<ParameterValue, 23>(dataField)));
+
+    dataField.clear();
+    writeResult = report.WriteTo(&dataField);
+    CHECK(writeResult.has_error() == false);
+    // Packet secondary header
+    CHECK(dataField[1] == 20_b);  // Service type ID
+    CHECK(dataField[2] == 2_b);   // Submessage type ID
+    CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
+    CHECK(dataField[4] == 2_b);   // Message type counter (low byte)
+}
+
+
+namespace
+{
+template<typename T, std::size_t offset, std::size_t size>
+    requires(offset + totalSerialSize<T> <= size)
+auto Deserialize(etl::vector<Byte, size> const & vector) -> T
+{
+    return sts1cobcsw::Deserialize<sts1cobcsw::ccsdsEndianness, T>(
+        Span(vector).template subspan<offset, totalSerialSize<T>>());
+}
 }
