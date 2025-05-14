@@ -40,7 +40,6 @@ enum class VerificationStage
 };
 
 
-// TODO: Add tests for this
 template<VerificationStage stage>
 class SuccessfulVerificationReport : public Payload
 {
@@ -61,7 +60,6 @@ private:
 };
 
 
-// TODO: Add tests for this
 template<VerificationStage stage>
 class FailedVerificationReport : public Payload
 {
