@@ -11,7 +11,9 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/ordered.hpp>
@@ -27,6 +29,7 @@
 using sts1cobcsw::Byte;
 using sts1cobcsw::ErrorCode;
 using sts1cobcsw::Span;
+using sts1cobcsw::totalSerialSize;
 using sts1cobcsw::VerificationStage;
 
 using sts1cobcsw::operator""_b;
@@ -216,4 +219,92 @@ TEST_CASE("Failed verification reports")
     CHECK(dataField[2] == 8_b);  // Submessage type ID
     CHECK(dataField[3] == 0_b);  // Message type counter (high byte)
     CHECK(dataField[4] == 1_b);  // Message type counter (low byte)
+}
+
+
+TEST_CASE("Housekeeping parameter report")
+{
+    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto record = sts1cobcsw::TelemetryRecord{
+        .eduShouldBePowered = true,
+        .eduIsAlive = true,
+        .newEduResultIsAvailable = true,
+        .antennasShouldBeDeployed = true,
+        .framIsWorking = true,
+        .epsIsWorking = true,
+        .flashIsWorking = true,
+        .rfIsWorking = true,
+        .lastTelecommandIdWasInvalid = true,
+        .lastTelecommandArgumentsWereInvalid = true,
+        .nTotalResets = 1U,
+        .nResetsSinceRf = 2U,
+        .activeSecondaryFwPartition = 3,
+        .backupSecondaryFwPartition = 4,
+        .eduProgramQueueIndex = 5U,
+        .programIdOfCurrentEduProgramQueueEntry = sts1cobcsw::ProgramId(6),
+        .nEduCommunicationErrors = 7U,
+        .lastResetReason = 8U,
+        .rodosTimeInSeconds = 9,
+        .realTime = sts1cobcsw::RealTime(10),
+        .nFirmwareChecksumErrors = 11U,
+        .nFlashErrors = 12U,
+        .nRfErrors = 13U,
+        .nFileSystemErrors = 14U,
+        .cobcTemperature = 15,
+        .rfTemperature = 16,
+ // clang-format off
+        .epsAdcData = {
+            .adc4 = {
+                17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U, 25U, 26U, 27U, 28U, 29U, 30U, 31U, 32U},
+            .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
+            .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
+  // clang-format on
+        .rxBaudRate = 53,
+        .txBaudRate = 54,
+        .nCorrectableUplinkErrors = 55U,
+        .nUncorrectableUplinkErrors = 56U,
+        .nGoodTransferFrames = 57U,
+        .nBadTransferFrames = 58U,
+        .lastFrameSequenceNumber = 59U,
+        .lastTelecommandId = 60U
+    };
+    auto report = sts1cobcsw::HousekeepingParameterReport(record);
+    auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
+    auto writeResult = report.WriteTo(&dataField);
+    auto tAfterWrite = sts1cobcsw::CurrentRealTime();
+    CHECK(writeResult.has_error() == false);
+    CHECK(dataField.size() == report.Size());
+    CHECK(report.Size()
+          == sts1cobcsw::tm::packetSecondaryHeaderLength + 1 + totalSerialSize<decltype(record)>);
+    // Packet secondary header
+    CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
+    CHECK(dataField[1] == 3_b);     // Service type ID
+    CHECK(dataField[2] == 25_b);    // Submessage type ID
+    CHECK(dataField[3] == 0_b);     // Message type counter (high byte)
+    CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
+    CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
+    CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
+    auto timestamp = sts1cobcsw::Deserialize<sts1cobcsw::ccsdsEndianness, sts1cobcsw::RealTime>(
+        Span(dataField).subspan<7, 4>());
+    CHECK(tBeforeWrite <= timestamp);
+    CHECK(timestamp <= tAfterWrite);
+    // Structure ID
+    CHECK(dataField[11] == 0_b);
+    // Telemetry record
+    CHECK(dataField[12] == 0b1111'1111_b);
+    CHECK(dataField[13] == 0b0000'0011_b);
+    CHECK(dataField[14] == 0_b);
+    CHECK(dataField[15] == 0_b);
+    CHECK(dataField[16] == 0_b);
+    CHECK(dataField[17] == 1_b);         // nTotalResets
+    CHECK(dataField[11 + 121] == 60_b);  // lastTelecommandId
+
+    dataField.clear();
+    writeResult = report.WriteTo(&dataField);
+    CHECK(writeResult.has_error() == false);
+    // Packet secondary header
+    CHECK(dataField[1] == 3_b);   // Service type ID
+    CHECK(dataField[2] == 25_b);  // Submessage type ID
+    CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
+    CHECK(dataField[4] == 1_b);   // Message type counter (low byte)
 }

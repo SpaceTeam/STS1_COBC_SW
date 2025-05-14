@@ -13,6 +13,7 @@
 
 namespace sts1cobcsw
 {
+// TODO: Use UInt<1> instead of bool
 struct TelemetryRecord
 {
     // Booleans: byte 1: EDU and housekeeping

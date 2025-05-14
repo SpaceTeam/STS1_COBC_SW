@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 
 #include <etl/vector.h>
 
@@ -39,6 +40,8 @@ enum class VerificationStage
     completionOfExecution = 8,
 };
 
+
+// --- Reports ---
 
 template<VerificationStage stage>
 class SuccessfulVerificationReport : public Payload
@@ -80,6 +83,25 @@ private:
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
+
+class HousekeepingParameterReport : public Payload
+{
+public:
+    explicit HousekeepingParameterReport(TelemetryRecord const & record);
+
+
+private:
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{3, 25}>();
+    mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
+    static constexpr std::uint8_t structureId = 0;
+    TelemetryRecord record_;
+
+    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
+// --- De-/Serialization ---
 
 template<>
 inline constexpr std::size_t serialSize<RequestId> =
