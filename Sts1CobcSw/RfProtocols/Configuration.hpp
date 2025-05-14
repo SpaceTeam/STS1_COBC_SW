@@ -77,8 +77,8 @@ inline constexpr auto idleData = 0x55_b;
 
 // --- Packet Utilization Standard ---
 
-using ApplicationProcessUserId = Id<std::uint16_t, 0xAAAA>;  // NOLINT(*magic-numbers)
-inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAAAA>();
+using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)
+inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAA33>();
 
 namespace tm
 {
