@@ -81,6 +81,29 @@ template class FailedVerificationReport<VerificationStage::acceptance>;
 template class FailedVerificationReport<VerificationStage::completionOfExecution>;
 
 
+HousekeepingParameterReport::HousekeepingParameterReport(TelemetryRecord const & record)
+    : record_(record)
+{
+}
+
+
+auto HousekeepingParameterReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+{
+    UpdateMessageTypeCounterAndTime(&secondaryHeader_);
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, structureId);
+    (void)SerializeTo<ccsdsEndianness>(cursor, record_);
+}
+
+
+auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(
+        totalSerialSize<decltype(secondaryHeader_), decltype(structureId), decltype(record_)>);
+}
+
+
 // --- De-/Serialization ---
 
 template<std::endian endianness>

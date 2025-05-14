@@ -173,6 +173,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_RfProtocols
                 Sts1CobcSw_Serial
+                Sts1CobcSw_Telemetry
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::CatchRodos
