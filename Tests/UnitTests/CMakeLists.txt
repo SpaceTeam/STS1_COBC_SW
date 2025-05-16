@@ -193,7 +193,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test(NAME SpacePacket COMMAND Sts1CobcSwTests_SpacePacket)
 
     add_test_program(Span)
-    target_link_libraries(Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
+    target_link_libraries(
+        Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain etl::etl Sts1CobcSw_Utility
+    )
     catch_discover_tests(Sts1CobcSwTests_Span)
 
     add_test_program(StringLiteral)

@@ -48,6 +48,12 @@ template<typename T, std::size_t size>
 
 template<typename T, std::size_t size>
 [[nodiscard]] auto Span(etl::vector<T, size> * vector) -> std::span<T>;
+
+template<typename T>
+[[nodiscard]] auto Span(etl::ivector<T> const & vector) -> std::span<T const>;
+
+template<typename T>
+[[nodiscard]] auto Span(etl::ivector<T> * vector) -> std::span<T>;
 }
 
 
