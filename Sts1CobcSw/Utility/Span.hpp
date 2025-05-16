@@ -3,7 +3,7 @@
 //!
 //! If a function takes a `std::span` as parameter, use the different overloads of `Span()` provided
 //! in this file to turn single objects or arrays of objects to the "correct" `std::span`.
-//! Parameters passed by `& const` are converted to spans with read-only elements, and those passed
+//! Parameters passed by `const &` are converted to spans with read-only elements, and those passed
 //! as a non-const pointer are converted to spans with mutable elements. This solves the problem
 //! that `std::span<T>` does not implicitly convert to `std::span<T const>`.
 
@@ -13,7 +13,7 @@
 #include <etl/vector.h>
 
 #include <array>
-#include <cstddef>  // for std::size_t
+#include <cstddef>
 #include <span>
 #include <type_traits>
 
