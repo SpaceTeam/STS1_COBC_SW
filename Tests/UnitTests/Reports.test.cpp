@@ -23,7 +23,7 @@
 
 #include <algorithm>
 #include <array>
-#include <span>
+#include <cstddef>
 
 
 using sts1cobcsw::Byte;

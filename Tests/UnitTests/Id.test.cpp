@@ -1,11 +1,9 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 
 #include <algorithm>
 #include <array>
-#include <initializer_list>
 #include <type_traits>
 
 

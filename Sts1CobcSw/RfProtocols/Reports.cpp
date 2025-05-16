@@ -2,6 +2,8 @@
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 
+#include <etl/utility.h>
+
 #include <algorithm>
 #include <cassert>
 #include <utility>

@@ -4,6 +4,7 @@
 
 #include <etl/vector.h>
 
+#include <algorithm>
 #include <array>
 #include <span>
 #include <type_traits>
