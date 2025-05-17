@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
@@ -161,6 +162,27 @@ private:
     std::uint8_t nObjects_ = 0;
     etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes_;
     etl::vector<fs::Path, maxNObjectsPerPacket> objectNames_;
+
+    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
+class DumpedRawMemoryDataReport : public Payload
+{
+public:
+    DumpedRawMemoryDataReport(std::uint8_t nDataBlocks,
+                              fram::Address startAddress,
+                              etl::vector<Byte, maxDumpedDataLength> dumpedData);
+
+
+private:
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{6, 6}>();
+    mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
+    std::uint8_t nDataBlocks_ = 0;
+    fram::Address startAddress_ = fram::Address(0);
+    etl::vector<Byte, maxDumpedDataLength> dumpedData_;
+
 
     auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;

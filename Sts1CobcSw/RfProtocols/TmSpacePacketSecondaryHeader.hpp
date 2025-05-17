@@ -2,11 +2,11 @@
 
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <etl/vector.h>
 

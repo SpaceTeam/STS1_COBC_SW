@@ -18,6 +18,7 @@
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/equality.hpp>
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
@@ -517,6 +518,57 @@ TEST_CASE("Repository content summary report")
     CHECK(dataField[2] == 13_b);  // Submessage type ID
     CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
     CHECK(dataField[4] == 1_b);   // Message type counter (low byte)
+}
+
+
+TEST_CASE("Dumped raw memory data report")
+{
+    using sts1cobcsw::DumpedRawMemoryDataReport;
+
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
+    std::uint8_t nDataBlocks = 17;
+    auto startAddress = sts1cobcsw::fram::Address(0x1234);
+    auto dumpedData = etl::vector<Byte, sts1cobcsw::maxDumpedDataLength>{
+        0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b, 0x00_b, 0x11_b, 0x22_b, 0x33_b, 0x44_b, 0x55_b,
+        0x66_b, 0x77_b, 0x88_b, 0x99_b, 0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b, 0xEE_b, 0xFF_b};
+    auto report = DumpedRawMemoryDataReport(nDataBlocks, startAddress, dumpedData);
+    auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
+    auto writeResult = report.WriteTo(&dataField);
+    auto tAfterWrite = sts1cobcsw::CurrentRealTime();
+    CHECK(writeResult.has_error() == false);
+    CHECK(dataField.size() == report.Size());
+    CHECK(report.Size()
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength
+              + totalSerialSize<decltype(nDataBlocks), decltype(startAddress), std::uint8_t>
+              + dumpedData.size()));
+    // Packet secondary header
+    CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
+    CHECK(dataField[1] == 6_b);     // Service type ID
+    CHECK(dataField[2] == 6_b);     // Submessage type ID
+    CHECK(dataField[3] == 0_b);     // Message type counter (high byte)
+    CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
+    CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
+    CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
+    auto timestamp = Deserialize<RealTime, 7>(dataField);
+    CHECK(tBeforeWrite <= timestamp);
+    CHECK(timestamp <= tAfterWrite);
+    // Number of data blocks
+    CHECK(dataField[11] == static_cast<Byte>(nDataBlocks));
+    // Start address
+    CHECK(startAddress == (Deserialize<decltype(startAddress), 12>(dataField)));
+    // Dumped data length
+    CHECK(dataField[16] == static_cast<Byte>(dumpedData.size()));
+    // Dumped data
+    CHECK(std::equal(dumpedData.begin(), dumpedData.end(), dataField.begin() + 17));
+
+    dataField.clear();
+    writeResult = report.WriteTo(&dataField);
+    CHECK(writeResult.has_error() == false);
+    // Packet secondary header
+    CHECK(dataField[1] == 6_b);  // Service type ID
+    CHECK(dataField[2] == 6_b);  // Submessage type ID
+    CHECK(dataField[3] == 0_b);  // Message type counter (high byte)
+    CHECK(dataField[4] == 1_b);  // Message type counter (low byte)
 }
 
 
