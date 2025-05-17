@@ -60,7 +60,7 @@ private:
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     RequestId requestId_;
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
@@ -81,7 +81,7 @@ private:
     RequestId requestId_;
     ErrorCode errorCode_;
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
@@ -98,7 +98,7 @@ private:
     static constexpr std::uint8_t structureId = 0;
     TelemetryRecord record_;
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
@@ -118,7 +118,7 @@ private:
     etl::vector<ParameterId, maxNParameters> parameterIds_;
     etl::vector<ParameterValue, maxNParameters> parameterValues_;
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
@@ -136,7 +136,7 @@ private:
     std::uint32_t fileSize_;
     FileStatus fileStatus_;
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
@@ -163,7 +163,7 @@ private:
     etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes_;
     etl::vector<fs::Path, maxNObjectsPerPacket> objectNames_;
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
@@ -184,7 +184,7 @@ private:
     etl::vector<Byte, maxDumpedDataLength> dumpedData_;
 
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 

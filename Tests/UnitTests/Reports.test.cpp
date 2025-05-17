@@ -74,9 +74,9 @@ TEST_CASE("Successful verification reports")
     };
     auto acceptanceReport = SuccessfulVerificationReport<VerificationStage::acceptance>(requestId);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
-    auto writeResult = acceptanceReport.WriteTo(&dataField);
+    auto addToResult = acceptanceReport.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
-    CHECK(writeResult.has_error() == false);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == acceptanceReport.Size());
     CHECK(acceptanceReport.Size() == sts1cobcsw::tm::packetSecondaryHeaderLength + 4);
     // Packet secondary header
@@ -97,8 +97,8 @@ TEST_CASE("Successful verification reports")
     CHECK(dataField[14] == 0_b);            // Packet sequence count
 
     dataField.clear();
-    writeResult = acceptanceReport.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = acceptanceReport.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 1_b);  // Service type ID
     CHECK(dataField[2] == 1_b);  // Submessage type ID
@@ -107,8 +107,8 @@ TEST_CASE("Successful verification reports")
 
     dataField.resize(dataField.MAX_SIZE - acceptanceReport.Size() + 1);
     CHECK(dataField.available() < acceptanceReport.Size());
-    writeResult = acceptanceReport.WriteTo(&dataField);
-    CHECK(writeResult.has_error());
+    addToResult = acceptanceReport.AddTo(&dataField);
+    CHECK(addToResult.has_error());
 
     dataField.clear();
     requestId = sts1cobcsw::RequestId{
@@ -121,8 +121,8 @@ TEST_CASE("Successful verification reports")
     };
     auto completionOfExecutionReport =
         SuccessfulVerificationReport<VerificationStage::completionOfExecution>(requestId);
-    writeResult = completionOfExecutionReport.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = completionOfExecutionReport.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == completionOfExecutionReport.Size());
     CHECK(completionOfExecutionReport.Size() == sts1cobcsw::tm::packetSecondaryHeaderLength + 4);
     // Packet secondary header
@@ -137,8 +137,8 @@ TEST_CASE("Successful verification reports")
     CHECK(dataField[14] == 0xFF_b);         // Packet sequence count
 
     dataField.clear();
-    writeResult = completionOfExecutionReport.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = completionOfExecutionReport.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 1_b);  // Service type ID
     CHECK(dataField[2] == 7_b);  // Submessage type ID
@@ -163,9 +163,9 @@ TEST_CASE("Failed verification reports")
     auto acceptanceReport = FailedVerificationReport<VerificationStage::acceptance>(
         requestId, ErrorCode::invalidSpacePacket);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
-    auto writeResult = acceptanceReport.WriteTo(&dataField);
+    auto addToResult = acceptanceReport.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
-    CHECK(writeResult.has_error() == false);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == acceptanceReport.Size());
     CHECK(acceptanceReport.Size() == sts1cobcsw::tm::packetSecondaryHeaderLength + 5);
     // Packet secondary header
@@ -188,8 +188,8 @@ TEST_CASE("Failed verification reports")
     CHECK(dataField[15] == static_cast<Byte>(ErrorCode::invalidSpacePacket));
 
     dataField.clear();
-    writeResult = acceptanceReport.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = acceptanceReport.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 1_b);  // Service type ID
     CHECK(dataField[2] == 2_b);  // Submessage type ID
@@ -208,8 +208,8 @@ TEST_CASE("Failed verification reports")
     auto completionOfExecutionReport =
         FailedVerificationReport<VerificationStage::completionOfExecution>(requestId,
                                                                            ErrorCode::timeout);
-    writeResult = completionOfExecutionReport.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = completionOfExecutionReport.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == completionOfExecutionReport.Size());
     CHECK(completionOfExecutionReport.Size() == sts1cobcsw::tm::packetSecondaryHeaderLength + 5);
     // Packet secondary header
@@ -226,8 +226,8 @@ TEST_CASE("Failed verification reports")
     CHECK(dataField[15] == static_cast<Byte>(ErrorCode::timeout));
 
     dataField.clear();
-    writeResult = completionOfExecutionReport.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = completionOfExecutionReport.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 1_b);  // Service type ID
     CHECK(dataField[2] == 8_b);  // Submessage type ID
@@ -284,9 +284,9 @@ TEST_CASE("Housekeeping parameter report")
     };
     auto report = sts1cobcsw::HousekeepingParameterReport(record);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
-    auto writeResult = report.WriteTo(&dataField);
+    auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
-    CHECK(writeResult.has_error() == false);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == sts1cobcsw::tm::packetSecondaryHeaderLength + 1 + totalSerialSize<decltype(record)>);
@@ -313,8 +313,8 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[11 + 121] == 60_b);  // lastTelecommandId
 
     dataField.clear();
-    writeResult = report.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = report.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 3_b);   // Service type ID
     CHECK(dataField[2] == 25_b);  // Submessage type ID
@@ -334,9 +334,9 @@ TEST_CASE("Parameter value report")
     auto parameterValue = 9600U;
     auto report = ParameterValueReport(parameterId, parameterValue);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
-    auto writeResult = report.WriteTo(&dataField);
+    auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
-    CHECK(writeResult.has_error() == false);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength + 1
@@ -364,8 +364,8 @@ TEST_CASE("Parameter value report")
     auto parameterValues =
         etl::vector<ParameterValue, sts1cobcsw::maxNParameters>{9600U, 115200U, 17U};
     report = ParameterValueReport(parameterIds, parameterValues);
-    writeResult = report.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = report.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength + 1
@@ -386,8 +386,8 @@ TEST_CASE("Parameter value report")
     CHECK(parameterValues[2] == (Deserialize<ParameterValue, 23>(dataField)));
 
     dataField.clear();
-    writeResult = report.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = report.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 20_b);  // Service type ID
     CHECK(dataField[2] == 2_b);   // Submessage type ID
@@ -407,9 +407,9 @@ TEST_CASE("File attribute report")
     auto fileStatus = FileStatus::locked;
     auto report = FileAttributeReport(filePath, fileSize, fileStatus);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
-    auto writeResult = report.WriteTo(&dataField);
+    auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
-    CHECK(writeResult.has_error() == false);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
@@ -438,8 +438,8 @@ TEST_CASE("File attribute report")
     CHECK(fileStatus == (Deserialize<FileStatus, iFileStatus>(dataField)));
 
     dataField.clear();
-    writeResult = report.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = report.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 23_b);  // Service type ID
     CHECK(dataField[2] == 4_b);   // Submessage type ID
@@ -474,9 +474,9 @@ TEST_CASE("Repository content summary report")
     auto report =
         RepositoryContentSummaryReport(repositoryPath, nObjects, objectTypes, objectNames);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
-    auto writeResult = report.WriteTo(&dataField);
+    auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
-    CHECK(writeResult.has_error() == false);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
@@ -511,8 +511,8 @@ TEST_CASE("Repository content summary report")
     }
 
     dataField.clear();
-    writeResult = report.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = report.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 23_b);  // Service type ID
     CHECK(dataField[2] == 13_b);  // Submessage type ID
@@ -533,9 +533,9 @@ TEST_CASE("Dumped raw memory data report")
         0x66_b, 0x77_b, 0x88_b, 0x99_b, 0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b, 0xEE_b, 0xFF_b};
     auto report = DumpedRawMemoryDataReport(nDataBlocks, startAddress, dumpedData);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
-    auto writeResult = report.WriteTo(&dataField);
+    auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
-    CHECK(writeResult.has_error() == false);
+    CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength
@@ -562,8 +562,8 @@ TEST_CASE("Dumped raw memory data report")
     CHECK(std::equal(dumpedData.begin(), dumpedData.end(), dataField.begin() + 17));
 
     dataField.clear();
-    writeResult = report.WriteTo(&dataField);
-    CHECK(writeResult.has_error() == false);
+    addToResult = report.AddTo(&dataField);
+    CHECK(addToResult.has_error() == false);
     // Packet secondary header
     CHECK(dataField[1] == 6_b);  // Service type ID
     CHECK(dataField[2] == 6_b);  // Submessage type ID

@@ -26,7 +26,7 @@ auto TransferFrame::GetDataField() -> etl::vector_ext<Byte> &
 
 auto TransferFrame::Add(Payload const & payload) -> Result<void>
 {
-    return payload.WriteTo(&dataField_);
+    return payload.AddTo(&dataField_);
 }
 
 

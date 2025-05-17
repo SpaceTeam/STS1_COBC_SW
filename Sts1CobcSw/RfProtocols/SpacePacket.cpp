@@ -38,7 +38,7 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
         .packetSequenceCount = packetSequenceCounters.PostIncrement(apid),
         .packetDataLength = static_cast<std::uint16_t>(payload.Size() - 1U)};
     (void)SerializeTo<std::endian::big>(packetBegin, primaryHeader);
-    return payload.WriteTo(dataField);
+    return payload.AddTo(dataField);
 }
 
 

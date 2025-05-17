@@ -34,7 +34,7 @@ SuccessfulVerificationReport<stage>::SuccessfulVerificationReport(RequestId cons
 
 
 template<VerificationStage stage>
-auto SuccessfulVerificationReport<stage>::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+auto SuccessfulVerificationReport<stage>::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -64,7 +64,7 @@ FailedVerificationReport<stage>::FailedVerificationReport(RequestId const & requ
 
 
 template<VerificationStage stage>
-auto FailedVerificationReport<stage>::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+auto FailedVerificationReport<stage>::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -92,7 +92,7 @@ HousekeepingParameterReport::HousekeepingParameterReport(TelemetryRecord const &
 }
 
 
-auto HousekeepingParameterReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+auto HousekeepingParameterReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -128,7 +128,7 @@ ParameterValueReport::ParameterValueReport(
 }
 
 
-auto ParameterValueReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+auto ParameterValueReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -159,7 +159,7 @@ FileAttributeReport::FileAttributeReport(fs::Path const & filePath,
 }
 
 
-auto FileAttributeReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -197,7 +197,7 @@ RepositoryContentSummaryReport::RepositoryContentSummaryReport(
 }
 
 
-auto RepositoryContentSummaryReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -230,7 +230,7 @@ DumpedRawMemoryDataReport::DumpedRawMemoryDataReport(
 }
 
 
-auto DumpedRawMemoryDataReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+auto DumpedRawMemoryDataReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
