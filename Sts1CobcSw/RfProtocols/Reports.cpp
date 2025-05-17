@@ -221,6 +221,38 @@ auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 }
 
 
+DumpedRawMemoryDataReport::DumpedRawMemoryDataReport(
+    std::uint8_t nDataBlocks,
+    fram::Address startAddress,
+    etl::vector<Byte, maxDumpedDataLength> dumpedData)
+    : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(std::move(dumpedData))
+{
+}
+
+
+auto DumpedRawMemoryDataReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+{
+    UpdateMessageTypeCounterAndTime(&secondaryHeader_);
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, nDataBlocks_);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, startAddress_);
+    auto dumpedDataLength = static_cast<std::uint8_t>(dumpedData_.size());
+    cursor = SerializeTo<ccsdsEndianness>(cursor, dumpedDataLength);
+    std::copy(dumpedData_.begin(), dumpedData_.end(), static_cast<Byte *>(cursor));
+}
+
+
+auto DumpedRawMemoryDataReport::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(secondaryHeader_),
+                                                      decltype(nDataBlocks_),
+                                                      decltype(startAddress_),
+                                                      std::uint8_t>
+                                      + dumpedData_.size());
+}
+
+
 // --- De-/Serialization ---
 
 template<std::endian endianness>
