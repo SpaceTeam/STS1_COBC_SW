@@ -108,6 +108,12 @@ enum class FileStatus : std::uint8_t
     locked = 0xFF,
 };
 
+enum class ObjectType : std::uint8_t
+{
+    file = 0,
+    directory = 1,
+};
+
 namespace tm
 {
 inline constexpr auto packetSecondaryHeaderLength = 11U;

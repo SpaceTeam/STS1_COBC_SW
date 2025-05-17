@@ -21,6 +21,7 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
+#include <etl/string.h>
 #include <etl/vector.h>
 
 #include <algorithm>
@@ -103,7 +104,7 @@ TEST_CASE("Successful verification reports")
     CHECK(dataField[3] == 0_b);  // Message type counter (high byte)
     CHECK(dataField[4] == 1_b);  // Message type counter (low byte)
 
-    dataField.resize(dataField.capacity() - acceptanceReport.Size() + 1);
+    dataField.resize(dataField.MAX_SIZE - acceptanceReport.Size() + 1);
     CHECK(dataField.available() < acceptanceReport.Size());
     writeResult = acceptanceReport.WriteTo(&dataField);
     CHECK(writeResult.has_error());
@@ -400,7 +401,7 @@ TEST_CASE("File attribute report")
     using sts1cobcsw::FileStatus;
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
-    auto filePath = fs::Path{"/results/12345_67890.zip"};
+    auto filePath = fs::Path("/results/12345_67890.zip");
     auto fileSize = 0xDEADBEEFU;
     auto fileStatus = FileStatus::locked;
     auto report = FileAttributeReport(filePath, fileSize, fileStatus);
@@ -410,7 +411,7 @@ TEST_CASE("File attribute report")
     CHECK(writeResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
-          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::maxPathLength
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
               + totalSerialSize<decltype(fileSize), decltype(fileStatus)>));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
@@ -429,10 +430,10 @@ TEST_CASE("File attribute report")
                      dataField.begin() + 11,
                      [](char c, Byte b) { return c == static_cast<char>(b); }));
     // File size
-    CHECK(fileSize == (Deserialize<std::uint32_t, 11 + fs::maxPathLength>(dataField)));
+    CHECK(fileSize == (Deserialize<std::uint32_t, 11 + fs::Path::MAX_SIZE>(dataField)));
     // File status
     static constexpr auto iFileStatus =
-        11 + fs::maxPathLength + totalSerialSize<decltype(fileSize)>;
+        11 + fs::Path::MAX_SIZE + totalSerialSize<decltype(fileSize)>;
     CHECK(fileStatus == (Deserialize<FileStatus, iFileStatus>(dataField)));
 
     dataField.clear();
@@ -441,6 +442,79 @@ TEST_CASE("File attribute report")
     // Packet secondary header
     CHECK(dataField[1] == 23_b);  // Service type ID
     CHECK(dataField[2] == 4_b);   // Submessage type ID
+    CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
+    CHECK(dataField[4] == 1_b);   // Message type counter (low byte)
+}
+
+
+TEST_CASE("Repository content summary report")
+{
+    using sts1cobcsw::ObjectType;
+    using sts1cobcsw::RepositoryContentSummaryReport;
+
+    static constexpr auto maxNObjectsPerPacket =
+        RepositoryContentSummaryReport::maxNObjectsPerPacket;
+
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
+    auto repositoryPath = fs::Path("/programs");
+    auto objectTypes = etl::vector<ObjectType, maxNObjectsPerPacket>{
+        ObjectType::directory,
+        ObjectType::directory,
+        ObjectType::file,
+        ObjectType::file,
+    };
+    auto objectNames = etl::vector<fs::Path, maxNObjectsPerPacket>{
+        fs::Path("/programs/."),
+        fs::Path("/programs/.."),
+        fs::Path("/programs/00001"),
+        fs::Path("/programs/00001.lock"),
+    };
+    auto nObjects = static_cast<std::uint8_t>(objectTypes.size());
+    auto report =
+        RepositoryContentSummaryReport(repositoryPath, nObjects, objectTypes, objectNames);
+    auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
+    auto writeResult = report.WriteTo(&dataField);
+    auto tAfterWrite = sts1cobcsw::CurrentRealTime();
+    CHECK(writeResult.has_error() == false);
+    CHECK(dataField.size() == report.Size());
+    CHECK(report.Size()
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
+              + totalSerialSize<decltype(nObjects)>
+              + nObjects * (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE)));
+    // Packet secondary header
+    CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
+    CHECK(dataField[1] == 23_b);    // Service type ID
+    CHECK(dataField[2] == 13_b);    // Submessage type ID
+    CHECK(dataField[3] == 0_b);     // Message type counter (high byte)
+    CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
+    CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
+    CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
+    auto timestamp = Deserialize<RealTime, 7>(dataField);
+    CHECK(tBeforeWrite <= timestamp);
+    CHECK(timestamp <= tAfterWrite);
+    // Repository path
+    CHECK(std::equal(repositoryPath.begin(),
+                     repositoryPath.end(),
+                     dataField.begin() + 11,
+                     [](char c, Byte b) { return c == static_cast<char>(b); }));
+    // Number of objects
+    CHECK(dataField[11 + fs::Path::MAX_SIZE] == static_cast<Byte>(nObjects));
+    // Object types and names
+    for(auto i = 0U; i < objectTypes.size(); ++i)
+    {
+        CHECK(dataField[47 + 36 * i] == static_cast<Byte>(objectTypes[i]));
+        CHECK(std::equal(objectNames[i].begin(),
+                         objectNames[i].end(),
+                         dataField.begin() + 48 + 36 * i,
+                         [](char c, Byte b) { return c == static_cast<char>(b); }));
+    }
+
+    dataField.clear();
+    writeResult = report.WriteTo(&dataField);
+    CHECK(writeResult.has_error() == false);
+    // Packet secondary header
+    CHECK(dataField[1] == 23_b);  // Service type ID
+    CHECK(dataField[2] == 13_b);  // Submessage type ID
     CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
     CHECK(dataField[4] == 1_b);   // Message type counter (low byte)
 }

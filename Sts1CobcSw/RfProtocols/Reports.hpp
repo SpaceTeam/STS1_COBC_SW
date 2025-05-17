@@ -140,6 +140,33 @@ private:
 };
 
 
+class RepositoryContentSummaryReport : public Payload
+{
+public:
+    static constexpr auto maxNObjectsPerPacket =
+        (tm::maxPacketDataLength - tm::packetSecondaryHeaderLength - fs::Path::MAX_SIZE
+         - totalSerialSize<std::uint8_t>)
+        / (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE);
+
+    RepositoryContentSummaryReport(fs::Path const & repositoryPath,
+                                   std::uint8_t nObjects,
+                                   etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes,
+                                   etl::vector<fs::Path, maxNObjectsPerPacket> objectNames);
+
+
+private:
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{23, 13}>();
+    mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
+    fs::Path repositoryPath_;
+    std::uint8_t nObjects_ = 0;
+    etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes_;
+    etl::vector<fs::Path, maxNObjectsPerPacket> objectNames_;
+
+    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
 // --- De-/Serialization ---
 
 template<>

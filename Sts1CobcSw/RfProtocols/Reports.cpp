@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 
+#include <etl/string.h>
 #include <etl/utility.h>
 
 #include <algorithm>
@@ -154,7 +155,7 @@ FileAttributeReport::FileAttributeReport(fs::Path const & filePath,
                                          FileStatus fileStatus)
     : filePath_(filePath), fileSize_(fileSize), fileStatus_(fileStatus)
 {
-    filePath_.resize(filePath_.capacity(), '\0');
+    filePath_.resize(fs::Path::MAX_SIZE, '\0');
 }
 
 
@@ -173,7 +174,50 @@ auto FileAttributeReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
         totalSerialSize<decltype(secondaryHeader_), decltype(fileSize_), decltype(fileStatus_)>
-        + filePath_.capacity());
+        + fs::Path::MAX_SIZE);
+}
+
+
+RepositoryContentSummaryReport::RepositoryContentSummaryReport(
+    fs::Path const & repositoryPath,
+    std::uint8_t nObjects,
+    etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes,
+    etl::vector<fs::Path, maxNObjectsPerPacket> objectNames)
+    : repositoryPath_(repositoryPath),
+      nObjects_(nObjects),
+      objectTypes_(std::move(objectTypes)),
+      objectNames_(std::move(objectNames))
+{
+    assert(objectTypes_.size() == objectNames_.size());  // NOLINT(*array*decay)
+    repositoryPath_.resize(fs::Path::MAX_SIZE, '\0');
+    for(auto & objectName : objectNames_)
+    {
+        objectName.resize(fs::Path::MAX_SIZE, '\0');
+    }
+}
+
+
+auto RepositoryContentSummaryReport::DoWriteTo(etl::ivector<Byte> * dataField) const -> void
+{
+    UpdateMessageTypeCounterAndTime(&secondaryHeader_);
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
+    cursor = std::copy(repositoryPath_.begin(), repositoryPath_.end(), static_cast<char *>(cursor));
+    cursor = SerializeTo<ccsdsEndianness>(cursor, nObjects_);
+    for(auto i = 0U; i < objectTypes_.size(); ++i)
+    {
+        cursor = SerializeTo<ccsdsEndianness>(cursor, objectTypes_[i]);
+        cursor =
+            std::copy(objectNames_[i].begin(), objectNames_[i].end(), static_cast<char *>(cursor));
+    }
+}
+
+
+auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(
+        totalSerialSize<decltype(secondaryHeader_), decltype(nObjects_)> + fs::Path::MAX_SIZE
+        + objectTypes_.size() * (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE));
 }
 
 
