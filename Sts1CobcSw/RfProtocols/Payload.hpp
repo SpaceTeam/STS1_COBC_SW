@@ -26,15 +26,14 @@ protected:
 
 
 public:
-    // TODO: Think about renaming this to AddTo()
-    auto WriteTo(etl::ivector<Byte> * dataField) const -> Result<void>
+    auto AddTo(etl::ivector<Byte> * dataField) const -> Result<void>
     {
         if(dataField->available() < DoSize())
         {
             // TODO: Think about what error to return here
             return ErrorCode::tooLarge;
         }
-        DoWriteTo(dataField);
+        DoAddTo(dataField);
         return outcome_v2::success();
     }
 
@@ -47,7 +46,7 @@ public:
 
 private:
     // Precondition: dataField->available() >= Size()
-    virtual auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void = 0;
+    virtual auto DoAddTo(etl::ivector<Byte> * dataField) const -> void = 0;
     [[nodiscard]] virtual auto DoSize() const -> std::uint16_t = 0;
 };
 }

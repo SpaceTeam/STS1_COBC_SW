@@ -291,9 +291,9 @@ TEST_CASE("FramRingArray")
         CHECK(sRingArray.Get(2) == s3);
 
         // PushBack() writes to memory
-        CHECK(fram::ram::memory[sRingArrayStartAddress + 0] == 1_b);
-        CHECK(fram::ram::memory[sRingArrayStartAddress + sizeof(S::u16)] == 1_b);
-        CHECK(fram::ram::memory[sRingArrayStartAddress + sizeof(S::u16) + sizeof(S::i32)] == 1_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 1] == 1_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 5] == 1_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 6] == 1_b);
 
         // When pushing to a full ring, the size stays the same and the oldest element is lost
         sRingArray.PushBack(s4);
@@ -316,10 +316,10 @@ TEST_CASE("FramRingArray")
         CHECK(sRingArray.Get(1) == s7);
         CHECK(sRingArray.Get(2) == s8);
 
-        CHECK(fram::ram::memory[sRingArrayStartAddress + 0] == 8_b);
-        CHECK(fram::ram::memory[sRingArrayStartAddress + totalSerialSize<S>] == 2_b);
-        CHECK(fram::ram::memory[sRingArrayStartAddress + 2 * totalSerialSize<S>] == 6_b);
-        CHECK(fram::ram::memory[sRingArrayStartAddress + 3 * totalSerialSize<S>] == 7_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 1] == 8_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 1 + totalSerialSize<S>] == 2_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 1 + 2 * totalSerialSize<S>] == 6_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 1 + 3 * totalSerialSize<S>] == 7_b);
 
         // Get() with out-of-bounds index prints a debug message and returns the last element
         CHECK(sRingArray.Get(17) == s8);
@@ -333,7 +333,7 @@ TEST_CASE("FramRingArray")
         CHECK(sRingArray.Get(0) == s2);
         CHECK(sRingArray.Get(1) == s7);
         CHECK(sRingArray.Get(2) == s8);
-        CHECK(fram::ram::memory[sRingArrayStartAddress + 2 * totalSerialSize<S>] == 2_b);
+        CHECK(fram::ram::memory[sRingArrayStartAddress + 1 + 2 * totalSerialSize<S>] == 2_b);
 
         sRingArray.FindAndReplace([](auto const & x) { return x.i32 == 32; }, s1);
         CHECK(sRingArray.Get(0) == s2);
