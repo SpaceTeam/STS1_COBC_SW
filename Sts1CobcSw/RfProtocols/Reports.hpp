@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
@@ -115,6 +116,24 @@ private:
     std::uint8_t nParameters_ = 0;
     etl::vector<ParameterId, maxNParameters> parameterIds_;
     etl::vector<ParameterValue, maxNParameters> parameterValues_;
+
+    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
+class FileAttributeReport : public Payload
+{
+public:
+    FileAttributeReport(fs::Path const & filePath, std::uint32_t fileSize, FileStatus fileStatus);
+
+
+private:
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{23, 4}>();
+    mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
+    fs::Path filePath_;
+    std::uint32_t fileSize_;
+    FileStatus fileStatus_;
 
     auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;

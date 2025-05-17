@@ -1,6 +1,8 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -24,10 +26,14 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 
+
+namespace fs = sts1cobcsw::fs;
 
 using sts1cobcsw::Byte;
 using sts1cobcsw::ErrorCode;
+using sts1cobcsw::RealTime;
 using sts1cobcsw::Span;
 using sts1cobcsw::totalSerialSize;
 using sts1cobcsw::VerificationStage;
@@ -79,7 +85,7 @@ TEST_CASE("Successful verification reports")
     CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
     CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
     CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
-    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
+    auto timestamp = Deserialize<RealTime, 7>(dataField);
     CHECK(tBeforeWrite <= timestamp);
     CHECK(timestamp <= tAfterWrite);
     // Request ID
@@ -168,7 +174,7 @@ TEST_CASE("Failed verification reports")
     CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
     CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
     CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
-    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
+    auto timestamp = Deserialize<RealTime, 7>(dataField);
     CHECK(tBeforeWrite <= timestamp);
     CHECK(timestamp <= tAfterWrite);
     // Request ID
@@ -251,7 +257,7 @@ TEST_CASE("Housekeeping parameter report")
         .nEduCommunicationErrors = 7U,
         .lastResetReason = 8U,
         .rodosTimeInSeconds = 9,
-        .realTime = sts1cobcsw::RealTime(10),
+        .realTime = RealTime(10),
         .nFirmwareChecksumErrors = 11U,
         .nFlashErrors = 12U,
         .nRfErrors = 13U,
@@ -290,7 +296,7 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
     CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
     CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
-    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
+    auto timestamp = Deserialize<RealTime, 7>(dataField);
     CHECK(tBeforeWrite <= timestamp);
     CHECK(timestamp <= tAfterWrite);
     // Structure ID
@@ -341,7 +347,7 @@ TEST_CASE("Parameter value report")
     CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
     CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
     CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
-    auto timestamp = Deserialize<sts1cobcsw::RealTime, 7>(dataField);
+    auto timestamp = Deserialize<RealTime, 7>(dataField);
     CHECK(tBeforeWrite <= timestamp);
     CHECK(timestamp <= tAfterWrite);
     // Number of parameters
@@ -385,6 +391,58 @@ TEST_CASE("Parameter value report")
     CHECK(dataField[2] == 2_b);   // Submessage type ID
     CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
     CHECK(dataField[4] == 2_b);   // Message type counter (low byte)
+}
+
+
+TEST_CASE("File attribute report")
+{
+    using sts1cobcsw::FileAttributeReport;
+    using sts1cobcsw::FileStatus;
+
+    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketDataLength>{};
+    auto filePath = fs::Path{"/results/12345_67890.zip"};
+    auto fileSize = 0xDEADBEEFU;
+    auto fileStatus = FileStatus::locked;
+    auto report = FileAttributeReport(filePath, fileSize, fileStatus);
+    auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
+    auto writeResult = report.WriteTo(&dataField);
+    auto tAfterWrite = sts1cobcsw::CurrentRealTime();
+    CHECK(writeResult.has_error() == false);
+    CHECK(dataField.size() == report.Size());
+    CHECK(report.Size()
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::maxPathLength
+              + totalSerialSize<decltype(fileSize), decltype(fileStatus)>));
+    // Packet secondary header
+    CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
+    CHECK(dataField[1] == 23_b);    // Service type ID
+    CHECK(dataField[2] == 4_b);     // Submessage type ID
+    CHECK(dataField[3] == 0_b);     // Message type counter (high byte)
+    CHECK(dataField[4] == 0_b);     // Message type counter (low byte)
+    CHECK(dataField[5] == 0xAA_b);  // Destination ID (high byte)
+    CHECK(dataField[6] == 0x33_b);  // Destination ID (low byte)
+    auto timestamp = Deserialize<RealTime, 7>(dataField);
+    CHECK(tBeforeWrite <= timestamp);
+    CHECK(timestamp <= tAfterWrite);
+    // File path
+    CHECK(std::equal(filePath.begin(),
+                     filePath.end(),
+                     dataField.begin() + 11,
+                     [](char c, Byte b) { return c == static_cast<char>(b); }));
+    // File size
+    CHECK(fileSize == (Deserialize<std::uint32_t, 11 + fs::maxPathLength>(dataField)));
+    // File status
+    static constexpr auto iFileStatus =
+        11 + fs::maxPathLength + totalSerialSize<decltype(fileSize)>;
+    CHECK(fileStatus == (Deserialize<FileStatus, iFileStatus>(dataField)));
+
+    dataField.clear();
+    writeResult = report.WriteTo(&dataField);
+    CHECK(writeResult.has_error() == false);
+    // Packet secondary header
+    CHECK(dataField[1] == 23_b);  // Service type ID
+    CHECK(dataField[2] == 4_b);   // Submessage type ID
+    CHECK(dataField[3] == 0_b);   // Message type counter (high byte)
+    CHECK(dataField[4] == 1_b);   // Message type counter (low byte)
 }
 
 

@@ -168,7 +168,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(Reports)
     target_link_libraries(
         Sts1CobcSwTests_Reports
-        PRIVATE Sts1CobcSw_Fram
+        PRIVATE Sts1CobcSw_FileSystem
+                Sts1CobcSw_Fram
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_RfProtocols
