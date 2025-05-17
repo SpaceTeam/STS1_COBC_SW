@@ -240,16 +240,16 @@ TEST_CASE("Housekeeping parameter report")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto record = sts1cobcsw::TelemetryRecord{
-        .eduShouldBePowered = true,
-        .eduIsAlive = true,
-        .newEduResultIsAvailable = true,
-        .antennasShouldBeDeployed = true,
-        .framIsWorking = true,
-        .epsIsWorking = true,
-        .flashIsWorking = true,
-        .rfIsWorking = true,
-        .lastTelecommandIdWasInvalid = true,
-        .lastTelecommandArgumentsWereInvalid = true,
+        .eduShouldBePowered = 1,
+        .eduIsAlive = 1,
+        .newEduResultIsAvailable = 1,
+        .antennasShouldBeDeployed = 1,
+        .framIsWorking = 1,
+        .epsIsWorking = 1,
+        .flashIsWorking = 1,
+        .rfIsWorking = 1,
+        .lastTelecommandIdWasInvalid = 1,
+        .lastTelecommandArgumentsWereInvalid = 1,
         .nTotalResets = 1U,
         .nResetsSinceRf = 2U,
         .activeSecondaryFwPartition = 3,
@@ -305,7 +305,7 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[11] == 0_b);
     // Telemetry record
     CHECK(dataField[12] == 0b1111'1111_b);
-    CHECK(dataField[13] == 0b0000'0011_b);
+    CHECK(dataField[13] == 0b1100'0000_b);
     CHECK(dataField[14] == 0_b);
     CHECK(dataField[15] == 0_b);
     CHECK(dataField[16] == 0_b);

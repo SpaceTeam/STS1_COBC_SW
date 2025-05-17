@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -13,21 +14,21 @@
 
 namespace sts1cobcsw
 {
-// TODO: Use UInt<1> instead of bool
 struct TelemetryRecord
 {
     // Booleans: byte 1: EDU and housekeeping
-    bool eduShouldBePowered = false;
-    bool eduIsAlive = false;
-    bool newEduResultIsAvailable = false;
-    bool antennasShouldBeDeployed = false;
-    bool framIsWorking = false;
-    bool epsIsWorking = false;
-    bool flashIsWorking = false;
-    bool rfIsWorking = false;
+    UInt<1> eduShouldBePowered = 0;
+    UInt<1> eduIsAlive = 0;
+    UInt<1> newEduResultIsAvailable = 0;
+    UInt<1> antennasShouldBeDeployed = 0;
+    UInt<1> framIsWorking = 0;
+    UInt<1> epsIsWorking = 0;
+    UInt<1> flashIsWorking = 0;
+    UInt<1> rfIsWorking = 0;
     // Booleans: byte 2: communication
-    bool lastTelecommandIdWasInvalid = false;
-    bool lastTelecommandArgumentsWereInvalid = false;
+    UInt<1> lastTelecommandIdWasInvalid = 0;
+    UInt<1> lastTelecommandArgumentsWereInvalid = 0;
+    UInt<6> padding = 0;  // NOLINT(*magic-numbers)
 
     // BootLoader
     std::uint32_t nTotalResets = 0U;
@@ -71,7 +72,17 @@ struct TelemetryRecord
 
 template<>
 inline constexpr std::size_t serialSize<TelemetryRecord> =
-    2
+    totalSerialSize<decltype(TelemetryRecord::eduShouldBePowered),
+                    decltype(TelemetryRecord::eduIsAlive),
+                    decltype(TelemetryRecord::newEduResultIsAvailable),
+                    decltype(TelemetryRecord::antennasShouldBeDeployed),
+                    decltype(TelemetryRecord::framIsWorking),
+                    decltype(TelemetryRecord::epsIsWorking),
+                    decltype(TelemetryRecord::flashIsWorking),
+                    decltype(TelemetryRecord::rfIsWorking),
+                    decltype(TelemetryRecord::lastTelecommandIdWasInvalid),
+                    decltype(TelemetryRecord::lastTelecommandArgumentsWereInvalid),
+                    decltype(TelemetryRecord::padding)>
     + totalSerialSize<
         // Bootloader
         decltype(TelemetryRecord::nResetsSinceRf),
