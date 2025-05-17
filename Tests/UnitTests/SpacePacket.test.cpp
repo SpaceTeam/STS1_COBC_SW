@@ -48,7 +48,7 @@ private:
 
 TEST_CASE("Adding Space Packets")
 {
-    auto dataField = etl::vector<Byte, sts1cobcsw::maxPacketLength>{};
+    auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketLength>{};
     auto payload = TestPayload(0xAB_b, 10);
     auto addSpacePacketResult =
         sts1cobcsw::AddSpacePacketTo(&dataField, false, sts1cobcsw::normalApid, payload);
@@ -111,7 +111,7 @@ TEST_CASE("Adding Space Packets")
     CHECK(dataField.size() == 0U);
 
     dataField.clear();
-    payload = TestPayload(0xFF_b, sts1cobcsw::maxPacketDataLength + 1);
+    payload = TestPayload(0xFF_b, sts1cobcsw::tm::maxPacketDataLength + 1);
     addSpacePacketResult =
         sts1cobcsw::AddSpacePacketTo(&dataField, false, sts1cobcsw::normalApid, payload);
     CHECK(addSpacePacketResult.has_error());
@@ -122,7 +122,7 @@ TEST_CASE("Adding Space Packets")
 
 TEST_CASE("Parsing Space Packets")
 {
-    auto buffer = etl::vector<Byte, sts1cobcsw::maxPacketLength>{};
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
     buffer.resize(sts1cobcsw::packetPrimaryHeaderLength);
     buffer[0] = 0b0001'1000_b;  // Version number, packet type, sec. header flag, APID
     buffer[1] = 0b1100'1100_b;  // APID
