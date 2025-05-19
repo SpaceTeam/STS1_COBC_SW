@@ -30,6 +30,12 @@ auto ReadPartNumber() -> std::uint16_t;
 auto EnterStandbyMode() -> void;
 auto SetTxType(TxType txType) -> void;
 auto SetTxDataLength(std::uint16_t length) -> void;
+
+// TODO needs testing RX-TX getter and setter!!
+auto SetBaudrate(std::uint32_t baud) -> void;      // sets RX + TX symbol rate
+[[nodiscard]] auto GetBaudrate() -> std::uint32_t; // returns current symbol rate
+// ------------------------
+
 [[nodiscard]] auto SendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto SendAndContinue(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto SuspendUntilDataSent(Duration timeout) -> Result<void>;

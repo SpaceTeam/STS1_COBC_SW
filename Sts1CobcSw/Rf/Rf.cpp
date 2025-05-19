@@ -259,6 +259,58 @@ auto SetTxDataLength(std::uint16_t length) -> void
 }
 
 
+// TODO: needs tersting and refactor of RX Setters and Getters
+// ─── 1. extra command byte ───────────────────────────────────────────────────
+[[maybe_unused]] constexpr auto cmdGetProperty = 0x12_b;  // Si446x “GET_PROPERTY” command
+
+// ─── 2. BAUD-RATE ACCESSORS ──────────────────────────────────────────────────
+// These two helpers touch MODEM_DATA_RATE (indices 0x03-0x05 of the MODEM
+// property group).  Because the current config makes “register value == baud”,
+//
+auto SetBaudrate(std::uint32_t baud) -> void
+{
+    // The property field is only 20 bits.  Clip anything above 1 048 575 Baud
+    // rather than overflow into adjacent bits.
+    if(baud > 0x0FFFFF)
+    {
+        baud = 0x0FFFFF;
+    }
+
+    // Split the 20-bit integer into three *big-endian* bytes, MSB first.
+    std::array<Byte, 3> payload{
+        static_cast<Byte>((baud >> 16) & 0xFF),  // highest 8 bits
+        static_cast<Byte>((baud >> 8) & 0xFF),   // middle 8
+        static_cast<Byte>(baud & 0xFF)           // lowest 8
+    };
+
+    // Write the three bytes starting at index 0x03 in the MODEM group.
+    static constexpr Byte iModemDataRate = 0x03_b;
+    SetProperties(PropertyGroup::modem, iModemDataRate, Span(payload));
+}
+
+
+auto GetBaudrate() -> std::uint32_t
+{
+    static constexpr Byte iModemDataRate = 0x03_b;  // start index
+    static constexpr Byte nBytes = 0x03_b;          // read exactly 3 bytes
+
+    // Build and send:  0x12  group-id  length  index
+    auto answer = SendCommand<3>(
+        Span({cmdGetProperty, static_cast<Byte>(PropertyGroup::modem), nBytes, iModemDataRate}));
+
+    // Re-assemble the three returned bytes into a 20-bit integer.
+    std::uint32_t baud = (static_cast<std::uint32_t>(answer[0]) << 16)
+                       | (static_cast<std::uint32_t>(answer[1]) << 8)
+                       | static_cast<std::uint32_t>(answer[2]);
+
+    // Thanks to the firmware’s “value == Baud” setup we can return it verbatim.
+    return baud;
+}
+// ----------------------------------
+
+
+
+
 auto SendAndWait(std::span<Byte const> data) -> Result<void>
 {
     SetTxDataLength(static_cast<std::uint16_t>(data.size()));
