@@ -123,6 +123,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     )
 endif()
 
+# ---- Tests only for Linux ----
+
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+    add_test_program(ReportFrames)
+    target_link_libraries(Sts1CobcSwTests_ReportFrames PRIVATE rodos::rodos Sts1CobcSw_RfProtocols)
+endif()
+
 get_property(manual_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 add_custom_target(AllManualTests)
 if(manual_test_targets)
