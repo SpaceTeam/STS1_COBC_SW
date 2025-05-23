@@ -67,7 +67,7 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::Front() -> T
             DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
             return T{};
         }
-        return Deserialize<T>(cache.front());
+        return Deserialize<endianness, T>(cache.front());
     }
     auto indexes = LoadIndexes();
     if(indexes.iBegin == indexes.iEnd)
@@ -91,7 +91,7 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::Back() -> T
             DEBUG_PRINT("Trying to get element from empty FramRingArray\n");
             return T{};
         }
-        return Deserialize<T>(cache.back());
+        return Deserialize<endianness, T>(cache.back());
     }
     auto indexes = LoadIndexes();
     if(indexes.iBegin == indexes.iEnd)
@@ -128,7 +128,7 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::PushBack(T const &
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     // We always write to the cache
-    cache.push(Serialize(t));
+    cache.push(Serialize<endianness>(t));
     if(not framIsWorking.Load())
     {
         return;
@@ -156,9 +156,9 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::FindAndReplace(
     {
         for(auto & element : cache)
         {
-            if(predicate(Deserialize<T>(element)))
+            if(predicate(Deserialize<endianness, T>(element)))
             {
-                element = Serialize(newData);
+                element = Serialize<endianness>(newData);
             }
         }
         return;
@@ -206,7 +206,7 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::GetFromCache(Index
                     static_cast<int>(size));
         index = size - 1;
     }
-    return Deserialize<T>(cache[index]);
+    return Deserialize<endianness, T>(cache[index]);
 }
 
 
@@ -247,7 +247,7 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::SetInCache(IndexTy
                     static_cast<int>(cache.size()));
         return;
     }
-    cache[index] = Serialize(t);
+    cache[index] = Serialize<endianness>(t);
 }
 
 
@@ -274,7 +274,7 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::SetInFramAndCache(
     {
         return;
     }
-    cache[static_cast<unsigned>(cacheIndex)] = Serialize(t);
+    cache[static_cast<unsigned>(cacheIndex)] = Serialize<endianness>(t);
 }
 
 
@@ -296,7 +296,7 @@ template<typename T, Section framRingArraySection, std::uint32_t nCachedElements
 auto FramRingArray<T, framRingArraySection, nCachedElements>::LoadElement(RingIndex index) -> T
 {
     auto address = subsections.template Get<"array">().begin + index.get() * elementSize;
-    return Deserialize<T>(fram::ReadFrom<serialSize<T>>(address, spiTimeout));
+    return Deserialize<endianness, T>(fram::ReadFrom<serialSize<T>>(address, spiTimeout));
 }
 
 
@@ -318,6 +318,6 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::StoreElement(RingI
                                                                            T const & t) -> void
 {
     auto address = subsections.template Get<"array">().begin + index.get() * elementSize;
-    fram::WriteTo(address, Span(Serialize(t)), spiTimeout);
+    fram::WriteTo(address, Span(Serialize<endianness>(t)), spiTimeout);
 }
 }

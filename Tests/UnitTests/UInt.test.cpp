@@ -11,9 +11,6 @@ using sts1cobcsw::AUInt;
 using sts1cobcsw::SmallestUnsignedType;
 using sts1cobcsw::UInt;
 
-template<auto value>
-using Constant = std::integral_constant<decltype(value), value>;
-
 
 // This struct allows us to use std::is_invocable_v to test if constructing a UInt<> does not
 // compile without actually throwing compiler errors. See Span.test.cpp for an explanation.

@@ -1,25 +1,40 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
+#include <etl/vector.h>
+
 #include <bit>
+#include <cstddef>
+#include <cstdint>
+#include <span>
 
 
 namespace sts1cobcsw
 {
+namespace packettype
+{
+constexpr auto telemetry = UInt<1>(0);
+constexpr auto telecommand = UInt<1>(1);
+};
+
+
+// TODO: Consider moving this into SpacePacket
 struct SpacePacketPrimaryHeader
 {
     UInt<3> versionNumber = sts1cobcsw::packetVersionNumber;
-    UInt<1> packetType = 0;
-    UInt<1> secondaryHeaderFlag = 0;
+    UInt<1> packetType;
+    UInt<1> secondaryHeaderFlag;
     Apid apid;
-    UInt<2> sequenceFlags = 0b11;
-    UInt<14> packetSequenceCount = 0;  // NOLINT(*magic-numbers)
+    UInt<2> sequenceFlags;
+    UInt<14> packetSequenceCount;  // NOLINT(*magic-numbers)
     std::uint16_t packetDataLength = 0;
 };
 
@@ -34,7 +49,7 @@ struct SpacePacket
 
 
 template<>
-inline constexpr auto serialSize<SpacePacketPrimaryHeader> =
+inline constexpr std::size_t serialSize<SpacePacketPrimaryHeader> =
     totalSerialSize<decltype(SpacePacketPrimaryHeader::versionNumber),
                     decltype(SpacePacketPrimaryHeader::packetType),
                     decltype(SpacePacketPrimaryHeader::secondaryHeaderFlag),
