@@ -113,6 +113,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .nUncorrectableUplinkErrors = persistentVariables.Load<"nUncorrectableUplinkErrors">(),
         .nGoodTransferFrames = persistentVariables.Load<"nGoodTransferFrames">(),
         .nBadTransferFrames = persistentVariables.Load<"nBadTransferFrames">(),
+        .lastFrameSequenceNumber = persistentVariables.Load<"lastFrameSequenceNumber">(),
         .lastTelecommandId = persistentVariables.Load<"lastTelecommandId">()};
 }
 }

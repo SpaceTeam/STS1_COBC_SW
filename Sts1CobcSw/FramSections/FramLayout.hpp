@@ -58,6 +58,7 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"nUncorrectableUplinkErrors", std::uint16_t>,
                         PersistentVariableInfo<"nGoodTransferFrames", std::uint16_t>,
                         PersistentVariableInfo<"nBadTransferFrames", std::uint16_t>,
+                        PersistentVariableInfo<"lastFrameSequenceNumber", std::uint8_t>,
                         PersistentVariableInfo<"lastTelecommandId", std::uint16_t>,
                         PersistentVariableInfo<"lastTelecommandIdWasInvalid", bool>,
                         PersistentVariableInfo<"lastTelecommandArgumentsWereInvalid", bool>>{};
