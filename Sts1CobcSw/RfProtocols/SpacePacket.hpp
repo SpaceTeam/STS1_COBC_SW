@@ -68,7 +68,9 @@ static_assert(serialSize<SpacePacketPrimaryHeader> == packetPrimaryHeaderLength)
 
 
 template<std::endian endianness>
-auto SerializeTo(void * destination, SpacePacketPrimaryHeader const & header) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, SpacePacketPrimaryHeader const & header)
+    -> void *;
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, SpacePacketPrimaryHeader * header) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, SpacePacketPrimaryHeader * header)
+    -> void const *;
 }

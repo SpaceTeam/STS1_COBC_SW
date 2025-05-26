@@ -57,9 +57,9 @@ template<AnId Id, typename Id::ValueType t>
 [[nodiscard]] constexpr auto Make() -> Id;
 
 template<std::endian endianness, AnId Id>
-auto SerializeTo(void * destination, Id const & id) -> void *;
+[[nodiscard]] auto SerializeTo(void * destination, Id const & id) -> void *;
 template<std::endian endianness, AnId Id>
-auto DeserializeFrom(void const * source, Id * id) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, Id * id) -> void const *;
 }
 
 
