@@ -60,7 +60,9 @@ struct TelemetryRecord
     std::uint16_t nUncorrectableUplinkErrors = 0U;
     std::uint16_t nGoodTransferFrames = 0U;
     std::uint16_t nBadTransferFrames = 0U;
+    // TODO: I think this should be a tc::MessageTypeId
     std::uint16_t lastTelecommandId = 0U;
+    // TODO: Add one of the sequence numbers
 
     friend auto operator==(TelemetryRecord const &, TelemetryRecord const &) -> bool = default;
 };

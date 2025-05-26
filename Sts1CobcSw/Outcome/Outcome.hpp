@@ -51,11 +51,16 @@ enum class ErrorCode
     full,
     empty,
     // RF protocols
+    // TODO: Rework the EDU and RF protocol errors once they are fully implemented. Since we send
+    // down the error code with the NACK report, we benefit from fine-grained error codes.
     invalidValue,
     bufferTooSmall,
-    invalidSpacePacket,  // TODO: Maybe use a more general invalidHeader or invalidPdu
-    // TODO: Rework the EDU and RF protocol errors into a smaller set of coherent codes that can be
-    // used for both
+    invalidTransferFrame,
+    invalidSpacecraftId,
+    invalidVcid,
+    invalidFrameLength,
+    invalidSpacePacket,
+    invalidApid,
     invalidPayload,
     // Firmware
     misaligned,
