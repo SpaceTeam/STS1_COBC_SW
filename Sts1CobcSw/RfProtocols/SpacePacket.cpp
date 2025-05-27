@@ -50,10 +50,14 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     (void)DeserializeFrom<std::endian::big>(buffer.data(), &primaryHeader);
     auto packetIsValid = primaryHeader.versionNumber == packetVersionNumber
                      and primaryHeader.packetType == packettype::telecommand
-                     and IsValid(primaryHeader.apid) and primaryHeader.sequenceFlags == 0b11;
+                     and primaryHeader.sequenceFlags == 0b11;
     if(not packetIsValid)
     {
         return ErrorCode::invalidSpacePacket;
+    }
+    if(not IsValid(primaryHeader.apid))
+    {
+        return ErrorCode::invalidApid;
     }
     if(buffer.size()
        < packetPrimaryHeaderLength + static_cast<std::size_t>(primaryHeader.packetDataLength))

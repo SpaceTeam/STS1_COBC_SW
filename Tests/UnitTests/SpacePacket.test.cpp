@@ -184,7 +184,7 @@ TEST_CASE("Parsing Space Packets")
     buffer[1] = 0b0000'0000_b;  // APID
     parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
     CHECK(parseResult.has_error());
-    CHECK(parseResult.error() == ErrorCode::invalidSpacePacket);
+    CHECK(parseResult.error() == ErrorCode::invalidApid);
 
     // Wrong sequence flags
     buffer[0] = 0b0001'0111_b;  // Version number, packet type, sec. header flag, APID
