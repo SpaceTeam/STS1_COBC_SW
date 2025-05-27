@@ -218,6 +218,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     catch_discover_tests(Sts1CobcSwTests_Subsections)
 
+    add_test_program(TcTransferFrame)
+    target_link_libraries(
+        Sts1CobcSwTests_TcTransferFrame
+        PRIVATE Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial Sts1CobcSw_Utility
+                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+    )
+    add_test(NAME TcTransferFrame COMMAND Sts1CobcSwTests_TcTransferFrame)
+
     add_test_program(TelemetryRecord)
     target_link_libraries(
         Sts1CobcSwTests_TelemetryRecord

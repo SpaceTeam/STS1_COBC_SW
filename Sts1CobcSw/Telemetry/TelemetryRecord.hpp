@@ -60,6 +60,8 @@ struct TelemetryRecord
     std::uint16_t nUncorrectableUplinkErrors = 0U;
     std::uint16_t nGoodTransferFrames = 0U;
     std::uint16_t nBadTransferFrames = 0U;
+    std::uint8_t lastFrameSequenceNumber = 0U;
+    // TODO: I think this should be a tc::MessageTypeId
     std::uint16_t lastTelecommandId = 0U;
 
     friend auto operator==(TelemetryRecord const &, TelemetryRecord const &) -> bool = default;
@@ -98,6 +100,7 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
         decltype(TelemetryRecord::nUncorrectableUplinkErrors),
         decltype(TelemetryRecord::nGoodTransferFrames),
         decltype(TelemetryRecord::nBadTransferFrames),
+        decltype(TelemetryRecord::lastFrameSequenceNumber),
         decltype(TelemetryRecord::lastTelecommandId)>;
 
 

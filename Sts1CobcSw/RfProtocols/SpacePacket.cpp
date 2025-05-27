@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 #include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
 
+#include <algorithm>
+
 
 namespace sts1cobcsw
 {
@@ -29,7 +31,7 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
     dataField->resize(dataField->size() + packetPrimaryHeaderLength);
     auto primaryHeader = SpacePacketPrimaryHeader{
         .versionNumber = packetVersionNumber,
-        .packetType = PacketType::telemetry,
+        .packetType = packettype::telemetry,
         .secondaryHeaderFlag = hasSecondaryHeader ? 1 : 0,
         .apid = apid,
         .sequenceFlags = 0b11,
@@ -49,8 +51,8 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     auto primaryHeader = SpacePacketPrimaryHeader();
     (void)DeserializeFrom<std::endian::big>(buffer.data(), &primaryHeader);
     auto packetIsValid = primaryHeader.versionNumber == packetVersionNumber
-                     and primaryHeader.packetType == PacketType::telecommand
-                     and primaryHeader.apid != invalidApid and primaryHeader.sequenceFlags == 0b11;
+                     and primaryHeader.packetType == packettype::telecommand
+                     and IsValid(primaryHeader.apid) and primaryHeader.sequenceFlags == 0b11;
     if(not packetIsValid)
     {
         return ErrorCode::invalidSpacePacket;
@@ -96,16 +98,7 @@ auto DeserializeFrom(void const * source, SpacePacketPrimaryHeader * header) -> 
                                          &apidValue,
                                          &header->sequenceFlags,
                                          &header->packetSequenceCount);
-    // This is ugly but I don't know how to do it better
-    auto makeResult = Apid::Make(apidValue);
-    if(makeResult.has_error())
-    {
-        header->apid = invalidApid;
-    }
-    else
-    {
-        header->apid = makeResult.value();
-    }
+    header->apid = Apid(apidValue);
     source = DeserializeFrom<endianness>(source, &header->packetDataLength);
     return source;
 }

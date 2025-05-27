@@ -45,36 +45,31 @@ namespace tc
 inline constexpr auto transferFrameVersionNumber = UInt<2>(0);
 inline constexpr auto transferFrameLength = ecc::messageLength;
 inline constexpr auto transferFramePrimaryHeaderLength = 5;
-inline constexpr auto transferFrameDataLength =
-    transferFrameLength - transferFramePrimaryHeaderLength;
+inline constexpr auto securityHeaderLength = 4;   // TODO: What's the right number?
+inline constexpr auto securityTrailerLength = 8;  // TODO: What's the right number?
+inline constexpr auto transferFrameDataLength = transferFrameLength
+                                              - transferFramePrimaryHeaderLength
+                                              - securityHeaderLength - securityTrailerLength;
 }
 
 using SpacecraftId = Id<UInt<10>, 0x123>;  // NOLINT(*magic-numbers)
-inline constexpr auto spacecraftId = SpacecraftId::Make<0x123>();
+inline constexpr auto spacecraftId = Make<SpacecraftId, 0x123>();
 
 using Vcid = Id<UInt<3>, 0b011, 0b101>;  // NOLINT(*magic-numbers)
-inline constexpr auto pusVcid = Vcid::Make<0b011>();
-inline constexpr auto cfdpVcid = Vcid::Make<0b101>();
+inline constexpr auto pusVcid = Make<Vcid, 0b011>();
+inline constexpr auto cfdpVcid = Make<Vcid, 0b101>();
 
 
 // --- Space Packet Protocol ---
-
-struct PacketType  // I use a struct instead of a namespace because I don't like "packettype"
-{
-    static constexpr auto telemetry = UInt<1>(0);
-    static constexpr auto telecommand = UInt<1>(1);
-};
-
 
 inline constexpr auto packetVersionNumber = UInt<3>(0);
 inline constexpr auto maxPacketLength = tm::transferFrameDataLength;
 inline constexpr auto packetPrimaryHeaderLength = 6U;
 inline constexpr auto maxPacketDataLength = maxPacketLength - packetPrimaryHeaderLength;
 
-using Apid = Id<UInt<11>, 0, 0b000'1100'1100, 0x7FF>;  // NOLINT(*magic-numbers)
-inline constexpr auto invalidApid = Apid::Make<0>();
-inline constexpr auto normalApid = Apid::Make<0b000'1100'1100>();
-inline constexpr auto idlePacketApid = Apid::Make<0x7FF>();
+using Apid = Id<UInt<11>, 0b000'1100'1100, 0x7FF>;  // NOLINT(*magic-numbers)
+inline constexpr auto normalApid = Make<Apid, 0b000'1100'1100>();
+inline constexpr auto idlePacketApid = Make<Apid, 0x7FF>();
 
 inline constexpr auto idleData = 0x55_b;
 }

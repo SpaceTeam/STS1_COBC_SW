@@ -98,8 +98,23 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
         case ErrorCode::bufferTooSmall:
             Append(string, "ErrorCode::bufferTooSmall");
             break;
+        case ErrorCode::invalidTransferFrame:
+            Append(string, "ErrorCode::invalidTransferFrame");
+            break;
+        case ErrorCode::invalidSpacecraftId:
+            Append(string, "ErrorCode::invalidSpacecraftId");
+            break;
+        case ErrorCode::invalidVcid:
+            Append(string, "ErrorCode::invalidVcid");
+            break;
+        case ErrorCode::invalidFrameLength:
+            Append(string, "ErrorCode::invalidFrameLength");
+            break;
         case ErrorCode::invalidSpacePacket:
             Append(string, "ErrorCode::invalidSpacePacket");
+            break;
+        case ErrorCode::invalidApid:
+            Append(string, "ErrorCode::invalidApid");
             break;
         case ErrorCode::invalidPayload:
             Append(string, "ErrorCode::invalidPayload");

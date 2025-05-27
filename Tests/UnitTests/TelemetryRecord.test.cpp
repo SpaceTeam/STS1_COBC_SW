@@ -63,7 +63,8 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .nUncorrectableUplinkErrors = 56U,
             .nGoodTransferFrames = 57U,
             .nBadTransferFrames = 58U,
-            .lastTelecommandId = 59U
+            .lastFrameSequenceNumber = 59U,
+            .lastTelecommandId = 60U,
         };
         auto serializedRecord = Serialize(originalRecord);
         auto deserializedRecord = Deserialize<TelemetryRecord>(serializedRecord);

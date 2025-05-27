@@ -62,7 +62,8 @@ private:
 
 
 template<std::endian endianness>
-auto SerializeTo(void * destination, TransferFrame::PrimaryHeader const & header) -> void *;
+[[nodiscard]] [[nodiscard]] auto SerializeTo(void * destination,
+                                             TransferFrame::PrimaryHeader const & header) -> void *;
 }
 
 
