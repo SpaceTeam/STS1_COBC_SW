@@ -137,9 +137,12 @@ typedef enum
   * @}
   */
 
-#include "core_cm4.h"             /* Cortex-M4 processor and core peripherals */
-#include "system_stm32f4xx.h"
+// We don't need these two headers, only the definition of __IO
+// #include "core_cm4.h"             /* Cortex-M4 processor and core peripherals */
+// #include "system_stm32f4xx.h"
 #include <stdint.h>
+
+#define __IO volatile // From core_cm4.h
 
 /** @addtogroup Peripheral_registers_structures
   * @{
