@@ -159,6 +159,33 @@
       "cacheVariables": {
         "HSE_VALUE": "12000000"
       }
+    },
+    {
+      "name": "dev-bootloader-fast",
+      "binaryDir": "${sourceDir}/build/bootloader-fast",
+      "inherits": [
+        "dev-mode",
+        "cpp-std"
+      ],
+      "generator": "Ninja Multi-Config",
+      "toolchainFile": "${sourceDir}/Sts1CobcSw/Bootloader/Toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "USE_CCACHE": "ON",
+        "BUILD_BOOTLOADER": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev-bootloader-fast-debug",
+      "configurePreset": "dev-bootloader-fast",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-bootloader-fast-min-size-rel",
+      "configurePreset": "dev-bootloader-fast",
+      "configuration": "MinSizeRel"
     }
   ]
 }
