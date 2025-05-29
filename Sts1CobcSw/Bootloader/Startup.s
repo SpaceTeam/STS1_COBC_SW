@@ -10,7 +10,6 @@
         ldr sp, =_estack
         bl  InitializeDataSegment
         bl  InitializeBssSegment
-        bl  __libc_init_array   /* Calls static constructors */
         bl  main
         loop:                   /* Infinite loop in case main returns */
             b   loop
