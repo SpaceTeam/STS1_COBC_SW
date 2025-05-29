@@ -2,6 +2,6 @@
 builtin = clear,rare,en-GB_to_en-US,names,informal,code
 check-filenames =
 check-hidden =
-skip = */.git,*/build,*/prefix,.clang-format
+skip = */.git,*/.cache,*/.vscode,*/build,*/prefix,.clang-format
 quiet-level = 2
 ignore-words = .codespell-ignore
