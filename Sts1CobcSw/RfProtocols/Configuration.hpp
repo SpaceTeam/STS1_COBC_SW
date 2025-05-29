@@ -112,7 +112,24 @@ using MessageTypeId = Id<MessageTypeIdFields,
 
 namespace tc
 {
+inline constexpr auto packetSecondaryHeaderLength = 5U;
 inline constexpr auto packetPusVersionNumber = UInt<4>(2);
+
+// NOLINTBEGIN(*magic-numbers)
+using MessageTypeId = Id<MessageTypeIdFields,
+                         MessageTypeIdFields{6, 2},
+                         MessageTypeIdFields{6, 5},
+                         MessageTypeIdFields{8, 1},
+                         MessageTypeIdFields{20, 1},
+                         MessageTypeIdFields{20, 3},
+                         MessageTypeIdFields{20, 4},
+                         MessageTypeIdFields{23, 2},
+                         MessageTypeIdFields{23, 3},
+                         MessageTypeIdFields{23, 12},
+                         MessageTypeIdFields{23, 14},
+                         MessageTypeIdFields{0, 0},
+                         MessageTypeIdFields{0, 0}>;
+// NOLINTEND(*magic-numbers)
 }
 
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)

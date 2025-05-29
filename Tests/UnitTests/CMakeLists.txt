@@ -243,6 +243,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     catch_discover_tests(Sts1CobcSwTests_Subsections)
 
+    add_test_program(TcSpacePacketSecondaryHeader)
+    target_link_libraries(
+        Sts1CobcSwTests_TcSpacePacketSecondaryHeader
+        PRIVATE Sts1CobcSw_RfProtocols Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
+                Sts1CobcSwTests::Utility
+    )
+    add_test(NAME TcSpacePacketSecondaryHeader COMMAND Sts1CobcSwTests_TcSpacePacketSecondaryHeader)
+
     add_test_program(TcTransferFrame)
     target_link_libraries(
         Sts1CobcSwTests_TcTransferFrame
