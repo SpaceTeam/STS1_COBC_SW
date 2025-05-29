@@ -51,10 +51,10 @@ TEST_CASE("Adding Space Packets")
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketLength>{};
     auto payload = TestPayload(0xAB_b, 10);
     auto addSpacePacketResult =
-        sts1cobcsw::AddSpacePacketTo(&dataField, false, sts1cobcsw::normalApid, payload);
+        sts1cobcsw::AddSpacePacketTo(&dataField, sts1cobcsw::normalApid, payload);
     CHECK(addSpacePacketResult.has_error() == false);
     CHECK(dataField.size() == payload.Size() + sts1cobcsw::packetPrimaryHeaderLength);
-    CHECK(dataField[0] == 0b0000'0000_b);  // Version number, packet type, sec. header flag, APID
+    CHECK(dataField[0] == 0b0000'1000_b);  // Version number, packet type, sec. header flag, APID
     CHECK(dataField[1] == 0b1100'1100_b);  // APID
     CHECK(dataField[2] == 0b1100'0000_b);  // Sequence flags, packet sequence count
     CHECK(dataField[3] == 0_b);            // Packet sequence count
@@ -69,7 +69,7 @@ TEST_CASE("Adding Space Packets")
     dataField.clear();
     payload = TestPayload(0x47_b, 13);
     addSpacePacketResult =
-        sts1cobcsw::AddSpacePacketTo(&dataField, true, sts1cobcsw::normalApid, payload);
+        sts1cobcsw::AddSpacePacketTo(&dataField, sts1cobcsw::normalApid, payload);
     CHECK(addSpacePacketResult.has_error() == false);
     CHECK(dataField.size() == payload.Size() + sts1cobcsw::packetPrimaryHeaderLength);
     CHECK(dataField[0] == 0b0000'1000_b);  // Version number, packet type, sec. header flag, APID
@@ -87,10 +87,10 @@ TEST_CASE("Adding Space Packets")
     dataField.clear();
     payload = TestPayload(0xA1_b, 5);
     addSpacePacketResult =
-        sts1cobcsw::AddSpacePacketTo(&dataField, false, sts1cobcsw::idlePacketApid, payload);
+        sts1cobcsw::AddSpacePacketTo(&dataField, sts1cobcsw::idlePacketApid, payload);
     CHECK(addSpacePacketResult.has_error() == false);
     CHECK(dataField.size() == payload.Size() + sts1cobcsw::packetPrimaryHeaderLength);
-    CHECK(dataField[0] == 0b0000'0111_b);  // Version number, packet type, sec. header flag, APID
+    CHECK(dataField[0] == 0b0000'1111_b);  // Version number, packet type, sec. header flag, APID
     CHECK(dataField[1] == 0b1111'1111_b);  // APID
     CHECK(dataField[2] == 0b1100'0000_b);  // Sequence flags, packet sequence count
     CHECK(dataField[3] == 0_b);            // Packet sequence count
@@ -105,7 +105,7 @@ TEST_CASE("Adding Space Packets")
     dataField.clear();
     payload = TestPayload(0xFF_b, 0);
     addSpacePacketResult =
-        sts1cobcsw::AddSpacePacketTo(&dataField, false, sts1cobcsw::normalApid, payload);
+        sts1cobcsw::AddSpacePacketTo(&dataField, sts1cobcsw::normalApid, payload);
     CHECK(addSpacePacketResult.has_error());
     CHECK(addSpacePacketResult.error() == ErrorCode::invalidPayload);
     CHECK(dataField.size() == 0U);
@@ -113,7 +113,7 @@ TEST_CASE("Adding Space Packets")
     dataField.clear();
     payload = TestPayload(0xFF_b, sts1cobcsw::tm::maxPacketDataLength + 1);
     addSpacePacketResult =
-        sts1cobcsw::AddSpacePacketTo(&dataField, false, sts1cobcsw::normalApid, payload);
+        sts1cobcsw::AddSpacePacketTo(&dataField, sts1cobcsw::normalApid, payload);
     CHECK(addSpacePacketResult.has_error());
     CHECK(addSpacePacketResult.error() == ErrorCode::tooLarge);
     CHECK(dataField.size() == 0U);

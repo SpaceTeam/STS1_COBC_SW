@@ -61,7 +61,6 @@ static_assert(serialSize<SpacePacketPrimaryHeader> == packetPrimaryHeaderLength)
 
 
 [[nodiscard]] auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
-                                    bool hasSecondaryHeader,
                                     Apid apid,
                                     Payload const & payload) -> Result<void>;
 [[nodiscard]] auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>;
