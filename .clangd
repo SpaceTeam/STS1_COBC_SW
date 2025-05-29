@@ -1,0 +1,6 @@
+# Do not diagnose CMSIS device header with clang-tidy
+If:
+  PathMatch: .*stm32f411xe\.h
+Diagnostics:
+  ClangTidy:
+    Remove: "*"
