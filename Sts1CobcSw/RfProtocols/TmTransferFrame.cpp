@@ -13,7 +13,6 @@ TransferFrame::TransferFrame(std::span<Byte, transferFrameLength> buffer) : buff
 auto TransferFrame::StartNew(Vcid vcid) -> void
 {
     primaryHeader_.vcid = vcid;
-    std::fill(buffer_.begin(), buffer_.end(), idleData);
     dataField_.clear();  // Resets size to 0
 }
 
@@ -36,9 +35,8 @@ auto TransferFrame::Finish() -> void
     primaryHeader_.virtualChannelFrameCount =
         virtualChannelFrameCounters.PostIncrement(primaryHeader_.vcid);
     (void)SerializeTo<ccsdsEndianness>(buffer_.data(), primaryHeader_);
-    // TODO: Fill the remaining space with a proper idle packet (currently it's only filled with
-    // idleData)
-    dataField_.resize(dataField_.max_size());
+    // TODO: Fill the remaining space with a proper idle packet
+    dataField_.resize(dataField_.max_size(), idleData);
 }
 
 
