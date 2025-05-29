@@ -31,7 +31,7 @@ private:
     Byte fillValue_;
     std::uint16_t size_;
 
-    auto DoWriteTo(etl::ivector<Byte> * dataField) const -> void override
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override
     {
         dataField->resize(dataField->size() + size_, fillValue_);
     }

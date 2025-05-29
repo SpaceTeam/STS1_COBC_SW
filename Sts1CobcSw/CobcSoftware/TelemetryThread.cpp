@@ -9,6 +9,7 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
@@ -73,18 +74,19 @@ auto CollectTelemetryData() -> TelemetryRecord
     txBaudRateBuffer.get(txBaudRate);
     return TelemetryRecord{
         // Booleans: byte 1: EDU and housekeeping
-        .eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">(),
-        .eduIsAlive = eduIsAlive,
-        .newEduResultIsAvailable = persistentVariables.Load<"newEduResultIsAvailable">(),
-        .antennasShouldBeDeployed = persistentVariables.Load<"antennasShouldBeDeployed">(),
-        .framIsWorking = fram::framIsWorking.Load(),
-        .epsIsWorking = persistentVariables.Load<"epsIsWorking">(),
-        .flashIsWorking = persistentVariables.Load<"flashIsWorking">(),
-        .rfIsWorking = persistentVariables.Load<"rfIsWorking">(),
+        .eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">() ? 1 : 0,
+        .eduIsAlive = eduIsAlive ? 1 : 0,
+        .newEduResultIsAvailable = persistentVariables.Load<"newEduResultIsAvailable">() ? 1 : 0,
+        .antennasShouldBeDeployed = persistentVariables.Load<"antennasShouldBeDeployed">() ? 1 : 0,
+        .framIsWorking = fram::framIsWorking.Load() ? 1 : 0,
+        .epsIsWorking = persistentVariables.Load<"epsIsWorking">() ? 1 : 0,
+        .flashIsWorking = persistentVariables.Load<"flashIsWorking">() ? 1 : 0,
+        .rfIsWorking = persistentVariables.Load<"rfIsWorking">() ? 1 : 0,
         // Booleans: byte 2:  and communication
-        .lastTelecommandIdWasInvalid = persistentVariables.Load<"lastTelecommandIdWasInvalid">(),
+        .lastTelecommandIdWasInvalid =
+            persistentVariables.Load<"lastTelecommandIdWasInvalid">() ? 1 : 0,
         .lastTelecommandArgumentsWereInvalid =
-            persistentVariables.Load<"lastTelecommandArgumentsWereInvalid">(),
+            persistentVariables.Load<"lastTelecommandArgumentsWereInvalid">() ? 1 : 0,
         // BootLoader
         .nTotalResets = persistentVariables.Load<"nTotalResets">(),
         .nResetsSinceRf = persistentVariables.Load<"nResetsSinceRf">(),

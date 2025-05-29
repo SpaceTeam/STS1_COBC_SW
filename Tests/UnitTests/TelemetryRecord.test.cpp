@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -7,6 +8,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <strong_type/type.hpp>
 
+#include <bit>
 #include <cstdint>
 #include <string>
 
@@ -24,16 +26,16 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
     SECTION("Example record is serialized and deserialized correctly")
     {
         static constexpr auto originalRecord = TelemetryRecord{
-            .eduShouldBePowered = true,
-            .eduIsAlive = true,
-            .newEduResultIsAvailable = true,
-            .antennasShouldBeDeployed = true,
-            .framIsWorking = true,
-            .epsIsWorking = true,
-            .flashIsWorking = true,
-            .rfIsWorking = true,
-            .lastTelecommandIdWasInvalid = true,
-            .lastTelecommandArgumentsWereInvalid = true,
+            .eduShouldBePowered = 1,
+            .eduIsAlive = 1,
+            .newEduResultIsAvailable = 1,
+            .antennasShouldBeDeployed = 1,
+            .framIsWorking = 1,
+            .epsIsWorking = 1,
+            .flashIsWorking = 1,
+            .rfIsWorking = 1,
+            .lastTelecommandIdWasInvalid = 1,
+            .lastTelecommandArgumentsWereInvalid = 1,
             .nTotalResets = 1U,
             .nResetsSinceRf = 2U,
             .activeSecondaryFwPartition = 3,
@@ -66,8 +68,8 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .lastFrameSequenceNumber = 59U,
             .lastTelecommandId = 60U,
         };
-        auto serializedRecord = Serialize(originalRecord);
-        auto deserializedRecord = Deserialize<TelemetryRecord>(serializedRecord);
+        auto serializedRecord = Serialize<std::endian::big>(originalRecord);
+        auto deserializedRecord = Deserialize<std::endian::big, TelemetryRecord>(serializedRecord);
         CHECK(originalRecord == deserializedRecord);
     }
 
@@ -81,19 +83,20 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
         {
             auto booleans1 = static_cast<std::uint8_t>((1U << i) & ((1U << nBooleans1) - 1U));
             auto booleans2 = static_cast<std::uint8_t>((1U << i) >> nBooleans1);
-            auto originalRecord = TelemetryRecord{
-                .eduShouldBePowered = static_cast<bool>(booleans1 & (1U << 0U)),
-                .eduIsAlive = static_cast<bool>(booleans1 & (1U << 1U)),
-                .newEduResultIsAvailable = static_cast<bool>(booleans1 & (1U << 2U)),
-                .antennasShouldBeDeployed = static_cast<bool>(booleans1 & 3U),
-                .framIsWorking = static_cast<bool>(booleans1 & (1U << 4U)),
-                .epsIsWorking = static_cast<bool>(booleans1 & (1U << 5U)),
-                .flashIsWorking = static_cast<bool>(booleans1 & (1U << 6U)),
-                .rfIsWorking = static_cast<bool>(booleans1 & (1U << 7U)),
-                .lastTelecommandIdWasInvalid = static_cast<bool>(booleans2 & (1U << 0U)),
-                .lastTelecommandArgumentsWereInvalid = static_cast<bool>(booleans2 & (1U << 1U))};
-            auto serializedRecord = Serialize(originalRecord);
-            auto deserializedRecord = Deserialize<TelemetryRecord>(serializedRecord);
+            auto originalRecord =
+                TelemetryRecord{.eduShouldBePowered = (booleans1 & (1U << 0U)),
+                                .eduIsAlive = (booleans1 & (1U << 1U)),
+                                .newEduResultIsAvailable = (booleans1 & (1U << 2U)),
+                                .antennasShouldBeDeployed = (booleans1 & 3U),
+                                .framIsWorking = (booleans1 & (1U << 4U)),
+                                .epsIsWorking = (booleans1 & (1U << 5U)),
+                                .flashIsWorking = (booleans1 & (1U << 6U)),
+                                .rfIsWorking = (booleans1 & (1U << 7U)),
+                                .lastTelecommandIdWasInvalid = (booleans2 & (1U << 0U)),
+                                .lastTelecommandArgumentsWereInvalid = (booleans2 & (1U << 1U))};
+            auto serializedRecord = Serialize<std::endian::big>(originalRecord);
+            auto deserializedRecord =
+                Deserialize<std::endian::big, TelemetryRecord>(serializedRecord);
             CHECK(originalRecord == deserializedRecord);
         }
     }

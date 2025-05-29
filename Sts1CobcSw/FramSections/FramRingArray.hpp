@@ -72,6 +72,8 @@ private:
     // PushBack() for details.
     static constexpr auto framCapacity = subsections.template Get<"array">().size / elementSize - 1;
     static constexpr auto spiTimeout = elementSize < 300U ? 1 * ms : value_of(elementSize) * 3 * us;
+    // We use big endian because UInt<> doesn't support little endian
+    static constexpr auto endianness = std::endian::big;
 
     using RingIndex = etl::cyclic_value<IndexType, 0, framCapacity>;
     struct Indexes

@@ -27,4 +27,21 @@ auto ReadFrom(Address address, Duration timeout) -> std::array<Byte, size>
     internal::ReadFrom(address, data.data(), data.size(), timeout);
     return data;
 }
+
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, Address const & address) -> void *
+{
+    return sts1cobcsw::SerializeTo<endianness>(destination, value_of(address));
+}
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, Address * address) -> void const *
+{
+    auto addressValue = strong::underlying_type_t<Address>{};
+    source = sts1cobcsw::DeserializeFrom<endianness>(source, &addressValue);
+    *address = Address(addressValue);
+    return source;
+}
 }

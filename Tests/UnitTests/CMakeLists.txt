@@ -165,6 +165,23 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 
+    add_test_program(Reports)
+    target_link_libraries(
+        Sts1CobcSwTests_Reports
+        PRIVATE Sts1CobcSw_FileSystem
+                Sts1CobcSw_Fram
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_RealTime
+                Sts1CobcSw_RfProtocols
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Telemetry
+                Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::CatchRodos
+                Sts1CobcSwTests::Utility
+    )
+    add_test(NAME Reports COMMAND Sts1CobcSwTests_Reports)
+
     add_test_program(Section)
     target_link_libraries(
         Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain strong_type::strong_type
@@ -193,7 +210,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test(NAME SpacePacket COMMAND Sts1CobcSwTests_SpacePacket)
 
     add_test_program(Span)
-    target_link_libraries(Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility)
+    target_link_libraries(
+        Sts1CobcSwTests_Span PRIVATE Catch2::Catch2WithMain etl::etl Sts1CobcSw_Utility
+    )
     catch_discover_tests(Sts1CobcSwTests_Span)
 
     add_test_program(StringLiteral)

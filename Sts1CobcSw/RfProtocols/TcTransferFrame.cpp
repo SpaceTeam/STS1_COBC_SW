@@ -30,7 +30,6 @@ auto ParseAsTransferFrame(std::span<Byte const, transferFrameLength> buffer)
     {
         return ErrorCode::invalidFrameLength;
     }
-    // TODO: Think about what to do with the frame sequence number
     return frame;
 }
 

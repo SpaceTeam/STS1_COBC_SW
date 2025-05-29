@@ -1,12 +1,14 @@
 #include <Tests/CatchRodos/Stringification.hpp>
 #include <Tests/Utility/Stringification.hpp>
 
+#include <strong_type/type.hpp>
+
 
 namespace sts1cobcsw
 {
-auto Append(ValueString * string, ErrorCode const & value) -> void
+auto Append(ValueString * string, ErrorCode const & errorCode) -> void
 {
-    switch(value)
+    switch(errorCode)
     {
         case ErrorCode::io:
             Append(string, "ErrorCode::io");
@@ -129,5 +131,12 @@ auto Append(ValueString * string, ErrorCode const & value) -> void
             Append(string, "ErrorCode::programFailed");
             break;
     }
+}
+
+
+auto Append(ValueString * string, RealTime const & realTime) -> void
+{
+    Append(string, value_of(realTime));
+    Append(string, " s");
 }
 }

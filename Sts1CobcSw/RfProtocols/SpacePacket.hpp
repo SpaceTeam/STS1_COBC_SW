@@ -30,11 +30,11 @@ constexpr auto telecommand = UInt<1>(1);
 struct SpacePacketPrimaryHeader
 {
     UInt<3> versionNumber = sts1cobcsw::packetVersionNumber;
-    UInt<1> packetType = 0;
-    UInt<1> secondaryHeaderFlag = 0;
+    UInt<1> packetType;
+    UInt<1> secondaryHeaderFlag;
     Apid apid;
-    UInt<2> sequenceFlags = 0b11;
-    UInt<14> packetSequenceCount = 0;  // NOLINT(*magic-numbers)
+    UInt<2> sequenceFlags;
+    UInt<14> packetSequenceCount;  // NOLINT(*magic-numbers)
     std::uint16_t packetDataLength = 0;
 };
 
@@ -61,7 +61,6 @@ static_assert(serialSize<SpacePacketPrimaryHeader> == packetPrimaryHeaderLength)
 
 
 [[nodiscard]] auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
-                                    bool hasSecondaryHeader,
                                     Apid apid,
                                     Payload const & payload) -> Result<void>;
 [[nodiscard]] auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>;

@@ -12,10 +12,8 @@ auto packetSequenceCounters = IdCounters<std::uint16_t, Apid>{};
 }
 
 
-auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
-                      bool hasSecondaryHeader,
-                      Apid apid,
-                      Payload const & payload) -> Result<void>
+auto AddSpacePacketTo(etl::ivector<Byte> * dataField, Apid apid, Payload const & payload)
+    -> Result<void>
 {
     if(payload.Size() == 0)
     {
@@ -32,13 +30,13 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField,
     auto primaryHeader = SpacePacketPrimaryHeader{
         .versionNumber = packetVersionNumber,
         .packetType = packettype::telemetry,
-        .secondaryHeaderFlag = hasSecondaryHeader ? 1 : 0,
+        .secondaryHeaderFlag = 1,
         .apid = apid,
         .sequenceFlags = 0b11,
         .packetSequenceCount = packetSequenceCounters.PostIncrement(apid),
         .packetDataLength = static_cast<std::uint16_t>(payload.Size() - 1U)};
     (void)SerializeTo<std::endian::big>(packetBegin, primaryHeader);
-    return payload.WriteTo(dataField);
+    return payload.AddTo(dataField);
 }
 
 
