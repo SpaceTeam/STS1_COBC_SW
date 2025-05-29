@@ -1,0 +1,6 @@
+# Do not diagnose bootloader code with clang-tidy
+If:
+  PathMatch: .*Bootloader.*\.(c|cpp|h|hpp)
+Diagnostics:
+  ClangTidy:
+    Remove: "*"
