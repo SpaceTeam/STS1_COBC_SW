@@ -275,14 +275,20 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     set(all_sources "")
     set(all_link_libraries "")
     foreach(target IN LISTS all_test_targets)
+        if(target STREQUAL Sts1CobcSwTests_FirmwareManagement)
+            # We must skip the FW management test because it erases everything after the first 128
+            # kiB of the flash and AlmostAllUnitTests is > 128 kiB in debug mode
+            continue()
+        endif()
         get_target_property(sources ${target} SOURCES)
         list(APPEND all_sources ${sources})
         get_target_property(link_libraries ${target} LINK_LIBRARIES)
         list(APPEND all_link_libraries ${link_libraries})
     endforeach()
+    list(REMOVE_DUPLICATES all_sources)
     list(REMOVE_DUPLICATES all_link_libraries)
-    add_program(AllUnitTests ${all_sources})
-    target_link_libraries(Sts1CobcSwTests_AllUnitTests PRIVATE ${all_link_libraries})
+    add_program(AlmostAllUnitTests ${all_sources})
+    target_link_libraries(Sts1CobcSwTests_AlmostAllUnitTests PRIVATE ${all_link_libraries})
 endif()
 
 # ---- All unit tests ----
