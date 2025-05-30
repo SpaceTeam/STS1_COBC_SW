@@ -2,9 +2,12 @@
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/RfProtocols/Id.hpp>
+#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
 
 
 TEST_CASE("Deserialize TC Space Packet secondary header")
