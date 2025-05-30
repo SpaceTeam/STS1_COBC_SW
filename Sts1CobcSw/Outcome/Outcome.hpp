@@ -62,6 +62,8 @@ enum class ErrorCode : std::int8_t
     invalidSpacePacket,
     invalidApid,
     invalidPayload,
+    invalidMessageTypeId,
+    invalidSourceId,
     // Firmware
     misaligned,
     eraseFailed,
