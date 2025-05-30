@@ -1,5 +1,5 @@
 target_sources(
-    Sts1CobcSw_RfProtocols PRIVATE MessageTypeIdFields.cpp Reports.cpp SpacePacket.cpp
+    Sts1CobcSw_RfProtocols PRIVATE MessageTypeIdFields.cpp Reports.cpp Requests.cpp SpacePacket.cpp
                                    TcTransferFrame.cpp TmTransferFrame.cpp
 )
 target_link_libraries(
