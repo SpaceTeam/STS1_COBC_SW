@@ -124,6 +124,9 @@ auto Append(ValueString * string, ErrorCode const & errorCode) -> void
         case ErrorCode::invalidApid:
             Append(string, "ErrorCode::invalidApid");
             break;
+        case ErrorCode::invalidPacketLength:
+            Append(string, "ErrorCode::invalidPacketLength");
+            break;
         case ErrorCode::invalidPayload:
             Append(string, "ErrorCode::invalidPayload");
             break;
