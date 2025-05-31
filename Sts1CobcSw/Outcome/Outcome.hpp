@@ -61,6 +61,7 @@ enum class ErrorCode : std::int8_t
     invalidFrameLength,
     invalidSpacePacket,
     invalidApid,
+    invalidPacketLength,
     invalidPayload,
     invalidMessageTypeId,
     invalidSourceId,
