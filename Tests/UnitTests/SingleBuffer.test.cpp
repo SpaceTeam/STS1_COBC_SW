@@ -1,7 +1,8 @@
+#include <Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>

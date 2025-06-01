@@ -27,7 +27,7 @@
 
 namespace sts1cobcsw
 {
-constexpr auto stackSize = 4'000U;
+constexpr auto stackSize = 4000U;
 constexpr auto telemetryThreadPeriod = 30 * s;
 
 
@@ -38,14 +38,12 @@ class TelemetryThread : public RODOS::StaticThread<stackSize>
 {
 public:
     TelemetryThread() : StaticThread("TelemetryThread", telemetryThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

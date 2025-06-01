@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/RfProtocols/Requests.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/Edu/Types.hpp>
@@ -5,7 +7,6 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
-#include <Sts1CobcSw/RfProtocols/Requests.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>

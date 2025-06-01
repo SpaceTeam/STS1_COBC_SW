@@ -1,5 +1,6 @@
-#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
+
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/type.hpp>
@@ -103,8 +104,7 @@ auto SetAllDoFunctions() -> void
 
 
 auto DoInitialize() -> void
-{
-}
+{}
 
 
 auto DoReadDeviceId() -> DeviceId
@@ -123,16 +123,14 @@ auto DoWriteTo([[maybe_unused]] Address address,
                [[maybe_unused]] void const * data,
                [[maybe_unused]] std::size_t nBytes,
                [[maybe_unused]] Duration timeout) -> void
-{
-}
+{}
 
 
 auto DoReadFrom([[maybe_unused]] Address address,
                 [[maybe_unused]] void * data,
                 [[maybe_unused]] std::size_t nBytes,
                 [[maybe_unused]] Duration timeout) -> void
-{
-}
+{}
 }
 
 
@@ -152,8 +150,7 @@ auto SetAllDoFunctions() -> void
 
 
 auto DoInitialize() -> void
-{
-}
+{}
 
 
 auto DoReadDeviceId() -> DeviceId

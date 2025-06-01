@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/RfProtocols/Reports.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
@@ -9,7 +11,6 @@
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
-#include <Sts1CobcSw/RfProtocols/Reports.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -267,13 +268,13 @@ TEST_CASE("Housekeeping parameter report")
         .nFileSystemErrors = 14U,
         .cobcTemperature = 15,
         .rfTemperature = 16,
- // clang-format off
+        // clang-format off
         .epsAdcData = {
             .adc4 = {
                 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U, 25U, 26U, 27U, 28U, 29U, 30U, 31U, 32U},
             .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
             .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
-  // clang-format on
+        // clang-format on
         .rxBaudRate = 53,
         .txBaudRate = 54,
         .nCorrectableUplinkErrors = 55U,
@@ -360,10 +361,9 @@ TEST_CASE("Parameter value report")
 
     dataField.clear();
     auto parameters = etl::vector<sts1cobcsw::Parameter, sts1cobcsw::maxNParameters>{
-        sts1cobcsw::Parameter{        .parameterId = Parameter::Id::rxBaudRate,.parameterValue = 9600U                                                                               },
-        sts1cobcsw::Parameter{        .parameterId = Parameter::Id::txBaudRate, .parameterValue = 115200U},
-        sts1cobcsw::Parameter{.parameterId = Parameter::Id::eduStartDelayLimit,
-                              .parameterValue = 17U                                                      }
+        sts1cobcsw::Parameter{Parameter::Id::rxBaudRate,         9600U   },
+        sts1cobcsw::Parameter{Parameter::Id::txBaudRate,         115'200U},
+        sts1cobcsw::Parameter{Parameter::Id::eduStartDelayLimit, 17U     }
     };
     report = ParameterValueReport(parameters);
     addToResult = report.AddTo(&dataField);
@@ -405,7 +405,7 @@ TEST_CASE("File attribute report")
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto filePath = fs::Path("/results/12345_67890.zip");
-    auto fileSize = 0xDEADBEEFU;
+    auto fileSize = 0xDEAD'BEEFU;
     auto fileStatus = FileStatus::locked;
     auto report = FileAttributeReport(filePath, fileSize, fileStatus);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();

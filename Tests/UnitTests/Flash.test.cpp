@@ -1,6 +1,7 @@
+#include <Sts1CobcSw/Flash/Flash.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -34,7 +35,7 @@ TEST_CASE("Flash")
 
     // TODO: Test programming and erasing all pages and sectors. This will take a long time, so
     // maybe it's better to do this in a separate WholeFlash.test.cpp.
-    static constexpr auto address = 0x00'01'00'00U;
+    static constexpr auto address = 0x0001'0000U;
 
     auto page = flash::Page{};
     flash::ProgramPage(address, page);

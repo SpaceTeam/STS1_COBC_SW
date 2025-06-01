@@ -21,8 +21,7 @@ class TestThread : public RODOS::StaticThread<stackSize>
 {
 public:
     TestThread() : StaticThread("TestThread")
-    {
-    }
+    {}
 
 
 private:

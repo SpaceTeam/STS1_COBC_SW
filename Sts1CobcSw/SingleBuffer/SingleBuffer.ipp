@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>
+
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 
 
 namespace sts1cobcsw

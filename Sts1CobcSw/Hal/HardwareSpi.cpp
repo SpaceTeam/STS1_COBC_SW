@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Hal/HardwareSpi.hpp>
+
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 
 #include <strong_type/affine_point.hpp>
@@ -11,8 +12,7 @@ HardwareSpi::HardwareSpi(RODOS::SPI_IDX spiIndex,
                          RODOS::GPIO_PIN misoPin,
                          RODOS::GPIO_PIN mosiPin)
     : spi_(spiIndex, sckPin, misoPin, mosiPin)
-{
-}
+{}
 
 
 auto HardwareSpi::DoInitialize(std::uint32_t baudRate, bool useOpenDrainOutputs) -> void

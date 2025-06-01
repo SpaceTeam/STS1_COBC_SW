@@ -38,8 +38,7 @@ class MaxPowerTestLedThread : public RODOS::StaticThread<>
 {
 public:
     MaxPowerTestLedThread() : StaticThread("MaxPowerTestLedThread")
-    {
-    }
+    {}
 
 
 private:
@@ -68,8 +67,7 @@ class MaxPowerTestUartThread : public RODOS::StaticThread<>
 {
 public:
     MaxPowerTestUartThread() : StaticThread("MaxPowerTestUartThread")
-    {
-    }
+    {}
 
 
 private:
@@ -101,8 +99,7 @@ class MaxPowerTestMainThread : public RODOS::StaticThread<>
 {
 public:
     MaxPowerTestMainThread() : StaticThread("MaxPowerTestMainThread")
-    {
-    }
+    {}
 
 
 private:

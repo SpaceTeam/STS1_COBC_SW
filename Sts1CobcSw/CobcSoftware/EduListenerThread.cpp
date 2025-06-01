@@ -1,5 +1,6 @@
-#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/EduListenerThread.hpp>
+
+#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
@@ -28,8 +29,7 @@ class EduListenerThread : public RODOS::StaticThread<>
 {
 public:
     EduListenerThread() : StaticThread("EduListenerThread", eduListenerThreadPriority)
-    {
-    }
+    {}
 
 
 private:

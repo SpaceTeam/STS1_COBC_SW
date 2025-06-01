@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/CobcSoftware/RfStartupTestThread.hpp>
+
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -22,14 +23,12 @@ class RfStartupTestThread : public RODOS::StaticThread<stackSize>
 {
 public:
     RfStartupTestThread() : StaticThread("RfStartupTestThread", rfStartupTestThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

@@ -18,7 +18,7 @@
 namespace sts1cobcsw
 {
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 2'000U;
+constexpr auto stackSize = 2000U;
 
 auto ledGpioPin = hal::GpioPin(hal::led1Pin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
@@ -34,8 +34,8 @@ class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
     EduHeartbeatThread() : StaticThread("EduHeartbeatThread", eduHeartbeatThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override

@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>
+
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
@@ -27,14 +28,12 @@ class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FramEpsStartupTestThread()
         : StaticThread("FramEpsStartupTestThread", framEpsStartupTestThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

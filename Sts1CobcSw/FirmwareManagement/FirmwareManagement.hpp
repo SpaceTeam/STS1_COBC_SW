@@ -21,9 +21,9 @@ struct Partition
 };
 
 
-extern const Partition primaryPartition;
-extern const Partition secondaryPartition1;
-extern const Partition secondaryPartition2;
+extern Partition const primaryPartition;
+extern Partition const secondaryPartition1;
+extern Partition const secondaryPartition2;
 
 
 [[nodiscard]] auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>;

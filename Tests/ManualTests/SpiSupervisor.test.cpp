@@ -29,14 +29,12 @@ class SpiSupervisorTest : public RODOS::StaticThread<stackSize>
 {
 public:
     SpiSupervisorTest() : StaticThread("SpiSupervisorTest")
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
@@ -46,7 +44,7 @@ private:
         PRINTF("\nSPI supervisor test\n\n");
 
         PRINTF("\n");
-        std::uint32_t const flashAddress = 0x00'01'10'00U;
+        std::uint32_t const flashAddress = 0x0001'1000U;
         PRINTF("Reading flash page ...\n");
         auto page = flash::ReadPage(flashAddress);
         PRINTF("Writing flash page ...\n");

@@ -29,7 +29,7 @@ public:
     template<std::size_t extent>
     [[nodiscard]] auto Read(std::span<Byte, extent> data) const -> Result<int>;
     template<std::size_t extent>
-    [[nodiscard]] auto Write(std::span<const Byte, extent> data) -> Result<int>;
+    [[nodiscard]] auto Write(std::span<Byte const, extent> data) -> Result<int>;
     [[nodiscard]] auto SeekAbsolute(int offset) -> Result<int>;
     [[nodiscard]] auto SeekRelative(int offset) -> Result<int>;
     [[nodiscard]] auto Size() const -> Result<int>;

@@ -35,18 +35,10 @@ auto transferEnd = endOfTime;
 
 class SpiSupervisorTest : public RODOS::StaticThread<>
 {
-    // We cannot use dynamic_cast because RTTI is disabled
-    // NOLINTBEGIN(*static-cast-downcast)
-    hal::SpiMock & flashSpi_ = static_cast<hal::SpiMock &>(flashSpi);
-    hal::SpiMock & framEpsSpi_ = static_cast<hal::SpiMock &>(framEpsSpi);
-    hal::SpiMock & rfSpi_ = static_cast<hal::SpiMock &>(rfSpi);
-    // NOLINTEND(*static-cast-downcast)
-
-
 public:
     SpiSupervisorTest() : StaticThread("SpiSupervisorTest", 200)
-    {
-    }
+    {}
+
 
     void init() override
     {
@@ -58,6 +50,7 @@ public:
         rfSpi_.SetWrite(WriteThatFinishesInTime);
         fram::ram::SetAllDoFunctions();
     }
+
 
     void run() override
     {
@@ -80,6 +73,15 @@ public:
         WriteTo(&flashSpi_, Span(0x00_b), 1 * ms);
         PRINTF("  -> this should never be printed\n");
     }
+
+
+private:
+    // We cannot use dynamic_cast because RTTI is disabled
+    // NOLINTBEGIN(*static-cast-downcast)
+    hal::SpiMock & flashSpi_ = static_cast<hal::SpiMock &>(flashSpi);
+    hal::SpiMock & framEpsSpi_ = static_cast<hal::SpiMock &>(framEpsSpi);
+    hal::SpiMock & rfSpi_ = static_cast<hal::SpiMock &>(rfSpi);
+    // NOLINTEND(*static-cast-downcast)
 } spiSupervisorTest;
 
 

@@ -6,9 +6,8 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
-#include <strong_type/difference.hpp>
-
 #include <littlefs/lfs_util.h>
+#include <strong_type/difference.hpp>
 
 #include <rodos_no_using_namespace.h>
 

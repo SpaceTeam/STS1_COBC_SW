@@ -1,7 +1,8 @@
+#include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
-#include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 
 #include <cstdint>
 

@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
+
 #include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>

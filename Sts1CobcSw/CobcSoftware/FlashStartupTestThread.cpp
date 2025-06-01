@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
+
 #include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Flash/Flash.hpp>
@@ -22,14 +23,12 @@ class FlashStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FlashStartupTestThread()
         : StaticThread("FlashStartupTestThread", flashStartupTestThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

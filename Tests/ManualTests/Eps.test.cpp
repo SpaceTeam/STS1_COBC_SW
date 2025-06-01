@@ -1,6 +1,7 @@
+#include <Sts1CobcSw/Sensors/Eps.hpp>
+
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
-#include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -17,14 +18,12 @@ class EpsTest : public RODOS::StaticThread<>
 {
 public:
     EpsTest() : StaticThread("EpsTest")
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

@@ -1,6 +1,7 @@
+#include <Sts1CobcSw/RfProtocols/Reports.hpp>
+
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
-#include <Sts1CobcSw/RfProtocols/Reports.hpp>
 
 #include <etl/string.h>
 
@@ -27,8 +28,7 @@ auto IncreaseSize(etl::ivector<Byte> * dataField, std::size_t sizeIncrease) -> s
 template<VerificationStage stage>
 SuccessfulVerificationReport<stage>::SuccessfulVerificationReport(RequestId const & requestId)
     : requestId_(requestId)
-{
-}
+{}
 
 
 template<VerificationStage stage>
@@ -57,8 +57,7 @@ template<VerificationStage stage>
 FailedVerificationReport<stage>::FailedVerificationReport(RequestId const & requestId,
                                                           ErrorCode errorCode)
     : requestId_(requestId), errorCode_(errorCode)
-{
-}
+{}
 
 
 template<VerificationStage stage>
@@ -86,8 +85,7 @@ template class FailedVerificationReport<VerificationStage::completionOfExecution
 
 HousekeepingParameterReport::HousekeepingParameterReport(TelemetryRecord const & record)
     : record_(record)
-{
-}
+{}
 
 
 auto HousekeepingParameterReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
@@ -110,18 +108,16 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 ParameterValueReport::ParameterValueReport(Parameter::Id parameterId,
                                            Parameter::Value parameterValue)
     : nParameters_(1),
-      parameters_(decltype(parameters_){
-          Parameter{.parameterId = parameterId, .parameterValue = parameterValue}
+      parameters_({
+          Parameter{parameterId, parameterValue}
 })
-{
-}
+{}
 
 
 ParameterValueReport::ParameterValueReport(
     etl::vector<Parameter, maxNParameters> const & parameters)
     : nParameters_(static_cast<std::uint8_t>(parameters.size())), parameters_(parameters)
-{
-}
+{}
 
 
 auto ParameterValueReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
@@ -220,8 +216,7 @@ DumpedRawMemoryDataReport::DumpedRawMemoryDataReport(
     fram::Address startAddress,
     etl::vector<Byte, maxDumpedDataLength> const & dumpedData)  // NOLINT(modernize-pass-by-value)
     : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(dumpedData)
-{
-}
+{}
 
 
 auto DumpedRawMemoryDataReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void

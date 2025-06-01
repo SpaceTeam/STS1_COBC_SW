@@ -7,8 +7,7 @@
 namespace sts1cobcsw::hal
 {
 inline GpioPin::GpioPin(RODOS::GPIO_PIN pinIndex) : pin_(pinIndex)
-{
-}
+{}
 
 
 inline auto GpioPin::SetDirection(PinDirection pinDirection) -> void

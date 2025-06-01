@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
+
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
 #include <rodos-semaphore.h>

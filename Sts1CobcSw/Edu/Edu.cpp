@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
+
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
@@ -17,10 +18,9 @@
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <littlefs/lfs.h>
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
-
-#include <littlefs/lfs.h>
 
 #include <rodos_no_using_namespace.h>
 
@@ -90,7 +90,7 @@ template<>
 [[nodiscard]] auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>;
 
 template<typename T>
-[[nodiscard]] auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
+[[nodiscard]] auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
 auto FlushUartReceiveBuffer() -> void;
 
 
@@ -329,7 +329,8 @@ auto ProgramsAreAvailableOnCobc() -> bool
     auto & directoryIterator = makeIteratorResult.value();
     return std::any_of(directoryIterator.begin(),
                        directoryIterator.end(),
-                       [](auto const & entryResult) {
+                       [](auto const & entryResult)
+                       {
                            return not entryResult.has_error()
                               and entryResult.value().type == fs::EntryType::file;
                        });
@@ -481,7 +482,7 @@ auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>
 
 
 template<typename T>
-auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>
+auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>
 {
     auto iTries = 0;
     while(true)

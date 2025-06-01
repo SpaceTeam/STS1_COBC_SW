@@ -97,12 +97,11 @@ using RODOS::PRINTF;
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
 
-class RfSendTest : public RODOS::StaticThread<5'000>
+class RfSendTest : public RODOS::StaticThread<5000>
 {
 public:
     RfSendTest() : StaticThread("RfSendTest")
-    {
-    }
+    {}
 
 
 private:

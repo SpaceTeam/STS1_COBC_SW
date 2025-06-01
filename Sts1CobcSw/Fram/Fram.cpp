@@ -2,6 +2,7 @@
 //! @brief  Low-level driver for the FRAM chip CY15B108QN-40SXI
 
 #include <Sts1CobcSw/Fram/Fram.hpp>
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>

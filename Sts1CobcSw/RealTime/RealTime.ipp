@@ -1,8 +1,9 @@
 #pragma once
 
 
-#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
+
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 
 #include <strong_type/type.hpp>

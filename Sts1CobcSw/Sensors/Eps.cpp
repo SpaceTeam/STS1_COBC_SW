@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/Sensors/Eps.hpp>
+
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -5,7 +7,6 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
-#include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>

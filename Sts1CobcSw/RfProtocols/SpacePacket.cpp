@@ -1,5 +1,6 @@
-#include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 #include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
+
+#include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 
 #include <algorithm>
 

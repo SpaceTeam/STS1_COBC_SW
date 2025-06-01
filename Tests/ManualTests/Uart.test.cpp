@@ -6,8 +6,9 @@
 //!
 //! After flashing the COBC just follow the instructions on the screen.
 
-#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
+
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>

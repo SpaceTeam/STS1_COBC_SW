@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
@@ -5,7 +7,6 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
-#include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
@@ -25,8 +26,7 @@ class TestPayload : public sts1cobcsw::Payload
 {
 public:
     TestPayload(Byte fillValue, std::uint16_t size) : fillValue_(fillValue), size_(size)
-    {
-    }
+    {}
 
 
 private:

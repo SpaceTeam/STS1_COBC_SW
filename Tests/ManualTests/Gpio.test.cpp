@@ -22,8 +22,7 @@ class LedBlinkThread : public RODOS::StaticThread<>
 {
 public:
     LedBlinkThread() : StaticThread("LedBlinkThread", ledBlinkThreadPriority)
-    {
-    }
+    {}
 
 
 private:
@@ -58,8 +57,7 @@ class InterruptTest : public RODOS::StaticThread<>
 {
 public:
     InterruptTest() : StaticThread("InterruptTest", interruptTestPriority)
-    {
-    }
+    {}
 
 
 private:

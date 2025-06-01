@@ -1,4 +1,5 @@
 #include <Tests/CatchRodos/Stringification.hpp>
+
 #include <Tests/Utility/Stringification.hpp>
 
 #include <strong_type/type.hpp>

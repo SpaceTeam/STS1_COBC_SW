@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
+
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
@@ -15,7 +16,7 @@
 
 namespace sts1cobcsw
 {
-constexpr auto stackSize = 2'000U;
+constexpr auto stackSize = 2000U;
 constexpr auto eduShutDownDelay = 2 * s;
 
 
@@ -24,14 +25,12 @@ class EduCommunicationErrorThread : public RODOS::StaticThread<stackSize>
 public:
     EduCommunicationErrorThread()
         : StaticThread("EduCommunicationThread", eduCommunicationErrorThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

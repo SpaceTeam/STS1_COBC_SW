@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
+
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 

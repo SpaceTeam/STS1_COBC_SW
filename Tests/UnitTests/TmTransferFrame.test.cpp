@@ -1,9 +1,10 @@
+#include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
-#include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -23,8 +24,7 @@ class TestPayload : public Payload
 {
 public:
     TestPayload(Byte fillValue, std::uint16_t size) : fillValue_(fillValue), size_(size)
-    {
-    }
+    {}
 
 
 private:

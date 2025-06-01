@@ -1,9 +1,10 @@
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
-#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #ifdef __linux__
     #include <Sts1CobcSw/FileSystem/LfsRam.hpp>
@@ -41,8 +42,8 @@ using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 
 namespace
 {
-auto CheckIfDataIsInMemory(std::span<const sts1cobcsw::Byte> dataToCheck) -> void;
-auto CheckIfDataIsNotInMemory(std::span<const sts1cobcsw::Byte> dataToCheck) -> void;
+auto CheckIfDataIsInMemory(std::span<sts1cobcsw::Byte const> dataToCheck) -> void;
+auto CheckIfDataIsNotInMemory(std::span<sts1cobcsw::Byte const> dataToCheck) -> void;
 #ifdef __linux__
 auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool;
 #endif
@@ -523,7 +524,7 @@ TEST_CASE("File system with data corruption")
 
 namespace
 {
-auto CheckIfDataIsInMemory([[maybe_unused]] std::span<const sts1cobcsw::Byte> dataToCheck) -> void
+auto CheckIfDataIsInMemory([[maybe_unused]] std::span<sts1cobcsw::Byte const> dataToCheck) -> void
 {
 #ifdef __linux__
     auto it =
@@ -533,7 +534,7 @@ auto CheckIfDataIsInMemory([[maybe_unused]] std::span<const sts1cobcsw::Byte> da
 }
 
 
-auto CheckIfDataIsNotInMemory([[maybe_unused]] std::span<const sts1cobcsw::Byte> dataToCheck)
+auto CheckIfDataIsNotInMemory([[maybe_unused]] std::span<sts1cobcsw::Byte const> dataToCheck)
     -> void
 {
 #ifdef __linux__

@@ -1,9 +1,10 @@
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
-#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
@@ -62,10 +63,10 @@ TEST_CASE("PersistentVariables")
 
         // SECTION("You load what you store")
         {
-            pvs.Store<"nResets">(0x12345678);
+            pvs.Store<"nResets">(0x1234'5678);
             pvs.Store<"activeFwImage">(42);
             pvs.Store<"somethingElse">(-2);
-            CHECK(pvs.Load<"nResets">() == 0x12345678U);
+            CHECK(pvs.Load<"nResets">() == 0x1234'5678U);
             CHECK(pvs.Load<"activeFwImage">() == 42);
             CHECK(pvs.Load<"somethingElse">() == -2);
         }
@@ -81,7 +82,7 @@ TEST_CASE("PersistentVariables")
 
         // SECTION("Store() writes to memory")
         {
-            pvs.Store<"nResets">(0x12345678U);
+            pvs.Store<"nResets">(0x1234'5678U);
             pvs.Store<"activeFwImage">(42);
             pvs.Store<"somethingElse">(-2);
             CHECK(memory[nResetsAddress0] == 0x78_b);
@@ -184,17 +185,17 @@ TEST_CASE("PersistentVariables")
 
         // SECTION("You load what you store")
         {
-            pvs.Store<"nResets">(0xABCDABCD);
+            pvs.Store<"nResets">(0xABCD'ABCD);
             pvs.Store<"activeFwImage">(111);
             pvs.Store<"somethingElse">(-55);
-            CHECK(pvs.Load<"nResets">() == 0xABCDABCDU);
+            CHECK(pvs.Load<"nResets">() == 0xABCD'ABCDU);
             CHECK(pvs.Load<"activeFwImage">() == 111);
             CHECK(pvs.Load<"somethingElse">() == -55);
         }
 
         // SECTION("Store() does not write to memory")
         {
-            pvs.Store<"nResets">(0xABCDABCD);
+            pvs.Store<"nResets">(0xABCD'ABCD);
             pvs.Store<"activeFwImage">(111);
             pvs.Store<"somethingElse">(-55);
             CHECK(memory[nResetsAddress0] == 0x00_b);

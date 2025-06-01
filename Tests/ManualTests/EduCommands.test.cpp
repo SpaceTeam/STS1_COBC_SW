@@ -36,8 +36,8 @@ class EduCommandsTest : public RODOS::StaticThread<>
 {
 public:
     EduCommandsTest() : StaticThread("EduCommandsTest")
-    {
-    }
+    {}
+
 
 private:
     void init() override

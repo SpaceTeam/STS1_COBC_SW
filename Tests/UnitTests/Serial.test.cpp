@@ -1,5 +1,6 @@
-#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
 #include <catch2/catch_test_macros.hpp>
@@ -61,8 +62,7 @@ TEST_CASE("TriviallySerializable and HasEndianness")  // NOLINT(cert-err58-cpp)
         one,
     };
     struct EmptyStruct
-    {
-    };
+    {};
     struct SingleInt32
     {
         std::int32_t i = 0;
@@ -134,7 +134,7 @@ TEST_CASE("Serialize TriviallySerializable types (default endian)")
     auto int8Buffer = Serialize(static_cast<std::int8_t>(-4));
     auto uint16Buffer = Serialize(static_cast<std::uint16_t>(11));
     auto int32Buffer = Serialize(static_cast<std::int32_t>(-2));
-    auto uint64Buffer = Serialize(static_cast<std::uint64_t>(0x0102030405060708));
+    auto uint64Buffer = Serialize(static_cast<std::uint64_t>(0x0102'0304'0506'0708));
     [[maybe_unused]] auto boolBuffer = Serialize(true);  // NOLINT(bugprone-argument-comment)
 
     STATIC_CHECK(std::is_same_v<decltype(byteBuffer), std::array<Byte, sizeof(std::byte)>>);
@@ -175,7 +175,7 @@ TEST_CASE("Serialize TriviallySerializable types (big endian)")
     auto int8Buffer = Serialize<endian::big>(static_cast<std::int8_t>(-4));
     auto uint16Buffer = Serialize<endian::big>(static_cast<std::uint16_t>(11));
     auto int32Buffer = Serialize<endian::big>(-2);
-    auto uint64Buffer = Serialize<endian::big>(static_cast<std::uint64_t>(0x0102030405060708));
+    auto uint64Buffer = Serialize<endian::big>(static_cast<std::uint64_t>(0x0102'0304'0506'0708));
 
     // CHECK magic can't handle std::byte, so we cast
     CHECK(int(byteBuffer[0]) == 0xAA);
@@ -318,11 +318,11 @@ TEST_CASE("Deserialize std::array (default endian)")
     CHECK(int16Array[3] == -1);
 
     auto uint32Array = Deserialize<std::array<std::uint32_t, 2>>(buffer);
-    CHECK(uint32Array[0] == 0x00070005U);
-    CHECK(uint32Array[1] == 0xFFFF0009U);
+    CHECK(uint32Array[0] == 0x0007'0005U);
+    CHECK(uint32Array[1] == 0xFFFF'0009U);
 
     auto uint64Array = Deserialize<std::array<std::uint64_t, 1>>(buffer);
-    CHECK(uint64Array[0] == 0xFFFF000900070005U);
+    CHECK(uint64Array[0] == 0xFFFF'0009'0007'0005U);
 }
 
 
@@ -337,11 +337,11 @@ TEST_CASE("Deserialize std::array (big endian)")
     CHECK(int16Array[3] == -2);
 
     auto uint32Array = Deserialize<std::endian::big, std::array<std::uint32_t, 2>>(buffer);
-    CHECK(uint32Array[0] == 0x00020004U);
-    CHECK(uint32Array[1] == 0x0006FFFEU);
+    CHECK(uint32Array[0] == 0x0002'0004U);
+    CHECK(uint32Array[1] == 0x0006'FFFEU);
 
     auto uint64Array = Deserialize<std::endian::big, std::array<std::uint64_t, 1>>(buffer);
-    CHECK(uint64Array[0] == 0x000200040006FFFEU);
+    CHECK(uint64Array[0] == 0x0002'0004'0006'FFFEU);
 }
 
 
@@ -442,8 +442,8 @@ TEST_CASE("Deserialize() is the inverse of Serialize() (default endian)")
     auto cBuffer = Serialize('x');
     auto uint8Buffer = Serialize(static_cast<std::uint8_t>(56));
     auto int16Buffer = Serialize(static_cast<std::int16_t>(-3333));
-    auto uint32Buffer = Serialize(static_cast<std::uint32_t>(123456));
-    auto int64Buffer = Serialize(static_cast<std::int64_t>(-999999));
+    auto uint32Buffer = Serialize(static_cast<std::uint32_t>(123'456));
+    auto int64Buffer = Serialize(static_cast<std::int64_t>(-999'999));
     auto booleanBuffer = Serialize(true);  // NOLINT(bugprone-argument-comment)
 
     auto character = Deserialize<char>(cBuffer);
@@ -456,8 +456,8 @@ TEST_CASE("Deserialize() is the inverse of Serialize() (default endian)")
     CHECK(character == 'x');
     CHECK(uint8 == 56);
     CHECK(int16 == -3333);
-    CHECK(uint32 == 123456);
-    CHECK(int64 == -999999);
+    CHECK(uint32 == 123'456);
+    CHECK(int64 == -999'999);
     CHECK(boolean == true);
 }
 
@@ -469,8 +469,8 @@ TEST_CASE("Deserialize() is the inverse of Serialize() (big endian)")
     auto cBuffer = Serialize<endian::big>('x');
     auto uint8Buffer = Serialize<endian::big>(static_cast<std::uint8_t>(56));
     auto int16Buffer = Serialize<endian::big>(static_cast<std::int16_t>(-3333));
-    auto uint32Buffer = Serialize<endian::big>(static_cast<std::uint32_t>(123456));
-    auto int64Buffer = Serialize<endian::big>(static_cast<std::int64_t>(-999999));
+    auto uint32Buffer = Serialize<endian::big>(static_cast<std::uint32_t>(123'456));
+    auto int64Buffer = Serialize<endian::big>(static_cast<std::int64_t>(-999'999));
     auto booleanBuffer = Serialize<endian::big>(true);  // NOLINT(bugprone-argument-comment)
 
     auto character = Deserialize<endian::big, char>(cBuffer);
@@ -483,8 +483,8 @@ TEST_CASE("Deserialize() is the inverse of Serialize() (big endian)")
     CHECK(character == 'x');
     CHECK(uint8 == 56);
     CHECK(int16 == -3333);
-    CHECK(uint32 == 123456);
-    CHECK(int64 == -999999);
+    CHECK(uint32 == 123'456);
+    CHECK(int64 == -999'999);
     CHECK(boolean == true);
 }
 
@@ -530,7 +530,7 @@ auto DeserializeFrom(void const * source, S * data) -> void const *
 
 TEST_CASE("(De-)Serialize user-defined types (default endian)")
 {
-    auto sBuffer = Serialize(S{.u16 = 0xABCD, .i32 = 0x12345678});
+    auto sBuffer = Serialize(S{.u16 = 0xABCD, .i32 = 0x1234'5678});
     STATIC_CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
     // CHECK magic can't handle std::byte, so we cast
@@ -543,13 +543,13 @@ TEST_CASE("(De-)Serialize user-defined types (default endian)")
 
     auto s = Deserialize<S>(sBuffer);
     CHECK(s.u16 == 0xABCD);
-    CHECK(s.i32 == 0x12345678);
+    CHECK(s.i32 == 0x1234'5678);
 }
 
 
 TEST_CASE("(De-)Serialize user-defined types (big endian)")
 {
-    auto sBuffer = Serialize<std::endian::big>(S{.u16 = 0xABCD, .i32 = 0x12345678});
+    auto sBuffer = Serialize<std::endian::big>(S{.u16 = 0xABCD, .i32 = 0x1234'5678});
     STATIC_CHECK(std::is_same_v<decltype(sBuffer), std::array<Byte, 2 + 4>>);
 
     // CHECK magic can't handle std::byte, so we cast
@@ -562,7 +562,7 @@ TEST_CASE("(De-)Serialize user-defined types (big endian)")
 
     auto s = Deserialize<std::endian::big, S>(sBuffer);
     CHECK(s.u16 == 0xABCD);
-    CHECK(s.i32 == 0x12345678);
+    CHECK(s.i32 == 0x1234'5678);
 }
 
 

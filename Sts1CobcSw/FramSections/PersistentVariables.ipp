@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -121,26 +122,23 @@ auto PersistentVariables<section, PersistentVariableInfos...>::WriteToCache(
 
 template<Section section, APersistentVariableInfo... PersistentVariableInfos>
     requires(sizeof...(PersistentVariableInfos) > 0)
-std::tuple<typename PersistentVariableInfos::ValueType...> PersistentVariables<
-    section,
-    PersistentVariableInfos...>::cache0 =
-    std::tuple(typename PersistentVariableInfos::ValueType{}...);
+std::tuple<typename PersistentVariableInfos::ValueType...>
+    PersistentVariables<section, PersistentVariableInfos...>::cache0 =
+        std::tuple(typename PersistentVariableInfos::ValueType{}...);
 
 
 template<Section section, APersistentVariableInfo... PersistentVariableInfos>
     requires(sizeof...(PersistentVariableInfos) > 0)
-std::tuple<typename PersistentVariableInfos::ValueType...> PersistentVariables<
-    section,
-    PersistentVariableInfos...>::cache1 =
-    std::tuple(typename PersistentVariableInfos::ValueType{}...);
+std::tuple<typename PersistentVariableInfos::ValueType...>
+    PersistentVariables<section, PersistentVariableInfos...>::cache1 =
+        std::tuple(typename PersistentVariableInfos::ValueType{}...);
 
 
 template<Section section, APersistentVariableInfo... PersistentVariableInfos>
     requires(sizeof...(PersistentVariableInfos) > 0)
-std::tuple<typename PersistentVariableInfos::ValueType...> PersistentVariables<
-    section,
-    PersistentVariableInfos...>::cache2 =
-    std::tuple(typename PersistentVariableInfos::ValueType{}...);
+std::tuple<typename PersistentVariableInfos::ValueType...>
+    PersistentVariables<section, PersistentVariableInfos...>::cache2 =
+        std::tuple(typename PersistentVariableInfos::ValueType{}...);
 
 
 template<Section section, APersistentVariableInfo... PersistentVariableInfos>

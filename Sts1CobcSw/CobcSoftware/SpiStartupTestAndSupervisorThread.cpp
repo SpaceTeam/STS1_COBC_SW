@@ -1,7 +1,8 @@
+#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
+
 #include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/RfStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -42,13 +43,12 @@ public:
     SpiStartupTestAndSupervisorThread()
         : StaticThread("SpiStartupTestAndSupervisorThread",
                        spiStartupTestAndSupervisorThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

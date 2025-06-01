@@ -219,7 +219,7 @@ TEST_CASE("Littlefs with data corruption")
 }
 
 
-auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool
+auto TryToCorruptDataInMemory(std::span<sts1cobcsw::Byte const> dataToCorrupt) -> bool
 {
     auto it = std::search(
         fs::memory.begin(), fs::memory.end(), dataToCorrupt.begin(), dataToCorrupt.end());

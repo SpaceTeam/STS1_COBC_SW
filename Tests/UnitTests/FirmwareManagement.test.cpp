@@ -1,7 +1,8 @@
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
-#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>

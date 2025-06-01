@@ -1,8 +1,9 @@
+#include <Sts1CobcSw/Utility/Crc32.hpp>
+
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <etl/vector.h>
@@ -22,13 +23,13 @@ TEST_CASE("CRC-32")
         0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b, 0xCA_b, 0xBB_b, 0xA5_b, 0xE3_b, 0xAB_b, 0xFF_b, 0x10_b};
 
     auto result = ComputeCrc32(Span(data).first<8>());
-    CHECK(result == 0x1ffa30e0U);
+    CHECK(result == 0x1FFA'30E0U);
     result = ComputeCrc32(Span(data).first<9>());
-    CHECK(result == 0xe1116228U);
+    CHECK(result == 0xE111'6228U);
     result = ComputeCrc32(Span(data).first<10>());
-    CHECK(result == 0x18565615U);
+    CHECK(result == 0x1856'5615U);
     result = ComputeCrc32(Span(data));
-    CHECK(result == 0x7072a2d9U);
+    CHECK(result == 0x7072'A2D9U);
 
     // Splitting the CRC computation in two yields the same result as computing it in one go
     result = ComputeCrc32(Span(data).first<5>());

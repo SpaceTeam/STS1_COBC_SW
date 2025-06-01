@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/CobcSoftware/RfCommunicationThread.hpp>
+
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -14,19 +15,16 @@ class RfCommunicationThread : public RODOS::StaticThread<stackSize>
 {
 public:
     RfCommunicationThread() : StaticThread("RfCommunicationThread", rfCommunicationThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
-    {
-    }
+    {}
 } rfCommunicationThread;
 
 

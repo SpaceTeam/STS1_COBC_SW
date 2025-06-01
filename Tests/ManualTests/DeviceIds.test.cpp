@@ -21,7 +21,7 @@ using RODOS::PRINTF;
 using RODOS::SECONDS;
 
 
-constexpr std::size_t stackSize = 5'000;
+constexpr std::size_t stackSize = 5000;
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
@@ -34,8 +34,7 @@ class DeviceIdsTest : public RODOS::StaticThread<stackSize>
 {
 public:
     DeviceIdsTest() : StaticThread("DeviceIdsTest")
-    {
-    }
+    {}
 
 
 private:

@@ -1,6 +1,6 @@
-#include <Tests/CatchRodos/TestMacros.hpp>
-
 #include <Sts1CobcSw/Fram/Fram.hpp>
+
+#include <Tests/CatchRodos/TestMacros.hpp>
 #ifdef __linux__
     #include <Sts1CobcSw/Fram/FramMock.hpp>
 #endif
