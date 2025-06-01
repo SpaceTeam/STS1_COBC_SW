@@ -50,10 +50,12 @@ constexpr std::size_t serialSize<S> =
 }
 
 
+// NOLINTBEGIN(*use-internal-linkage)
 template<std::endian endianness>
 auto SerializeTo(void * destination, S const & data) -> void *;
 template<std::endian endianness>
 auto DeserializeFrom(void const * source, S * data) -> void const *;
+// NOLINTEND(*use-internal-linkage)
 
 
 inline constexpr auto indexesSize = fram::Size(3 * 2 * sizeof(std::uint32_t));
@@ -107,7 +109,7 @@ TEST_CASE("FramRingArray")
         // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
         charRingArray1.Set(0, 11);
-        CHECK(std::all_of(memory.begin(), memory.end(), [](auto x) { return x == 0_b; }));
+        CHECK(std::ranges::all_of(memory, [](auto x) { return x == 0_b; }));
 
         charRingArray1.PushBack(11);
         CHECK(charRingArray1.Size() == 1U);
@@ -270,7 +272,7 @@ TEST_CASE("FramRingArray")
         // Trying to set an element in an empty ring prints a debug message and does not set
         // anything
         sRingArray.Set(0, s1);
-        CHECK(std::all_of(memory.begin(), memory.end(), [](auto x) { return x == 0_b; }));
+        CHECK(std::ranges::all_of(memory, [](auto x) { return x == 0_b; }));
 
         sRingArray.PushBack(s1);
         CHECK(sRingArray.Size() == 1U);

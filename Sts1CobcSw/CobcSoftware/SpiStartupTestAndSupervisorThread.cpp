@@ -26,6 +26,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 // Running the golden test for the supervisor thread showed that at least 850 bytes are needed
 constexpr auto stackSize = 900 + EXTRA_SANITIZER_STACK_SIZE;
 
@@ -131,6 +133,7 @@ private:
         }
     }
 } spiStartupTestAndSupervisorThread;
+}
 
 
 auto ResumeSpiStartupTestAndSupervisorThread() -> void
@@ -139,11 +142,14 @@ auto ResumeSpiStartupTestAndSupervisorThread() -> void
 }
 
 
+namespace
+{
 auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool
 {
     auto testEnd = CurrentRodosTime() + startupTestTimeout;
     startupTestThreadResumeFuntion();
     SuspendUntil(testEnd);
     return CurrentRodosTime() <= testEnd;
+}
 }
 }

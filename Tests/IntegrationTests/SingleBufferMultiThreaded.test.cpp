@@ -6,6 +6,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 auto buffer = SingleBuffer<int>{};
 auto errorCounter = 0;
 
@@ -63,4 +65,5 @@ class Receiver : public RODOS::StaticThread<>
         }
     }
 } receiver;
+}
 }

@@ -25,6 +25,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
@@ -188,5 +190,6 @@ auto ReadCharacters() -> std::array<char, nCharacters>
     // NOLINTNEXTLINE(*reinterpret-cast)
     hal::ReadFrom(&uciUart, std::span(reinterpret_cast<Byte *>(string.data()), nCharacters));
     return string;
+}
 }
 }

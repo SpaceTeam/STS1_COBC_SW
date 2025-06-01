@@ -29,6 +29,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 [[nodiscard]] auto ComputeStartDelay(RealTime startTime) -> Duration;
 
 
@@ -69,6 +71,7 @@ private:
         {
             if(edu::programQueue.IsEmpty())
             {
+                (void)0;  // Silence warning about repeated branch in conditional
                 DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
             }
@@ -165,6 +168,7 @@ auto ComputeStartDelay(RealTime startTime) -> Duration
 {
     auto delay = ToRodosTime(startTime) - CurrentRodosTime();
     return delay < Duration(0) ? Duration(0) : delay;
+}
 }
 
 

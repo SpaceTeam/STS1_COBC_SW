@@ -31,7 +31,7 @@ enum class ProgramStatus : std::uint8_t
 };
 
 
-enum class StatusType
+enum class StatusType : std::uint8_t
 {
     noEvent,
     programFinished,

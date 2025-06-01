@@ -12,7 +12,7 @@
 
 namespace sts1cobcsw::fs
 {
-enum class EntryType
+enum class EntryType : std::uint8_t
 {
     file = LFS_TYPE_REG,
     directory = LFS_TYPE_DIR,

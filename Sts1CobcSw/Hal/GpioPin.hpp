@@ -11,28 +11,28 @@
 
 namespace sts1cobcsw::hal
 {
-enum class PinDirection
+enum class PinDirection : std::uint8_t
 {
     in,
     out
 };
 
 
-enum class PinOutputType
+enum class PinOutputType : std::uint8_t
 {
     pushPull,
     openDrain
 };
 
 
-enum class PinState
+enum class PinState : std::uint8_t
 {
     set,
     reset
 };
 
 
-enum class InterruptSensitivity
+enum class InterruptSensitivity : std::uint8_t
 {
     bothEdges = 0,
     risingEdge,

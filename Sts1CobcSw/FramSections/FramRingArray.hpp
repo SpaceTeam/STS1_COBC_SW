@@ -91,8 +91,10 @@ private:
     static auto SetInCache(IndexType index, T const & t) -> void;
     static auto SetInFramAndCache(IndexType index, T const & t, Indexes const & indexes) -> void;
     [[nodiscard]] static auto LoadIndexes() -> Indexes;
+    // NOLINTNEXTLINE(*unnecessary-value-param)
     [[nodiscard]] static auto LoadElement(RingIndex index) -> T;
     static auto StoreIndexes(Indexes const & indexes) -> void;
+    // NOLINTNEXTLINE(*unnecessary-value-param)
     static auto StoreElement(RingIndex index, T const & t) -> void;
 };
 }

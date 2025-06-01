@@ -12,7 +12,7 @@
 
 namespace sts1cobcsw::rf
 {
-enum class TxType
+enum class TxType : std::uint8_t
 {
     morse,  // From GPIO pin
     packet  // From FIFO

@@ -152,7 +152,7 @@ auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::copy(filePath_.begin(), filePath_.end(), static_cast<char *>(cursor));
+    cursor = std::ranges::copy(filePath_, static_cast<char *>(cursor)).out;
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     (void)SerializeTo<ccsdsEndianness>(cursor, fileStatus_);
 }
@@ -169,10 +169,8 @@ auto FileAttributeReport::DoSize() const -> std::uint16_t
 RepositoryContentSummaryReport::RepositoryContentSummaryReport(
     fs::Path const & repositoryPath,
     std::uint8_t nObjects,
-    etl::vector<ObjectType, maxNObjectsPerPacket> const &  // NOLINT(modernize-pass-by-value)
-        objectTypes,
-    etl::vector<fs::Path, maxNObjectsPerPacket> const &  // NOLINT(modernize-pass-by-value)
-        objectNames)
+    etl::vector<ObjectType, maxNObjectsPerPacket> const & objectTypes,
+    etl::vector<fs::Path, maxNObjectsPerPacket> const & objectNames)
     : repositoryPath_(repositoryPath),
       nObjects_(nObjects),
       objectTypes_(objectTypes),
@@ -192,7 +190,7 @@ auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) con
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::copy(repositoryPath_.begin(), repositoryPath_.end(), static_cast<char *>(cursor));
+    cursor = std::ranges::copy(repositoryPath_, static_cast<char *>(cursor)).out;
     cursor = SerializeTo<ccsdsEndianness>(cursor, nObjects_);
     for(auto i = 0U; i < objectTypes_.size(); ++i)
     {
@@ -214,7 +212,7 @@ auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 DumpedRawMemoryDataReport::DumpedRawMemoryDataReport(
     std::uint8_t nDataBlocks,
     fram::Address startAddress,
-    etl::vector<Byte, maxDumpedDataLength> const & dumpedData)  // NOLINT(modernize-pass-by-value)
+    etl::vector<Byte, maxDumpedDataLength> const & dumpedData)
     : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(dumpedData)
 {}
 
@@ -228,7 +226,7 @@ auto DumpedRawMemoryDataReport::DoAddTo(etl::ivector<Byte> * dataField) const ->
     cursor = SerializeTo<ccsdsEndianness>(cursor, startAddress_);
     auto dumpedDataLength = static_cast<std::uint8_t>(dumpedData_.size());
     cursor = SerializeTo<ccsdsEndianness>(cursor, dumpedDataLength);
-    std::copy(dumpedData_.begin(), dumpedData_.end(), static_cast<Byte *>(cursor));
+    std::ranges::copy(dumpedData_, static_cast<Byte *>(cursor));
 }
 
 

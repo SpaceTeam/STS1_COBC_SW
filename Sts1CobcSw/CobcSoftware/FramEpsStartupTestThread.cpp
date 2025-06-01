@@ -19,6 +19,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 // Running the SpiSupervisor HW test showed that the minimum required stack size is ~800 bytes
 constexpr auto stackSize = 850;
 
@@ -66,6 +68,7 @@ private:
         SuspendUntil(endOfTime);
     }
 } framEpsStartupTestThread;
+}
 
 
 auto ResumeFramEpsStartupTestThread() -> void

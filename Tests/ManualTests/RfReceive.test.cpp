@@ -14,6 +14,9 @@ namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 
+
+namespace
+{
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
 
@@ -78,5 +81,6 @@ auto Print(std::span<Byte const> data) -> void
     {
         PRINTF("\n");
     }
+}
 }
 }

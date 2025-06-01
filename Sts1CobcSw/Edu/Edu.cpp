@@ -37,7 +37,14 @@
 
 namespace sts1cobcsw::edu
 {
-// --- Globals ---
+// --- Public globals ---
+
+hal::GpioPin updateGpioPin(hal::eduUpdatePin);
+
+
+namespace
+{
+// --- Private globals ---
 
 auto const programsDirectory = fs::Path("programs/");
 auto const resultsDirectory = fs::Path("results/");
@@ -92,9 +99,10 @@ template<>
 template<typename T>
 [[nodiscard]] auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
 auto FlushUartReceiveBuffer() -> void;
+}
 
 
-// --- Function definitions ---
+// --- Public function definitions ---
 
 //! @brief  Must be called in an init() function of a thread.
 auto Initialize() -> void
@@ -220,57 +228,6 @@ auto GetStatus() -> Result<Status>
 }
 
 
-auto ReceiveAndParseStatusData() -> Result<Status>
-{
-    OUTCOME_TRY(ReceiveDataPacket());
-    return ParseStatusData();
-}
-
-
-auto ParseStatusData() -> Result<Status>
-{
-    if(cepDataBuffer.empty())
-    {
-        return ErrorCode::invalidLength;
-    }
-    auto statusId = cepDataBuffer[0];
-    if(statusId == NoEventData::id)
-    {
-        if(cepDataBuffer.size() != totalSerialSize<NoEventData>)
-        {
-            return ErrorCode::invalidLength;
-        }
-        return Status{.statusType = StatusType::noEvent};
-    }
-    if(statusId == ProgramFinishedData::id)
-    {
-        if(cepDataBuffer.size() != totalSerialSize<ProgramFinishedData>)
-        {
-            return ErrorCode::invalidLength;
-        }
-        auto programFinishedData = Deserialize<ProgramFinishedData>(
-            Span(cepDataBuffer).first<totalSerialSize<ProgramFinishedData>>());
-        return Status{.statusType = StatusType::programFinished,
-                      .programId = programFinishedData.programId,
-                      .startTime = programFinishedData.startTime,
-                      .exitCode = programFinishedData.exitCode};
-    }
-    if(statusId == ResultsReadyData::id)
-    {
-        if(cepDataBuffer.size() != totalSerialSize<ResultsReadyData>)
-        {
-            return ErrorCode::invalidLength;
-        }
-        auto resultsReadyData = Deserialize<ResultsReadyData>(
-            Span(cepDataBuffer).first<totalSerialSize<ResultsReadyData>>());
-        return Status{.statusType = StatusType::resultsReady,
-                      .programId = resultsReadyData.programId,
-                      .startTime = resultsReadyData.startTime};
-    }
-    return ErrorCode::invalidStatusType;
-}
-
-
 auto ReturnResult(ReturnResultData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
@@ -334,6 +291,61 @@ auto ProgramsAreAvailableOnCobc() -> bool
                            return not entryResult.has_error()
                               and entryResult.value().type == fs::EntryType::file;
                        });
+}
+
+
+// --- Private function definitions ---
+
+namespace
+{
+auto ReceiveAndParseStatusData() -> Result<Status>
+{
+    OUTCOME_TRY(ReceiveDataPacket());
+    return ParseStatusData();
+}
+
+
+auto ParseStatusData() -> Result<Status>
+{
+    if(cepDataBuffer.empty())
+    {
+        return ErrorCode::invalidLength;
+    }
+    auto statusId = cepDataBuffer[0];
+    if(statusId == NoEventData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<NoEventData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        return Status{.statusType = StatusType::noEvent};
+    }
+    if(statusId == ProgramFinishedData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<ProgramFinishedData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        auto programFinishedData = Deserialize<ProgramFinishedData>(
+            Span(cepDataBuffer).first<totalSerialSize<ProgramFinishedData>>());
+        return Status{.statusType = StatusType::programFinished,
+                      .programId = programFinishedData.programId,
+                      .startTime = programFinishedData.startTime,
+                      .exitCode = programFinishedData.exitCode};
+    }
+    if(statusId == ResultsReadyData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<ResultsReadyData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        auto resultsReadyData = Deserialize<ResultsReadyData>(
+            Span(cepDataBuffer).first<totalSerialSize<ResultsReadyData>>());
+        return Status{.statusType = StatusType::resultsReady,
+                      .programId = resultsReadyData.programId,
+                      .startTime = resultsReadyData.startTime};
+    }
+    return ErrorCode::invalidStatusType;
 }
 
 
@@ -519,5 +531,6 @@ auto FlushUartReceiveBuffer() -> void
             break;
         }
     }
+}
 }
 }

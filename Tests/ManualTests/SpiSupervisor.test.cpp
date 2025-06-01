@@ -21,6 +21,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 // Running this test showed that the minimum required stack size is between 12.0 and 12.1 kB
 constexpr auto stackSize = 13'000;
 
@@ -71,4 +73,5 @@ private:
         PRINTF("  done\n\n");
     }
 } spiSupervisorTest;
+}
 }

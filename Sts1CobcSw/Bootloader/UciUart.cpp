@@ -5,6 +5,10 @@
 
 namespace sts1cobcsw::uciuart
 {
+// NOLINTBEGIN(*no-int-to-ptr, *cstyle-cast)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 auto Initialize() -> void
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;   // Enable GPIOA clock
@@ -12,11 +16,13 @@ auto Initialize() -> void
 
     // Configure PA2 and PA3 for USART2 (TX and RX)
     GPIOA->MODER |= (GPIO_MODER_MODER2_1 | GPIO_MODER_MODER3_1);  // Alternate function mode
-    GPIOA->AFR[0] |= (7 << GPIO_AFRL_AFSEL2_Pos) | (7 << GPIO_AFRL_AFSEL3_Pos);  // AF7 for USART2
-    GPIOA->OSPEEDR |= (GPIO_OSPEEDR_OSPEED2 | GPIO_OSPEEDR_OSPEED3);             // High speed
+    static constexpr auto af7 = 7U;                               // AF7 for USART2
+    GPIOA->AFR[0] |= (af7 << GPIO_AFRL_AFSEL2_Pos) | (af7 << GPIO_AFRL_AFSEL3_Pos);
+    GPIOA->OSPEEDR |= (GPIO_OSPEEDR_OSPEED2 | GPIO_OSPEEDR_OSPEED3);  // High speed
 
     // Configure USART2 (default settings are 8N1)
-    USART2->BRR = 0x008C;  // = 8.6875 → ~115200 bd @ 16 MHz & OVER8 = 0 acc. Table 75 in RM0383
+    static constexpr auto usartdiv = 0x008C;     // = 8.6875 → ~115200 bd @ 16 MHz & OVER8 = 0 acc.
+    USART2->BRR = usartdiv;                      // Table 75 in the reference manual RM0383
     USART2->CR1 |= USART_CR1_TE | USART_CR1_RE;  // Enable transmitter and receiver
     USART2->CR1 |= USART_CR1_UE;                 // Enable USART2
 }
@@ -48,7 +54,7 @@ auto Write(char character) -> void
 
 auto Write(char const * string) -> void
 {
-    for(; *string != '\0'; ++string)
+    for(; *string != '\0'; ++string)  // NOLINT(*pointer-arithmetic)
     {
         // Convert \n to \r\n because RODOS::PRINTF() also does this
         if(*string == '\n')
@@ -59,4 +65,7 @@ auto Write(char const * string) -> void
     }
     while((USART2->SR & USART_SR_TC) == 0) {}  // Wait until transmission is complete
 }
+
+#pragma GCC diagnostic pop
+// NOLINTEND(*no-int-to-ptr, *cstyle-cast)
 }

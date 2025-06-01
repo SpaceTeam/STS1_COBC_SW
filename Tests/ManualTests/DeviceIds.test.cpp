@@ -21,6 +21,8 @@ using RODOS::PRINTF;
 using RODOS::SECONDS;
 
 
+namespace
+{
 constexpr std::size_t stackSize = 5000;
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
@@ -166,5 +168,6 @@ auto BlinkLed(int frequency, int duration) -> void
         AT(NOW() + SECONDS / frequency / 2LL);
     }
     led1GpioPin.Reset();
+}
 }
 }

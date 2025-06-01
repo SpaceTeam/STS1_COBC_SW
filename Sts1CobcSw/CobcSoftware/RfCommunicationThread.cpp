@@ -7,6 +7,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 // TODO: Get a better estimation for the required stack size.
 constexpr auto stackSize = 1000;
 
@@ -26,6 +28,7 @@ private:
     void run() override
     {}
 } rfCommunicationThread;
+}
 
 
 auto ResumeRfCommunicationThread() -> void

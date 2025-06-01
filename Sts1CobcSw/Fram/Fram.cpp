@@ -20,6 +20,8 @@ namespace sts1cobcsw::fram
 EdacVariable<bool> framIsWorking(true);
 
 
+namespace
+{
 // --- Private globals ---
 
 constexpr auto spiTimeout = 1 * ms;
@@ -42,6 +44,7 @@ auto csGpioPin = hal::GpioPin(hal::framCsPin);
 // --- Private function declarations ---
 
 auto SetWriteEnableLatch() -> void;
+}
 
 
 // --- Public function definitions ---
@@ -103,10 +106,13 @@ auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout
 
 // --- Private function definitions ---
 
+namespace
+{
 auto SetWriteEnableLatch() -> void
 {
     csGpioPin.Reset();
     hal::WriteTo(&framEpsSpi, Span(opcode::setWriteEnableLatch), spiTimeout);
     csGpioPin.Set();
+}
 }
 }

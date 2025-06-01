@@ -13,23 +13,13 @@
 #include <strong_type/difference.hpp>
 #include <strong_type/ordered.hpp>
 
-#include <array>
-#include <bit>
 #include <compare>
 
 
-namespace sts1cobcsw
+namespace sts1cobcsw::flash
 {
-template<>
-inline constexpr std::size_t serialSize<flash::JedecId> =
-    totalSerialSize<decltype(flash::JedecId::manufacturerId), decltype(flash::JedecId::deviceId)>;
-
-
-namespace flash
+namespace
 {
-using sts1cobcsw::DeserializeFrom;
-
-
 struct SimpleInstruction
 {
     Byte id = 0x00_b;
@@ -82,9 +72,7 @@ template<SimpleInstruction const & instruction>
 template<SimpleInstruction const & instruction>
     requires(instruction.answerLength == 0)
 auto SendInstruction() -> void;
-
-template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
+}
 
 
 // ---Public function definitions ---
@@ -189,8 +177,25 @@ auto ActualBaudRate() -> std::int32_t
 }
 
 
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *
+{
+    source = sts1cobcsw::DeserializeFrom<endianness>(source, &(jedecId->manufacturerId));
+    source = sts1cobcsw::DeserializeFrom<endianness>(source, &(jedecId->deviceId));
+    return source;
+}
+
+
+template auto DeserializeFrom<std::endian::big>(void const * source, JedecId * jedecId)
+    -> void const *;
+template auto DeserializeFrom<std::endian::little>(void const * source, JedecId * jedecId)
+    -> void const *;
+
+
 // --- Private function definitions ---
 
+namespace
+{
 auto EnableWriting() -> void
 {
     csGpioPin.Reset();
@@ -251,15 +256,6 @@ template<SimpleInstruction const & instruction>
 inline auto SendInstruction() -> void
 {
     Write(Span(instruction.id), spiTimeout);
-}
-
-
-template<std::endian endianness>
-auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *
-{
-    source = DeserializeFrom<endianness>(source, &(jedecId->manufacturerId));
-    source = DeserializeFrom<endianness>(source, &(jedecId->deviceId));
-    return source;
 }
 }
 }

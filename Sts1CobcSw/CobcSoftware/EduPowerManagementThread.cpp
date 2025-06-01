@@ -1,4 +1,3 @@
-#include <Sts1CobcSw/CobcSoftware/EduListenerThread.hpp>
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
@@ -33,7 +32,6 @@ constexpr auto eduPowerManagementThreadPeriod = 2 * s;
 constexpr auto startDelayLimit = 60 * s;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
-}
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
@@ -64,7 +62,7 @@ private:
                 eduIsAliveBufferForPowerManagement.get(eduIsAlive);
                 auto startDelay = Duration(0);
                 nextProgramStartDelayBuffer.get(startDelay);
-                auto eduHasUpdate = eduUpdateGpioPin.Read() == hal::PinState::set;
+                auto eduHasUpdate = edu::updateGpioPin.Read() == hal::PinState::set;
                 auto noWorkMustBeDoneInTheNearFuture = not eduHasUpdate
                                                    and not edu::ProgramsAreAvailableOnCobc()
                                                    and startDelay >= startDelayLimit;
@@ -87,4 +85,5 @@ private:
         }
     }
 } eduPowerManagementThread;
+}
 }

@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <bit>
 #include <cstddef>
+#include <cstdint>
 
 
 // The following tables are taken from the wiki page "EPS - Electrical Power Supply" (11.03.2025)
@@ -90,7 +91,7 @@ namespace
 using AdcValues = std::array<AdcValue, nChannels>;
 
 
-enum class ResetType
+enum class ResetType : std::uint8_t
 {
     registers,
     fifo

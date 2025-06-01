@@ -36,7 +36,7 @@ struct RequestId
 
 // The values are chosen to match the subtype IDs of the failed verification reports. The IDs of the
 // successful ones are one less. The implementations of the reports rely on this.
-enum class VerificationStage
+enum class VerificationStage : std::uint8_t
 {
     acceptance = 2,
     completionOfExecution = 8,

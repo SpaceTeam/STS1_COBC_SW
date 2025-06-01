@@ -20,9 +20,12 @@ constexpr auto maxFirmwareLength = 0x2'0000U;
 
 
 #ifdef __linux__
+namespace
+{
 auto primaryPartitionMemory = std::array<std::uint8_t, maxFirmwareLength>{};
 auto secondaryPartition1Memory = std::array<std::uint8_t, maxFirmwareLength>{};
 auto secondaryPartition2Memory = std::array<std::uint8_t, maxFirmwareLength>{};
+}
 // NOLINTBEGIN(*reinterpret-cast)
 Partition const primaryPartition{
     .startAddress = reinterpret_cast<std::uintptr_t>(primaryPartitionMemory.data()),

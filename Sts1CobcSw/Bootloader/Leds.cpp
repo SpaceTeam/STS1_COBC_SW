@@ -5,6 +5,10 @@
 
 namespace sts1cobcsw::leds
 {
+// NOLINTBEGIN(*no-int-to-ptr, *cstyle-cast)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 auto Initialize() -> void
 {
     // LEDs are connected to PB12 and PB15
@@ -33,4 +37,7 @@ auto TurnOff() -> void
 {
     GPIOB->ODR &= ~(GPIO_ODR_OD12 | GPIO_ODR_OD15);  // Set PB12 and PB15 low
 }
+
+#pragma GCC diagnostic pop
+// NOLINTEND(*no-int-to-ptr, *cstyle-cast)
 }

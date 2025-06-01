@@ -13,6 +13,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 auto const stackSize = 800U + EXTRA_SANITIZER_STACK_SIZE;
 
 
@@ -86,21 +88,22 @@ private:
         SuspendUntil(endOfTime);
     }
 } rfStartupTestThread;
+}
 
 
-auto ResumeFramEpsStartupTestThread() -> void
+auto ResumeFramEpsStartupTestThread() -> void  // NOLINT(*use-internal-linkage)
 {
     framEpsStartupTestThread.resume();
 }
 
 
-auto ResumeFlashStartupTestThread() -> void
+auto ResumeFlashStartupTestThread() -> void  // NOLINT(*use-internal-linkage)
 {
     flashStartupTestThread.resume();
 }
 
 
-auto ResumeRfStartupTestThread() -> void
+auto ResumeRfStartupTestThread() -> void  // NOLINT(*use-internal-linkage)
 {
     rfStartupTestThread.resume();
 }

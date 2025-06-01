@@ -27,6 +27,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 constexpr auto stackSize = 4000U;
 constexpr auto telemetryThreadPeriod = 30 * s;
 
@@ -115,5 +117,6 @@ auto CollectTelemetryData() -> TelemetryRecord
         .nBadTransferFrames = persistentVariables.Load<"nBadTransferFrames">(),
         .lastFrameSequenceNumber = persistentVariables.Load<"lastFrameSequenceNumber">(),
         .lastTelecommandId = persistentVariables.Load<"lastTelecommandId">()};
+}
 }
 }

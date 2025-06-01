@@ -10,9 +10,11 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
-#include <strong_type/type.hpp>
+#ifdef ENABLE_DEBUG_PRINT
+    #include <strong_type/type.hpp>
 
-#include <cinttypes>  // IWYU pragma: keep
+    #include <cinttypes>
+#endif
 
 
 namespace sts1cobcsw
@@ -88,7 +90,6 @@ auto ParseAndAddQueueEntries(std::span<Byte const> queueEntries) -> void
     {
         auto entry = Deserialize<edu::ProgramQueueEntry>(
             queueEntries.first<totalSerialSize<edu::ProgramQueueEntry>>());
-
         DEBUG_PRINT("Prog ID      : %" PRIu16 "\n", value_of(entry.programId));
         DEBUG_PRINT("Start Time   : %" PRIi32 "\n", value_of(entry.startTime));
         DEBUG_PRINT("Timeout      : %" PRIi16 "\n", entry.timeout);
