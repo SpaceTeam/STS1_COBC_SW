@@ -108,6 +108,12 @@ jobs:
       if: steps.restorecache.outputs.cache-hit != 'true'
       run: echo "Cache miss"
 
+    - name: Configure bootloader
+      run: cmake --preset=ci-bootloader
+
+    - name: Build bootloader
+      run: cmake --build build/ci-bootloader
+
     - name: Configure COBC FW
       run: cmake --preset=ci-cobc
 
@@ -129,6 +135,8 @@ jobs:
       with:
         name: CobcBinaries
         path: |
+          ./build/ci-bootloader/*.bin
+          ./build/ci-bootloader/*.elf
           ./build/ci-cobc/*.bin
           ./build/ci-cobc/*.elf
           ./build/ci-cobc/Tests/**/*.bin
@@ -139,6 +147,8 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
           files: |
+            ./build/ci-bootloader/*.bin
+            ./build/ci-bootloader/*.elf
             ./build/ci-cobc/*.bin
             ./build/ci-cobc/*.elf
 
