@@ -67,6 +67,8 @@ enum class ErrorCode : std::int8_t
     invalidPayload,
     invalidMessageTypeId,
     invalidSourceId,
+    invalidApplicationData,
+    invalidDataLength,
     // Firmware
     misaligned,
     eraseFailed,

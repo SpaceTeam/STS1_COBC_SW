@@ -7,6 +7,7 @@
 
 #include <type_traits>
 
+
 namespace sts1cobcsw
 {
 
@@ -37,4 +38,96 @@ namespace sts1cobcsw
     return request;
 }
 
+
+[[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
+    -> Result<LoadRawMemoryDataAreasRequest>
+{
+    static constexpr auto minApplicationDataLength =
+        totalSerialSize<decltype(LoadRawMemoryDataAreasRequest::nDataAreas),
+                        decltype(LoadRawMemoryDataAreasRequest::startAddress),
+                        decltype(LoadRawMemoryDataAreasRequest::dataLength)>;
+    if(buffer.size() < minApplicationDataLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto request = LoadRawMemoryDataAreasRequest{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request);
+    if(not(request.nDataAreas == 1))
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    static constexpr auto maxDataLength = tc::maxMessageDataLength - minApplicationDataLength;
+    if(request.dataLength > maxDataLength)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    if(buffer.size() != minApplicationDataLength + request.dataLength)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    request.data = buffer.subspan(minApplicationDataLength, request.dataLength);
+    return request;
+}
+
+
+[[nodiscard]] auto ParseAsDumpRawMemoryDataRequest(std::span<Byte const> buffer)
+    -> Result<DumpRawMemoryDataRequest>
+{
+    static constexpr auto minApplicationDataLength =
+        totalSerialSize<decltype(DumpRawMemoryDataRequest::nDataAreas)>;
+    if(buffer.size() < minApplicationDataLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto request = DumpRawMemoryDataRequest{};
+    auto const * cursor =
+        DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.nDataAreas);
+    if(request.nDataAreas > DumpRawMemoryDataRequest::maxNDataAreas)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    request.dataAreas.resize(request.nDataAreas);
+    if(buffer.size()
+       != minApplicationDataLength + totalSerialSize<DumpRawMemoryDataArea> * request.nDataAreas)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &request.dataAreas);
+    for(auto dataArea : request.dataAreas)
+    {
+        if(dataArea.length > maxDumpedDataLength)
+        {
+            return ErrorCode::invalidApplicationData;
+        }
+    }
+    return request;
+}
+
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
+    -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &header->nDataAreas);
+    source = DeserializeFrom<endianness>(source, &header->startAddress);
+    source = DeserializeFrom<endianness>(source, &header->dataLength);
+    return source;
+}
+
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, DumpRawMemoryDataArea * dataArea)
+    -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &dataArea->startAddress);
+    source = DeserializeFrom<endianness>(source, &dataArea->length);
+    return source;
+}
+
+
+template auto DeserializeFrom<std::endian::big>(void const * source,
+                                                LoadRawMemoryDataAreasRequest * header)
+    -> void const *;
+template auto DeserializeFrom<std::endian::big>(void const * source,
+                                                DumpRawMemoryDataArea * dataArea) -> void const *;
 }

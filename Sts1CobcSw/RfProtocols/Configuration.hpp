@@ -95,6 +95,7 @@ namespace tm
 {
 inline constexpr auto packetSecondaryHeaderLength = 11U;
 inline constexpr auto packetPusVersionNumber = UInt<4>(2);
+inline constexpr auto maxMessageDataLength = maxPacketDataLength - packetSecondaryHeaderLength;
 
 // NOLINTBEGIN(*magic-numbers)
 using MessageTypeId = Id<MessageTypeIdFields,
@@ -114,6 +115,7 @@ namespace tc
 {
 inline constexpr auto packetSecondaryHeaderLength = 5U;
 inline constexpr auto packetPusVersionNumber = UInt<4>(2);
+inline constexpr auto maxMessageDataLength = maxPacketDataLength - packetSecondaryHeaderLength;
 
 // NOLINTBEGIN(*magic-numbers)
 using MessageTypeId = Id<MessageTypeIdFields,
