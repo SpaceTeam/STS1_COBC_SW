@@ -31,103 +31,37 @@ see how to properly install everything.
 
 This project makes use of [CMake
 presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) to simplify the
-process of configuring the project. As a developer, you should create a
-`CMakeUserPresets.json` file at the top-level directory of the repository. If you use the
-Docker image, the file should look something like the following:
+process of configuring the project.
+
+As a developer, you should create a `CMakeUserPresets.json` file at the root of the
+project. If you use the Docker image,
+[`CMakeDeveloperPresets.json`](CMakeDeveloperPresets.json) already contains a convenient
+set of configure and build presets for you. Just include it in your user preset file as
+shown in the following example.
 
 <details>
   <summary>CMakeUserPresets.json</summary>
 
   ~~~json
   {
-    "version": 3,
+    "version": 4,
     "cmakeMinimumRequired": {
       "major": 3,
-      "minor": 22,
+      "minor": 23,
       "patch": 0
     },
-    "configurePresets": [
-      {
-        "name": "dev-common",
-        "hidden": true,
-        "inherits": [
-          "dev-mode",
-          "clang-tidy",
-          "ci-unix",
-          "include-what-you-use"
-        ],
-        "generator": "Ninja",
-        "cacheVariables": {
-          "CMAKE_BUILD_TYPE": "Debug",
-          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-          "BUILD_MCSS_DOCS": "ON",
-          "HW_VERSION": "27"
-        }
-      },
-      {
-        "name": "dev-linux-x86",
-        "binaryDir": "${sourceDir}/build/linux-x86",
-        "inherits": "dev-common",
-        "toolchainFile": "/linux-x86.cmake"
-      },
-      {
-        "name": "dev-cobc",
-        "binaryDir": "${sourceDir}/build/cobc",
-        "inherits": "dev-common",
-        "toolchainFile": "/stm32f411.cmake",
-        "cacheVariables": {
-          "HSE_VALUE": "12000000"
-        }
-      },
-      {
-        "name": "dev-coverage",
-        "binaryDir": "${sourceDir}/build/coverage",
-        "inherits": [
-          "dev-mode",
-          "coverage-unix"
-        ],
-        "toolchainFile": "/linux-x86.cmake"
-      }
-    ],
-    "buildPresets": [
-      {
-        "name": "dev-linux-x86",
-        "configurePreset": "dev-linux-x86",
-        "configuration": "Debug",
-        "jobs": 4
-      },
-      {
-        "name": "dev-cobc",
-        "configurePreset": "dev-cobc",
-        "configuration": "Debug",
-        "jobs": 4
-      }
-    ],
-    "testPresets": [
-      {
-        "name": "dev-linux-x86",
-        "configurePreset": "dev-linux-x86",
-        "configuration": "Debug",
-        "output": {
-          "outputOnFailure": true
-        },
-        "execution": {
-          "jobs": 4
-        }
-      }
+    "include": [
+      "CMakeDeveloperPresets.json"
     ]
   }
-
   ~~~
 
 </details>
 
 The paths to the toolchain files depend on your setup. If you don't use Docker you mostly
-likely have to change them. The number of jobs given in the build and test presets must be
-adapted by you as well and should ideally be set to the number of threads available on
-your CPU. In general, `CMakeUserPresets.json` is the perfect place in which you can put
-all sorts of things that depend on your personal setup or preference, and that you would
-otherwise want to pass to the CMake command in the terminal.
+likely have to change them. In general, `CMakeUserPresets.json` is the perfect place in
+which you can put all sorts of things that depend on your personal setup or preference,
+and that you would otherwise want to pass to the CMake command in the terminal.
 
 
 ### Include What You Use
@@ -141,7 +75,8 @@ In particular, this means that we have to do the following additional steps when
 header (`.hpp`) or inline implementation (`.ipp`) file:
 
 - Add a line to the mappings file to ensure that the header file gets included with angle
-  brackets instead of quotes.
+  brackets instead of quotes. Unfortunately, this still doesn't stop IWYU from sometimes
+  suggesting our includes with quotes. I don't know why that is.
 
   ~~~
   { include: ["\"Sts1CobcSw/Hal/Spi.hpp\"", "public", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
@@ -186,16 +121,16 @@ commands:
 
 ~~~shell
 cmake --preset=dev-linux-x86
-cmake --build --preset=dev-linux-x86
-cmake --build build/linux-x86 -t Tests
-ctest --preset=dev-linux-x86
+cmake --build --preset=dev-linux-x86-debug
+cmake --build --preset=dev-linux-x86-debug -t AllTests
+ctest --test-dir build/dev-linux-x86/Tests -C Debug
 ~~~
 
 To cross-compile for the COBC run
 
 ~~~shell
 cmake --preset=dev-cobc
-cmake --build --preset=dev-cobc
+cmake --build --preset=dev-cobc-debug
 ~~~
 
 If you want to build a specific target, e.g., the hardware test for the FRAM you must
@@ -203,8 +138,11 @@ execute
 
 ~~~shell
 cmake --prest=dev-cobc
-cmake --build --preset=dev-cobc --target Sts1CobcSwTests_Fram
+cmake --build --preset=dev-cobc-debug -t Sts1CobcSwTests_Fram
 ~~~
+
+There are also build presets for non-debug builds. On Linux there is
+`dev-linux-x86-release`, and for the COBC we have `dev-cobc-min-size-rel`.
 
 
 ## Project layout
