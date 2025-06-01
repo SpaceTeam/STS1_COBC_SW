@@ -26,6 +26,8 @@ namespace sts1cobcsw
 using std::literals::operator""s;
 
 
+namespace
+{
 constexpr auto stackSize = 4000U;
 
 
@@ -260,5 +262,6 @@ auto WriteToFileAsFrame(Payload const & report, std::string const & filename) ->
     {
         RODOS::PRINTF("Failed to generate     %s\n", filename.c_str());
     }
+}
 }
 }

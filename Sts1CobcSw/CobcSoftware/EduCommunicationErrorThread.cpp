@@ -15,6 +15,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 constexpr auto stackSize = 2000U;
 constexpr auto eduShutDownDelay = 2 * s;
 
@@ -62,6 +64,7 @@ private:
         }
     }
 } eduCommunicationErrorThread;
+}
 
 
 auto ResumeEduCommunicationErrorThread() -> void

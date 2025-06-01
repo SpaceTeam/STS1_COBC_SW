@@ -3,6 +3,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 class HelloWorld : public RODOS::StaticThread<>
 {
     void run() override
@@ -11,4 +13,5 @@ class HelloWorld : public RODOS::StaticThread<>
         RODOS::hwResetAndReboot();
     }
 } helloWorld;
+}
 }

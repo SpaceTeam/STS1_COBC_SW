@@ -7,6 +7,7 @@ auto BusyWaitUs(int duration) -> void
 {
     for(int i = 0; i < duration; ++i)
     {
+        // NOLINTBEGIN(*no-assembler)
         asm volatile("nop");
         asm volatile("nop");
         asm volatile("nop");
@@ -20,6 +21,7 @@ auto BusyWaitUs(int duration) -> void
         asm volatile("nop");
         asm volatile("nop");
 #endif
+        // NOLINTEND(*no-assembler)
     }
 }
 }

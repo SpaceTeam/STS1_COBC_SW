@@ -71,7 +71,6 @@
   # Include all our headers with <> instead of ""
   { include: ["\"Sts1CobcSw/CobcSoftware/CommandParser.hpp\"",                     "public", "<Sts1CobcSw/CobcSoftware/CommandParser.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp\"",       "public", "<Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/CobcSoftware/EduListenerThread.hpp\"",                 "public", "<Sts1CobcSw/CobcSoftware/EduListenerThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp\"",             "public", "<Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp\"",            "public", "<Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp\"",          "public", "<Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>", "public"] },

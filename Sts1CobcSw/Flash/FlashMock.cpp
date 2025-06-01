@@ -4,6 +4,8 @@
 
 namespace sts1cobcsw::flash
 {
+namespace
+{
 auto doInitialize = empty::DoInitialize;
 auto doReadJedecId = empty::DoReadJedecId;
 auto doReadStatusRegister = empty::DoReadStatusRegister;
@@ -13,13 +15,14 @@ auto doProgramPage = empty::DoProgramPage;
 auto doEraseSector = empty::DoEraseSector;
 auto doWaitWhileBusy = empty::DoWaitWhileBusy;
 auto doActualBaudRate = empty::DoActualBaudRate;
+}
 
 
 // --- Mocked functions ---
 
 auto Initialize() -> void
 {
-    return doInitialize();
+    doInitialize();
 }
 
 
@@ -43,13 +46,13 @@ auto ReadPage(std::uint32_t address) -> Page
 
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
-    return doProgramPage(address, data);
+    doProgramPage(address, data);
 }
 
 
 auto EraseSector(std::uint32_t address) -> void
 {
-    return doEraseSector(address);
+    doEraseSector(address);
 }
 
 

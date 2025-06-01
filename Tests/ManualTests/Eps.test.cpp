@@ -10,9 +10,8 @@
 
 namespace sts1cobcsw
 {
-using RODOS::PRINTF;
-
-
+namespace
+{
 class EpsTest : public RODOS::StaticThread<>
 {
 public:
@@ -27,6 +26,8 @@ private:
 
     void run() override
     {
+        using RODOS::PRINTF;
+
         PRINTF("\nEPS test\n\n");
 
         PRINTF("\n");
@@ -79,4 +80,5 @@ private:
         }
     }
 } epsTest;
+}
 }

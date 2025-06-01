@@ -12,15 +12,17 @@
 using sts1cobcsw::FlatArray;
 
 
+namespace
+{
 struct S
 {
     int i = 1;
+
+    friend auto operator==(S const & lhs, S const & rhs) -> bool
+    {
+        return lhs.i == rhs.i;
+    }
 };
-
-
-auto operator==(S const & lhs, S const & rhs) -> bool
-{
-    return lhs.i == rhs.i;
 }
 
 
@@ -37,10 +39,13 @@ TEST_CASE("FlatArray() from values of the same type")
 }
 
 
+namespace
+{
 // Mix const and non-const arrays
-static constexpr auto a1 = std::array{1};
+constexpr auto a1 = std::array{1};
 auto const a2 = std::array{2, 3};
 auto a3 = std::array{4, 5, 6};
+}
 
 
 TEST_CASE("FlatArray() from arrays of the same type")
@@ -66,11 +71,14 @@ TEST_CASE("FlatArray() from arrays of the same type")
 }
 
 
+namespace
+{
 // Mix all constnesses of spans
 auto s1 = std::span<int const, 1>{a1};
 auto const s2 = std::span<int const, 2>{a2};
 auto s3 = std::span<int, 3>{a3};
 auto const s4 = std::span<int, 3>{a3};
+}
 
 
 TEST_CASE("FlatArray() from spans of the same type")

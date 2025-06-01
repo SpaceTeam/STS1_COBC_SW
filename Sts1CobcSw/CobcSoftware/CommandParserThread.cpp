@@ -18,6 +18,8 @@ extern HAL_UART uart_stdout;
 
 namespace sts1cobcsw
 {
+namespace
+{
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 4000U;
 constexpr auto startCharacter = '$';
@@ -71,4 +73,5 @@ private:
         }
     }
 } commandParserThread;
+}
 }

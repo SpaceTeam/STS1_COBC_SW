@@ -8,7 +8,9 @@
 
 namespace sts1cobcsw
 {
-static auto watchdogClearGpio = hal::GpioPin(hal::watchdogClearPin);
+namespace
+{
+auto watchdogClearGpio = hal::GpioPin(hal::watchdogClearPin);
 
 
 class HardwareSetupThread : public RODOS::StaticThread<>
@@ -48,4 +50,5 @@ private:
 #endif
     }
 } hardwareSetupThread;
+}
 }

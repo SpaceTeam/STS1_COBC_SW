@@ -7,7 +7,8 @@ namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 
-
+namespace
+{
 class TermperatureSensorTest : public RODOS::StaticThread<>
 {
 public:
@@ -36,4 +37,5 @@ private:
         }
     }
 } termperatureSensorTest;
+}
 }

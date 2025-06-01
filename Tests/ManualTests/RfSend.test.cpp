@@ -21,6 +21,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 // CCSDS test messages. RS(255,223) + CCSDS scrambling, 223 byte message, 8 byte preamble, 4
 // byte sync word, once without and once with convolutional coding.
 [[maybe_unused]] constexpr auto dataWithoutCc = std::to_array<Byte>(
@@ -181,4 +183,5 @@ private:
         PRINTF("-> done\n");
     }
 } rfSendTest;
+}
 }

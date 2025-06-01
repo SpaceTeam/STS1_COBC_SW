@@ -22,6 +22,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 auto WriteThatFinishesInTime([[maybe_unused]] void const * data,
                              [[maybe_unused]] std::size_t nBytes,
                              Duration duration) -> void;
@@ -77,11 +79,11 @@ public:
 
 private:
     // We cannot use dynamic_cast because RTTI is disabled
-    // NOLINTBEGIN(*static-cast-downcast)
+    // NOLINTBEGIN(*static-cast-downcast, *avoid-const-or-ref-data-members)
     hal::SpiMock & flashSpi_ = static_cast<hal::SpiMock &>(flashSpi);
     hal::SpiMock & framEpsSpi_ = static_cast<hal::SpiMock &>(framEpsSpi);
     hal::SpiMock & rfSpi_ = static_cast<hal::SpiMock &>(rfSpi);
-    // NOLINTEND(*static-cast-downcast)
+    // NOLINTEND(*static-cast-downcast, *avoid-const-or-ref-data-members)
 } spiSupervisorTest;
 
 
@@ -101,5 +103,6 @@ auto WriteThatTakesTooLong([[maybe_unused]] void const * data,
 {
     transferEnd = CurrentRodosTime() + duration;
     SuspendFor(duration + 3 * s);
+}
 }
 }

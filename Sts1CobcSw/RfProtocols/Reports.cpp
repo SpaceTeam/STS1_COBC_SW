@@ -160,7 +160,7 @@ auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::copy(filePath_.begin(), filePath_.end(), static_cast<char *>(cursor));
+    cursor = std::ranges::copy(filePath_, static_cast<char *>(cursor)).out;
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     (void)SerializeTo<ccsdsEndianness>(cursor, fileStatus_);
 }
@@ -198,7 +198,7 @@ auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) con
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::copy(repositoryPath_.begin(), repositoryPath_.end(), static_cast<char *>(cursor));
+    cursor = std::ranges::copy(repositoryPath_, static_cast<char *>(cursor)).out;
     cursor = SerializeTo<ccsdsEndianness>(cursor, nObjects_);
     for(auto i = 0U; i < objectTypes_.size(); ++i)
     {
@@ -234,7 +234,7 @@ auto DumpedRawMemoryDataReport::DoAddTo(etl::ivector<Byte> * dataField) const ->
     cursor = SerializeTo<ccsdsEndianness>(cursor, startAddress_);
     auto dumpedDataLength = static_cast<std::uint8_t>(dumpedData_.size());
     cursor = SerializeTo<ccsdsEndianness>(cursor, dumpedDataLength);
-    std::copy(dumpedData_.begin(), dumpedData_.end(), static_cast<Byte *>(cursor));
+    std::ranges::copy(dumpedData_, static_cast<Byte *>(cursor));
 }
 
 

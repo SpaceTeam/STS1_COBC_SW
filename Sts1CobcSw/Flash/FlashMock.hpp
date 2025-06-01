@@ -17,7 +17,7 @@ auto SetDoReadStatusRegister(Byte (*doReadStatusRegisterFunction)(std::int8_t re
 auto SetDoReadPage(Page (*doReadPageFunction)(std::uint32_t address)) -> void;
 auto SetDoProgramPage(void (*doProgramPageFunction)(std::uint32_t address, PageSpan data)) -> void;
 auto SetDoEraseSector(void (*doEraseSectorFunction)(std::uint32_t address)) -> void;
-auto SetDoWaitWhileBusyFunction(Result<void> (*doWaitWhileBusy)(Duration timeout)) -> void;
+auto SetDoWaitWhileBusy(Result<void> (*doWaitWhileBusyFunction)(Duration timeout)) -> void;
 auto SetDoActualBaudRate(std::int32_t (*doActualBaudRateFunction)()) -> void;
 
 namespace empty

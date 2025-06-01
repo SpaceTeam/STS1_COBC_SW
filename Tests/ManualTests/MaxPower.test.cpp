@@ -23,6 +23,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 constexpr auto uartTimeout = 100 * ms;
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
@@ -199,5 +201,6 @@ auto IsPrime(std::int32_t number) -> bool
         }
     }
     return true;
+}
 }
 }

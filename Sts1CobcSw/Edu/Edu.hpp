@@ -2,11 +2,15 @@
 
 
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 
 
 namespace sts1cobcsw::edu
 {
+extern hal::GpioPin updateGpioPin;
+
+
 auto Initialize() -> void;
 auto TurnOn() -> void;
 auto TurnOff() -> void;

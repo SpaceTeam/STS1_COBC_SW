@@ -10,6 +10,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 constexpr auto ledBlinkThreadPriority = 100;
 constexpr auto interruptTestPriority = 200;
 
@@ -92,4 +94,5 @@ private:
         }
     }
 } interruptTest;
+}
 }

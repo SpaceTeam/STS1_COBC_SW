@@ -9,9 +9,13 @@
 
 namespace sts1cobcsw::rftemperaturesensor
 {
+namespace
+{
 // RF_TMP is read on pin PC0 on internal ADC1
-auto adc = RODOS::HAL_ADC(RODOS::ADC_IDX1);
 constexpr auto channel = RODOS::ADC_CH_010;
+
+auto adc = RODOS::HAL_ADC(RODOS::ADC_IDX1);
+}
 
 
 auto Initialize() -> void
