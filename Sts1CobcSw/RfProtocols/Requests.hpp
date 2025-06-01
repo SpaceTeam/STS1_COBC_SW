@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
@@ -53,12 +54,22 @@ struct DumpRawMemoryDataRequest
 };
 
 
+struct PerformAFunctionRequest
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    tc::FunctionId functionId;
+    std::span<Byte const> dataField;
+};
+
+
 [[nodiscard]] auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>;
 
 [[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
     -> Result<LoadRawMemoryDataAreasRequest>;
 [[nodiscard]] auto ParseAsDumpRawMemoryDataRequest(std::span<Byte const> buffer)
     -> Result<DumpRawMemoryDataRequest>;
+[[nodiscard]] auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer)
+    -> Result<PerformAFunctionRequest>;
 
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)

@@ -104,6 +104,20 @@ namespace sts1cobcsw
 }
 
 
+[[nodiscard]] auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer)
+    -> Result<PerformAFunctionRequest>
+{
+    if(buffer.empty())
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto request = PerformAFunctionRequest{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.functionId);
+    request.dataField = buffer.subspan(totalSerialSize<tc::FunctionId>);
+    return request;
+}
+
+
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
     -> void const *

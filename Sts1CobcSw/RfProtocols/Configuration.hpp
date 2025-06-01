@@ -132,6 +132,20 @@ using MessageTypeId = Id<MessageTypeIdFields,
                          MessageTypeIdFields{0, 0},
                          MessageTypeIdFields{0, 0}>;
 // NOLINTEND(*magic-numbers)
+
+enum class FunctionId : std::uint8_t
+{
+    stopAntennaDeployment = 1,
+    requestHousekeepingParameterReports = 2,
+    disableCubeSatTx = 4,
+    enableCubeSatTx = 7,
+    resetNow = 8,
+    enableFileTransferFor = 9,
+    updateEduQueue = 22,
+    setActiveFirmware = 23,
+    setBackupFirmware = 25,
+    checkFirmwareIntegrity = 31,
+};
 }
 
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)
