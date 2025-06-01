@@ -2,7 +2,7 @@
 
 
 #include <Tests/CatchRodos/AssertionDecomposer.hpp>
-#include <Tests/CatchRodos/TestRegistration.hpp>
+#include <Tests/CatchRodos/TestRegistration.hpp>  // IWYU pragma: export
 
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage)

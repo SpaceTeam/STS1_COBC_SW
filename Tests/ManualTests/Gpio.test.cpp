@@ -3,9 +3,13 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <utility>
 
 
 namespace sts1cobcsw

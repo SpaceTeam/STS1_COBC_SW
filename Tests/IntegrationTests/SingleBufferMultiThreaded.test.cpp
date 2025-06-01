@@ -1,7 +1,14 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
+
+#include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <cstdlib>
+#include <utility>
 
 
 namespace sts1cobcsw

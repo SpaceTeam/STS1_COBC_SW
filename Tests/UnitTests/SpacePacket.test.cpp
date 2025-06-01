@@ -11,7 +11,6 @@
 
 #include <etl/vector.h>
 
-#include <algorithm>
 #include <cstdint>
 #include <span>
 

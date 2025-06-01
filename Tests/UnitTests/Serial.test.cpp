@@ -4,13 +4,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
-#include <string>
 #include <type_traits>
 
 

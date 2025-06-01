@@ -10,6 +10,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <climits>
+#include <utility>
 
 
 namespace sts1cobcsw

@@ -2,7 +2,6 @@
 
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 
-#include <algorithm>
 #include <array>
 #include <type_traits>
 

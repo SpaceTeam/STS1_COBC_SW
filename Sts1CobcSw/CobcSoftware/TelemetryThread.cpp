@@ -23,6 +23,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <cstdint>
+#include <utility>
 
 
 namespace sts1cobcsw

@@ -2,7 +2,6 @@
 
 #include <etl/vector.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 

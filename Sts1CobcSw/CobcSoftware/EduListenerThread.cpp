@@ -5,14 +5,15 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <utility>
 
 
 namespace sts1cobcsw

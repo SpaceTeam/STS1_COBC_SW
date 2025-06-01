@@ -5,6 +5,7 @@
 #include <strong_type/type.hpp>
 
 #include <cstring>
+#include <utility>
 
 
 namespace sts1cobcsw::fram

@@ -6,6 +6,7 @@ target_link_libraries(
     Sts1CobcSw_RfProtocols
     PUBLIC etl::etl
            rodos::without_main_on_linux
+           strong_type::strong_type
            Sts1CobcSw_FileSystem
            Sts1CobcSw_Fram
            Sts1CobcSw_Outcome

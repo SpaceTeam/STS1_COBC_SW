@@ -5,7 +5,6 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
-#include <array>
 #include <cstdint>
 #include <span>
 

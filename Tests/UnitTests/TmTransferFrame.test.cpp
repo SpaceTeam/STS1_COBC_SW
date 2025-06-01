@@ -1,6 +1,5 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
@@ -9,8 +8,6 @@
 
 #include <etl/vector.h>
 
-#include <algorithm>
-#include <array>
 #include <cstdint>
 #include <span>
 

@@ -1,8 +1,6 @@
 #include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
-#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -15,7 +13,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <algorithm>
+#include <utility>
 
 
 namespace sts1cobcsw

@@ -8,7 +8,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(Sts1CobcSw_FileSystem PRIVATE LfsFlash.cpp)
     target_link_libraries(
         Sts1CobcSw_FileSystem PRIVATE strong_type::strong_type Sts1CobcSw_Flash
-                                      Sts1CobcSw_RodosTime
+                                      Sts1CobcSw_Vocabulary
     )
 else()
     target_sources(Sts1CobcSw_FileSystem PRIVATE LfsRam.cpp)

@@ -1,7 +1,5 @@
 #include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
 
-#include <algorithm>
-
 
 namespace sts1cobcsw::tm
 {

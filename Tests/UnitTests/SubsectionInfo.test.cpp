@@ -3,7 +3,6 @@
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 
 #include <catch2/catch_test_macros.hpp>
-#include <strong_type/type.hpp>
 
 
 using sts1cobcsw::containsNoDuplicateNames;
