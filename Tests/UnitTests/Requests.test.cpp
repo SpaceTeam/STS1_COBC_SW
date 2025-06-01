@@ -172,3 +172,26 @@ TEST_CASE("DumpRawMemoryDataRequest")
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 }
+
+
+TEST_CASE("PerformAFunctionRequest")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(1);
+    buffer[0] = 0x01_b;        // FunctionID
+    buffer.push_back(0xAA_b);  // Data
+
+    auto parseResult = sts1cobcsw::ParseAsPerformAFunctionRequest(buffer);
+    CHECK(parseResult.has_value());
+    auto request = parseResult.value();
+
+    CHECK(request.functionId == sts1cobcsw::tc::FunctionId::stopAntennaDeployment);
+    CHECK(request.dataField[0] == 0xAA_b);
+
+    // Minimum buffer size needs to be 1
+    auto smallBuffer = etl::vector<Byte, 1>{};
+    smallBuffer.resize(0);
+    parseResult = sts1cobcsw::ParseAsPerformAFunctionRequest(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+}
