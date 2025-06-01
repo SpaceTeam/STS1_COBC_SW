@@ -1,6 +1,6 @@
 {
     "name": "STS1 COBC",
-    "image": "tuwienspaceteam/sts1-cobc:1.12.0",
+    "image": "tuwienspaceteam/sts1-cobc:1.17.0",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -16,9 +16,9 @@
                 "mhutchie.git-graph",
                 "eamodio.gitlens",
                 "LAK132.indent-to-bracket",
-                "valentjn.vscode-ltex",
                 "ionutvmi.path-autocomplete",
-                "Gruntfuggly.todo-tree"
+                "Gruntfuggly.todo-tree",
+                "ltex-plus.vscode-ltex-plus"
             ]
         }
     }
