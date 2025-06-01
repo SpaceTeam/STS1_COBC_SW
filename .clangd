@@ -1,3 +1,9 @@
+# The include cleaner does not support the concept of associated headers, so it gives false
+# positives for pretty much every source file
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+---
 # Do not diagnose CMSIS device header with clang-tidy
 If:
   PathMatch: .*stm32f411xe\.h
