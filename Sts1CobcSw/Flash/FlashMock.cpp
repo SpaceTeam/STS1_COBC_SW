@@ -2,6 +2,8 @@
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 
+#include <utility>
+
 
 namespace sts1cobcsw::flash
 {

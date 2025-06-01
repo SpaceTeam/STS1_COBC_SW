@@ -2,13 +2,13 @@
 
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
-#include <array>
+#include <utility>
 
 
 namespace flash = sts1cobcsw::flash;

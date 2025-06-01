@@ -14,6 +14,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <etl/utility.h>
 #include <etl/vector.h>
 
@@ -21,6 +23,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw

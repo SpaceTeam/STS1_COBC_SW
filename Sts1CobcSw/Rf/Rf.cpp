@@ -12,19 +12,21 @@
 #include <Sts1CobcSw/Hal/Spis.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/DebugPrint.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
-#include <algorithm>
 #include <array>
 #include <bit>
+#include <compare>
 #include <cstddef>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw::rf

@@ -28,6 +28,7 @@
   { include: ["<subscriber.h>",                 "private", "<rodos_no_using_namespace.h>", "public"] },
   { include: ["<yprintf.h>",                    "private", "<rodos_no_using_namespace.h>", "public"] },
   { include: ["<gateway.h>",                    "private", "<rodos_no_using_namespace.h>", "public"] },
+  { include: ["<genericIO.h>",                  "private", "<rodos_no_using_namespace.h>", "public"] },
 
   # Same thing for HAL components
   { include: ["<hal_uart.h>","private", "<rodos_no_using_namespace.h>", "public"] },
@@ -56,6 +57,7 @@
   { include: ["\"Sts1CobcSw/Hal/Spi.ipp\"",                             "private", "<Sts1CobcSw/Hal/Spi.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Hal/Uart.ipp\"",                            "private", "<Sts1CobcSw/Hal/Uart.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Fram/Fram.ipp\"",                           "private", "<Sts1CobcSw/Fram/Fram.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Sensors/Eps.ipp\"",                         "private", "<Sts1CobcSw/Sensors/Eps.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Byte.ipp\"",                         "private", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",                       "private", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/SingleBuffer/SingleBuffer.ipp\"",           "private", "<Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>", "public"] },

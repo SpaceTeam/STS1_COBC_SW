@@ -13,12 +13,12 @@
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
-#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 
 
 namespace fram = sts1cobcsw::fram;

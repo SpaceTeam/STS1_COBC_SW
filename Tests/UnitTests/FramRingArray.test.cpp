@@ -14,14 +14,13 @@
 #include <strong_type/equality.hpp>
 #include <strong_type/type.hpp>
 
-#include <etl/circular_buffer.h>
-
 #include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 
 
 namespace fram = sts1cobcsw::fram;

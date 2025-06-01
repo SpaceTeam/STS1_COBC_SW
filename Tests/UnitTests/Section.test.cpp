@@ -6,6 +6,8 @@
 #include <strong_type/equality.hpp>
 #include <strong_type/type.hpp>
 
+#include <utility>
+
 
 using sts1cobcsw::Section;
 using sts1cobcsw::fram::Address;

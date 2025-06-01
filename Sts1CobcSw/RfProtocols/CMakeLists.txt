@@ -6,6 +6,7 @@ target_link_libraries(
     Sts1CobcSw_RfProtocols
     PUBLIC etl::etl
            rodos::rodos
+           strong_type::strong_type
            Sts1CobcSw_Blake2s
            Sts1CobcSw_Edu
            Sts1CobcSw_FileSystem

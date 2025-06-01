@@ -61,14 +61,8 @@ add_test(NAME FirmwareManagement COMMAND Sts1CobcSwTests_FirmwareManagement)
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(Flash)
     target_link_libraries(
-        Sts1CobcSwTests_Flash
-        PRIVATE strong_type::strong_type
-                Sts1CobcSw_Flash
-                Sts1CobcSw_Outcome
-                Sts1CobcSw_Serial
-                Sts1CobcSw_Utility
-                Sts1CobcSw_Vocabulary
-                Sts1CobcSwTests::CatchRodos
+        Sts1CobcSwTests_Flash PRIVATE strong_type::strong_type Sts1CobcSw_Flash Sts1CobcSw_Serial
+                                      Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos
     )
 
     add_test_program(WholeFram)
@@ -110,13 +104,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(FramRingArray)
     target_link_libraries(
         Sts1CobcSwTests_FramRingArray
-        PRIVATE etl::etl
-                strong_type::strong_type
-                Sts1CobcSw_Fram
-                Sts1CobcSw_FramSections
-                Sts1CobcSw_Serial
-                Sts1CobcSw_Utility
-                Sts1CobcSwTests::CatchRodos
+        PRIVATE strong_type::strong_type Sts1CobcSw_Fram Sts1CobcSw_FramSections Sts1CobcSw_Serial
+                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
@@ -174,15 +163,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(Reports)
     target_link_libraries(
         Sts1CobcSwTests_Reports
-        PRIVATE Sts1CobcSw_FileSystem
-                Sts1CobcSw_Fram
+        PRIVATE strong_type::strong_type
+                Sts1CobcSw_FileSystem
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_RfProtocols
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Telemetry
                 Sts1CobcSw_Utility
-                Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::CatchRodos
                 Sts1CobcSwTests::Utility
     )
@@ -191,8 +179,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(Requests)
     target_link_libraries(
         Sts1CobcSwTests_Requests
-        PRIVATE Sts1CobcSw_FileSystem Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
-                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+        PRIVATE etl::etl
+                strong_type::strong_type
+                Sts1CobcSw_Edu
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_RfProtocols
+                Sts1CobcSw_Serial
+                Sts1CobcSwTests::CatchRodos
+                Sts1CobcSwTests::Utility
     )
     add_test(NAME Requests COMMAND Sts1CobcSwTests_Requests)
 
@@ -204,7 +198,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     catch_discover_tests(Sts1CobcSwTests_Section)
 
     add_test_program(Serial)
-    target_link_libraries(Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Serial)
+    target_link_libraries(
+        Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain etl::etl Sts1CobcSw_Serial
+    )
     catch_discover_tests(Sts1CobcSwTests_Serial)
 
     add_test_program(SingleBuffer)
@@ -237,9 +233,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(SubsectionInfo)
     target_link_libraries(
-        Sts1CobcSwTests_SubsectionInfo
-        PRIVATE Catch2::Catch2WithMain strong_type::strong_type Sts1CobcSw_Fram
-                Sts1CobcSw_FramSections Sts1CobcSw_Utility
+        Sts1CobcSwTests_SubsectionInfo PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Fram
+                                               Sts1CobcSw_FramSections Sts1CobcSw_Utility
     )
     catch_discover_tests(Sts1CobcSwTests_SubsectionInfo)
 
@@ -270,16 +265,15 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(TelemetryRecord)
     target_link_libraries(
         Sts1CobcSwTests_TelemetryRecord
-        PRIVATE Catch2::Catch2WithMain strong_type::strong_type Sts1CobcSw_Edu Sts1CobcSw_Serial
-                Sts1CobcSw_Telemetry Sts1CobcSw_Vocabulary
+        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Edu Sts1CobcSw_Serial Sts1CobcSw_Telemetry
+                Sts1CobcSw_Vocabulary
     )
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
 
     add_test_program(TmTransferFrame)
     target_link_libraries(
-        Sts1CobcSwTests_TmTransferFrame
-        PRIVATE etl::etl Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
-                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+        Sts1CobcSwTests_TmTransferFrame PRIVATE etl::etl Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+                                                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME TmTransferFrame COMMAND Sts1CobcSwTests_TmTransferFrame)
 

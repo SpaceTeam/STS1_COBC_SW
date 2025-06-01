@@ -7,11 +7,10 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <catch2/catch_test_macros.hpp>
-#include <strong_type/type.hpp>
 
 #include <bit>
 #include <cstdint>
-#include <string>
+#include <utility>
 
 
 using sts1cobcsw::Deserialize;

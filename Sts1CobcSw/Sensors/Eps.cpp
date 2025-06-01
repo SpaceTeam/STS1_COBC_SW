@@ -12,11 +12,13 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 
 // The following tables are taken from the wiki page "EPS - Electrical Power Supply" (11.03.2025)

@@ -1,5 +1,9 @@
 #include <Sts1CobcSw/RfProtocols/TcTransferFrame.hpp>
 
+#include <Sts1CobcSw/Blake2s/Blake2s.hpp>
+
+#include <array>
+
 
 namespace sts1cobcsw::tc
 {

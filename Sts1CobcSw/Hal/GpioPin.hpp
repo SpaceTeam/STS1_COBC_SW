@@ -81,4 +81,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/Hal/GpioPin.ipp>
+#include <Sts1CobcSw/Hal/GpioPin.ipp>  // IWYU pragma: keep

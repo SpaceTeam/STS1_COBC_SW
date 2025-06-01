@@ -14,11 +14,14 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <etl/vector.h>
 
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 
 namespace sts1cobcsw

@@ -8,8 +8,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(SingleBufferMultiThreaded)
     target_link_libraries(
-        Sts1CobcSwTests_SingleBufferMultiThreaded PRIVATE rodos::rodos Sts1CobcSw_SingleBuffer
-                                                          Sts1CobcSw_RodosTime
+        Sts1CobcSwTests_SingleBufferMultiThreaded
+        PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_SingleBuffer Sts1CobcSw_RodosTime
+                Sts1CobcSw_Vocabulary
     )
     add_test(NAME SingleBufferMultiThreaded COMMAND Sts1CobcSwTests_SingleBufferMultiThreaded)
 

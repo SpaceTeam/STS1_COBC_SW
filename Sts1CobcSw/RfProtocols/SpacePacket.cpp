@@ -2,8 +2,6 @@
 
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 
-#include <algorithm>
-
 
 namespace sts1cobcsw
 {

@@ -11,10 +11,12 @@
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <cstddef>
+#include <utility>
 
 
 namespace sts1cobcsw

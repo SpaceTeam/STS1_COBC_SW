@@ -10,8 +10,11 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <utility>
 
 
 namespace sts1cobcsw

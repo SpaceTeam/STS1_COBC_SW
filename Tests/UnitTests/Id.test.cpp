@@ -2,7 +2,6 @@
 
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <algorithm>
 #include <array>
 #include <type_traits>
 

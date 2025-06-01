@@ -4,7 +4,6 @@
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
-#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -31,6 +30,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 
 namespace fs = sts1cobcsw::fs;

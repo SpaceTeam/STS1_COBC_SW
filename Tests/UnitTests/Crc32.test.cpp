@@ -8,7 +8,6 @@
 
 #include <etl/vector.h>
 
-#include <algorithm>
 #include <span>
 
 

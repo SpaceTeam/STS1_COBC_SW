@@ -7,6 +7,7 @@
 
 #include <array>
 #include <bit>
+#include <span>
 
 
 namespace blake2s = sts1cobcsw::blake2s;

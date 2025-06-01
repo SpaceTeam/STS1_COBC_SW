@@ -1,23 +1,24 @@
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 
 #include <Tests/CatchRodos/TestMacros.hpp>
+#include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
-#include <Sts1CobcSw/Vocabulary/Time.hpp>
+
+#include <strong_type/type.hpp>
 
 #include <etl/string.h>
 #include <etl/vector.h>
 
 #include <cstdint>
 #include <span>
+#include <utility>
 
 
 using sts1cobcsw::Byte;
@@ -552,8 +553,8 @@ TEST_CASE("UpdateEduQueueFunction")
     auto function = parseResult.value();
 
     CHECK(function.nQueueEntries == 0x01);
-    CHECK(function.queueEntries[0].programId._val == 0xAABB);
-    CHECK(function.queueEntries[0].startTime._val == static_cast<std::int32_t>(0xAABB'CCDD));
+    CHECK(value_of(function.queueEntries[0].programId) == 0xAABB);
+    CHECK(value_of(function.queueEntries[0].startTime) == static_cast<std::int32_t>(0xAABB'CCDD));
     CHECK(function.queueEntries[0].timeout == static_cast<std::int16_t>(0xABCD));
 
     // Only 24 entries allowed
