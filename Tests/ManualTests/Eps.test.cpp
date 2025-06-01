@@ -17,14 +17,12 @@ class EpsTest : public RODOS::StaticThread<>
 {
 public:
     EpsTest() : StaticThread("EpsTest")
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

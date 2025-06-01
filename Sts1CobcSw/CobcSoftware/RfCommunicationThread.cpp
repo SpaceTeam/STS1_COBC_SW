@@ -14,19 +14,16 @@ class RfCommunicationThread : public RODOS::StaticThread<stackSize>
 {
 public:
     RfCommunicationThread() : StaticThread("RfCommunicationThread", rfCommunicationThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
-    {
-    }
+    {}
 } rfCommunicationThread;
 
 

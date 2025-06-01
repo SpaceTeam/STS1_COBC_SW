@@ -1,6 +1,5 @@
-#include <Sts1CobcSw/Bootloader/UciUart.hpp>
-
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
+#include <Sts1CobcSw/Bootloader/UciUart.hpp>
 
 
 namespace sts1cobcsw::uciuart

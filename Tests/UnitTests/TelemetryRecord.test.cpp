@@ -52,13 +52,13 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .nFileSystemErrors = 14U,
             .cobcTemperature = 15,
             .rfTemperature = 16,
- // clang-format off
+            // clang-format off
             .epsAdcData = {
                 .adc4 = {
                     17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U, 25U, 26U, 27U, 28U, 29U, 30U, 31U, 32U},
                 .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
                 .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
-  // clang-format on
+            // clang-format on
             .rxBaudRate = 53,
             .txBaudRate = 54,
             .nCorrectableUplinkErrors = 55U,

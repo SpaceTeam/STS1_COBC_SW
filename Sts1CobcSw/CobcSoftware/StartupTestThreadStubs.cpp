@@ -21,13 +21,13 @@ class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FramEpsStartupTestThread()
         : StaticThread("FramEpsStartupTestThread", framEpsStartupTestThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
+
 
     void run() override
     {
@@ -46,13 +46,13 @@ class FlashStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FlashStartupTestThread()
         : StaticThread("FlashStartupTestThread", flashStartupTestThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
+
 
     void run() override
     {
@@ -69,13 +69,13 @@ class RfStartupTestThread : public RODOS::StaticThread<stackSize>
 {
 public:
     RfStartupTestThread() : StaticThread("RfStartupTestThread", rfStartupTestThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
+
 
     void run() override
     {

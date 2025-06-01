@@ -11,8 +11,7 @@ HardwareSpi::HardwareSpi(RODOS::SPI_IDX spiIndex,
                          RODOS::GPIO_PIN misoPin,
                          RODOS::GPIO_PIN mosiPin)
     : spi_(spiIndex, sckPin, misoPin, mosiPin)
-{
-}
+{}
 
 
 auto HardwareSpi::DoInitialize(std::uint32_t baudRate, bool useOpenDrainOutputs) -> void

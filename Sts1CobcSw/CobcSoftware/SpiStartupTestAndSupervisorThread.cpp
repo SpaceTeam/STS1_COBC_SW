@@ -42,13 +42,12 @@ public:
     SpiStartupTestAndSupervisorThread()
         : StaticThread("SpiStartupTestAndSupervisorThread",
                        spiStartupTestAndSupervisorThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

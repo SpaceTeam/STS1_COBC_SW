@@ -17,7 +17,7 @@ constexpr auto channel = RODOS::ADC_CH_010;
 auto Initialize() -> void
 {
     adc.init(channel);
-    const int32_t bitResolution = 12;  // 3.3 V / 2^12 bits / (10 mV/°C) = 0.0806 °C/bit
+    int32_t const bitResolution = 12;  // 3.3 V / 2^12 bits / (10 mV/°C) = 0.0806 °C/bit
     adc.config(RODOS::ADC_PARAMETER_RESOLUTION, bitResolution);
 }
 

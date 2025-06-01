@@ -12,8 +12,7 @@ class TermperatureSensorTest : public RODOS::StaticThread<>
 {
 public:
     TermperatureSensorTest() : StaticThread("TermperatureSensorTest")
-    {
-    }
+    {}
 
 
 private:

@@ -39,7 +39,7 @@ static_assert(not std::is_invocable_v<CallMakeMyId, std::integral_constant<int, 
 static_assert(not std::is_invocable_v<CallMakeMyId, std::integral_constant<int, 0>>);
 static_assert(not std::is_invocable_v<CallMakeMyId, std::integral_constant<int, 4>>);
 static_assert(not std::is_invocable_v<CallMakeMyId, std::integral_constant<int, 16>>);
-static_assert(not std::is_invocable_v<CallMakeMyId, std::integral_constant<int, 123456>>);
+static_assert(not std::is_invocable_v<CallMakeMyId, std::integral_constant<int, 123'456>>);
 
 // operator==()
 static_assert(id1 == Make<MyId, 1>());

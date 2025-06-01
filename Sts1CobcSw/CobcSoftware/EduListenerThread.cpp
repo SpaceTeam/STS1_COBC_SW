@@ -28,8 +28,7 @@ class EduListenerThread : public RODOS::StaticThread<>
 {
 public:
     EduListenerThread() : StaticThread("EduListenerThread", eduListenerThreadPriority)
-    {
-    }
+    {}
 
 
 private:

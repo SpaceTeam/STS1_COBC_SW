@@ -134,8 +134,7 @@ auto SetAllDoFunctions() -> void
 
 
 auto DoInitialize() -> void
-{
-}
+{}
 
 
 auto DoReadJedecId() -> JedecId
@@ -157,13 +156,11 @@ auto DoReadPage([[maybe_unused]] std::uint32_t address) -> Page
 
 
 auto DoProgramPage([[maybe_unused]] std::uint32_t address, [[maybe_unused]] PageSpan data) -> void
-{
-}
+{}
 
 
 auto DoEraseSector([[maybe_unused]] std::uint32_t address) -> void
-{
-}
+{}
 
 
 auto DoWaitWhileBusy([[maybe_unused]] Duration timeout) -> Result<void>

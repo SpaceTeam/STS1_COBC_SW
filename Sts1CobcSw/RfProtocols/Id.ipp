@@ -11,8 +11,7 @@ namespace sts1cobcsw
 template<typename T, T... validIdValues>
     requires(sizeof...(validIdValues) > 0)
 constexpr Id<T, validIdValues...>::Id(T t) : valueIsAnImplementationDetail(std::move(t))
-{
-}
+{}
 
 
 template<typename T, T... validIdValues>

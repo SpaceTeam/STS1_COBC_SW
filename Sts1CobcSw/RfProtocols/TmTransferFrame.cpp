@@ -6,8 +6,7 @@
 namespace sts1cobcsw::tm
 {
 TransferFrame::TransferFrame(std::span<Byte, transferFrameLength> buffer) : buffer_(buffer)
-{
-}
+{}
 
 
 auto TransferFrame::StartNew(Vcid vcid) -> void

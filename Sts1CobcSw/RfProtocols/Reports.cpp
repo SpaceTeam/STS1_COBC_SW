@@ -29,8 +29,7 @@ auto IncreaseSize(etl::ivector<Byte> * dataField, std::size_t sizeIncrease) -> s
 template<VerificationStage stage>
 SuccessfulVerificationReport<stage>::SuccessfulVerificationReport(RequestId const & requestId)
     : requestId_(requestId)
-{
-}
+{}
 
 
 template<VerificationStage stage>
@@ -59,8 +58,7 @@ template<VerificationStage stage>
 FailedVerificationReport<stage>::FailedVerificationReport(RequestId const & requestId,
                                                           ErrorCode errorCode)
     : requestId_(requestId), errorCode_(errorCode)
-{
-}
+{}
 
 
 template<VerificationStage stage>
@@ -88,8 +86,7 @@ template class FailedVerificationReport<VerificationStage::completionOfExecution
 
 HousekeepingParameterReport::HousekeepingParameterReport(TelemetryRecord const & record)
     : record_(record)
-{
-}
+{}
 
 
 auto HousekeepingParameterReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
@@ -113,8 +110,7 @@ ParameterValueReport::ParameterValueReport(ParameterId parameterId, ParameterVal
     : nParameters_(1),
       parameterIds_(decltype(parameterIds_){parameterId}),
       parameterValues_(decltype(parameterValues_){parameterValue})
-{
-}
+{}
 
 
 ParameterValueReport::ParameterValueReport(
@@ -226,8 +222,7 @@ DumpedRawMemoryDataReport::DumpedRawMemoryDataReport(
     fram::Address startAddress,
     etl::vector<Byte, maxDumpedDataLength> dumpedData)
     : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(std::move(dumpedData))
-{
-}
+{}
 
 
 auto DumpedRawMemoryDataReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void

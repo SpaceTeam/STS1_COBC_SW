@@ -27,14 +27,12 @@ class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FramEpsStartupTestThread()
         : StaticThread("FramEpsStartupTestThread", framEpsStartupTestThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

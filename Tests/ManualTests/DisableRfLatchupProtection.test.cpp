@@ -8,8 +8,7 @@ namespace sts1cobcsw
 class DisableRfLatchupProtectionTest : public RODOS::StaticThread<>
 {
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

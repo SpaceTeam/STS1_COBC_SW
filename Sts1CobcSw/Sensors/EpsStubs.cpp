@@ -4,8 +4,7 @@
 namespace sts1cobcsw::eps
 {
 auto InitializeAdcs() -> void
-{
-}
+{}
 
 
 [[nodiscard]] auto ReadAdcs() -> AdcData
@@ -15,11 +14,9 @@ auto InitializeAdcs() -> void
 
 
 auto ResetAdcRegisters() -> void
-{
-}
+{}
 
 
 auto ClearAdcFifos() -> void
-{
-}
+{}
 }

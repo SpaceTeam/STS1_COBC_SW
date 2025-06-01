@@ -42,7 +42,7 @@ TEST_CASE("Span() converts to the right std::span")
     // Passing by const & yields std::span<T const> aka a read-only span
     STATIC_CHECK(std::is_same_v<decltype(Span(i)), std::span<int const, 1>>);
     STATIC_CHECK(std::is_same_v<decltype(Span(ci)), std::span<int const, 1>>);
-    STATIC_CHECK(std::is_same_v<decltype(Span(123456L)), std::span<long const, 1>>);
+    STATIC_CHECK(std::is_same_v<decltype(Span(123'456L)), std::span<long const, 1>>);
     STATIC_CHECK(std::is_same_v<decltype(Span(a)), std::span<short const, 3>>);
     STATIC_CHECK(std::is_same_v<decltype(Span(ca)), std::span<char const, 5>>);
     STATIC_CHECK(std::is_same_v<decltype(Span("ijk")), std::span<char const, 4>>);

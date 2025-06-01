@@ -20,12 +20,11 @@ auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 auto Print(std::span<Byte const> data) -> void;
 
 
-class RfReceiveTest : public RODOS::StaticThread<5'000>
+class RfReceiveTest : public RODOS::StaticThread<5000>
 {
 public:
     RfReceiveTest() : StaticThread("RfReceiveTest")
-    {
-    }
+    {}
 
 
 private:

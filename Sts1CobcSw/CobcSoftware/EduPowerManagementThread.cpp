@@ -24,7 +24,7 @@ namespace sts1cobcsw
 namespace
 {
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 2'000U;
+constexpr auto stackSize = 2000U;
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
 constexpr auto eduBootTimeMargin = 5 * s;
@@ -41,8 +41,7 @@ class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
 public:
     EduPowerManagementThread()
         : StaticThread("EduPowerManagementThread", eduPowerManagementThreadPriority)
-    {
-    }
+    {}
 
 
 private:

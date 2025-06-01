@@ -32,7 +32,7 @@ namespace sts1cobcsw
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 8'000U;
+constexpr auto stackSize = 8000U;
 constexpr auto eduCommunicationDelay = 2 * s;
 
 
@@ -40,8 +40,7 @@ class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
     EduProgramQueueThread() : StaticThread("EduProgramQueueThread", eduProgramQueueThreadPriority)
-    {
-    }
+    {}
 
 
 private:

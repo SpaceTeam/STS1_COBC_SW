@@ -22,14 +22,12 @@ class FlashStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FlashStartupTestThread()
         : StaticThread("FlashStartupTestThread", flashStartupTestThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override

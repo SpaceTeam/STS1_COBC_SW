@@ -15,8 +15,7 @@ class HardwareSetupThread : public RODOS::StaticThread<>
 {
 public:
     HardwareSetupThread() : StaticThread("HardwareSetupThread", MAX_THREAD_PRIORITY)
-    {
-    }
+    {}
 
 
 private:

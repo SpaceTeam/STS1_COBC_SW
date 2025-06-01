@@ -25,8 +25,7 @@ class TestPayload : public sts1cobcsw::Payload
 {
 public:
     TestPayload(Byte fillValue, std::uint16_t size) : fillValue_(fillValue), size_(size)
-    {
-    }
+    {}
 
 
 private:

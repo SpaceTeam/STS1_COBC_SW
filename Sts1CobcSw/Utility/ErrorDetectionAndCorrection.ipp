@@ -13,8 +13,7 @@ RODOS::Semaphore EdacVariable<T>::semaphore{};
 template<typename T>
 constexpr EdacVariable<T>::EdacVariable(T const & value)
     : value0_(value), value1_(value), value2_(value)
-{
-}
+{}
 
 
 template<typename T>

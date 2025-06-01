@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Bootloader/Leds.hpp>
-
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 
 
