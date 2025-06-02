@@ -61,6 +61,22 @@ struct PerformAFunctionRequest
 };
 
 
+struct ReportParameterValuesRequest
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{20, 1}>();
+    std::uint8_t nParameters;
+    etl::vector<ParameterId, maxNParameters> parameterIds;
+};
+
+
+struct SetParameterValuesRequest
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{20, 3}>();
+    std::uint8_t nParameters;
+    etl::vector<Parameter, maxNParameters> parameters;
+};
+
+
 [[nodiscard]] auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>;
 
 [[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
@@ -69,6 +85,10 @@ struct PerformAFunctionRequest
     -> Result<DumpRawMemoryDataRequest>;
 [[nodiscard]] auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer)
     -> Result<PerformAFunctionRequest>;
+[[nodiscard]] auto ParseAsReportParameterValuesRequest(std::span<Byte const> buffer)
+    -> Result<ReportParameterValuesRequest>;
+[[nodiscard]] auto ParseAsSetParameterValuesRequest(std::span<Byte const> buffer)
+    -> Result<SetParameterValuesRequest>;
 
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
@@ -76,4 +96,6 @@ template<std::endian endianness>
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, DumpRawMemoryDataArea * dataArea)
     -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *;
 }
