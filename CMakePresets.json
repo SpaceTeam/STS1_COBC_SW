@@ -37,10 +37,18 @@
       }
     },
     {
-      "name": "clang-tidy",
+      "name": "clang-tidy-linux",
       "hidden": true,
       "cacheVariables": {
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--header-filter=${sourceDir}/*.hpp;--extra-arg=-fsized-deallocation"
+      }
+    },
+    {
+      "name": "clang-tidy-cobc",
+      "description": "Some time after version 15 clang-tidy became picky and now we need to specify the target triple and include paths",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--header-filter=${sourceDir}/*.hpp;--extra-arg=-fsized-deallocation;--extra-arg=--target=arm-none-eabi;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../arm-none-eabi/include/newlib-nano;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include/c++/13.3.1;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include/c++/13.3.1/arm-none-eabi;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include/c++/13.3.1/backward;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/include-fixed;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include"
       }
     },
     {
@@ -138,7 +146,7 @@
       "inherits": [
         "dev-mode",
         "ci-unix",
-        "clang-tidy",
+        "clang-tidy-linux",
         "include-what-you-use"
       ],
       "toolchainFile": "/linux-x86.cmake"
@@ -148,7 +156,7 @@
       "inherits": [
         "dev-mode",
         "ci-unix",
-        "clang-tidy",
+        "clang-tidy-cobc",
         "include-what-you-use"
       ],
       "toolchainFile": "/stm32f411.cmake",
@@ -161,7 +169,7 @@
       "inherits": [
         "dev-mode",
         "ci-unix",
-        "clang-tidy",
+        "clang-tidy-cobc",
         "include-what-you-use"
       ],
       "toolchainFile": "${sourceDir}/Sts1CobcSw/Bootloader/Toolchain.cmake",

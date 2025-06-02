@@ -31,7 +31,7 @@
       "name": "dev-linux-x86",
       "inherits": [
         "dev-linux-x86-fast",
-        "clang-tidy",
+        "clang-tidy-linux",
         "include-what-you-use"
       ]
     },
@@ -48,7 +48,7 @@
       "name": "dev-cobc",
       "inherits": [
         "dev-cobc-fast",
-        "clang-tidy",
+        "clang-tidy-cobc",
         "include-what-you-use"
       ]
     },
@@ -64,7 +64,7 @@
       "name": "dev-bootloader",
       "inherits": [
         "dev-bootloader-fast",
-        "clang-tidy",
+        "clang-tidy-cobc",
         "include-what-you-use"
       ]
     }
