@@ -4,6 +4,9 @@
 #include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
+
+#include <etl/algorithm.h>
 
 #include <type_traits>
 
@@ -118,6 +121,59 @@ namespace sts1cobcsw
 }
 
 
+[[nodiscard]] auto ParseAsReportParameterValuesRequest(std::span<Byte const> buffer)
+    -> Result<ReportParameterValuesRequest>
+{
+    static constexpr auto minApplicationDataLength =
+        totalSerialSize<decltype(ReportParameterValuesRequest::nParameters)>;
+    if(buffer.size() < minApplicationDataLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto request = ReportParameterValuesRequest{};
+    auto const * cursor =
+        DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.nParameters);
+    if(request.nParameters > maxNParameters)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    if(buffer.size()
+       != minApplicationDataLength + totalSerialSize<ParameterId> * request.nParameters)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    request.parameterIds.resize(request.nParameters);
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &request.parameterIds);
+    return request;
+}
+
+
+[[nodiscard]] auto ParseAsSetParameterValuesRequest(std::span<Byte const> buffer)
+    -> Result<SetParameterValuesRequest>
+{
+    static constexpr auto minApplicationDataLength =
+        totalSerialSize<decltype(ReportParameterValuesRequest::nParameters)>;
+    if(buffer.size() < minApplicationDataLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto request = SetParameterValuesRequest{};
+    auto const * cursor =
+        DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.nParameters);
+    if(request.nParameters > maxNParameters)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    if(buffer.size() != minApplicationDataLength + totalSerialSize<Parameter> * request.nParameters)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    request.parameters.resize(request.nParameters);
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &request.parameters);
+    return request;
+}
+
+
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
     -> void const *
@@ -139,9 +195,20 @@ template<std::endian endianness>
 }
 
 
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &parameter->parameterId);
+    source = DeserializeFrom<endianness>(source, &parameter->parameterValue);
+    return source;
+}
+
+
 template auto DeserializeFrom<std::endian::big>(void const * source,
                                                 LoadRawMemoryDataAreasRequest * header)
     -> void const *;
 template auto DeserializeFrom<std::endian::big>(void const * source,
                                                 DumpRawMemoryDataArea * dataArea) -> void const *;
+template auto DeserializeFrom<std::endian::big>(void const * source, Parameter * parameter)
+    -> void const *;
 }
