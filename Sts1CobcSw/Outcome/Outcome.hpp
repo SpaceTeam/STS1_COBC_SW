@@ -69,6 +69,7 @@ enum class ErrorCode : std::int8_t
     invalidSourceId,
     invalidApplicationData,
     invalidDataLength,
+    emptyFilePath,
     // Firmware
     misaligned,
     eraseFailed,

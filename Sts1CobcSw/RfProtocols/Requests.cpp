@@ -1,14 +1,9 @@
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-
-#include <etl/algorithm.h>
-
-#include <type_traits>
+#include <Sts1CobcSw/Serial/UInt.hpp>
 
 
 namespace sts1cobcsw
@@ -174,6 +169,81 @@ namespace sts1cobcsw
 }
 
 
+[[nodiscard]] auto ParseAsDeleteAFileRequest(std::span<Byte const> buffer)
+    -> Result<DeleteAFileRequest>
+{
+    auto request = DeleteAFileRequest{};
+    if(buffer.size() < request.filePath.capacity())
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.filePath);
+    if(request.filePath.empty())
+    {
+        return ErrorCode::emptyFilePath;
+    }
+    return request;
+}
+
+
+[[nodiscard]] auto ParseAsReportTheAttributesOfAFileRequest(std::span<Byte const> buffer)
+    -> Result<ReportTheAttributesOfAFileRequest>
+{
+    auto request = ReportTheAttributesOfAFileRequest{};
+    if(buffer.size() < request.filePath.capacity())
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.filePath);
+    if(request.filePath.empty())
+    {
+        return ErrorCode::emptyFilePath;
+    }
+    return request;
+}
+
+
+[[nodiscard]] auto ParseAsSummaryReportTheContentOfARepositoryRequest(std::span<Byte const> buffer)
+    -> Result<SummaryReportTheContentOfARepositoryRequest>
+
+{
+    auto request = SummaryReportTheContentOfARepositoryRequest{};
+    if(buffer.size() < request.repositoryPath.capacity())
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.repositoryPath);
+    if(request.repositoryPath.empty())
+    {
+        return ErrorCode::emptyFilePath;
+    }
+    return request;
+}
+
+
+[[nodiscard]] auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRequest>
+{
+    auto request = CopyAFileRequest{};
+    auto const applicationDataLength = request.targetFilePath.capacity()
+                                     + request.sourceFilePath.capacity()
+                                     + totalSerialSize<decltype(CopyAFileRequest::operationId)>;
+    if(buffer.size() != applicationDataLength)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request);
+    if(not IsValid(request.operationId))
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    if(request.sourceFilePath.empty() or request.targetFilePath.empty())
+    {
+        return ErrorCode::emptyFilePath;
+    }
+    return request;
+}
+
+
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
     -> void const *
@@ -204,11 +274,23 @@ template<std::endian endianness>
 }
 
 
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &header->operationId);
+    source = DeserializeFrom<endianness>(source, &header->sourceFilePath);
+    source = DeserializeFrom<endianness>(source, &header->targetFilePath);
+    return source;
+}
+
+
 template auto DeserializeFrom<std::endian::big>(void const * source,
                                                 LoadRawMemoryDataAreasRequest * header)
     -> void const *;
 template auto DeserializeFrom<std::endian::big>(void const * source,
                                                 DumpRawMemoryDataArea * dataArea) -> void const *;
 template auto DeserializeFrom<std::endian::big>(void const * source, Parameter * parameter)
+    -> void const *;
+template auto DeserializeFrom<std::endian::big>(void const * source, CopyAFileRequest * header)
     -> void const *;
 }

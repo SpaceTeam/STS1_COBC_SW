@@ -1,14 +1,22 @@
 #pragma once
 
 
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/RfProtocols/Id.hpp>
+#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
+#include <etl/utility.h>
 #include <etl/vector.h>
 
+#include <bit>
+#include <cstddef>
+#include <cstdint>
 #include <span>
 
 
@@ -78,6 +86,36 @@ struct SetParameterValuesRequest
 };
 
 
+struct DeleteAFileRequest
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 2}>();
+    fs::Path filePath;
+};
+
+
+struct ReportTheAttributesOfAFileRequest
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 3}>();
+    fs::Path filePath;
+};
+
+
+struct SummaryReportTheContentOfARepositoryRequest
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 12}>();
+    fs::Path repositoryPath;
+};
+
+
+struct CopyAFileRequest
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 14}>();
+    CopyOperationId operationId;
+    fs::Path sourceFilePath;
+    fs::Path targetFilePath;
+};
+
+
 [[nodiscard]] auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>;
 
 [[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
@@ -90,6 +128,14 @@ struct SetParameterValuesRequest
     -> Result<ReportParameterValuesRequest>;
 [[nodiscard]] auto ParseAsSetParameterValuesRequest(std::span<Byte const> buffer)
     -> Result<SetParameterValuesRequest>;
+[[nodiscard]] auto ParseAsDeleteAFileRequest(std::span<Byte const> buffer)
+    -> Result<DeleteAFileRequest>;
+[[nodiscard]] auto ParseAsReportTheAttributesOfAFileRequest(std::span<Byte const> buffer)
+    -> Result<ReportTheAttributesOfAFileRequest>;
+[[nodiscard]] auto ParseAsSummaryReportTheContentOfARepositoryRequest(std::span<Byte const> buffer)
+    -> Result<SummaryReportTheContentOfARepositoryRequest>;
+[[nodiscard]] auto ParseAsCopyAFileRequest(std::span<Byte const> buffer)
+    -> Result<CopyAFileRequest>;
 
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
@@ -99,4 +145,6 @@ template<std::endian endianness>
     -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *;
 }

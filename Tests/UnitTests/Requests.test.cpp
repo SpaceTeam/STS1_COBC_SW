@@ -3,10 +3,12 @@
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <etl/string.h>
 #include <etl/vector.h>
 
 #include <span>
@@ -294,4 +296,178 @@ TEST_CASE("SetParameterValuesRequest")
     parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(smallBuffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+}
+
+
+TEST_CASE("DeleteAFileRequest")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(35);
+    buffer[0] = 0x2f_b;
+    buffer[1] = 0x70_b;
+    buffer[2] = 0x72_b;
+    buffer[3] = 0x6f_b;
+    buffer[4] = 0x67_b;
+    buffer[5] = 0x72_b;
+    buffer[6] = 0x61_b;
+    buffer[7] = 0x6d_b;
+    buffer[8] = 0x31_b;
+    buffer[9] = 0x00_b;  // Null
+
+    auto parseResult = sts1cobcsw::ParseAsDeleteAFileRequest(buffer);
+    CHECK(parseResult.has_value());
+    auto request = parseResult.value();
+
+    CHECK(request.filePath == "/program1");
+
+    // A empty string is not allowed
+    buffer[0] = 0x00_b;
+    parseResult = sts1cobcsw::ParseAsDeleteAFileRequest(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::emptyFilePath);
+    buffer[0] = 0x2f_b;
+
+    // Minimum buffer size needs to be 35
+    auto smallBuffer = etl::vector<Byte, 34>{};
+    smallBuffer.resize(34);
+    parseResult = sts1cobcsw::ParseAsDeleteAFileRequest(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+}
+
+
+TEST_CASE("ReportTheAttributesOfAFileRequest")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(35);
+    buffer[0] = 0x2f_b;
+    buffer[1] = 0x70_b;
+    buffer[2] = 0x72_b;
+    buffer[3] = 0x6f_b;
+    buffer[4] = 0x67_b;
+    buffer[5] = 0x72_b;
+    buffer[6] = 0x61_b;
+    buffer[7] = 0x6d_b;
+    buffer[8] = 0x31_b;
+    buffer[9] = 0x00_b;  // Null
+
+    auto parseResult = sts1cobcsw::ParseAsReportTheAttributesOfAFileRequest(buffer);
+    CHECK(parseResult.has_value());
+    auto request = parseResult.value();
+
+    CHECK(request.filePath == "/program1");
+
+    // A empty string is not allowed
+    buffer[0] = 0x00_b;
+    parseResult = sts1cobcsw::ParseAsReportTheAttributesOfAFileRequest(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::emptyFilePath);
+    buffer[0] = 0x2f_b;
+
+    // Minimum buffer size needs to be 35
+    auto smallBuffer = etl::vector<Byte, 34>{};
+    smallBuffer.resize(34);
+    parseResult = sts1cobcsw::ParseAsReportTheAttributesOfAFileRequest(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+}
+
+
+TEST_CASE("SummaryReportTheContentOfARepositoryRequest")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(35);
+    buffer[0] = 0x2f_b;
+    buffer[1] = 0x70_b;
+    buffer[2] = 0x72_b;
+    buffer[3] = 0x6f_b;
+    buffer[4] = 0x67_b;
+    buffer[5] = 0x72_b;
+    buffer[6] = 0x61_b;
+    buffer[7] = 0x6d_b;
+    buffer[8] = 0x31_b;
+    buffer[9] = 0x00_b;  // Null
+
+    auto parseResult = sts1cobcsw::ParseAsSummaryReportTheContentOfARepositoryRequest(buffer);
+    CHECK(parseResult.has_value());
+    auto request = parseResult.value();
+
+    CHECK(request.repositoryPath == "/program1");
+
+    // A empty string is not allowed
+    buffer[0] = 0x00_b;
+    parseResult = sts1cobcsw::ParseAsSummaryReportTheContentOfARepositoryRequest(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::emptyFilePath);
+    buffer[0] = 0x2f_b;
+
+    // Minimum buffer size needs to be 35
+    auto smallBuffer = etl::vector<Byte, 34>{};
+    smallBuffer.resize(34);
+    parseResult = sts1cobcsw::ParseAsSummaryReportTheContentOfARepositoryRequest(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+}
+
+
+TEST_CASE("CopyAFileRequest")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(71);
+    buffer[0] = 0x0F_b;  // OperationId
+    buffer[1] = 0x2f_b;  // Source File Path
+    buffer[2] = 0x70_b;
+    buffer[3] = 0x72_b;
+    buffer[4] = 0x6f_b;
+    buffer[5] = 0x67_b;
+    buffer[6] = 0x72_b;
+    buffer[7] = 0x61_b;
+    buffer[8] = 0x6d_b;
+    buffer[9] = 0x31_b;
+    buffer[10] = 0x00_b;  // Null
+    buffer[36] = 0x2f_b;  // Target File Path
+    buffer[37] = 0x70_b;
+    buffer[38] = 0x72_b;
+    buffer[39] = 0x6f_b;
+    buffer[40] = 0x67_b;
+    buffer[41] = 0x72_b;
+    buffer[42] = 0x61_b;
+    buffer[43] = 0x6d_b;
+    buffer[44] = 0x32_b;
+    buffer[45] = 0x00_b;  // Null
+
+    auto parseResult = sts1cobcsw::ParseAsCopyAFileRequest(buffer);
+    CHECK(parseResult.has_value());
+    auto request = parseResult.value();
+    CHECK(request.operationId == sts1cobcsw::copyOperationId);
+    CHECK(request.sourceFilePath == "/program1");
+    CHECK(request.targetFilePath == "/program2");
+
+    // OperationId needs to be 0x0F
+    buffer[0] = 0xF0_b;
+    parseResult = sts1cobcsw::ParseAsCopyAFileRequest(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
+    buffer[0] = 0x0F_b;
+
+    // A empty string is not allowed as source
+    buffer[1] = 0x00_b;
+    parseResult = sts1cobcsw::ParseAsCopyAFileRequest(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::emptyFilePath);
+    buffer[1] = 0x2f_b;
+
+    // A empty string is not allowed as target
+    buffer[36] = 0x00_b;
+    parseResult = sts1cobcsw::ParseAsCopyAFileRequest(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::emptyFilePath);
+    buffer[36] = 0x2f_b;
+
+    // Minimum buffer size needs to be 71
+    auto smallBuffer = etl::vector<Byte, 70>{};
+    smallBuffer.resize(70);
+    parseResult = sts1cobcsw::ParseAsCopyAFileRequest(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
 }

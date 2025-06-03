@@ -185,6 +185,9 @@ enum class ObjectType : std::uint8_t
     directory = 1,
 };
 
+using CopyOperationId = Id<std::uint8_t, 0b0000'1111>;  // NOLINT(*magic-numbers)
+inline constexpr auto copyOperationId = Make<CopyOperationId, 0b0000'1111>();
+
 inline constexpr auto maxDumpedDataLength =
     tm::maxPacketDataLength - tm::packetSecondaryHeaderLength
     - totalSerialSize<std::uint8_t, fram::Address, std::uint8_t>;
