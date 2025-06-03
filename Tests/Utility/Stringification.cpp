@@ -135,6 +135,8 @@ auto Append(ValueString * string, ErrorCode const & errorCode) -> void
             break;
         case ErrorCode::invalidDataLength:
             Append(string, "ErrorCode::invalidDataLength");
+        case ErrorCode::emptyFilePath:
+            Append(string, "ErrorCode::emptyFilePath");
             break;
         case ErrorCode::misaligned:
             Append(string, "ErrorCode::misaligned");
