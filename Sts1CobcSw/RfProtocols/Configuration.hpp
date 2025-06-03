@@ -7,7 +7,6 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 
@@ -124,13 +123,10 @@ using MessageTypeId = Id<MessageTypeIdFields,
                          MessageTypeIdFields{8, 1},
                          MessageTypeIdFields{20, 1},
                          MessageTypeIdFields{20, 3},
-                         MessageTypeIdFields{20, 4},
                          MessageTypeIdFields{23, 2},
                          MessageTypeIdFields{23, 3},
                          MessageTypeIdFields{23, 12},
-                         MessageTypeIdFields{23, 14},
-                         MessageTypeIdFields{0, 0},
-                         MessageTypeIdFields{0, 0}>;
+                         MessageTypeIdFields{23, 14}>;
 // NOLINTEND(*magic-numbers)
 
 enum class FunctionId : std::uint8_t
