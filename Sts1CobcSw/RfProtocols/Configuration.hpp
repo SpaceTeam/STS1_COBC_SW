@@ -7,7 +7,6 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 
@@ -48,8 +47,8 @@ namespace tc
 inline constexpr auto transferFrameVersionNumber = UInt<2>(0);
 inline constexpr auto transferFrameLength = ecc::messageLength;
 inline constexpr auto transferFramePrimaryHeaderLength = 5;
-inline constexpr auto securityHeaderLength = 4;   // TODO: What's the right number?
-inline constexpr auto securityTrailerLength = 8;  // TODO: What's the right number?
+inline constexpr auto securityHeaderLength = 2;
+inline constexpr auto securityTrailerLength = 8;
 inline constexpr auto transferFrameDataLength = transferFrameLength
                                               - transferFramePrimaryHeaderLength
                                               - securityHeaderLength - securityTrailerLength;
@@ -122,13 +121,10 @@ using MessageTypeId = Id<MessageTypeIdFields,
                          MessageTypeIdFields{8, 1},
                          MessageTypeIdFields{20, 1},
                          MessageTypeIdFields{20, 3},
-                         MessageTypeIdFields{20, 4},
                          MessageTypeIdFields{23, 2},
                          MessageTypeIdFields{23, 3},
                          MessageTypeIdFields{23, 12},
-                         MessageTypeIdFields{23, 14},
-                         MessageTypeIdFields{0, 0},
-                         MessageTypeIdFields{0, 0}>;
+                         MessageTypeIdFields{23, 14}>;
 // NOLINTEND(*magic-numbers)
 
 enum class FunctionId : std::uint8_t
