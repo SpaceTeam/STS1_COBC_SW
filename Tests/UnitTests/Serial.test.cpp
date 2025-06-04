@@ -355,6 +355,23 @@ TEST_CASE("Deserialize etl::vector (big endian)")
 }
 
 
+TEST_CASE("Deserialize etl::string")
+{
+    auto string = etl::string<5>{};
+    auto buffer = std::array{'a', 'b', 'c', 'd', 'e'};
+    (void)DeserializeFrom<std::endian::little>(buffer.data(), &string);
+    CHECK(string == "abcde");
+
+    buffer[3] = '\0';
+    (void)DeserializeFrom<std::endian::little>(buffer.data(), &string);
+    CHECK(string == "abc");
+
+    auto longBuffer = std::array{'1', '2', '3', '4', '5', '6', '7', '8', '\0'};
+    (void)DeserializeFrom<std::endian::little>(longBuffer.data(), &string);
+    CHECK(string == "12345");
+}
+
+
 TEST_CASE("Deserialize UInts (big endian)")
 {
     auto uint1 = UInt<1>{};

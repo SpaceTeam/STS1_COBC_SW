@@ -123,6 +123,15 @@ auto DeserializeFrom(void const * source, etl::ivector<T> * vector) -> void cons
 }
 
 
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, etl::istring * string) -> void const *
+{
+    std::memcpy(string->data(), source, string->capacity());
+    string->trim_to_terminator();
+    return static_cast<char const *>(source) + string->capacity();  // NOLINT(*pointer-arithmetic)
+}
+
+
 template<std::endian endianness, std::size_t... nBits>
     requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
 [[nodiscard]] auto DeserializeFrom(void const * source, UInt<nBits> *... uInts) -> void const *
