@@ -4,19 +4,18 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
-#include <string>
 #include <type_traits>
 
 
 using sts1cobcsw::Byte;
 using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 using sts1cobcsw::Deserialize;
+using sts1cobcsw::DeserializeFrom;
 using sts1cobcsw::Serialize;
 using sts1cobcsw::serialSize;
 using sts1cobcsw::totalSerialSize;
@@ -312,6 +311,50 @@ TEST_CASE("Deserialize std::array (big endian)")
 }
 
 
+TEST_CASE("Deserialize etl::vector (little endian)")
+{
+    auto buffer = std::array{0x05_b, 0x00_b, 0x07_b, 0x00_b, 0xFF_b, 0xFF_b};
+
+    auto i16Vector = etl::vector<std::int16_t, 3>{};
+    i16Vector.uninitialized_resize(1);
+    (void)DeserializeFrom<std::endian::little>(buffer.data(), &i16Vector);
+    CHECK(i16Vector[0] == 5);
+
+    i16Vector.uninitialized_resize(2);
+    (void)DeserializeFrom<std::endian::little>(buffer.data(), &i16Vector);
+    CHECK(i16Vector[0] == 5);
+    CHECK(i16Vector[1] == 7);
+
+    i16Vector.uninitialized_resize(3);
+    (void)DeserializeFrom<std::endian::little>(buffer.data(), &i16Vector);
+    CHECK(i16Vector[0] == 5);
+    CHECK(i16Vector[1] == 7);
+    CHECK(i16Vector[2] == -1);
+}
+
+
+TEST_CASE("Deserialize etl::vector (big endian)")
+{
+    auto buffer = std::array{0x00_b, 0x02_b, 0x00_b, 0x04_b, 0xFF_b, 0xFE_b};
+    auto i16Vector = etl::vector<std::int16_t, 3>{};
+
+    i16Vector.uninitialized_resize(1);
+    (void)DeserializeFrom<std::endian::big>(buffer.data(), &i16Vector);
+    CHECK(i16Vector[0] == 2);
+
+    i16Vector.uninitialized_resize(2);
+    (void)DeserializeFrom<std::endian::big>(buffer.data(), &i16Vector);
+    CHECK(i16Vector[0] == 2);
+    CHECK(i16Vector[1] == 4);
+
+    i16Vector.uninitialized_resize(3);
+    (void)DeserializeFrom<std::endian::big>(buffer.data(), &i16Vector);
+    CHECK(i16Vector[0] == 2);
+    CHECK(i16Vector[1] == 4);
+    CHECK(i16Vector[2] == -2);
+}
+
+
 TEST_CASE("Deserialize UInts (big endian)")
 {
     auto uint1 = UInt<1>{};
@@ -509,4 +552,26 @@ TEST_CASE("(De-)Serialize std::array of user-defined types (big endian)")
     CHECK(sArray[0].i32 == 0x4433'2211);
     CHECK(sArray[1].u16 == 0xBEEF);
     CHECK(sArray[1].i32 == 0x1234'5678);
+}
+
+
+TEST_CASE("Deserialize etl::vector of user-defined types (little endian)")
+{
+    // clang-format off
+    auto sBuffer = std::array{0xAD_b, 0xDE_b, 0x11_b, 0x22_b, 0x33_b, 0x44_b,
+                              0xEF_b, 0xBE_b, 0x78_b, 0x56_b, 0x34_b, 0x12_b};
+    // clang-format on
+    auto sVector = etl::vector<S, 2>{};
+
+    sVector.uninitialized_resize(1);
+    (void)DeserializeFrom<std::endian::big>(sBuffer.data(), &sVector);
+    CHECK(sVector[0].u16 == 0xADDE);
+    CHECK(sVector[0].i32 == 0x1122'3344);
+
+    sVector.uninitialized_resize(2);
+    (void)DeserializeFrom<std::endian::little>(sBuffer.data(), &sVector);
+    CHECK(sVector[0].u16 == 0xDEAD);
+    CHECK(sVector[0].i32 == 0x4433'2211);
+    CHECK(sVector[1].u16 == 0xBEEF);
+    CHECK(sVector[1].i32 == 0x1234'5678);
 }
