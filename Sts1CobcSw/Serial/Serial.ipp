@@ -111,6 +111,18 @@ auto DeserializeFrom(void const * source, std::array<T, size> * array) -> void c
 }
 
 
+template<std::endian endianness, typename T>
+auto DeserializeFrom(void const * source, etl::ivector<T> * vector) -> void const *
+{
+    // TODO: Do I need using sts1cobcsw::DeserializeFrom here (and in the array function above)?
+    for(auto & element : *vector)
+    {
+        source = DeserializeFrom<endianness>(source, &element);
+    }
+    return source;
+}
+
+
 template<std::endian endianness, std::size_t... nBits>
     requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
 [[nodiscard]] auto DeserializeFrom(void const * source, UInt<nBits> *... uInts) -> void const *
