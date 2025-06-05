@@ -7,7 +7,7 @@ target_link_libraries(
     Sts1CobcSwTests_CatchRodos INTERFACE etl::etl rodos::rodos Sts1CobcSwTests::HardwareSetup
 )
 target_include_directories(
-    Sts1CobcSwTests_CatchRodos INTERFACE ${warning_guard} "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
+    Sts1CobcSwTests_CatchRodos INTERFACE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
 )
 
 add_program(CatchRodos_Example Example.test.cpp)

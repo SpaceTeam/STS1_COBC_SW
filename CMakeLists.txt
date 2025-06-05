@@ -10,17 +10,10 @@ project(
     LANGUAGES ASM CXX
 )
 
-include(cmake/project-is-top-level.cmake)
-include(cmake/variables.cmake)
-include(cmake/custom-commands.cmake)
-include(cmake/clang-tidy-cache.cmake)
+include(cmake/options-and-variables.cmake)
 include(cmake/ccache.cmake)
-
-option(BUILD_BOOTLOADER "Build the bootloader instead of the firmware" OFF)
-if(BUILD_BOOTLOADER AND CMAKE_SYSTEM_NAME STREQUAL Linux)
-    message(FATAL_ERROR "Building the bootloader is only supported on embedded platforms")
-    set(BUILD_BOOTLOADER OFF)
-endif()
+include(cmake/clang-tidy-cache.cmake)
+include(cmake/custom-commands.cmake)
 
 if(BUILD_BOOTLOADER)
     add_program(Bootloader)
