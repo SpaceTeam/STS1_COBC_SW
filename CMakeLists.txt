@@ -23,9 +23,11 @@ find_package_and_notify(etl)
 find_rodos()
 find_package_and_notify(littlefs)
 find_package_and_notify(strong_type)
+find_package_and_notify(libfec)
 
 # ---- Declare targets ----
 
+add_library(Sts1CobcSw_ChannelCoding STATIC)
 add_library(Sts1CobcSw_Edu STATIC)
 add_library(Sts1CobcSw_FileSystem STATIC)
 add_library(Sts1CobcSw_FirmwareManagement STATIC)
