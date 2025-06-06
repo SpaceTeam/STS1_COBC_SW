@@ -5,7 +5,7 @@ target_sources(
 target_link_libraries(
     Sts1CobcSw_RfProtocols
     PUBLIC etl::etl
-           rodos::without_main_on_linux
+           rodos::rodos
            Sts1CobcSw_Blake2s
            Sts1CobcSw_Edu
            Sts1CobcSw_FileSystem
