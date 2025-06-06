@@ -1,7 +1,7 @@
 target_sources(Sts1CobcSw_Hal PRIVATE Spi.cpp)
 target_compile_definitions(Sts1CobcSw_Hal PUBLIC HW_VERSION=${HW_VERSION})
 target_link_libraries(
-    Sts1CobcSw_Hal PUBLIC rodos::without_main_on_linux strong_type::strong_type Sts1CobcSw_Outcome
+    Sts1CobcSw_Hal PUBLIC rodos::rodos strong_type::strong_type Sts1CobcSw_Outcome
                           Sts1CobcSw_RodosTime Sts1CobcSw_Vocabulary
 )
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)

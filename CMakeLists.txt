@@ -14,7 +14,6 @@ include(cmake/options-and-variables.cmake)
 include(cmake/ccache.cmake)
 include(cmake/clang-tidy-cache.cmake)
 include(cmake/custom-commands.cmake)
-include(cmake/rodos-without-main-on-linux.cmake)
 
 if(BUILD_BOOTLOADER)
     add_program(Bootloader)
