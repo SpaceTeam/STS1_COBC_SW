@@ -18,10 +18,12 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <misc-rodos-funcs.h>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <span>
 
 
 namespace sts1cobcsw
@@ -31,7 +33,7 @@ constexpr auto stackSize = 1000;
 
 constexpr auto rxTimeoutAfterTmSend = 5 * s;
 
-auto HandleReceivedData(std::span<Byte> receivedData) -> void
+static auto HandleReceivedData(std::span<Byte> receivedData) -> void
 {
     // TODO: Feed reset dog, set nResetsSinceRf to 0
     persistentVariables.template Store<"nResetsSinceRf">(0);
@@ -56,6 +58,8 @@ auto HandleReceivedData(std::span<Byte> receivedData) -> void
     else
     {
         // requests not  implemented yet
+        // Signature will be something like : 
+        // rf::ParseAsTransferFrame(std::span<Byte const,  transferFrameLength> buffer) -> Result<TransferFrame>
     }
 }
 
@@ -67,12 +71,32 @@ auto SendTmRecord(TelemetryRecord const & telemetryRecord) -> void
 
     auto frame = tm::TransferFrame(Span(&housekeepingBuffer));
     frame.StartNew(pusVcid);
+    // TODO: Handle error when packaging
     auto addSpacePacketResult =
         AddSpacePacketTo(&frame.GetDataField(), normalApid, housekeepingParameterReport);
     frame.Finish();
 
     // TODO: Error handling
-    rf::SendAndWait(Span(housekeepingBuffer));
+    // If an RF function fails after initialization, we should retry the function.
+    // If it still fails, we reinitialize the RF module and try the function again.
+    auto sendResult = rf::SendAndWait(Span(housekeepingBuffer));
+    if(sendResult.has_error())
+    {
+        sendResult = rf::SendAndWait(Span(housekeepingBuffer));
+        if(sendResult.has_error())
+        {
+            rf::Initialize(rf::TxType::packet);
+            rf::EnableTx();
+            sendResult = rf::SendAndWait(Span(housekeepingBuffer));
+
+            if(sendResult.has_error())
+            {
+                RODOS::hwResetAndReboot();
+            }
+        }
+    }
+
+
 }
 
 
@@ -108,7 +132,7 @@ private:
             if(not receiveResult.has_error())
             {
                 HandleReceivedData(Span(&receivedData));
-            }
+            } else {}
         }
         else
         {
