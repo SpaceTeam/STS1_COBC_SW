@@ -98,15 +98,15 @@ inline constexpr auto maxMessageDataLength = maxPacketDataLength - packetSeconda
 
 // NOLINTBEGIN(*magic-numbers)
 using MessageTypeId = Id<MessageTypeIdFields,
-                         MessageTypeIdFields{1, 1},
-                         MessageTypeIdFields{1, 2},
-                         MessageTypeIdFields{1, 7},
-                         MessageTypeIdFields{1, 8},
-                         MessageTypeIdFields{3, 25},
-                         MessageTypeIdFields{6, 6},
-                         MessageTypeIdFields{20, 2},
-                         MessageTypeIdFields{23, 4},
-                         MessageTypeIdFields{23, 13}>;
+                         {1, 1},
+                         {1, 2},
+                         {1, 7},
+                         {1, 8},
+                         {3, 25},
+                         {6, 6},
+                         {20, 2},
+                         {23, 4},
+                         {23, 13}>;
 // NOLINTEND(*magic-numbers)
 }
 
@@ -118,15 +118,15 @@ inline constexpr auto maxMessageDataLength = maxPacketDataLength - packetSeconda
 
 // NOLINTBEGIN(*magic-numbers)
 using MessageTypeId = Id<MessageTypeIdFields,
-                         MessageTypeIdFields{6, 2},
-                         MessageTypeIdFields{6, 5},
-                         MessageTypeIdFields{8, 1},
-                         MessageTypeIdFields{20, 1},
-                         MessageTypeIdFields{20, 3},
-                         MessageTypeIdFields{23, 2},
-                         MessageTypeIdFields{23, 3},
-                         MessageTypeIdFields{23, 12},
-                         MessageTypeIdFields{23, 14}>;
+                         {6, 2},
+                         {6, 5},
+                         {8, 1},
+                         {20, 1},
+                         {20, 3},
+                         {23, 2},
+                         {23, 3},
+                         {23, 12},
+                         {23, 14}>;
 // NOLINTEND(*magic-numbers)
 
 enum class FunctionId : std::uint8_t
