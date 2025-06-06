@@ -94,6 +94,9 @@ auto Append(ValueString * string, ErrorCode const & errorCode) -> void
         case ErrorCode::empty:
             Append(string, "ErrorCode::empty");
             break;
+        case ErrorCode::errorCorrectionFailed:
+            Append(string, "ErrorCode::errorCorrectionFailed");
+            break;
         case ErrorCode::bufferTooSmall:
             Append(string, "ErrorCode::bufferTooSmall");
             break;

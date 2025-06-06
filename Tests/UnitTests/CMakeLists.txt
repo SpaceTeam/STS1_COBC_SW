@@ -89,6 +89,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     catch_discover_tests(Sts1CobcSwTests_Blake2s)
 
+    add_test_program(ChannelCoding)
+    target_link_libraries(
+        Sts1CobcSwTests_ChannelCoding PRIVATE Sts1CobcSw_ChannelCoding Sts1CobcSw_Outcome
+                                              Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
+    )
+    add_test(NAME ChannelCoding COMMAND Sts1CobcSwTests_ChannelCoding)
+
     add_test_program(EdacVariable)
     target_link_libraries(
         Sts1CobcSwTests_EdacVariable PRIVATE Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
@@ -272,8 +279,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(TmTransferFrame)
     target_link_libraries(
-        Sts1CobcSwTests_TmTransferFrame PRIVATE etl::etl Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
-                                                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+        Sts1CobcSwTests_TmTransferFrame
+        PRIVATE etl::etl Sts1CobcSw_ChannelCoding Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME TmTransferFrame COMMAND Sts1CobcSwTests_TmTransferFrame)
 

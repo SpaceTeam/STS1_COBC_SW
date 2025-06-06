@@ -11,6 +11,7 @@
 #include <etl/vector.h>
 
 #include <algorithm>
+#include <cstring>
 #include <numeric>
 
 
@@ -182,7 +183,18 @@ private:
         auto rightValueString = ValueString("");
         // NOLINTNEXTLINE(*array-to-pointer-decay,*no-array-decay)
         Append(&rightValueString, std::forward<RightValue>(rightValue));
-        PRINTF("  %s %s %s\n\n", leftValueString.c_str(), assertion.op, rightValueString.c_str());
+        static constexpr auto maxLineLength = 100;
+        if(leftValueString.size() + rightValueString.size() + std::strlen(" == ") > maxLineLength)
+        {
+            PRINTF("  %s\n", leftValueString.c_str());
+            PRINTF("  %s\n", assertion.op);
+            PRINTF("  %s\n\n", rightValueString.c_str());
+        }
+        else
+        {
+            PRINTF(
+                "  %s %s %s\n\n", leftValueString.c_str(), assertion.op, rightValueString.c_str());
+        }
     }
 };
 }

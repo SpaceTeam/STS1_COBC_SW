@@ -15,7 +15,7 @@ using czstring = char const *;  // NOLINT(*identifier-naming)
 
 namespace sts1cobcsw
 {
-static constexpr auto maxValueStringLength = 1000;
+static constexpr auto maxValueStringLength = 2000;
 using ValueString = etl::string<maxValueStringLength>;
 
 
