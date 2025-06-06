@@ -51,11 +51,14 @@ enum class PropertyGroup : std::uint8_t
 
 // --- Private globals ---
 
+constexpr auto endianness = std::endian::big;
+
 // Commands
 [[maybe_unused]] constexpr auto cmdPartInfo = 0x01_b;
 [[maybe_unused]] constexpr auto cmdPowerUp = 0x02_b;
-[[maybe_unused]] constexpr auto cmdFuncInfo = 0x11_b;
+[[maybe_unused]] constexpr auto cmdFuncInfo = 0x10_b;
 [[maybe_unused]] constexpr auto cmdSetProperty = 0x11_b;
+[[maybe_unused]] constexpr auto cmdGetProperty = 0x12_b;
 [[maybe_unused]] constexpr auto cmdGpioPinCfg = 0x13_b;
 [[maybe_unused]] constexpr auto cmdFifoInfo = 0x15_b;
 [[maybe_unused]] constexpr auto cmdGetIntStatus = 0x20_b;
@@ -77,7 +80,12 @@ enum class PropertyGroup : std::uint8_t
 [[maybe_unused]] constexpr auto fifoInfoAnswerLength = 2U;
 [[maybe_unused]] constexpr auto interruptStatusAnswerLength = 8U;
 [[maybe_unused]] constexpr auto modemStatusAnswerLength = 8U;
-// Max. number of properties that can be set in a single command
+
+// Property indexes and sizes
+constexpr auto iModemDataRate = 0x03_b;
+constexpr auto modemDataRateSize = 3U;
+// Max. number of properties that can be set in a single command. We could read 16 properties
+// at once, but I don't want to make a second constant.
 constexpr auto maxNProperties = 12;
 
 // Packet handler interrupt flags
@@ -178,6 +186,10 @@ template<std::size_t extent>
 auto SetProperties(PropertyGroup propertyGroup,
                    Byte startIndex,
                    std::span<Byte const, extent> propertyValues) -> void;
+template<std::size_t size>
+    requires(size <= maxNProperties)
+[[nodiscard]] auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
+    -> std::array<Byte, size>;
 }
 
 
@@ -209,7 +221,7 @@ auto DisableTx() -> void
 auto ReadPartNumber() -> std::uint16_t
 {
     auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
-    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+    return Deserialize<endianness, std::uint16_t>(Span(answer).subspan<1, 2>());
 }
 
 
@@ -247,7 +259,7 @@ auto SetTxType(TxType txType) -> void
                        modemMapControl,
                        modemDsmCtrl,
                        // The data rate property is only 3 bytes wide, so drop the first byte
-                       Span(Serialize<std::endian::big>(dataRate)).subspan<1>())));
+                       Span(Serialize<endianness>(dataRate)).subspan<1>())));
 }
 
 
@@ -255,7 +267,26 @@ auto SetTxType(TxType txType) -> void
 auto SetTxDataLength(std::uint16_t length) -> void
 {
     static constexpr auto iPktField1Length = 0x0D_b;
-    SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
+    SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<endianness>(length)));
+}
+
+
+auto SetDataRate(std::uint32_t dataRate) -> void
+{
+    // The property field for the data rate is only 20 bits
+    static constexpr std::uint32_t maxDataRate = (1U << 20U) - 1U;
+    dataRate = std::min(dataRate, maxDataRate);
+    auto serializedDataRate = Serialize<endianness>(dataRate);
+    SetProperties(
+        PropertyGroup::modem, iModemDataRate, Span(serializedDataRate).last<modemDataRateSize>());
+}
+
+
+auto GetDataRate() -> std::uint32_t
+{
+    auto answer = GetProperties<modemDataRateSize>(PropertyGroup::modem, iModemDataRate);
+    auto serializedDataRate = FlatArray(0x00_b, answer);
+    return Deserialize<endianness, std::uint32_t>(serializedDataRate);
 }
 
 
@@ -518,7 +549,7 @@ auto PowerUp() -> void
     static constexpr auto xtalOptions = 0x01_b;          // Use external oscillator
     static constexpr std::uint32_t xoFreq = 26'000'000;  // MHz
     SendCommand(FlatArray(
-        cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
+        cmdPowerUp, bootOptions, xtalOptions, Serialize<endianness, std::uint32_t>(xoFreq)));
 }
 
 
@@ -1321,6 +1352,15 @@ inline auto SetProperties(PropertyGroup propertyGroup,
                           static_cast<Byte>(extent),
                           startIndex,
                           propertyValues));
+}
+
+
+template<std::size_t size>
+    requires(size <= maxNProperties)
+inline auto GetProperties(PropertyGroup propertyGroup, Byte startIndex) -> std::array<Byte, size>
+{
+    return SendCommand<size>(Span(
+        {cmdGetProperty, static_cast<Byte>(propertyGroup), static_cast<Byte>(size), startIndex}));
 }
 }
 }

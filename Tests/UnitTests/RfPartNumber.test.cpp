@@ -6,9 +6,17 @@
 namespace rf = sts1cobcsw::rf;
 
 
-TEST_CASE("Check RF part number")
+TEST_CASE("RF module")
 {
     rf::Initialize(rf::TxType::packet);
-    auto partNumber = rf::ReadPartNumber();
-    CHECK(partNumber == rf::correctPartNumber);
+    CHECK(rf::ReadPartNumber() == rf::correctPartNumber);
+    CHECK(rf::GetDataRate() == 384'000U);
+
+    auto dataRate = 1'200U;
+    rf::SetDataRate(dataRate);
+    CHECK(rf::GetDataRate() == dataRate);
+
+    dataRate = 9'600U;
+    rf::SetDataRate(dataRate);
+    CHECK(rf::GetDataRate() == dataRate);
 }
