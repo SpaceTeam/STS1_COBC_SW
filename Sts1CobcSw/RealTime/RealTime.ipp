@@ -22,13 +22,13 @@ inline auto CurrentRealTime() -> RealTime
 inline auto ToRodosTime(RealTime realTime) -> RodosTime
 {
     return RodosTime(value_of(realTime) * RODOS::SECONDS)
-         - persistentVariables.template Load<"realTimeOffset">();
+         - persistentVariables.Load<"realTimeOffset">();
 }
 
 
 inline auto ToRealTime(RodosTime rodosTime) -> RealTime
 {
-    return RealTime(value_of(rodosTime + persistentVariables.template Load<"realTimeOffset">())
+    return RealTime(value_of(rodosTime + persistentVariables.Load<"realTimeOffset">())
                     / RODOS::SECONDS);
 }
 }

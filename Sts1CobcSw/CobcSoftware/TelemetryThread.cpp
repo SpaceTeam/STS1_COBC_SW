@@ -53,7 +53,7 @@ private:
     {
         TIME_LOOP(0, value_of(telemetryThreadPeriod))
         {
-            persistentVariables.template Store<"realTime">(CurrentRealTime());
+            persistentVariables.Store<"realTime">(CurrentRealTime());
             auto telemetryRecord = CollectTelemetryData();
             telemetryMemory.PushBack(telemetryRecord);
             telemetryTopic.publish(telemetryRecord);

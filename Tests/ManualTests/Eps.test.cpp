@@ -31,7 +31,7 @@ private:
         PRINTF("\nEPS test\n\n");
 
         PRINTF("\n");
-        persistentVariables.template Store<"epsIsWorking">(true);
+        persistentVariables.Store<"epsIsWorking">(true);
         eps::InitializeAdcs();
         PRINTF("EPS ADCs initialized\n");
 

@@ -41,12 +41,12 @@ private:
         auto partNumber = rf::ReadPartNumber();
         if(partNumber == rf::correctPartNumber)
         {
-            persistentVariables.template Store<"rfIsWorking">(true);
+            persistentVariables.Store<"rfIsWorking">(true);
         }
         else
         {
             DEBUG_PRINT(" failed to read correct RF part number");
-            persistentVariables.template Store<"rfIsWorking">(false);
+            persistentVariables.Store<"rfIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);

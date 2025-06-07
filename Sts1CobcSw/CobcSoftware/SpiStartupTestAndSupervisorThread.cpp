@@ -69,7 +69,7 @@ private:
         {
             DEBUG_PRINT("%s", errorMessage);
             fram::framIsWorking.Store(false);
-            persistentVariables.template Store<"epsIsWorking">(false);
+            persistentVariables.Store<"epsIsWorking">(false);
         }
         else
         {
@@ -77,12 +77,12 @@ private:
         }
 
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
-        DEBUG_PRINT(persistentVariables.template Load<"flashIsWorking">() ? "\n" : " and");
+        DEBUG_PRINT(persistentVariables.Load<"flashIsWorking">() ? "\n" : " and");
         if(not testWasSuccessful)
         {
             DEBUG_PRINT("%s", errorMessage);
-            persistentVariables.template Store<"flashIsWorking">(false);
-            persistentVariables.template Increment<"nFlashErrors">();
+            persistentVariables.Store<"flashIsWorking">(false);
+            persistentVariables.Increment<"nFlashErrors">();
         }
         else
         {
@@ -90,12 +90,12 @@ private:
         }
 
         testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
-        DEBUG_PRINT(persistentVariables.template Load<"rfIsWorking">() ? "\n" : " and");
+        DEBUG_PRINT(persistentVariables.Load<"rfIsWorking">() ? "\n" : " and");
         if(not testWasSuccessful)
         {
             DEBUG_PRINT("%s", errorMessage);
-            persistentVariables.template Store<"rfIsWorking">(false);
-            persistentVariables.template Increment<"nRfErrors">();
+            persistentVariables.Store<"rfIsWorking">(false);
+            persistentVariables.Increment<"nRfErrors">();
             DEBUG_PRINT("Resetting and rebooting in 2 s\n");
             // TODO: Add a named constant for this delay
             SuspendFor(2 * s);
@@ -118,13 +118,13 @@ private:
             {
                 DEBUG_PRINT("Flash SPI timeout occurred\n");
                 timeoutHappened = true;
-                persistentVariables.template Increment<"nFlashErrors">();
+                persistentVariables.Increment<"nFlashErrors">();
             }
             if(CurrentRodosTime() > rfSpi.TransferEnd())
             {
                 DEBUG_PRINT("RF SPI timeout occurred\n");
                 timeoutHappened = true;
-                persistentVariables.template Increment<"nRfErrors">();
+                persistentVariables.Increment<"nRfErrors">();
             }
             if(timeoutHappened)
             {

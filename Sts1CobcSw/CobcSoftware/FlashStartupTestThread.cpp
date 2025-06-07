@@ -42,12 +42,12 @@ private:
         if(jedecId.deviceId == flash::correctJedecId.deviceId
            && jedecId.manufacturerId == flash::correctJedecId.manufacturerId)
         {
-            persistentVariables.template Store<"flashIsWorking">(true);
+            persistentVariables.Store<"flashIsWorking">(true);
         }
         else
         {
             DEBUG_PRINT(" failed to read correct flash JEDEC ID");
-            persistentVariables.template Store<"flashIsWorking">(false);
+            persistentVariables.Store<"flashIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);

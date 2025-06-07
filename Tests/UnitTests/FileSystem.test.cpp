@@ -56,7 +56,7 @@ TEST_CASE("File system without data corruption")
 #endif
     fram::Initialize();
     fs::Initialize();
-    persistentVariables.template Store<"flashIsWorking">(true);
+    persistentVariables.Store<"flashIsWorking">(true);
 
     auto mountResult = fs::Mount();
     REQUIRE(mountResult.has_error() == false);
@@ -301,37 +301,37 @@ TEST_CASE("File system with flash not working")
     fram::Initialize();
     fs::Initialize();
 
-    persistentVariables.template Store<"flashIsWorking">(false);
+    persistentVariables.Store<"flashIsWorking">(false);
     auto mountResult = fs::Mount();
     CHECK(mountResult.has_error());
     CHECK(mountResult.error() == ErrorCode::io);
 
-    persistentVariables.template Store<"flashIsWorking">(true);
+    persistentVariables.Store<"flashIsWorking">(true);
     mountResult = fs::Mount();
     REQUIRE(mountResult.has_error() == false);
 
-    persistentVariables.template Store<"flashIsWorking">(false);
+    persistentVariables.Store<"flashIsWorking">(false);
     auto dirPath = fs::Path("/MyDir");
     auto createDirResult = fs::CreateDirectory(dirPath);
     CHECK(createDirResult.has_error());
     CHECK(createDirResult.error() == ErrorCode::io);
 
-    persistentVariables.template Store<"flashIsWorking">(true);
+    persistentVariables.Store<"flashIsWorking">(true);
     createDirResult = fs::CreateDirectory(dirPath);
     CHECK(createDirResult.has_error() == false);
 
-    persistentVariables.template Store<"flashIsWorking">(false);
+    persistentVariables.Store<"flashIsWorking">(false);
     auto filePath = fs::Path("/MyDir/MyFile");
     auto openResult = fs::Open(filePath, LFS_O_RDWR | LFS_O_CREAT);
     CHECK(openResult.has_error());
     CHECK(openResult.error() == ErrorCode::io);
 
-    persistentVariables.template Store<"flashIsWorking">(true);
+    persistentVariables.Store<"flashIsWorking">(true);
     openResult = fs::Open(filePath, LFS_O_RDWR | LFS_O_CREAT);
     CHECK(openResult.has_value());
     auto & file = openResult.value();
 
-    persistentVariables.template Store<"flashIsWorking">(false);
+    persistentVariables.Store<"flashIsWorking">(false);
     auto flushResult = file.Flush();
     CHECK(flushResult.has_error());
     CHECK(flushResult.error() == ErrorCode::io);
@@ -360,14 +360,14 @@ TEST_CASE("File system with flash not working")
     CHECK(makeIteratorResult.has_error());
     CHECK(makeIteratorResult.error() == ErrorCode::io);
 
-    persistentVariables.template Store<"flashIsWorking">(true);
+    persistentVariables.Store<"flashIsWorking">(true);
     makeIteratorResult = fs::MakeIterator(dirPath);
     CHECK(makeIteratorResult.has_value());
     auto & iterator = makeIteratorResult.value();
 
     auto dereferenceResult = *iterator;
     CHECK(dereferenceResult.has_value());
-    persistentVariables.template Store<"flashIsWorking">(false);
+    persistentVariables.Store<"flashIsWorking">(false);
     // Dereferencing works even when flashIsWorking is false, because the iterator already read the
     // directory info when it was created or incremented
     dereferenceResult = *iterator;
@@ -394,7 +394,7 @@ TEST_CASE("File system with flash not working")
 
     // We need to use ForceRemove() because the lock file is not removed, when the file is moved
     // while flashIsWorking == false
-    persistentVariables.template Store<"flashIsWorking">(true);
+    persistentVariables.Store<"flashIsWorking">(true);
     removeResult = fs::ForceRemove(filePath);
     CHECK(removeResult.has_error() == false);
 
@@ -402,7 +402,7 @@ TEST_CASE("File system with flash not working")
     CHECK(removeResult.has_error() == false);
 
     // Unmount should still work, as it only frees up memory
-    persistentVariables.template Store<"flashIsWorking">(false);
+    persistentVariables.Store<"flashIsWorking">(false);
     auto unmountResult = fs::Unmount();
     CHECK(unmountResult.has_error() == false);
 }
@@ -414,7 +414,7 @@ TEST_CASE("File system with data corruption")
     fram::ram::SetAllDoFunctions();
     fram::Initialize();
     fs::Initialize();
-    persistentVariables.template Store<"flashIsWorking">(true);
+    persistentVariables.Store<"flashIsWorking">(true);
 
     // Test with faulty write
     {
