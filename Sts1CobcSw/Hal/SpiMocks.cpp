@@ -4,9 +4,13 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 auto flashSpiMock = hal::SpiMock{};
 auto framEpsSpiMock = hal::SpiMock{};
 auto rfSpiMock = hal::SpiMock{};
+}
+
 
 hal::Spi & flashSpi = flashSpiMock;
 hal::Spi & framEpsSpi = framEpsSpiMock;

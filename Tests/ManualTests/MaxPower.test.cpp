@@ -16,13 +16,15 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdint>
-
+#include <utility>
 
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 
 
+namespace
+{
 constexpr auto uartTimeout = 100 * ms;
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
@@ -38,8 +40,7 @@ class MaxPowerTestLedThread : public RODOS::StaticThread<>
 {
 public:
     MaxPowerTestLedThread() : StaticThread("MaxPowerTestLedThread")
-    {
-    }
+    {}
 
 
 private:
@@ -68,8 +69,7 @@ class MaxPowerTestUartThread : public RODOS::StaticThread<>
 {
 public:
     MaxPowerTestUartThread() : StaticThread("MaxPowerTestUartThread")
-    {
-    }
+    {}
 
 
 private:
@@ -101,8 +101,7 @@ class MaxPowerTestMainThread : public RODOS::StaticThread<>
 {
 public:
     MaxPowerTestMainThread() : StaticThread("MaxPowerTestMainThread")
-    {
-    }
+    {}
 
 
 private:
@@ -202,5 +201,6 @@ auto IsPrime(std::int32_t number) -> bool
         }
     }
     return true;
+}
 }
 }

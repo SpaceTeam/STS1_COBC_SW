@@ -14,7 +14,7 @@ auto File::Read(std::span<Byte, extent> data) const -> Result<int>
 
 
 template<std::size_t extent>
-auto File::Write(std::span<const Byte, extent> data) -> Result<int>
+auto File::Write(std::span<Byte const, extent> data) -> Result<int>
 {
     return Write(data.data(), data.size());
 }

@@ -3,12 +3,18 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
+
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <utility>
 
 
 namespace sts1cobcsw
+{
+namespace
 {
 constexpr auto ledBlinkThreadPriority = 100;
 constexpr auto interruptTestPriority = 200;
@@ -22,8 +28,7 @@ class LedBlinkThread : public RODOS::StaticThread<>
 {
 public:
     LedBlinkThread() : StaticThread("LedBlinkThread", ledBlinkThreadPriority)
-    {
-    }
+    {}
 
 
 private:
@@ -58,8 +63,7 @@ class InterruptTest : public RODOS::StaticThread<>
 {
 public:
     InterruptTest() : StaticThread("InterruptTest", interruptTestPriority)
-    {
-    }
+    {}
 
 
 private:
@@ -94,4 +98,5 @@ private:
         }
     }
 } interruptTest;
+}
 }

@@ -10,7 +10,6 @@
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
@@ -24,15 +23,18 @@
 #include <rodos_no_using_namespace.h>
 
 #include <cinttypes>  // IWYU pragma: keep
+#include <utility>
 
 
 namespace sts1cobcsw
+{
+namespace
 {
 [[nodiscard]] auto ComputeStartDelay(RealTime startTime) -> Duration;
 
 
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 8'000U;
+constexpr auto stackSize = 8000U;
 constexpr auto eduCommunicationDelay = 2 * s;
 
 
@@ -40,8 +42,7 @@ class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
 {
 public:
     EduProgramQueueThread() : StaticThread("EduProgramQueueThread", eduProgramQueueThreadPriority)
-    {
-    }
+    {}
 
 
 private:
@@ -69,6 +70,7 @@ private:
         {
             if(edu::programQueue.IsEmpty())
             {
+                (void)0;  // Silence warning about repeated branch in conditional
                 DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
             }
@@ -165,6 +167,7 @@ auto ComputeStartDelay(RealTime startTime) -> Duration
 {
     auto delay = ToRodosTime(startTime) - CurrentRodosTime();
     return delay < Duration(0) ? Duration(0) : delay;
+}
 }
 
 

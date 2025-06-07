@@ -3,7 +3,7 @@ name: Continuous Integration
 # format-and-spell-check        : push, pull_request, release
 # coverage                      : push, pull_request, release
 # sanitize                      : push, pull_request, release
-# build-cobc                    : push, pull_request (Upload of artifacts), release (upload binaries to release)
+# build-for-cobc                : push, pull_request (Upload of artifacts), release (upload binaries to release)
 # test                          : push, pull_request, release
 # docs                          : release
 
@@ -23,7 +23,7 @@ on:
 jobs:
   format-and-spell-check:
     runs-on: ubuntu-24.04
-    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.15.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
     needs: format-and-spell-check
 
     runs-on: ubuntu-24.04
-    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.15.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
@@ -48,26 +48,26 @@ jobs:
       run: cmake --preset=ci-coverage
 
     - name: Build all tests
-      run: cmake --build build/coverage -t AllTests -j 2
+      run: cmake --build build/ci-coverage -t AllTests
 
     - name: Test
-      working-directory: build/coverage
-      run: ctest --output-on-failure -j 2
+      working-directory: build/ci-coverage
+      run: ctest --output-on-failure
 
     - name: Process coverage info
-      run: cmake --build build/coverage -t coverage
+      run: cmake --build build/ci-coverage -t coverage
 
     - name: Submit to codecov.io
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: build/coverage/coverage.info
+        files: build/ci-coverage/coverage.info
 
   sanitize:
     needs: format-and-spell-check
 
     runs-on: ubuntu-24.04
-    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.15.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
@@ -76,10 +76,10 @@ jobs:
       run: cmake --preset=ci-sanitize
 
     - name: Build all tests
-      run: cmake --build build/sanitize -t AllTests -j 2
+      run: cmake --build build/ci-sanitize -t AllTests
 
     - name: Test
-      working-directory: build/sanitize
+      working-directory: build/ci-sanitize
       env:
         ASAN_OPTIONS: "strict_string_checks=1:\
           detect_stack_use_after_return=1:\
@@ -87,13 +87,13 @@ jobs:
           strict_init_order=1:\
           detect_leaks=1"
         UBSAN_OPTIONS: print_stacktrace=1
-      run: ctest --output-on-failure -j 2
+      run: ctest --output-on-failure
 
-  build-cobc:
+  build-for-cobc:
     needs: format-and-spell-check
 
     runs-on: ubuntu-24.04
-    container: tuwienspaceteam/sts1-cobc:1.12.0
+    container: tuwienspaceteam/sts1-cobc:1.15.0
 
     steps:
     - uses: actions/checkout@v4
@@ -108,14 +108,20 @@ jobs:
       if: steps.restorecache.outputs.cache-hit != 'true'
       run: echo "Cache miss"
 
-    - name: Configure
+    - name: Configure bootloader
+      run: cmake --preset=ci-bootloader
+
+    - name: Build bootloader
+      run: cmake --build build/ci-bootloader
+
+    - name: Configure COBC FW
       run: cmake --preset=ci-cobc
 
-    - name: Build COBC SW
-      run: cmake --build build/cobc -j 2
+    - name: Build COBC FW
+      run: cmake --build build/ci-cobc
 
-    - name: Build tests
-      run: cmake --build build/cobc -t AllTests -j 2
+    - name: Build all tests
+      run: cmake --build build/ci-cobc -t AllTests
 
     - uses: actions/cache/save@v4
       id: savecache
@@ -129,21 +135,28 @@ jobs:
       with:
         name: CobcBinaries
         path: |
-          ./build/cobc/*.bin
-          ./build/cobc/Tests/**/*.bin
-        retention-days: 7
+          ./build/ci-bootloader/*.bin
+          ./build/ci-bootloader/*.elf
+          ./build/ci-cobc/*.bin
+          ./build/ci-cobc/*.elf
+          ./build/ci-cobc/Tests/**/*.bin
+          ./build/ci-cobc/Tests/**/*.elf
 
     - name: Add assets to release
       if: github.event_name == 'release'
       uses: softprops/action-gh-release@v2
       with:
-          files: ./build/cobc/*.bin
+          files: |
+            ./build/ci-bootloader/*.bin
+            ./build/ci-bootloader/*.elf
+            ./build/ci-cobc/*.bin
+            ./build/ci-cobc/*.elf
 
   test:
     needs: format-and-spell-check
 
     runs-on: ubuntu-24.04
-    container: tuwienspaceteam/sts1-cobc:1.12.0-linux-x86
+    container: tuwienspaceteam/sts1-cobc:1.15.0-linux-x86
 
     steps:
     - uses: actions/checkout@v4
@@ -152,15 +165,15 @@ jobs:
       run: cmake --preset=ci-linux-x86
 
     - name: Build all tests
-      run: cmake --build build/linux-x86 -t AllTests -j 2
+      run: cmake --build build/ci-linux-x86 -t AllTests
 
     - name: Test
-      working-directory: build/linux-x86/Tests
-      run: ctest --output-on-failure -C Release -j 2
+      working-directory: build/ci-linux-x86/Tests
+      run: ctest --output-on-failure -C MinSizeRel
 
   docs:
     # Deploy docs only when builds and tests succeed
-    needs: [sanitize, build-cobc, test]
+    needs: [sanitize, build-for-cobc, test]
 
     runs-on: ubuntu-24.04
 

@@ -11,10 +11,13 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <algorithm>
 #include <bit>
 #include <cstddef>
+#include <cstdint>
+#include <utility>
 
 
 // The following tables are taken from the wiki page "EPS - Electrical Power Supply" (11.03.2025)
@@ -89,7 +92,7 @@ namespace
 using AdcValues = std::array<AdcValue, nChannels>;
 
 
-enum class ResetType
+enum class ResetType : std::uint8_t
 {
     registers,
     fifo
@@ -118,7 +121,7 @@ auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
 auto InitializeAdcs() -> void
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return;
     }
@@ -146,7 +149,7 @@ auto InitializeAdcs() -> void
 
 auto ReadAdcs() -> AdcData
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return AdcData{};
     }
@@ -164,7 +167,7 @@ auto ReadAdcs() -> AdcData
 
 auto ResetAdcRegisters() -> void
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return;
     }
@@ -176,7 +179,7 @@ auto ResetAdcRegisters() -> void
 
 auto ClearAdcFifos() -> void
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return;
     }

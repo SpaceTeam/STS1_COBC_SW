@@ -8,6 +8,8 @@
 #include <cstring>
 
 
+namespace
+{
 struct S
 {
     char c = 's';
@@ -22,6 +24,7 @@ struct S
 auto ApproximatelyEqual(double lhs, double rhs, double relativeTolerance = 1e-6) -> bool
 {
     return std::abs(lhs - rhs) < relativeTolerance * std::max(std::abs(lhs), std::abs(rhs));
+}
 }
 
 

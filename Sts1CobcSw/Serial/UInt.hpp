@@ -38,8 +38,7 @@ struct UInt
     constexpr UInt() = default;
     // NOLINTNEXTLINE(*explicit*)
     constexpr UInt(UnderlyingType value) : valueIsAnImplementationDetail(value & mask)
-    {
-    }
+    {}
 
 
     template<std::size_t rightNBits>

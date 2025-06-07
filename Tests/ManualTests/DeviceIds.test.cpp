@@ -8,7 +8,6 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 
@@ -21,7 +20,9 @@ using RODOS::PRINTF;
 using RODOS::SECONDS;
 
 
-constexpr std::size_t stackSize = 5'000;
+namespace
+{
+constexpr std::size_t stackSize = 5000;
 
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
@@ -34,8 +35,7 @@ class DeviceIdsTest : public RODOS::StaticThread<stackSize>
 {
 public:
     DeviceIdsTest() : StaticThread("DeviceIdsTest")
-    {
-    }
+    {}
 
 
 private:
@@ -167,5 +167,6 @@ auto BlinkLed(int frequency, int duration) -> void
         AT(NOW() + SECONDS / frequency / 2LL);
     }
     led1GpioPin.Reset();
+}
 }
 }

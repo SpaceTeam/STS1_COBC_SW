@@ -6,6 +6,8 @@
 
 #include <littlefs/lfs.h>
 
+#include <etl/string.h>
+
 #include <cstdint>
 #include <iterator>
 

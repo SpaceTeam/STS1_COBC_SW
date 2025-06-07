@@ -4,8 +4,11 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 
 namespace sts1cobcsw::hal

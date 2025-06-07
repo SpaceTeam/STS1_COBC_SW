@@ -10,6 +10,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <climits>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -20,9 +21,9 @@ auto UpdateRealTimeOffset(RealTime telecommandTimestamp, std::int32_t rxBaudRate
     static constexpr auto telecommandSize = 383;
     auto currentRodosTime = CurrentRodosTime();
     auto const transmissionDuration = telecommandSize * CHAR_BIT * 1000 / rxBaudRate * ms;
-    auto offsetCorrection = persistentVariables.template Load<"realTimeOffsetCorrection">();
+    auto offsetCorrection = persistentVariables.Load<"realTimeOffsetCorrection">();
     auto newRealTimeOffset = RodosTime(value_of(telecommandTimestamp) * RODOS::SECONDS)
                            + transmissionDuration + offsetCorrection - currentRodosTime;
-    persistentVariables.template Store<"realTimeOffset">(newRealTimeOffset);
+    persistentVariables.Store<"realTimeOffset">(newRealTimeOffset);
 }
 }

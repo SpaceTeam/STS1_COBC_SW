@@ -6,8 +6,6 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <cstdint>
-
 
 namespace sts1cobcsw::hal
 {
@@ -81,4 +79,4 @@ private:
 }
 
 
-#include <Sts1CobcSw/Hal/GpioPin.ipp>
+#include <Sts1CobcSw/Hal/GpioPin.ipp>  // IWYU pragma: keep

@@ -3,22 +3,15 @@
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 
-#include <strong_type/type.hpp>
+#ifdef ENABLE_DEBUG_PRINT
+    #include <strong_type/type.hpp>
 
-#include <cinttypes>  // IWYU pragma: keep
-
-
-namespace sts1cobcsw
-{
-// TODO: Move this to EduProgramQueueThreadMock.cpp or something
-auto ResumeEduProgramQueueThread() -> void
-{
-    DEBUG_PRINT("Call to ResumeEduProgramQueueThread()\n");
-}
+    #include <cinttypes>
+#endif
 
 
 // TODO: This file is not used at all right now. Think about the mocking later.
-namespace edu
+namespace sts1cobcsw::edu
 {
 auto Initialize() -> void
 {
@@ -82,6 +75,5 @@ auto UpdateTime([[maybe_unused]] UpdateTimeData const & data) -> Result<void>
     DEBUG_PRINT_REAL_TIME();
     DEBUG_PRINT("Call to UpdateTime(currentTime = %" PRIi32 ")\n", value_of(data.currentTime));
     return outcome_v2::success();
-}
 }
 }

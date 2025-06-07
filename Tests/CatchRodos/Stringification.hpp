@@ -10,6 +10,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+// IWYU pragma: no_include <version>
 
 
 namespace sts1cobcsw

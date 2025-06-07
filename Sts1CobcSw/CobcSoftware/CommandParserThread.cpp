@@ -18,8 +18,10 @@ extern HAL_UART uart_stdout;
 
 namespace sts1cobcsw
 {
+namespace
+{
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 4'000U;
+constexpr auto stackSize = 4000U;
 constexpr auto startCharacter = '$';
 
 
@@ -27,13 +29,12 @@ class CommandParserThread : public RODOS::StaticThread<stackSize>
 {
 public:
     CommandParserThread() : StaticThread("CommandParserThread", commandParserThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
@@ -72,4 +73,5 @@ private:
         }
     }
 } commandParserThread;
+}
 }

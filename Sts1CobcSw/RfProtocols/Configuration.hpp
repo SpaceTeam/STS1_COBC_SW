@@ -96,15 +96,15 @@ inline constexpr auto packetPusVersionNumber = UInt<4>(2);
 
 // NOLINTBEGIN(*magic-numbers)
 using MessageTypeId = Id<MessageTypeIdFields,
-                         MessageTypeIdFields{1, 1},
-                         MessageTypeIdFields{1, 2},
-                         MessageTypeIdFields{1, 7},
-                         MessageTypeIdFields{1, 8},
-                         MessageTypeIdFields{3, 25},
-                         MessageTypeIdFields{6, 6},
-                         MessageTypeIdFields{20, 2},
-                         MessageTypeIdFields{23, 4},
-                         MessageTypeIdFields{23, 13}>;
+                         {1, 1},
+                         {1, 2},
+                         {1, 7},
+                         {1, 8},
+                         {3, 25},
+                         {6, 6},
+                         {20, 2},
+                         {23, 4},
+                         {23, 13}>;
 // NOLINTEND(*magic-numbers)
 }
 

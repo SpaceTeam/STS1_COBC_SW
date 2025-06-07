@@ -1,31 +1,38 @@
-#include <Tests/HardwareSetup/RfLatchupProtection.hpp>
-
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
+
+#include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <span>
+#include <utility>
 
 
 namespace sts1cobcsw
 {
 using RODOS::PRINTF;
 
+
+namespace
+{
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
 
 auto Print(std::span<Byte const> data) -> void;
 
 
-class RfReceiveTest : public RODOS::StaticThread<5'000>
+class RfReceiveTest : public RODOS::StaticThread<5000>
 {
 public:
     RfReceiveTest() : StaticThread("RfReceiveTest")
-    {
-    }
+    {}
 
 
 private:
@@ -79,5 +86,6 @@ auto Print(std::span<Byte const> data) -> void
     {
         PRINTF("\n");
     }
+}
 }
 }

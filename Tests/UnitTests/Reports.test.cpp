@@ -2,7 +2,6 @@
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
-#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -29,6 +28,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 
 namespace fs = sts1cobcsw::fs;
@@ -266,13 +266,13 @@ TEST_CASE("Housekeeping parameter report")
         .nFileSystemErrors = 14U,
         .cobcTemperature = 15,
         .rfTemperature = 16,
- // clang-format off
+        // clang-format off
         .epsAdcData = {
             .adc4 = {
                 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U, 25U, 26U, 27U, 28U, 29U, 30U, 31U, 32U},
             .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
             .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
-  // clang-format on
+        // clang-format on
         .rxBaudRate = 53,
         .txBaudRate = 54,
         .nCorrectableUplinkErrors = 55U,
@@ -362,7 +362,7 @@ TEST_CASE("Parameter value report")
     auto parameterIds = etl::vector<ParameterId, sts1cobcsw::maxNParameters>{
         ParameterId::rxBaudRate, ParameterId::txBaudRate, ParameterId::eduStartDelayLimit};
     auto parameterValues =
-        etl::vector<ParameterValue, sts1cobcsw::maxNParameters>{9600U, 115200U, 17U};
+        etl::vector<ParameterValue, sts1cobcsw::maxNParameters>{9600U, 115'200U, 17U};
     report = ParameterValueReport(parameterIds, parameterValues);
     addToResult = report.AddTo(&dataField);
     CHECK(addToResult.has_error() == false);
@@ -403,7 +403,7 @@ TEST_CASE("File attribute report")
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto filePath = fs::Path("/results/12345_67890.zip");
-    auto fileSize = 0xDEADBEEFU;
+    auto fileSize = 0xDEAD'BEEFU;
     auto fileStatus = FileStatus::locked;
     auto report = FileAttributeReport(filePath, fileSize, fileStatus);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();

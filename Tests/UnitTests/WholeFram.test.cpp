@@ -10,8 +10,8 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
-#include <algorithm>
 #include <array>
+#include <utility>
 
 
 namespace fram = sts1cobcsw::fram;

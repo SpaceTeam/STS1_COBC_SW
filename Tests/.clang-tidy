@@ -1,5 +1,6 @@
-Checks: "-readability-identifier-length, \
+Checks: "-*function-size, \
          -*magic-numbers*, \
+         -performance-enum-size, \
          -readability-function-cognitive-complexity, \
-         -*function-size"
+         -readability-identifier-length"
 InheritParentConfig: true
