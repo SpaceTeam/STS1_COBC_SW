@@ -5,6 +5,13 @@ if(BUILD_BOOTLOADER AND CMAKE_SYSTEM_NAME STREQUAL Linux)
     message(FATAL_ERROR "Building the bootloader is only supported on embedded platforms")
 endif()
 
+option(BUILD_FOR_USE_WITH_BOOTLOADER "Build the firmware for use with the bootloader" OFF)
+if(BUILD_FOR_USE_WITH_BOOTLOADER AND CMAKE_SYSTEM_NAME STREQUAL Linux)
+    message(FATAL_ERROR "Building the firmware for use with the bootloader is only supported on "
+                        "embedded platforms"
+    )
+endif()
+
 set(HW_VERSION 30 CACHE STRING "Hardware version")
 
 # Developer mode enables targets and code paths in the CMake scripts that are only relevant for the
