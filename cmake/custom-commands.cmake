@@ -32,6 +32,9 @@ function(add_program program_name)
         set_target_properties(${target} PROPERTIES SUFFIX ".elf")
         # Automatically call objcopy on the executable targets after the build
         objcopy_target(${target})
+        if(BUILD_FOR_USE_WITH_BOOTLOADER)
+            add_metadata(${target})
+        endif()
     endif()
 endfunction()
 
@@ -50,6 +53,9 @@ function(add_test_program test_name)
         set_target_properties(${target} PROPERTIES SUFFIX ".elf")
         # Automatically call objcopy on the executable targets after the build
         objcopy_target(${target})
+        if(BUILD_FOR_USE_WITH_BOOTLOADER)
+            add_metadata(${target})
+        endif()
     endif()
 endfunction()
 
@@ -61,6 +67,19 @@ function(objcopy_target target)
         COMMAND "${CMAKE_OBJCOPY}" -O binary "$<TARGET_FILE:${target}>"
                 "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_BASE_NAME:${target}>.bin"
         COMMENT "Calling objcopy on ${output_name} to generate flashable ${output_name}.bin"
+        VERBATIM
+    )
+endfunction()
+
+function(add_metadata target)
+    get_target_property(output_name ${target} OUTPUT_NAME)
+    add_custom_command(
+        TARGET ${target}
+        POST_BUILD
+        COMMAND
+            "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../Scripts/add_metadata.py"
+            "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_BASE_NAME:${target}>.bin"
+        COMMENT "Adding metadata to ${output_name}.bin"
         VERBATIM
     )
 endfunction()
