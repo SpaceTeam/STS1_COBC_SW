@@ -1,24 +1,23 @@
-#include "ReedSolomon.hpp"
-extern "C"
-{
+#include <Sts1CobcSw/ChannelCoding/ReedSolomon.hpp>
+
 #include <libfec/fec.h>
-}
+
 
 namespace sts1cobcsw::rs
 {
-auto Encode(std::span<Byte, messageLength> data, std::span<Byte, nParitySymbols> parities) -> void
+auto Encode(std::span<Byte, messageLength> message, std::span<Byte, nParitySymbols> paritySymbols)
+    -> void
 {
-    encode_rs_ccsds(
-        std::span<unsigned char>(reinterpret_cast<unsigned char *>(data.data()), data.size())
-            .data(),
-        std::span<unsigned char>(reinterpret_cast<unsigned char *>(parities.data()),
-                                 parities.size())
-            .data());
+    // NOLINTBEGIN(*reinterpret-cast)
+    encode_rs_ccsds(reinterpret_cast<unsigned char *>(message.data()),
+                    reinterpret_cast<unsigned char *>(paritySymbols.data()));
+    // NOLINTEND(*reinterpret-cast)
 }
-auto Decode(std::span<Byte, blockLength> data) -> void
+
+
+auto Decode(std::span<Byte, blockLength> block) -> void
 {
-    decode_rs_ccsds(
-        std::span<unsigned char>(reinterpret_cast<unsigned char *>(data.data()), data.size())
-            .data());
+    // NOLINTNEXTLINE(*reinterpret-cast)
+    decode_rs_ccsds(reinterpret_cast<unsigned char *>(block.data()));
 }
 }

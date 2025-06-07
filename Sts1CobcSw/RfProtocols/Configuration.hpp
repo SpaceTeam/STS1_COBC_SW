@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
@@ -18,26 +19,12 @@ namespace sts1cobcsw
 inline constexpr auto ccsdsEndianness = std::endian::big;
 
 
-// --- Synchronization and channel coding ---
-
-namespace ecc
-{
-// RS(255, 223)
-inline constexpr auto blockLength = 255;
-inline constexpr auto messageLength = 223;
-inline constexpr auto nParitySymbols = 32;
-static_assert(nParitySymbols == blockLength - messageLength);
-
-using Block = std::array<Byte, blockLength>;
-}
-
-
 // --- Space Data Link Protocol ---
 
 namespace tm
 {
 inline constexpr auto transferFrameVersionNumber = UInt<2>(0);
-inline constexpr auto transferFrameLength = ecc::messageLength;
+inline constexpr auto transferFrameLength = messageLength;
 inline constexpr auto transferFramePrimaryHeaderLength = 6;
 inline constexpr auto transferFrameDataLength =
     transferFrameLength - transferFramePrimaryHeaderLength;
@@ -46,7 +33,7 @@ inline constexpr auto transferFrameDataLength =
 namespace tc
 {
 inline constexpr auto transferFrameVersionNumber = UInt<2>(0);
-inline constexpr auto transferFrameLength = ecc::messageLength;
+inline constexpr auto transferFrameLength = messageLength;
 inline constexpr auto transferFramePrimaryHeaderLength = 5;
 inline constexpr auto securityHeaderLength = 4;   // TODO: What's the right number?
 inline constexpr auto securityTrailerLength = 8;  // TODO: What's the right number?

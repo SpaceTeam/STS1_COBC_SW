@@ -1,18 +1,21 @@
 #pragma once
 
-extern "C"
-{
-#include <libfec/tables.h>
-}
-#include <span>
 
-#include "../Serial/Byte.hpp"
-#include "Configuration.hpp"
+#include <Sts1CobcSw/Serial/Byte.hpp>
+
+#include <libfec/fixed.h>
+
+#include <span>
 
 
 namespace sts1cobcsw::rs
 {
+inline constexpr auto blockLength = NN;
+inline constexpr auto nParitySymbols = NROOTS;
+inline constexpr auto messageLength = NN - NROOTS;
 
-auto Encode(std::span<Byte, messageLength> data, std::span<Byte, nParitySymbols> parities) -> void;
-auto Decode(std::span<Byte, blockLength> data) -> void;
+
+auto Encode(std::span<Byte, messageLength> message, std::span<Byte, nParitySymbols> paritySymbols)
+    -> void;
+auto Decode(std::span<Byte, blockLength> block) -> void;
 }

@@ -1,11 +1,13 @@
 #pragma once
 
-#include <cstdint>
+
+#include <Sts1CobcSw/Serial/Byte.hpp>
+
 #include <span>
 
-#include "../Serial/Byte.hpp"
 
-std::uint8_t constexpr fieldSize = 255;
-
-auto Unscramble(std::span<sts1cobcsw::Byte> data) -> void;
-auto Scramble(std::span<sts1cobcsw::Byte> data) -> void;
+namespace sts1cobcsw
+{
+auto Scramble(std::span<Byte> data) -> void;
+auto Unscramble(std::span<Byte> data) -> void;
+}
