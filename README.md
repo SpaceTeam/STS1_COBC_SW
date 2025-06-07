@@ -324,6 +324,11 @@ The following shows what the directory structure could actually look like.
 Only contributions from members of the TU Wien Space Team are accepted.
 
 
-## Licensing
+## Licensing and attribution
 
-See the [LICENSE](LICENSE) document.
+This project is licensed under the MIT license. See the [LICENSE](LICENSE) document for
+the full text.
+
+The lookup tables for our bit-scrambling code in
+[`Sts1CobcSw/ChannelCoding/Scrambler.cpp`](./Sts1CobcSw/ChannelCoding/Scrambler.cpp) were
+taken from [bitsnarl](https://github.com/Tagussan/bitsnarl).
