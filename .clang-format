@@ -96,8 +96,8 @@ IncludeCategories:
   # Test header files <Tests/*.hpp> without underscores
   - Regex: '^<Tests(\/[A-Za-z0-9]+)+\.hpp>'
     Priority: 1
-  # Sts1CobcSw header files <Sts1CobcSw/*.hpp> without underscores
-  - Regex: '^<Sts1CobcSw(\/[A-Za-z0-9]+)+\.hpp>'
+  # Sts1CobcSw header files <Sts1CobcSw/*.hpp> or <Sts1CobcSw/*.h> without underscores
+  - Regex: '^<Sts1CobcSw(\/[A-Za-z0-9]+)+\.(h|hpp)>'
     Priority: 2
   # C headers from external libraries: <**/*.h>
   - Regex: '^<([A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.h>'
