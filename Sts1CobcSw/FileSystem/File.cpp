@@ -39,7 +39,7 @@ File::~File()
 
 auto Open(Path const & path, unsigned int flags) -> Result<File>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -79,7 +79,7 @@ auto File::SeekRelative(int offset) -> Result<int>
 
 auto File::Size() const -> Result<int>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -98,7 +98,7 @@ auto File::Size() const -> Result<int>
 
 auto File::Close() const -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -119,7 +119,7 @@ auto File::Close() const -> Result<void>
 
 auto File::Flush() -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -154,7 +154,7 @@ auto File::MoveConstructFrom(File * other) noexcept -> void
     {
         return;
     }
-    if(persistentVariables.template Load<"flashIsWorking">())
+    if(persistentVariables.Load<"flashIsWorking">())
     {
         auto error = lfs_file_opencfg(
             &lfs, &lfsFile_, path_.c_str(), static_cast<int>(openFlags_), &lfsFileConfig_);
@@ -200,7 +200,7 @@ auto File::CreateLockFile() const noexcept -> Result<void>
 
 auto File::Read(void * buffer, std::size_t size) const -> Result<int>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -223,7 +223,7 @@ auto File::Read(void * buffer, std::size_t size) const -> Result<int>
 
 auto File::Write(void const * buffer, std::size_t size) -> Result<int>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -244,9 +244,9 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
 }
 
 
-[[nodiscard]] auto File::Seek(int offset, int whence) -> Result<int>
+auto File::Seek(int offset, int whence) -> Result<int>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }

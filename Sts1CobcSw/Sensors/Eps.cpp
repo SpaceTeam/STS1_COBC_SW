@@ -121,7 +121,7 @@ auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
 
 auto InitializeAdcs() -> void
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return;
     }
@@ -149,7 +149,7 @@ auto InitializeAdcs() -> void
 
 auto ReadAdcs() -> AdcData
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return AdcData{};
     }
@@ -167,7 +167,7 @@ auto ReadAdcs() -> AdcData
 
 auto ResetAdcRegisters() -> void
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return;
     }
@@ -179,7 +179,7 @@ auto ResetAdcRegisters() -> void
 
 auto ClearAdcFifos() -> void
 {
-    if(not persistentVariables.template Load<"epsIsWorking">())
+    if(not persistentVariables.Load<"epsIsWorking">())
     {
         return;
     }

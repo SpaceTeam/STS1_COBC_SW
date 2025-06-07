@@ -14,7 +14,7 @@ namespace sts1cobcsw::edu
 inline constexpr auto nCachedProgramStatusHistoryEntries = 10;
 inline constexpr auto programStatusHistory =
     FramRingArray<ProgramStatusHistoryEntry,
-                  framSections.template Get<"eduProgramStatusHistory">(),
+                  framSections.Get<"eduProgramStatusHistory">(),
                   nCachedProgramStatusHistoryEntries>{};
 
 

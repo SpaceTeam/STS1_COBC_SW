@@ -43,7 +43,7 @@ private:
         {
             SuspendUntil(endOfTime);
 
-            persistentVariables.template Increment<"nEduCommunicationErrors">();
+            persistentVariables.Increment<"nEduCommunicationErrors">();
 
             DEBUG_PRINT("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU

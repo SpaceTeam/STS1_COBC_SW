@@ -108,13 +108,13 @@ auto FlushUartReceiveBuffer() -> void;
 auto Initialize() -> void
 {
     eduEnableGpioPin.SetDirection(hal::PinDirection::out);
-    persistentVariables.template Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
+    persistentVariables.Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
 }
 
 
 auto TurnOn() -> void
 {
-    persistentVariables.template Store<"eduShouldBePowered">(true);
+    persistentVariables.Store<"eduShouldBePowered">(true);
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
@@ -125,7 +125,7 @@ auto TurnOn() -> void
 
 auto TurnOff() -> void
 {
-    persistentVariables.template Store<"eduShouldBePowered">(false);
+    persistentVariables.Store<"eduShouldBePowered">(false);
     eduEnableGpioPin.Reset();
     hal::Deinitialize(&uart);
 }

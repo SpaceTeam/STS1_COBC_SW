@@ -20,7 +20,7 @@ auto & lfs = internal::lfs;
 // crashes with a SEGFAULT.
 auto Mount() -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -57,7 +57,7 @@ auto Unmount() -> Result<void>
 
 auto CreateDirectory(Path const & path) -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -72,7 +72,7 @@ auto CreateDirectory(Path const & path) -> Result<void>
 
 auto Remove(Path const & path) -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -94,7 +94,7 @@ auto Remove(Path const & path) -> Result<void>
 
 auto ForceRemove(Path const & path) -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }

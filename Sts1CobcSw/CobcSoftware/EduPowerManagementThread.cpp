@@ -53,7 +53,7 @@ private:
                   value_of(eduPowerManagementThreadPeriod))
         {
             auto batteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
-            auto flashIsWorking = persistentVariables.template Load<"flashIsWorking">();
+            auto flashIsWorking = persistentVariables.Load<"flashIsWorking">();
             if(batteryIsGood and flashIsWorking)
             {
                 auto eduIsAlive = false;

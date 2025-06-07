@@ -36,7 +36,7 @@ private:
         SuspendUntil(endOfTime);
         DEBUG_PRINT("FRAM/EPS start-up test ...");
         fram::framIsWorking.Store(true);
-        persistentVariables.template Store<"epsIsWorking">(true);
+        persistentVariables.Store<"epsIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
@@ -60,7 +60,7 @@ private:
     {
         SuspendUntil(endOfTime);
         DEBUG_PRINT("Flash start-up test ...");
-        persistentVariables.template Store<"flashIsWorking">(true);
+        persistentVariables.Store<"flashIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
@@ -83,7 +83,7 @@ private:
     {
         SuspendUntil(endOfTime);
         DEBUG_PRINT("RF start-up test ...");
-        persistentVariables.template Store<"rfIsWorking">(true);
+        persistentVariables.Store<"rfIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
