@@ -1,0 +1,7 @@
+# Do not diagnose the files in Blake2s/ except for the wrapper
+If:
+  PathMatch: .*Blake2s/.*\.(h|cpp)$
+  PathExclude: .*/Blake2sWrapper\.(h|c)pp$
+Diagnostics:
+  ClangTidy:
+    Remove: "*"
