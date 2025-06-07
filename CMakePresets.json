@@ -165,6 +165,15 @@
       }
     },
     {
+      "name": "ci-cobc-for-bootloader",
+      "inherits": [
+        "ci-cobc"
+      ],
+      "cacheVariables": {
+        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON"
+      }
+    },
+    {
       "name": "ci-bootloader",
       "inherits": [
         "dev-mode",

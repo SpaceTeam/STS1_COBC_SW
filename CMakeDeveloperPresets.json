@@ -53,6 +53,16 @@
       ]
     },
     {
+      "name": "dev-cobc-for-bootloader-fast",
+      "inherits": "dev-cobc-fast",
+      "toolchainFile": "/stm32f411.cmake",
+      "cacheVariables": {
+        "HSE_VALUE": "12000000",
+        "HW_VERSION": "30",
+        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON"
+      }
+    },
+    {
       "name": "dev-bootloader-fast",
       "inherits": "dev-common",
       "toolchainFile": "${sourceDir}/Sts1CobcSw/Bootloader/Toolchain.cmake",
@@ -108,6 +118,16 @@
     {
       "name": "dev-cobc-min-size-rel",
       "configurePreset": "dev-cobc",
+      "configuration": "MinSizeRel"
+    },
+    {
+      "name": "dev-cobc-for-bootloader-fast-debug",
+      "configurePreset": "dev-cobc-for-bootloader-fast",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-cobc-for-bootloader-fast-min-size-rel",
+      "configurePreset": "dev-cobc-for-bootloader-fast",
       "configuration": "MinSizeRel"
     },
     {
