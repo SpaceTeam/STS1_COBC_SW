@@ -324,6 +324,10 @@ The following shows what the directory structure could actually look like.
 Only contributions from members of the TU Wien Space Team are accepted.
 
 
-## Licensing
+## Licensing and attribution
 
-See the [LICENSE](LICENSE) document.
+This project is licensed under the MIT license. See the [LICENSE](LICENSE) document for
+the full text.
+
+The files in `Sts1CobcSw/Blake2s/External/` were copied from
+[arduinolibs](https://github.com/rweather/arduinolibs/) which is also MIT licensed.
