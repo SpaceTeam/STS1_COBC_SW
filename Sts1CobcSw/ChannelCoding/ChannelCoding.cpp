@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
 #include <Sts1CobcSw/ChannelCoding/ReedSolomon.hpp>
 #include <Sts1CobcSw/ChannelCoding/Scrambler.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 
 
 namespace sts1cobcsw
@@ -14,10 +15,10 @@ auto Encode(std::span<Byte, blockLength> block) -> void
 }
 
 
-auto Decode(std::span<Byte, blockLength> block) -> void
+auto Decode(std::span<Byte, blockLength> block) -> Result<int>
 {
     Unscramble(block);
-    rs::Decode(block);
+    return rs::Decode(block);
 }
 }
 
@@ -31,10 +32,10 @@ auto Encode(std::span<Byte, blockLength> block) -> void
 }
 
 
-auto Decode(std::span<Byte, blockLength> block) -> void
+auto Decode(std::span<Byte, blockLength> block) -> Result<int>
 {
     Unscramble(block);
-    rs::Decode(block);
+    return rs::Decode(block);
 }
 }
 }

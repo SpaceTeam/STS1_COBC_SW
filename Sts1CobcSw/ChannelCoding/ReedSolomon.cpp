@@ -15,9 +15,15 @@ auto Encode(std::span<Byte, messageLength> message, std::span<Byte, nParitySymbo
 }
 
 
-auto Decode(std::span<Byte, blockLength> block) -> void
+auto Decode(std::span<Byte, blockLength> block) -> Result<int>
 {
     // NOLINTNEXTLINE(*reinterpret-cast)
-    decode_rs_ccsds(reinterpret_cast<unsigned char *>(block.data()));
+    auto nCorrectedErrors = decode_rs_ccsds(reinterpret_cast<unsigned char *>(block.data()));
+
+    if (nCorrectedErrors >= 0) {
+        return nCorrectedErrors;
+    } else {
+        return ErrorCode::errorCorrectionFailed;
+    }
 }
 }

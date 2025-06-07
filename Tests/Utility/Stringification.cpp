@@ -130,6 +130,9 @@ auto Append(ValueString * string, ErrorCode const & errorCode) -> void
         case ErrorCode::programFailed:
             Append(string, "ErrorCode::programFailed");
             break;
+        case ErrorCode::errorCorrectionFailed:
+            Append(string, "ErrorCode::errorCorrectionFailed");
+            break;
     }
 }
 

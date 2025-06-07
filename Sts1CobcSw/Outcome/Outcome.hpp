@@ -66,6 +66,7 @@ enum class ErrorCode : std::int8_t
     misaligned,
     eraseFailed,
     programFailed,
+    errorCorrectionFailed,
 };
 
 
