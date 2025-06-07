@@ -14,7 +14,15 @@ inline constexpr auto messageLength = rs::messageLength;
 inline constexpr auto nParitySymbols = rs::nParitySymbols;
 
 
-// TODO: Change to a single parameter of blockLength
+namespace tc
+{
 auto Encode(std::span<Byte, blockLength> block) -> void;
 auto Decode(std::span<Byte, blockLength> block) -> void;
+}
+
+namespace tm
+{
+auto Encode(std::span<Byte, blockLength> block) -> void;
+auto Decode(std::span<Byte, blockLength> block) -> void;
+}
 }
