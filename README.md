@@ -231,7 +231,7 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
   provide type-safe and more specifically named C++ wrappers for this low-level Rodos
   stuff.
 - `Periphery/` should contain abstractions for the external periphery the COBC
-  communicates with, like sensors or memory chips. The EDU also kinda fits here.
+  communicates with, like sensors or memory chips. The EDU also kind of fits here.
 - All CMake targets are prefixed with the project name: `Sts1CobcSw_CobcSoftware`,
   `Sts1CobcSw_Hal`, etc.
 - Everything test related is in `Tests/` and its subdirectories.
