@@ -145,6 +145,9 @@ Hash::~Hash()
  * \sa resetHMAC(), finalize()
  */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 /**
  * \brief Formats a HMAC key into a block.
  *
@@ -178,6 +181,8 @@ void Hash::formatHMACKey(void *block, const void *key, size_t len, uint8_t pad)
         --len;
     }
 }
+
+#pragma GCC diagnostic pop
 
 /**
  * \fn void hmac<T>(void *out, size_t outLen, const void *key, size_t keyLen, const void *data, size_t dataLen)

@@ -155,6 +155,10 @@
      state.length = 0;
  }
 
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wold-style-cast"
+ #pragma GCC diagnostic ignored "-Wconversion"
+
  /**
   * \brief Resets the hash ready for a new hashing process with a specified
   * key and output length.
@@ -330,3 +334,5 @@
      for (index = 0; index < 8; ++index)
          state.h[index] ^= (v[index] ^ v[index + 8]);
  }
+
+ #pragma GCC diagnostic pop

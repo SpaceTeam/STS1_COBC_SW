@@ -22,6 +22,10 @@
 
 #include "Crypto.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+
 /**
  * \brief Cleans a block of bytes.
  *
@@ -112,3 +116,5 @@ uint8_t crypto_crc8(uint8_t tag, const void *data, unsigned size)
     }
     return crc;
 }
+
+#pragma GCC diagnostic pop

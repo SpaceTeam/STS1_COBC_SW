@@ -25,6 +25,9 @@
 
  #include "Hash.h"
 
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wsuggest-override"
+
  class BLAKE2s : public Hash
  {
  public:
@@ -59,5 +62,7 @@
 
      void processChunk(uint32_t f0);
  };
+
+ #pragma GCC diagnostic pop
 
  #endif
