@@ -13,7 +13,7 @@
 namespace sts1cobcsw
 {
 inline constexpr auto persistentVariablesSize = fram::Size(300);
-inline constexpr auto eduProgramQueueSize = fram::Size(20 * 8);
+inline constexpr auto eduProgramQueueSize = fram::Size(24 * 8 + 12);
 inline constexpr auto eduProgramStatusHistorySize = fram::Size(50 * 7);
 inline constexpr auto testMemorySize = fram::Size(1000);
 inline constexpr auto telemetrySize = fram::memorySize - persistentVariablesSize

@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Edu/ProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -116,6 +118,61 @@ struct CopyAFileRequest
 };
 
 
+struct ReportHousekeepingParameterReportFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto functionId = tc::FunctionId::requestHousekeepingParameterReports;
+    std::uint16_t firstReportIndex;
+    std::uint16_t lastReportIndex;
+};
+
+
+struct EnableFileTransferFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto functionId = tc::FunctionId::enableFileTransferFor;
+    std::uint16_t durationInS;
+};
+
+
+struct UpdateEduQueueFunction
+{
+    static constexpr auto maxNQueueEntries =
+        (tc::maxMessageDataLength - totalSerialSize<std::uint8_t>)
+        / totalSerialSize<edu::ProgramQueueEntry>;
+    static_assert(edu::programQueue.FramCapacity() == maxNQueueEntries);
+
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto functionId = tc::FunctionId::updateEduQueue;
+    std::uint8_t nQueueEntries;
+    etl::vector<edu::ProgramQueueEntry, maxNQueueEntries> queueEntries;
+};
+
+
+struct SetActiveFirmwareFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto functionId = tc::FunctionId::setActiveFirmware;
+    tc::FirmwarePartitionId partitionId;
+};
+
+
+struct SetBackupFirmwareFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto functionId = tc::FunctionId::setBackupFirmware;
+    tc::FirmwarePartitionId partitionId;
+};
+
+
+struct CheckFirmwareIntegrityFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto functionId = tc::FunctionId::checkFirmwareIntegrity;
+    tc::FirmwarePartitionId partitionId;
+};
+
+
 [[nodiscard]] auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>;
 
 [[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
@@ -137,6 +194,20 @@ struct CopyAFileRequest
 [[nodiscard]] auto ParseAsCopyAFileRequest(std::span<Byte const> buffer)
     -> Result<CopyAFileRequest>;
 
+
+[[nodiscard]] auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
+    -> Result<ReportHousekeepingParameterReportFunction>;
+[[nodiscard]] auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
+    -> Result<EnableFileTransferFunction>;
+[[nodiscard]] auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer)
+    -> Result<UpdateEduQueueFunction>;
+[[nodiscard]] auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
+    -> Result<SetActiveFirmwareFunction>;
+[[nodiscard]] auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
+    -> Result<SetBackupFirmwareFunction>;
+[[nodiscard]] auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
+    -> Result<CheckFirmwareIntegrityFunction>;
+
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
     -> void const *;
@@ -147,4 +218,8 @@ template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source,
+                                   ReportHousekeepingParameterReportFunction * function)
+    -> void const *;
 }

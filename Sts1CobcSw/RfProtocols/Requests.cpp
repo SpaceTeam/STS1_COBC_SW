@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
@@ -244,6 +245,121 @@ namespace sts1cobcsw
 }
 
 
+[[nodiscard]] auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
+    -> Result<ReportHousekeepingParameterReportFunction>
+{
+    if(buffer.size()
+       != totalSerialSize<decltype(ReportHousekeepingParameterReportFunction::firstReportIndex),
+                          decltype(ReportHousekeepingParameterReportFunction::lastReportIndex)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = ReportHousekeepingParameterReportFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function);
+    if(function.firstReportIndex > function.lastReportIndex)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    return function;
+}
+
+
+[[nodiscard]] auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
+    -> Result<EnableFileTransferFunction>
+{
+    if(buffer.size() != totalSerialSize<decltype(EnableFileTransferFunction::durationInS)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = EnableFileTransferFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.durationInS);
+    return function;
+}
+
+
+[[nodiscard]] auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer)
+    -> Result<UpdateEduQueueFunction>
+{
+    static constexpr auto minApplicationDataLength =
+        totalSerialSize<decltype(UpdateEduQueueFunction::nQueueEntries)>;
+    if(buffer.size() < minApplicationDataLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto function = UpdateEduQueueFunction{};
+    auto const * cursor =
+        DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.nQueueEntries);
+    if(function.nQueueEntries > UpdateEduQueueFunction::maxNQueueEntries)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    if(buffer.size()
+       != minApplicationDataLength
+              + totalSerialSize<edu::ProgramQueueEntry> * function.nQueueEntries)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    function.queueEntries.resize(function.nQueueEntries);
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &function.queueEntries);
+    return function;
+}
+
+
+[[nodiscard]] auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
+    -> Result<SetActiveFirmwareFunction>
+{
+    if(buffer.size() != totalSerialSize<decltype(SetActiveFirmwareFunction::partitionId)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = SetActiveFirmwareFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
+    if(function.partitionId != tc::FirmwarePartitionId::secondary1
+       and function.partitionId != tc::FirmwarePartitionId::secondary2)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    return function;
+}
+
+
+[[nodiscard]] auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
+    -> Result<SetBackupFirmwareFunction>
+{
+    if(buffer.size() != totalSerialSize<decltype(SetBackupFirmwareFunction::partitionId)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = SetBackupFirmwareFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
+    if(function.partitionId != tc::FirmwarePartitionId::secondary1
+       && function.partitionId != tc::FirmwarePartitionId::secondary2)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    return function;
+}
+
+
+[[nodiscard]] auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
+    -> Result<CheckFirmwareIntegrityFunction>
+{
+    if(buffer.size() != totalSerialSize<decltype(CheckFirmwareIntegrityFunction::partitionId)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = CheckFirmwareIntegrityFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
+    if(function.partitionId != tc::FirmwarePartitionId::primary
+       && function.partitionId != tc::FirmwarePartitionId::secondary1
+       && function.partitionId != tc::FirmwarePartitionId::secondary2)
+    {
+        return ErrorCode::invalidApplicationData;
+    }
+    return function;
+}
+
+
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
     -> void const *
@@ -284,6 +400,17 @@ template<std::endian endianness>
 }
 
 
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source,
+                                   ReportHousekeepingParameterReportFunction * function)
+    -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &function->firstReportIndex);
+    source = DeserializeFrom<endianness>(source, &function->lastReportIndex);
+    return source;
+}
+
+
 template auto DeserializeFrom<std::endian::big>(void const * source,
                                                 LoadRawMemoryDataAreasRequest * header)
     -> void const *;
@@ -293,4 +420,6 @@ template auto DeserializeFrom<std::endian::big>(void const * source, Parameter *
     -> void const *;
 template auto DeserializeFrom<std::endian::big>(void const * source, CopyAFileRequest * header)
     -> void const *;
+template auto DeserializeFrom<std::endian::big>(
+    void const * source, ReportHousekeepingParameterReportFunction * function) -> void const *;
 }

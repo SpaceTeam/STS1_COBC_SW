@@ -1,5 +1,6 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
@@ -7,10 +8,13 @@
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <etl/string.h>
 #include <etl/vector.h>
 
+#include <cstdint>
 #include <span>
 
 
@@ -147,7 +151,7 @@ TEST_CASE("DumpRawMemoryDataRequest")
     CHECK(request.dataAreas[1].startAddress.value_of() == 0xBBCC'DDEEULL);
     CHECK(request.dataAreas[1].length == 0x01);
 
-    buffer[0] = 39_b;  // No more than 38 data areas are allowed
+    buffer[0] = 40_b;  // No more than 39 data areas are allowed
     parseResult = sts1cobcsw::ParseAsDumpRawMemoryDataRequest(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
@@ -468,6 +472,218 @@ TEST_CASE("CopyAFileRequest")
     auto smallBuffer = etl::vector<Byte, 70>{};
     smallBuffer.resize(70);
     parseResult = sts1cobcsw::ParseAsCopyAFileRequest(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
+TEST_CASE("ReportHousekeepingParameterReportFunction")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(4);
+    buffer[0] = 0x00_b;  // First Report Index (high byte)
+    buffer[1] = 0x01_b;  // First Report Index (low byte)
+    buffer[2] = 0x00_b;  // Last Report Index (high byte)
+    buffer[3] = 0x02_b;  // Last Report Index (low byte)
+
+    auto parseResult = sts1cobcsw::ParseAsReportHousekeepingParameterReportFunction(buffer);
+    CHECK(parseResult.has_value());
+    auto function = parseResult.value();
+
+    CHECK(function.firstReportIndex == 0x01);
+    CHECK(function.lastReportIndex == 0x02);
+
+    // Last index needs to be equal or greater than first index
+    buffer[1] = 0x03_b;
+    parseResult = sts1cobcsw::ParseAsReportHousekeepingParameterReportFunction(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
+    buffer[1] = 0x01_b;
+
+    // Minimum buffer size needs to be 4
+    auto smallBuffer = etl::vector<Byte, 4>{};
+    smallBuffer.resize(3);
+    parseResult = sts1cobcsw::ParseAsReportHousekeepingParameterReportFunction(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
+TEST_CASE("ParseAsEnableFileTransferFunction")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(2);
+    buffer[0] = 0xAA_b;  // Duration (high byte)
+    buffer[1] = 0xBB_b;  // Duration (low byte)
+
+    auto parseResult = sts1cobcsw::ParseAsEnableFileTransferFunction(buffer);
+    CHECK(parseResult.has_value());
+    auto function = parseResult.value();
+
+    CHECK(function.durationInS == 0xAABB);
+
+    // Minimum buffer size needs to be 2
+    auto smallBuffer = etl::vector<Byte, 1>{};
+    smallBuffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsEnableFileTransferFunction(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
+TEST_CASE("UpdateEduQueueFunction")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(9);
+    buffer[0] = 0x01_b;  // nQueueEntries
+    buffer[1] = 0xAA_b;  // ProgramId (high byte)
+    buffer[2] = 0xBB_b;  // ProgramId (low byte)
+    buffer[3] = 0xAA_b;  // Start Time (high byte)
+    buffer[4] = 0xBB_b;  // Start Time
+    buffer[5] = 0xCC_b;  // Start Time
+    buffer[6] = 0xDD_b;  // Start Time (low byte)
+    buffer[7] = 0xAB_b;  // Timeout (high byte)
+    buffer[8] = 0xCD_b;  // Timeout (low byte)
+
+    auto parseResult = sts1cobcsw::ParseAsUpdateEduQueueFunction(buffer);
+    CHECK(parseResult.has_value());
+    auto function = parseResult.value();
+
+    CHECK(function.nQueueEntries == 0x01);
+    CHECK(function.queueEntries[0].programId._val == 0xAABB);
+    CHECK(function.queueEntries[0].startTime._val == static_cast<std::int32_t>(0xAABB'CCDD));
+    CHECK(function.queueEntries[0].timeout == static_cast<std::int16_t>(0xABCD));
+
+    // Only 24 entries allowed
+    buffer[0] = 25_b;
+    parseResult = sts1cobcsw::ParseAsUpdateEduQueueFunction(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
+    buffer[0] = 0x01_b;
+
+    // One entry needs 8 bytes + 1 for nQueueEntries
+    auto smallerBuffer = etl::vector<Byte, 8>{};
+    smallerBuffer.resize(8);
+    parseResult = sts1cobcsw::ParseAsUpdateEduQueueFunction(smallerBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+
+    // Minimum buffer size needs to be 1
+    auto smallBuffer = etl::vector<Byte, 1>{};
+    smallBuffer.resize(0);
+    parseResult = sts1cobcsw::ParseAsUpdateEduQueueFunction(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+}
+
+
+TEST_CASE("SetActiveFirmwareFunction")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(1);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);  // PartitionId
+
+    auto parseResult = sts1cobcsw::ParseAsSetActiveFirmwareFunction(buffer);
+    CHECK(parseResult.has_value());
+    auto function = parseResult.value();
+
+    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+
+    // Check with secondaryFwPartition2
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    parseResult = sts1cobcsw::ParseAsSetActiveFirmwareFunction(buffer);
+    CHECK(parseResult.has_value());
+    function = parseResult.value();
+    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+
+    // Only secondary partitions are allowed
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::primary);
+    parseResult = sts1cobcsw::ParseAsSetActiveFirmwareFunction(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+
+    // Minimum buffer size needs to be 1
+    auto smallBuffer = etl::vector<Byte, 1>{};
+    smallBuffer.resize(0);
+    parseResult = sts1cobcsw::ParseAsSetActiveFirmwareFunction(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
+TEST_CASE("SetBackupFirmwareFunction")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(1);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);  // PartitionId
+
+    auto parseResult = sts1cobcsw::ParseAsSetBackupFirmwareFunction(buffer);
+    CHECK(parseResult.has_value());
+    auto function = parseResult.value();
+
+    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+
+    // Check with secondaryFwPartition2
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    parseResult = sts1cobcsw::ParseAsSetBackupFirmwareFunction(buffer);
+    CHECK(parseResult.has_value());
+    function = parseResult.value();
+    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+
+    // Only secondary partitions are allowed
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::primary);
+    parseResult = sts1cobcsw::ParseAsSetBackupFirmwareFunction(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+
+    // Minimum buffer size needs to be 1
+    auto smallBuffer = etl::vector<Byte, 1>{};
+    smallBuffer.resize(0);
+    parseResult = sts1cobcsw::ParseAsSetBackupFirmwareFunction(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
+TEST_CASE("CheckFirmwareIntegrityFunction")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(1);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);  // PartitionId
+
+    auto parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
+    CHECK(parseResult.has_value());
+    auto function = parseResult.value();
+
+    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+
+    // Check with secondaryFwPartition2
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
+    CHECK(parseResult.has_value());
+    function = parseResult.value();
+    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+
+    // Check with primaryFwPartition
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::primary);
+    parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
+    CHECK(parseResult.has_value());
+    function = parseResult.value();
+    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::primary);
+
+    // Only valid partitionIds are allowed
+    buffer[0] = 0xF0_b;
+    parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+
+    // Minimum buffer size needs to be 1
+    auto smallBuffer = etl::vector<Byte, 1>{};
+    smallBuffer.resize(0);
+    parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(smallBuffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidDataLength);
 }
