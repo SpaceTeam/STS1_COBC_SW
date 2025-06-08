@@ -55,6 +55,17 @@ inline auto SerializeTo(void * destination, T const & t) -> void *
 }
 
 
+template<std::endian endianness, typename T>
+[[nodiscard]] auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *
+{
+    for(auto const & element : vector)
+    {
+        destination = SerializeTo<endianness>(destination, element);
+    }
+    return destination;
+}
+
+
 template<std::endian endianness, typename T, std::size_t size>
 auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *
 {

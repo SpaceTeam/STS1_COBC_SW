@@ -99,6 +99,9 @@ template<std::endian endianness, std::default_initializable T>
 template<std::endian endianness, TriviallySerializable T>
 [[nodiscard]] auto SerializeTo(void * destination, T const & t) -> void *;
 
+template<std::endian endianness, typename T>
+[[nodiscard]] auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *;
+
 template<std::endian endianness, typename T, std::size_t size>
 [[nodiscard]] auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *;
 

@@ -4,6 +4,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <etl/vector.h>
+
 #include <array>
 #include <bit>
 #include <cstddef>
@@ -17,6 +19,7 @@ using sts1cobcsw::operator""_b;  // NOLINT(misc-unused-using-decls)
 using sts1cobcsw::Deserialize;
 using sts1cobcsw::DeserializeFrom;
 using sts1cobcsw::Serialize;
+using sts1cobcsw::SerializeTo;
 using sts1cobcsw::serialSize;
 using sts1cobcsw::totalSerialSize;
 using sts1cobcsw::UInt;
@@ -242,6 +245,34 @@ TEST_CASE("Serialize UInts (big endian)")
         &buffer, UInt<1>(1), UInt<2>(0), UInt<3>(0b111), UInt<4>(0), UInt<5>(0b1'1111), UInt<1>(0));
     CHECK(buffer[0] == 0b1001'1100_b);
     CHECK(buffer[1] == 0b0011'1110_b);
+}
+
+
+TEST_CASE("Serialize etl::vector (little endian)")
+{
+    auto buffer = std::array<Byte, 6>{};
+    auto i16Vector = etl::vector<std::int16_t, 3>{5, 7, -1};
+    (void)SerializeTo<std::endian::little>(&buffer, i16Vector);
+    CHECK(buffer[0] == 0x05_b);  // 5
+    CHECK(buffer[1] == 0x00_b);
+    CHECK(buffer[2] == 0x07_b);  // 7
+    CHECK(buffer[3] == 0x00_b);
+    CHECK(buffer[4] == 0xFF_b);  // -1
+    CHECK(buffer[5] == 0xFF_b);
+}
+
+
+TEST_CASE("Serialize etl::vector (big endian)")
+{
+    auto buffer = std::array<Byte, 6>{};
+    auto i16Vector = etl::vector<std::int16_t, 3>{2, 4, -2};
+    (void)SerializeTo<std::endian::big>(&buffer, i16Vector);
+    CHECK(buffer[0] == 0x00_b);  // 5
+    CHECK(buffer[1] == 0x02_b);
+    CHECK(buffer[2] == 0x00_b);  // 7
+    CHECK(buffer[3] == 0x04_b);
+    CHECK(buffer[4] == 0xFF_b);  // -1
+    CHECK(buffer[5] == 0xFE_b);
 }
 
 
