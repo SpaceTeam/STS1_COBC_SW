@@ -111,20 +111,16 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 
 ParameterValueReport::ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue)
     : nParameters_(1),
-      parameterIds_(decltype(parameterIds_){parameterId}),
-      parameterValues_(decltype(parameterValues_){parameterValue})
+      parameters_(decltype(parameters_){
+          Parameter{.parameterId = parameterId, .parameterValue = parameterValue}
+})
 {
 }
 
 
-ParameterValueReport::ParameterValueReport(
-    etl::vector<ParameterId, maxNParameters> parameterIds,
-    etl::vector<ParameterValue, maxNParameters> parameterValues)
-    : nParameters_(static_cast<std::uint8_t>(parameterIds.size())),
-      parameterIds_(std::move(parameterIds)),
-      parameterValues_(std::move(parameterValues))
+ParameterValueReport::ParameterValueReport(etl::vector<Parameter, maxNParameters> parameters)
+    : nParameters_(static_cast<std::uint8_t>(parameters.size())), parameters_(std::move(parameters))
 {
-    assert(parameterIds_.size() == parameterValues_.size());  // NOLINT(*array*decay)
 }
 
 
@@ -134,11 +130,7 @@ auto ParameterValueReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, nParameters_);
-    for(auto i = 0U; i < nParameters_; ++i)
-    {
-        cursor = SerializeTo<ccsdsEndianness>(cursor, parameterIds_[i]);
-        cursor = SerializeTo<ccsdsEndianness>(cursor, parameterValues_[i]);
-    }
+    (void)SerializeTo<ccsdsEndianness>(cursor, parameters_);
 }
 
 
@@ -255,6 +247,16 @@ auto DumpedRawMemoryDataReport::DoSize() const -> std::uint16_t
 
 // --- De-/Serialization ---
 
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, Parameter const & parameter) -> void *
+{
+    destination = SerializeTo<endianness>(destination, parameter.parameterId);
+    destination = SerializeTo<endianness>(destination, parameter.parameterValue);
+    return destination;
+}
+
+
 template<std::endian endianness>
 auto SerializeTo(void * destination, RequestId const & requestId) -> void *
 {
@@ -269,6 +271,8 @@ auto SerializeTo(void * destination, RequestId const & requestId) -> void *
 }
 
 
+template auto SerializeTo<std::endian::big>(void * destination, Parameter const & parameter)
+    -> void *;
 template auto SerializeTo<std::endian::big>(void * destination, RequestId const & requestId)
     -> void *;
 

@@ -359,17 +359,19 @@ TEST_CASE("Parameter value report")
     CHECK(parameterValue == (Deserialize<ParameterValue, 13>(dataField)));
 
     dataField.clear();
-    auto parameterIds = etl::vector<ParameterId, sts1cobcsw::maxNParameters>{
-        ParameterId::rxBaudRate, ParameterId::txBaudRate, ParameterId::eduStartDelayLimit};
-    auto parameterValues =
-        etl::vector<ParameterValue, sts1cobcsw::maxNParameters>{9600U, 115200U, 17U};
-    report = ParameterValueReport(parameterIds, parameterValues);
+    auto parameters = etl::vector<sts1cobcsw::Parameter, sts1cobcsw::maxNParameters>{
+        sts1cobcsw::Parameter{        .parameterId = ParameterId::rxBaudRate,.parameterValue = 9600U                                                                             },
+        sts1cobcsw::Parameter{        .parameterId = ParameterId::txBaudRate, .parameterValue = 115200U},
+        sts1cobcsw::Parameter{.parameterId = ParameterId::eduStartDelayLimit,
+                              .parameterValue = 17U                                                    }
+    };
+    report = ParameterValueReport(parameters);
     addToResult = report.AddTo(&dataField);
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength + 1
-              + parameterIds.size() * totalSerialSize<ParameterId, ParameterValue>));
+              + parameters.size() * totalSerialSize<ParameterId, ParameterValue>));
     // Packet secondary header
     CHECK(dataField[1] == 20_b);  // Service type ID
     CHECK(dataField[2] == 2_b);   // Submessage type ID
@@ -379,11 +381,11 @@ TEST_CASE("Parameter value report")
     CHECK(dataField[11] == 3_b);
     // Parameters
     CHECK(dataField[12] == static_cast<Byte>(ParameterId::rxBaudRate));
-    CHECK(parameterValues[0] == (Deserialize<ParameterValue, 13>(dataField)));
+    CHECK(parameters[0].parameterValue == (Deserialize<ParameterValue, 13>(dataField)));
     CHECK(dataField[17] == static_cast<Byte>(ParameterId::txBaudRate));
-    CHECK(parameterValues[1] == (Deserialize<ParameterValue, 18>(dataField)));
+    CHECK(parameters[1].parameterValue == (Deserialize<ParameterValue, 18>(dataField)));
     CHECK(dataField[22] == static_cast<Byte>(ParameterId::eduStartDelayLimit));
-    CHECK(parameterValues[2] == (Deserialize<ParameterValue, 23>(dataField)));
+    CHECK(parameters[2].parameterValue == (Deserialize<ParameterValue, 23>(dataField)));
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);

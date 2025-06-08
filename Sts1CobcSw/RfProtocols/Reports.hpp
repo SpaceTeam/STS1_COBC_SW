@@ -107,16 +107,14 @@ class ParameterValueReport : public Payload
 {
 public:
     ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue);
-    ParameterValueReport(etl::vector<ParameterId, maxNParameters> parameterIds,
-                         etl::vector<ParameterValue, maxNParameters> parameterValues);
+    explicit ParameterValueReport(etl::vector<Parameter, maxNParameters> parameters);
 
 
 private:
     static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{20, 2}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     std::uint8_t nParameters_ = 0;
-    etl::vector<ParameterId, maxNParameters> parameterIds_;
-    etl::vector<ParameterValue, maxNParameters> parameterValues_;
+    etl::vector<Parameter, maxNParameters> parameters_;
 
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
@@ -201,6 +199,8 @@ inline constexpr std::size_t serialSize<RequestId> =
                     decltype(RequestId::packetSequenceCount)>;
 
 
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, Parameter const & parameter) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, RequestId const & requestId) -> void *;
 template<std::endian endianness>
