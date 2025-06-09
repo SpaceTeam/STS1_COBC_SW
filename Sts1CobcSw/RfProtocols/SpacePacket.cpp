@@ -18,7 +18,7 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField, Apid apid, Payload const &
     if(payload.Size() == 0)
     {
         // TODO: Think about what to return here
-        return ErrorCode::invalidPayload;
+        return ErrorCode::emptyPayload;
     }
     if(dataField->available()
        < packetPrimaryHeaderLength + static_cast<std::size_t>(payload.Size()))

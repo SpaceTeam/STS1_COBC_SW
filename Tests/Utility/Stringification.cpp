@@ -94,9 +94,6 @@ auto Append(ValueString * string, ErrorCode const & errorCode) -> void
         case ErrorCode::empty:
             Append(string, "ErrorCode::empty");
             break;
-        case ErrorCode::invalidValue:
-            Append(string, "ErrorCode::invalidValue");
-            break;
         case ErrorCode::bufferTooSmall:
             Append(string, "ErrorCode::bufferTooSmall");
             break;
@@ -127,8 +124,8 @@ auto Append(ValueString * string, ErrorCode const & errorCode) -> void
         case ErrorCode::invalidPacketLength:
             Append(string, "ErrorCode::invalidPacketLength");
             break;
-        case ErrorCode::invalidPayload:
-            Append(string, "ErrorCode::invalidPayload");
+        case ErrorCode::emptyPayload:
+            Append(string, "ErrorCode::emptyPayload");
             break;
         case ErrorCode::invalidMessageTypeId:
             Append(string, "ErrorCode::invalidMessageTypeId");
