@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -43,6 +44,8 @@ auto csGpioPin = hal::GpioPin(hal::framCsPin);
 
 // --- Private function declarations ---
 
+auto SelectChip() -> void;
+auto DeselectChip() -> void;
 auto SetWriteEnableLatch() -> void;
 }
 
@@ -53,7 +56,6 @@ auto Initialize() -> void
 {
     csGpioPin.SetDirection(hal::PinDirection::out);
     csGpioPin.Set();
-
     auto const baudRate = 6'000'000;
     Initialize(&framEpsSpi, baudRate);
 }
@@ -61,11 +63,11 @@ auto Initialize() -> void
 
 auto ReadDeviceId() -> DeviceId
 {
-    csGpioPin.Reset();
+    SelectChip();
     hal::WriteTo(&framEpsSpi, Span(opcode::readDeviceId), spiTimeout);
     auto deviceId = DeviceId{};
     hal::ReadFrom(&framEpsSpi, Span(&deviceId), spiTimeout);
-    csGpioPin.Set();
+    DeselectChip();
     return deviceId;
 }
 
@@ -81,25 +83,25 @@ namespace internal
 auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration timeout) -> void
 {
     SetWriteEnableLatch();
-    csGpioPin.Reset();
+    SelectChip();
     hal::WriteTo(&framEpsSpi, Span(opcode::writeData), spiTimeout);
     // FRAM expects 3-byte address in big endian
     hal::WriteTo(
         &framEpsSpi, Span(Serialize<endianness>(value_of(address))).subspan<1, 3>(), spiTimeout);
     hal::WriteTo(&framEpsSpi, std::span(static_cast<Byte const *>(data), nBytes), timeout);
-    csGpioPin.Set();
+    DeselectChip();
 }
 
 
 auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout) -> void
 {
-    csGpioPin.Reset();
+    SelectChip();
     hal::WriteTo(&framEpsSpi, Span(opcode::readData), spiTimeout);
     // FRAM expects 3-byte address in big endian
     hal::WriteTo(
         &framEpsSpi, Span(Serialize<endianness>(value_of(address))).subspan<1, 3>(), spiTimeout);
     hal::ReadFrom(&framEpsSpi, std::span(static_cast<Byte *>(data), nBytes), timeout);
-    csGpioPin.Set();
+    DeselectChip();
 }
 }
 
@@ -108,11 +110,29 @@ auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout
 
 namespace
 {
+auto SelectChip() -> void
+{
+    static constexpr auto chipSelectDelay = 10 * ns;
+    csGpioPin.Reset();
+    BusyWaitFor(chipSelectDelay);
+}
+
+
+auto DeselectChip() -> void
+{
+    static constexpr auto chipSelectHoldDuration = 10 * ns;
+    static constexpr auto deselectDelay = 60 * ns;
+    BusyWaitFor(chipSelectHoldDuration);
+    csGpioPin.Set();
+    BusyWaitFor(deselectDelay);
+}
+
+
 auto SetWriteEnableLatch() -> void
 {
-    csGpioPin.Reset();
+    SelectChip();
     hal::WriteTo(&framEpsSpi, Span(opcode::setWriteEnableLatch), spiTimeout);
-    csGpioPin.Set();
+    DeselectChip();
 }
 }
 }
