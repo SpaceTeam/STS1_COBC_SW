@@ -1,6 +1,7 @@
-import sys
 import pathlib
 import struct
+import subprocess
+import sys
 import zlib
 
 
@@ -13,6 +14,14 @@ if __name__ == "__main__":
     metadata = bytearray([0xFF] * METADATA_SIZE)
     image_size = METADATA_SIZE + firmware_size
     metadata[:4] = struct.pack('<I', image_size)    # Store image size in little endian
+
+    try:
+        git_hash = subprocess.check_output(
+            ['git', 'log', '--format="%H"', '-n', '1']).strip().decode('utf-8').strip('"')
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        git_hash = "unknown"
+    print(f"  commit hash = {git_hash}")
+    metadata[4:4 + len(git_hash)] = git_hash.encode('utf-8')
 
     with firmware_bin_file.open('rb') as f:
         firmware = f.read()
