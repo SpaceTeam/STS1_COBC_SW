@@ -64,7 +64,7 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
         return ErrorCode::invalidPacketLength;
     }
     if(buffer.size() < packetPrimaryHeaderLength
-                           + static_cast<std::size_t>(packet.primaryHeader.packetDataLength))
+                           + static_cast<std::size_t>(packet.primaryHeader.packetDataLength) + 1)
     {
         return ErrorCode::bufferTooSmall;
     }
