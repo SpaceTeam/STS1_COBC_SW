@@ -231,7 +231,7 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
   provide type-safe and more specifically named C++ wrappers for this low-level Rodos
   stuff.
 - `Periphery/` should contain abstractions for the external periphery the COBC
-  communicates with, like sensors or memory chips. The EDU also kinda fits here.
+  communicates with, like sensors or memory chips. The EDU also kind of fits here.
 - All CMake targets are prefixed with the project name: `Sts1CobcSw_CobcSoftware`,
   `Sts1CobcSw_Hal`, etc.
 - Everything test related is in `Tests/` and its subdirectories.
@@ -324,6 +324,10 @@ The following shows what the directory structure could actually look like.
 Only contributions from members of the TU Wien Space Team are accepted.
 
 
-## Licensing
+## Licensing and attribution
 
-See the [LICENSE](LICENSE) document.
+This project is licensed under the MIT license. See the [LICENSE](LICENSE) document for
+the full text.
+
+The files in `Sts1CobcSw/Blake2s/External/` were copied from
+[arduinolibs](https://github.com/rweather/arduinolibs/) which is also MIT licensed.

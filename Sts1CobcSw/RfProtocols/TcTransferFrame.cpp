@@ -7,10 +7,9 @@ auto ParseAsTransferFrame(std::span<Byte const, transferFrameLength> buffer)
     -> Result<TransferFrame>
 {
     auto frame = TransferFrame{
-        .primaryHeader = {},
         .dataField = buffer.subspan<transferFramePrimaryHeaderLength + securityHeaderLength,
                                     transferFrameDataLength>()};
-    (void)DeserializeFrom<std::endian::big>(buffer.data(), &frame.primaryHeader);
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &frame.primaryHeader);
     auto frameIsValid = frame.primaryHeader.versionNumber == transferFrameVersionNumber
                     and frame.primaryHeader.bypassFlag == 1
                     and frame.primaryHeader.controlCommandFlag == 0;
@@ -29,6 +28,19 @@ auto ParseAsTransferFrame(std::span<Byte const, transferFrameLength> buffer)
     if(frame.primaryHeader.frameLength != transferFrameLength - 1)
     {
         return ErrorCode::invalidFrameLength;
+    }
+    (void)sts1cobcsw::DeserializeFrom<ccsdsEndianness>(cursor, &frame.securityParameterIndex);
+    if(frame.securityParameterIndex != securityParameterIndex)
+    {
+        return ErrorCode::invalidSecurityParameterIndex;
+    }
+    (void)sts1cobcsw::DeserializeFrom<ccsdsEndianness>(buffer.last<securityTrailerLength>().data(),
+                                                       &frame.messageAuthenticationCode);
+    auto messageAuthenticationCode =
+        blake2s::ComputeHash(buffer.first<transferFrameLength - securityTrailerLength>());
+    if(frame.messageAuthenticationCode != messageAuthenticationCode)
+    {
+        return ErrorCode::authenticationFailed;
     }
     return frame;
 }

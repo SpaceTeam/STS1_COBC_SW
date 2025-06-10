@@ -48,12 +48,14 @@ namespace tc
 inline constexpr auto transferFrameVersionNumber = UInt<2>(0);
 inline constexpr auto transferFrameLength = ecc::messageLength;
 inline constexpr auto transferFramePrimaryHeaderLength = 5;
-inline constexpr auto securityHeaderLength = 4;   // TODO: What's the right number?
-inline constexpr auto securityTrailerLength = 8;  // TODO: What's the right number?
+inline constexpr auto securityHeaderLength = 2;
+inline constexpr auto securityTrailerLength = 8;
 inline constexpr auto transferFrameDataLength = transferFrameLength
                                               - transferFramePrimaryHeaderLength
                                               - securityHeaderLength - securityTrailerLength;
 }
+
+inline constexpr std::uint16_t securityParameterIndex = 0x1717;
 
 using SpacecraftId = Id<UInt<10>, 0x123>;  // NOLINT(*magic-numbers)
 inline constexpr auto spacecraftId = Make<SpacecraftId, 0x123>();

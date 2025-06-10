@@ -25,6 +25,7 @@ file(
     Tests/*.hpp
     Tests/*.ipp
 )
+list(FILTER files EXCLUDE REGEX ".*External.*")
 set(badly_formatted "")
 set(output "")
 string(LENGTH "${CMAKE_SOURCE_DIR}/" path_prefix_length)
