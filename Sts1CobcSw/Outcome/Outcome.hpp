@@ -59,6 +59,8 @@ enum class ErrorCode : std::int8_t
     invalidSpacecraftId,
     invalidVcid,
     invalidFrameLength,
+    invalidSecurityParameterIndex,
+    authenticationFailed,
     invalidSpacePacket,
     invalidApid,
     invalidPayload,

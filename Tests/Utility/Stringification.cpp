@@ -112,6 +112,12 @@ auto Append(ValueString * string, ErrorCode const & errorCode) -> void
         case ErrorCode::invalidFrameLength:
             Append(string, "ErrorCode::invalidFrameLength");
             break;
+        case ErrorCode::invalidSecurityParameterIndex:
+            Append(string, "ErrorCode::invalidSecurityParameterIndex");
+            break;
+        case ErrorCode::authenticationFailed:
+            Append(string, "ErrorCode::authenticationFailed");
+            break;
         case ErrorCode::invalidSpacePacket:
             Append(string, "ErrorCode::invalidSpacePacket");
             break;

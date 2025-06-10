@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/Blake2s/Blake2s.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -17,7 +18,6 @@ namespace sts1cobcsw
 {
 namespace tc
 {
-// TODO: Add security header and trailer
 struct TransferFrame
 {
     struct PrimaryHeader
@@ -34,7 +34,12 @@ struct TransferFrame
     };
 
     PrimaryHeader primaryHeader;
+    std::uint16_t securityParameterIndex;
     std::span<Byte const, transferFrameDataLength> dataField;
+    blake2s::Hash messageAuthenticationCode;
+
+    static_assert(totalSerialSize<decltype(securityParameterIndex)> == securityHeaderLength);
+    static_assert(totalSerialSize<decltype(messageAuthenticationCode)> == securityTrailerLength);
 };
 
 

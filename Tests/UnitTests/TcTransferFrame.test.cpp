@@ -6,7 +6,6 @@
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/TcTransferFrame.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <array>
 #include <span>
@@ -14,7 +13,6 @@
 
 using sts1cobcsw::Byte;
 using sts1cobcsw::ErrorCode;
-using sts1cobcsw::Span;
 using sts1cobcsw::operator""_b;
 
 
@@ -26,10 +24,20 @@ TEST_CASE("Parsing TC Transfer Frames")
     buffer[2] = 0b0000'1100_b;  // VCID, frame length
     buffer[3] = 222_b;          // Frame length
     buffer[4] = 13_b;           // Frame sequence number
+    buffer[5] = 0x17_b;         // Security parameter index (high byte)
+    buffer[6] = 0x17_b;         // Security parameter index (low byte)
     // Data field
-    buffer[5 + sts1cobcsw::tc::securityHeaderLength] = 0xFF_b;
-    buffer[6 + sts1cobcsw::tc::securityHeaderLength] = 0xEE_b;
-    auto parseResult = sts1cobcsw::tc::ParseAsTransferFrame(Span(buffer));
+    buffer[7] = 0xFF_b;
+    buffer[8] = 0xEE_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 8] = 0x4F_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 7] = 0x10_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 6] = 0xFC_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 5] = 0x12_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 4] = 0xC1_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 3] = 0x13_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 2] = 0x44_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 1] = 0x5D_b;
+    auto parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_value());
     auto & frame = parseResult.value();
     CHECK(frame.primaryHeader.vcid == sts1cobcsw::pusVcid);
@@ -39,35 +47,47 @@ TEST_CASE("Parsing TC Transfer Frames")
     CHECK(frame.dataField[2] == 0x00_b);
 
     buffer[0] = 0b1010'0001_b;  // Wrong version number
-    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(Span(buffer));
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidTransferFrame);
 
     buffer[0] = 0b0000'0001_b;  // Wrong bypass flag
-    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(Span(buffer));
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidTransferFrame);
 
     buffer[0] = 0b0011'1001_b;  // Wrong control command flag
-    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(Span(buffer));
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidTransferFrame);
 
     buffer[0] = 0b0010'0001_b;  // Correct version number, bypass flag, control command flag
     buffer[1] = 0x17_b;         // Wrong spacecraft ID
-    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(Span(buffer));
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidSpacecraftId);
 
     buffer[1] = 0x23_b;         // Correct spacecraft ID
     buffer[2] = 0b0001'1100_b;  // Wrong VCID
-    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(Span(buffer));
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidVcid);
 
     buffer[2] = 0b0000'1100_b;  // Correct VCID
     buffer[3] = 255_b;          // Frame length too large
-    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(Span(buffer));
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidFrameLength);
+
+    buffer[3] = 222_b;   // Correct frame length
+    buffer[5] = 0x00_b;  // Wrong security parameter index
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidSecurityParameterIndex);
+
+    buffer[5] = 0x17_b;                                        // Correct security parameter index
+    buffer[sts1cobcsw::tc::transferFrameLength - 1] = 0x00_b;  // Wrong authentication code
+    parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == sts1cobcsw::ErrorCode::authenticationFailed);
 }
