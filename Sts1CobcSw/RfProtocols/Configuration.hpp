@@ -3,7 +3,7 @@
 
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
-#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 

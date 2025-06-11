@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 
 
 namespace sts1cobcsw
