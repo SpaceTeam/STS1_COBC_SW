@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>

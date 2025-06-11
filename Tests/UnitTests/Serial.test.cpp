@@ -4,13 +4,16 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <etl/string.h>
 #include <etl/vector.h>
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <string>
 #include <type_traits>
 
 
