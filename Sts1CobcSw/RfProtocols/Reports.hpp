@@ -107,7 +107,7 @@ class ParameterValueReport : public Payload
 {
 public:
     ParameterValueReport(Parameter::Id parameterId, Parameter::Value parameterValue);
-    explicit ParameterValueReport(etl::vector<Parameter, maxNParameters> parameters);
+    explicit ParameterValueReport(etl::vector<Parameter, maxNParameters> const & parameters);
 
 
 private:
@@ -147,10 +147,11 @@ public:
          - totalSerialSize<std::uint8_t>)
         / (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE);
 
-    RepositoryContentSummaryReport(fs::Path const & repositoryPath,
-                                   std::uint8_t nObjects,
-                                   etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes,
-                                   etl::vector<fs::Path, maxNObjectsPerPacket> objectNames);
+    RepositoryContentSummaryReport(
+        fs::Path const & repositoryPath,
+        std::uint8_t nObjects,
+        etl::vector<ObjectType, maxNObjectsPerPacket> const & objectTypes,
+        etl::vector<fs::Path, maxNObjectsPerPacket> const & objectNames);
 
 
 private:
@@ -171,7 +172,7 @@ class DumpedRawMemoryDataReport : public Payload
 public:
     DumpedRawMemoryDataReport(std::uint8_t nDataBlocks,
                               fram::Address startAddress,
-                              etl::vector<Byte, maxDumpedDataLength> dumpedData);
+                              etl::vector<Byte, maxDumpedDataLength> const & dumpedData);
 
 
 private:

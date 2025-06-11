@@ -3,11 +3,9 @@
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 
 #include <etl/string.h>
-#include <etl/utility.h>
 
 #include <algorithm>
 #include <cassert>
-#include <utility>
 
 
 namespace sts1cobcsw
@@ -119,8 +117,9 @@ ParameterValueReport::ParameterValueReport(Parameter::Id parameterId,
 }
 
 
-ParameterValueReport::ParameterValueReport(etl::vector<Parameter, maxNParameters> parameters)
-    : nParameters_(static_cast<std::uint8_t>(parameters.size())), parameters_(std::move(parameters))
+ParameterValueReport::ParameterValueReport(
+    etl::vector<Parameter, maxNParameters> const & parameters)
+    : nParameters_(static_cast<std::uint8_t>(parameters.size())), parameters_(parameters)
 {
 }
 
@@ -174,12 +173,14 @@ auto FileAttributeReport::DoSize() const -> std::uint16_t
 RepositoryContentSummaryReport::RepositoryContentSummaryReport(
     fs::Path const & repositoryPath,
     std::uint8_t nObjects,
-    etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes,
-    etl::vector<fs::Path, maxNObjectsPerPacket> objectNames)
+    etl::vector<ObjectType, maxNObjectsPerPacket> const &  // NOLINT(modernize-pass-by-value)
+        objectTypes,
+    etl::vector<fs::Path, maxNObjectsPerPacket> const &  // NOLINT(modernize-pass-by-value)
+        objectNames)
     : repositoryPath_(repositoryPath),
       nObjects_(nObjects),
-      objectTypes_(std::move(objectTypes)),
-      objectNames_(std::move(objectNames))
+      objectTypes_(objectTypes),
+      objectNames_(objectNames)
 {
     assert(objectTypes_.size() == objectNames_.size());  // NOLINT(*array*decay)
     repositoryPath_.resize(fs::Path::MAX_SIZE, '\0');
@@ -217,8 +218,8 @@ auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 DumpedRawMemoryDataReport::DumpedRawMemoryDataReport(
     std::uint8_t nDataBlocks,
     fram::Address startAddress,
-    etl::vector<Byte, maxDumpedDataLength> dumpedData)
-    : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(std::move(dumpedData))
+    etl::vector<Byte, maxDumpedDataLength> const & dumpedData)  // NOLINT(modernize-pass-by-value)
+    : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(dumpedData)
 {
 }
 
