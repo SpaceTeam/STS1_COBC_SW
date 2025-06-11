@@ -54,9 +54,7 @@ add_compile_options(
     -fno-rtti
 )
 
-set(linker_script "${CMAKE_CURRENT_LIST_DIR}/CobcBootloader.ld")
-message("Linker script used: ${linker_script}")
-add_link_options(${compile_and_link_options} -Wl,-T${linker_script})
+add_link_options(${compile_and_link_options})
 add_link_options(
     -nostartfiles --specs=nosys.specs -Xlinker --gc-sections -fno-unwind-tables
     -fno-asynchronous-unwind-tables
