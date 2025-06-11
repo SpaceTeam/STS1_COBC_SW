@@ -249,15 +249,6 @@ auto DumpedRawMemoryDataReport::DoSize() const -> std::uint16_t
 
 
 template<std::endian endianness>
-auto SerializeTo(void * destination, Parameter const & parameter) -> void *
-{
-    destination = SerializeTo<endianness>(destination, parameter.parameterId);
-    destination = SerializeTo<endianness>(destination, parameter.parameterValue);
-    return destination;
-}
-
-
-template<std::endian endianness>
 auto SerializeTo(void * destination, RequestId const & requestId) -> void *
 {
     destination = SerializeTo<endianness>(destination,
@@ -271,8 +262,6 @@ auto SerializeTo(void * destination, RequestId const & requestId) -> void *
 }
 
 
-template auto SerializeTo<std::endian::big>(void * destination, Parameter const & parameter)
-    -> void *;
 template auto SerializeTo<std::endian::big>(void * destination, RequestId const & requestId)
     -> void *;
 

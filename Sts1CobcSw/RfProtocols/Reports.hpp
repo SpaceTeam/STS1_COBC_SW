@@ -200,8 +200,6 @@ inline constexpr std::size_t serialSize<RequestId> =
 
 
 template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, Parameter const & parameter) -> void *;
-template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, RequestId const & requestId) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, RequestId & requestId) -> void const *;

@@ -382,15 +382,6 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *
-{
-    source = DeserializeFrom<endianness>(source, &parameter->parameterId);
-    source = DeserializeFrom<endianness>(source, &parameter->parameterValue);
-    return source;
-}
-
-
-template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &header->operationId);
@@ -416,8 +407,6 @@ template auto DeserializeFrom<std::endian::big>(void const * source,
     -> void const *;
 template auto DeserializeFrom<std::endian::big>(void const * source,
                                                 DumpRawMemoryDataArea * dataArea) -> void const *;
-template auto DeserializeFrom<std::endian::big>(void const * source, Parameter * parameter)
-    -> void const *;
 template auto DeserializeFrom<std::endian::big>(void const * source, CopyAFileRequest * header)
     -> void const *;
 template auto DeserializeFrom<std::endian::big>(

@@ -215,8 +215,6 @@ template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, DumpRawMemoryDataArea * dataArea)
     -> void const *;
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *;
-template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source,
