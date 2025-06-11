@@ -134,7 +134,7 @@ namespace sts1cobcsw
         return ErrorCode::invalidApplicationData;
     }
     if(buffer.size()
-       != minApplicationDataLength + totalSerialSize<ParameterId> * request.nParameters)
+       != minApplicationDataLength + totalSerialSize<Parameter::Id> * request.nParameters)
     {
         return ErrorCode::invalidDataLength;
     }

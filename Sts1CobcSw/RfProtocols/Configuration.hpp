@@ -153,8 +153,6 @@ enum class FirmwarePartitionId : std::uint8_t
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)
 inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAA33>();
 
-using ParameterValue = Parameter::Value;
-using ParameterId = Parameter::Id;
 inline constexpr auto maxNParameters = 5U;  // Chosen to be the number of different parameters
 
 enum class FileStatus : std::uint8_t

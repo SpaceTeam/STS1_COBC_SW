@@ -76,7 +76,7 @@ struct ReportParameterValuesRequest
 {
     static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{20, 1}>();
     std::uint8_t nParameters;
-    etl::vector<ParameterId, maxNParameters> parameterIds;
+    etl::vector<Parameter::Id, maxNParameters> parameterIds;
 };
 
 

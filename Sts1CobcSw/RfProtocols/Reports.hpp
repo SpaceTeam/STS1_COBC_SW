@@ -106,7 +106,7 @@ private:
 class ParameterValueReport : public Payload
 {
 public:
-    ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue);
+    ParameterValueReport(Parameter::Id parameterId, Parameter::Value parameterValue);
     explicit ParameterValueReport(etl::vector<Parameter, maxNParameters> parameters);
 
 

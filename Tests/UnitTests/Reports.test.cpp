@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
@@ -325,12 +326,11 @@ TEST_CASE("Housekeeping parameter report")
 
 TEST_CASE("Parameter value report")
 {
-    using sts1cobcsw::ParameterId;
-    using sts1cobcsw::ParameterValue;
+    using sts1cobcsw::Parameter;
     using sts1cobcsw::ParameterValueReport;
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
-    auto parameterId = ParameterId::rxBaudRate;
+    auto parameterId = Parameter::Id::rxBaudRate;
     auto parameterValue = 9600U;
     auto report = ParameterValueReport(parameterId, parameterValue);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
@@ -340,7 +340,7 @@ TEST_CASE("Parameter value report")
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength + 1
-              + totalSerialSize<ParameterId, ParameterValue>));
+              + totalSerialSize<Parameter::Id, Parameter::Value>));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
     CHECK(dataField[1] == 20_b);    // Service type ID
@@ -356,14 +356,14 @@ TEST_CASE("Parameter value report")
     CHECK(dataField[11] == 1_b);
     // Parameters
     CHECK(dataField[12] == static_cast<Byte>(parameterId));
-    CHECK(parameterValue == (Deserialize<ParameterValue, 13>(dataField)));
+    CHECK(parameterValue == (Deserialize<Parameter::Value, 13>(dataField)));
 
     dataField.clear();
     auto parameters = etl::vector<sts1cobcsw::Parameter, sts1cobcsw::maxNParameters>{
-        sts1cobcsw::Parameter{        .parameterId = ParameterId::rxBaudRate,.parameterValue = 9600U                                                                             },
-        sts1cobcsw::Parameter{        .parameterId = ParameterId::txBaudRate, .parameterValue = 115200U},
-        sts1cobcsw::Parameter{.parameterId = ParameterId::eduStartDelayLimit,
-                              .parameterValue = 17U                                                    }
+        sts1cobcsw::Parameter{        .parameterId = Parameter::Id::rxBaudRate,.parameterValue = 9600U                                                                               },
+        sts1cobcsw::Parameter{        .parameterId = Parameter::Id::txBaudRate, .parameterValue = 115200U},
+        sts1cobcsw::Parameter{.parameterId = Parameter::Id::eduStartDelayLimit,
+                              .parameterValue = 17U                                                      }
     };
     report = ParameterValueReport(parameters);
     addToResult = report.AddTo(&dataField);
@@ -371,7 +371,7 @@ TEST_CASE("Parameter value report")
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength + 1
-              + parameters.size() * totalSerialSize<ParameterId, ParameterValue>));
+              + parameters.size() * totalSerialSize<Parameter::Id, Parameter::Value>));
     // Packet secondary header
     CHECK(dataField[1] == 20_b);  // Service type ID
     CHECK(dataField[2] == 2_b);   // Submessage type ID
@@ -380,12 +380,12 @@ TEST_CASE("Parameter value report")
     // Number of parameters
     CHECK(dataField[11] == 3_b);
     // Parameters
-    CHECK(dataField[12] == static_cast<Byte>(ParameterId::rxBaudRate));
-    CHECK(parameters[0].parameterValue == (Deserialize<ParameterValue, 13>(dataField)));
-    CHECK(dataField[17] == static_cast<Byte>(ParameterId::txBaudRate));
-    CHECK(parameters[1].parameterValue == (Deserialize<ParameterValue, 18>(dataField)));
-    CHECK(dataField[22] == static_cast<Byte>(ParameterId::eduStartDelayLimit));
-    CHECK(parameters[2].parameterValue == (Deserialize<ParameterValue, 23>(dataField)));
+    CHECK(dataField[12] == static_cast<Byte>(Parameter::Id::rxBaudRate));
+    CHECK(parameters[0].parameterValue == (Deserialize<Parameter::Value, 13>(dataField)));
+    CHECK(dataField[17] == static_cast<Byte>(Parameter::Id::txBaudRate));
+    CHECK(parameters[1].parameterValue == (Deserialize<Parameter::Value, 18>(dataField)));
+    CHECK(dataField[22] == static_cast<Byte>(Parameter::Id::eduStartDelayLimit));
+    CHECK(parameters[2].parameterValue == (Deserialize<Parameter::Value, 23>(dataField)));
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);

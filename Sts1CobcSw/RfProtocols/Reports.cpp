@@ -109,7 +109,8 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 }
 
 
-ParameterValueReport::ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue)
+ParameterValueReport::ParameterValueReport(Parameter::Id parameterId,
+                                           Parameter::Value parameterValue)
     : nParameters_(1),
       parameters_(decltype(parameters_){
           Parameter{.parameterId = parameterId, .parameterValue = parameterValue}
@@ -138,7 +139,7 @@ auto ParameterValueReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
         totalSerialSize<decltype(secondaryHeader_), decltype(nParameters_)>
-        + nParameters_ * totalSerialSize<ParameterId, ParameterValue>);
+        + nParameters_ * totalSerialSize<Parameter::Id, Parameter::Value>);
 }
 
 
