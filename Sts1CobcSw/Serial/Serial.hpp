@@ -20,12 +20,13 @@
 // We need std::byteswap which is C++23 but for some reason clang-tidy crashes when using C++23, so
 // we use the ETL version
 #include <etl/bit.h>
+#include <etl/string.h>
+#include <etl/vector.h>
 
 #include <array>
 #include <concepts>
 #include <cstddef>
 #include <cstring>
-#include <limits>
 #include <span>
 #include <type_traits>
 
@@ -98,6 +99,9 @@ template<std::endian endianness, std::default_initializable T>
 template<std::endian endianness, TriviallySerializable T>
 [[nodiscard]] auto SerializeTo(void * destination, T const & t) -> void *;
 
+template<std::endian endianness, typename T>
+[[nodiscard]] auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *;
+
 template<std::endian endianness, typename T, std::size_t size>
 [[nodiscard]] auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *;
 
@@ -113,6 +117,12 @@ template<std::endian endianness, TriviallySerializable T>
 template<std::endian endianness, typename T, std::size_t size>
 [[nodiscard]] auto DeserializeFrom(void const * source, std::array<T, size> * array)
     -> void const *;
+
+template<std::endian endianness, typename T>
+[[nodiscard]] auto DeserializeFrom(void const * source, etl::ivector<T> * vector) -> void const *;
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, etl::istring * string) -> void const *;
 
 // Deserializing UInt<>s is only implemented for big endian with MSB first
 template<std::endian endianness, std::size_t... nBits>

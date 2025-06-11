@@ -6,9 +6,9 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
-#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/TmSpacePacketSecondaryHeader.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
@@ -106,17 +106,15 @@ private:
 class ParameterValueReport : public Payload
 {
 public:
-    ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue);
-    ParameterValueReport(etl::vector<ParameterId, maxNParameters> parameterIds,
-                         etl::vector<ParameterValue, maxNParameters> parameterValues);
+    ParameterValueReport(Parameter::Id parameterId, Parameter::Value parameterValue);
+    explicit ParameterValueReport(etl::vector<Parameter, maxNParameters> const & parameters);
 
 
 private:
     static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{20, 2}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     std::uint8_t nParameters_ = 0;
-    etl::vector<ParameterId, maxNParameters> parameterIds_;
-    etl::vector<ParameterValue, maxNParameters> parameterValues_;
+    etl::vector<Parameter, maxNParameters> parameters_;
 
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
@@ -149,10 +147,11 @@ public:
          - totalSerialSize<std::uint8_t>)
         / (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE);
 
-    RepositoryContentSummaryReport(fs::Path const & repositoryPath,
-                                   std::uint8_t nObjects,
-                                   etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes,
-                                   etl::vector<fs::Path, maxNObjectsPerPacket> objectNames);
+    RepositoryContentSummaryReport(
+        fs::Path const & repositoryPath,
+        std::uint8_t nObjects,
+        etl::vector<ObjectType, maxNObjectsPerPacket> const & objectTypes,
+        etl::vector<fs::Path, maxNObjectsPerPacket> const & objectNames);
 
 
 private:
@@ -173,7 +172,7 @@ class DumpedRawMemoryDataReport : public Payload
 public:
     DumpedRawMemoryDataReport(std::uint8_t nDataBlocks,
                               fram::Address startAddress,
-                              etl::vector<Byte, maxDumpedDataLength> dumpedData);
+                              etl::vector<Byte, maxDumpedDataLength> const & dumpedData);
 
 
 private:

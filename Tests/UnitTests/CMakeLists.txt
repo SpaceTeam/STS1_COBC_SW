@@ -188,6 +188,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME Reports COMMAND Sts1CobcSwTests_Reports)
 
+    add_test_program(Requests)
+    target_link_libraries(
+        Sts1CobcSwTests_Requests
+        PRIVATE Sts1CobcSw_FileSystem Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+    )
+    add_test(NAME Requests COMMAND Sts1CobcSwTests_Requests)
+
     add_test_program(Section)
     target_link_libraries(
         Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain strong_type::strong_type
@@ -242,6 +250,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_FramSections Sts1CobcSw_Utility
     )
     catch_discover_tests(Sts1CobcSwTests_Subsections)
+
+    add_test_program(TcSpacePacketSecondaryHeader)
+    target_link_libraries(
+        Sts1CobcSwTests_TcSpacePacketSecondaryHeader
+        PRIVATE Sts1CobcSw_RfProtocols Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
+                Sts1CobcSwTests::Utility
+    )
+    add_test(NAME TcSpacePacketSecondaryHeader COMMAND Sts1CobcSwTests_TcSpacePacketSecondaryHeader)
 
     add_test_program(TcTransferFrame)
     target_link_libraries(

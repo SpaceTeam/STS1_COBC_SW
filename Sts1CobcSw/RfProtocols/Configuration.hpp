@@ -3,11 +3,10 @@
 
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
-#include <Sts1CobcSw/RfProtocols/MessageTypeIdFields.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 
@@ -95,6 +94,7 @@ namespace tm
 {
 inline constexpr auto packetSecondaryHeaderLength = 11U;
 inline constexpr auto packetPusVersionNumber = UInt<4>(2);
+inline constexpr auto maxMessageDataLength = maxPacketDataLength - packetSecondaryHeaderLength;
 
 // NOLINTBEGIN(*magic-numbers)
 using MessageTypeId = Id<MessageTypeIdFields,
@@ -112,21 +112,47 @@ using MessageTypeId = Id<MessageTypeIdFields,
 
 namespace tc
 {
+inline constexpr auto packetSecondaryHeaderLength = 5U;
 inline constexpr auto packetPusVersionNumber = UInt<4>(2);
+inline constexpr auto maxMessageDataLength = maxPacketDataLength - packetSecondaryHeaderLength;
+
+// NOLINTBEGIN(*magic-numbers)
+using MessageTypeId = Id<MessageTypeIdFields,
+                         MessageTypeIdFields{6, 2},
+                         MessageTypeIdFields{6, 5},
+                         MessageTypeIdFields{8, 1},
+                         MessageTypeIdFields{20, 1},
+                         MessageTypeIdFields{20, 3},
+                         MessageTypeIdFields{23, 2},
+                         MessageTypeIdFields{23, 3},
+                         MessageTypeIdFields{23, 12},
+                         MessageTypeIdFields{23, 14}>;
+// NOLINTEND(*magic-numbers)
+
+enum class FunctionId : std::uint8_t
+{
+    stopAntennaDeployment = 1,
+    requestHousekeepingParameterReports = 2,
+    disableCubeSatTx = 4,
+    enableCubeSatTx = 7,
+    resetNow = 8,
+    enableFileTransferFor = 9,
+    updateEduQueue = 22,
+    setActiveFirmware = 23,
+    setBackupFirmware = 25,
+    checkFirmwareIntegrity = 31,
+};
+enum class FirmwarePartitionId : std::uint8_t
+{
+    primary = 0b0000'1111,
+    secondary1 = 0b0000'0000,
+    secondary2 = 0b1111'1111
+};
 }
 
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)
 inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAA33>();
 
-enum class ParameterId : std::uint8_t
-{
-    rxBaudRate = 1,
-    txBaudRate,
-    realTimeOffsetCorrection,
-    newEduResultIsAvailable,
-    eduStartDelayLimit,
-};
-using ParameterValue = std::uint32_t;
 inline constexpr auto maxNParameters = 5U;  // Chosen to be the number of different parameters
 
 enum class FileStatus : std::uint8_t
@@ -140,6 +166,9 @@ enum class ObjectType : std::uint8_t
     file = 0,
     directory = 1,
 };
+
+using CopyOperationId = Id<std::uint8_t, 0b0000'1111>;  // NOLINT(*magic-numbers)
+inline constexpr auto copyOperationId = Make<CopyOperationId, 0b0000'1111>();
 
 inline constexpr auto maxDumpedDataLength =
     tm::maxPacketDataLength - tm::packetSecondaryHeaderLength

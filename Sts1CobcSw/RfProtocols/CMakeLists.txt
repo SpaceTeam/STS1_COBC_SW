@@ -1,5 +1,5 @@
 target_sources(
-    Sts1CobcSw_RfProtocols PRIVATE MessageTypeIdFields.cpp Reports.cpp SpacePacket.cpp
+    Sts1CobcSw_RfProtocols PRIVATE Vocabulary.cpp Reports.cpp Requests.cpp SpacePacket.cpp
                                    TcTransferFrame.cpp TmTransferFrame.cpp
 )
 target_link_libraries(
@@ -7,8 +7,10 @@ target_link_libraries(
     PUBLIC etl::etl
            rodos::without_main_on_linux
            Sts1CobcSw_Blake2s
+           Sts1CobcSw_Edu
            Sts1CobcSw_FileSystem
            Sts1CobcSw_Fram
+           Sts1CobcSw_FramSections
            Sts1CobcSw_Outcome
            Sts1CobcSw_Serial
            Sts1CobcSw_Telemetry

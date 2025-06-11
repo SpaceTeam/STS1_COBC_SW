@@ -172,7 +172,7 @@ private:
         // Parameter value report
         {
             auto reportName = "ParameterValueReport.bin"s;
-            auto parameterId = ParameterId::rxBaudRate;
+            auto parameterId = Parameter::Id::rxBaudRate;
             auto parameterValue = 9600U;
             auto report = ParameterValueReport(parameterId, parameterValue);
             WriteToFileAsFrame(report, outputDir + reportName);

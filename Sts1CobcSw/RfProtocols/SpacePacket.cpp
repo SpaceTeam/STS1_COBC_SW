@@ -18,7 +18,7 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField, Apid apid, Payload const &
     if(payload.Size() == 0)
     {
         // TODO: Think about what to return here
-        return ErrorCode::invalidPayload;
+        return ErrorCode::emptyPayload;
     }
     if(dataField->available()
        < packetPrimaryHeaderLength + static_cast<std::size_t>(payload.Size()))
@@ -46,23 +46,31 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     {
         return ErrorCode::bufferTooSmall;
     }
-    auto primaryHeader = SpacePacketPrimaryHeader();
-    (void)DeserializeFrom<std::endian::big>(buffer.data(), &primaryHeader);
-    auto packetIsValid = primaryHeader.versionNumber == packetVersionNumber
-                     and primaryHeader.packetType == packettype::telecommand
-                     and IsValid(primaryHeader.apid) and primaryHeader.sequenceFlags == 0b11;
+    auto packet = SpacePacket{};
+    (void)DeserializeFrom<std::endian::big>(buffer.data(), &packet.primaryHeader);
+    auto packetIsValid = packet.primaryHeader.versionNumber == packetVersionNumber
+                     and packet.primaryHeader.packetType == packettype::telecommand
+                     and packet.primaryHeader.sequenceFlags == 0b11;
     if(not packetIsValid)
     {
         return ErrorCode::invalidSpacePacket;
     }
-    if(buffer.size()
-       < packetPrimaryHeaderLength + static_cast<std::size_t>(primaryHeader.packetDataLength))
+    if(not IsValid(packet.primaryHeader.apid))
+    {
+        return ErrorCode::invalidApid;
+    }
+    if(packet.primaryHeader.packetDataLength + 1U > tc::maxPacketDataLength)
+    {
+        return ErrorCode::invalidPacketLength;
+    }
+    if(buffer.size() < packetPrimaryHeaderLength
+                           + static_cast<std::size_t>(packet.primaryHeader.packetDataLength) + 1)
     {
         return ErrorCode::bufferTooSmall;
     }
-    return SpacePacket{
-        .primaryHeader = primaryHeader,
-        .dataField = buffer.subspan(packetPrimaryHeaderLength, primaryHeader.packetDataLength + 1)};
+    packet.dataField =
+        buffer.subspan(packetPrimaryHeaderLength, packet.primaryHeader.packetDataLength + 1);
+    return packet;
 }
 
 

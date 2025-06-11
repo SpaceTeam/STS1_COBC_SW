@@ -3,11 +3,9 @@
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 
 #include <etl/string.h>
-#include <etl/utility.h>
 
 #include <algorithm>
 #include <cassert>
-#include <utility>
 
 
 namespace sts1cobcsw
@@ -109,22 +107,20 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 }
 
 
-ParameterValueReport::ParameterValueReport(ParameterId parameterId, ParameterValue parameterValue)
+ParameterValueReport::ParameterValueReport(Parameter::Id parameterId,
+                                           Parameter::Value parameterValue)
     : nParameters_(1),
-      parameterIds_(decltype(parameterIds_){parameterId}),
-      parameterValues_(decltype(parameterValues_){parameterValue})
+      parameters_(decltype(parameters_){
+          Parameter{.parameterId = parameterId, .parameterValue = parameterValue}
+})
 {
 }
 
 
 ParameterValueReport::ParameterValueReport(
-    etl::vector<ParameterId, maxNParameters> parameterIds,
-    etl::vector<ParameterValue, maxNParameters> parameterValues)
-    : nParameters_(static_cast<std::uint8_t>(parameterIds.size())),
-      parameterIds_(std::move(parameterIds)),
-      parameterValues_(std::move(parameterValues))
+    etl::vector<Parameter, maxNParameters> const & parameters)
+    : nParameters_(static_cast<std::uint8_t>(parameters.size())), parameters_(parameters)
 {
-    assert(parameterIds_.size() == parameterValues_.size());  // NOLINT(*array*decay)
 }
 
 
@@ -134,11 +130,7 @@ auto ParameterValueReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, nParameters_);
-    for(auto i = 0U; i < nParameters_; ++i)
-    {
-        cursor = SerializeTo<ccsdsEndianness>(cursor, parameterIds_[i]);
-        cursor = SerializeTo<ccsdsEndianness>(cursor, parameterValues_[i]);
-    }
+    (void)SerializeTo<ccsdsEndianness>(cursor, parameters_);
 }
 
 
@@ -146,7 +138,7 @@ auto ParameterValueReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
         totalSerialSize<decltype(secondaryHeader_), decltype(nParameters_)>
-        + nParameters_ * totalSerialSize<ParameterId, ParameterValue>);
+        + nParameters_ * totalSerialSize<Parameter::Id, Parameter::Value>);
 }
 
 
@@ -181,12 +173,14 @@ auto FileAttributeReport::DoSize() const -> std::uint16_t
 RepositoryContentSummaryReport::RepositoryContentSummaryReport(
     fs::Path const & repositoryPath,
     std::uint8_t nObjects,
-    etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes,
-    etl::vector<fs::Path, maxNObjectsPerPacket> objectNames)
+    etl::vector<ObjectType, maxNObjectsPerPacket> const &  // NOLINT(modernize-pass-by-value)
+        objectTypes,
+    etl::vector<fs::Path, maxNObjectsPerPacket> const &  // NOLINT(modernize-pass-by-value)
+        objectNames)
     : repositoryPath_(repositoryPath),
       nObjects_(nObjects),
-      objectTypes_(std::move(objectTypes)),
-      objectNames_(std::move(objectNames))
+      objectTypes_(objectTypes),
+      objectNames_(objectNames)
 {
     assert(objectTypes_.size() == objectNames_.size());  // NOLINT(*array*decay)
     repositoryPath_.resize(fs::Path::MAX_SIZE, '\0');
@@ -224,8 +218,8 @@ auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 DumpedRawMemoryDataReport::DumpedRawMemoryDataReport(
     std::uint8_t nDataBlocks,
     fram::Address startAddress,
-    etl::vector<Byte, maxDumpedDataLength> dumpedData)
-    : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(std::move(dumpedData))
+    etl::vector<Byte, maxDumpedDataLength> const & dumpedData)  // NOLINT(modernize-pass-by-value)
+    : nDataBlocks_(nDataBlocks), startAddress_(startAddress), dumpedData_(dumpedData)
 {
 }
 
@@ -254,6 +248,7 @@ auto DumpedRawMemoryDataReport::DoSize() const -> std::uint16_t
 
 
 // --- De-/Serialization ---
+
 
 template<std::endian endianness>
 auto SerializeTo(void * destination, RequestId const & requestId) -> void *

@@ -55,6 +55,17 @@ inline auto SerializeTo(void * destination, T const & t) -> void *
 }
 
 
+template<std::endian endianness, typename T>
+[[nodiscard]] auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *
+{
+    for(auto const & element : vector)
+    {
+        destination = SerializeTo<endianness>(destination, element);
+    }
+    return destination;
+}
+
+
 template<std::endian endianness, typename T, std::size_t size>
 auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *
 {
@@ -108,6 +119,27 @@ auto DeserializeFrom(void const * source, std::array<T, size> * array) -> void c
         source = DeserializeFrom<endianness>(source, &element);
     }
     return source;
+}
+
+
+template<std::endian endianness, typename T>
+auto DeserializeFrom(void const * source, etl::ivector<T> * vector) -> void const *
+{
+    // TODO: Do I need using sts1cobcsw::DeserializeFrom here (and in the array function above)?
+    for(auto & element : *vector)
+    {
+        source = DeserializeFrom<endianness>(source, &element);
+    }
+    return source;
+}
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, etl::istring * string) -> void const *
+{
+    std::memcpy(string->data(), source, string->capacity());
+    string->trim_to_terminator();
+    return static_cast<char const *>(source) + string->capacity();  // NOLINT(*pointer-arithmetic)
 }
 
 

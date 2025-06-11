@@ -53,7 +53,6 @@ enum class ErrorCode : std::int8_t
     // RF protocols
     // TODO: Rework the EDU and RF protocol errors once they are fully implemented. Since we send
     // down the error code with the NACK report, we benefit from fine-grained error codes.
-    invalidValue,
     bufferTooSmall,
     invalidTransferFrame,
     invalidSpacecraftId,
@@ -63,7 +62,13 @@ enum class ErrorCode : std::int8_t
     authenticationFailed,
     invalidSpacePacket,
     invalidApid,
-    invalidPayload,
+    invalidPacketLength,
+    emptyPayload,
+    invalidMessageTypeId,
+    invalidSourceId,
+    invalidApplicationData,
+    invalidDataLength,
+    emptyFilePath,
     // Firmware
     misaligned,
     eraseFailed,

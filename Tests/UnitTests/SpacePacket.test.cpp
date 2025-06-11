@@ -107,7 +107,7 @@ TEST_CASE("Adding Space Packets")
     addSpacePacketResult =
         sts1cobcsw::AddSpacePacketTo(&dataField, sts1cobcsw::normalApid, payload);
     CHECK(addSpacePacketResult.has_error());
-    CHECK(addSpacePacketResult.error() == ErrorCode::invalidPayload);
+    CHECK(addSpacePacketResult.error() == ErrorCode::emptyPayload);
     CHECK(dataField.size() == 0U);
 
     dataField.clear();
@@ -184,7 +184,7 @@ TEST_CASE("Parsing Space Packets")
     buffer[1] = 0b0000'0000_b;  // APID
     parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
     CHECK(parseResult.has_error());
-    CHECK(parseResult.error() == ErrorCode::invalidSpacePacket);
+    CHECK(parseResult.error() == ErrorCode::invalidApid);
 
     // Wrong sequence flags
     buffer[0] = 0b0001'0111_b;  // Version number, packet type, sec. header flag, APID
