@@ -37,8 +37,10 @@ _Min_Stack_Size = 0x400;    /* required amount of stack: 0x400 = 1k */
 MEMORY
 {
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
-  /* 128K (sector size) - 0x200 (metadata size) = 130560 */
-  FLASH    (rx)    : ORIGIN = 0x8020200,   LENGTH = 130560
+  /* We need to specify the full remaining size of the flash and not just one flash sector.         */
+  /* Otherwise the linker will error because some tests in debug mode are larger than one sector. */
+  /* 512 K (flash size) - 0x20200 (offset) = 392704 */
+  FLASH    (rx)    : ORIGIN = 0x8020200,   LENGTH = 392704
 }
 
 /* Sections */
