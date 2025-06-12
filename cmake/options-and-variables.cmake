@@ -5,6 +5,19 @@ if(BUILD_BOOTLOADER AND CMAKE_SYSTEM_NAME STREQUAL Linux)
     message(FATAL_ERROR "Building the bootloader is only supported on embedded platforms")
 endif()
 
+option(BUILD_FOR_USE_WITH_BOOTLOADER "Build the firmware for use with the bootloader" OFF)
+if(BUILD_FOR_USE_WITH_BOOTLOADER AND CMAKE_SYSTEM_NAME STREQUAL Linux)
+    message(FATAL_ERROR "Building the firmware for use with the bootloader is only supported on "
+                        "embedded platforms"
+    )
+endif()
+
+if(BUILD_BOOTLOADER AND BUILD_FOR_USE_WITH_BOOTLOADER)
+    message(FATAL_ERROR "Cannot build both the bootloader and the firmware for use with the "
+                        "bootloader at the same time"
+    )
+endif()
+
 set(HW_VERSION 30 CACHE STRING "Hardware version")
 
 # Developer mode enables targets and code paths in the CMake scripts that are only relevant for the
@@ -19,6 +32,8 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     if(BUILD_BOOTLOADER)
         set(linker_script "${CMAKE_SOURCE_DIR}/Scripts/Bootloader.ld")
+    elseif(BUILD_FOR_USE_WITH_BOOTLOADER)
+        set(linker_script "${CMAKE_SOURCE_DIR}/Scripts/Stm32f411xeWithOffset.ld")
     else()
         set(linker_script "${CMAKE_SOURCE_DIR}/Scripts/Stm32f411xe.ld")
     endif()
