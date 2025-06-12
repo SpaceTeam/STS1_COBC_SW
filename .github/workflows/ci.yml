@@ -135,6 +135,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Building COBC binaries for use with the bootloader runs add_metadata.py which calls Git.
+    # Without this step, the Git command fails with an error about the workspace not being a safe
+    # directory.
+    - name: Mark workspace as safe
+      run: git config --global --add safe.directory $GITHUB_WORKSPACE
+
     - name: Configure for COBC with bootloader
       run: cmake --preset=ci-cobc-with-bootloader
 
