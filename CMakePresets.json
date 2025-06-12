@@ -165,7 +165,7 @@
       }
     },
     {
-      "name": "ci-cobc-for-bootloader",
+      "name": "ci-cobc-with-bootloader",
       "inherits": [
         "ci-cobc"
       ],

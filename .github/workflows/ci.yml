@@ -98,42 +98,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/cache/restore@v4
-      id: restorecache
-      with:
-        path: /.cache/clang-tidy
-        key: ctcache
-
-    - name: Echo cache miss
-      if: steps.restorecache.outputs.cache-hit != 'true'
-      run: echo "Cache miss"
-
-    - name: Configure COBC FW
+    - name: Configure
       run: cmake --preset=ci-cobc
 
-    - name: Build COBC FW
+    - name: Build
       run: cmake --build build/ci-cobc
 
     - name: Build all tests
       run: cmake --build build/ci-cobc -t AllTests
-
-    - name: Configure COBC FW for use with bootloader
-      run: cmake --preset=ci-cobc-for-bootloader
-
-    - name: Build COBC FW for use with bootloader
-      run: cmake --build build/ci-cobc-for-bootloader
-
-    - name: Configure bootloader
-      run: cmake --preset=ci-bootloader
-
-    - name: Build bootloader
-      run: cmake --build build/ci-bootloader
-
-    - uses: actions/cache/save@v4
-      id: savecache
-      with:
-        path: /.cache/clang-tidy
-        key: ctcache
 
     - name: Upload artifacts
       if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -145,10 +117,6 @@ jobs:
           ./build/ci-cobc/*.elf
           ./build/ci-cobc/Tests/**/*.bin
           ./build/ci-cobc/Tests/**/*.elf
-          ./build/ci-cobc-for-bootloader/*.bin
-          ./build/ci-cobc-for-bootloader/*.elf
-          ./build/ci-bootloader/*.bin
-          ./build/ci-bootloader/*.elf
 
     - name: Add assets to release
       if: github.event_name == 'release'
@@ -157,8 +125,46 @@ jobs:
           files: |
             ./build/ci-cobc/*.bin
             ./build/ci-cobc/*.elf
-            ./build/ci-cobc-for-bootloader/*.bin
-            ./build/ci-cobc-for-bootloader/*.elf
+
+  build-for-cobc-with-bootloader:
+    needs: format-and-spell-check
+
+    runs-on: ubuntu-24.04
+    container: tuwienspaceteam/sts1-cobc:1.17.0
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure for COBC with bootloader
+      run: cmake --preset=ci-cobc-with-bootloader
+
+    - name: Build COBC FW for use with bootloader
+      run: cmake --build build/ci-cobc-with-bootloader
+
+    - name: Configure bootloader
+      run: cmake --preset=ci-bootloader
+
+    - name: Build bootloader
+      run: cmake --build build/ci-bootloader
+
+    - name: Upload artifacts
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: CobcBinariesWithBootloader
+        path: |
+          ./build/ci-cobc-with-bootloader/*.bin
+          ./build/ci-cobc-with-bootloader/*.elf
+          ./build/ci-bootloader/*.bin
+          ./build/ci-bootloader/*.elf
+
+    - name: Add assets to release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v2
+      with:
+          files: |
+            ./build/ci-cobc-with-bootloader/*.bin
+            ./build/ci-cobc-with-bootloader/*.elf
             ./build/ci-bootloader/*.bin
             ./build/ci-bootloader/*.elf
 
