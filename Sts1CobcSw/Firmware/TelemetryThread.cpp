@@ -1,6 +1,6 @@
-#include <Sts1CobcSw/CobcSoftware/RfCommunicationThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
-#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>

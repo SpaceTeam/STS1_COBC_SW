@@ -1,6 +1,6 @@
-#include <Sts1CobcSw/CobcSoftware/RfCommunicationThread.hpp>
+#include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
 
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 
 #include <rodos_no_using_namespace.h>
 

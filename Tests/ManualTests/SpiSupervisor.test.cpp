@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>

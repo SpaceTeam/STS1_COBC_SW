@@ -1,12 +1,12 @@
-#include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
 
-#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
-#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>

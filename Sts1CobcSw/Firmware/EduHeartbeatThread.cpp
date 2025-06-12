@@ -1,5 +1,5 @@
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
-#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>

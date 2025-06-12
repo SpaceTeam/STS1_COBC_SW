@@ -83,10 +83,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(SpiSupervisor)
     target_sources(
         Sts1CobcSwTests_SpiSupervisor
-        PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/FlashStartupTestThread.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/RfStartupTestThread.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.cpp
+        PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/FlashStartupTestThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/FramEpsStartupTestThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/RfStartupTestThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.cpp
     )
     target_link_libraries(
         Sts1CobcSwTests_SpiSupervisor

@@ -170,7 +170,7 @@ Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html
   stuff.
 - `Periphery/` should contain abstractions for the external periphery the COBC
   communicates with, like sensors or memory chips. The EDU also kind of fits here.
-- All CMake targets are prefixed with the project name: `Sts1CobcSw_CobcSoftware`,
+- All CMake targets are prefixed with the project name: `Sts1CobcSw_Firmware`,
   `Sts1CobcSw_Hal`, etc.
 - Everything test related is in `Tests/` and its subdirectories.
 - Tests have the `.test.cpp` extension (no `_Test` suffix or `Test_` prefix, etc.) and are

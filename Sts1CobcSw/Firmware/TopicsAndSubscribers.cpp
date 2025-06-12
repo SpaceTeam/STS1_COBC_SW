@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 
 
 namespace sts1cobcsw

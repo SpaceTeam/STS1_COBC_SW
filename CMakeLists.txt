@@ -46,8 +46,7 @@ else()
     add_library(Sts1CobcSw_Utility STATIC)
     add_library(Sts1CobcSw_Vocabulary INTERFACE)
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
-        # TODO: Rename to (Cobc)Firmware
-        add_program(CobcSoftware)
+        add_program(Firmware)
     endif()
 endif()
 
