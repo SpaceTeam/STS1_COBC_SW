@@ -1,6 +1,5 @@
-#include <Sts1CobcSw/FramSections/Section.hpp>
-
 #include <Sts1CobcSw/Fram/Fram.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <strong_type/equality.hpp>

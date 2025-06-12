@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Blake2s/Blake2s.hpp>
-
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 

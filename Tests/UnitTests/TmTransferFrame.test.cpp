@@ -1,9 +1,8 @@
-#include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
-
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
+#include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 

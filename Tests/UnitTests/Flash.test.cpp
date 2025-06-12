@@ -1,7 +1,6 @@
-#include <Sts1CobcSw/Flash/Flash.hpp>
-
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 

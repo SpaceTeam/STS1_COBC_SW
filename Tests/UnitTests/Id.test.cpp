@@ -1,6 +1,6 @@
-#include <Sts1CobcSw/RfProtocols/Id.hpp>
-
 #include <Tests/CatchRodos/TestMacros.hpp>
+
+#include <Sts1CobcSw/RfProtocols/Id.hpp>
 
 #include <array>
 #include <type_traits>

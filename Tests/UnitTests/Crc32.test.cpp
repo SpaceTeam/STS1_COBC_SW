@@ -1,9 +1,8 @@
-#include <Sts1CobcSw/Utility/Crc32.hpp>
-
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <etl/vector.h>
