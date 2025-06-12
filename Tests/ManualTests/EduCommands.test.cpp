@@ -2,7 +2,6 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
@@ -18,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -25,6 +25,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
@@ -36,8 +38,8 @@ class EduCommandsTest : public RODOS::StaticThread<>
 {
 public:
     EduCommandsTest() : StaticThread("EduCommandsTest")
-    {
-    }
+    {}
+
 
 private:
     void init() override
@@ -188,5 +190,6 @@ auto ReadCharacters() -> std::array<char, nCharacters>
     // NOLINTNEXTLINE(*reinterpret-cast)
     hal::ReadFrom(&uciUart, std::span(reinterpret_cast<Byte *>(string.data()), nCharacters));
     return string;
+}
 }
 }

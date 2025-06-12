@@ -79,7 +79,10 @@ TEST_CASE("Littlefs without data corruption")
 
 
 #ifdef __linux__
-auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool;
+namespace
+{
+auto TryToCorruptDataInMemory(std::span<sts1cobcsw::Byte const> dataToCorrupt) -> bool;
+}
 
 
 TEST_CASE("Littlefs with data corruption")
@@ -134,6 +137,7 @@ TEST_CASE("Littlefs with data corruption")
             fs::memory.begin(), fs::memory.end(), corruptedData.begin(), corruptedData.end());
         CHECK(it != fs::memory.end());
 
+
         // Since littlefs detected and corrected the write fault, we should read the correct data
         auto readData = decltype(writeData){};
         errorCode = lfs_file_read(&lfs, &file, readData.data(), readData.size());
@@ -164,7 +168,7 @@ TEST_CASE("Littlefs with data corruption")
         static constexpr auto dataToCorrupt = std::array{0xDE_b, 0xAD_b, 0xBE_b, 0xEF_b};
         auto fileSize = i < 2 ? 252U : 257U;
         auto writeData = std::vector(fileSize, 0xB0_b);
-        std::copy(dataToCorrupt.begin(), dataToCorrupt.end(), writeData.begin());
+        std::ranges::copy(dataToCorrupt, writeData.begin());
         errorCode = lfs_file_write(
             &lfs, &file, writeData.data(), static_cast<lfs_size_t>(writeData.size()));
         CHECK(errorCode == static_cast<int>(writeData.size()));
@@ -219,7 +223,9 @@ TEST_CASE("Littlefs with data corruption")
 }
 
 
-auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -> bool
+namespace
+{
+auto TryToCorruptDataInMemory(std::span<sts1cobcsw::Byte const> dataToCorrupt) -> bool
 {
     auto it = std::search(
         fs::memory.begin(), fs::memory.end(), dataToCorrupt.begin(), dataToCorrupt.end());
@@ -229,5 +235,6 @@ auto TryToCorruptDataInMemory(std::span<const sts1cobcsw::Byte> dataToCorrupt) -
     }
     *it ^= 0x80_b;
     return true;
+}
 }
 #endif

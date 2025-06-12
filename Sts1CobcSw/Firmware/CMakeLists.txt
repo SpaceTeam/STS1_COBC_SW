@@ -1,6 +1,6 @@
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(
-        Sts1CobcSw_CobcSoftware
+        Sts1CobcSw_Firmware
         PRIVATE CommandParser.cpp
                 CommandParserThread.cpp
                 EduCommunicationErrorThread.cpp
@@ -17,7 +17,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 TopicsAndSubscribers.cpp
     )
     target_link_libraries(
-        Sts1CobcSw_CobcSoftware
+        Sts1CobcSw_Firmware
         PRIVATE etl::etl
                 rodos::rodos
                 strong_type::strong_type

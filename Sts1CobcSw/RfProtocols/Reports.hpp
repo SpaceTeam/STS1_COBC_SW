@@ -14,11 +14,14 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <etl/vector.h>
 
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -36,7 +39,7 @@ struct RequestId
 
 // The values are chosen to match the subtype IDs of the failed verification reports. The IDs of the
 // successful ones are one less. The implementations of the reports rely on this.
-enum class VerificationStage
+enum class VerificationStage : std::uint8_t
 {
     acceptance = 2,
     completionOfExecution = 8,
@@ -56,7 +59,7 @@ public:
 
 private:
     static constexpr auto messageTypeId =
-        Make<tm::MessageTypeId, MessageTypeIdFields{1, static_cast<int>(stage) - 1}>();
+        Make<tm::MessageTypeId, {1, static_cast<int>(stage) - 1}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     RequestId requestId_;
 
@@ -75,8 +78,7 @@ public:
 
 
 private:
-    static constexpr auto messageTypeId =
-        Make<tm::MessageTypeId, MessageTypeIdFields{1, static_cast<int>(stage)}>();
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, {1, static_cast<int>(stage)}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     RequestId requestId_;
     ErrorCode errorCode_;
@@ -93,7 +95,7 @@ public:
 
 
 private:
-    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{3, 25}>();
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, {3, 25}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     static constexpr std::uint8_t structureId = 0;
     TelemetryRecord record_;
@@ -111,7 +113,7 @@ public:
 
 
 private:
-    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{20, 2}>();
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, {20, 2}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     std::uint8_t nParameters_ = 0;
     etl::vector<Parameter, maxNParameters> parameters_;
@@ -128,7 +130,7 @@ public:
 
 
 private:
-    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{23, 4}>();
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, {23, 4}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     fs::Path filePath_;
     std::uint32_t fileSize_;
@@ -155,7 +157,7 @@ public:
 
 
 private:
-    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{23, 13}>();
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, {23, 13}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     fs::Path repositoryPath_;
     std::uint8_t nObjects_ = 0;
@@ -176,7 +178,7 @@ public:
 
 
 private:
-    static constexpr auto messageTypeId = Make<tm::MessageTypeId, MessageTypeIdFields{6, 6}>();
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, {6, 6}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     std::uint8_t nDataBlocks_ = 0;
     fram::Address startAddress_ = fram::Address(0);

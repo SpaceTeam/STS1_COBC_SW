@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
+
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
@@ -17,10 +18,9 @@
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <littlefs/lfs.h>
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
-
-#include <littlefs/lfs.h>
 
 #include <rodos_no_using_namespace.h>
 
@@ -33,11 +33,19 @@
 #include <cstdint>
 #include <limits>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw::edu
 {
-// --- Globals ---
+// --- Public globals ---
+
+hal::GpioPin updateGpioPin(hal::eduUpdatePin);
+
+
+namespace
+{
+// --- Private globals ---
 
 auto const programsDirectory = fs::Path("programs/");
 auto const resultsDirectory = fs::Path("results/");
@@ -90,23 +98,24 @@ template<>
 [[nodiscard]] auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>;
 
 template<typename T>
-[[nodiscard]] auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
+[[nodiscard]] auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
 auto FlushUartReceiveBuffer() -> void;
+}
 
 
-// --- Function definitions ---
+// --- Public function definitions ---
 
 //! @brief  Must be called in an init() function of a thread.
 auto Initialize() -> void
 {
     eduEnableGpioPin.SetDirection(hal::PinDirection::out);
-    persistentVariables.template Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
+    persistentVariables.Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
 }
 
 
 auto TurnOn() -> void
 {
-    persistentVariables.template Store<"eduShouldBePowered">(true);
+    persistentVariables.Store<"eduShouldBePowered">(true);
     eduEnableGpioPin.Set();
 
     // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
@@ -117,7 +126,7 @@ auto TurnOn() -> void
 
 auto TurnOff() -> void
 {
-    persistentVariables.template Store<"eduShouldBePowered">(false);
+    persistentVariables.Store<"eduShouldBePowered">(false);
     eduEnableGpioPin.Reset();
     hal::Deinitialize(&uart);
 }
@@ -220,57 +229,6 @@ auto GetStatus() -> Result<Status>
 }
 
 
-auto ReceiveAndParseStatusData() -> Result<Status>
-{
-    OUTCOME_TRY(ReceiveDataPacket());
-    return ParseStatusData();
-}
-
-
-auto ParseStatusData() -> Result<Status>
-{
-    if(cepDataBuffer.empty())
-    {
-        return ErrorCode::invalidLength;
-    }
-    auto statusId = cepDataBuffer[0];
-    if(statusId == NoEventData::id)
-    {
-        if(cepDataBuffer.size() != totalSerialSize<NoEventData>)
-        {
-            return ErrorCode::invalidLength;
-        }
-        return Status{.statusType = StatusType::noEvent};
-    }
-    if(statusId == ProgramFinishedData::id)
-    {
-        if(cepDataBuffer.size() != totalSerialSize<ProgramFinishedData>)
-        {
-            return ErrorCode::invalidLength;
-        }
-        auto programFinishedData = Deserialize<ProgramFinishedData>(
-            Span(cepDataBuffer).first<totalSerialSize<ProgramFinishedData>>());
-        return Status{.statusType = StatusType::programFinished,
-                      .programId = programFinishedData.programId,
-                      .startTime = programFinishedData.startTime,
-                      .exitCode = programFinishedData.exitCode};
-    }
-    if(statusId == ResultsReadyData::id)
-    {
-        if(cepDataBuffer.size() != totalSerialSize<ResultsReadyData>)
-        {
-            return ErrorCode::invalidLength;
-        }
-        auto resultsReadyData = Deserialize<ResultsReadyData>(
-            Span(cepDataBuffer).first<totalSerialSize<ResultsReadyData>>());
-        return Status{.statusType = StatusType::resultsReady,
-                      .programId = resultsReadyData.programId,
-                      .startTime = resultsReadyData.startTime};
-    }
-    return ErrorCode::invalidStatusType;
-}
-
-
 auto ReturnResult(ReturnResultData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
@@ -329,10 +287,66 @@ auto ProgramsAreAvailableOnCobc() -> bool
     auto & directoryIterator = makeIteratorResult.value();
     return std::any_of(directoryIterator.begin(),
                        directoryIterator.end(),
-                       [](auto const & entryResult) {
+                       [](auto const & entryResult)
+                       {
                            return not entryResult.has_error()
                               and entryResult.value().type == fs::EntryType::file;
                        });
+}
+
+
+// --- Private function definitions ---
+
+namespace
+{
+auto ReceiveAndParseStatusData() -> Result<Status>
+{
+    OUTCOME_TRY(ReceiveDataPacket());
+    return ParseStatusData();
+}
+
+
+auto ParseStatusData() -> Result<Status>
+{
+    if(cepDataBuffer.empty())
+    {
+        return ErrorCode::invalidLength;
+    }
+    auto statusId = cepDataBuffer[0];
+    if(statusId == NoEventData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<NoEventData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        return Status{.statusType = StatusType::noEvent};
+    }
+    if(statusId == ProgramFinishedData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<ProgramFinishedData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        auto programFinishedData = Deserialize<ProgramFinishedData>(
+            Span(cepDataBuffer).first<totalSerialSize<ProgramFinishedData>>());
+        return Status{.statusType = StatusType::programFinished,
+                      .programId = programFinishedData.programId,
+                      .startTime = programFinishedData.startTime,
+                      .exitCode = programFinishedData.exitCode};
+    }
+    if(statusId == ResultsReadyData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<ResultsReadyData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        auto resultsReadyData = Deserialize<ResultsReadyData>(
+            Span(cepDataBuffer).first<totalSerialSize<ResultsReadyData>>());
+        return Status{.statusType = StatusType::resultsReady,
+                      .programId = resultsReadyData.programId,
+                      .startTime = resultsReadyData.startTime};
+    }
+    return ErrorCode::invalidStatusType;
 }
 
 
@@ -481,7 +495,7 @@ auto ReceiveAndCheckCrc32(std::span<Byte const> data) -> Result<void>
 
 
 template<typename T>
-auto Retry(auto(*communicationFunction)()->Result<T>, int nTries) -> Result<T>
+auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>
 {
     auto iTries = 0;
     while(true)
@@ -518,5 +532,6 @@ auto FlushUartReceiveBuffer() -> void
             break;
         }
     }
+}
 }
 }

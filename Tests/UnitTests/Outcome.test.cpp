@@ -11,6 +11,8 @@
 #include <utility>
 
 
+namespace
+{
 // First define a policy
 struct AbortPolicy : outcome_v2::experimental::policy::base
 {
@@ -67,7 +69,7 @@ auto Convert(std::string const & str) noexcept -> Result<int>
     }
 
     // NOLINTNEXTLINE(readability-identifier-length)
-    if(!std::all_of(str.begin(), str.end(), [](unsigned char c) { return std::isdigit(c); }))
+    if(!std::ranges::all_of(str, [](unsigned char c) { return std::isdigit(c); }))
     {
         return ConversionErrc::illegalChar;
     }
@@ -79,6 +81,7 @@ auto Convert(std::string const & str) noexcept -> Result<int>
 
     // NOLINTNEXTLINE(cert-err34-c)
     return atoi(str.c_str());
+}
 }
 
 
@@ -111,6 +114,8 @@ TEST_CASE("Inspecting result")
 }
 
 
+namespace
+{
 // Dummy function to chain with Convert
 auto WriteData(int * buffer, bool shouldSucceed) -> Result<void>
 {
@@ -146,6 +151,7 @@ auto Write(bool shouldSucceed) -> Result<int>
     int buffer = 0;
     OUTCOME_TRY(WriteData(&buffer, shouldSucceed));
     return buffer;
+}
 }
 
 

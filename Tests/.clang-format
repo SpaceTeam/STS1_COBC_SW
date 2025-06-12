@@ -1,0 +1,10 @@
+---
+# For clang-format 19
+BasedOnStyle: InheritParentConfig
+IncludeCategories:
+  # Test header files <Tests/*.hpp> without underscores
+  - Regex: '^<Tests(\/[A-Za-z0-9]+)+\.hpp>'
+    Priority: -1
+  # Sts1CobcSw header files <Sts1CobcSw/*.(h|hpp)> without underscores
+  - Regex: '^<Sts1CobcSw(\/[A-Za-z0-9]+)+\.(h|hpp)>'
+    Priority: 0

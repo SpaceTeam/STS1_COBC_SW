@@ -5,6 +5,4 @@ target_link_libraries(
     Sts1CobcSwTests_Utility PUBLIC Sts1CobcSwTests::CatchRodos Sts1CobcSw_Outcome
                                    Sts1CobcSw_Vocabulary
 )
-target_include_directories(
-    Sts1CobcSwTests_Utility PUBLIC ${warning_guard} "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
-)
+target_include_directories(Sts1CobcSwTests_Utility PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")

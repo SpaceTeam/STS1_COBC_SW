@@ -13,6 +13,7 @@
 #include <etl/vector.h>
 
 #include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 

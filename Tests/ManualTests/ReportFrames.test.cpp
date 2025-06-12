@@ -1,24 +1,34 @@
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
-#include <Sts1CobcSw/RfProtocols/Id.hpp>
+#include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 #include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
 #include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
+
+#include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <etl/vector.h>
 
 #include <array>
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -26,6 +36,8 @@ namespace sts1cobcsw
 using std::literals::operator""s;
 
 
+namespace
+{
 constexpr auto stackSize = 4000U;
 
 
@@ -36,14 +48,12 @@ class ReportFramesTest : public RODOS::StaticThread<stackSize>
 {
 public:
     ReportFramesTest() : StaticThread("ReportFramesTest")
-    {
-    }
+    {}
 
 
 private:
     auto init() -> void override
-    {
-    }
+    {}
 
 
     auto run() -> void override
@@ -149,13 +159,13 @@ private:
                 .nFileSystemErrors = 14U,
                 .cobcTemperature = 15,
                 .rfTemperature = 16,
- // clang-format off
+                // clang-format off
         .epsAdcData = {
             .adc4 = {
                 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U, 25U, 26U, 27U, 28U, 29U, 30U, 31U, 32U},
             .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
             .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
-  // clang-format on
+                // clang-format on
                 .rxBaudRate = 53,
                 .txBaudRate = 54,
                 .nCorrectableUplinkErrors = 55U,
@@ -182,7 +192,7 @@ private:
         {
             auto reportName = "FileAttributeReport.bin"s;
             auto filePath = fs::Path("/results/12345_67890.zip");
-            auto fileSize = 0xDEADBEEFU;
+            auto fileSize = 0xDEAD'BEEFU;
             auto fileStatus = FileStatus::locked;
             auto report = FileAttributeReport(filePath, fileSize, fileStatus);
             WriteToFileAsFrame(report, outputDir + reportName);
@@ -262,5 +272,6 @@ auto WriteToFileAsFrame(Payload const & report, std::string const & filename) ->
     {
         RODOS::PRINTF("Failed to generate     %s\n", filename.c_str());
     }
+}
 }
 }

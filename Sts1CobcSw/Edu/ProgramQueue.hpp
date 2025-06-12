@@ -11,6 +11,6 @@ namespace sts1cobcsw::edu
 {
 inline constexpr auto nCachedProgramQueueEntries = 10;
 inline constexpr auto programQueue = FramVector<ProgramQueueEntry,
-                                                framSections.template Get<"eduProgramQueue">(),
+                                                framSections.Get<"eduProgramQueue">(),
                                                 nCachedProgramQueueEntries>{};
 }

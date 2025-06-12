@@ -2,10 +2,20 @@
 # Enable ALL the things! Except not really. We don't use the abseil library, OpenCL (the altera
 # stuff), android, darwin (an Apple OS apparently), MPI or OpenMP. The fuchsia checks are just too
 # restrictive, we don't write Objective-C and don't develop the Linux kernel or LLVM-libc.
-# misc-non-private-member-variables-in-classes: the options don't do anything.
-# misc-const-correctness is not about const-correctness, but about const-ness of local variables and
-# we are not jumping on that bandwagon. Accessing static members through instances is way to
-# convenient for classes like Section<> or Subsections<>.
+# - boost-use-ranges: we don't use boost but have std::ranges instead
+# - misc-non-private-member-variables-in-classes: the options don't do anything.
+# - misc-const-correctness is not about const-correctness, but about const-ness of local variables
+#   and we are not jumping on that bandwagon.
+# - misc-header-include-cycle: we have header include cycles on purpose in our .ipp files
+# - misc-include-cleaner: the include cleaner does not support the concept of associated headers, so
+#   it gives false positives for pretty much every source file
+# - modernize-use-designated-initializers: this is too verbose and we try to use different strong
+#   types for every field
+# - modernize-use-ranges: some tests run significantly slower with ranges in debug mode, so we
+#   disable this (Littlefs.test.cpp and FileSystem.test.cpp the culprit was std::ranges::search())
+# - readability-math-missing-parentheses: we are not that stupid
+# - Accessing static members through instances is way to convenient for classes like Section<> or
+#   Subsections<>.
 Checks: "*,\
   -*avoid-c-arrays,\
   -abseil-*,\
@@ -15,6 +25,7 @@ Checks: "*,\
   -altera-struct-pack-align,\
   -altera-unroll-loops,\
   -android-*,\
+  -boost-use-ranges,\
   -bugprone-implicit-widening-of-multiplication-result,\
   -clang-diagnostic-unused-command-line-argument,\
   -cppcoreguidelines-avoid-non-const-global-variables,\
@@ -30,19 +41,24 @@ Checks: "*,\
   -hicpp-vararg,\
   -linuxkernel-must-use-errs,\
   -llvm-header-guard,\
+  -llvm-include-order,\
   -llvm-namespace-comment,\
   -llvmlibc-*,\
   -misc-const-correctness,\
+  -misc-header-include-cycle,\
+  -misc-include-cleaner,\
   -misc-non-private-member-variables-in-classes,
   -misc-unused-using-decls,\
+  -modernize-use-designated-initializers,\
+  -modernize-use-ranges,\
   -mpi-*,\
   -openmp-*,\
+  -readability-math-missing-parentheses,\
   -readability-static-accessed-through-instance,\
   "
 WarningsAsErrors: ''
-HeaderFilterRegex: ''
-#AnalyzeTemporaryDtors: false
-FormatStyle: none
+HeaderFilterRegex: '.*\.hpp$'
+FormatStyle: 'file'
 CheckOptions:
   - key: 'bugprone-argument-comment.StrictMode'
     value: 'true'

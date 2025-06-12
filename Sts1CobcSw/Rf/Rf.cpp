@@ -4,26 +4,29 @@
 //! See "AN625: Si446x API Descriptions" for more information.
 
 
+#include <Sts1CobcSw/Rf/Rf.hpp>
+
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
-#include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/DebugPrint.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
-#include <algorithm>
 #include <array>
 #include <bit>
+#include <compare>
 #include <cstddef>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw::rf
@@ -229,7 +232,7 @@ auto SetTxType(TxType txType) -> void
     static constexpr std::uint32_t dataRateMorse = 20'000U * 40U;
     // MODEM_DATA_RATE: For 9k6 Baud: (TX_DATA_RATE * MODEM_TX_NCO_MODE * TXOSR) / F_XTAL_Hz = (9600
     // * 26'000'000 * 40) / 26'000'000 = 9600 * 40
-    static constexpr std::uint32_t dataRate2Gfsk = 9'600U * 40U;
+    static constexpr std::uint32_t dataRate2Gfsk = 9600U * 40U;
     // MODEM_MODE_TYPE: TX data from GPIO0 pin, modulation OOK
     static constexpr auto modemModeTypeMorse = 0x09_b;
     // MODEM_MODE_TYPE: TX data from packet handler, modulation 2GFSK
@@ -586,7 +589,7 @@ auto Configure(TxType txType) -> void
     static constexpr auto preambleConfigStd2 = 0x0F_b;
     // RX Standard preamble, first received preamble bit is 0, unit of preamble TX length is in
     // bytes, use standard preamble 0101 pattern
-    static constexpr auto preambleConfig = 0b00010010_b;
+    static constexpr auto preambleConfig = 0b0001'0010_b;
     // Non-standard pattern
     static constexpr auto preamblePattern = std::array<Byte, 4>{};
     SetProperties(PropertyGroup::preamble,
@@ -601,7 +604,7 @@ auto Configure(TxType txType) -> void
     // Sync word
     static constexpr auto iSyncConfig = 0x00_b;
     // Do not transmit sync word, allow 4-bit sync word errors on receive, 4-byte sync word length
-    static constexpr auto syncConfig = 0b11000011_b;
+    static constexpr auto syncConfig = 0b1100'0011_b;
     // Valid CCSDS TM sync word for Reed-Solomon or convolutional coding. Be careful: Send order is
     // MSB-first but little endian so the lowest bit of the highest byte is transmitted first, which
     // is different to how the CCSDS spec annotates those bit patterns!
@@ -614,7 +617,7 @@ auto Configure(TxType txType) -> void
     // TODO: The application note says the exact opposite: LSB first, big endian. Also, instead of
     // specifying the 4 bytes manually we should, serialize a 32-bit number.
     static constexpr auto syncBits =
-        std::array{0b01011000_b, 0b11110011_b, 0b00111111_b, 0b10111000_b};
+        std::array{0b0101'1000_b, 0b1111'0011_b, 0b0011'1111_b, 0b1011'1000_b};
     SetProperties(PropertyGroup::sync, iSyncConfig, Span(FlatArray(syncConfig, syncBits)));
 
     // CRC

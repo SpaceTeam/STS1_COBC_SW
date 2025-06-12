@@ -1,8 +1,13 @@
 #include <Sts1CobcSw/Flash/FlashMock.hpp>
+
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+
+#include <utility>
 
 
 namespace sts1cobcsw::flash
+{
+namespace
 {
 auto doInitialize = empty::DoInitialize;
 auto doReadJedecId = empty::DoReadJedecId;
@@ -13,13 +18,14 @@ auto doProgramPage = empty::DoProgramPage;
 auto doEraseSector = empty::DoEraseSector;
 auto doWaitWhileBusy = empty::DoWaitWhileBusy;
 auto doActualBaudRate = empty::DoActualBaudRate;
+}
 
 
 // --- Mocked functions ---
 
 auto Initialize() -> void
 {
-    return doInitialize();
+    doInitialize();
 }
 
 
@@ -43,13 +49,13 @@ auto ReadPage(std::uint32_t address) -> Page
 
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
-    return doProgramPage(address, data);
+    doProgramPage(address, data);
 }
 
 
 auto EraseSector(std::uint32_t address) -> void
 {
-    return doEraseSector(address);
+    doEraseSector(address);
 }
 
 
@@ -134,8 +140,7 @@ auto SetAllDoFunctions() -> void
 
 
 auto DoInitialize() -> void
-{
-}
+{}
 
 
 auto DoReadJedecId() -> JedecId
@@ -157,13 +162,11 @@ auto DoReadPage([[maybe_unused]] std::uint32_t address) -> Page
 
 
 auto DoProgramPage([[maybe_unused]] std::uint32_t address, [[maybe_unused]] PageSpan data) -> void
-{
-}
+{}
 
 
 auto DoEraseSector([[maybe_unused]] std::uint32_t address) -> void
-{
-}
+{}
 
 
 auto DoWaitWhileBusy([[maybe_unused]] Duration timeout) -> Result<void>

@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
@@ -11,10 +11,12 @@
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <cstddef>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -22,6 +24,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 auto WriteThatFinishesInTime([[maybe_unused]] void const * data,
                              [[maybe_unused]] std::size_t nBytes,
                              Duration duration) -> void;
@@ -35,18 +39,10 @@ auto transferEnd = endOfTime;
 
 class SpiSupervisorTest : public RODOS::StaticThread<>
 {
-    // We cannot use dynamic_cast because RTTI is disabled
-    // NOLINTBEGIN(*static-cast-downcast)
-    hal::SpiMock & flashSpi_ = static_cast<hal::SpiMock &>(flashSpi);
-    hal::SpiMock & framEpsSpi_ = static_cast<hal::SpiMock &>(framEpsSpi);
-    hal::SpiMock & rfSpi_ = static_cast<hal::SpiMock &>(rfSpi);
-    // NOLINTEND(*static-cast-downcast)
-
-
 public:
     SpiSupervisorTest() : StaticThread("SpiSupervisorTest", 200)
-    {
-    }
+    {}
+
 
     void init() override
     {
@@ -58,6 +54,7 @@ public:
         rfSpi_.SetWrite(WriteThatFinishesInTime);
         fram::ram::SetAllDoFunctions();
     }
+
 
     void run() override
     {
@@ -80,6 +77,15 @@ public:
         WriteTo(&flashSpi_, Span(0x00_b), 1 * ms);
         PRINTF("  -> this should never be printed\n");
     }
+
+
+private:
+    // We cannot use dynamic_cast because RTTI is disabled
+    // NOLINTBEGIN(*static-cast-downcast, *avoid-const-or-ref-data-members)
+    hal::SpiMock & flashSpi_ = static_cast<hal::SpiMock &>(flashSpi);
+    hal::SpiMock & framEpsSpi_ = static_cast<hal::SpiMock &>(framEpsSpi);
+    hal::SpiMock & rfSpi_ = static_cast<hal::SpiMock &>(rfSpi);
+    // NOLINTEND(*static-cast-downcast, *avoid-const-or-ref-data-members)
 } spiSupervisorTest;
 
 
@@ -99,5 +105,6 @@ auto WriteThatTakesTooLong([[maybe_unused]] void const * data,
 {
     transferEnd = CurrentRodosTime() + duration;
     SuspendFor(duration + 3 * s);
+}
 }
 }

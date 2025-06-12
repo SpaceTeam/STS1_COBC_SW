@@ -1,5 +1,9 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 
+#include <strong_type/type.hpp>
+
+#include <utility>
+
 
 namespace sts1cobcsw::hal
 {

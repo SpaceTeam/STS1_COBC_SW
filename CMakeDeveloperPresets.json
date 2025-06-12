@@ -1,0 +1,154 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "dev-common",
+      "hidden": true,
+      "inherits": [
+        "dev-mode",
+        "flags-unix",
+        "cpp-std"
+      ],
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_MCSS_DOCS": "OFF",
+        "USE_CCACHE": "ON"
+      }
+    },
+    {
+      "name": "dev-linux-x86-fast",
+      "inherits": "dev-common",
+      "toolchainFile": "/linux-x86.cmake"
+    },
+    {
+      "name": "dev-linux-x86",
+      "inherits": [
+        "dev-linux-x86-fast",
+        "clang-tidy-linux",
+        "include-what-you-use"
+      ]
+    },
+    {
+      "name": "dev-cobc-fast",
+      "inherits": "dev-common",
+      "toolchainFile": "/stm32f411.cmake",
+      "cacheVariables": {
+        "HSE_VALUE": "12000000",
+        "HW_VERSION": "30"
+      }
+    },
+    {
+      "name": "dev-cobc",
+      "inherits": [
+        "dev-cobc-fast",
+        "clang-tidy-cobc",
+        "include-what-you-use"
+      ]
+    },
+    {
+      "name": "dev-cobc-for-bootloader-fast",
+      "inherits": "dev-cobc-fast",
+      "toolchainFile": "/stm32f411.cmake",
+      "cacheVariables": {
+        "HSE_VALUE": "12000000",
+        "HW_VERSION": "30",
+        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON"
+      }
+    },
+    {
+      "name": "dev-bootloader-fast",
+      "inherits": "dev-common",
+      "toolchainFile": "${sourceDir}/Sts1CobcSw/Bootloader/Toolchain.cmake",
+      "cacheVariables": {
+        "BUILD_BOOTLOADER": "ON"
+      }
+    },
+    {
+      "name": "dev-bootloader",
+      "inherits": [
+        "dev-bootloader-fast",
+        "clang-tidy-cobc",
+        "include-what-you-use"
+      ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev-linux-x86-fast-debug",
+      "configurePreset": "dev-linux-x86-fast",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-linux-x86-fast-release",
+      "configurePreset": "dev-linux-x86-fast",
+      "configuration": "Release"
+    },
+    {
+      "name": "dev-linux-x86-debug",
+      "configurePreset": "dev-linux-x86",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-linux-x86-release",
+      "configurePreset": "dev-linux-x86",
+      "configuration": "Release"
+    },
+    {
+      "name": "dev-cobc-fast-debug",
+      "configurePreset": "dev-cobc-fast",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-cobc-fast-min-size-rel",
+      "configurePreset": "dev-cobc-fast",
+      "configuration": "MinSizeRel"
+    },
+    {
+      "name": "dev-cobc-debug",
+      "configurePreset": "dev-cobc",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-cobc-min-size-rel",
+      "configurePreset": "dev-cobc",
+      "configuration": "MinSizeRel"
+    },
+    {
+      "name": "dev-cobc-for-bootloader-fast-debug",
+      "configurePreset": "dev-cobc-for-bootloader-fast",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-cobc-for-bootloader-fast-min-size-rel",
+      "configurePreset": "dev-cobc-for-bootloader-fast",
+      "configuration": "MinSizeRel"
+    },
+    {
+      "name": "dev-bootloader-fast-debug",
+      "configurePreset": "dev-bootloader-fast",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-bootloader-fast-min-size-rel",
+      "configurePreset": "dev-bootloader-fast",
+      "configuration": "MinSizeRel"
+    },
+    {
+      "name": "dev-bootloader-debug",
+      "configurePreset": "dev-bootloader",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-bootloader-min-size-rel",
+      "configurePreset": "dev-bootloader",
+      "configuration": "MinSizeRel"
+    }
+  ]
+}

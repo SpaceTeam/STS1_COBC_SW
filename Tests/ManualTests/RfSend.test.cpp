@@ -1,19 +1,22 @@
-#include <Tests/HardwareSetup/RfLatchupProtection.hpp>
-
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <span>
 #include <type_traits>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -21,6 +24,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 // CCSDS test messages. RS(255,223) + CCSDS scrambling, 223 byte message, 8 byte preamble, 4
 // byte sync word, once without and once with convolutional coding.
 [[maybe_unused]] constexpr auto dataWithoutCc = std::to_array<Byte>(
@@ -97,12 +102,11 @@ using RODOS::PRINTF;
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
 
-class RfSendTest : public RODOS::StaticThread<5'000>
+class RfSendTest : public RODOS::StaticThread<5000>
 {
 public:
     RfSendTest() : StaticThread("RfSendTest")
-    {
-    }
+    {}
 
 
 private:
@@ -182,4 +186,5 @@ private:
         PRINTF("-> done\n");
     }
 } rfSendTest;
+}
 }

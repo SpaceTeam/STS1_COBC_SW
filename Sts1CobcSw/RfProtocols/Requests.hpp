@@ -14,6 +14,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <etl/utility.h>
 #include <etl/vector.h>
 
@@ -21,6 +23,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -34,7 +37,7 @@ struct Request
 
 struct LoadRawMemoryDataAreasRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{6, 2}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {6, 2}>();
     std::uint8_t nDataAreas;
     fram::Address startAddress;
     std::uint8_t dataLength;
@@ -57,7 +60,7 @@ inline constexpr std::size_t serialSize<DumpRawMemoryDataArea> =
 
 struct DumpRawMemoryDataRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{6, 5}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {6, 5}>();
     static constexpr auto maxNDataAreas = (tc::maxMessageDataLength - totalSerialSize<std::uint8_t>)
                                         / totalSerialSize<DumpRawMemoryDataArea>;
     std::uint8_t nDataAreas;
@@ -67,7 +70,7 @@ struct DumpRawMemoryDataRequest
 
 struct PerformAFunctionRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     tc::FunctionId functionId;
     std::span<Byte const> dataField;
 };
@@ -75,7 +78,7 @@ struct PerformAFunctionRequest
 
 struct ReportParameterValuesRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{20, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {20, 1}>();
     std::uint8_t nParameters;
     etl::vector<Parameter::Id, maxNParameters> parameterIds;
 };
@@ -83,7 +86,7 @@ struct ReportParameterValuesRequest
 
 struct SetParameterValuesRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{20, 3}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {20, 3}>();
     std::uint8_t nParameters;
     etl::vector<Parameter, maxNParameters> parameters;
 };
@@ -91,28 +94,28 @@ struct SetParameterValuesRequest
 
 struct DeleteAFileRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 2}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {23, 2}>();
     fs::Path filePath;
 };
 
 
 struct ReportTheAttributesOfAFileRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 3}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {23, 3}>();
     fs::Path filePath;
 };
 
 
 struct SummaryReportTheContentOfARepositoryRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 12}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {23, 12}>();
     fs::Path repositoryPath;
 };
 
 
 struct CopyAFileRequest
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{23, 14}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {23, 14}>();
     CopyOperationId operationId;
     fs::Path sourceFilePath;
     fs::Path targetFilePath;
@@ -121,7 +124,7 @@ struct CopyAFileRequest
 
 struct ReportHousekeepingParameterReportFunction
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::requestHousekeepingParameterReports;
     std::uint16_t firstReportIndex;
     std::uint16_t lastReportIndex;
@@ -130,7 +133,7 @@ struct ReportHousekeepingParameterReportFunction
 
 struct EnableFileTransferFunction
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::enableFileTransferFor;
     std::uint16_t durationInS;
 };
@@ -143,7 +146,7 @@ struct UpdateEduQueueFunction
         / totalSerialSize<edu::ProgramQueueEntry>;
     static_assert(edu::programQueue.FramCapacity() == maxNQueueEntries);
 
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::updateEduQueue;
     std::uint8_t nQueueEntries;
     etl::vector<edu::ProgramQueueEntry, maxNQueueEntries> queueEntries;
@@ -152,7 +155,7 @@ struct UpdateEduQueueFunction
 
 struct SetActiveFirmwareFunction
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::setActiveFirmware;
     tc::FirmwarePartitionId partitionId;
 };
@@ -160,7 +163,7 @@ struct SetActiveFirmwareFunction
 
 struct SetBackupFirmwareFunction
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::setBackupFirmware;
     tc::FirmwarePartitionId partitionId;
 };
@@ -168,7 +171,7 @@ struct SetBackupFirmwareFunction
 
 struct CheckFirmwareIntegrityFunction
 {
-    static constexpr auto id = Make<tc::MessageTypeId, MessageTypeIdFields{8, 1}>();
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::checkFirmwareIntegrity;
     tc::FirmwarePartitionId partitionId;
 };

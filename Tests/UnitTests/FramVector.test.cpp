@@ -12,12 +12,12 @@
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
-#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 
 
 namespace fram = sts1cobcsw::fram;
@@ -43,10 +43,14 @@ constexpr std::size_t serialSize<S> =
     totalSerialSize<decltype(S::u16), decltype(S::i32), decltype(S::u8)>;
 }
 
+
+// NOLINTBEGIN(*use-internal-linkage)
 template<std::endian endianness>
 auto SerializeTo(void * destination, S const & data) -> void *;
 template<std::endian endianness>
 auto DeserializeFrom(void const * source, S * data) -> void const *;
+// NOLINTEND(*use-internal-linkage)
+
 
 // Define FRAM sections for testing
 inline constexpr auto metadataSize = fram::Size(3 * 4);

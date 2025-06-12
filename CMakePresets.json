@@ -37,10 +37,18 @@
       }
     },
     {
-      "name": "clang-tidy",
+      "name": "clang-tidy-linux",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--header-filter=${sourceDir}/*.hpp;--extra-arg=-fsized-deallocation"
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--extra-arg=-fsized-deallocation"
+      }
+    },
+    {
+      "name": "clang-tidy-cobc",
+      "description": "Some time after version 15 clang-tidy became picky and now we need to specify the target triple and include paths",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--extra-arg=-fsized-deallocation;--extra-arg=--target=arm-none-eabi;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../arm-none-eabi/include/newlib-nano;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include/c++/13.3.1;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include/c++/13.3.1/arm-none-eabi;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include/c++/13.3.1/backward;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/include-fixed;--extra-arg=-isystem/opt/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/include"
       }
     },
     {
@@ -86,12 +94,13 @@
     },
     {
       "name": "ci-unix",
-      "generator": "Unix Makefiles",
       "hidden": true,
       "inherits": [
         "flags-unix",
         "cpp-std"
       ],
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "MinSizeRel",
         "USE_CCACHE": "OFF"
@@ -99,9 +108,8 @@
     },
     {
       "name": "coverage-unix",
-      "binaryDir": "${sourceDir}/build/coverage",
-      "inherits": "ci-unix",
       "hidden": true,
+      "inherits": "ci-unix",
       "cacheVariables": {
         "ENABLE_COVERAGE": "ON",
         "CMAKE_BUILD_TYPE": "Coverage",
@@ -112,24 +120,22 @@
     },
     {
       "name": "ci-coverage",
-      "binaryDir": "${sourceDir}/build/coverage",
-      "toolchainFile": "/linux-x86.cmake",
       "inherits": [
         "coverage-unix",
         "dev-mode"
       ],
+      "toolchainFile": "/linux-x86.cmake",
       "cacheVariables": {
         "COVERAGE_HTML_COMMAND": ""
       }
     },
     {
       "name": "ci-sanitize",
-      "binaryDir": "${sourceDir}/build/sanitize",
-      "toolchainFile": "/linux-x86.cmake",
       "inherits": [
         "ci-unix",
         "dev-mode"
       ],
+      "toolchainFile": "/linux-x86.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Sanitize",
         "CMAKE_CXX_FLAGS_SANITIZE": "-Os -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common"
@@ -137,27 +143,47 @@
     },
     {
       "name": "ci-linux-x86",
-      "binaryDir": "${sourceDir}/build/linux-x86",
       "inherits": [
         "dev-mode",
-        "clang-tidy",
         "ci-unix",
+        "clang-tidy-linux",
         "include-what-you-use"
       ],
       "toolchainFile": "/linux-x86.cmake"
     },
     {
       "name": "ci-cobc",
-      "binaryDir": "${sourceDir}/build/cobc",
       "inherits": [
         "dev-mode",
-        "clang-tidy",
         "ci-unix",
+        "clang-tidy-cobc",
         "include-what-you-use"
       ],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000"
+      }
+    },
+    {
+      "name": "ci-cobc-with-bootloader",
+      "inherits": [
+        "ci-cobc"
+      ],
+      "cacheVariables": {
+        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON"
+      }
+    },
+    {
+      "name": "ci-bootloader",
+      "inherits": [
+        "dev-mode",
+        "ci-unix",
+        "clang-tidy-cobc",
+        "include-what-you-use"
+      ],
+      "toolchainFile": "${sourceDir}/Sts1CobcSw/Bootloader/Toolchain.cmake",
+      "cacheVariables": {
+        "BUILD_BOOTLOADER": "ON"
       }
     }
   ]

@@ -1,6 +1,7 @@
-#include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/FlashStartupTestThread.hpp>
+
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
@@ -13,6 +14,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 // Running the SpiSupervisor HW test showed that the minimum required stack size is ~560 bytes
 constexpr auto stackSize = 600;
 
@@ -22,14 +25,12 @@ class FlashStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FlashStartupTestThread()
         : StaticThread("FlashStartupTestThread", flashStartupTestThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
@@ -41,17 +42,18 @@ private:
         if(jedecId.deviceId == flash::correctJedecId.deviceId
            && jedecId.manufacturerId == flash::correctJedecId.manufacturerId)
         {
-            persistentVariables.template Store<"flashIsWorking">(true);
+            persistentVariables.Store<"flashIsWorking">(true);
         }
         else
         {
             DEBUG_PRINT(" failed to read correct flash JEDEC ID");
-            persistentVariables.template Store<"flashIsWorking">(false);
+            persistentVariables.Store<"flashIsWorking">(false);
         }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } flashStartupTestThread;
+}
 
 
 auto ResumeFlashStartupTestThread() -> void

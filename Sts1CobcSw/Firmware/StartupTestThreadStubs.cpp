@@ -1,5 +1,5 @@
-#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
@@ -13,6 +13,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 auto const stackSize = 800U + EXTRA_SANITIZER_STACK_SIZE;
 
 
@@ -21,20 +23,20 @@ class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FramEpsStartupTestThread()
         : StaticThread("FramEpsStartupTestThread", framEpsStartupTestThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
+
 
     void run() override
     {
         SuspendUntil(endOfTime);
         DEBUG_PRINT("FRAM/EPS start-up test ...");
         fram::framIsWorking.Store(true);
-        persistentVariables.template Store<"epsIsWorking">(true);
+        persistentVariables.Store<"epsIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
@@ -46,19 +48,19 @@ class FlashStartupTestThread : public RODOS::StaticThread<stackSize>
 public:
     FlashStartupTestThread()
         : StaticThread("FlashStartupTestThread", flashStartupTestThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
+
 
     void run() override
     {
         SuspendUntil(endOfTime);
         DEBUG_PRINT("Flash start-up test ...");
-        persistentVariables.template Store<"flashIsWorking">(true);
+        persistentVariables.Store<"flashIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
@@ -69,38 +71,39 @@ class RfStartupTestThread : public RODOS::StaticThread<stackSize>
 {
 public:
     RfStartupTestThread() : StaticThread("RfStartupTestThread", rfStartupTestThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
+
 
     void run() override
     {
         SuspendUntil(endOfTime);
         DEBUG_PRINT("RF start-up test ...");
-        persistentVariables.template Store<"rfIsWorking">(true);
+        persistentVariables.Store<"rfIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } rfStartupTestThread;
+}
 
 
-auto ResumeFramEpsStartupTestThread() -> void
+auto ResumeFramEpsStartupTestThread() -> void  // NOLINT(*use-internal-linkage)
 {
     framEpsStartupTestThread.resume();
 }
 
 
-auto ResumeFlashStartupTestThread() -> void
+auto ResumeFlashStartupTestThread() -> void  // NOLINT(*use-internal-linkage)
 {
     flashStartupTestThread.resume();
 }
 
 
-auto ResumeRfStartupTestThread() -> void
+auto ResumeRfStartupTestThread() -> void  // NOLINT(*use-internal-linkage)
 {
     rfStartupTestThread.resume();
 }

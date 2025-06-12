@@ -5,12 +5,15 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 auto hardwareFlashSpi = hal::HardwareSpi(
     hal::flashSpiIndex, hal::flashSpiSckPin, hal::flashSpiMisoPin, hal::flashSpiMosiPin);
 auto hardwareFramEpsSpi = hal::HardwareSpi(
     hal::framEpsSpiIndex, hal::framEpsSpiSckPin, hal::framEpsSpiMisoPin, hal::framEpsSpiMosiPin);
 auto hardwareRfSpi =
     hal::HardwareSpi(hal::rfSpiIndex, hal::rfSpiSckPin, hal::rfSpiMisoPin, hal::rfSpiMosiPin);
+}
 
 hal::Spi & flashSpi = hardwareFlashSpi;
 hal::Spi & framEpsSpi = hardwareFramEpsSpi;

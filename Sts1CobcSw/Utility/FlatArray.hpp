@@ -14,7 +14,7 @@ template<typename T, std::size_t size>
 inline constexpr std::size_t flatArraySize<std::array<T, size>> = size;
 
 template<typename T, std::size_t size>
-inline constexpr std::size_t flatArraySize<const std::array<T, size>> = size;
+inline constexpr std::size_t flatArraySize<std::array<T, size> const> = size;
 
 template<typename T, std::size_t extent>
     requires(extent != std::dynamic_extent)
@@ -27,11 +27,11 @@ inline constexpr std::size_t flatArraySize<std::span<T const, extent>> = extent;
 // Not sure if we need the following two overloads as well, but better safe than sorry
 template<typename T, std::size_t extent>
     requires(extent != std::dynamic_extent)
-inline constexpr std::size_t flatArraySize<const std::span<T, extent>> = extent;
+inline constexpr std::size_t flatArraySize<std::span<T, extent> const> = extent;
 
 template<typename T, std::size_t extent>
     requires(extent != std::dynamic_extent)
-inline constexpr std::size_t flatArraySize<const std::span<T const, extent>> = extent;
+inline constexpr std::size_t flatArraySize<std::span<T const, extent> const> = extent;
 
 
 //! @brief  Create a flat `std::array` from the given arrays, spans, and values.

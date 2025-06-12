@@ -10,7 +10,7 @@ function(add_golden_test test_name)
 
     set(target ${PROJECT_NAME}_${test_name})
     add_executable(${target} "${test_source_file}")
-    target_include_directories(${target} ${warning_guard} PUBLIC "${CMAKE_SOURCE_DIR}")
+    target_include_directories(${target} PUBLIC "${CMAKE_SOURCE_DIR}")
     set_target_properties(${target} PROPERTIES OUTPUT_NAME ${test_name}Test)
 
     get_filename_component(test_directory ${test_source_file} DIRECTORY)

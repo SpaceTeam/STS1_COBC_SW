@@ -1,10 +1,12 @@
-#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
+
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 
 #include <strong_type/type.hpp>
 
 #include <cstring>
+#include <utility>
 
 
 namespace sts1cobcsw::fram
@@ -12,18 +14,21 @@ namespace sts1cobcsw::fram
 EdacVariable<bool> framIsWorking(true);
 
 
+namespace
+{
 auto doInitialize = empty::DoInitialize;
 auto doReadDeviceId = empty::DoReadDeviceId;
 auto doActualBaudRate = empty::DoActualBaudRate;
 auto doWriteTo = empty::DoWriteTo;
 auto doReadFrom = empty::DoReadFrom;
+}
 
 
 // --- Mocked functions ---
 
 auto Initialize() -> void
 {
-    return doInitialize();
+    doInitialize();
 }
 
 
@@ -43,13 +48,13 @@ namespace internal
 {
 auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration timeout) -> void
 {
-    return doWriteTo(address, data, nBytes, timeout);
+    doWriteTo(address, data, nBytes, timeout);
 }
 
 
 auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout) -> void
 {
-    return doReadFrom(address, data, nBytes, timeout);
+    doReadFrom(address, data, nBytes, timeout);
 }
 }
 
@@ -103,8 +108,7 @@ auto SetAllDoFunctions() -> void
 
 
 auto DoInitialize() -> void
-{
-}
+{}
 
 
 auto DoReadDeviceId() -> DeviceId
@@ -123,16 +127,14 @@ auto DoWriteTo([[maybe_unused]] Address address,
                [[maybe_unused]] void const * data,
                [[maybe_unused]] std::size_t nBytes,
                [[maybe_unused]] Duration timeout) -> void
-{
-}
+{}
 
 
 auto DoReadFrom([[maybe_unused]] Address address,
                 [[maybe_unused]] void * data,
                 [[maybe_unused]] std::size_t nBytes,
                 [[maybe_unused]] Duration timeout) -> void
-{
-}
+{}
 }
 
 
@@ -152,8 +154,7 @@ auto SetAllDoFunctions() -> void
 
 
 auto DoInitialize() -> void
-{
-}
+{}
 
 
 auto DoReadDeviceId() -> DeviceId

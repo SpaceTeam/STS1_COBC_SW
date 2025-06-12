@@ -1,7 +1,7 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
-#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 
-#include <etl/to_string.h>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 
 
 namespace sts1cobcsw::fs
@@ -21,7 +21,7 @@ auto & lfs = internal::lfs;
 // crashes with a SEGFAULT.
 auto Mount() -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -58,7 +58,7 @@ auto Unmount() -> Result<void>
 
 auto CreateDirectory(Path const & path) -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -73,7 +73,7 @@ auto CreateDirectory(Path const & path) -> Result<void>
 
 auto Remove(Path const & path) -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -95,7 +95,7 @@ auto Remove(Path const & path) -> Result<void>
 
 auto ForceRemove(Path const & path) -> Result<void>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }

@@ -5,14 +5,13 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
-#include <array>
 #include <cstdint>
 #include <span>
 
 
 namespace sts1cobcsw::rf
 {
-enum class TxType
+enum class TxType : std::uint8_t
 {
     morse,  // From GPIO pin
     packet  // From FIFO

@@ -10,29 +10,28 @@
 
 namespace sts1cobcsw
 {
-using RODOS::PRINTF;
-
-
+namespace
+{
 class EpsTest : public RODOS::StaticThread<>
 {
 public:
     EpsTest() : StaticThread("EpsTest")
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
     {
+        using RODOS::PRINTF;
+
         PRINTF("\nEPS test\n\n");
 
         PRINTF("\n");
-        persistentVariables.template Store<"epsIsWorking">(true);
+        persistentVariables.Store<"epsIsWorking">(true);
         eps::InitializeAdcs();
         PRINTF("EPS ADCs initialized\n");
 
@@ -81,4 +80,5 @@ private:
         }
     }
 } epsTest;
+}
 }

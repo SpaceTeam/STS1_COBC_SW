@@ -5,11 +5,12 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 class DisableRfLatchupProtectionTest : public RODOS::StaticThread<>
 {
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
@@ -17,4 +18,5 @@ class DisableRfLatchupProtectionTest : public RODOS::StaticThread<>
         DisableRfLatchupProtection();
     }
 } disableRfLatchupProtectionTest;
+}
 }

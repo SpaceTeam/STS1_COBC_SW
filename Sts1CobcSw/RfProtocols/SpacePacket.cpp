@@ -1,7 +1,6 @@
-#include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 #include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
 
-#include <algorithm>
+#include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 
 
 namespace sts1cobcsw

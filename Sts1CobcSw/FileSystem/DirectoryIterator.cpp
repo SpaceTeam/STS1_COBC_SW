@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 
@@ -47,7 +48,7 @@ auto DirectoryIterator::operator=(DirectoryIterator && other) noexcept -> Direct
 
 DirectoryIterator::~DirectoryIterator()
 {
-    if(persistentVariables.template Load<"flashIsWorking">() and not path_.empty())
+    if(persistentVariables.Load<"flashIsWorking">() and not path_.empty())
     {
         (void)lfs_dir_close(&lfs, &lfsDirectory_);
     }
@@ -56,7 +57,7 @@ DirectoryIterator::~DirectoryIterator()
 
 auto MakeIterator(Path const & path) -> Result<DirectoryIterator>
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
     }
@@ -84,7 +85,7 @@ auto operator==(DirectoryIterator const & lhs, DirectoryIterator const & rhs) ->
 
 auto DirectoryIterator::operator++() -> DirectoryIterator &
 {
-    if(not persistentVariables.template Load<"flashIsWorking">())
+    if(not persistentVariables.Load<"flashIsWorking">())
     {
         lfsErrorCode_ = LFS_ERR_IO;
         ResetEverythingExceptErrorCode();
@@ -126,7 +127,7 @@ auto DirectoryIterator::end() -> DirectoryIterator
 
 auto DirectoryIterator::CopyConstructFrom(DirectoryIterator const * other) noexcept -> void
 {
-    if(persistentVariables.template Load<"flashIsWorking">())
+    if(persistentVariables.Load<"flashIsWorking">())
     {
         if(not path_.empty())
         {

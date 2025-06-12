@@ -21,7 +21,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 strong_type::strong_type
                 Sts1CobcSw_Edu
                 Sts1CobcSw_Hal
-                Sts1CobcSw_Outcome
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Vocabulary
@@ -36,8 +35,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(Gpio)
     target_link_libraries(
-        Sts1CobcSwTests_Gpio PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_RodosTime
-                                     Sts1CobcSw_Vocabulary Sts1CobcSwTests::HardwareSetup
+        Sts1CobcSwTests_Gpio
+        PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Hal Sts1CobcSw_RodosTime
+                Sts1CobcSw_Vocabulary Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(MaxPower)
@@ -55,8 +55,15 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(RfReceive)
     target_link_libraries(
-        Sts1CobcSwTests_RfReceive PRIVATE rodos::rodos Sts1CobcSw_Hal Sts1CobcSw_Rf
-                                          Sts1CobcSw_Utility Sts1CobcSwTests::HardwareSetup
+        Sts1CobcSwTests_RfReceive
+        PRIVATE rodos::rodos
+                strong_type::strong_type
+                Sts1CobcSw_Hal
+                Sts1CobcSw_Rf
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(RfSend)
@@ -69,16 +76,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_RodosTime
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(SpiSupervisor)
     target_sources(
         Sts1CobcSwTests_SpiSupervisor
-        PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/FlashStartupTestThread.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/RfStartupTestThread.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.cpp
+        PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/FlashStartupTestThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/FramEpsStartupTestThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/RfStartupTestThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.cpp
     )
     target_link_libraries(
         Sts1CobcSwTests_SpiSupervisor
@@ -127,7 +135,21 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(ReportFrames)
-    target_link_libraries(Sts1CobcSwTests_ReportFrames PRIVATE rodos::rodos Sts1CobcSw_RfProtocols)
+    target_link_libraries(
+        Sts1CobcSwTests_ReportFrames
+        PRIVATE etl::etl
+                rodos::rodos
+                strong_type::strong_type
+                Sts1CobcSw_FileSystem
+                Sts1CobcSw_Fram
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_RfProtocols
+                Sts1CobcSw_RodosTime
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Telemetry
+                Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
+    )
 endif()
 
 get_property(manual_test_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS)

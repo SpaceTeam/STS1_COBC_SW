@@ -4,13 +4,18 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <utility>
 
 
 namespace sts1cobcsw
 {
-static auto led1Gpio = hal::GpioPin(hal::led1Pin);
+namespace
+{
+auto led1Gpio = hal::GpioPin(hal::led1Pin);
 
 
 class WatchdogTest : public RODOS::StaticThread<>
@@ -28,4 +33,5 @@ class WatchdogTest : public RODOS::StaticThread<>
         led1Gpio.Set();
     }
 } watchdogTest;
+}
 }

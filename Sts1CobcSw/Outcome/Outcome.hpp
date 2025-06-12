@@ -15,7 +15,7 @@
 
 namespace sts1cobcsw
 {
-enum class ErrorCode : std::int8_t
+enum class ErrorCode : std::int8_t  // NOLINT
 {
     // Littlefs (negative values)
     io = LFS_ERR_IO,                    // Error during device operation

@@ -3,8 +3,9 @@
 //!
 //! This is useful for testing the file system without using a real flash memory.
 
-#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/FileSystem/LfsRam.hpp>
+
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>  // IWYU pragma: associated
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <littlefs/lfs.h>
@@ -118,7 +119,7 @@ auto Read(lfs_config const * config,
         auto pageAddress = blockNo * sectorSize + pageNo * pageSize;
         auto page = std::span(&memory[pageAddress], pageSize);
         auto pageIsErased =
-            std::all_of(page.begin(), page.end(), [](auto byte) { return byte == erasedValue; });
+            std::ranges::all_of(page, [](auto byte) { return byte == erasedValue; });
         // Check the CRC only if the page is not erased
         if(not pageIsErased)
         {

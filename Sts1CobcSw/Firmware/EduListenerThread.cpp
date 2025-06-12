@@ -1,13 +1,11 @@
-#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/EduListenerThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
-#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -15,27 +13,27 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <utility>
+
 
 namespace sts1cobcsw
 {
+namespace
+{
 constexpr auto timeLoopPeriod = 1 * s;
-
-// TODO: This should also go to Edu.hpp/.cpp
-hal::GpioPin eduUpdateGpioPin(hal::eduUpdatePin);
 
 
 class EduListenerThread : public RODOS::StaticThread<>
 {
 public:
     EduListenerThread() : StaticThread("EduListenerThread", eduListenerThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
     {
-        eduUpdateGpioPin.SetDirection(hal::PinDirection::in);
+        edu::updateGpioPin.SetDirection(hal::PinDirection::in);
     }
 
 
@@ -44,7 +42,7 @@ private:
         TIME_LOOP(0, value_of(timeLoopPeriod))
         {
             // DEBUG_PRINT("[EduListenerThread] Start of TimeLoop Iteration\n");
-            auto eduHasUpdate = (eduUpdateGpioPin.Read() == hal::PinState::set);
+            auto eduHasUpdate = (edu::updateGpioPin.Read() == hal::PinState::set);
 
             auto eduIsAlive = false;
             eduIsAliveBufferForListener.get(eduIsAlive);
@@ -144,4 +142,5 @@ private:
         }
     }
 } eduListenerThread;
+}
 }

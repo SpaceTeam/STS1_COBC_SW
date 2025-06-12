@@ -96,9 +96,9 @@ static_assert(uint1.ToUnderlying() == 1);
 static_assert(uint8.ToUnderlying() == 0xFF);
 static_assert(uint9.ToUnderlying() == 0x1FF);
 static_assert(uint16.ToUnderlying() == 0xFFFF);
-static_assert(uint17.ToUnderlying() == 0x1FFFF);
+static_assert(uint17.ToUnderlying() == 0x1'FFFF);
 static_assert(uint32.ToUnderlying() == 0xFFFF'FFFF);
-static_assert(uint33.ToUnderlying() == 0x1FFFF'FFFF);
+static_assert(uint33.ToUnderlying() == 0x1'FFFF'FFFF);
 static_assert(uint64.ToUnderlying() == 0xFFFF'FFFF'FFFF'FFFF);
 
 // operator==()

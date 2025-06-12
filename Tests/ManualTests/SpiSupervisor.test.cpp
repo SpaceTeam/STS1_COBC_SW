@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
@@ -14,6 +14,7 @@
 
 #include <array>
 #include <cstdint>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -21,6 +22,8 @@ namespace sts1cobcsw
 using RODOS::PRINTF;
 
 
+namespace
+{
 // Running this test showed that the minimum required stack size is between 12.0 and 12.1 kB
 constexpr auto stackSize = 13'000;
 
@@ -29,14 +32,12 @@ class SpiSupervisorTest : public RODOS::StaticThread<stackSize>
 {
 public:
     SpiSupervisorTest() : StaticThread("SpiSupervisorTest")
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
@@ -46,7 +47,7 @@ private:
         PRINTF("\nSPI supervisor test\n\n");
 
         PRINTF("\n");
-        std::uint32_t const flashAddress = 0x00'01'10'00U;
+        std::uint32_t const flashAddress = 0x0001'1000U;
         PRINTF("Reading flash page ...\n");
         auto page = flash::ReadPage(flashAddress);
         PRINTF("Writing flash page ...\n");
@@ -73,4 +74,5 @@ private:
         PRINTF("  done\n\n");
     }
 } spiSupervisorTest;
+}
 }

@@ -1,8 +1,9 @@
-#include <Sts1CobcSw/CobcSoftware/FlashStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/FramEpsStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/RfStartupTestThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/SpiStartupTestAndSupervisorThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+
+#include <Sts1CobcSw/Firmware/FlashStartupTestThread.hpp>
+#include <Sts1CobcSw/Firmware/FramEpsStartupTestThread.hpp>
+#include <Sts1CobcSw/Firmware/RfStartupTestThread.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
@@ -25,6 +26,8 @@
 
 namespace sts1cobcsw
 {
+namespace
+{
 // Running the golden test for the supervisor thread showed that at least 850 bytes are needed
 constexpr auto stackSize = 900 + EXTRA_SANITIZER_STACK_SIZE;
 
@@ -42,13 +45,12 @@ public:
     SpiStartupTestAndSupervisorThread()
         : StaticThread("SpiStartupTestAndSupervisorThread",
                        spiStartupTestAndSupervisorThreadPriority)
-    {
-    }
+    {}
+
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
@@ -67,7 +69,7 @@ private:
         {
             DEBUG_PRINT("%s", errorMessage);
             fram::framIsWorking.Store(false);
-            persistentVariables.template Store<"epsIsWorking">(false);
+            persistentVariables.Store<"epsIsWorking">(false);
         }
         else
         {
@@ -75,12 +77,12 @@ private:
         }
 
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
-        DEBUG_PRINT(persistentVariables.template Load<"flashIsWorking">() ? "\n" : " and");
+        DEBUG_PRINT(persistentVariables.Load<"flashIsWorking">() ? "\n" : " and");
         if(not testWasSuccessful)
         {
             DEBUG_PRINT("%s", errorMessage);
-            persistentVariables.template Store<"flashIsWorking">(false);
-            persistentVariables.template Increment<"nFlashErrors">();
+            persistentVariables.Store<"flashIsWorking">(false);
+            persistentVariables.Increment<"nFlashErrors">();
         }
         else
         {
@@ -88,12 +90,12 @@ private:
         }
 
         testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
-        DEBUG_PRINT(persistentVariables.template Load<"rfIsWorking">() ? "\n" : " and");
+        DEBUG_PRINT(persistentVariables.Load<"rfIsWorking">() ? "\n" : " and");
         if(not testWasSuccessful)
         {
             DEBUG_PRINT("%s", errorMessage);
-            persistentVariables.template Store<"rfIsWorking">(false);
-            persistentVariables.template Increment<"nRfErrors">();
+            persistentVariables.Store<"rfIsWorking">(false);
+            persistentVariables.Increment<"nRfErrors">();
             DEBUG_PRINT("Resetting and rebooting in 2 s\n");
             // TODO: Add a named constant for this delay
             SuspendFor(2 * s);
@@ -116,13 +118,13 @@ private:
             {
                 DEBUG_PRINT("Flash SPI timeout occurred\n");
                 timeoutHappened = true;
-                persistentVariables.template Increment<"nFlashErrors">();
+                persistentVariables.Increment<"nFlashErrors">();
             }
             if(CurrentRodosTime() > rfSpi.TransferEnd())
             {
                 DEBUG_PRINT("RF SPI timeout occurred\n");
                 timeoutHappened = true;
-                persistentVariables.template Increment<"nRfErrors">();
+                persistentVariables.Increment<"nRfErrors">();
             }
             if(timeoutHappened)
             {
@@ -131,6 +133,7 @@ private:
         }
     }
 } spiStartupTestAndSupervisorThread;
+}
 
 
 auto ResumeSpiStartupTestAndSupervisorThread() -> void
@@ -139,11 +142,14 @@ auto ResumeSpiStartupTestAndSupervisorThread() -> void
 }
 
 
+namespace
+{
 auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool
 {
     auto testEnd = CurrentRodosTime() + startupTestTimeout;
     startupTestThreadResumeFuntion();
     SuspendUntil(testEnd);
     return CurrentRodosTime() <= testEnd;
+}
 }
 }

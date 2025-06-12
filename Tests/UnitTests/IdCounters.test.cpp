@@ -9,6 +9,8 @@
 using sts1cobcsw::Make;
 
 
+namespace
+{
 struct MyIdFields
 {
     std::uint8_t minor = 0;
@@ -25,6 +27,7 @@ auto myIdCounters = sts1cobcsw::IdCounters<int, MyId>{};
 constexpr auto id1 = Make<MyId, MyIdFields{0, 1}>();
 constexpr auto id2 = Make<MyId, MyIdFields{3, 5}>();
 constexpr auto id3 = Make<MyId, MyIdFields{7, 9}>();
+}
 
 
 TEST_CASE("IdCounters")

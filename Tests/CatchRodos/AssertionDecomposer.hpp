@@ -5,7 +5,7 @@
 #include <Tests/CatchRodos/TestReporter.hpp>
 #include <Tests/CatchRodos/Vocabulary.hpp>
 
-#include <source_location>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -13,7 +13,7 @@ namespace sts1cobcsw
 template<typename LeftValue>
 struct LeftExpression
 {
-    LeftValue leftValue;
+    LeftValue leftValue;  // NOLINT(*avoid-const-or-ref-data-members)
     Assertion assertion;
 
 
@@ -22,7 +22,7 @@ struct LeftExpression
     {
         assertion.op = "==";
         // NOLINTNEXTLINE(*array-to-pointer-decay,*no-array-decay)
-        return Assert(leftValue == rightValue, rightValue);
+        return Assert(leftValue == rightValue, std::forward<RightValue>(rightValue));
     }
 
 
@@ -31,7 +31,7 @@ struct LeftExpression
     {
         assertion.op = "!=";
         // NOLINTNEXTLINE(*array-to-pointer-decay,*no-array-decay)
-        return Assert(leftValue != rightValue, rightValue);
+        return Assert(leftValue != rightValue, std::forward<RightValue>(rightValue));
     }
 
 
@@ -40,7 +40,7 @@ struct LeftExpression
     {
         assertion.op = "<";
         // NOLINTNEXTLINE(*array-to-pointer-decay,*no-array-decay)
-        return Assert(leftValue < rightValue, rightValue);
+        return Assert(leftValue < rightValue, std::forward<RightValue>(rightValue));
     }
 
 
@@ -49,7 +49,7 @@ struct LeftExpression
     {
         assertion.op = "<=";
         // NOLINTNEXTLINE(*array-to-pointer-decay,*no-array-decay)
-        return Assert(leftValue <= rightValue, rightValue);
+        return Assert(leftValue <= rightValue, std::forward<RightValue>(rightValue));
     }
 
 
@@ -58,7 +58,7 @@ struct LeftExpression
     {
         assertion.op = ">=";
         // NOLINTNEXTLINE(*array-to-pointer-decay,*no-array-decay)
-        return Assert(leftValue >= rightValue, rightValue);
+        return Assert(leftValue >= rightValue, std::forward<RightValue>(rightValue));
     }
 
 
@@ -67,7 +67,7 @@ struct LeftExpression
     {
         assertion.op = ">";
         // NOLINTNEXTLINE(*array-to-pointer-decay,*no-array-decay)
-        return Assert(leftValue > rightValue, rightValue);
+        return Assert(leftValue > rightValue, std::forward<RightValue>(rightValue));
     }
 
 

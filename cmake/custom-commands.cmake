@@ -27,9 +27,14 @@ function(add_program program_name)
     add_executable(${target} ${ARGN})
     set_target_properties(${target} PROPERTIES OUTPUT_NAME ${program_name})
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+        target_link_options(${target} PRIVATE -T "${linker_script}")
+        set_target_properties(${target} PROPERTIES LINK_DEPENDS "${linker_script}")
         set_target_properties(${target} PROPERTIES SUFFIX ".elf")
         # Automatically call objcopy on the executable targets after the build
         objcopy_target(${target})
+        if(BUILD_FOR_USE_WITH_BOOTLOADER)
+            add_metadata(${target})
+        endif()
     endif()
 endfunction()
 
@@ -43,9 +48,14 @@ function(add_test_program test_name)
     add_executable(${target} ${test_source_file})
     set_target_properties(${target} PROPERTIES OUTPUT_NAME ${test_name}Test)
     if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+        target_link_options(${target} PRIVATE -T "${linker_script}")
+        set_target_properties(${target} PROPERTIES LINK_DEPENDS "${linker_script}")
         set_target_properties(${target} PROPERTIES SUFFIX ".elf")
         # Automatically call objcopy on the executable targets after the build
         objcopy_target(${target})
+        if(BUILD_FOR_USE_WITH_BOOTLOADER)
+            add_metadata(${target})
+        endif()
     endif()
 endfunction()
 
@@ -61,6 +71,19 @@ function(objcopy_target target)
     )
 endfunction()
 
+function(add_metadata target)
+    get_target_property(output_name ${target} OUTPUT_NAME)
+    add_custom_command(
+        TARGET ${target}
+        POST_BUILD
+        COMMAND
+            "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../Scripts/add_metadata.py"
+            "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_BASE_NAME:${target}>.bin"
+        COMMENT "Adding metadata to ${output_name}.bin"
+        VERBATIM
+    )
+endfunction()
+
 function(all_targets_include_directories include_directories)
     get_property(target_names DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
     message("Setting include directory to ${include_directories} for targets:")
@@ -68,9 +91,9 @@ function(all_targets_include_directories include_directories)
         message("- ${target}")
         get_target_property(type ${target} TYPE)
         if(type STREQUAL INTERFACE_LIBRARY)
-            target_include_directories(${target} ${warning_guard} INTERFACE ${include_directories})
+            target_include_directories(${target} INTERFACE ${include_directories})
         else()
-            target_include_directories(${target} ${warning_guard} PUBLIC ${include_directories})
+            target_include_directories(${target} PUBLIC ${include_directories})
         endif()
     endforeach()
 endfunction()

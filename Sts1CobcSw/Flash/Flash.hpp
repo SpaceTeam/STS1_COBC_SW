@@ -6,15 +6,19 @@
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <array>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
 
 
-namespace sts1cobcsw::flash
+namespace sts1cobcsw
+{
+namespace flash
 {
 struct JedecId
 {
@@ -50,4 +54,13 @@ auto ProgramPage(std::uint32_t address, PageSpan data) -> void;
 auto EraseSector(std::uint32_t address) -> void;
 [[nodiscard]] auto WaitWhileBusy(Duration timeout) -> Result<void>;
 auto ActualBaudRate() -> std::int32_t;
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, JedecId * jedecId) -> void const *;
+}
+
+
+template<>
+inline constexpr std::size_t serialSize<flash::JedecId> =
+    totalSerialSize<decltype(flash::JedecId::manufacturerId), decltype(flash::JedecId::deviceId)>;
 }

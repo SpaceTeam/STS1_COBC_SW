@@ -1,7 +1,8 @@
-#include <Sts1CobcSw/CobcSoftware/EduCommunicationErrorThread.hpp>
-#include <Sts1CobcSw/CobcSoftware/ThreadPriorities.hpp>
-#include <Sts1CobcSw/CobcSoftware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
+
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
@@ -9,13 +10,18 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <utility>
 
 
 namespace sts1cobcsw
 {
-constexpr auto stackSize = 2'000U;
+namespace
+{
+constexpr auto stackSize = 2000U;
 constexpr auto eduShutDownDelay = 2 * s;
 
 
@@ -24,14 +30,12 @@ class EduCommunicationErrorThread : public RODOS::StaticThread<stackSize>
 public:
     EduCommunicationErrorThread()
         : StaticThread("EduCommunicationThread", eduCommunicationErrorThreadPriority)
-    {
-    }
+    {}
 
 
 private:
     void init() override
-    {
-    }
+    {}
 
 
     void run() override
@@ -40,7 +44,7 @@ private:
         {
             SuspendUntil(endOfTime);
 
-            persistentVariables.template Increment<"nEduCommunicationErrors">();
+            persistentVariables.Increment<"nEduCommunicationErrors">();
 
             DEBUG_PRINT("[EduCommunicationErrorThread] Resetting the Edu\n");
             // Reset EDU
@@ -64,6 +68,7 @@ private:
         }
     }
 } eduCommunicationErrorThread;
+}
 
 
 auto ResumeEduCommunicationErrorThread() -> void
