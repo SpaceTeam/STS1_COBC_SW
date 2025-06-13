@@ -76,6 +76,19 @@ auto Mailbox<Message>::Put(Message const & message) -> Result<void>
 
 
 template<typename Message>
+auto Mailbox<Message>::Overwrite(Message const & message) -> void
+{
+    auto protector = RODOS::ScopeProtector(&semaphore_);
+    message_ = message;
+    isFull_ = true;
+    if(thread_ != nullptr)
+    {
+        thread_->resume();
+    }
+}
+
+
+template<typename Message>
 auto Mailbox<Message>::Get() -> Result<Message>
 {
     auto protector = RODOS::ScopeProtector(&semaphore_);  // NOLINT(*readability-casting)
@@ -87,6 +100,18 @@ auto Mailbox<Message>::Get() -> Result<Message>
     if(thread_ != nullptr)
     {
         thread_->resume();
+    }
+    return message_;
+}
+
+
+template<typename Message>
+auto Mailbox<Message>::Peek() const -> Result<Message>
+{
+    auto protector = RODOS::ScopeProtector(&semaphore_);
+    if(!isFull_)
+    {
+        return ErrorCode::empty;
     }
     return message_;
 }

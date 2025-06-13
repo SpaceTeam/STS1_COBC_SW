@@ -12,12 +12,14 @@ template<typename Message>
 class Mailbox
 {
 public:
-    auto IsEmpty() -> bool;
-    auto IsFull() -> bool;
-    auto SuspendUntilFull(Duration duration) -> Result<void>;
-    auto SuspendUntilEmpty(Duration duration) -> Result<void>;
-    auto Put(Message const & message) -> Result<void>;
-    auto Get() -> Result<Message>;
+    [[nodiscard]] auto IsEmpty() -> bool;
+    [[nodiscard]] auto IsFull() -> bool;
+    [[nodiscard]] auto SuspendUntilFull(Duration duration) -> Result<void>;
+    [[nodiscard]] auto SuspendUntilEmpty(Duration duration) -> Result<void>;
+    [[nodiscard]] auto Put(Message const & message) -> Result<void>;
+    auto Overwrite(Message const & message) -> void;
+    [[nodiscard]] auto Get() -> Result<Message>;
+    [[nodiscard]] auto Peek() const -> Result<Message>;
 
 
 private:
@@ -29,4 +31,4 @@ private:
 };
 }
 
-#include <Sts1CobcSw/Mailbox/Mailbox.ipp>
+#include <Sts1CobcSw/Mailbox/Mailbox.ipp>  // IWYU pragma: keep
