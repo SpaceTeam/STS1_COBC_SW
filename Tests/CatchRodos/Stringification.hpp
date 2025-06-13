@@ -92,6 +92,9 @@ inline auto Append(ValueString * string, T * value) -> void
 }
 
 
+inline constexpr auto maxElementsPerLine = 15;
+
+
 template<typename T, std::size_t size>
 inline auto Append(ValueString * string, std::array<T, size> const & value) -> void
 {
@@ -102,6 +105,10 @@ inline auto Append(ValueString * string, std::array<T, size> const & value) -> v
         if(i < value.size() - 1)
         {
             string->append(", ");
+        }
+        if(i % maxElementsPerLine == maxElementsPerLine - 1 and i != value.size() - 1)
+        {
+            string->append("\n   ");
         }
     }
     string->append("}");
@@ -118,6 +125,10 @@ inline auto Append(ValueString * string, etl::vector<T, capacity> const & value)
         if(i < value.size() - 1)
         {
             string->append(", ");
+        }
+        if(i % maxElementsPerLine == maxElementsPerLine - 1 and i != value.size() - 1)
+        {
+            string->append("\n   ");
         }
     }
     string->append("}");

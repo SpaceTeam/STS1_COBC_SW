@@ -267,5 +267,11 @@ Only contributions from members of the TU Wien Space Team are accepted.
 This project is licensed under the MIT license. See the [LICENSE](LICENSE) document for
 the full text.
 
-The files in `Sts1CobcSw/Blake2s/External/` were copied from
-[arduinolibs](https://github.com/rweather/arduinolibs/) which is also MIT licensed.
+We do use some code from other projects, though, so here is a list with licensing and
+attribution information for those parts.
+
+- The files in `Sts1CobcSw/Blake2s/External/` were copied from
+  [arduinolibs](https://github.com/rweather/arduinolibs/) which is also MIT licensed
+- The lookup tables for our bit-scrambling code in
+  [`Sts1CobcSw/ChannelCoding/Scrambler.cpp`](./Sts1CobcSw/ChannelCoding/Scrambler.cpp)
+  were taken from [bitsnarl](https://github.com/Tagussan/bitsnarl)

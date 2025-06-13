@@ -8,6 +8,7 @@ target_link_libraries(
            rodos::rodos
            strong_type::strong_type
            Sts1CobcSw_Blake2s
+           Sts1CobcSw_ChannelCoding
            Sts1CobcSw_Edu
            Sts1CobcSw_FileSystem
            Sts1CobcSw_Fram

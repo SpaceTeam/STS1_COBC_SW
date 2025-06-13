@@ -1,5 +1,6 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
@@ -8,6 +9,7 @@
 
 #include <etl/vector.h>
 
+#include <array>
 #include <cstdint>
 #include <span>
 
@@ -42,15 +44,15 @@ private:
 
 TEST_CASE("TM Transfer Frame")
 {
-    auto eccBlock = ecc::Block{};
-    auto frame = tm::TransferFrame(Span(&eccBlock).first<tm::transferFrameLength>());
-    CHECK(eccBlock == ecc::Block{});
+    auto block = std::array<Byte, blockLength>{};
+    auto frame = tm::TransferFrame(Span(&block).first<tm::transferFrameLength>());
+    CHECK(block == (std::array<Byte, blockLength>{}));
 
     frame.StartNew(pusVcid);
     auto & dataField = frame.GetDataField();
     dataField.resize(dataField.max_size(), 0x0F_b);
     frame.Finish();
-    auto header = Span(eccBlock).first<tm::transferFramePrimaryHeaderLength>();
+    auto header = Span(block).first<tm::transferFramePrimaryHeaderLength>();
     CHECK(header[0] == 0b0001'0010_b);  // Always the same
     CHECK(header[1] == 0b0011'0110_b);  // VCID is bits 1-3
     CHECK(header[2] == 0_b);            // Master channel frame count
@@ -58,12 +60,12 @@ TEST_CASE("TM Transfer Frame")
     CHECK(header[4] == 0b0001'1000_b);  // Always the same
     CHECK(header[5] == 0b0000'0000_b);  // Always the same
     auto dataFieldSpan =
-        Span(eccBlock).subspan<tm::transferFramePrimaryHeaderLength, tm::transferFrameDataLength>();
+        Span(block).subspan<tm::transferFramePrimaryHeaderLength, tm::transferFrameDataLength>();
     for(auto byte : dataFieldSpan)
     {
         CHECK(byte == 0x0F_b);
     }
-    for(auto byte : Span(eccBlock).subspan<tm::transferFrameLength>())
+    for(auto byte : Span(block).subspan<tm::transferFrameLength>())
     {
         CHECK(byte == 0x00_b);
     }
