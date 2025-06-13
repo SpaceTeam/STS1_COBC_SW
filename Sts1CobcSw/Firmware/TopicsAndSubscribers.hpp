@@ -1,13 +1,16 @@
 #pragma once
 
 
+#include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <array>
 #include <cstdint>
 
 
@@ -37,6 +40,7 @@ inline auto txBaudRateTopic = RODOS::Topic<std::int32_t>(-1, "txBaudRateTopic");
 inline auto txBaudRateBuffer = RODOS::CommBuffer<std::int32_t>{};
 
 // We only send the telemetry records from the telemetry thread to the RF communication thread, so
-// we don't need the whole publisher/subscriber mechanism here. One simple mailbox is enough.
+// we don't need the whole publisher/subscriber mechanism here. A simple mailbox is enough.
 inline auto telemetryRecordMailbox = Mailbox<TelemetryRecord>{};
+inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
 }
