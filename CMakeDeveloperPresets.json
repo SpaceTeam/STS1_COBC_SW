@@ -44,7 +44,8 @@
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
         "HSE_VALUE": "12000000",
-        "HW_VERSION": "30"
+        "HW_VERSION": "30",
+        "REDIRECT_RF_OVER_UCI": "ON"
       }
     },
     {

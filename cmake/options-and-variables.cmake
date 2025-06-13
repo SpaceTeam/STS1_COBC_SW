@@ -18,6 +18,13 @@ if(BUILD_BOOTLOADER AND BUILD_FOR_USE_WITH_BOOTLOADER)
     )
 endif()
 
+option(REDIRECT_RF_OVER_UCI "Redirect RF communication over UCI UART" OFF)
+if(REDIRECT_RF_OVER_UCI AND CMAKE_SYSTEM_NAME STREQUAL Linux)
+    message(FATAL_ERROR "Redirecting RF communication over UCI is only supported on embedded "
+                        "platforms"
+    )
+endif()
+
 set(HW_VERSION 30 CACHE STRING "Hardware version")
 
 # Developer mode enables targets and code paths in the CMake scripts that are only relevant for the
