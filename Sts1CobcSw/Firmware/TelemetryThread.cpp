@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
@@ -31,7 +32,7 @@ namespace sts1cobcsw
 namespace
 {
 constexpr auto stackSize = 4000U;
-constexpr auto telemetryThreadPeriod = 30 * s;
+constexpr auto telemetryThreadInterval = 30 * s;
 
 
 [[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
@@ -51,12 +52,12 @@ private:
 
     void run() override
     {
-        TIME_LOOP(0, value_of(telemetryThreadPeriod))
+        TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
             persistentVariables.Store<"realTime">(CurrentRealTime());
             auto telemetryRecord = CollectTelemetryData();
             telemetryMemory.PushBack(telemetryRecord);
-            telemetryTopic.publish(telemetryRecord);
+            telemetryRecordMailbox.Overwrite(telemetryRecord);
             ResumeRfCommunicationThread();
         }
     }

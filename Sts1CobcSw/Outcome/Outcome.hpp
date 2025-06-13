@@ -77,6 +77,8 @@ enum class ErrorCode : std::int8_t  // NOLINT
 };
 
 
+// TODO: Think about printing more information. For example, we could print the error code in case
+// the value check fails.
 struct RebootPolicy : outcome_v2::experimental::policy::base
 {
     template<class Impl>
