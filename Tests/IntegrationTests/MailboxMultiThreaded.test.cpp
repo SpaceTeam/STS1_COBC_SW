@@ -60,16 +60,9 @@ class Receiver : public RODOS::StaticThread<>
         while(true)
         {
             auto value = mailbox.Get();
-            if(value.has_error())
+            if(value.has_error() or value.value() != counter)
             {
                 errorCounter++;
-            }
-            if(value.has_value())
-            {
-                if(value.value() != counter)
-                {
-                    errorCounter++;
-                }
             }
             counter++;
             auto result = mailbox.SuspendUntilFull(15 * ms);
