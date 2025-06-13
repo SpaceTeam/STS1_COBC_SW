@@ -24,7 +24,7 @@ private:
     bool isFull_ = false;
 
     RODOS::Thread * thread_ = nullptr;
-    static inline auto semaphore = RODOS::Semaphore{};
+    RODOS::Semaphore semaphore_;
 };
 }
 
