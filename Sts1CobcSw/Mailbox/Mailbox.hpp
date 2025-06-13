@@ -8,19 +8,20 @@
 
 namespace sts1cobcsw
 {
-template<typename T>
-class SingleBuffer
+template<typename Message>
+class Mailbox
 {
 public:
     auto IsEmpty() -> bool;
     auto IsFull() -> bool;
     auto SuspendUntilFull(Duration duration) -> Result<void>;
     auto SuspendUntilEmpty(Duration duration) -> Result<void>;
-    auto Put(T const & data) -> Result<void>;
-    auto Get() -> Result<T>;
+    auto Put(Message const & message) -> Result<void>;
+    auto Get() -> Result<Message>;
+
 
 private:
-    T buffer_ = {};
+    Message message_ = {};
     bool isFull_ = false;
 
     RODOS::Thread * thread_ = nullptr;
@@ -28,4 +29,4 @@ private:
 };
 }
 
-#include <Sts1CobcSw/SingleBuffer/SingleBuffer.ipp>
+#include <Sts1CobcSw/Mailbox/Mailbox.ipp>

@@ -1,7 +1,7 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -13,45 +13,45 @@
 namespace sts1cobcsw
 {
 
-TEST_CASE("SingleBuffer")
+TEST_CASE("Mailbox")
 {
-    auto buffer = SingleBuffer<int>{};
+    auto mailbox = Mailbox<int>{};
 
-    CHECK(buffer.IsEmpty());
+    CHECK(mailbox.IsEmpty());
 
-    CHECK(buffer.IsFull() == false);
+    CHECK(mailbox.IsFull() == false);
 
-    auto getResult = buffer.Get();
+    auto getResult = mailbox.Get();
     CHECK(getResult.has_error());
 
-    auto putResult = buffer.Put(1);
+    auto putResult = mailbox.Put(1);
     CHECK(putResult.has_error() == false);
 
-    putResult = buffer.Put(1);
+    putResult = mailbox.Put(1);
     CHECK(putResult.has_error());
 
-    CHECK(buffer.IsEmpty() == false);
+    CHECK(mailbox.IsEmpty() == false);
 
-    CHECK(buffer.IsFull());
+    CHECK(mailbox.IsFull());
 
-    getResult = buffer.Get();
+    getResult = mailbox.Get();
     CHECK(getResult.has_error() == false);
 
-    auto suspendResult = buffer.SuspendUntilEmpty(1 * ms);
+    auto suspendResult = mailbox.SuspendUntilEmpty(1 * ms);
     CHECK(suspendResult.has_error() == false);
 
-    suspendResult = buffer.SuspendUntilFull(1 * ms);
+    suspendResult = mailbox.SuspendUntilFull(1 * ms);
     CHECK(suspendResult.has_error());
     CHECK(suspendResult.error() == ErrorCode::timeout);
 
-    putResult = buffer.Put(1);
+    putResult = mailbox.Put(1);
     CHECK(putResult.has_error() == false);
 
-    suspendResult = buffer.SuspendUntilEmpty(1 * ms);
+    suspendResult = mailbox.SuspendUntilEmpty(1 * ms);
     CHECK(suspendResult.has_error());
     CHECK(suspendResult.error() == ErrorCode::timeout);
 
-    suspendResult = buffer.SuspendUntilFull(1 * ms);
+    suspendResult = mailbox.SuspendUntilFull(1 * ms);
     CHECK(suspendResult.has_error() == false);
 }
 

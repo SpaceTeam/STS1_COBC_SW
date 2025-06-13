@@ -1,28 +1,28 @@
 #pragma once
 
-#include <Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>
+#include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 
 
 namespace sts1cobcsw
 {
-template<typename T>
-auto SingleBuffer<T>::IsEmpty() -> bool
+template<typename Message>
+auto Mailbox<Message>::IsEmpty() -> bool
 {
     return !isFull_;
 }
 
 
-template<typename T>
-auto SingleBuffer<T>::IsFull() -> bool
+template<typename Message>
+auto Mailbox<Message>::IsFull() -> bool
 {
     return isFull_;
 }
 
 
-template<typename T>
-auto SingleBuffer<T>::SuspendUntilFull(Duration duration) -> Result<void>
+template<typename Message>
+auto Mailbox<Message>::SuspendUntilFull(Duration duration) -> Result<void>
 {
     semaphore_.enter();
     if(isFull_)
@@ -39,8 +39,8 @@ auto SingleBuffer<T>::SuspendUntilFull(Duration duration) -> Result<void>
 }
 
 
-template<typename T>
-auto SingleBuffer<T>::SuspendUntilEmpty(Duration duration) -> Result<void>
+template<typename Message>
+auto Mailbox<Message>::SuspendUntilEmpty(Duration duration) -> Result<void>
 {
     semaphore_.enter();
     if(!isFull_)
@@ -57,15 +57,15 @@ auto SingleBuffer<T>::SuspendUntilEmpty(Duration duration) -> Result<void>
 }
 
 
-template<typename T>
-auto SingleBuffer<T>::Put(T const & data) -> Result<void>
+template<typename Message>
+auto Mailbox<Message>::Put(Message const & message) -> Result<void>
 {
     auto protector = RODOS::ScopeProtector(&semaphore_);  // NOLINT(*readability-casting)
     if(isFull_)
     {
         return ErrorCode::full;
     }
-    buffer_ = data;
+    message_ = message;
     isFull_ = true;
     if(thread_ != nullptr)
     {
@@ -75,8 +75,8 @@ auto SingleBuffer<T>::Put(T const & data) -> Result<void>
 }
 
 
-template<typename T>
-auto SingleBuffer<T>::Get() -> Result<T>
+template<typename Message>
+auto Mailbox<Message>::Get() -> Result<Message>
 {
     auto protector = RODOS::ScopeProtector(&semaphore_);  // NOLINT(*readability-casting)
     if(!isFull_)
@@ -88,6 +88,6 @@ auto SingleBuffer<T>::Get() -> Result<T>
     {
         thread_->resume();
     }
-    return buffer_;
+    return message_;
 }
 }
