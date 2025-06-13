@@ -14,23 +14,24 @@ namespace sts1cobcsw
 {
 // Topics and subscribers must be defined in the same file to prevent a static initialization order
 // fiasco
-extern RODOS::Topic<bool> eduIsAliveTopic;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForListener;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForPowerManagement;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForCommunicationError;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForTelemetry;
+inline auto eduIsAliveTopic = RODOS::Topic<bool>(-1, "eduIsAliveTopic");
+inline auto eduIsAliveBufferForListener = RODOS::CommBuffer<bool>{};
+inline auto eduIsAliveBufferForPowerManagement = RODOS::CommBuffer<bool>{};
+inline auto eduIsAliveBufferForCommunicationError = RODOS::CommBuffer<bool>{};
+inline auto eduIsAliveBufferForTelemetry = RODOS::CommBuffer<bool>{};
 
-extern RODOS::Topic<Duration> nextProgramStartDelayTopic;
-extern RODOS::CommBuffer<Duration> nextProgramStartDelayBuffer;
+inline auto nextProgramStartDelayTopic = RODOS::Topic<Duration>(-1, "nextProgramStartDelayTopic");
+inline auto nextProgramStartDelayBuffer = RODOS::CommBuffer<Duration>{};
 
-extern RODOS::Topic<ProgramId> programIdOfCurrentEduProgramQueueEntryTopic;
-extern RODOS::CommBuffer<ProgramId> programIdOfCurrentEduProgramQueueEntryBuffer;
+inline auto programIdOfCurrentEduProgramQueueEntryTopic =
+    RODOS::Topic<ProgramId>(-1, "programIdOfCurrentEduProgramQueueEntryTopic");
+inline auto programIdOfCurrentEduProgramQueueEntryBuffer = RODOS::CommBuffer<ProgramId>{};
 
-extern RODOS::Topic<std::int32_t> rxBaudRateTopic;
-extern RODOS::CommBuffer<std::int32_t> rxBaudRateBuffer;
+inline auto rxBaudRateTopic = RODOS::Topic<std::int32_t>(-1, "rxBaudRateTopic");
+inline auto rxBaudRateBuffer = RODOS::CommBuffer<std::int32_t>{};
 
-extern RODOS::Topic<std::int32_t> txBaudRateTopic;
-extern RODOS::CommBuffer<std::int32_t> txBaudRateBuffer;
+inline auto txBaudRateTopic = RODOS::Topic<std::int32_t>(-1, "txBaudRateTopic");
+inline auto txBaudRateBuffer = RODOS::CommBuffer<std::int32_t>{};
 
 extern RODOS::Topic<TelemetryRecord> telemetryTopic;
 // TODO: Look for a less memory-intensive solution than a CommBuffer
