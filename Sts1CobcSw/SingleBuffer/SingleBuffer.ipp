@@ -24,15 +24,15 @@ auto SingleBuffer<T>::IsFull() -> bool
 template<typename T>
 auto SingleBuffer<T>::SuspendUntilFull(Duration duration) -> Result<void>
 {
-    semaphore.enter();
+    semaphore_.enter();
     if(isFull_)
     {
-        semaphore.leave();
+        semaphore_.leave();
         return outcome_v2::success();
     }
     thread_ = RODOS::Thread::getCurrentThread();
     RODOS::PRIORITY_CEILER_IN_SCOPE();
-    semaphore.leave();
+    semaphore_.leave();
     auto result = SuspendUntilResumed(duration);
     thread_ = nullptr;
     return result;
@@ -42,15 +42,15 @@ auto SingleBuffer<T>::SuspendUntilFull(Duration duration) -> Result<void>
 template<typename T>
 auto SingleBuffer<T>::SuspendUntilEmpty(Duration duration) -> Result<void>
 {
-    semaphore.enter();
+    semaphore_.enter();
     if(!isFull_)
     {
-        semaphore.leave();
+        semaphore_.leave();
         return outcome_v2::success();
     }
     thread_ = RODOS::Thread::getCurrentThread();
     RODOS::PRIORITY_CEILER_IN_SCOPE();
-    semaphore.leave();
+    semaphore_.leave();
     auto result = SuspendUntilResumed(duration);
     thread_ = nullptr;
     return result;
@@ -60,7 +60,7 @@ auto SingleBuffer<T>::SuspendUntilEmpty(Duration duration) -> Result<void>
 template<typename T>
 auto SingleBuffer<T>::Put(T const & data) -> Result<void>
 {
-    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(*readability-casting)
+    auto protector = RODOS::ScopeProtector(&semaphore_);  // NOLINT(*readability-casting)
     if(isFull_)
     {
         return ErrorCode::full;
@@ -78,7 +78,7 @@ auto SingleBuffer<T>::Put(T const & data) -> Result<void>
 template<typename T>
 auto SingleBuffer<T>::Get() -> Result<T>
 {
-    auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(*readability-casting)
+    auto protector = RODOS::ScopeProtector(&semaphore_);  // NOLINT(*readability-casting)
     if(!isFull_)
     {
         return ErrorCode::empty;

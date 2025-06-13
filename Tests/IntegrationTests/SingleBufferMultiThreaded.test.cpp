@@ -37,6 +37,14 @@ class Sender : public RODOS::StaticThread<>
             }
         }
         SuspendFor(10 * ms);
+        if(errorCounter == 0)
+        {
+            RODOS::PRINTF("Test passed\n");
+        }
+        else
+        {
+            RODOS::PRINTF("Test failed with %d errors\n", errorCounter);
+        }
         RODOS::isShuttingDown = true;
         std::exit(errorCounter);  // NOLINT(concurrency-mt-unsafe)
     }
