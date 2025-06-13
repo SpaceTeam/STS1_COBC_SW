@@ -1,5 +1,5 @@
+#include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
-#include <Sts1CobcSw/SingleBuffer/SingleBuffer.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -15,7 +15,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-auto buffer = SingleBuffer<int>{};
+auto mailbox = Mailbox<int>{};
 auto errorCounter = 0;
 
 
@@ -25,12 +25,12 @@ class Sender : public RODOS::StaticThread<>
     {
         for(auto counter = 0; counter < 2; ++counter)
         {
-            auto result = buffer.Put(counter);
+            auto result = mailbox.Put(counter);
             if(result.has_error())
             {
                 errorCounter++;
             }
-            result = buffer.SuspendUntilEmpty(15 * ms);
+            result = mailbox.SuspendUntilEmpty(15 * ms);
             if(result.has_error())
             {
                 errorCounter++;
@@ -59,7 +59,7 @@ class Receiver : public RODOS::StaticThread<>
         SuspendFor(10 * ms);
         while(true)
         {
-            auto value = buffer.Get();
+            auto value = mailbox.Get();
             if(value.has_error())
             {
                 errorCounter++;
@@ -72,7 +72,7 @@ class Receiver : public RODOS::StaticThread<>
                 }
             }
             counter++;
-            auto result = buffer.SuspendUntilFull(15 * ms);
+            auto result = mailbox.SuspendUntilFull(15 * ms);
             if(result.has_error())
             {
                 errorCounter++;

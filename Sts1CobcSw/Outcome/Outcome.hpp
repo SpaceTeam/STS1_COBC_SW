@@ -47,7 +47,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidStatusType,
     invalidLength,
     tooManyDataPackets,
-    // SingleBuffer
+    // Mailbox
     full,
     empty,
     // RF protocols
