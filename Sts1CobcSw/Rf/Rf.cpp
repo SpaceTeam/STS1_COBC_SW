@@ -15,6 +15,7 @@
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Utility/FlatArray.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
@@ -114,8 +115,6 @@ constexpr auto pollingInterval = 10 * us;
 
 constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settles after power up
 constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to finish
-// Delay for the sequence reset -> pause -> set -> pause -> reset during initialization
-constexpr auto watchDogResetPinDelay = 1 * ms;
 
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
@@ -130,8 +129,6 @@ auto rfLatchupDisableGpioPin = hal::GpioPin(hal::rfLatchupDisablePin);
 auto rfLatchupDisableGpioPin1 = hal::GpioPin(hal::rfLatchupDisablePin1);
 auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
 #endif
-// TODO: This should probably be somewhere else as it is not directly related to the RF module
-auto watchdogResetGpioPin = hal::GpioPin(hal::watchdogClearPin);
 
 auto isInTxMode = false;
 
@@ -406,14 +403,10 @@ auto InitializeGpiosAndSpi() -> void
     rfLatchupDisableGpioPin2.SetDirection(hal::PinDirection::out);
 #endif
     EnableRfLatchupProtection();
-    watchdogResetGpioPin.SetDirection(hal::PinDirection::out);
+    wdt::Initialize();
     // The watchdog must be fed regularely for the TX to work. Even without the watchdog timer on
     // the PCB it needs to be triggered at least once after boot to enable the TX.
-    watchdogResetGpioPin.Reset();
-    SuspendFor(watchDogResetPinDelay);
-    watchdogResetGpioPin.Set();
-    SuspendFor(watchDogResetPinDelay);
-    watchdogResetGpioPin.Reset();
+    wdt::Feed();
 
     constexpr auto baudrate = 6'000'000;
 #if HW_VERSION >= 30

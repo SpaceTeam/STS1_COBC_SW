@@ -21,4 +21,5 @@ target_link_libraries(
 )
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_compile_definitions(Sts1CobcSwTests_HardwareSetup INTERFACE USE_WATCHDOG)
+    target_link_libraries(Sts1CobcSwTests_HardwareSetup INTERFACE Sts1CobcSw_WatchdogTimers)
 endif()
