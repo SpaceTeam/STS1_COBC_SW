@@ -23,7 +23,6 @@ constexpr auto stackSize = 2000U;
 constexpr auto edgeCounterThreshold = 4;
 
 auto ledGpioPin = hal::GpioPin(hal::led1Pin);
-auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
 
@@ -40,9 +39,7 @@ private:
     {
         eduHeartbeatGpioPin.SetDirection(hal::PinDirection::in);
         ledGpioPin.SetDirection(hal::PinDirection::out);
-        epsChargingGpioPin.SetDirection(hal::PinDirection::out);
         ledGpioPin.Reset();
-        epsChargingGpioPin.Reset();
 
         eduHeartbeatGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::bothEdges);
         eduHeartbeatGpioPin.EnableInterrupts();
@@ -65,35 +62,24 @@ private:
 
         // RODOS::AT(RODOS::END_OF_TIME);
 
-        auto const heartbeatFrequency = 10;                     // Hz
+        auto const heartbeatFrequency = 10;  // Hz
         auto const heartbeatPeriod = 1 * s / heartbeatFrequency;
 
         auto edgeCounter = 0;
 
-        //DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
-        auto toggle = true;
         TIME_LOOP(0, value_of(heartbeatPeriod))
         {
-            if(toggle)
-            {
-                epsChargingGpioPin.Set();
-            }
-            else
-            {
-                epsChargingGpioPin.Reset();
-            }
-            toggle = not toggle;
-
- 
             auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(heartbeatPeriod);
 
             if(result.has_error())
             {
-                // timeout
+                // timeout, no edge during a whole heartbeat period
                 edgeCounter = 0;
                 // DEBUG_PRINT("Edu is alive published to false\n");
                 eduIsAliveTopic.publish(false);
-            } else {
+            }
+            else
+            {
                 // edge detected during heartbeat period
                 edgeCounter++;
                 if(edgeCounter >= edgeCounterThreshold)
@@ -103,7 +89,6 @@ private:
                     edgeCounter = 0;
                 }
             }
-
         }
     }
 } eduHeartbeatThread;
