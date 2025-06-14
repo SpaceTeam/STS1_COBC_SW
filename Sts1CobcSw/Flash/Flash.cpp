@@ -54,6 +54,8 @@ auto writeProtectionGpioPin = hal::GpioPin(hal::flashWriteProtectionPin);
 
 // --- Private function declarations ---
 
+auto SelectChip() -> void;
+auto DeselectChip() -> void;
 auto EnableWriting() -> void;
 auto DisableWriting() -> void;
 auto IsBusy() -> bool;
@@ -92,9 +94,9 @@ auto Initialize() -> void
 
 auto ReadJedecId() -> JedecId
 {
-    csGpioPin.Reset();
+    SelectChip();
     auto answer = SendInstruction<readJedecId>();
-    csGpioPin.Set();
+    DeselectChip();
     return Deserialize<endianness, JedecId>(Span(answer));
 }
 
@@ -103,7 +105,7 @@ auto ReadJedecId() -> JedecId
 auto ReadStatusRegister(int8_t registerNo) -> Byte
 {
     auto statusRegister = 0xFF_b;  // NOLINT(*magic-numbers*)
-    csGpioPin.Reset();
+    SelectChip();
     if(registerNo == 1)
     {
         statusRegister = SendInstruction<readStatusRegister1>()[0];
@@ -116,18 +118,18 @@ auto ReadStatusRegister(int8_t registerNo) -> Byte
     {
         statusRegister = SendInstruction<readStatusRegister3>()[0];
     }
-    csGpioPin.Set();
+    DeselectChip();
     return statusRegister;
 }
 
 
 auto ReadPage(std::uint32_t address) -> Page
 {
-    csGpioPin.Reset();
+    SelectChip();
     Write(Span(readData4ByteAddress), spiTimeout);
     Write(Span(Serialize<endianness>(address)), spiTimeout);
     auto page = Read<pageSize>(spiTimeout);
-    csGpioPin.Set();
+    DeselectChip();
     return page;
 }
 
@@ -135,11 +137,11 @@ auto ReadPage(std::uint32_t address) -> Page
 auto ProgramPage(std::uint32_t address, PageSpan data) -> void
 {
     EnableWriting();
-    csGpioPin.Reset();
+    SelectChip();
     Write(Span(pageProgram4ByteAddress), spiTimeout);
     Write(Span(Serialize<endianness>(address)), spiTimeout);
     Write(data, spiTimeout);
-    csGpioPin.Set();
+    DeselectChip();
     DisableWriting();
 }
 
@@ -149,10 +151,10 @@ auto EraseSector(std::uint32_t address) -> void
     // Round address down to the nearest sector address.
     address = (address / sectorSize) * sectorSize;
     EnableWriting();
-    csGpioPin.Reset();
+    SelectChip();
     Write(Span(sectorErase4ByteAddress), spiTimeout);
     Write(Span(Serialize<endianness>(address)), spiTimeout);
-    csGpioPin.Set();
+    DeselectChip();
     DisableWriting();
 }
 
@@ -198,19 +200,33 @@ template auto DeserializeFrom<std::endian::little>(void const * source, JedecId 
 
 namespace
 {
-auto EnableWriting() -> void
+auto SelectChip() -> void
 {
     csGpioPin.Reset();
-    SendInstruction<writeEnable>();
+}
+
+
+auto DeselectChip() -> void
+{
+    static constexpr auto deselectDelay = 50 * ns;
+    BusyWaitFor(deselectDelay);
     csGpioPin.Set();
+}
+
+
+auto EnableWriting() -> void
+{
+    SelectChip();
+    SendInstruction<writeEnable>();
+    DeselectChip();
 }
 
 
 auto DisableWriting() -> void
 {
-    csGpioPin.Reset();
+    SelectChip();
     SendInstruction<writeDisable>();
-    csGpioPin.Set();
+    DeselectChip();
 }
 
 
