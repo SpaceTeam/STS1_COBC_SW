@@ -22,8 +22,6 @@ namespace
 constexpr auto stackSize = 2000U;
 constexpr auto edgeCounterThreshold = 4;
 
-auto ledGpioPin = hal::GpioPin(hal::led1Pin);
-auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
 
@@ -39,11 +37,6 @@ private:
     void init() override
     {
         eduHeartbeatGpioPin.SetDirection(hal::PinDirection::in);
-        ledGpioPin.SetDirection(hal::PinDirection::out);
-        epsChargingGpioPin.SetDirection(hal::PinDirection::out);
-        ledGpioPin.Reset();
-        epsChargingGpioPin.Reset();
-        // edu.Initialize();
     }
 
 
@@ -73,21 +66,9 @@ private:
         auto edgeCounter = 0;
 
         DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
-        auto toggle = true;
         TIME_LOOP(0, value_of(samplingPeriod))
         {
             // Read current heartbeat value
-
-            if(toggle)
-            {
-                epsChargingGpioPin.Set();
-            }
-            else
-            {
-                epsChargingGpioPin.Reset();
-            }
-            toggle = not toggle;
-
             auto heartbeat = eduHeartbeatGpioPin.Read();
 
             ++samplingCount;
