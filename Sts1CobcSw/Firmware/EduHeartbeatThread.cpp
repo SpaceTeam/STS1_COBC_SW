@@ -66,17 +66,14 @@ private:
         // RODOS::AT(RODOS::END_OF_TIME);
 
         auto const heartbeatFrequency = 10;                     // Hz
-        auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
-        auto const samplingPeriod = 1 * s / samplingFrequency;
+        auto const heartbeatPeriod = 1 * s / heartbeatFrequency;
 
         auto edgeCounter = 0;
 
-        DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
+        //DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
         auto toggle = true;
-        TIME_LOOP(0, value_of(samplingPeriod) * 5)
+        TIME_LOOP(0, value_of(heartbeatPeriod))
         {
-            // Read current heartbeat value
-
             if(toggle)
             {
                 epsChargingGpioPin.Set();
@@ -88,7 +85,7 @@ private:
             toggle = not toggle;
 
  
-            auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(samplingPeriod * 5);
+            auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(heartbeatPeriod);
 
             if(result.has_error())
             {
@@ -97,7 +94,7 @@ private:
                 // DEBUG_PRINT("Edu is alive published to false\n");
                 eduIsAliveTopic.publish(false);
             } else {
-                // edge detected during sampling period
+                // edge detected during heartbeat period
                 edgeCounter++;
                 if(edgeCounter >= edgeCounterThreshold)
                 {
