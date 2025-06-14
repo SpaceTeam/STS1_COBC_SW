@@ -68,8 +68,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(WholeFram)
     target_link_libraries(
         Sts1CobcSwTests_WholeFram
-        PRIVATE strong_type::strong_type Sts1CobcSw_Fram Sts1CobcSw_Serial Sts1CobcSw_Utility
-                Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos
+        PRIVATE rodos::rodos
+                strong_type::strong_type
+                Sts1CobcSw_Fram
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::CatchRodos
     )
 
     add_test_program(RfPartNumber)
