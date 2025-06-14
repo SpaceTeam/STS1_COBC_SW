@@ -446,10 +446,35 @@ auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>
 }
 
 
+// TODO: MR14.06.25 there are a buch of settings to set for SetRx. So there should be some standard data rates we want to set, and save all values for thouse rates.
+// we are in 437.395 MHz band
 auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
 {
-    // TODO: Implement this
-    (void)dataRate;
+    // TODO: check to not be in TX mode. Ignored for now.
+
+
+    // set Mandatory registers:
+
+    // TODO: set MODEM_BCR_OSR              RX BCR/Slicer oversampling rate (12-bit unsigned number).
+    //      Group:  0x20
+    //      Indexes: 0x22 0x23
+    //      Default 0x00    0x4b
+    // Summary:
+    // Oversampling ratio OSR that the Bit-Clock-Recovery (BCR) loop and slicer run at
+
+    // TODO: set MODEM_BCR_NCO_OFFSET       RX BCR NCO offset value (an unsigned 22-bit number).
+    //      Group:  0x20
+    //      Indexes: 0x24 0x25 0x26
+    //      Default 0x06 0xd3 0xa0
+
+
+    // TODO: set Recommended support registers:
+    // MODEM_BCR_GAIN
+    // MODEM_BCR_GEAR
+    // MODEM_BCR_MISC1:RXNCOCOMP
+    // MODEM_CHFLT_*
+    // MODEM_DECIMATION_CFGx
+    (void) dataRate;
     return outcome_v2::success();
 }
 
