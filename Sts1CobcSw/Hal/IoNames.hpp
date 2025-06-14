@@ -11,6 +11,8 @@ namespace sts1cobcsw::hal
 inline constexpr auto led1Pin = pb12;
 inline constexpr auto led2Pin = pb15;
 
+inline constexpr auto resetdogClearPin1 = pb8;
+inline constexpr auto resetdogClearPin2 = pb7;
 #if HW_VERSION >= 27
 inline constexpr auto watchdogClearPin = pb9;
 inline constexpr auto dosiEnablePin = pb10;
