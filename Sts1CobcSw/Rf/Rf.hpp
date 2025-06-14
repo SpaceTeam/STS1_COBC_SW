@@ -30,8 +30,8 @@ auto ReadPartNumber() -> std::uint16_t;
 auto EnterStandbyMode() -> void;
 auto SetTxType(TxType txType) -> void;
 auto SetTxDataLength(std::uint16_t length) -> void;
-auto SetDataRate(std::uint32_t dataRate) -> void;
-[[nodiscard]] auto GetDataRate() -> std::uint32_t;
+auto SetTxDataRate(std::uint32_t dataRate) -> void;
+[[nodiscard]] auto GetTxDataRate() -> std::uint32_t;
 
 [[nodiscard]] auto SendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto SendAndContinue(std::span<Byte const> data) -> Result<void>;

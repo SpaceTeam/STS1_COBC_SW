@@ -271,7 +271,7 @@ auto SetTxDataLength(std::uint16_t length) -> void
 }
 
 
-auto SetDataRate(std::uint32_t dataRate) -> void
+auto SetTxDataRate(std::uint32_t dataRate) -> void
 {
     // The property field for the data rate is only 20 bits
     static constexpr std::uint32_t maxDataRate = (1U << 20U) - 1U;
@@ -282,7 +282,7 @@ auto SetDataRate(std::uint32_t dataRate) -> void
 }
 
 
-auto GetDataRate() -> std::uint32_t
+auto GetTxDataRate() -> std::uint32_t
 {
     auto answer = GetProperties<modemDataRateSize>(PropertyGroup::modem, iModemDataRate);
     auto serializedDataRate = FlatArray(0x00_b, answer);
