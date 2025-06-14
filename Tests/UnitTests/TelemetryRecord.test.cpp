@@ -34,7 +34,7 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .flashIsWorking = 1,
             .rfIsWorking = 1,
             .lastMessageTypeIdWasInvalid = 1,
-            .lastTelecommandArgumentsWereInvalid = 1,
+            .lastApplicationDataWasInvalid = 1,
             .nTotalResets = 1U,
             .nResetsSinceRf = 2U,
             .activeSecondaryFwPartition = 3,
@@ -92,7 +92,7 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
                                 .flashIsWorking = (booleans1 & (1U << 6U)),
                                 .rfIsWorking = (booleans1 & (1U << 7U)),
                                 .lastMessageTypeIdWasInvalid = (booleans2 & (1U << 0U)),
-                                .lastTelecommandArgumentsWereInvalid = (booleans2 & (1U << 1U))};
+                                .lastApplicationDataWasInvalid = (booleans2 & (1U << 1U))};
             auto serializedRecord = Serialize<std::endian::big>(originalRecord);
             auto deserializedRecord =
                 Deserialize<std::endian::big, TelemetryRecord>(serializedRecord);

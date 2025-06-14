@@ -62,5 +62,5 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"lastFrameSequenceNumber", std::uint8_t>,
                         PersistentVariableInfo<"lastMessageTypeId", MessageTypeIdFields>,
                         PersistentVariableInfo<"lastMessageTypeIdWasInvalid", bool>,
-                        PersistentVariableInfo<"lastTelecommandArgumentsWereInvalid", bool>>{};
+                        PersistentVariableInfo<"lastApplicationDataWasInvalid", bool>>{};
 }

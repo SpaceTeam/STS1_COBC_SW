@@ -29,7 +29,7 @@ struct TelemetryRecord
     UInt<1> rfIsWorking = 0;
     // Booleans: byte 2: communication
     UInt<1> lastMessageTypeIdWasInvalid = 0;
-    UInt<1> lastTelecommandArgumentsWereInvalid = 0;
+    UInt<1> lastApplicationDataWasInvalid = 0;
     UInt<6> padding = 0;  // NOLINT(*magic-numbers)
 
     // BootLoader
@@ -82,7 +82,7 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
                     decltype(TelemetryRecord::flashIsWorking),
                     decltype(TelemetryRecord::rfIsWorking),
                     decltype(TelemetryRecord::lastMessageTypeIdWasInvalid),
-                    decltype(TelemetryRecord::lastTelecommandArgumentsWereInvalid),
+                    decltype(TelemetryRecord::lastApplicationDataWasInvalid),
                     decltype(TelemetryRecord::padding)>
     + totalSerialSize<
         // Bootloader

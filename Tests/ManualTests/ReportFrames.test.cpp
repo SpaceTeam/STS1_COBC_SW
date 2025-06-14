@@ -142,7 +142,7 @@ private:
                 .flashIsWorking = 1,
                 .rfIsWorking = 1,
                 .lastMessageTypeIdWasInvalid = 1,
-                .lastTelecommandArgumentsWereInvalid = 1,
+                .lastApplicationDataWasInvalid = 1,
                 .nTotalResets = 1U,
                 .nResetsSinceRf = 2U,
                 .activeSecondaryFwPartition = 3,

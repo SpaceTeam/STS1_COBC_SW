@@ -16,7 +16,7 @@ auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const 
                                          &(data->flashIsWorking),
                                          &(data->rfIsWorking),
                                          &(data->lastMessageTypeIdWasInvalid),
-                                         &(data->lastTelecommandArgumentsWereInvalid),
+                                         &(data->lastApplicationDataWasInvalid),
                                          &(data->padding));
     source = DeserializeFrom<endianness>(source, &(data->nTotalResets));
     source = DeserializeFrom<endianness>(source, &(data->nResetsSinceRf));
@@ -60,7 +60,7 @@ auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *
                                           data.flashIsWorking,
                                           data.rfIsWorking,
                                           data.lastMessageTypeIdWasInvalid,
-                                          data.lastTelecommandArgumentsWereInvalid,
+                                          data.lastApplicationDataWasInvalid,
                                           data.padding);
     destination = SerializeTo<endianness>(destination, data.nTotalResets);
     destination = SerializeTo<endianness>(destination, data.nResetsSinceRf);

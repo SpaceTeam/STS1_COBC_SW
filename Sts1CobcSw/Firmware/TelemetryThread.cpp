@@ -88,8 +88,8 @@ auto CollectTelemetryData() -> TelemetryRecord
         // Booleans: byte 2:  and communication
         .lastMessageTypeIdWasInvalid =
             persistentVariables.Load<"lastMessageTypeIdWasInvalid">() ? 1 : 0,
-        .lastTelecommandArgumentsWereInvalid =
-            persistentVariables.Load<"lastTelecommandArgumentsWereInvalid">() ? 1 : 0,
+        .lastApplicationDataWasInvalid =
+            persistentVariables.Load<"lastApplicationDataWasInvalid">() ? 1 : 0,
         // BootLoader
         .nTotalResets = persistentVariables.Load<"nTotalResets">(),
         .nResetsSinceRf = persistentVariables.Load<"nResetsSinceRf">(),
