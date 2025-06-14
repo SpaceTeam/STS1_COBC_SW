@@ -21,6 +21,7 @@ namespace
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2000U;
 constexpr auto edgeCounterThreshold = 4;
+constexpr auto interruptMargin = 5 * ms;
 
 auto ledGpioPin = hal::GpioPin(hal::led1Pin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
@@ -69,13 +70,13 @@ private:
 
         TIME_LOOP(0, value_of(heartbeatPeriod))
         {
-            auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(heartbeatPeriod);
+            auto result =
+                eduHeartbeatGpioPin.SuspendUntilInterrupt(heartbeatPeriod - interruptMargin);
 
             if(result.has_error())
             {
                 // timeout, no edge during a whole heartbeat period
                 edgeCounter = 0;
-                // DEBUG_PRINT("Edu is alive published to false\n");
                 eduIsAliveTopic.publish(false);
             }
             else
@@ -84,7 +85,6 @@ private:
                 edgeCounter++;
                 if(edgeCounter >= edgeCounterThreshold)
                 {
-                    // DEBUG_PRINT("Edu is alive published to true\n");
                     eduIsAliveTopic.publish(true);
                     edgeCounter = 0;
                 }
