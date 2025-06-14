@@ -13,11 +13,13 @@
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 #include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
+#include <Sts1CobcSw/RfProtocols/TcTransferFrame.hpp>
 #include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
+#include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
 
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
@@ -46,8 +48,9 @@ auto tmFrame = tm::TransferFrame(std::span(tmBuffer).first<tm::transferFrameLeng
 
 auto Send(Payload const & report) -> void;
 auto SendCfdpFrames() -> void;
-// Handle received data and return true if the thread should continue the loop without suspending
-[[nodiscard]] auto HandleReceivedData() -> bool;
+auto HandleReceivedData() -> void;
+auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void;
+auto HandleRequestFrame(tc::TransferFrame const & frame) -> void;
 
 
 class RfCommunicationThread : public RODOS::StaticThread<stackSize>
@@ -61,7 +64,7 @@ private:
     auto run() -> void override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
-        // TODO: rdt::Initialize();
+        rdt::Initialize();
         while(true)
         {
             auto receiveResult = Result<void>(ErrorCode::timeout);
@@ -85,11 +88,8 @@ private:
             }
             if(receiveResult.has_value())
             {
-                auto threadShouldNotSuspend = HandleReceivedData();
-                if(threadShouldNotSuspend)
-                {
-                    continue;
-                }
+                HandleReceivedData();
+                continue;
             }
             SuspendUntil(endOfTime);
         }
@@ -122,23 +122,54 @@ auto Send(Payload const & report) -> void
 
 auto SendCfdpFrames() -> void
 {
-    // TODO: Implement it
+    // TODO: Implement this
 }
 
 
-auto HandleReceivedData() -> bool
+auto HandleReceivedData() -> void
 {
-    // TODO: rdt::Feed();
+    rdt::Feed();
     persistentVariables.Store<"nResetsSinceRf">(0);
-    auto threadShouldNotSuspend = true;
-    auto decodeResult = tc::Decode(tcBuffer);
-    // TODO: Continue here with the implementation
-    if(decodeResult.has_error())
+    auto result = [&]() -> Result<void>
     {
-        persistentVariables.Increment<"nUncorrectableUplinkErrors">();
+        auto decodeResult = tc::Decode(tcBuffer);
+        if(decodeResult.has_error())
+        {
+            persistentVariables.Increment<"nUncorrectableUplinkErrors">();
+            return decodeResult.error();
+        }
+        persistentVariables.Add<"nCorrectableUplinkErrors">(
+            static_cast<std::uint16_t>(decodeResult.value()));
+        OUTCOME_TRY(auto tcFrame,
+                    tc::ParseAsTransferFrame(std::span(tcBuffer).first<tc::transferFrameLength>()));
+        persistentVariables.Store<"lastFrameSequenceNumber">(
+            tcFrame.primaryHeader.frameSequenceNumber);
+        if(tcFrame.primaryHeader.vcid == cfdpVcid)
+        {
+            HandleCfdpFrame(tcFrame);
+        }
+        else
+        {
+            HandleRequestFrame(tcFrame);
+        }
+        return outcome_v2::success();
+    }();
+    if(result.has_error())
+    {
         persistentVariables.Increment<"nBadTransferFrames">();
     }
-    return threadShouldNotSuspend;
+}
+
+
+auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
+{
+    // TODO: Implement this
+}
+
+
+auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
+{
+    // TODO: Implement this
 }
 }
 }

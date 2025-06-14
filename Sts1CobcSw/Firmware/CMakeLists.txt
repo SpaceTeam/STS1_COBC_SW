@@ -38,5 +38,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Telemetry
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
+                Sts1CobcSw_WatchdogTimers
     )
 endif()
