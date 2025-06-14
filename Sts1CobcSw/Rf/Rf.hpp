@@ -31,7 +31,9 @@ auto EnterStandbyMode() -> void;
 auto SetTxType(TxType txType) -> void;
 auto SetTxDataLength(std::uint16_t length) -> void;
 auto SetTxDataRate(std::uint32_t dataRate) -> void;
+auto SetRxDataRate(std::uint32_t dataRate) -> void;
 [[nodiscard]] auto GetTxDataRate() -> std::uint32_t;
+[[nodiscard]] auto GetRxDataRate() -> std::uint32_t;
 
 [[nodiscard]] auto SendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto SendAndContinue(std::span<Byte const> data) -> Result<void>;
