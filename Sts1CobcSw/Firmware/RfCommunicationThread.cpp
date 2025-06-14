@@ -10,17 +10,23 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
+#include <Sts1CobcSw/RfProtocols/Requests.hpp>
 #include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
+#include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/TcTransferFrame.hpp>
 #include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
 
+#include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
@@ -40,17 +46,24 @@ namespace
 constexpr auto stackSize = 1000;
 constexpr auto rxTimeout = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
+constexpr auto rxToTxSwitchDuration = 300 * ms;
 
 auto tmBuffer = std::array<Byte, blockLength>{};
 auto tcBuffer = std::array<Byte, blockLength>{};
 auto tmFrame = tm::TransferFrame(std::span(tmBuffer).first<tm::transferFrameLength>());
+auto lastRxTime = RodosTime(0);
 
 
 auto Send(Payload const & report) -> void;
+auto Send(std::span<Byte const, blockLength> encodedFrame) -> void;
+
 auto SendCfdpFrames() -> void;
 auto HandleReceivedData() -> void;
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void;
 auto HandleRequestFrame(tc::TransferFrame const & frame) -> void;
+auto Handle(Request const & request, RequestId const & requestId) -> void;
+
+auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
 
 
 class RfCommunicationThread : public RODOS::StaticThread<stackSize>
@@ -88,6 +101,7 @@ private:
             }
             if(receiveResult.has_value())
             {
+                lastRxTime = CurrentRodosTime();
                 HandleReceivedData();
                 continue;
             }
@@ -114,9 +128,20 @@ auto Send(Payload const & report) -> void
     (void)AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
     tmFrame.Finish();
     tm::Encode(tmBuffer);
+    Send(tmBuffer);
+}
+
+
+auto Send(std::span<Byte const, blockLength> encodedFrame) -> void
+{
+    auto earliestTxTime = lastRxTime + rxToTxSwitchDuration;
+    if(earliestTxTime > CurrentRodosTime())
+    {
+        SuspendUntil(earliestTxTime);
+    }
     // TODO: Once the RF driver implements full error handling (retrying, reconfiguring,
-    // and resetting). This will no longer return a Result<void>.
-    (void)rf::SendAndWait(tmBuffer);
+    // and resetting). This should no longer return a Result<void>.
+    (void)rf::SendAndWait(encodedFrame);
 }
 
 
@@ -169,7 +194,44 @@ auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
 
 auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
 {
+    auto parseAsSpacePacketResult = ParseAsSpacePacket(frame.dataField);
+    if(parseAsSpacePacketResult.has_error())
+    {
+        return;
+    }
+    auto const & spacePacket = parseAsSpacePacketResult.value();
+    auto requestId = ToRequestId(spacePacket.primaryHeader);
+    auto parseAsRequestResult = ParseAsRequest(spacePacket.dataField);
+    if(parseAsRequestResult.has_error())
+    {
+        persistentVariables.Store<"lastMessageTypeIdWasInvalid">(
+            parseAsRequestResult.error() == ErrorCode::invalidMessageTypeId);
+        Send(FailedVerificationReport<VerificationStage::acceptance>(requestId,
+                                                                     parseAsRequestResult.error()));
+        return;
+    }
+    auto const & request = parseAsRequestResult.value();
+    persistentVariables.Store<"lastMessageTypeIdWasInvalid">(false);
+    persistentVariables.Store<"lastMessageTypeId">(
+        request.packetSecondaryHeader.messageTypeId.Value());
+    Handle(request, requestId);
+}
+
+
+auto Handle(Request const & request, RequestId const & requestId) -> void
+{
     // TODO: Implement this
+}
+
+
+auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId
+{
+    return RequestId{.packetVersionNumber = header.versionNumber,
+                     .packetType = header.packetType,
+                     .secondaryHeaderFlag = header.secondaryHeaderFlag,
+                     .apid = header.apid,
+                     .sequenceFlags = header.sequenceFlags,
+                     .packetSequenceCount = header.packetSequenceCount};
 }
 }
 }
