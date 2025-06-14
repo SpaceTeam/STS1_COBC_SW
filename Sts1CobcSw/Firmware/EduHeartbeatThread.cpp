@@ -21,9 +21,9 @@ namespace
 // TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2000U;
 constexpr auto edgeCounterThreshold = 4;
+constexpr auto interruptMargin = 5 * ms;
 
 auto ledGpioPin = hal::GpioPin(hal::led1Pin);
-auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
 
@@ -40,10 +40,10 @@ private:
     {
         eduHeartbeatGpioPin.SetDirection(hal::PinDirection::in);
         ledGpioPin.SetDirection(hal::PinDirection::out);
-        epsChargingGpioPin.SetDirection(hal::PinDirection::out);
         ledGpioPin.Reset();
-        epsChargingGpioPin.Reset();
-        // edu.Initialize();
+
+        eduHeartbeatGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::bothEdges);
+        eduHeartbeatGpioPin.EnableInterrupts();
     }
 
 
@@ -63,66 +63,31 @@ private:
 
         // RODOS::AT(RODOS::END_OF_TIME);
 
-        auto const heartbeatFrequency = 10;                     // Hz
-        auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
-        auto const samplingPeriod = 1 * s / samplingFrequency;
+        auto const heartbeatFrequency = 10;  // Hz
+        auto const heartbeatPeriod = 1 * s / heartbeatFrequency;
 
-        auto samplingCount = 0;
-        auto heartbeatIsConstant = true;
-        auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0;
 
-        DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
-        auto toggle = true;
-        TIME_LOOP(0, value_of(samplingPeriod))
+        TIME_LOOP(0, value_of(heartbeatPeriod))
         {
-            // Read current heartbeat value
+            auto result =
+                eduHeartbeatGpioPin.SuspendUntilInterrupt(heartbeatPeriod - interruptMargin);
 
-            if(toggle)
+            if(result.has_error())
             {
-                epsChargingGpioPin.Set();
+                // timeout, no edge during a whole heartbeat period
+                edgeCounter = 0;
+                eduIsAliveTopic.publish(false);
             }
             else
             {
-                epsChargingGpioPin.Reset();
-            }
-            toggle = not toggle;
-
-            auto heartbeat = eduHeartbeatGpioPin.Read();
-
-            ++samplingCount;
-
-            // If heartbeat was constant but is not anymore
-            if(heartbeatIsConstant and (heartbeat != oldHeartbeat))
-            {
-                heartbeatIsConstant = false;
-                // DEBUG_PRINT("Detected an edge \n");
+                // edge detected during heartbeat period
                 edgeCounter++;
-            }
-
-            if(edgeCounter == edgeCounterThreshold)
-            {
-                // DEBUG_PRINT("Edu is alive published to true\n");
-                eduIsAliveTopic.publish(true);
-                edgeCounter = 0;
-            }
-            // if(oldHeartbeat == heartbeat) {
-            //    heartbeatIsConstant = true;
-            //}
-
-            oldHeartbeat = heartbeat;
-
-            // Check if heartbeat is constant over a whole heartbeat period
-            if(samplingCount == samplingFrequency / heartbeatFrequency)
-            {
-                if(heartbeatIsConstant)
+                if(edgeCounter >= edgeCounterThreshold)
                 {
+                    eduIsAliveTopic.publish(true);
                     edgeCounter = 0;
-                    // DEBUG_PRINT("Edu is alive published to false\n");
-                    eduIsAliveTopic.publish(false);
                 }
-                heartbeatIsConstant = true;
-                samplingCount = 0;
             }
         }
     }
