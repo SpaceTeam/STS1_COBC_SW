@@ -249,7 +249,7 @@ TEST_CASE("Housekeeping parameter report")
         .epsIsWorking = 1,
         .flashIsWorking = 1,
         .rfIsWorking = 1,
-        .lastTelecommandIdWasInvalid = 1,
+        .lastMessageTypeIdWasInvalid = 1,
         .lastTelecommandArgumentsWereInvalid = 1,
         .nTotalResets = 1U,
         .nResetsSinceRf = 2U,
@@ -281,7 +281,7 @@ TEST_CASE("Housekeeping parameter report")
         .nGoodTransferFrames = 57U,
         .nBadTransferFrames = 58U,
         .lastFrameSequenceNumber = 59U,
-        .lastTelecommandId = 60U
+        .lastMessageTypeId = {60U, 61}
     };
     auto report = sts1cobcsw::HousekeepingParameterReport(record);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
@@ -311,7 +311,8 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[15] == 0_b);
     CHECK(dataField[16] == 0_b);
     CHECK(dataField[17] == 1_b);         // nTotalResets
-    CHECK(dataField[11 + 121] == 60_b);  // lastTelecommandId
+    CHECK(dataField[11 + 120] == 60_b);  // lastMessageTypeId
+    CHECK(dataField[11 + 121] == 61_b);  // lastMessageTypeId
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);

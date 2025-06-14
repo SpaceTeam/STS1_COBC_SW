@@ -15,7 +15,7 @@ auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const 
                                          &(data->epsIsWorking),
                                          &(data->flashIsWorking),
                                          &(data->rfIsWorking),
-                                         &(data->lastTelecommandIdWasInvalid),
+                                         &(data->lastMessageTypeIdWasInvalid),
                                          &(data->lastTelecommandArgumentsWereInvalid),
                                          &(data->padding));
     source = DeserializeFrom<endianness>(source, &(data->nTotalResets));
@@ -42,7 +42,7 @@ auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const 
     source = DeserializeFrom<endianness>(source, &(data->nGoodTransferFrames));
     source = DeserializeFrom<endianness>(source, &(data->nBadTransferFrames));
     source = DeserializeFrom<endianness>(source, &(data->lastFrameSequenceNumber));
-    source = DeserializeFrom<endianness>(source, &(data->lastTelecommandId));
+    source = DeserializeFrom<endianness>(source, &(data->lastMessageTypeId));
     return source;
 }
 
@@ -59,7 +59,7 @@ auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *
                                           data.epsIsWorking,
                                           data.flashIsWorking,
                                           data.rfIsWorking,
-                                          data.lastTelecommandIdWasInvalid,
+                                          data.lastMessageTypeIdWasInvalid,
                                           data.lastTelecommandArgumentsWereInvalid,
                                           data.padding);
     destination = SerializeTo<endianness>(destination, data.nTotalResets);
@@ -86,7 +86,7 @@ auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *
     destination = SerializeTo<endianness>(destination, data.nGoodTransferFrames);
     destination = SerializeTo<endianness>(destination, data.nBadTransferFrames);
     destination = SerializeTo<endianness>(destination, data.lastFrameSequenceNumber);
-    destination = SerializeTo<endianness>(destination, data.lastTelecommandId);
+    destination = SerializeTo<endianness>(destination, data.lastMessageTypeId);
     return destination;
 }
 

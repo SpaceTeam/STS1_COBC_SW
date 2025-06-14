@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 
@@ -59,7 +60,7 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"nGoodTransferFrames", std::uint16_t>,
                         PersistentVariableInfo<"nBadTransferFrames", std::uint16_t>,
                         PersistentVariableInfo<"lastFrameSequenceNumber", std::uint8_t>,
-                        PersistentVariableInfo<"lastTelecommandId", std::uint16_t>,
-                        PersistentVariableInfo<"lastTelecommandIdWasInvalid", bool>,
+                        PersistentVariableInfo<"lastMessageTypeId", MessageTypeIdFields>,
+                        PersistentVariableInfo<"lastMessageTypeIdWasInvalid", bool>,
                         PersistentVariableInfo<"lastTelecommandArgumentsWereInvalid", bool>>{};
 }

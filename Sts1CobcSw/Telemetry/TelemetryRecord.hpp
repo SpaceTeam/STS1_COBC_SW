@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -27,7 +28,7 @@ struct TelemetryRecord
     UInt<1> flashIsWorking = 0;
     UInt<1> rfIsWorking = 0;
     // Booleans: byte 2: communication
-    UInt<1> lastTelecommandIdWasInvalid = 0;
+    UInt<1> lastMessageTypeIdWasInvalid = 0;
     UInt<1> lastTelecommandArgumentsWereInvalid = 0;
     UInt<6> padding = 0;  // NOLINT(*magic-numbers)
 
@@ -64,8 +65,7 @@ struct TelemetryRecord
     std::uint16_t nGoodTransferFrames = 0U;
     std::uint16_t nBadTransferFrames = 0U;
     std::uint8_t lastFrameSequenceNumber = 0U;
-    // TODO: I think this should be a tc::MessageTypeId
-    std::uint16_t lastTelecommandId = 0U;
+    MessageTypeIdFields lastMessageTypeId;
 
     friend auto operator==(TelemetryRecord const &, TelemetryRecord const &) -> bool = default;
 };
@@ -81,7 +81,7 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
                     decltype(TelemetryRecord::epsIsWorking),
                     decltype(TelemetryRecord::flashIsWorking),
                     decltype(TelemetryRecord::rfIsWorking),
-                    decltype(TelemetryRecord::lastTelecommandIdWasInvalid),
+                    decltype(TelemetryRecord::lastMessageTypeIdWasInvalid),
                     decltype(TelemetryRecord::lastTelecommandArgumentsWereInvalid),
                     decltype(TelemetryRecord::padding)>
     + totalSerialSize<
@@ -114,7 +114,7 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
         decltype(TelemetryRecord::nGoodTransferFrames),
         decltype(TelemetryRecord::nBadTransferFrames),
         decltype(TelemetryRecord::lastFrameSequenceNumber),
-        decltype(TelemetryRecord::lastTelecommandId)>;
+        decltype(TelemetryRecord::lastMessageTypeId)>;
 
 
 template<std::endian endianness>

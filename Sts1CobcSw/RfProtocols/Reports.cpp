@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
 #include <etl/string.h>
 
