@@ -43,7 +43,9 @@ private:
         epsChargingGpioPin.SetDirection(hal::PinDirection::out);
         ledGpioPin.Reset();
         epsChargingGpioPin.Reset();
-        // edu.Initialize();
+
+        eduHeartbeatGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::bothEdges);
+        eduHeartbeatGpioPin.EnableInterrupts();
     }
 
 
@@ -67,14 +69,11 @@ private:
         auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
         auto const samplingPeriod = 1 * s / samplingFrequency;
 
-        auto samplingCount = 0;
-        auto heartbeatIsConstant = true;
-        auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0;
 
         DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
         auto toggle = true;
-        TIME_LOOP(0, value_of(samplingPeriod))
+        TIME_LOOP(0, value_of(samplingPeriod) * 5)
         {
             // Read current heartbeat value
 
@@ -88,42 +87,26 @@ private:
             }
             toggle = not toggle;
 
-            auto heartbeat = eduHeartbeatGpioPin.Read();
+ 
+            auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(samplingPeriod * 5);
 
-            ++samplingCount;
-
-            // If heartbeat was constant but is not anymore
-            if(heartbeatIsConstant and (heartbeat != oldHeartbeat))
+            if(result.has_error())
             {
-                heartbeatIsConstant = false;
-                // DEBUG_PRINT("Detected an edge \n");
-                edgeCounter++;
-            }
-
-            if(edgeCounter == edgeCounterThreshold)
-            {
-                // DEBUG_PRINT("Edu is alive published to true\n");
-                eduIsAliveTopic.publish(true);
+                // timeout
                 edgeCounter = 0;
-            }
-            // if(oldHeartbeat == heartbeat) {
-            //    heartbeatIsConstant = true;
-            //}
-
-            oldHeartbeat = heartbeat;
-
-            // Check if heartbeat is constant over a whole heartbeat period
-            if(samplingCount == samplingFrequency / heartbeatFrequency)
-            {
-                if(heartbeatIsConstant)
+                // DEBUG_PRINT("Edu is alive published to false\n");
+                eduIsAliveTopic.publish(false);
+            } else {
+                // edge detected during sampling period
+                edgeCounter++;
+                if(edgeCounter >= edgeCounterThreshold)
                 {
+                    // DEBUG_PRINT("Edu is alive published to true\n");
+                    eduIsAliveTopic.publish(true);
                     edgeCounter = 0;
-                    // DEBUG_PRINT("Edu is alive published to false\n");
-                    eduIsAliveTopic.publish(false);
                 }
-                heartbeatIsConstant = true;
-                samplingCount = 0;
             }
+
         }
     }
 } eduHeartbeatThread;
