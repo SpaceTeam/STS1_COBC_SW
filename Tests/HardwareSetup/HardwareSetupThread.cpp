@@ -2,6 +2,9 @@
 
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#ifdef USE_WATCHDOG
+    #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
+#endif
 
 #include <rodos_no_using_namespace.h>
 
@@ -25,7 +28,7 @@ private:
     {
         InitializeRfLatchupDisablePins();
 #ifdef USE_WATCHDOG
-        watchdogClearGpio.SetDirection(hal::PinDirection::out);
+        wdt::Initialize();
 #endif
     }
 
@@ -34,18 +37,9 @@ private:
     {
         EnableRfLatchupProtection();
 #ifdef USE_WATCHDOG
-        auto toggle = true;
         TIME_LOOP(0, 800 * RODOS::MILLISECONDS)
         {
-            if(toggle)
-            {
-                watchdogClearGpio.Reset();
-            }
-            else
-            {
-                watchdogClearGpio.Set();
-            }
-            toggle = not toggle;
+            wdt::Feed();
         }
 #endif
     }

@@ -141,8 +141,8 @@ private:
                 .epsIsWorking = 1,
                 .flashIsWorking = 1,
                 .rfIsWorking = 1,
-                .lastTelecommandIdWasInvalid = 1,
-                .lastTelecommandArgumentsWereInvalid = 1,
+                .lastRequestIdWasInvalid = 1,
+                .lastApplicationDataWasInvalid = 1,
                 .nTotalResets = 1U,
                 .nResetsSinceRf = 2U,
                 .activeSecondaryFwPartition = 3,
@@ -173,7 +173,7 @@ private:
                 .nGoodTransferFrames = 57U,
                 .nBadTransferFrames = 58U,
                 .lastFrameSequenceNumber = 59U,
-                .lastTelecommandId = 60U
+                .lastRequestId = 60U
             };
             auto report = sts1cobcsw::HousekeepingParameterReport(record);
             WriteToFileAsFrame(report, outputDir + reportName);
