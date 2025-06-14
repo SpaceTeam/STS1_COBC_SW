@@ -67,6 +67,7 @@
   { include: ["\"Sts1CobcSw/Utility/ErrorDetectionAndCorrection.ipp\"", "private", "<Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",                        "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.ipp\"",               "private", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Vocabulary/MessageTypeIdFields.ipp\"",      "private", "<Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.ipp\"",                "private", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/Time.ipp\"",                     "private", "<Sts1CobcSw/Vocabulary/Time.hpp>", "public"] },
 
@@ -138,6 +139,7 @@
   { include: ["\"Sts1CobcSw/Utility/FirmwareIntegrity.hpp\"",                  "public", "<Sts1CobcSw/Utility/FirmwareIntegrity.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                               "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",                      "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp\"",             "public", "<Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.hpp\"",                       "public", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/Time.hpp\"",                            "public", "<Sts1CobcSw/Vocabulary/Time.hpp>", "public"] },
   { include: ["\"Tests/CatchRodos/Assertion.hpp\"",                            "public", "<Tests/CatchRodos/Assertion.hpp>", "public"] },

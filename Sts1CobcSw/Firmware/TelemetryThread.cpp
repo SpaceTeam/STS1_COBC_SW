@@ -14,6 +14,7 @@
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -85,8 +86,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .flashIsWorking = persistentVariables.Load<"flashIsWorking">() ? 1 : 0,
         .rfIsWorking = persistentVariables.Load<"rfIsWorking">() ? 1 : 0,
         // Booleans: byte 2:  and communication
-        .lastTelecommandIdWasInvalid =
-            persistentVariables.Load<"lastTelecommandIdWasInvalid">() ? 1 : 0,
+        .lastRequestIdWasInvalid = persistentVariables.Load<"lastRequestIdWasInvalid">() ? 1 : 0,
         .lastTelecommandArgumentsWereInvalid =
             persistentVariables.Load<"lastTelecommandArgumentsWereInvalid">() ? 1 : 0,
         // BootLoader
@@ -118,7 +118,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .nGoodTransferFrames = persistentVariables.Load<"nGoodTransferFrames">(),
         .nBadTransferFrames = persistentVariables.Load<"nBadTransferFrames">(),
         .lastFrameSequenceNumber = persistentVariables.Load<"lastFrameSequenceNumber">(),
-        .lastTelecommandId = persistentVariables.Load<"lastTelecommandId">()};
+        .lastRequestId = persistentVariables.Load<"lastRequestId">()};
 }
 }
 }
