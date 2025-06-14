@@ -28,6 +28,7 @@
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -35,7 +36,9 @@
 #include <etl/vector.h>
 
 #include <array>
+#include <compare>
 #include <span>
+#include <type_traits>
 #include <utility>
 
 
@@ -61,9 +64,22 @@ auto SendCfdpFrames() -> void;
 auto HandleReceivedData() -> void;
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void;
 auto HandleRequestFrame(tc::TransferFrame const & frame) -> void;
+auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
 auto Handle(Request const & request, RequestId const & requestId) -> void;
 
-auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
+template<auto parseFunction>
+auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> void;
+
+auto Handle(LoadRawMemoryDataAreasRequest const & request, RequestId const & requestId) -> void;
+auto Handle(DumpRawMemoryDataRequest const & request, RequestId const & requestId) -> void;
+auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void;
+auto Handle(ReportParameterValuesRequest const & request, RequestId const & requestId) -> void;
+auto Handle(SetParameterValuesRequest const & request, RequestId const & requestId) -> void;
+auto Handle(DeleteAFileRequest const & request, RequestId const & requestId) -> void;
+auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const & requestId) -> void;
+auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
+            RequestId const & requestId) -> void;
+auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void;
 
 
 class RfCommunicationThread : public RODOS::StaticThread<stackSize>
@@ -218,12 +234,6 @@ auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
 }
 
 
-auto Handle(Request const & request, RequestId const & requestId) -> void
-{
-    // TODO: Implement this
-}
-
-
 auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId
 {
     return RequestId{.packetVersionNumber = header.versionNumber,
@@ -232,6 +242,131 @@ auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId
                      .apid = header.apid,
                      .sequenceFlags = header.sequenceFlags,
                      .packetSequenceCount = header.packetSequenceCount};
+}
+
+
+auto Handle(Request const & request, RequestId const & requestId) -> void
+{
+    auto const & messageTypeId = request.packetSecondaryHeader.messageTypeId;
+    if(messageTypeId == LoadRawMemoryDataAreasRequest::id)
+    {
+        VerifyAndHandle<ParseAsLoadRawMemoryDataAreasRequest>(request, requestId);
+    }
+    else if(messageTypeId == DumpRawMemoryDataRequest::id)
+    {
+        VerifyAndHandle<ParseAsDumpRawMemoryDataRequest>(request, requestId);
+    }
+    else if(messageTypeId == PerformAFunctionRequest::id)
+    {
+        VerifyAndHandle<ParseAsPerformAFunctionRequest>(request, requestId);
+    }
+    else if(messageTypeId == ReportParameterValuesRequest::id)
+    {
+        VerifyAndHandle<ParseAsReportParameterValuesRequest>(request, requestId);
+    }
+    else if(messageTypeId == SetParameterValuesRequest::id)
+    {
+        VerifyAndHandle<ParseAsSetParameterValuesRequest>(request, requestId);
+    }
+    else if(messageTypeId == DeleteAFileRequest::id)
+    {
+        VerifyAndHandle<ParseAsDeleteAFileRequest>(request, requestId);
+    }
+    else if(messageTypeId == ReportTheAttributesOfAFileRequest::id)
+    {
+        VerifyAndHandle<ParseAsReportTheAttributesOfAFileRequest>(request, requestId);
+    }
+    else if(messageTypeId == SummaryReportTheContentOfARepositoryRequest::id)
+    {
+        VerifyAndHandle<ParseAsSummaryReportTheContentOfARepositoryRequest>(request, requestId);
+    }
+    else if(messageTypeId == CopyAFileRequest::id)
+    {
+        VerifyAndHandle<ParseAsCopyAFileRequest>(request, requestId);
+    }
+}
+
+
+template<auto parseFunction>
+auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> void
+{
+    auto parseResult = parseFunction(request.applicationData);
+    if(parseResult.has_error())
+    {
+        Send(FailedVerificationReport<VerificationStage::acceptance>(requestId,
+                                                                     parseResult.error()));
+        return;
+    }
+    if constexpr(not std::is_same_v<decltype(parseFunction),
+                                    decltype(&ParseAsPerformAFunctionRequest)>)
+    {
+        Send(SuccessfulVerificationReport<VerificationStage::acceptance>(requestId));
+    }
+    Handle(parseResult.value(), requestId);
+}
+
+
+auto Handle(LoadRawMemoryDataAreasRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing LoadRawMemoryDataAreasRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(DumpRawMemoryDataRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing DumpRawMemoryDataRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing PerformAFunctionRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(ReportParameterValuesRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing ReportParameterValuesRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(SetParameterValuesRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing SetParameterValuesRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(DeleteAFileRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing DeleteAFileRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing ReportTheAttributesOfAFileRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
+            RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing SummaryReportTheContentOfARepositoryRequest\n");
+    // TODO: Implement this
+}
+
+
+auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
+{
+    DEBUG_PRINT("Executing CopyAFileRequest\n");
+    // TODO: Implement this
 }
 }
 }
