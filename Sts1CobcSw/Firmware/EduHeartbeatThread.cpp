@@ -2,7 +2,6 @@
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
-#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -10,6 +9,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
 #include <cinttypes>  // IWYU pragma: keep
 #include <utility>
 
@@ -18,14 +18,16 @@ namespace sts1cobcsw
 {
 namespace
 {
-// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
 constexpr auto stackSize = 2000U;
-constexpr auto edgeCounterThreshold = 4;
+constexpr auto heartbeatFrequency = 10;
+constexpr auto heartbeatPeriod = 1 * s / heartbeatFrequency;
+// Due to integer arithmetic, we cannot store the safety margin of 12 / 10 in a separate variable
+constexpr auto interruptTimeout = heartbeatPeriod / 2 * 12 / 10;
+constexpr auto edgeCounterThreshold = 3;
 
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
 
 
-// TODO: Use an external interrupt for detecting the edges of the heartbeat
 class EduHeartbeatThread : public RODOS::StaticThread<stackSize>
 {
 public:
@@ -37,73 +39,30 @@ private:
     void init() override
     {
         eduHeartbeatGpioPin.SetDirection(hal::PinDirection::in);
+        eduHeartbeatGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::bothEdges);
+        eduHeartbeatGpioPin.EnableInterrupts();
     }
 
 
     void run() override
     {
-        //        TIME_LOOP(0, 1*RODOS::SECONDS){
-        //
-        //            auto type = EduIsAlive();
-        //            if(type) {
-        //                DEBUG_PRINT("Edu is alive\n");
-        //            } else {
-        //                DEBUG_PRINT("Edu is dead\n");
-        //            }
-        //            eduIsAliveTopic.publish(type);
-        //
-        //        }
-
-        // RODOS::AT(RODOS::END_OF_TIME);
-
-        auto const heartbeatFrequency = 10;                     // Hz
-        auto const samplingFrequency = 5 * heartbeatFrequency;  // Hz
-        auto const samplingPeriod = 1 * s / samplingFrequency;
-
-        auto samplingCount = 0;
-        auto heartbeatIsConstant = true;
-        auto oldHeartbeat = eduHeartbeatGpioPin.Read();
         auto edgeCounter = 0;
-
-        DEBUG_PRINT("Sampling period : %" PRIi64 " ms\n", samplingPeriod / ms);
-        TIME_LOOP(0, value_of(samplingPeriod))
+        while(true)
         {
-            // Read current heartbeat value
-            auto heartbeat = eduHeartbeatGpioPin.Read();
-
-            ++samplingCount;
-
-            // If heartbeat was constant but is not anymore
-            if(heartbeatIsConstant and (heartbeat != oldHeartbeat))
+            auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(interruptTimeout);
+            if(result.has_error())
             {
-                heartbeatIsConstant = false;
-                // DEBUG_PRINT("Detected an edge \n");
-                edgeCounter++;
-            }
-
-            if(edgeCounter == edgeCounterThreshold)
-            {
-                // DEBUG_PRINT("Edu is alive published to true\n");
-                eduIsAliveTopic.publish(true);
                 edgeCounter = 0;
+                eduIsAliveTopic.publish(false);
             }
-            // if(oldHeartbeat == heartbeat) {
-            //    heartbeatIsConstant = true;
-            //}
-
-            oldHeartbeat = heartbeat;
-
-            // Check if heartbeat is constant over a whole heartbeat period
-            if(samplingCount == samplingFrequency / heartbeatFrequency)
+            else
             {
-                if(heartbeatIsConstant)
+                ++edgeCounter;
+                edgeCounter = std::min(edgeCounter, edgeCounterThreshold);
+                if(edgeCounter == edgeCounterThreshold)
                 {
-                    edgeCounter = 0;
-                    // DEBUG_PRINT("Edu is alive published to false\n");
-                    eduIsAliveTopic.publish(false);
+                    eduIsAliveTopic.publish(true);
                 }
-                heartbeatIsConstant = true;
-                samplingCount = 0;
             }
         }
     }
