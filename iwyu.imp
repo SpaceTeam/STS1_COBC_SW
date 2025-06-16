@@ -72,7 +72,6 @@
   { include: ["\"Sts1CobcSw/Vocabulary/Time.ipp\"",                     "private", "<Sts1CobcSw/Vocabulary/Time.hpp>", "public"] },
 
   # Include all our headers with <> instead of ""
-  { include: ["\"Sts1CobcSw/Firmware/CommandParser.hpp\"",                     "public", "<Sts1CobcSw/Firmware/CommandParser.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp\"",       "public", "<Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Firmware/EduProgramQueueThread.hpp\"",             "public", "<Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Firmware/FlashStartupTestThread.hpp\"",            "public", "<Sts1CobcSw/Firmware/FlashStartupTestThread.hpp>", "public"] },

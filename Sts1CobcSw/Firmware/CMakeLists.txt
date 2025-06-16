@@ -1,9 +1,7 @@
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(
         Sts1CobcSw_Firmware
-        PRIVATE CommandParser.cpp
-                CommandParserThread.cpp
-                EduCommunicationErrorThread.cpp
+        PRIVATE EduCommunicationErrorThread.cpp
                 EduHeartbeatThread.cpp
                 EduListenerThread.cpp
                 EduPowerManagementThread.cpp
