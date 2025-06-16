@@ -1,10 +1,12 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -49,6 +51,7 @@ private:
 
     void run() override
     {
+        SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         TIME_LOOP(value_of(eduPowerManagementThreadStartDelay),
                   value_of(eduPowerManagementThreadPeriod))
         {

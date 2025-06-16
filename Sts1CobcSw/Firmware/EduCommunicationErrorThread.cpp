@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
 
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -42,6 +43,7 @@ private:
     {
         while(true)
         {
+            SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
             SuspendUntil(endOfTime);
 
             persistentVariables.Increment<"nEduCommunicationErrors">();

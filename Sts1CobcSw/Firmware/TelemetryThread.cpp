@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
@@ -53,6 +54,7 @@ private:
 
     void run() override
     {
+        SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
             persistentVariables.Store<"realTime">(CurrentRealTime());
