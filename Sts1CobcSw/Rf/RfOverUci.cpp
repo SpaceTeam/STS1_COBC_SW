@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>  // IWYU pragma: associated
@@ -28,8 +30,6 @@ constexpr auto endOfFrame = std::array{0x0D_b, 0x0A_b};  // = \r\n
 constexpr auto frameDelimiterTimeout = 10 * ms;  // Timeout for writing the start or end of frame
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
-// FIXME: There is actually a persistent variable for this: "txIsOn"
-auto txIsEnabled = true;
 auto rxDataRate = uartBaudRate;
 auto txDataRate = uartBaudRate;
 }
@@ -43,13 +43,13 @@ auto Initialize([[maybe_unused]] TxType txType) -> void
 
 auto EnableTx() -> void
 {
-    txIsEnabled = true;
+    persistentVariables.Store<"txIsOn">(true);
 }
 
 
 auto DisableTx() -> void
 {
-    txIsEnabled = false;
+    persistentVariables.Store<"txIsOn">(false);
 }
 
 
@@ -97,7 +97,7 @@ auto GetRxDataRate() -> std::uint32_t
 
 auto SendAndWait(std::span<Byte const> data) -> Result<void>
 {
-    if(not txIsEnabled)
+    if(not persistentVariables.Load<"txIsOn">())
     {
         return outcome_v2::success();
     }

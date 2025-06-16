@@ -6,6 +6,7 @@
 
 #include <Sts1CobcSw/Rf/Rf.hpp>
 
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
@@ -189,19 +190,20 @@ auto Initialize(TxType txType) -> void
     ApplyPatch();
     PowerUp();
     Configure(txType);
-    // The user is responsible for disabling TX if the related persistent variable is false
-    EnableTx();
+    persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
 }
 
 
 auto EnableTx() -> void
 {
+    persistentVariables.Store<"txIsOn">(true);
     paEnablePin.Set();
 }
 
 
 auto DisableTx() -> void
 {
+    persistentVariables.Store<"txIsOn">(false);
     paEnablePin.Reset();
 }
 
@@ -289,6 +291,10 @@ auto GetRxDataRate() -> std::uint32_t
 
 auto SendAndWait(std::span<Byte const> data) -> Result<void>
 {
+    if(not persistentVariables.Load<"txIsOn">())
+    {
+        return outcome_v2::success();
+    }
     SetTxDataLength(static_cast<std::uint16_t>(data.size()));
     auto result = [&]() -> Result<void>
     {
@@ -306,6 +312,10 @@ auto SendAndWait(std::span<Byte const> data) -> Result<void>
 // allows sending multiple data packets without interruption.
 auto SendAndContinue(std::span<Byte const> data) -> Result<void>
 {
+    if(not persistentVariables.Load<"txIsOn">())
+    {
+        return outcome_v2::success();
+    }
     if(not isInTxMode)
     {
         ResetFifos();
