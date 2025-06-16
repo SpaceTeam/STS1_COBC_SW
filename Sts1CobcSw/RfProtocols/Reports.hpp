@@ -68,6 +68,12 @@ private:
 };
 
 
+using SuccessfulAcceptanceVerificationReport =
+    SuccessfulVerificationReport<VerificationStage::acceptance>;
+using SuccessfulCompletionOfExecutionVerificationReport =
+    SuccessfulVerificationReport<VerificationStage::completionOfExecution>;
+
+
 template<VerificationStage stage>
 class FailedVerificationReport : public Payload
 {
@@ -86,6 +92,11 @@ private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
+
+
+using FailedAcceptanceVerificationReport = FailedVerificationReport<VerificationStage::acceptance>;
+using FailedCompletionOfExecutionVerificationReport =
+    FailedVerificationReport<VerificationStage::completionOfExecution>;
 
 
 class HousekeepingParameterReport : public Payload

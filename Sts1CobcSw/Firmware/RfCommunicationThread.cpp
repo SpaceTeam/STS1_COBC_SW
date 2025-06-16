@@ -222,8 +222,7 @@ auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
     {
         persistentVariables.Store<"lastMessageTypeIdWasInvalid">(
             parseAsRequestResult.error() == ErrorCode::invalidMessageTypeId);
-        Send(FailedVerificationReport<VerificationStage::acceptance>(requestId,
-                                                                     parseAsRequestResult.error()));
+        Send(FailedAcceptanceVerificationReport(requestId, parseAsRequestResult.error()));
         return;
     }
     auto const & request = parseAsRequestResult.value();
@@ -293,14 +292,13 @@ auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> vo
     auto parseResult = parseFunction(request.applicationData);
     if(parseResult.has_error())
     {
-        Send(FailedVerificationReport<VerificationStage::acceptance>(requestId,
-                                                                     parseResult.error()));
+        Send(FailedAcceptanceVerificationReport(requestId, parseResult.error()));
         return;
     }
     if constexpr(not std::is_same_v<decltype(parseFunction),
                                     decltype(&ParseAsPerformAFunctionRequest)>)
     {
-        Send(SuccessfulVerificationReport<VerificationStage::acceptance>(requestId));
+        Send(SuccessfulAcceptanceVerificationReport(requestId));
     }
     Handle(parseResult.value(), requestId);
 }

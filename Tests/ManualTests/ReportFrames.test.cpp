@@ -74,7 +74,7 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 0,
             };
-            auto report = SuccessfulVerificationReport<VerificationStage::acceptance>(requestId);
+            auto report = SuccessfulAcceptanceVerificationReport(requestId);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
@@ -89,8 +89,7 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 0,
             };
-            auto report =
-                SuccessfulVerificationReport<VerificationStage::completionOfExecution>(requestId);
+            auto report = SuccessfulCompletionOfExecutionVerificationReport(requestId);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
@@ -105,8 +104,8 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 3,
             };
-            auto report = FailedVerificationReport<VerificationStage::acceptance>(
-                requestId, ErrorCode::invalidSpacePacket);
+            auto report =
+                FailedAcceptanceVerificationReport(requestId, ErrorCode::invalidSpacePacket);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
@@ -121,8 +120,8 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 4,
             };
-            auto report = FailedVerificationReport<VerificationStage::completionOfExecution>(
-                requestId, ErrorCode::timeout);
+            auto report =
+                FailedCompletionOfExecutionVerificationReport(requestId, ErrorCode::timeout);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 

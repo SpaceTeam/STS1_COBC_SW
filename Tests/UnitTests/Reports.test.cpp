@@ -62,8 +62,6 @@ TEST_INIT("Initialize FRAM for reports")
 
 TEST_CASE("Successful verification reports")
 {
-    using sts1cobcsw::SuccessfulVerificationReport;
-
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
@@ -73,7 +71,7 @@ TEST_CASE("Successful verification reports")
         .sequenceFlags = 0b11,
         .packetSequenceCount = 0,
     };
-    auto acceptanceReport = SuccessfulVerificationReport<VerificationStage::acceptance>(requestId);
+    auto acceptanceReport = sts1cobcsw::SuccessfulAcceptanceVerificationReport(requestId);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
     auto addToResult = acceptanceReport.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
@@ -121,7 +119,7 @@ TEST_CASE("Successful verification reports")
         .packetSequenceCount = 0x3FFF,
     };
     auto completionOfExecutionReport =
-        SuccessfulVerificationReport<VerificationStage::completionOfExecution>(requestId);
+        sts1cobcsw::SuccessfulCompletionOfExecutionVerificationReport(requestId);
     addToResult = completionOfExecutionReport.AddTo(&dataField);
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == completionOfExecutionReport.Size());
@@ -150,8 +148,6 @@ TEST_CASE("Successful verification reports")
 
 TEST_CASE("Failed verification reports")
 {
-    using sts1cobcsw::FailedVerificationReport;
-
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
@@ -161,8 +157,8 @@ TEST_CASE("Failed verification reports")
         .sequenceFlags = 0b11,
         .packetSequenceCount = 0,
     };
-    auto acceptanceReport = FailedVerificationReport<VerificationStage::acceptance>(
-        requestId, ErrorCode::invalidSpacePacket);
+    auto acceptanceReport =
+        sts1cobcsw::FailedAcceptanceVerificationReport(requestId, ErrorCode::invalidSpacePacket);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
     auto addToResult = acceptanceReport.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
@@ -207,8 +203,7 @@ TEST_CASE("Failed verification reports")
         .packetSequenceCount = 0x3FFF,
     };
     auto completionOfExecutionReport =
-        FailedVerificationReport<VerificationStage::completionOfExecution>(requestId,
-                                                                           ErrorCode::timeout);
+        sts1cobcsw::FailedCompletionOfExecutionVerificationReport(requestId, ErrorCode::timeout);
     addToResult = completionOfExecutionReport.AddTo(&dataField);
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == completionOfExecutionReport.Size());
