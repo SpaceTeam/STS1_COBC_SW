@@ -10,7 +10,11 @@
 
 namespace sts1cobcsw
 {
+#ifdef DISABLE_CHANNEL_CODING
+inline constexpr auto blockLength = rs::messageLength;
+#else
 inline constexpr auto blockLength = rs::blockLength;
+#endif
 inline constexpr auto messageLength = rs::messageLength;
 inline constexpr auto nParitySymbols = rs::nParitySymbols;
 

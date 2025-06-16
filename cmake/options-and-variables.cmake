@@ -25,6 +25,8 @@ if(REDIRECT_RF_OVER_UCI AND CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
 endif()
 
+option(DISABLE_CHANNEL_CODING "Do not encode and decode transfer frames" OFF)
+
 set(HW_VERSION 30 CACHE STRING "Hardware version")
 
 # Developer mode enables targets and code paths in the CMake scripts that are only relevant for the

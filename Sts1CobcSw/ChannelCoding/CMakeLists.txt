@@ -1,3 +1,6 @@
 target_sources(Sts1CobcSw_ChannelCoding PRIVATE ChannelCoding.cpp ReedSolomon.cpp Scrambler.cpp)
 target_link_libraries(Sts1CobcSw_ChannelCoding PUBLIC Sts1CobcSw_Outcome Sts1CobcSw_Serial)
 target_link_libraries(Sts1CobcSw_ChannelCoding PRIVATE libfec::libfec)
+if(DISABLE_CHANNEL_CODING)
+    target_compile_definitions(Sts1CobcSw_ChannelCoding PUBLIC DISABLE_CHANNEL_CODING)
+endif()
