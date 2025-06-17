@@ -58,6 +58,7 @@
   { include: ["\"Sts1CobcSw/Hal/Uart.ipp\"",                            "private", "<Sts1CobcSw/Hal/Uart.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Fram/Fram.ipp\"",                           "private", "<Sts1CobcSw/Fram/Fram.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Mailbox/Mailbox.ipp\"",                     "private", "<Sts1CobcSw/Mailbox/Mailbox.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Outcome/Outcome.ipp\"",                     "private", "<Sts1CobcSw/Outcome/Outcome.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Sensors/Eps.ipp\"",                         "private", "<Sts1CobcSw/Sensors/Eps.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Byte.ipp\"",                         "private", "<Sts1CobcSw/Serial/Byte.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",                       "private", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },

@@ -143,4 +143,10 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
 
 template<typename T>
 using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolicy>;
+
+
+constexpr auto ToCZString(ErrorCode errorCode) -> char const *;
 }
+
+
+#include <Sts1CobcSw/Outcome/Outcome.ipp>  // IWYU pragma: keep
