@@ -22,6 +22,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
@@ -36,6 +37,7 @@
 #include <etl/vector.h>
 
 #include <array>
+#include <cinttypes>
 #include <compare>
 #include <span>
 #include <type_traits>
@@ -93,6 +95,7 @@ private:
     auto run() -> void override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        DEBUG_PRINT("Starting RF communication thread\n");
         rdt::Initialize();
         while(true)
         {
@@ -101,7 +104,9 @@ private:
             if(newTelemetryRecordIsAvailable)
             {
                 auto getTelemetryRecordResult = telemetryRecordMailbox.Get();
+                DEBUG_PRINT("Sending housekeeping parameter report\n");
                 Send(HousekeepingParameterReport(getTelemetryRecordResult.value()));
+                DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 receiveResult = rf::Receive(tcBuffer, rxTimeoutAfterTelemetryRecord);
             }
             if(not newTelemetryRecordIsAvailable or receiveResult.has_error())
@@ -112,6 +117,7 @@ private:
                 }
                 else  // TODO: Maybe add if(not newTelemetryRecordIsAvailable) here
                 {
+                    DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeout / s);
                     receiveResult = rf::Receive(tcBuffer, rxTimeout);
                 }
             }
@@ -163,6 +169,7 @@ auto Send(std::span<Byte const, blockLength> encodedFrame) -> void
 
 auto SendCfdpFrames() -> void
 {
+    DEBUG_PRINT("SendCfdpFrames()\n");
     // TODO: Implement this
 }
 
@@ -197,6 +204,7 @@ auto HandleReceivedData() -> void
     }();
     if(result.has_error())
     {
+        DEBUG_PRINT("Error in HandleReceivedData(): %s\n", ToCZString(result.error()));
         persistentVariables.Increment<"nBadTransferFrames">();
     }
 }
@@ -204,6 +212,7 @@ auto HandleReceivedData() -> void
 
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
 {
+    DEBUG_PRINT("HandleCfdpFrame()\n");
     // TODO: Implement this
 }
 
@@ -213,6 +222,8 @@ auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
     auto parseAsSpacePacketResult = ParseAsSpacePacket(frame.dataField);
     if(parseAsSpacePacketResult.has_error())
     {
+        DEBUG_PRINT("Error parsing as Space Packet: %s\n",
+                    ToCZString(parseAsSpacePacketResult.error()));
         return;
     }
     auto const & spacePacket = parseAsSpacePacketResult.value();
@@ -222,6 +233,7 @@ auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
     {
         persistentVariables.Store<"lastMessageTypeIdWasInvalid">(
             parseAsRequestResult.error() == ErrorCode::invalidMessageTypeId);
+        DEBUG_PRINT("Failed acceptance of request: %s\n", ToCZString(parseAsRequestResult.error()));
         Send(FailedAcceptanceVerificationReport(requestId, parseAsRequestResult.error()));
         return;
     }
@@ -292,12 +304,16 @@ auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> vo
     auto parseResult = parseFunction(request.applicationData);
     if(parseResult.has_error())
     {
+        DEBUG_PRINT("Failed acceptance of request: %s\n", ToCZString(parseResult.error()));
         Send(FailedAcceptanceVerificationReport(requestId, parseResult.error()));
         return;
     }
+    // PerformAFunctionRequest has one more level of parsing to do before the successful acceptance
+    // verification report can be sent
     if constexpr(not std::is_same_v<decltype(parseFunction),
                                     decltype(&ParseAsPerformAFunctionRequest)>)
     {
+        DEBUG_PRINT("Successfully accepted request\n");
         Send(SuccessfulAcceptanceVerificationReport(requestId));
     }
     Handle(parseResult.value(), requestId);
@@ -306,49 +322,49 @@ auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> vo
 
 auto Handle(LoadRawMemoryDataAreasRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing LoadRawMemoryDataAreasRequest\n");
+    DEBUG_PRINT("Handling LoadRawMemoryDataAreasRequest\n");
     // TODO: Implement this
 }
 
 
 auto Handle(DumpRawMemoryDataRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing DumpRawMemoryDataRequest\n");
+    DEBUG_PRINT("Handling DumpRawMemoryDataRequest\n");
     // TODO: Implement this
 }
 
 
 auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing PerformAFunctionRequest\n");
+    DEBUG_PRINT("Handling PerformAFunctionRequest\n");
     // TODO: Implement this
 }
 
 
 auto Handle(ReportParameterValuesRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing ReportParameterValuesRequest\n");
+    DEBUG_PRINT("Handling ReportParameterValuesRequest\n");
     // TODO: Implement this
 }
 
 
 auto Handle(SetParameterValuesRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing SetParameterValuesRequest\n");
+    DEBUG_PRINT("Handling SetParameterValuesRequest\n");
     // TODO: Implement this
 }
 
 
 auto Handle(DeleteAFileRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing DeleteAFileRequest\n");
+    DEBUG_PRINT("Handling DeleteAFileRequest\n");
     // TODO: Implement this
 }
 
 
 auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing ReportTheAttributesOfAFileRequest\n");
+    DEBUG_PRINT("Handling ReportTheAttributesOfAFileRequest\n");
     // TODO: Implement this
 }
 
@@ -356,14 +372,14 @@ auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const &
 auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
             RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing SummaryReportTheContentOfARepositoryRequest\n");
+    DEBUG_PRINT("Handling SummaryReportTheContentOfARepositoryRequest\n");
     // TODO: Implement this
 }
 
 
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Executing CopyAFileRequest\n");
+    DEBUG_PRINT("Handling CopyAFileRequest\n");
     // TODO: Implement this
 }
 }

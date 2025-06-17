@@ -14,6 +14,7 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
@@ -55,11 +56,13 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        DEBUG_PRINT("Starting telemetry thread\n");
         TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
             persistentVariables.Store<"realTime">(CurrentRealTime());
             auto telemetryRecord = CollectTelemetryData();
             telemetryMemory.PushBack(telemetryRecord);
+            DEBUG_PRINT("Publishing telemetry record\n");
             telemetryRecordMailbox.Overwrite(telemetryRecord);
             ResumeRfCommunicationThread();
         }
