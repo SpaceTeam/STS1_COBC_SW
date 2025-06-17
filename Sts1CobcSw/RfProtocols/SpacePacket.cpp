@@ -49,6 +49,7 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     (void)DeserializeFrom<std::endian::big>(buffer.data(), &packet.primaryHeader);
     auto packetIsValid = packet.primaryHeader.versionNumber == packetVersionNumber
                      and packet.primaryHeader.packetType == packettype::telecommand
+                     and packet.primaryHeader.secondaryHeaderFlag == 1
                      and packet.primaryHeader.sequenceFlags == 0b11;
     if(not packetIsValid)
     {

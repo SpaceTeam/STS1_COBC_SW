@@ -142,7 +142,7 @@ TEST_CASE("Parsing Space Packets")
     CHECK(packet.dataField.size() == 1U);
     CHECK(packet.dataField[0] == 0xAB_b);
 
-    buffer[0] = 0b0001'0111_b;  // Version number, packet type, sec. header flag, APID
+    buffer[0] = 0b0001'1111_b;  // Version number, packet type, sec. header flag, APID
     buffer[1] = 0b1111'1111_b;  // APID
     buffer[2] = 0b1100'0100_b;  // Sequence flags, packet sequence count
     buffer[3] = 26_b;           // Packet sequence count
@@ -154,7 +154,7 @@ TEST_CASE("Parsing Space Packets")
     packet = parseResult.value();
     CHECK(packet.primaryHeader.versionNumber == sts1cobcsw::packetVersionNumber);
     CHECK(packet.primaryHeader.packetType == sts1cobcsw::packettype::telecommand);
-    CHECK(packet.primaryHeader.secondaryHeaderFlag == 0);
+    CHECK(packet.primaryHeader.secondaryHeaderFlag == 1);
     CHECK(packet.primaryHeader.apid == sts1cobcsw::idlePacketApid);
     CHECK(packet.primaryHeader.sequenceFlags == 0b11);
     CHECK(packet.primaryHeader.packetSequenceCount == 1024 + 26);
@@ -178,14 +178,14 @@ TEST_CASE("Parsing Space Packets")
     CHECK(parseResult.error() == ErrorCode::invalidSpacePacket);
 
     // Wrong APID
-    buffer[0] = 0b0001'0000_b;  // Version number, packet type, sec. header flag, APID
+    buffer[0] = 0b0001'1000_b;  // Version number, packet type, sec. header flag, APID
     buffer[1] = 0b0000'0000_b;  // APID
     parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidApid);
 
     // Wrong sequence flags
-    buffer[0] = 0b0001'0111_b;  // Version number, packet type, sec. header flag, APID
+    buffer[0] = 0b0001'1111_b;  // Version number, packet type, sec. header flag, APID
     buffer[1] = 0b1111'1111_b;  // APID
     buffer[2] = 0b0000'0000_b;  // Sequence flags, packet sequence count
     parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
