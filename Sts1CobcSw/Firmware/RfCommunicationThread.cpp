@@ -46,7 +46,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 1000;
+constexpr auto stackSize = 2000;
 constexpr auto rxTimeout = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 constexpr auto rxToTxSwitchDuration = 300 * ms;

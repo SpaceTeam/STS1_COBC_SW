@@ -33,7 +33,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 4000U;
+constexpr auto stackSize = 1000U;
 constexpr auto telemetryThreadInterval = 30 * s;
 
 
