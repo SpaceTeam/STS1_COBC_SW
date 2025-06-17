@@ -24,19 +24,19 @@ TEST_CASE("Parsing TC Transfer Frames")
     buffer[2] = 0b0000'1100_b;  // VCID, frame length
     buffer[3] = 222_b;          // Frame length
     buffer[4] = 13_b;           // Frame sequence number
-    buffer[5] = 0x17_b;         // Security parameter index (high byte)
-    buffer[6] = 0x17_b;         // Security parameter index (low byte)
+    buffer[5] = 0x00_b;         // Security parameter index (high byte)
+    buffer[6] = 0x01_b;         // Security parameter index (low byte)
     // Data field
     buffer[7] = 0xFF_b;
     buffer[8] = 0xEE_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 8] = 0x4F_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 7] = 0x10_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 6] = 0xFC_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 5] = 0x12_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 4] = 0xC1_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 3] = 0x13_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 2] = 0x44_b;
-    buffer[sts1cobcsw::tc::transferFrameLength - 1] = 0x5D_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 8] = 0x38_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 7] = 0x34_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 6] = 0x83_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 5] = 0x8B_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 4] = 0x28_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 3] = 0xA3_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 2] = 0xF6_b;
+    buffer[sts1cobcsw::tc::transferFrameLength - 1] = 0x2C_b;
     auto parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_value());
     auto & frame = parseResult.value();
@@ -80,12 +80,12 @@ TEST_CASE("Parsing TC Transfer Frames")
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidFrameLength);
 
     buffer[3] = 222_b;   // Correct frame length
-    buffer[5] = 0x00_b;  // Wrong security parameter index
+    buffer[5] = 0xFF_b;  // Wrong security parameter index
     parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == sts1cobcsw::ErrorCode::invalidSecurityParameterIndex);
 
-    buffer[5] = 0x17_b;                                        // Correct security parameter index
+    buffer[5] = 0x00_b;                                        // Correct security parameter index
     buffer[sts1cobcsw::tc::transferFrameLength - 1] = 0x00_b;  // Wrong authentication code
     parseResult = sts1cobcsw::tc::ParseAsTransferFrame(buffer);
     CHECK(parseResult.has_error());

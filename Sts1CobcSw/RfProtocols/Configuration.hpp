@@ -42,7 +42,7 @@ inline constexpr auto transferFrameDataLength = transferFrameLength
                                               - securityHeaderLength - securityTrailerLength;
 }
 
-inline constexpr std::uint16_t securityParameterIndex = 0x1717;
+inline constexpr std::uint16_t securityParameterIndex = 1;
 
 using SpacecraftId = Id<UInt<10>, 0x123>;  // NOLINT(*magic-numbers)
 inline constexpr auto spacecraftId = Make<SpacecraftId, 0x123>();
