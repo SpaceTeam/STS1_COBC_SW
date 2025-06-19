@@ -259,6 +259,34 @@ auto SetTxDataLength(std::uint16_t length) -> void
 }
 
 
+auto SetTxDataRate(std::uint32_t dataRate) -> void
+{
+    (void)dataRate;
+    // TODO: Implement this
+}
+
+
+auto SetRxDataRate(std::uint32_t dataRate) -> void
+{
+    (void)dataRate;
+    // TODO: Implement this
+}
+
+
+auto GetTxDataRate() -> std::uint32_t
+{
+    // TODO: Implement this
+    return 0;
+}
+
+
+auto GetRxDataRate() -> std::uint32_t
+{
+    // TODO: Implement this
+    return 0;
+}
+
+
 auto SendAndWait(std::span<Byte const> data) -> Result<void>
 {
     SetTxDataLength(static_cast<std::uint16_t>(data.size()));
