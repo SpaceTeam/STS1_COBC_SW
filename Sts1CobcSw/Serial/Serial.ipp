@@ -55,17 +55,6 @@ inline auto SerializeTo(void * destination, T const & t) -> void *
 }
 
 
-template<std::endian endianness, typename T>
-[[nodiscard]] auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *
-{
-    for(auto const & element : vector)
-    {
-        destination = SerializeTo<endianness>(destination, element);
-    }
-    return destination;
-}
-
-
 template<std::endian endianness, typename T, std::size_t size>
 auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *
 {
@@ -77,9 +66,28 @@ auto SerializeTo(void * destination, std::array<T, size> const & array) -> void 
 }
 
 
+template<std::endian endianness, typename T>
+auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *
+{
+    for(auto const & element : vector)
+    {
+        destination = SerializeTo<endianness>(destination, element);
+    }
+    return destination;
+}
+
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, etl::istring const & string) -> void *
+{
+    destination = std::ranges::copy(string, static_cast<char *>(destination)).out;
+    return destination;
+}
+
+
 template<std::endian endianness, std::size_t... nBits>
     requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
-[[nodiscard]] auto SerializeTo(void * destination, UInt<nBits>... uInts) -> void *
+auto SerializeTo(void * destination, UInt<nBits>... uInts) -> void *
 {
     static constexpr auto totalNBits = (nBits + ...);
     using Buffer = SmallestUnsignedType<totalNBits>;
@@ -145,7 +153,7 @@ auto DeserializeFrom(void const * source, etl::istring * string) -> void const *
 
 template<std::endian endianness, std::size_t... nBits>
     requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
-[[nodiscard]] auto DeserializeFrom(void const * source, UInt<nBits> *... uInts) -> void const *
+auto DeserializeFrom(void const * source, UInt<nBits> *... uInts) -> void const *
 {
     static constexpr auto totalNBits = (nBits + ...);
     static constexpr auto totalNBytes = totalNBits / CHAR_BIT;

@@ -409,8 +409,8 @@ TEST_CASE("File attribute report")
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
-          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
-              + totalSerialSize<decltype(fileSize), decltype(fileStatus)>));
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength
+              + totalSerialSize<decltype(filePath), decltype(fileSize), decltype(fileStatus)>));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
     CHECK(dataField[1] == 23_b);    // Service type ID
@@ -431,7 +431,7 @@ TEST_CASE("File attribute report")
     CHECK(fileSize == (Deserialize<std::uint32_t, 11 + fs::Path::MAX_SIZE>(dataField)));
     // File status
     static constexpr auto iFileStatus =
-        11 + fs::Path::MAX_SIZE + totalSerialSize<decltype(fileSize)>;
+        11 + totalSerialSize<decltype(filePath), decltype(fileSize)>;
     CHECK(fileStatus == (Deserialize<FileStatus, iFileStatus>(dataField)));
 
     dataField.clear();
@@ -476,9 +476,9 @@ TEST_CASE("Repository content summary report")
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
-          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
-              + totalSerialSize<decltype(nObjects)>
-              + nObjects * (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE)));
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength
+              + totalSerialSize<decltype(repositoryPath), decltype(nObjects)>
+              + nObjects * (totalSerialSize<ObjectType, fs::Path>)));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
     CHECK(dataField[1] == 23_b);    // Service type ID

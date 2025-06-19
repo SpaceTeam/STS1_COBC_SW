@@ -246,9 +246,10 @@ namespace sts1cobcsw
 [[nodiscard]] auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRequest>
 {
     auto request = CopyAFileRequest{};
-    auto const applicationDataLength = request.targetFilePath.capacity()
-                                     + request.sourceFilePath.capacity()
-                                     + totalSerialSize<decltype(CopyAFileRequest::operationId)>;
+    static constexpr auto applicationDataLength =
+        totalSerialSize<decltype(CopyAFileRequest::operationId),
+                        decltype(CopyAFileRequest::sourceFilePath),
+                        decltype(CopyAFileRequest::targetFilePath)>;
     if(buffer.size() != applicationDataLength)
     {
         return ErrorCode::invalidDataLength;

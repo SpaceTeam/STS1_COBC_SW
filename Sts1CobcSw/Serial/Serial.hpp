@@ -55,6 +55,9 @@ inline constexpr std::size_t serialSize<std::array<T, size>> = serialSize<T> * s
 template<AUInt T>
 inline constexpr std::size_t serialSize<T> = serialSize<SmallestUnsignedType<T::size>>;
 
+template<std::size_t capacity>
+inline constexpr std::size_t serialSize<etl::string<capacity>> = capacity;
+
 namespace internal
 {
 template<typename... Ts>
@@ -99,11 +102,14 @@ template<std::endian endianness, std::default_initializable T>
 template<std::endian endianness, TriviallySerializable T>
 [[nodiscard]] auto SerializeTo(void * destination, T const & t) -> void *;
 
+template<std::endian endianness, typename T, std::size_t size>
+[[nodiscard]] auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *;
+
 template<std::endian endianness, typename T>
 [[nodiscard]] auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *;
 
-template<std::endian endianness, typename T, std::size_t size>
-[[nodiscard]] auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *;
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, etl::istring const & string) -> void *;
 
 // Serializing UInt<>s is only implemented for big endian with MSB first
 template<std::endian endianness, std::size_t... nBits>

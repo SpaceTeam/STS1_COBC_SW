@@ -154,7 +154,7 @@ auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::ranges::copy(filePath_, static_cast<char *>(cursor)).out;
+    cursor = SerializeTo<ccsdsEndianness>(cursor, filePath_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     (void)SerializeTo<ccsdsEndianness>(cursor, fileStatus_);
 }
@@ -162,9 +162,10 @@ auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 
 auto FileAttributeReport::DoSize() const -> std::uint16_t
 {
-    return static_cast<std::uint16_t>(
-        totalSerialSize<decltype(secondaryHeader_), decltype(fileSize_), decltype(fileStatus_)>
-        + fs::Path::MAX_SIZE);
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(secondaryHeader_),
+                                                      decltype(filePath_),
+                                                      decltype(fileSize_),
+                                                      decltype(fileStatus_)>);
 }
 
 
@@ -192,13 +193,12 @@ auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) con
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::ranges::copy(repositoryPath_, static_cast<char *>(cursor)).out;
+    cursor = SerializeTo<ccsdsEndianness>(cursor, repositoryPath_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, nObjects_);
     for(auto i = 0U; i < objectTypes_.size(); ++i)
     {
         cursor = SerializeTo<ccsdsEndianness>(cursor, objectTypes_[i]);
-        cursor =
-            std::copy(objectNames_[i].begin(), objectNames_[i].end(), static_cast<char *>(cursor));
+        cursor = SerializeTo<ccsdsEndianness>(cursor, objectNames_[i]);
     }
 }
 
@@ -206,8 +206,8 @@ auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) con
 auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
-        totalSerialSize<decltype(secondaryHeader_), decltype(nObjects_)> + fs::Path::MAX_SIZE
-        + objectTypes_.size() * (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE));
+        totalSerialSize<decltype(secondaryHeader_), decltype(repositoryPath_), decltype(nObjects_)>
+        + objectTypes_.size() * (totalSerialSize<ObjectType, fs::Path>));
 }
 
 

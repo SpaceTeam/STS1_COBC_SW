@@ -156,9 +156,9 @@ class RepositoryContentSummaryReport : public Payload
 {
 public:
     static constexpr auto maxNObjectsPerPacket =
-        (tm::maxPacketDataLength - tm::packetSecondaryHeaderLength - fs::Path::MAX_SIZE
-         - totalSerialSize<std::uint8_t>)
-        / (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE);
+        (tm::maxPacketDataLength - tm::packetSecondaryHeaderLength
+         - totalSerialSize<fs::Path, std::uint8_t>)
+        / (totalSerialSize<ObjectType, fs::Path>);
 
     RepositoryContentSummaryReport(
         fs::Path const & repositoryPath,
