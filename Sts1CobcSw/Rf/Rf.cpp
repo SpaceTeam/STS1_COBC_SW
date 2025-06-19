@@ -140,6 +140,20 @@ using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
 
 // --- Private function declarations ---
 
+[[nodiscard]] auto DoInitialize(TxType txType) -> Result<void>;
+[[nodiscard]] auto DoReadPartNumber() -> Result<std::uint16_t>;
+[[nodiscard]] auto DoEnterStandbyMode() -> Result<void>;
+[[nodiscard]] auto DoSetTxType(TxType txType) -> Result<void>;
+[[nodiscard]] auto DoSetTxDataLength(std::uint16_t length) -> Result<void>;
+[[nodiscard]] auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>;
+[[nodiscard]] auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>;
+[[nodiscard]] auto DoGetTxDataRate() -> Result<std::uint32_t>;
+[[nodiscard]] auto DoGetRxDataRate() -> Result<std::uint32_t>;
+[[nodiscard]] auto DoSendAndWait(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>;
+[[nodiscard]] auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>;
+
 auto InitializeGpiosAndSpi() -> void;
 [[nodiscard]] auto ApplyPatch() -> Result<void>;
 [[nodiscard]] auto PowerUp() -> Result<void>;
@@ -188,12 +202,8 @@ auto SetProperties(PropertyGroup propertyGroup,
 
 auto Initialize(TxType txType) -> void
 {
-    InitializeGpiosAndSpi();
     // TODO: handle error
-    (void)ApplyPatch();
-    (void)PowerUp();
-    (void)Configure(txType);
-    persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
+    (void)DoInitialize(txType);
 }
 
 
@@ -214,26 +224,138 @@ auto DisableTx() -> void
 auto ReadPartNumber() -> std::uint16_t
 {
     // TODO: handle error
-    auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
+    auto answer = DoReadPartNumber();
     if(answer.has_error())
     {
         return {};
     }
-    return Deserialize<std::endian::big, std::uint16_t>(Span(answer.value()).subspan<1, 2>());
+    return answer.value();
 }
 
 
 auto EnterStandbyMode() -> void
 {
-    static constexpr auto standbyMode = 0x01_b;
     // TODO: handle error
-    (void)SendCommand(Span({cmdChangeState, standbyMode}));
-    isInTxMode = false;
-    EnableRfLatchupProtection();
+    (void)DoEnterStandbyMode();
 }
 
 
 auto SetTxType(TxType txType) -> void
+{
+    // TODO: handle error
+    (void)DoSetTxType(txType);
+}
+
+
+// Must be called before SendAndContinue()
+auto SetTxDataLength(std::uint16_t length) -> void
+{
+    // TODO: handle error
+    (void)DoSetTxDataLength(length);
+}
+
+
+auto SetTxDataRate(std::uint32_t dataRate) -> void
+{
+    // TODO: handle error
+    (void)DoSetTxDataRate(dataRate);
+}
+
+
+auto SetRxDataRate(std::uint32_t dataRate) -> void
+{
+    // TODO: handle error
+    (void)DoSetRxDataRate(dataRate);
+}
+
+
+auto GetTxDataRate() -> std::uint32_t
+{
+    // TODO: handle error
+    auto result = DoGetTxDataRate();
+    if(result.has_error())
+    {
+        return 0;
+    }
+    return result.value();
+}
+
+
+auto GetRxDataRate() -> std::uint32_t
+{
+    // TODO: handle error
+    auto result = DoGetRxDataRate();
+    if(result.has_error())
+    {
+        return 0;
+    }
+    return result.value();
+}
+
+
+auto SendAndWait(std::span<Byte const> data) -> Result<void>
+{
+    // TODO: handle error
+    return DoSendAndWait(data);
+}
+
+
+// Send the data to the RF module and return as soon as the last chunk was written to the FIFO. This
+// allows sending multiple data packets without interruption.
+auto SendAndContinue(std::span<Byte const> data) -> Result<void>
+{
+    // TODO: handle error
+    return DoSendAndContinue(data);
+}
+
+
+auto SuspendUntilDataSent(Duration timeout) -> Result<void>
+{
+    // TODO: handle error
+    return DoSuspendUntilDataSent(timeout);
+}
+
+
+auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
+{
+    // TODO: handle error
+    return DoReceive(data, timeout);
+}
+
+
+// --- Private function definitions ---
+
+namespace
+{
+auto DoInitialize(TxType txType) -> Result<void>
+{
+    InitializeGpiosAndSpi();
+    OUTCOME_TRY(ApplyPatch());
+    OUTCOME_TRY(PowerUp());
+    OUTCOME_TRY(Configure(txType));
+    persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
+    return outcome_v2::success();
+}
+
+
+auto DoReadPartNumber() -> Result<std::uint16_t>
+{
+    OUTCOME_TRY(auto answer, SendCommand<partInfoAnswerLength>(Span(cmdPartInfo)));
+    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+}
+
+
+auto DoEnterStandbyMode() -> Result<void>
+{
+    static constexpr auto standbyMode = 0x01_b;
+    OUTCOME_TRY(SendCommand(Span({cmdChangeState, standbyMode})));
+    isInTxMode = false;
+    EnableRfLatchupProtection();
+    return outcome_v2::success();
+}
+
+
+auto DoSetTxType(TxType txType) -> Result<void>
 {
     // Constants for setting the TX type (morse, 2GFSK)
     // MODEM_DATA_RATE: unused, 20 kBaud
@@ -251,8 +373,7 @@ auto SetTxType(TxType txType) -> void
     static constexpr auto startIndex = 0x00_b;
     auto modemModeType = (txType == TxType::morse ? modemModeTypeMorse : modemModeType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
-    // TODO: handle error
-    (void)SetProperties(
+    return SetProperties(
         PropertyGroup::modem,
         startIndex,
         Span(FlatArray(modemModeType,
@@ -263,67 +384,65 @@ auto SetTxType(TxType txType) -> void
 }
 
 
-// Must be called before SendAndContinue()
-auto SetTxDataLength(std::uint16_t length) -> void
+auto DoSetTxDataLength(std::uint16_t length) -> Result<void>
 {
     static constexpr auto iPktField1Length = 0x0D_b;
-    // TODO: handle error
-    (void)SetProperties(
+    return SetProperties(
         PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
 }
 
 
-auto SetTxDataRate(std::uint32_t dataRate) -> void
+auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>
 {
-    (void)dataRate;
     // TODO: Implement this
+    (void)dataRate;
+    return outcome_v2::success();
 }
 
 
-auto SetRxDataRate(std::uint32_t dataRate) -> void
+auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
 {
-    (void)dataRate;
     // TODO: Implement this
+    (void)dataRate;
+    return outcome_v2::success();
 }
 
 
-auto GetTxDataRate() -> std::uint32_t
+auto DoGetTxDataRate() -> Result<std::uint32_t>
 {
     // TODO: Implement this
     return 0;
 }
 
 
-auto GetRxDataRate() -> std::uint32_t
+auto DoGetRxDataRate() -> Result<std::uint32_t>
 {
     // TODO: Implement this
     return 0;
 }
 
 
-auto SendAndWait(std::span<Byte const> data) -> Result<void>
+auto DoSendAndWait(std::span<Byte const> data) -> Result<void>
 {
     if(not persistentVariables.Load<"txIsOn">())
     {
         return outcome_v2::success();
     }
-    SetTxDataLength(static_cast<std::uint16_t>(data.size()));
+    OUTCOME_TRY(DoSetTxDataLength(static_cast<std::uint16_t>(data.size())));
     auto result = [&]() -> Result<void>
     {
-        OUTCOME_TRY(SendAndContinue(data));
-        auto suspendUntilInterruptResult = SuspendUntilDataSent(interruptTimeout);
+        OUTCOME_TRY(DoSendAndContinue(data));
+        auto suspendUntilInterruptResult = DoSuspendUntilDataSent(interruptTimeout);
         OUTCOME_TRY(SetPacketHandlerInterrupts(noInterrupts));
         return suspendUntilInterruptResult;
     }();
-    EnterStandbyMode();
+    OUTCOME_TRY(DoEnterStandbyMode());
     return result;
 }
 
 
-// Send the data to the RF module and return as soon as the last chunk was written to the FIFO. This
-// allows sending multiple data packets without interruption.
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-auto SendAndContinue(std::span<Byte const> data) -> Result<void>
+auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
 {
     if(not persistentVariables.Load<"txIsOn">())
     {
@@ -367,7 +486,7 @@ auto SendAndContinue(std::span<Byte const> data) -> Result<void>
 }
 
 
-auto SuspendUntilDataSent(Duration timeout) -> Result<void>
+auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>
 {
     OUTCOME_TRY(SetPacketHandlerInterrupts(packetSentInterrupt));
     static constexpr auto iPacketHandlerStatus = 3;
@@ -389,7 +508,7 @@ auto SuspendUntilDataSent(Duration timeout) -> Result<void>
 
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
+auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>
 {
     auto result = [&]() -> Result<void>
     {
@@ -420,16 +539,12 @@ auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
         OUTCOME_TRY(SetRxFifoThreshold(static_cast<Byte>(rxFifoThreshold)));
         return outcome_v2::success();
     }();
-    EnterStandbyMode();
+    OUTCOME_TRY(DoEnterStandbyMode());
     OUTCOME_TRY(ReadAndClearInterruptStatus());
     return result;
 }
 
 
-// --- Private function definitions ---
-
-namespace
-{
 auto InitializeGpiosAndSpi() -> void
 {
     csGpioPin.SetDirection(hal::PinDirection::out);
@@ -709,7 +824,7 @@ auto Configure(TxType txType) -> Result<void>
                                              pktField1CrcConfig))));
 
     // RF modem mod type
-    SetTxType(txType);
+    OUTCOME_TRY(DoSetTxType(txType));
     // SetTxType sets modem properties from 0x00 to 0x05
     static constexpr auto iModemTxNcoMode = 0x06_b;
     // TXOSR = x40 = 0, NCOMOD = F_XTAL = 26'000'000 = 0x018CBA80
