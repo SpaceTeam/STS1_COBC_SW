@@ -96,10 +96,12 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidSourceId";
         case ErrorCode::invalidApplicationData:
             return "invalidApplicationData";
-        case ErrorCode::invalidDataArea:
-            return "invalidDataArea";
         case ErrorCode::invalidDataLength:
             return "invalidDataLength";
+        case ErrorCode::invalidDataArea:
+            return "invalidDataArea";
+        case ErrorCode::invalidParameterId:
+            return "invalidParameterId";
         case ErrorCode::emptyFilePath:
             return "emptyFilePath";
         case ErrorCode::misaligned:

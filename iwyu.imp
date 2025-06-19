@@ -64,6 +64,7 @@
   { include: ["\"Sts1CobcSw/Serial/Serial.ipp\"",                       "private", "<Sts1CobcSw/Serial/Serial.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RealTime/RealTime.ipp\"",                   "private", "<Sts1CobcSw/RealTime/RealTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/Id.ipp\"",                      "private", "<Sts1CobcSw/RfProtocols/Id.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/RfProtocols/Vocabulary.ipp\"",              "private", "<Sts1CobcSw/RfProtocols/Vocabulary.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RodosTime/RodosTime.ipp\"",                 "private", "<Sts1CobcSw/RodosTime/RodosTime.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/ErrorDetectionAndCorrection.ipp\"", "private", "<Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",                        "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },

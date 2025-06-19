@@ -6,8 +6,8 @@ namespace sts1cobcsw
 template<std::endian endianness>
 auto SerializeTo(void * destination, Parameter const & parameter) -> void *
 {
-    destination = SerializeTo<endianness>(destination, parameter.parameterId);
-    destination = SerializeTo<endianness>(destination, parameter.parameterValue);
+    destination = SerializeTo<endianness>(destination, parameter.id);
+    destination = SerializeTo<endianness>(destination, parameter.value);
     return destination;
 }
 
@@ -19,8 +19,8 @@ template auto SerializeTo<std::endian::little>(void *, Parameter const &) -> voi
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *
 {
-    source = DeserializeFrom<endianness>(source, &parameter->parameterId);
-    source = DeserializeFrom<endianness>(source, &parameter->parameterValue);
+    source = DeserializeFrom<endianness>(source, &parameter->id);
+    source = DeserializeFrom<endianness>(source, &parameter->value);
     return source;
 }
 

@@ -147,6 +147,13 @@ namespace sts1cobcsw
     }
     request.parameterIds.resize(request.nParameters);
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &request.parameterIds);
+    for(auto parameterId : request.parameterIds)
+    {
+        if(not IsValid(parameterId))
+        {
+            return ErrorCode::invalidParameterId;
+        }
+    }
     return request;
 }
 
@@ -173,6 +180,13 @@ namespace sts1cobcsw
     }
     request.parameters.resize(request.nParameters);
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &request.parameters);
+    for(auto parameter : request.parameters)
+    {
+        if(not IsValid(parameter.id))
+        {
+            return ErrorCode::invalidParameterId;
+        }
+    }
     return request;
 }
 

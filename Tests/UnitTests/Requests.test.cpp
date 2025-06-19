@@ -225,8 +225,8 @@ TEST_CASE("ReportParameterValuesRequest")
     CHECK(request.parameterIds[0] == sts1cobcsw::Parameter::Id::rxDataRate);
     CHECK(request.parameterIds[1] == sts1cobcsw::Parameter::Id::txDataRate);
     CHECK(request.parameterIds[2] == sts1cobcsw::Parameter::Id::realTimeOffsetCorrection);
-    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
-    CHECK(request.parameterIds[4] == sts1cobcsw::Parameter::Id::eduStartDelayLimit);
+    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::eduStartDelayLimit);
+    CHECK(request.parameterIds[4] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
 
     // No more than 5 Parameters are allowed
     buffer[0] = 0x06_b;
@@ -261,33 +261,43 @@ TEST_CASE("SetParameterValuesRequest")
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
     buffer.resize(26);
     buffer[0] = 0x05_b;   // Number of ParameterIDs
-    buffer[1] = 0x01_b;   // ParameterID 1
+    buffer[1] = 0x01_b;   // ParameterId 1
     buffer[2] = 0xAA_b;   // ParameterValue 1 (high byte)
     buffer[3] = 0xBB_b;   // ParameterValue 1
     buffer[4] = 0xCC_b;   // ParameterValue 1
     buffer[5] = 0xDD_b;   // ParameterValue 1 (low byte)
-    buffer[6] = 0x02_b;   // ParameterID 2
+    buffer[6] = 0x02_b;   // ParameterId 2
     buffer[7] = 0xBB_b;   // ParameterValue 2 (high byte)
     buffer[8] = 0xCC_b;   // ParameterValue 2
     buffer[9] = 0xDD_b;   // ParameterValue 2
     buffer[10] = 0xEE_b;  // ParameterValue 2 (low byte)
+    buffer[11] = 0x03_b;  // ParameterId 3
+    buffer[16] = 0x04_b;  // ParameterId 4
+    buffer[21] = 0x05_b;  // ParameterId 5
 
     auto parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(buffer);
     CHECK(parseResult.has_value());
     auto request = parseResult.value();
 
     CHECK(request.nParameters == 0x05);
-    CHECK(request.parameters[0].parameterId == sts1cobcsw::Parameter::Id::rxDataRate);
-    CHECK(request.parameters[0].parameterValue == 0xAABB'CCDD);
-    CHECK(request.parameters[1].parameterId == sts1cobcsw::Parameter::Id::txDataRate);
-    CHECK(request.parameters[1].parameterValue == 0xBBCC'DDEE);
+    CHECK(request.parameters[0].id == sts1cobcsw::Parameter::Id::rxDataRate);
+    CHECK(request.parameters[0].value == 0xAABB'CCDD);
+    CHECK(request.parameters[1].id == sts1cobcsw::Parameter::Id::txDataRate);
+    CHECK(request.parameters[1].value == 0xBBCC'DDEE);
+
+    // Minimum buffer size needs to be 1
+    auto smallBuffer = etl::vector<Byte, 1>{};
+    smallBuffer.resize(0);
+    parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 
     // No more than 5 Parameters are allowed
     buffer[0] = 0x06_b;
     parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
-    buffer[0] = 0x02_b;
+    buffer[0] = 0x05_b;
 
     // For 5 Parameter, a buffer of 26 is required
     auto smallerBuffer = etl::vector<Byte, 25>{};
@@ -297,12 +307,11 @@ TEST_CASE("SetParameterValuesRequest")
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidDataLength);
 
-    // Minimum buffer size needs to be 1
-    auto smallBuffer = etl::vector<Byte, 1>{};
-    smallBuffer.resize(0);
-    parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(smallBuffer);
+    // All parameter IDs must be valid
+    buffer[1] = 0xFF_b;  // Invalid ParameterId
+    parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(buffer);
     CHECK(parseResult.has_error());
-    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+    CHECK(parseResult.error() == ErrorCode::invalidParameterId);
 }
 
 

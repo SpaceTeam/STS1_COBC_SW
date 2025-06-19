@@ -376,11 +376,11 @@ TEST_CASE("Parameter value report")
     CHECK(dataField[11] == 3_b);
     // Parameters
     CHECK(dataField[12] == static_cast<Byte>(Parameter::Id::rxDataRate));
-    CHECK(parameters[0].parameterValue == (Deserialize<Parameter::Value, 13>(dataField)));
+    CHECK(parameters[0].value == (Deserialize<Parameter::Value, 13>(dataField)));
     CHECK(dataField[17] == static_cast<Byte>(Parameter::Id::txDataRate));
-    CHECK(parameters[1].parameterValue == (Deserialize<Parameter::Value, 18>(dataField)));
+    CHECK(parameters[1].value == (Deserialize<Parameter::Value, 18>(dataField)));
     CHECK(dataField[22] == static_cast<Byte>(Parameter::Id::eduStartDelayLimit));
-    CHECK(parameters[2].parameterValue == (Deserialize<Parameter::Value, 23>(dataField)));
+    CHECK(parameters[2].value == (Deserialize<Parameter::Value, 23>(dataField)));
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);

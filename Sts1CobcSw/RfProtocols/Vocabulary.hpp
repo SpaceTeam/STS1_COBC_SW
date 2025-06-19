@@ -17,13 +17,13 @@ struct Parameter
         rxDataRate = 1,
         txDataRate,
         realTimeOffsetCorrection,
-        newEduResultIsAvailable,
         eduStartDelayLimit,
+        newEduResultIsAvailable,
     };
     using Value = std::uint32_t;
 
-    Id parameterId;
-    Value parameterValue;
+    Id id;
+    Value value;
 };
 
 
@@ -32,8 +32,13 @@ inline constexpr std::size_t serialSize<Parameter> =
     totalSerialSize<Parameter::Id, Parameter::Value>;
 
 
+constexpr auto IsValid(Parameter::Id parameterId) -> bool;
+
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, Parameter const & parameter) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, Parameter * parameter) -> void const *;
 }
+
+
+#include <Sts1CobcSw/RfProtocols/Vocabulary.ipp>  // IWYU pragma: keep
