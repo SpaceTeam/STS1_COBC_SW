@@ -86,6 +86,9 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
             RequestId const & requestId) -> void;
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void;
 
+auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
+auto Set(Parameter parameter) -> void;
+
 
 class RfCommunicationThread : public RODOS::StaticThread<stackSize>
 {
@@ -354,17 +357,30 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
 }
 
 
-auto Handle(ReportParameterValuesRequest const & request, RequestId const & requestId) -> void
+auto Handle(ReportParameterValuesRequest const & request,
+            [[maybe_unused]] RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Handling ReportParameterValuesRequest\n");
-    // TODO: Implement this
+    auto parameters = etl::vector<Parameter, maxNParameters>{};
+    for(auto parameterId : request.parameterIds)
+    {
+        parameters.push_back({parameterId, GetValue(parameterId)});
+    }
+    DEBUG_PRINT("Sending parameter value report\n");
+    Send(ParameterValueReport(parameters));
 }
 
 
-auto Handle(SetParameterValuesRequest const & request, RequestId const & requestId) -> void
+auto Handle(SetParameterValuesRequest const & request, [[maybe_unused]] RequestId const & requestId)
+    -> void
 {
-    DEBUG_PRINT("Handling SetParameterValuesRequest\n");
-    // TODO: Implement this
+    auto parameters = etl::vector<Parameter, maxNParameters>{};
+    for(auto parameter : request.parameters)
+    {
+        Set(parameter);
+        parameters.push_back({parameter.id, GetValue(parameter.id)});
+    }
+    DEBUG_PRINT("Sending parameter value report\n");
+    Send(ParameterValueReport(parameters));
 }
 
 
@@ -394,6 +410,49 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
 {
     DEBUG_PRINT("Handling CopyAFileRequest\n");
     // TODO: Implement this
+}
+
+
+auto GetValue(Parameter::Id parameterId) -> Parameter::Value
+{
+    switch(parameterId)
+    {
+        case Parameter::Id::rxDataRate:
+            return rf::GetRxDataRate();
+        case Parameter::Id::txDataRate:
+            return rf::GetTxDataRate();
+        case Parameter::Id::realTimeOffsetCorrection:
+            return static_cast<std::uint32_t>(persistentVariables.Load<"realTimeOffsetCorrection">()
+                                              / s);
+        case Parameter::Id::eduStartDelayLimit:
+            return static_cast<std::uint32_t>(persistentVariables.Load<"eduStartDelayLimit">() / s);
+        case Parameter::Id::newEduResultIsAvailable:
+            return persistentVariables.Load<"newEduResultIsAvailable">() ? 1 : 0;
+    }
+    return 0;  // Should never be reached
+}
+
+
+auto Set(Parameter parameter) -> void
+{
+    switch(parameter.id)
+    {
+        case Parameter::Id::rxDataRate:
+            rf::SetRxDataRate(parameter.value);
+            break;
+        case Parameter::Id::txDataRate:
+            rf::SetTxDataRate(parameter.value);
+            break;
+        case Parameter::Id::realTimeOffsetCorrection:
+            persistentVariables.Store<"realTimeOffsetCorrection">(parameter.value * s);
+            break;
+        case Parameter::Id::eduStartDelayLimit:
+            persistentVariables.Store<"eduStartDelayLimit">(parameter.value * s);
+            break;
+        case Parameter::Id::newEduResultIsAvailable:
+            persistentVariables.Store<"newEduResultIsAvailable">(parameter.value != 0U);
+            break;
+    }
 }
 }
 }
