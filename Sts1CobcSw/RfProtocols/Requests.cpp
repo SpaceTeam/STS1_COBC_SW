@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
@@ -53,14 +54,18 @@ namespace sts1cobcsw
     }
     auto request = LoadRawMemoryDataAreasRequest{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request);
-    if(not(request.nDataAreas == 1))
+    if(request.nDataAreas != 1)
     {
         return ErrorCode::invalidApplicationData;
     }
     static constexpr auto maxDataLength = tc::maxMessageDataLength - minApplicationDataLength;
-    if(request.dataLength > maxDataLength)
+    auto endAddress = request.startAddress + fram::Size(request.dataLength);
+    auto dataAreaIsValid = request.dataLength <= maxDataLength
+                       and request.startAddress >= framSections.Get<"testMemory">().begin
+                       and endAddress < framSections.Get<"testMemory">().end;
+    if(not dataAreaIsValid)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidDataArea;
     }
     if(buffer.size() != minApplicationDataLength + request.dataLength)
     {
@@ -98,7 +103,7 @@ namespace sts1cobcsw
     {
         if(dataArea.length > maxDumpedDataLength)
         {
-            return ErrorCode::invalidApplicationData;
+            return ErrorCode::invalidDataArea;
         }
     }
     return request;

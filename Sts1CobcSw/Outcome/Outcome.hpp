@@ -68,6 +68,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidMessageTypeId,
     invalidSourceId,
     invalidApplicationData,
+    invalidDataArea,
     invalidDataLength,
     emptyFilePath,
     // Firmware
