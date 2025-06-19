@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
@@ -72,6 +73,8 @@ auto Handle(Request const & request, RequestId const & requestId) -> void;
 template<auto parseFunction>
 auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> void;
 
+// Only those requests which answer with a successful/failed verification report need the requestId,
+// but to make our life in VerifyAndHandle() easier, we pass it to all handlers.
 auto Handle(LoadRawMemoryDataAreasRequest const & request, RequestId const & requestId) -> void;
 auto Handle(DumpRawMemoryDataRequest const & request, RequestId const & requestId) -> void;
 auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void;
@@ -322,15 +325,25 @@ auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> vo
 
 auto Handle(LoadRawMemoryDataAreasRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Handling LoadRawMemoryDataAreasRequest\n");
-    // TODO: Implement this
+    static constexpr auto timeout = 100 * ms;
+    fram::WriteTo(request.startAddress, request.data, timeout);
+    DEBUG_PRINT("Successfully loaded raw memory data areas\n");
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
-auto Handle(DumpRawMemoryDataRequest const & request, RequestId const & requestId) -> void
+auto Handle(DumpRawMemoryDataRequest const & request, [[maybe_unused]] RequestId const & requestId)
+    -> void
 {
-    DEBUG_PRINT("Handling DumpRawMemoryDataRequest\n");
-    // TODO: Implement this
+    auto dumpedData = etl::vector<Byte, maxDumpedDataLength>{};
+    for(auto && dataArea : request.dataAreas)
+    {
+        dumpedData.uninitialized_resize(dataArea.length);
+        static constexpr auto timeout = 100 * ms;
+        fram::ReadFrom(dataArea.startAddress, std::span(dumpedData), timeout);
+        DEBUG_PRINT("Sending dumped raw memory data report\n");
+        Send(DumpedRawMemoryDataReport(1, dataArea.startAddress, dumpedData));
+    }
 }
 
 
