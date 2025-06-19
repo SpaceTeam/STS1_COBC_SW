@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
@@ -43,4 +44,5 @@ inline auto txDataRateBuffer = RODOS::CommBuffer<std::int32_t>{};
 // we don't need the whole publisher/subscriber mechanism here. A simple mailbox is enough.
 inline auto telemetryRecordMailbox = Mailbox<TelemetryRecord>{};
 inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
+inline auto fileTransferInfoMailbox = Mailbox<FileTransferInfo>{};
 }

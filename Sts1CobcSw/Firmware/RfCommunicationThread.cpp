@@ -1,6 +1,8 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
@@ -49,7 +51,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 2000;
+constexpr auto stackSize = 3000;
 constexpr auto rxTimeout = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 constexpr auto rxToTxSwitchDuration = 300 * ms;
@@ -386,30 +388,88 @@ auto Handle(SetParameterValuesRequest const & request, [[maybe_unused]] RequestI
 
 auto Handle(DeleteAFileRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Handling DeleteAFileRequest\n");
-    // TODO: Implement this
+    auto result = fs::Remove(request.filePath);
+    if(result.has_error())
+    {
+        DEBUG_PRINT(
+            "Failed to delete file %s: %s\n", request.filePath.c_str(), ToCZString(result.error()));
+        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        return;
+    }
+    DEBUG_PRINT("Successfully deleted file %s\n", request.filePath.c_str());
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
 auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Handling ReportTheAttributesOfAFileRequest\n");
-    // TODO: Implement this
+    auto result = [&]() -> Result<void>
+    {
+        OUTCOME_TRY(auto isLocked, fs::IsLocked(request.filePath));
+        OUTCOME_TRY(auto fileSize, fs::FileSize(request.filePath));
+        auto fileStatus = isLocked ? FileStatus::locked : FileStatus::unlocked;
+        DEBUG_PRINT("Sending file attribute report for %s\n", request.filePath.c_str());
+        Send(FileAttributeReport(request.filePath, fileSize, fileStatus));
+        return outcome_v2::success();
+    }();
+    if(result.has_error())
+    {
+        DEBUG_PRINT("Failed to report attributes of file %s: %s\n",
+                    request.filePath.c_str(),
+                    ToCZString(result.error()));
+        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+    }
 }
 
 
 auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
             RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Handling SummaryReportTheContentOfARepositoryRequest\n");
-    // TODO: Implement this
+    auto result = [&]() -> Result<void>
+    {
+        OUTCOME_TRY(auto iterator, fs::MakeIterator(request.repositoryPath));
+        auto nObjects = static_cast<std::uint8_t>(std::distance(iterator, iterator.end()));
+        OUTCOME_TRY(iterator, fs::MakeIterator(request.repositoryPath));
+        auto objects =
+            etl::vector<FileSystemObject, RepositoryContentSummaryReport::maxNObjectsPerPacket>{};
+        while(iterator != iterator.end())
+        {
+            OUTCOME_TRY(auto directoryInfo, *iterator);
+            auto objectType = directoryInfo.type == fs::EntryType::file
+                                ? FileSystemObject::Type::file
+                                : FileSystemObject::Type::directory;
+            objects.push_back({objectType, directoryInfo.name});
+            ++iterator;
+            if(objects.full() or iterator == iterator.end())
+            {
+                DEBUG_PRINT("Sending repository content summary report for %s\n",
+                            request.repositoryPath.c_str());
+                Send(RepositoryContentSummaryReport(request.repositoryPath, nObjects, objects));
+                objects.clear();
+            }
+        }
+        return outcome_v2::success();
+    }();
+    if(result.has_error())
+    {
+        DEBUG_PRINT("Failed to report content of repository %s: %s\n",
+                    request.repositoryPath.c_str(),
+                    ToCZString(result.error()));
+        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+    }
 }
 
 
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Handling CopyAFileRequest\n");
-    // TODO: Implement this
+    fileTransferInfoMailbox.Overwrite(FileTransferInfo{.sourcePath = request.sourceFilePath,
+                                                       .destinationPath = request.targetFilePath});
+    DEBUG_PRINT("Successfully initiated copying file %s to %s\n",
+                request.sourceFilePath.c_str(),
+                request.targetFilePath.c_str());
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    ResumeFileTransferThread();
+    SuspendUntil(endOfTime);
 }
 
 
