@@ -26,7 +26,7 @@ RODOS::Subscriber programIdOfCurrentEduProgramQueueEntrySubscriber(
     programIdOfCurrentEduProgramQueueEntryTopic,
     programIdOfCurrentEduProgramQueueEntryBuffer,
     "programIdOfCurrentEduProgramQueueEntrySubscriber");
-RODOS::Subscriber rxBaudRateSubscriber(rxBaudRateTopic, rxBaudRateBuffer, "rxBaudRateSubscriber");
-RODOS::Subscriber txBaudRateSubscriber(txBaudRateTopic, txBaudRateBuffer, "txBaudRateSubscriber");
+RODOS::Subscriber rxDataRateSubscriber(rxDataRateTopic, rxDataRateBuffer, "rxDataRateSubscriber");
+RODOS::Subscriber txDataRateSubscriber(txDataRateTopic, txDataRateBuffer, "txDataRateSubscriber");
 }
 }

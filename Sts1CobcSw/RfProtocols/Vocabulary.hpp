@@ -14,8 +14,8 @@ struct Parameter
 {
     enum class Id : std::uint8_t
     {
-        rxBaudRate = 1,
-        txBaudRate,
+        rxDataRate = 1,
+        txDataRate,
         realTimeOffsetCorrection,
         newEduResultIsAvailable,
         eduStartDelayLimit,

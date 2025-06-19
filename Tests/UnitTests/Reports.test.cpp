@@ -269,8 +269,8 @@ TEST_CASE("Housekeeping parameter report")
             .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
             .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
         // clang-format on
-        .rxBaudRate = 53,
-        .txBaudRate = 54,
+        .rxDataRate = 53,
+        .txDataRate = 54,
         .nCorrectableUplinkErrors = 55U,
         .nUncorrectableUplinkErrors = 56U,
         .nGoodTransferFrames = 57U,
@@ -326,7 +326,7 @@ TEST_CASE("Parameter value report")
     using sts1cobcsw::ParameterValueReport;
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
-    auto parameterId = Parameter::Id::rxBaudRate;
+    auto parameterId = Parameter::Id::rxDataRate;
     auto parameterValue = 9600U;
     auto report = ParameterValueReport(parameterId, parameterValue);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
@@ -356,8 +356,8 @@ TEST_CASE("Parameter value report")
 
     dataField.clear();
     auto parameters = etl::vector<sts1cobcsw::Parameter, sts1cobcsw::maxNParameters>{
-        sts1cobcsw::Parameter{Parameter::Id::rxBaudRate,         9600U   },
-        sts1cobcsw::Parameter{Parameter::Id::txBaudRate,         115'200U},
+        sts1cobcsw::Parameter{Parameter::Id::rxDataRate,         9600U   },
+        sts1cobcsw::Parameter{Parameter::Id::txDataRate,         115'200U},
         sts1cobcsw::Parameter{Parameter::Id::eduStartDelayLimit, 17U     }
     };
     report = ParameterValueReport(parameters);
@@ -375,9 +375,9 @@ TEST_CASE("Parameter value report")
     // Number of parameters
     CHECK(dataField[11] == 3_b);
     // Parameters
-    CHECK(dataField[12] == static_cast<Byte>(Parameter::Id::rxBaudRate));
+    CHECK(dataField[12] == static_cast<Byte>(Parameter::Id::rxDataRate));
     CHECK(parameters[0].parameterValue == (Deserialize<Parameter::Value, 13>(dataField)));
-    CHECK(dataField[17] == static_cast<Byte>(Parameter::Id::txBaudRate));
+    CHECK(dataField[17] == static_cast<Byte>(Parameter::Id::txDataRate));
     CHECK(parameters[1].parameterValue == (Deserialize<Parameter::Value, 18>(dataField)));
     CHECK(dataField[22] == static_cast<Byte>(Parameter::Id::eduStartDelayLimit));
     CHECK(parameters[2].parameterValue == (Deserialize<Parameter::Value, 23>(dataField)));

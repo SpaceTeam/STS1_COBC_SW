@@ -221,8 +221,8 @@ TEST_CASE("ReportParameterValuesRequest")
     auto request = parseResult.value();
 
     CHECK(request.nParameters == 0x05);
-    CHECK(request.parameterIds[0] == sts1cobcsw::Parameter::Id::rxBaudRate);
-    CHECK(request.parameterIds[1] == sts1cobcsw::Parameter::Id::txBaudRate);
+    CHECK(request.parameterIds[0] == sts1cobcsw::Parameter::Id::rxDataRate);
+    CHECK(request.parameterIds[1] == sts1cobcsw::Parameter::Id::txDataRate);
     CHECK(request.parameterIds[2] == sts1cobcsw::Parameter::Id::realTimeOffsetCorrection);
     CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
     CHECK(request.parameterIds[4] == sts1cobcsw::Parameter::Id::eduStartDelayLimit);
@@ -276,9 +276,9 @@ TEST_CASE("SetParameterValuesRequest")
     auto request = parseResult.value();
 
     CHECK(request.nParameters == 0x05);
-    CHECK(request.parameters[0].parameterId == sts1cobcsw::Parameter::Id::rxBaudRate);
+    CHECK(request.parameters[0].parameterId == sts1cobcsw::Parameter::Id::rxDataRate);
     CHECK(request.parameters[0].parameterValue == 0xAABB'CCDD);
-    CHECK(request.parameters[1].parameterId == sts1cobcsw::Parameter::Id::txBaudRate);
+    CHECK(request.parameters[1].parameterId == sts1cobcsw::Parameter::Id::txDataRate);
     CHECK(request.parameters[1].parameterValue == 0xBBCC'DDEE);
 
     // No more than 5 Parameters are allowed

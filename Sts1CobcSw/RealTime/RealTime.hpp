@@ -15,7 +15,7 @@ namespace sts1cobcsw
 [[nodiscard]] auto CurrentRealTime() -> RealTime;
 [[nodiscard]] auto ToRodosTime(RealTime realTime) -> RodosTime;
 [[nodiscard]] auto ToRealTime(RodosTime rodosTime) -> RealTime;
-auto UpdateRealTimeOffset(RealTime telecommandTimestamp, std::int32_t rxBaudRate) -> void;
+auto UpdateRealTimeOffset(RealTime telecommandTimestamp, std::int32_t rxDataRate) -> void;
 }
 
 

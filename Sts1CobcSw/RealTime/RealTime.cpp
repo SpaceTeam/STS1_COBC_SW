@@ -16,12 +16,12 @@
 
 namespace sts1cobcsw
 {
-auto UpdateRealTimeOffset(RealTime telecommandTimestamp, std::int32_t rxBaudRate) -> void
+auto UpdateRealTimeOffset(RealTime telecommandTimestamp, std::int32_t rxDataRate) -> void
 {
     // TODO: Get this from the CCSDS TC Space Data Link Protocol config once we have it
     static constexpr auto telecommandSize = 383;
     auto currentRodosTime = CurrentRodosTime();
-    auto const transmissionDuration = telecommandSize * CHAR_BIT * 1000 / rxBaudRate * ms;
+    auto const transmissionDuration = telecommandSize * CHAR_BIT * 1000 / rxDataRate * ms;
     auto offsetCorrection = persistentVariables.Load<"realTimeOffsetCorrection">();
     auto newRealTimeOffset = RodosTime(value_of(telecommandTimestamp) * RODOS::SECONDS)
                            + transmissionDuration + offsetCorrection - currentRodosTime;

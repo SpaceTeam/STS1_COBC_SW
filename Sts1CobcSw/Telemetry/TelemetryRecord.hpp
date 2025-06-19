@@ -58,8 +58,8 @@ struct TelemetryRecord
     eps::AdcData epsAdcData = {};
 
     // Communication
-    std::int32_t rxBaudRate = 0;
-    std::int32_t txBaudRate = 0;
+    std::int32_t rxDataRate = 0;
+    std::int32_t txDataRate = 0;
     std::uint16_t nCorrectableUplinkErrors = 0U;
     std::uint16_t nUncorrectableUplinkErrors = 0U;
     std::uint16_t nGoodTransferFrames = 0U;
@@ -107,8 +107,8 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
         decltype(TelemetryRecord::rfTemperature),
         decltype(TelemetryRecord::epsAdcData),
         // Communication
-        decltype(TelemetryRecord::rxBaudRate),
-        decltype(TelemetryRecord::txBaudRate),
+        decltype(TelemetryRecord::rxDataRate),
+        decltype(TelemetryRecord::txDataRate),
         decltype(TelemetryRecord::nCorrectableUplinkErrors),
         decltype(TelemetryRecord::nUncorrectableUplinkErrors),
         decltype(TelemetryRecord::nGoodTransferFrames),

@@ -76,10 +76,10 @@ auto CollectTelemetryData() -> TelemetryRecord
     eduIsAliveBufferForTelemetry.get(eduIsAlive);
     auto programIdOfCurrentEduProgramQueueEntry = ProgramId(0);
     programIdOfCurrentEduProgramQueueEntryBuffer.get(programIdOfCurrentEduProgramQueueEntry);
-    std::int32_t rxBaudRate = 0;
-    rxBaudRateBuffer.get(rxBaudRate);
-    std::int32_t txBaudRate = 0;
-    txBaudRateBuffer.get(txBaudRate);
+    std::int32_t rxDataRate = 0;
+    rxDataRateBuffer.get(rxDataRate);
+    std::int32_t txDataRate = 0;
+    txDataRateBuffer.get(txDataRate);
     return TelemetryRecord{
         // Booleans: byte 1: EDU and housekeeping
         .eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">() ? 1 : 0,
@@ -117,8 +117,8 @@ auto CollectTelemetryData() -> TelemetryRecord
         .rfTemperature = rftemperaturesensor::Read(),
         .epsAdcData = eps::ReadAdcs(),
         // Communication
-        .rxBaudRate = rxBaudRate,
-        .txBaudRate = txBaudRate,
+        .rxDataRate = rxDataRate,
+        .txDataRate = txDataRate,
         .nCorrectableUplinkErrors = persistentVariables.Load<"nCorrectableUplinkErrors">(),
         .nUncorrectableUplinkErrors = persistentVariables.Load<"nUncorrectableUplinkErrors">(),
         .nGoodTransferFrames = persistentVariables.Load<"nGoodTransferFrames">(),
