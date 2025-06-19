@@ -75,6 +75,8 @@ public:
         PRINTF("Writing with implementation that takes too long ...\n");
         flashSpi_.SetWrite(WriteThatTakesTooLong);
         WriteTo(&flashSpi_, Span(0x00_b), 1 * ms);
+        // Since all 3 SPIs use the same transferEnd in this test, the supervisor thread will detect
+        // a timeout for all of them and not just for the flash SPI
         PRINTF("  -> this should never be printed\n");
     }
 

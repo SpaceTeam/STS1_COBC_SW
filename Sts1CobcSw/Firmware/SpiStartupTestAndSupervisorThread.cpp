@@ -109,18 +109,19 @@ private:
         TIME_LOOP(0, value_of(supervisionPeriod))
         {
             auto timeoutHappened = false;
-            if(CurrentRodosTime() > framEpsSpi.TransferEnd())
+            auto now = CurrentRodosTime();
+            if(now > framEpsSpi.TransferEnd())
             {
                 DEBUG_PRINT("FRAM/EPS SPI timeout occurred\n");
                 timeoutHappened = true;
             }
-            if(CurrentRodosTime() > flashSpi.TransferEnd())
+            if(now > flashSpi.TransferEnd())
             {
                 DEBUG_PRINT("Flash SPI timeout occurred\n");
                 timeoutHappened = true;
                 persistentVariables.Increment<"nFlashErrors">();
             }
-            if(CurrentRodosTime() > rfSpi.TransferEnd())
+            if(now > rfSpi.TransferEnd())
             {
                 DEBUG_PRINT("RF SPI timeout occurred\n");
                 timeoutHappened = true;
