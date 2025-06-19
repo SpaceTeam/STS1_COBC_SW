@@ -5,10 +5,7 @@
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
-#include <etl/string.h>
-
 #include <algorithm>
-#include <cassert>
 
 
 namespace sts1cobcsw
@@ -172,18 +169,13 @@ auto FileAttributeReport::DoSize() const -> std::uint16_t
 RepositoryContentSummaryReport::RepositoryContentSummaryReport(
     fs::Path const & repositoryPath,
     std::uint8_t nObjects,
-    etl::vector<ObjectType, maxNObjectsPerPacket> const & objectTypes,
-    etl::vector<fs::Path, maxNObjectsPerPacket> const & objectNames)
-    : repositoryPath_(repositoryPath),
-      nObjects_(nObjects),
-      objectTypes_(objectTypes),
-      objectNames_(objectNames)
+    etl::vector<FileSystemObject, maxNObjectsPerPacket> const & objects)
+    : repositoryPath_(repositoryPath), nObjects_(nObjects), objects_(objects)
 {
-    assert(objectTypes_.size() == objectNames_.size());  // NOLINT(*array*decay)
     repositoryPath_.resize(fs::Path::MAX_SIZE, '\0');
-    for(auto & objectName : objectNames_)
+    for(auto && object : objects_)
     {
-        objectName.resize(fs::Path::MAX_SIZE, '\0');
+        object.name.resize(fs::Path::MAX_SIZE, '\0');
     }
 }
 
@@ -195,10 +187,9 @@ auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) con
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, repositoryPath_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, nObjects_);
-    for(auto i = 0U; i < objectTypes_.size(); ++i)
+    for(auto && object : objects_)
     {
-        cursor = SerializeTo<ccsdsEndianness>(cursor, objectTypes_[i]);
-        cursor = SerializeTo<ccsdsEndianness>(cursor, objectNames_[i]);
+        cursor = SerializeTo<ccsdsEndianness>(cursor, object);
     }
 }
 
@@ -207,7 +198,7 @@ auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
         totalSerialSize<decltype(secondaryHeader_), decltype(repositoryPath_), decltype(nObjects_)>
-        + objectTypes_.size() * (totalSerialSize<ObjectType, fs::Path>));
+        + nObjects_ * totalSerialSize<FileSystemObject>);
 }
 
 

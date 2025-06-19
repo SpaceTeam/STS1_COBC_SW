@@ -22,7 +22,6 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
-#include <etl/string.h>
 #include <etl/vector.h>
 
 #include <algorithm>
@@ -447,29 +446,23 @@ TEST_CASE("File attribute report")
 
 TEST_CASE("Repository content summary report")
 {
-    using sts1cobcsw::ObjectType;
+    using sts1cobcsw::FileSystemObject;
     using sts1cobcsw::RepositoryContentSummaryReport;
+    using Type = sts1cobcsw::FileSystemObject::Type;
 
     static constexpr auto maxNObjectsPerPacket =
         RepositoryContentSummaryReport::maxNObjectsPerPacket;
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto repositoryPath = fs::Path("/programs");
-    auto objectTypes = etl::vector<ObjectType, maxNObjectsPerPacket>{
-        ObjectType::directory,
-        ObjectType::directory,
-        ObjectType::file,
-        ObjectType::file,
+    auto objects = etl::vector<FileSystemObject, maxNObjectsPerPacket>{
+        {Type::directory, fs::Path("/programs/.")         },
+        {Type::directory, fs::Path("/programs/..")        },
+        {Type::file,      fs::Path("/programs/00001")     },
+        {Type::file,      fs::Path("/programs/00001.lock")}
     };
-    auto objectNames = etl::vector<fs::Path, maxNObjectsPerPacket>{
-        fs::Path("/programs/."),
-        fs::Path("/programs/.."),
-        fs::Path("/programs/00001"),
-        fs::Path("/programs/00001.lock"),
-    };
-    auto nObjects = static_cast<std::uint8_t>(objectTypes.size());
-    auto report =
-        RepositoryContentSummaryReport(repositoryPath, nObjects, objectTypes, objectNames);
+    auto nObjects = static_cast<std::uint8_t>(objects.size());
+    auto report = RepositoryContentSummaryReport(repositoryPath, nObjects, objects);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
     auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
@@ -478,7 +471,7 @@ TEST_CASE("Repository content summary report")
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength
               + totalSerialSize<decltype(repositoryPath), decltype(nObjects)>
-              + nObjects * (totalSerialSize<ObjectType, fs::Path>)));
+              + nObjects * (totalSerialSize<FileSystemObject>)));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
     CHECK(dataField[1] == 23_b);    // Service type ID
@@ -498,11 +491,11 @@ TEST_CASE("Repository content summary report")
     // Number of objects
     CHECK(dataField[11 + fs::Path::MAX_SIZE] == static_cast<Byte>(nObjects));
     // Object types and names
-    for(auto i = 0U; i < objectTypes.size(); ++i)
+    for(auto i = 0U; i < objects.size(); ++i)
     {
-        CHECK(dataField[47 + 36 * i] == static_cast<Byte>(objectTypes[i]));
-        CHECK(std::equal(objectNames[i].begin(),
-                         objectNames[i].end(),
+        CHECK(dataField[47 + 36 * i] == static_cast<Byte>(objects[i].type));
+        CHECK(std::equal(objects[i].name.begin(),
+                         objects[i].name.end(),
                          dataField.begin() + 48 + 36 * i,
                          [](char c, Byte b) { return c == static_cast<char>(b); }));
     }

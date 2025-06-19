@@ -158,13 +158,12 @@ public:
     static constexpr auto maxNObjectsPerPacket =
         (tm::maxPacketDataLength - tm::packetSecondaryHeaderLength
          - totalSerialSize<fs::Path, std::uint8_t>)
-        / (totalSerialSize<ObjectType, fs::Path>);
+        / (totalSerialSize<FileSystemObject>);
 
     RepositoryContentSummaryReport(
         fs::Path const & repositoryPath,
         std::uint8_t nObjects,
-        etl::vector<ObjectType, maxNObjectsPerPacket> const & objectTypes,
-        etl::vector<fs::Path, maxNObjectsPerPacket> const & objectNames);
+        etl::vector<FileSystemObject, maxNObjectsPerPacket> const & objects);
 
 
 private:
@@ -172,8 +171,7 @@ private:
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     fs::Path repositoryPath_;
     std::uint8_t nObjects_ = 0;
-    etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes_;
-    etl::vector<fs::Path, maxNObjectsPerPacket> objectNames_;
+    etl::vector<FileSystemObject, maxNObjectsPerPacket> objects_;
 
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;

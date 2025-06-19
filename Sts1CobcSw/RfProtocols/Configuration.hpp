@@ -149,12 +149,6 @@ enum class FileStatus : std::uint8_t
     locked = 0xFF,
 };
 
-enum class ObjectType : std::uint8_t
-{
-    file = 0,
-    directory = 1,
-};
-
 using CopyOperationId = Id<std::uint8_t, 0b0000'1111>;  // NOLINT(*magic-numbers)
 inline constexpr auto copyOperationId = Make<CopyOperationId, 0b0000'1111>();
 

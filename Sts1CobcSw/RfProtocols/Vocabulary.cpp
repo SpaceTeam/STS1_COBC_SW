@@ -27,4 +27,17 @@ template<std::endian endianness>
 
 template auto DeserializeFrom<std::endian::big>(void const *, Parameter *) -> void const *;
 template auto DeserializeFrom<std::endian::little>(void const *, Parameter *) -> void const *;
+
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, FileSystemObject const & object) -> void *
+{
+    destination = SerializeTo<endianness>(destination, object.type);
+    destination = SerializeTo<endianness>(destination, object.name);
+    return destination;
+}
+
+
+template auto SerializeTo<std::endian::big>(void *, FileSystemObject const &) -> void *;
+template auto SerializeTo<std::endian::little>(void *, FileSystemObject const &) -> void *;
 }

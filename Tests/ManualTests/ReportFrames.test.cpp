@@ -203,21 +203,14 @@ private:
             auto repositoryPath = fs::Path("/programs");
             static constexpr auto maxNObjectsPerPacket =
                 RepositoryContentSummaryReport::maxNObjectsPerPacket;
-            auto objectTypes = etl::vector<ObjectType, maxNObjectsPerPacket>{
-                ObjectType::directory,
-                ObjectType::directory,
-                ObjectType::file,
-                ObjectType::file,
+            auto objects = etl::vector<FileSystemObject, maxNObjectsPerPacket>{
+                {FileSystemObject::Type::directory, fs::Path("/programs/.")         },
+                {FileSystemObject::Type::directory, fs::Path("/programs/..")        },
+                {FileSystemObject::Type::file,      fs::Path("/programs/00001")     },
+                {FileSystemObject::Type::file,      fs::Path("/programs/00001.lock")}
             };
-            auto objectNames = etl::vector<fs::Path, maxNObjectsPerPacket>{
-                fs::Path("/programs/."),
-                fs::Path("/programs/.."),
-                fs::Path("/programs/00001"),
-                fs::Path("/programs/00001.lock"),
-            };
-            auto nObjects = static_cast<std::uint8_t>(objectTypes.size());
-            auto report =
-                RepositoryContentSummaryReport(repositoryPath, nObjects, objectTypes, objectNames);
+            auto nObjects = static_cast<std::uint8_t>(objects.size());
+            auto report = RepositoryContentSummaryReport(repositoryPath, nObjects, objects);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
