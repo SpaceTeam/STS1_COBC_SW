@@ -432,15 +432,19 @@ auto DoSendAndWait(std::span<Byte const> data) -> Result<void>
     auto result = [&]() -> Result<void>
     {
         OUTCOME_TRY(DoSendAndContinue(data));
-        auto suspendUntilInterruptResult = DoSuspendUntilDataSent(interruptTimeout);
-        OUTCOME_TRY(SetPacketHandlerInterrupts(noInterrupts));
-        return suspendUntilInterruptResult;
+        auto suspendUntilDataSentResult = DoSuspendUntilDataSent(interruptTimeout);
+        return suspendUntilDataSentResult;
     }();
     OUTCOME_TRY(DoEnterStandbyMode());
     return result;
 }
 
 
+// The high cognitive complexity comes from the OUTCOME_TRY macros which expand to extra if
+// statements. However, you don't see them when reading the code so they shouldn't really count.
+// Also, even extracting the interrupt driven part of the sending into a separate function doesn't
+// help, since that function alone would have too high of a cognitive complexity.
+//
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
 {
@@ -453,10 +457,10 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
         OUTCOME_TRY(ResetFifos());
         DisableRfLatchupProtection();
     }
-    OUTCOME_TRY(SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt));
     auto dataIndex = 0U;
     auto result = [&]() -> Result<void>
     {
+        OUTCOME_TRY(SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt));
         OUTCOME_TRY(auto chunkSize, ReadFreeTxFifoSpace());
         while(dataIndex + chunkSize < static_cast<unsigned int>(data.size()))
         {
@@ -488,25 +492,29 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
 
 auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>
 {
-    OUTCOME_TRY(SetPacketHandlerInterrupts(packetSentInterrupt));
-    static constexpr auto iPacketHandlerStatus = 3;
-    OUTCOME_TRY(auto readAndClearInterruptStatusResult, ReadAndClearInterruptStatus());
-    auto packetHandlerStatus = readAndClearInterruptStatusResult[iPacketHandlerStatus];
     auto result = [&]() -> Result<void>
     {
+        OUTCOME_TRY(SetPacketHandlerInterrupts(packetSentInterrupt));
+        static constexpr auto iPacketHandlerStatus = 3;
+        OUTCOME_TRY(auto interruptStatus, ReadAndClearInterruptStatus());
+        auto packetHandlerStatus = interruptStatus[iPacketHandlerStatus];
         if((packetHandlerStatus & packetSentInterrupt) == 0x00_b)
         {
             OUTCOME_TRY(SuspendUntilInterrupt(timeout));
         }
         return outcome_v2::success();
     }();
-    // We won't stay in TX mode, no matter if the transmission was completed successfully or not.
+    // We won't stay in TX mode, no matter if the transmission was completed successfully or not
     isInTxMode = false;
     EnableRfLatchupProtection();
+    OUTCOME_TRY(SetPacketHandlerInterrupts(noInterrupts));
     return result;
 }
 
 
+// I don't care too much about the high cognitive complexity here for the same reason as in
+// DoSendAndContinue().
+//
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>
 {
@@ -539,7 +547,12 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>
         OUTCOME_TRY(SetRxFifoThreshold(static_cast<Byte>(rxFifoThreshold)));
         return outcome_v2::success();
     }();
+    auto setInterruptsResult = SetPacketHandlerInterrupts(noInterrupts);
     OUTCOME_TRY(DoEnterStandbyMode());
+    if(setInterruptsResult.has_error())
+    {
+        return setInterruptsResult;
+    }
     OUTCOME_TRY(ReadAndClearInterruptStatus());
     return result;
 }
@@ -682,10 +695,10 @@ auto PowerUp() -> Result<void>
     static constexpr auto bootOptions = 0x81_b;
     static constexpr auto xtalOptions = 0x01_b;          // Use external oscillator
     static constexpr std::uint32_t xoFreq = 26'000'000;  // MHz
-    OUTCOME_TRY(SendCommand(FlatArray(
-        cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq))));
-    return outcome_v2::success();
+    return SendCommand(FlatArray(
+        cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
 }
+
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto Configure(TxType txType) -> Result<void>
@@ -1342,8 +1355,7 @@ auto StartRx() -> Result<void>
 auto ResetFifos() -> Result<void>
 {
     static constexpr auto resetBothFifos = 0b11_b;
-    OUTCOME_TRY(SendCommand(Span({cmdFifoInfo, resetBothFifos})));
-    return outcome_v2::success();
+    return SendCommand(Span({cmdFifoInfo, resetBothFifos}));
 }
 
 
@@ -1433,8 +1445,7 @@ auto SendCommand(std::span<Byte const> data) -> Result<std::array<Byte, answerLe
     SelectChip();
     hal::WriteTo(&rfSpi, data, spiTimeout);
     DeselectChip();
-    auto busyWaitForAnswerResult = BusyWaitForAnswer<answerLength>(ctsTimeout);
-    return busyWaitForAnswerResult;
+    return BusyWaitForAnswer<answerLength>(ctsTimeout);
 }
 
 
