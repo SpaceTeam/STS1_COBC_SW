@@ -70,8 +70,6 @@
   { include: ["\"Sts1CobcSw/Utility/Span.ipp\"",                        "private", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.ipp\"",               "private", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/MessageTypeIdFields.ipp\"",      "private", "<Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.ipp\"",                "private", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Vocabulary/Time.ipp\"",                     "private", "<Sts1CobcSw/Vocabulary/Time.hpp>", "public"] },
 
   # Include all our headers with <> instead of ""
   { include: ["\"Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp\"",       "public", "<Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>", "public"] },

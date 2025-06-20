@@ -2,7 +2,6 @@
 
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
-#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -14,16 +13,13 @@
 #include <strong_type/type.hpp>
 
 #include <array>
-#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
 #include <utility>
 
 
-namespace sts1cobcsw
-{
-namespace fram
+namespace sts1cobcsw::fram
 {
 // NOLINTNEXTLINE(*magic-numbers)
 using DeviceId = std::array<Byte, 9>;
@@ -60,12 +56,6 @@ template<std::size_t size>
 [[nodiscard]] auto ReadFrom(Address address, Duration timeout) -> std::array<Byte, size>;
 
 
-template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, Address const & address) -> void *;
-template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, Address * address) -> void const *;
-
-
 // Contents of namespace internal is only for internal use and not part of the public interface. The
 // declarations here are necessary because of templates.
 namespace internal
@@ -73,12 +63,6 @@ namespace internal
 auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration timeout) -> void;
 auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout) -> void;
 }
-}
-
-
-template<>
-inline constexpr std::size_t serialSize<fram::Address> =
-    totalSerialSize<strong::underlying_type_t<fram::Address>>;
 }
 
 

@@ -1,8 +1,6 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Serial/Serial.hpp>
-
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
 #include <strong_type/equality.hpp>
@@ -11,8 +9,6 @@
 
 #include <rodos/api/timemodel.h>
 
-#include <bit>
-#include <cstddef>
 #include <cstdint>
 
 
@@ -44,25 +40,4 @@ constexpr auto h = Duration(RODOS::HOURS);
 constexpr auto days = Duration(RODOS::DAYS);
 constexpr auto weeks = Duration(RODOS::WEEKS);
 constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
-
-
-template<>
-inline constexpr std::size_t serialSize<RealTime> =
-    totalSerialSize<strong::underlying_type_t<RealTime>>;
-template<>
-inline constexpr std::size_t serialSize<Duration> =
-    totalSerialSize<strong::underlying_type_t<Duration>>;
-
-
-template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, RealTime const & data) -> void *;
-template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, RealTime * data) -> void const *;
-template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, Duration const & data) -> void *;
-template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, Duration * data) -> void const *;
 }
-
-
-#include <Sts1CobcSw/Vocabulary/Time.ipp>  // IWYU pragma: keep
