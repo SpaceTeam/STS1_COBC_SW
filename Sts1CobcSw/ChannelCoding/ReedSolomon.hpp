@@ -5,6 +5,9 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <libfec/fixed.h>
+// The macro FCR that is defined in libfec/fec.h clashes with a struct member name in a CMSIS
+// header. Since we don't need the FCR macro, we can undefine it here to avoid the clash.
+#undef FCR
 
 #include <span>
 
