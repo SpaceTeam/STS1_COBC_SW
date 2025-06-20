@@ -13,7 +13,7 @@
 namespace sts1cobcsw
 {
 
-[[nodiscard]] auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>
+auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>
 {
     if(buffer.size() < tc::packetSecondaryHeaderLength)
     {
@@ -41,7 +41,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
+auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
     -> Result<LoadRawMemoryDataAreasRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -76,7 +76,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsDumpRawMemoryDataRequest(std::span<Byte const> buffer)
+auto ParseAsDumpRawMemoryDataRequest(std::span<Byte const> buffer)
     -> Result<DumpRawMemoryDataRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -110,8 +110,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer)
-    -> Result<PerformAFunctionRequest>
+auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer) -> Result<PerformAFunctionRequest>
 {
     if(buffer.empty())
     {
@@ -124,7 +123,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsReportParameterValuesRequest(std::span<Byte const> buffer)
+auto ParseAsReportParameterValuesRequest(std::span<Byte const> buffer)
     -> Result<ReportParameterValuesRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -158,7 +157,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsSetParameterValuesRequest(std::span<Byte const> buffer)
+auto ParseAsSetParameterValuesRequest(std::span<Byte const> buffer)
     -> Result<SetParameterValuesRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -191,8 +190,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsDeleteAFileRequest(std::span<Byte const> buffer)
-    -> Result<DeleteAFileRequest>
+auto ParseAsDeleteAFileRequest(std::span<Byte const> buffer) -> Result<DeleteAFileRequest>
 {
     auto request = DeleteAFileRequest{};
     if(buffer.size() < request.filePath.capacity())
@@ -208,7 +206,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsReportTheAttributesOfAFileRequest(std::span<Byte const> buffer)
+auto ParseAsReportTheAttributesOfAFileRequest(std::span<Byte const> buffer)
     -> Result<ReportTheAttributesOfAFileRequest>
 {
     auto request = ReportTheAttributesOfAFileRequest{};
@@ -225,7 +223,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsSummaryReportTheContentOfARepositoryRequest(std::span<Byte const> buffer)
+auto ParseAsSummaryReportTheContentOfARepositoryRequest(std::span<Byte const> buffer)
     -> Result<SummaryReportTheContentOfARepositoryRequest>
 
 {
@@ -243,7 +241,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRequest>
+auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRequest>
 {
     auto request = CopyAFileRequest{};
     static constexpr auto applicationDataLength =
@@ -267,7 +265,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
+auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
     -> Result<ReportHousekeepingParameterReportFunction>
 {
     if(buffer.size()
@@ -286,7 +284,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
+auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
     -> Result<EnableFileTransferFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(EnableFileTransferFunction::durationInS)>)
@@ -299,8 +297,19 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer)
-    -> Result<UpdateEduQueueFunction>
+auto ParseAsSynchronizeTimeFunction(std::span<Byte const> buffer) -> Result<SynchronizeTimeFunction>
+{
+    if(buffer.size() != totalSerialSize<decltype(SynchronizeTimeFunction::realTime)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = SynchronizeTimeFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.realTime);
+    return function;
+}
+
+
+auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer) -> Result<UpdateEduQueueFunction>
 {
     static constexpr auto minApplicationDataLength =
         totalSerialSize<decltype(UpdateEduQueueFunction::nQueueEntries)>;
@@ -327,7 +336,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
+auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
     -> Result<SetActiveFirmwareFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(SetActiveFirmwareFunction::partitionId)>)
@@ -345,7 +354,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
+auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
     -> Result<SetBackupFirmwareFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(SetBackupFirmwareFunction::partitionId)>)
@@ -363,7 +372,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
+auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
     -> Result<CheckFirmwareIntegrityFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(CheckFirmwareIntegrityFunction::partitionId)>)
@@ -383,8 +392,7 @@ namespace sts1cobcsw
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
-    -> void const *
+auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &header->nDataAreas);
     source = DeserializeFrom<endianness>(source, &header->startAddress);
@@ -394,8 +402,7 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, DumpRawMemoryDataArea * dataArea)
-    -> void const *
+auto DeserializeFrom(void const * source, DumpRawMemoryDataArea * dataArea) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &dataArea->startAddress);
     source = DeserializeFrom<endianness>(source, &dataArea->length);
@@ -404,7 +411,7 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *
+auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &header->operationId);
     source = DeserializeFrom<endianness>(source, &header->sourceFilePath);
@@ -414,8 +421,7 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source,
-                                   ReportHousekeepingParameterReportFunction * function)
+auto DeserializeFrom(void const * source, ReportHousekeepingParameterReportFunction * function)
     -> void const *
 {
     source = DeserializeFrom<endianness>(source, &function->firstReportIndex);

@@ -543,6 +543,33 @@ TEST_CASE("ParseAsEnableFileTransferFunction")
 }
 
 
+TEST_CASE("SynchronizeTimeFunction")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    buffer.resize(4);
+    buffer[0] = 0xAA_b;  // Real time (high byte)
+    buffer[1] = 0xBB_b;  // Real time
+    buffer[2] = 0xCC_b;  // Real time
+    buffer[3] = 0xDD_b;  // Real time (low byte)
+
+    auto parseResult = sts1cobcsw::ParseAsSynchronizeTimeFunction(buffer);
+    CHECK(parseResult.has_value());
+    auto function = parseResult.value();
+
+    CHECK(value_of(function.realTime) == 0xAABB'CCDD);
+
+    // Buffer size must be 4
+    buffer.resize(5);
+    parseResult = sts1cobcsw::ParseAsSynchronizeTimeFunction(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+    buffer.resize(3);
+    parseResult = sts1cobcsw::ParseAsSynchronizeTimeFunction(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
 TEST_CASE("UpdateEduQueueFunction")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};

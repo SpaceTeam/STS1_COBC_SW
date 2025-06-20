@@ -13,6 +13,7 @@
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/type.hpp>
 
@@ -134,8 +135,16 @@ struct ReportHousekeepingParameterReportFunction
 struct EnableFileTransferFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::enableFileTransferFor;
+    static constexpr auto functionId = tc::FunctionId::enableFileTransfer;
     std::uint16_t durationInS;
+};
+
+
+struct SynchronizeTimeFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
+    static constexpr auto functionId = tc::FunctionId::synchronizeTime;
+    RealTime realTime;
 };
 
 
@@ -203,6 +212,8 @@ struct CheckFirmwareIntegrityFunction
     -> Result<ReportHousekeepingParameterReportFunction>;
 [[nodiscard]] auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
     -> Result<EnableFileTransferFunction>;
+[[nodiscard]] auto ParseAsSynchronizeTimeFunction(std::span<Byte const> buffer)
+    -> Result<SynchronizeTimeFunction>;
 [[nodiscard]] auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer)
     -> Result<UpdateEduQueueFunction>;
 [[nodiscard]] auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
