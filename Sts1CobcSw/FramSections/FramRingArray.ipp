@@ -14,8 +14,7 @@ using fram::framIsWorking;
 
 template<typename T, Section framRingArraySection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-inline constexpr auto FramRingArray<T, framRingArraySection, nCachedElements>::FramCapacity()
-    -> SizeType
+constexpr auto FramRingArray<T, framRingArraySection, nCachedElements>::FramCapacity() -> SizeType
 {
     return framCapacity;
 }
@@ -23,8 +22,7 @@ inline constexpr auto FramRingArray<T, framRingArraySection, nCachedElements>::F
 
 template<typename T, Section framRingArraySection, std::uint32_t nCachedElements>
     requires(serialSize<T> > 0)
-inline constexpr auto FramRingArray<T, framRingArraySection, nCachedElements>::CacheCapacity()
-    -> SizeType
+constexpr auto FramRingArray<T, framRingArraySection, nCachedElements>::CacheCapacity() -> SizeType
 {
     return nCachedElements;
 }
@@ -205,7 +203,7 @@ auto FramRingArray<T, framRingArraySection, nCachedElements>::GetFromCache(Index
         DEBUG_PRINT("Index out of bounds in FramRingArray::GetFromCache(): %d >= %d\n",
                     static_cast<int>(index),
                     static_cast<int>(size));
-        index = size - 1;
+        index = static_cast<IndexType>(size) - 1;
     }
     return Deserialize<endianness, T>(cache[index]);
 }

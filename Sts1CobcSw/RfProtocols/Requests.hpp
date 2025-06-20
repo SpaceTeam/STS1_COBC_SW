@@ -73,7 +73,7 @@ struct DumpRawMemoryDataRequest
 struct PerformAFunctionRequest
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    tc::FunctionId functionId;
+    FunctionId functionId;
     std::span<Byte const> dataField;
 };
 
@@ -127,7 +127,7 @@ struct CopyAFileRequest
 struct ReportHousekeepingParameterReportFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::requestHousekeepingParameterReports;
+    static constexpr auto functionId = FunctionId::requestHousekeepingParameterReports;
     std::uint16_t firstReportIndex;
     std::uint16_t lastReportIndex;
 };
@@ -136,7 +136,7 @@ struct ReportHousekeepingParameterReportFunction
 struct EnableFileTransferFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::enableFileTransfer;
+    static constexpr auto functionId = FunctionId::enableFileTransfer;
     std::uint16_t durationInS;
 };
 
@@ -144,7 +144,7 @@ struct EnableFileTransferFunction
 struct SynchronizeTimeFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::synchronizeTime;
+    static constexpr auto functionId = FunctionId::synchronizeTime;
     RealTime realTime;
 };
 
@@ -157,7 +157,7 @@ struct UpdateEduQueueFunction
     static_assert(edu::programQueue.FramCapacity() == maxNQueueEntries);
 
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::updateEduQueue;
+    static constexpr auto functionId = FunctionId::updateEduQueue;
     std::uint8_t nQueueEntries;
     etl::vector<edu::ProgramQueueEntry, maxNQueueEntries> queueEntries;
 };
@@ -166,7 +166,7 @@ struct UpdateEduQueueFunction
 struct SetActiveFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::setActiveFirmware;
+    static constexpr auto functionId = FunctionId::setActiveFirmware;
     fw::PartitionId partitionId;
 };
 
@@ -174,7 +174,7 @@ struct SetActiveFirmwareFunction
 struct SetBackupFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::setBackupFirmware;
+    static constexpr auto functionId = FunctionId::setBackupFirmware;
     fw::PartitionId partitionId;
 };
 
@@ -182,7 +182,7 @@ struct SetBackupFirmwareFunction
 struct CheckFirmwareIntegrityFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::checkFirmwareIntegrity;
+    static constexpr auto functionId = FunctionId::checkFirmwareIntegrity;
     fw::PartitionId partitionId;
 };
 

@@ -2,6 +2,8 @@
 
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
@@ -9,6 +11,9 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
+
+#include <strong_type/affine_point.hpp>
+#include <strong_type/ordered.hpp>
 
 
 namespace sts1cobcsw
@@ -119,7 +124,7 @@ auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer) -> Result<Perf
     }
     auto request = PerformAFunctionRequest{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.functionId);
-    request.dataField = buffer.subspan(totalSerialSize<tc::FunctionId>);
+    request.dataField = buffer.subspan(totalSerialSize<FunctionId>);
     return request;
 }
 

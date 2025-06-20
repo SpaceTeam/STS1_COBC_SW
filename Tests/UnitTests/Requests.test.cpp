@@ -91,7 +91,7 @@ TEST_CASE("LoadRawMemoryDataAreasRequest")
     auto request = parseResult.value();
 
     CHECK(request.nDataAreas == 0x1);
-    CHECK(request.startAddress.value_of() == 0x0000'0400);
+    CHECK(request.startAddress.value_of() == 0x0000'0400U);
     CHECK(request.dataLength == 0x02);
     CHECK(request.data[0] == 0xAA_b);
     CHECK(request.data[1] == 0xBB_b);
@@ -195,7 +195,7 @@ TEST_CASE("PerformAFunctionRequest")
     CHECK(parseResult.has_value());
     auto request = parseResult.value();
 
-    CHECK(request.functionId == sts1cobcsw::tc::FunctionId::stopAntennaDeployment);
+    CHECK(request.functionId == sts1cobcsw::FunctionId::stopAntennaDeployment);
     CHECK(request.dataField[0] == 0xAA_b);
 
     // Minimum buffer size needs to be 1

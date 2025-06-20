@@ -39,6 +39,7 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"backupSecondaryFwPartition", fw::PartitionId>,
                         // Housekeeping
                         PersistentVariableInfo<"txIsOn", bool>,
+                        PersistentVariableInfo<"fileTransferWindowEnd", RodosTime>,
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
                         PersistentVariableInfo<"realTime", RealTime>,
                         PersistentVariableInfo<"realTimeOffset", Duration>,

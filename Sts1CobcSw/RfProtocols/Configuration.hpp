@@ -116,6 +116,7 @@ using MessageTypeId = Id<MessageTypeIdFields,
                          {23, 12},
                          {23, 14}>;
 // NOLINTEND(*magic-numbers)
+}
 
 enum class FunctionId : std::uint8_t
 {
@@ -131,7 +132,6 @@ enum class FunctionId : std::uint8_t
     setBackupFirmware = 25,
     checkFirmwareIntegrity = 31,
 };
-}
 
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)
 inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAA33>();

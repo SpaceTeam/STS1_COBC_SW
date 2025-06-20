@@ -1,16 +1,23 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/Edu/ProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
 #include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
@@ -21,9 +28,11 @@
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/TcTransferFrame.hpp>
 #include <Sts1CobcSw/RfProtocols/TmTransferFrame.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
@@ -39,9 +48,12 @@
 
 #include <etl/vector.h>
 
+#include <algorithm>
 #include <array>
-#include <cinttypes>
+#include <cinttypes>  // IWYU pragma: keep
 #include <compare>
+#include <cstdint>
+#include <iterator>
 #include <span>
 #include <type_traits>
 #include <utility>
@@ -87,6 +99,19 @@ auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const &
 auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
             RequestId const & requestId) -> void;
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void;
+
+template<auto parseFunction>
+auto VerifyAndHandle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void;
+
+// As above, not all functions need the requestId, but it's easier if we pass it to all handlers
+auto Handle(ReportHousekeepingParameterReportFunction const & function, RequestId const & requestId)
+    -> void;
+auto Handle(EnableFileTransferFunction const & function, RequestId const & requestId) -> void;
+auto Handle(SynchronizeTimeFunction const & function, RequestId const & requestId) -> void;
+auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId) -> void;
+auto Handle(SetActiveFirmwareFunction const & function, RequestId const & requestId) -> void;
+auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void;
+auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & requestId) -> void;
 
 auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
 auto Set(Parameter parameter) -> void;
@@ -354,8 +379,47 @@ auto Handle(DumpRawMemoryDataRequest const & request, [[maybe_unused]] RequestId
 
 auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void
 {
-    DEBUG_PRINT("Handling PerformAFunctionRequest\n");
-    // TODO: Implement this
+    switch(request.functionId)
+    {
+        case FunctionId::stopAntennaDeployment:
+            persistentVariables.Store<"antennasShouldBeDeployed">(false);
+            DEBUG_PRINT("Stopped antenna deployment\n");
+            Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+            return;
+        case FunctionId::requestHousekeepingParameterReports:
+            VerifyAndHandle<ParseAsReportHousekeepingParameterReportFunction>(request, requestId);
+            return;
+        case FunctionId::disableCubeSatTx:
+            rf::DisableTx();
+            DEBUG_PRINT("Disabled CubeSat TX\n");
+            return;
+        case FunctionId::enableCubeSatTx:
+            rf::EnableTx();
+            DEBUG_PRINT("Enabled CubeSat TX\n");
+            Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+            return;
+        case FunctionId::resetNow:
+            RODOS::hwResetAndReboot();
+            return;
+        case FunctionId::enableFileTransfer:
+            VerifyAndHandle<ParseAsEnableFileTransferFunction>(request, requestId);
+            return;
+        case FunctionId::synchronizeTime:
+            VerifyAndHandle<ParseAsSynchronizeTimeFunction>(request, requestId);
+            return;
+        case FunctionId::updateEduQueue:
+            VerifyAndHandle<ParseAsUpdateEduQueueFunction>(request, requestId);
+            return;
+        case FunctionId::setActiveFirmware:
+            VerifyAndHandle<ParseAsSetActiveFirmwareFunction>(request, requestId);
+            return;
+        case FunctionId::setBackupFirmware:
+            VerifyAndHandle<ParseAsSetBackupFirmwareFunction>(request, requestId);
+            return;
+        case FunctionId::checkFirmwareIntegrity:
+            VerifyAndHandle<ParseAsCheckFirmwareIntegrityFunction>(request, requestId);
+            return;
+    }
 }
 
 
@@ -470,6 +534,104 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
     Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
     ResumeFileTransferThread();
     SuspendUntil(endOfTime);
+}
+
+
+template<auto parseFunction>
+auto VerifyAndHandle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void
+{
+    auto parseResult = parseFunction(request.dataField);
+    if(parseResult.has_error())
+    {
+        DEBUG_PRINT("Failed acceptance of request: %s\n", ToCZString(parseResult.error()));
+        Send(FailedAcceptanceVerificationReport(requestId, parseResult.error()));
+        return;
+    }
+    DEBUG_PRINT("Successfully accepted request\n");
+    Send(SuccessfulAcceptanceVerificationReport(requestId));
+    Handle(parseResult.value(), requestId);
+}
+
+
+auto Handle(ReportHousekeepingParameterReportFunction const & function,
+            [[maybe_unused]] RequestId const & requestId) -> void
+{
+    auto nTelemetryRecords = static_cast<std::uint16_t>(telemetryMemory.Size());
+    auto iMax = std::min<std::uint16_t>(nTelemetryRecords, function.lastReportIndex + 1U);
+    DEBUG_PRINT("Sending housekeeping parameter report %" PRIu16 " to %" PRIu16 "\n",
+                function.firstReportIndex,
+                iMax - 1U);
+    for(auto i = function.firstReportIndex; i < iMax; ++i)
+    {
+        Send(HousekeepingParameterReport(telemetryMemory.Get(i)));
+    }
+}
+
+
+auto Handle(EnableFileTransferFunction const & function, RequestId const & requestId) -> void
+{
+    persistentVariables.Store<"fileTransferWindowEnd">(CurrentRodosTime()
+                                                       + function.durationInS * s);
+    DEBUG_PRINT("Enabled file transfers for the next %" PRIu16 " s\n", function.durationInS);
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+}
+
+
+auto Handle(SynchronizeTimeFunction const & function, RequestId const & requestId) -> void
+{
+    UpdateRealTimeOffset(function.realTime);
+    DEBUG_PRINT("Successfully synchronized time: current real time = %" PRIi32 "\n",
+                value_of(CurrentRealTime()));
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+}
+
+
+auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId) -> void
+{
+    edu::programQueue.Clear();
+    for(auto && entry : function.queueEntries)
+    {
+        edu::programQueue.PushBack(entry);
+    }
+    DEBUG_PRINT("Updated EDU queue with %u entries\n", function.queueEntries.size());
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+}
+
+
+auto Handle(SetActiveFirmwareFunction const & function, RequestId const & requestId) -> void
+{
+    persistentVariables.Store<"activeSecondaryFwPartition">(function.partitionId);
+    DEBUG_PRINT("Set active firmware partition to %s\n", ToCZString(function.partitionId));
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+}
+
+
+auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void
+{
+    persistentVariables.Store<"backupSecondaryFwPartition">(function.partitionId);
+    DEBUG_PRINT("Set backup firmware partition to %s\n", ToCZString(function.partitionId));
+    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+}
+
+
+auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & requestId) -> void
+{
+    auto result = [&]() -> Result<void>
+    {
+        OUTCOME_TRY(auto partition, fw::GetPartition(function.partitionId));
+        OUTCOME_TRY(fw::CheckFirmwareIntegrity(partition.startAddress));
+        DEBUG_PRINT("Firmware in partition %s is intact\n", ToCZString(function.partitionId));
+        DEBUG_PRINT("Successfully passed firmware integrity check for partition %s\n",
+                    ToCZString(function.partitionId));
+        Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+        return outcome_v2::success();
+    }();
+    if(result.has_error())
+    {
+        DEBUG_PRINT("Failed to check firmware integrity: %s\n", ToCZString(result.error()));
+        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        return;
+    }
 }
 
 
