@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
@@ -345,10 +346,10 @@ auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
     }
     auto function = SetActiveFirmwareFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != tc::FirmwarePartitionId::secondary1
-       and function.partitionId != tc::FirmwarePartitionId::secondary2)
+    if(function.partitionId != fw::PartitionId::secondary1
+       and function.partitionId != fw::PartitionId::secondary2)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidPartitionId;
     }
     return function;
 }
@@ -363,10 +364,10 @@ auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
     }
     auto function = SetBackupFirmwareFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != tc::FirmwarePartitionId::secondary1
-       && function.partitionId != tc::FirmwarePartitionId::secondary2)
+    if(function.partitionId != fw::PartitionId::secondary1
+       && function.partitionId != fw::PartitionId::secondary2)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidPartitionId;
     }
     return function;
 }
@@ -381,11 +382,11 @@ auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
     }
     auto function = CheckFirmwareIntegrityFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != tc::FirmwarePartitionId::primary
-       && function.partitionId != tc::FirmwarePartitionId::secondary1
-       && function.partitionId != tc::FirmwarePartitionId::secondary2)
+    if(function.partitionId != fw::PartitionId::primary
+       && function.partitionId != fw::PartitionId::secondary1
+       && function.partitionId != fw::PartitionId::secondary2)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidPartitionId;
     }
     return function;
 }

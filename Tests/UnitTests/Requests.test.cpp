@@ -2,6 +2,7 @@
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
@@ -547,16 +548,16 @@ TEST_CASE("SynchronizeTimeFunction")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
     buffer.resize(4);
-    buffer[0] = 0xAA_b;  // Real time (high byte)
-    buffer[1] = 0xBB_b;  // Real time
-    buffer[2] = 0xCC_b;  // Real time
-    buffer[3] = 0xDD_b;  // Real time (low byte)
+    buffer[0] = 0x0A_b;  // Real time (high byte)
+    buffer[1] = 0x0B_b;  // Real time
+    buffer[2] = 0x0C_b;  // Real time
+    buffer[3] = 0x0D_b;  // Real time (low byte)
 
     auto parseResult = sts1cobcsw::ParseAsSynchronizeTimeFunction(buffer);
     CHECK(parseResult.has_value());
     auto function = parseResult.value();
 
-    CHECK(value_of(function.realTime) == 0xAABB'CCDD);
+    CHECK(value_of(function.realTime) == 0x0A0B'0C0D);
 
     // Buffer size must be 4
     buffer.resize(5);
@@ -620,27 +621,27 @@ TEST_CASE("SetActiveFirmwareFunction")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
     buffer.resize(1);
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);  // PartitionId
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary1);
 
     auto parseResult = sts1cobcsw::ParseAsSetActiveFirmwareFunction(buffer);
     CHECK(parseResult.has_value());
     auto function = parseResult.value();
 
-    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+    CHECK(function.partitionId == sts1cobcsw::fw::PartitionId::secondary1);
 
     // Check with secondaryFwPartition2
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary2);
     parseResult = sts1cobcsw::ParseAsSetActiveFirmwareFunction(buffer);
     CHECK(parseResult.has_value());
     function = parseResult.value();
-    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    CHECK(function.partitionId == sts1cobcsw::fw::PartitionId::secondary2);
 
     // Only secondary partitions are allowed
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::primary);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::primary);
     parseResult = sts1cobcsw::ParseAsSetActiveFirmwareFunction(buffer);
     CHECK(parseResult.has_error());
-    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+    CHECK(parseResult.error() == ErrorCode::invalidPartitionId);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary1);
 
     // Minimum buffer size needs to be 1
     auto smallBuffer = etl::vector<Byte, 1>{};
@@ -655,27 +656,27 @@ TEST_CASE("SetBackupFirmwareFunction")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
     buffer.resize(1);
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);  // PartitionId
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary1);
 
     auto parseResult = sts1cobcsw::ParseAsSetBackupFirmwareFunction(buffer);
     CHECK(parseResult.has_value());
     auto function = parseResult.value();
 
-    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+    CHECK(function.partitionId == sts1cobcsw::fw::PartitionId::secondary1);
 
     // Check with secondaryFwPartition2
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary2);
     parseResult = sts1cobcsw::ParseAsSetBackupFirmwareFunction(buffer);
     CHECK(parseResult.has_value());
     function = parseResult.value();
-    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    CHECK(function.partitionId == sts1cobcsw::fw::PartitionId::secondary2);
 
     // Only secondary partitions are allowed
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::primary);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::primary);
     parseResult = sts1cobcsw::ParseAsSetBackupFirmwareFunction(buffer);
     CHECK(parseResult.has_error());
-    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+    CHECK(parseResult.error() == ErrorCode::invalidPartitionId);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary1);
 
     // Minimum buffer size needs to be 1
     auto smallBuffer = etl::vector<Byte, 1>{};
@@ -690,34 +691,34 @@ TEST_CASE("CheckFirmwareIntegrityFunction")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
     buffer.resize(1);
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);  // PartitionId
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary1);
 
     auto parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
     CHECK(parseResult.has_value());
     auto function = parseResult.value();
 
-    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+    CHECK(function.partitionId == sts1cobcsw::fw::PartitionId::secondary1);
 
     // Check with secondaryFwPartition2
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary2);
     parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
     CHECK(parseResult.has_value());
     function = parseResult.value();
-    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::secondary2);
+    CHECK(function.partitionId == sts1cobcsw::fw::PartitionId::secondary2);
 
     // Check with primaryFwPartition
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::primary);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::primary);
     parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
     CHECK(parseResult.has_value());
     function = parseResult.value();
-    CHECK(function.partitionId == sts1cobcsw::tc::FirmwarePartitionId::primary);
+    CHECK(function.partitionId == sts1cobcsw::fw::PartitionId::primary);
 
     // Only valid partitionIds are allowed
-    buffer[0] = 0xF0_b;
+    buffer[0] = 0xAB_b;
     parseResult = sts1cobcsw::ParseAsCheckFirmwareIntegrityFunction(buffer);
     CHECK(parseResult.has_error());
-    CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
-    buffer[0] = static_cast<Byte>(sts1cobcsw::tc::FirmwarePartitionId::secondary1);
+    CHECK(parseResult.error() == ErrorCode::invalidPartitionId);
+    buffer[0] = static_cast<Byte>(sts1cobcsw::fw::PartitionId::secondary1);
 
     // Minimum buffer size needs to be 1
     auto smallBuffer = etl::vector<Byte, 1>{};

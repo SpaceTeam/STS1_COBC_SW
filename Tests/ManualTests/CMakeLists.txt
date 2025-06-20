@@ -141,6 +141,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 rodos::rodos
                 strong_type::strong_type
                 Sts1CobcSw_FileSystem
+                Sts1CobcSw_FirmwareManagement
                 Sts1CobcSw_Fram
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RfProtocols

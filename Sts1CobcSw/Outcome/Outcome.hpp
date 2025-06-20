@@ -72,6 +72,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidDataArea,
     invalidParameterId,
     emptyFilePath,
+    invalidPartitionId,
     // Firmware
     misaligned,
     eraseFailed,

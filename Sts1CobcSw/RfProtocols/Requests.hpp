@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -166,7 +167,7 @@ struct SetActiveFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::setActiveFirmware;
-    tc::FirmwarePartitionId partitionId;
+    fw::PartitionId partitionId;
 };
 
 
@@ -174,7 +175,7 @@ struct SetBackupFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::setBackupFirmware;
-    tc::FirmwarePartitionId partitionId;
+    fw::PartitionId partitionId;
 };
 
 
@@ -182,7 +183,7 @@ struct CheckFirmwareIntegrityFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = tc::FunctionId::checkFirmwareIntegrity;
-    tc::FirmwarePartitionId partitionId;
+    fw::PartitionId partitionId;
 };
 
 

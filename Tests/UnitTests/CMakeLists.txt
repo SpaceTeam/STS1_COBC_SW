@@ -185,6 +185,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         Sts1CobcSwTests_Reports
         PRIVATE strong_type::strong_type
                 Sts1CobcSw_FileSystem
+                Sts1CobcSw_FirmwareManagement
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_RfProtocols
@@ -202,6 +203,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         PRIVATE etl::etl
                 strong_type::strong_type
                 Sts1CobcSw_Edu
+                Sts1CobcSw_FirmwareManagement
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RfProtocols
                 Sts1CobcSw_Serial
@@ -277,8 +279,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(TelemetryRecord)
     target_link_libraries(
         Sts1CobcSwTests_TelemetryRecord
-        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Edu Sts1CobcSw_Serial Sts1CobcSw_Telemetry
-                Sts1CobcSw_Vocabulary
+        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Edu Sts1CobcSw_FirmwareManagement
+                Sts1CobcSw_Serial Sts1CobcSw_Telemetry Sts1CobcSw_Vocabulary
     )
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
 

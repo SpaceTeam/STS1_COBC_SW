@@ -104,6 +104,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidParameterId";
         case ErrorCode::emptyFilePath:
             return "emptyFilePath";
+        case ErrorCode::invalidPartitionId:
+            return "invalidPartitionId";
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:

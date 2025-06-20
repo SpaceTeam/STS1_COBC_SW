@@ -44,6 +44,36 @@ Partition const secondaryPartition2{.startAddress = 0x0806'0000U, .flashSector =
 #endif
 
 
+auto ToCZString(PartitionId partitionId) -> char const *
+{
+    switch(partitionId)
+    {
+        case PartitionId::primary:
+            return "primary";
+        case PartitionId::secondary1:
+            return "secondary1";
+        case PartitionId::secondary2:
+            return "secondary2";
+    }
+    return "unknown";
+}
+
+
+auto GetPartition(PartitionId partitionId) -> Result<Partition>
+{
+    switch(partitionId)
+    {
+        case PartitionId::primary:
+            return primaryPartition;
+        case PartitionId::secondary1:
+            return secondaryPartition1;
+        case PartitionId::secondary2:
+            return secondaryPartition2;
+    }
+    return ErrorCode::invalidPartitionId;
+}
+
+
 // Partition structure:
 // - Length: without CRC at the end, 4 bytes, in little endian
 // - Data

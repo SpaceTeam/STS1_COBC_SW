@@ -131,12 +131,6 @@ enum class FunctionId : std::uint8_t
     setBackupFirmware = 25,
     checkFirmwareIntegrity = 31,
 };
-enum class FirmwarePartitionId : std::uint8_t
-{
-    primary = 0b0000'1111,
-    secondary1 = 0b0000'0000,
-    secondary2 = 0b1111'1111
-};
 }
 
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)

@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
@@ -37,8 +38,8 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .lastApplicationDataWasInvalid = 1,
             .nTotalResets = 1U,
             .nResetsSinceRf = 2U,
-            .activeSecondaryFwPartition = 3,
-            .backupSecondaryFwPartition = 4,
+            .activeSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary1,
+            .backupSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary2,
             .eduProgramQueueIndex = 5U,
             .programIdOfCurrentEduProgramQueueEntry = ProgramId(6),
             .nEduCommunicationErrors = 7U,

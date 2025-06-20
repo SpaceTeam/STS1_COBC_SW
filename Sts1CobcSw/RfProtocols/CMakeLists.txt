@@ -11,6 +11,7 @@ target_link_libraries(
            Sts1CobcSw_ChannelCoding
            Sts1CobcSw_Edu
            Sts1CobcSw_FileSystem
+           Sts1CobcSw_FirmwareManagement
            Sts1CobcSw_Fram
            Sts1CobcSw_FramSections
            Sts1CobcSw_Outcome

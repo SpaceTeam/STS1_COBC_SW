@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
@@ -35,8 +36,8 @@ struct TelemetryRecord
     // BootLoader
     std::uint32_t nTotalResets = 0U;
     std::uint8_t nResetsSinceRf = 0U;
-    std::int8_t activeSecondaryFwPartition = 0;
-    std::int8_t backupSecondaryFwPartition = 0;
+    fw::PartitionId activeSecondaryFwPartition = fw::PartitionId::secondary1;
+    fw::PartitionId backupSecondaryFwPartition = fw::PartitionId::secondary1;
 
     // EDU
     std::uint8_t eduProgramQueueIndex = 0;

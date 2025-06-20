@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
@@ -34,8 +35,8 @@ inline constexpr auto persistentVariables =
                         // Bootloader
                         PersistentVariableInfo<"nTotalResets", std::uint32_t>,
                         PersistentVariableInfo<"nResetsSinceRf", std::uint8_t>,
-                        PersistentVariableInfo<"activeSecondaryFwPartition", std::int8_t>,
-                        PersistentVariableInfo<"backupSecondaryFwPartition", std::int8_t>,
+                        PersistentVariableInfo<"activeSecondaryFwPartition", fw::PartitionId>,
+                        PersistentVariableInfo<"backupSecondaryFwPartition", fw::PartitionId>,
                         // Housekeeping
                         PersistentVariableInfo<"txIsOn", bool>,
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
