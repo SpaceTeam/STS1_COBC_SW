@@ -51,17 +51,6 @@ private:
     void init() override
     {
         edu::Initialize();
-
-        // auto queueEntry1 = EduQueueEntry{
-        //    .programId = 0, .timestamp = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
-
-        // auto queueEntry2 = EduQueueEntry{
-        //    .programId = 0, .timestamp = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
-
-        // eduProgramQueue.push_back(queueEntry1);
-        // eduProgramQueue.push_back(queueEntry2);
-
-        DEBUG_PRINT("Size of EDU program queue = %" PRIu32 "\n", edu::programQueue.Size());
     }
 
     void run() override
@@ -126,7 +115,6 @@ private:
                         startDelay2 / s);
             SuspendFor(startDelay2);
 
-            // Never reached
             DEBUG_PRINT("Done suspending for the second time\n");
 
             DEBUG_PRINT("Executing EDU program %" PRIu16 "\n", value_of(queueEntry.programId));
