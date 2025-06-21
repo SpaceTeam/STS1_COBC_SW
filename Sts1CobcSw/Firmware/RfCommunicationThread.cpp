@@ -67,21 +67,21 @@ constexpr auto stackSize = 3000;
 constexpr auto rxTimeout = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 constexpr auto rxToTxSwitchDuration = 300 * ms;
+constexpr auto maxNFramesToSendContinously = rf::maxTxDataLength / fullyEncodedFrameLength;
+
 
 auto tmBuffer = std::array<Byte, blockLength>{};
 auto tcBuffer = std::array<Byte, blockLength>{};
 auto tmFrame = tm::TransferFrame(std::span(tmBuffer).first<tm::transferFrameLength>());
 auto lastRxTime = RodosTime(0);
+std::uint16_t nFramesToSend = 0U;
+std::uint16_t nSentFrames = 0U;
 
-
-auto Send(Payload const & report) -> void;
-auto Send(std::span<Byte const, blockLength> encodedFrame) -> void;
 
 auto SendCfdpFrames() -> void;
 auto HandleReceivedData() -> void;
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void;
 auto HandleRequestFrame(tc::TransferFrame const & frame) -> void;
-auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
 auto Handle(Request const & request, RequestId const & requestId) -> void;
 
 template<auto parseFunction>
@@ -113,8 +113,18 @@ auto Handle(SetActiveFirmwareFunction const & function, RequestId const & reques
 auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void;
 auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & requestId) -> void;
 
+auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
 auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
 auto Set(Parameter parameter) -> void;
+
+// Must be called before SendAndContinue()
+auto SetTxDataLength(std::uint16_t nFrames) -> void;
+auto SendAndWait(Payload const & report) -> void;
+auto SendAndContinue(Payload const & report) -> void;
+auto PackageAndEncode(Payload const & report) -> void;
+auto SuspendUntilEarliestTxTime() -> void;
+// Must be called after SendAndContinue()
+auto FinalizeTransmission() -> void;
 
 
 class RfCommunicationThread : public RODOS::StaticThread<stackSize>
@@ -138,7 +148,7 @@ private:
             {
                 auto getTelemetryRecordResult = telemetryRecordMailbox.Get();
                 DEBUG_PRINT("Sending housekeeping parameter report\n");
-                Send(HousekeepingParameterReport(getTelemetryRecordResult.value()));
+                SendAndWait(HousekeepingParameterReport(getTelemetryRecordResult.value()));
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 receiveResult = rf::Receive(tcBuffer, rxTimeoutAfterTelemetryRecord);
             }
@@ -175,31 +185,6 @@ auto ResumeRfCommunicationThread() -> void
 
 namespace
 {
-auto Send(Payload const & report) -> void
-{
-    tmFrame.StartNew(pusVcid);
-    // TODO: We know that the payload is neither empty nor too large but maybe we should
-    // at least assert() that.
-    (void)AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
-    tmFrame.Finish();
-    tm::Encode(tmBuffer);
-    Send(tmBuffer);
-}
-
-
-auto Send(std::span<Byte const, blockLength> encodedFrame) -> void
-{
-    auto earliestTxTime = lastRxTime + rxToTxSwitchDuration;
-    if(earliestTxTime > CurrentRodosTime())
-    {
-        SuspendUntil(earliestTxTime);
-    }
-    // TODO: Once the RF driver implements full error handling (retrying, reconfiguring,
-    // and resetting). This should no longer return a Result<void>.
-    (void)rf::SendAndWait(encodedFrame);
-}
-
-
 auto SendCfdpFrames() -> void
 {
     DEBUG_PRINT("SendCfdpFrames()\n");
@@ -267,7 +252,7 @@ auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
         persistentVariables.Store<"lastMessageTypeIdWasInvalid">(
             parseAsRequestResult.error() == ErrorCode::invalidMessageTypeId);
         DEBUG_PRINT("Failed acceptance of request: %s\n", ToCZString(parseAsRequestResult.error()));
-        Send(FailedAcceptanceVerificationReport(requestId, parseAsRequestResult.error()));
+        SendAndWait(FailedAcceptanceVerificationReport(requestId, parseAsRequestResult.error()));
         return;
     }
     auto const & request = parseAsRequestResult.value();
@@ -275,17 +260,6 @@ auto HandleRequestFrame(tc::TransferFrame const & frame) -> void
     persistentVariables.Store<"lastMessageTypeId">(
         request.packetSecondaryHeader.messageTypeId.Value());
     Handle(request, requestId);
-}
-
-
-auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId
-{
-    return RequestId{.packetVersionNumber = header.versionNumber,
-                     .packetType = header.packetType,
-                     .secondaryHeaderFlag = header.secondaryHeaderFlag,
-                     .apid = header.apid,
-                     .sequenceFlags = header.sequenceFlags,
-                     .packetSequenceCount = header.packetSequenceCount};
 }
 
 
@@ -338,7 +312,7 @@ auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> vo
     if(parseResult.has_error())
     {
         DEBUG_PRINT("Failed acceptance of request: %s\n", ToCZString(parseResult.error()));
-        Send(FailedAcceptanceVerificationReport(requestId, parseResult.error()));
+        SendAndWait(FailedAcceptanceVerificationReport(requestId, parseResult.error()));
         return;
     }
     // PerformAFunctionRequest has one more level of parsing to do before the successful acceptance
@@ -347,7 +321,7 @@ auto VerifyAndHandle(Request const & request, RequestId const & requestId) -> vo
                                     decltype(&ParseAsPerformAFunctionRequest)>)
     {
         DEBUG_PRINT("Successfully accepted request\n");
-        Send(SuccessfulAcceptanceVerificationReport(requestId));
+        SendAndWait(SuccessfulAcceptanceVerificationReport(requestId));
     }
     Handle(parseResult.value(), requestId);
 }
@@ -358,7 +332,7 @@ auto Handle(LoadRawMemoryDataAreasRequest const & request, RequestId const & req
     static constexpr auto timeout = 100 * ms;
     fram::WriteTo(request.startAddress, request.data, timeout);
     DEBUG_PRINT("Successfully loaded raw memory data areas\n");
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
@@ -366,14 +340,16 @@ auto Handle(DumpRawMemoryDataRequest const & request, [[maybe_unused]] RequestId
     -> void
 {
     auto dumpedData = etl::vector<Byte, maxDumpedDataLength>{};
+    SetTxDataLength(request.nDataAreas);
     for(auto && dataArea : request.dataAreas)
     {
         dumpedData.uninitialized_resize(dataArea.length);
         static constexpr auto timeout = 100 * ms;
         fram::ReadFrom(dataArea.startAddress, std::span(dumpedData), timeout);
         DEBUG_PRINT("Sending dumped raw memory data report\n");
-        Send(DumpedRawMemoryDataReport(1, dataArea.startAddress, dumpedData));
+        SendAndContinue(DumpedRawMemoryDataReport(1, dataArea.startAddress, dumpedData));
     }
+    FinalizeTransmission();
 }
 
 
@@ -384,7 +360,7 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
         case FunctionId::stopAntennaDeployment:
             persistentVariables.Store<"antennasShouldBeDeployed">(false);
             DEBUG_PRINT("Stopped antenna deployment\n");
-            Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+            SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
             return;
         case FunctionId::requestHousekeepingParameterReports:
             VerifyAndHandle<ParseAsReportHousekeepingParameterReportFunction>(request, requestId);
@@ -396,7 +372,7 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
         case FunctionId::enableCubeSatTx:
             rf::EnableTx();
             DEBUG_PRINT("Enabled CubeSat TX\n");
-            Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+            SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
             return;
         case FunctionId::resetNow:
             RODOS::hwResetAndReboot();
@@ -432,7 +408,7 @@ auto Handle(ReportParameterValuesRequest const & request,
         parameters.push_back({parameterId, GetValue(parameterId)});
     }
     DEBUG_PRINT("Sending parameter value report\n");
-    Send(ParameterValueReport(parameters));
+    SendAndWait(ParameterValueReport(parameters));
 }
 
 
@@ -446,7 +422,7 @@ auto Handle(SetParameterValuesRequest const & request, [[maybe_unused]] RequestI
         parameters.push_back({parameter.id, GetValue(parameter.id)});
     }
     DEBUG_PRINT("Sending parameter value report\n");
-    Send(ParameterValueReport(parameters));
+    SendAndWait(ParameterValueReport(parameters));
 }
 
 
@@ -457,11 +433,11 @@ auto Handle(DeleteAFileRequest const & request, RequestId const & requestId) -> 
     {
         DEBUG_PRINT(
             "Failed to delete file %s: %s\n", request.filePath.c_str(), ToCZString(result.error()));
-        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
         return;
     }
     DEBUG_PRINT("Successfully deleted file %s\n", request.filePath.c_str());
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
@@ -473,7 +449,7 @@ auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const &
         OUTCOME_TRY(auto fileSize, fs::FileSize(request.filePath));
         auto fileStatus = isLocked ? FileStatus::locked : FileStatus::unlocked;
         DEBUG_PRINT("Sending file attribute report for %s\n", request.filePath.c_str());
-        Send(FileAttributeReport(request.filePath, fileSize, fileStatus));
+        SendAndWait(FileAttributeReport(request.filePath, fileSize, fileStatus));
         return outcome_v2::success();
     }();
     if(result.has_error())
@@ -481,7 +457,7 @@ auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const &
         DEBUG_PRINT("Failed to report attributes of file %s: %s\n",
                     request.filePath.c_str(),
                     ToCZString(result.error()));
-        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
     }
 }
 
@@ -494,32 +470,42 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
         OUTCOME_TRY(auto iterator, fs::MakeIterator(request.repositoryPath));
         auto nObjects = static_cast<std::uint8_t>(std::distance(iterator, iterator.end()));
         OUTCOME_TRY(iterator, fs::MakeIterator(request.repositoryPath));
-        auto objects =
-            etl::vector<FileSystemObject, RepositoryContentSummaryReport::maxNObjectsPerPacket>{};
-        while(iterator != iterator.end())
+        static constexpr auto maxNObjectsPerPacket =
+            RepositoryContentSummaryReport::maxNObjectsPerPacket;
+        auto objects = etl::vector<FileSystemObject, maxNObjectsPerPacket>{};
+        // Round up to get the number of frames required to send all objects
+        SetTxDataLength(static_cast<std::uint16_t>((nObjects + maxNObjectsPerPacket - 1)
+                                                   / maxNObjectsPerPacket));
+        auto loopResult = [&]() -> Result<void>
         {
-            OUTCOME_TRY(auto directoryInfo, *iterator);
-            auto objectType = directoryInfo.type == fs::EntryType::file
-                                ? FileSystemObject::Type::file
-                                : FileSystemObject::Type::directory;
-            objects.push_back({objectType, directoryInfo.name});
-            ++iterator;
-            if(objects.full() or iterator == iterator.end())
+            while(iterator != iterator.end())
             {
-                DEBUG_PRINT("Sending repository content summary report for %s\n",
-                            request.repositoryPath.c_str());
-                Send(RepositoryContentSummaryReport(request.repositoryPath, nObjects, objects));
-                objects.clear();
+                OUTCOME_TRY(auto directoryInfo, *iterator);
+                auto objectType = directoryInfo.type == fs::EntryType::file
+                                    ? FileSystemObject::Type::file
+                                    : FileSystemObject::Type::directory;
+                objects.push_back({objectType, directoryInfo.name});
+                ++iterator;
+                if(objects.full() or iterator == iterator.end())
+                {
+                    DEBUG_PRINT("Sending repository content summary report for %s\n",
+                                request.repositoryPath.c_str());
+                    SendAndContinue(
+                        RepositoryContentSummaryReport(request.repositoryPath, nObjects, objects));
+                    objects.clear();
+                }
             }
-        }
-        return outcome_v2::success();
+            return outcome_v2::success();
+        }();
+        FinalizeTransmission();
+        return loopResult;
     }();
     if(result.has_error())
     {
         DEBUG_PRINT("Failed to report content of repository %s: %s\n",
                     request.repositoryPath.c_str(),
                     ToCZString(result.error()));
-        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
     }
 }
 
@@ -531,7 +517,7 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
     DEBUG_PRINT("Successfully initiated copying file %s to %s\n",
                 request.sourceFilePath.c_str(),
                 request.targetFilePath.c_str());
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
     ResumeFileTransferThread();
     SuspendUntil(endOfTime);
 }
@@ -544,11 +530,11 @@ auto VerifyAndHandle(PerformAFunctionRequest const & request, RequestId const & 
     if(parseResult.has_error())
     {
         DEBUG_PRINT("Failed acceptance of request: %s\n", ToCZString(parseResult.error()));
-        Send(FailedAcceptanceVerificationReport(requestId, parseResult.error()));
+        SendAndWait(FailedAcceptanceVerificationReport(requestId, parseResult.error()));
         return;
     }
     DEBUG_PRINT("Successfully accepted request\n");
-    Send(SuccessfulAcceptanceVerificationReport(requestId));
+    SendAndWait(SuccessfulAcceptanceVerificationReport(requestId));
     Handle(parseResult.value(), requestId);
 }
 
@@ -557,14 +543,21 @@ auto Handle(ReportHousekeepingParameterReportFunction const & function,
             [[maybe_unused]] RequestId const & requestId) -> void
 {
     auto nTelemetryRecords = static_cast<std::uint16_t>(telemetryMemory.Size());
-    auto iMax = std::min<std::uint16_t>(nTelemetryRecords, function.lastReportIndex + 1U);
-    DEBUG_PRINT("Sending housekeeping parameter report %" PRIu16 " to %" PRIu16 "\n",
-                function.firstReportIndex,
-                iMax - 1U);
-    for(auto i = function.firstReportIndex; i < iMax; ++i)
+    auto iBegin = std::min<std::uint16_t>(function.firstReportIndex, nTelemetryRecords);
+    auto iEnd = std::min<std::uint16_t>(function.lastReportIndex + 1U, nTelemetryRecords);
+    if(iBegin == iEnd)
     {
-        Send(HousekeepingParameterReport(telemetryMemory.Get(i)));
+        DEBUG_PRINT("No housekeeping parameter reports to send\n");
+        return;
     }
+    DEBUG_PRINT(
+        "Sending housekeeping parameter reports %" PRIu16 " to %" PRIu16 "\n", iBegin, iEnd - 1U);
+    SetTxDataLength(iEnd - iBegin);
+    for(auto i = iBegin; i < iEnd; ++i)
+    {
+        SendAndContinue(HousekeepingParameterReport(telemetryMemory.Get(i)));
+    }
+    FinalizeTransmission();
 }
 
 
@@ -573,7 +566,7 @@ auto Handle(EnableFileTransferFunction const & function, RequestId const & reque
     persistentVariables.Store<"fileTransferWindowEnd">(CurrentRodosTime()
                                                        + function.durationInS * s);
     DEBUG_PRINT("Enabled file transfers for the next %" PRIu16 " s\n", function.durationInS);
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
@@ -582,7 +575,7 @@ auto Handle(SynchronizeTimeFunction const & function, RequestId const & requestI
     UpdateRealTimeOffset(function.realTime);
     DEBUG_PRINT("Successfully synchronized time: current real time = %" PRIi32 "\n",
                 value_of(CurrentRealTime()));
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
@@ -594,7 +587,7 @@ auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId
         edu::programQueue.PushBack(entry);
     }
     DEBUG_PRINT("Updated EDU queue with %u entries\n", function.queueEntries.size());
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
@@ -602,7 +595,7 @@ auto Handle(SetActiveFirmwareFunction const & function, RequestId const & reques
 {
     persistentVariables.Store<"activeSecondaryFwPartition">(function.partitionId);
     DEBUG_PRINT("Set active firmware partition to %s\n", ToCZString(function.partitionId));
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
@@ -610,7 +603,7 @@ auto Handle(SetBackupFirmwareFunction const & function, RequestId const & reques
 {
     persistentVariables.Store<"backupSecondaryFwPartition">(function.partitionId);
     DEBUG_PRINT("Set backup firmware partition to %s\n", ToCZString(function.partitionId));
-    Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 
@@ -623,15 +616,26 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
         DEBUG_PRINT("Firmware in partition %s is intact\n", ToCZString(function.partitionId));
         DEBUG_PRINT("Successfully passed firmware integrity check for partition %s\n",
                     ToCZString(function.partitionId));
-        Send(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+        SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
         return outcome_v2::success();
     }();
     if(result.has_error())
     {
         DEBUG_PRINT("Failed to check firmware integrity: %s\n", ToCZString(result.error()));
-        Send(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
         return;
     }
+}
+
+
+auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId
+{
+    return RequestId{.packetVersionNumber = header.versionNumber,
+                     .packetType = header.packetType,
+                     .secondaryHeaderFlag = header.secondaryHeaderFlag,
+                     .apid = header.apid,
+                     .sequenceFlags = header.sequenceFlags,
+                     .packetSequenceCount = header.packetSequenceCount};
 }
 
 
@@ -675,6 +679,68 @@ auto Set(Parameter parameter) -> void
             persistentVariables.Store<"newEduResultIsAvailable">(parameter.value != 0U);
             break;
     }
+}
+
+
+auto SetTxDataLength(std::uint16_t nFrames) -> void
+{
+    nFramesToSend = nFrames;
+    nSentFrames = 0;
+    rf::SetTxDataLength(std::min<std::uint16_t>(nFrames, maxNFramesToSendContinously)
+                        * fullyEncodedFrameLength);
+}
+
+
+auto SendAndWait(Payload const & report) -> void
+{
+    PackageAndEncode(report);
+    SuspendUntilEarliestTxTime();
+    // TODO: Once the RF driver implements full error handling (retrying, reconfiguring,
+    // and resetting). This should no longer return a Result<void>.
+    (void)rf::SendAndWait(tmBuffer);
+}
+
+
+auto SendAndContinue(Payload const & report) -> void
+{
+    PackageAndEncode(report);
+    if(nSentFrames >= maxNFramesToSendContinously)
+    {
+        FinalizeTransmission();
+        SetTxDataLength(nFramesToSend - nSentFrames);
+    }
+    SuspendUntilEarliestTxTime();
+    // TODO: Once the RF driver implements full error handling this should no longer return a Result
+    (void)rf::SendAndContinue(tmBuffer);
+}
+
+
+auto PackageAndEncode(Payload const & report) -> void
+{
+    tmFrame.StartNew(pusVcid);
+    (void)AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
+    tmFrame.Finish();
+    tm::Encode(tmBuffer);
+}
+
+
+auto SuspendUntilEarliestTxTime() -> void
+{
+    auto earliestTxTime = lastRxTime + rxToTxSwitchDuration;
+    if(earliestTxTime > CurrentRodosTime())
+    {
+        SuspendUntil(earliestTxTime);
+    }
+}
+
+
+auto FinalizeTransmission() -> void
+{
+    // TX FIFO buffer size <= 128 B, slowest data rate = 1.2 kbps → max. send time = 128 B * 8 b/B /
+    // 1200 b/s = 0.853 s → timeout = 1 s
+    static constexpr auto timeout = 1 * s;
+    (void)rf::SuspendUntilDataSent(timeout);
+    rf::EnterStandbyMode();
 }
 }
 }
