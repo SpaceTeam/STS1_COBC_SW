@@ -51,6 +51,7 @@
 #include <algorithm>
 #include <array>
 #include <cinttypes>  // IWYU pragma: keep
+#include <climits>
 #include <compare>
 #include <cstdint>
 #include <iterator>
@@ -64,7 +65,7 @@ namespace sts1cobcsw
 namespace
 {
 constexpr auto stackSize = 3000;
-constexpr auto rxTimeout = 3 * s;
+constexpr auto rxTimeoutForAdditionalData = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 constexpr auto rxToTxSwitchDuration = 300 * ms;
 constexpr auto maxNFramesToSendContinously = rf::maxTxDataLength / fullyEncodedFrameLength;
@@ -78,6 +79,9 @@ std::uint16_t nFramesToSend = 0U;
 std::uint16_t nSentFrames = 0U;
 
 
+auto SuspendUntilNewTelemetryRecordIsAvailable() -> void;
+auto ThereIsEnoughTimeForRxAndDataHandling(Duration rxTimeout) -> bool;
+auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>;
 auto SendCfdpFrames() -> void;
 auto HandleReceivedData() -> void;
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void;
@@ -140,37 +144,33 @@ private:
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         DEBUG_PRINT("Starting RF communication thread\n");
         rdt::Initialize();
+        auto moreDataShouldBeReceived = false;
         while(true)
         {
-            auto receiveResult = Result<void>(ErrorCode::timeout);
-            auto newTelemetryRecordIsAvailable = telemetryRecordMailbox.IsFull();
-            if(newTelemetryRecordIsAvailable)
+            if(telemetryRecordMailbox.IsFull())
             {
-                auto getTelemetryRecordResult = telemetryRecordMailbox.Get();
                 DEBUG_PRINT("Sending housekeeping parameter report\n");
-                SendAndWait(HousekeepingParameterReport(getTelemetryRecordResult.value()));
+                SendAndWait(HousekeepingParameterReport(telemetryRecordMailbox.Get().value()));
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
-                receiveResult = rf::Receive(tcBuffer, rxTimeoutAfterTelemetryRecord);
-            }
-            if(not newTelemetryRecordIsAvailable or receiveResult.has_error())
-            {
-                if(encodedCfdpFrameMailbox.IsFull())
-                {
-                    SendCfdpFrames();
-                }
-                else  // TODO: Maybe add if(not newTelemetryRecordIsAvailable) here
-                {
-                    DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeout / s);
-                    receiveResult = rf::Receive(tcBuffer, rxTimeout);
-                }
-            }
-            if(receiveResult.has_value())
-            {
-                lastRxTime = CurrentRodosTime();
-                HandleReceivedData();
+                auto receiveResult = ReceiveAndHandleData(rxTimeoutAfterTelemetryRecord);
+                moreDataShouldBeReceived = receiveResult.has_value();
                 continue;
             }
-            SuspendUntil(endOfTime);
+            if(encodedCfdpFrameMailbox.IsFull())
+            {
+                SendCfdpFrames();
+                SuspendUntilNewTelemetryRecordIsAvailable();
+                continue;
+            }
+            if(moreDataShouldBeReceived
+               and ThereIsEnoughTimeForRxAndDataHandling(rxTimeoutForAdditionalData))
+            {
+                DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutForAdditionalData / s);
+                auto receiveResult = ReceiveAndHandleData(rxTimeoutForAdditionalData);
+                moreDataShouldBeReceived = receiveResult.has_value();
+                continue;
+            }
+            SuspendUntilNewTelemetryRecordIsAvailable();
         }
     }
 } rfCommunicationThread;
@@ -185,6 +185,35 @@ auto ResumeRfCommunicationThread() -> void
 
 namespace
 {
+auto SuspendUntilNewTelemetryRecordIsAvailable() -> void
+{
+    // We cannot use endOfTime here since SuspendUntilFull() takes a duration and not a time point.
+    // 2 days is basically the end of time, though, since if we don't receive any data for about 1
+    // day the reset dog will reset the COBC anyway.
+    (void)telemetryRecordMailbox.SuspendUntilFull(2 * days);
+}
+
+
+auto ThereIsEnoughTimeForRxAndDataHandling(Duration rxTimeout) -> bool
+{
+    auto frameSendDuration = fullyEncodedFrameLength * CHAR_BIT * s / rf::GetTxDataRate();
+    auto const dataHandlingDuration = 2 * frameSendDuration + 100 * ms;
+    // We know that the nextTelemetryRecordTimeMailbox is never empty here, because the telemetry
+    // thread has a higher priority and will always write to it before we read it.
+    auto nextTelemetryRecordTime = nextTelemetryRecordTimeMailbox.Peek().value();
+    return CurrentRodosTime() + rxTimeout + dataHandlingDuration < nextTelemetryRecordTime;
+}
+
+
+auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>
+{
+    OUTCOME_TRY(rf::Receive(tcBuffer, rxTimeout));
+    lastRxTime = CurrentRodosTime();
+    HandleReceivedData();
+    return outcome_v2::success();
+}
+
+
 auto SendCfdpFrames() -> void
 {
     DEBUG_PRINT("SendCfdpFrames()\n");
@@ -348,6 +377,10 @@ auto Handle(DumpRawMemoryDataRequest const & request, [[maybe_unused]] RequestId
         fram::ReadFrom(dataArea.startAddress, std::span(dumpedData), timeout);
         DEBUG_PRINT("Sending dumped raw memory data report\n");
         SendAndContinue(DumpedRawMemoryDataReport(1, dataArea.startAddress, dumpedData));
+        if(telemetryRecordMailbox.IsFull())
+        {
+            break;
+        }
     }
     FinalizeTransmission();
 }
@@ -476,29 +509,34 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
         // Round up to get the number of frames required to send all objects
         SetTxDataLength(static_cast<std::uint16_t>((nObjects + maxNObjectsPerPacket - 1)
                                                    / maxNObjectsPerPacket));
-        auto loopResult = [&]() -> Result<void>
+        while(iterator != iterator.end())
         {
-            while(iterator != iterator.end())
+            auto dereferenceResult = *iterator;
+            if(dereferenceResult.has_error())
             {
-                OUTCOME_TRY(auto directoryInfo, *iterator);
-                auto objectType = directoryInfo.type == fs::EntryType::file
-                                    ? FileSystemObject::Type::file
-                                    : FileSystemObject::Type::directory;
-                objects.push_back({objectType, directoryInfo.name});
-                ++iterator;
-                if(objects.full() or iterator == iterator.end())
-                {
-                    DEBUG_PRINT("Sending repository content summary report for %s\n",
-                                request.repositoryPath.c_str());
-                    SendAndContinue(
-                        RepositoryContentSummaryReport(request.repositoryPath, nObjects, objects));
-                    objects.clear();
-                }
+                break;
             }
-            return outcome_v2::success();
-        }();
+            auto const & directoryInfo = dereferenceResult.value();
+            auto objectType = directoryInfo.type == fs::EntryType::file
+                                ? FileSystemObject::Type::file
+                                : FileSystemObject::Type::directory;
+            objects.push_back({objectType, directoryInfo.name});
+            ++iterator;
+            if(objects.full() or iterator == iterator.end())
+            {
+                DEBUG_PRINT("Sending repository content summary report for %s\n",
+                            request.repositoryPath.c_str());
+                SendAndContinue(
+                    RepositoryContentSummaryReport(request.repositoryPath, nObjects, objects));
+                if(telemetryRecordMailbox.IsFull())
+                {
+                    break;
+                }
+                objects.clear();
+            }
+        }
         FinalizeTransmission();
-        return loopResult;
+        return outcome_v2::success();
     }();
     if(result.has_error())
     {
@@ -519,7 +557,7 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
                 request.targetFilePath.c_str());
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
     ResumeFileTransferThread();
-    SuspendUntil(endOfTime);
+    SuspendUntilNewTelemetryRecordIsAvailable();
 }
 
 
@@ -556,6 +594,10 @@ auto Handle(ReportHousekeepingParameterReportFunction const & function,
     for(auto i = iBegin; i < iEnd; ++i)
     {
         SendAndContinue(HousekeepingParameterReport(telemetryMemory.Get(i)));
+        if(telemetryRecordMailbox.IsFull())
+        {
+            break;
+        }
     }
     FinalizeTransmission();
 }

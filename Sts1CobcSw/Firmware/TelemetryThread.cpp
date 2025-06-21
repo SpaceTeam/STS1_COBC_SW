@@ -49,10 +49,6 @@ public:
 
 
 private:
-    void init() override
-    {}
-
-
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
@@ -64,6 +60,7 @@ private:
             telemetryMemory.PushBack(telemetryRecord);
             DEBUG_PRINT("Publishing telemetry record\n");
             telemetryRecordMailbox.Overwrite(telemetryRecord);
+            nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
             ResumeRfCommunicationThread();
         }
     }
