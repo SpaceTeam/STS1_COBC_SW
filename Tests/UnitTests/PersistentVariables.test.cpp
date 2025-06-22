@@ -79,6 +79,15 @@ TEST_CASE("PersistentVariables")
             CHECK(pvs.Load<"nResets">() == 15U);
         }
 
+        // SECTION("Add() adds")
+        {
+            pvs.Store<"nResets">(13U);
+            pvs.Add<"nResets">(7U);
+            CHECK(pvs.Load<"nResets">() == 20U);
+            pvs.Add<"nResets">(-3U);
+            CHECK(pvs.Load<"nResets">() == 17U);
+        }
+
         // SECTION("Store() writes to memory")
         {
             pvs.Store<"nResets">(0x1234'5678U);
@@ -110,6 +119,17 @@ TEST_CASE("PersistentVariables")
             CHECK(memory[activeFwImageAddress0] == 18_b);
             CHECK(memory[activeFwImageAddress1] == 18_b);
             CHECK(memory[activeFwImageAddress2] == 18_b);
+        }
+
+        // SECTION("Add() loads from and writes to memory")
+        {
+            memory[activeFwImageAddress0] = 17_b;
+            memory[activeFwImageAddress1] = 17_b;
+            memory[activeFwImageAddress2] = 17_b;
+            pvs.Add<"activeFwImage">(5);
+            CHECK(memory[activeFwImageAddress0] == 22_b);
+            CHECK(memory[activeFwImageAddress1] == 22_b);
+            CHECK(memory[activeFwImageAddress2] == 22_b);
         }
 
         // SECTION("Load() returns majority and repairs memory")
@@ -175,6 +195,40 @@ TEST_CASE("PersistentVariables")
             CHECK(memory[activeFwImageAddress1] == 43_b);
             CHECK(memory[activeFwImageAddress2] == 43_b);
         }
+
+        // SECTION("Add() adds to majority and repairs memory")
+        {
+            memory[activeFwImageAddress0] = 42_b;
+            memory[activeFwImageAddress1] = 10_b;
+            memory[activeFwImageAddress2] = 10_b;
+            pvs.Add<"activeFwImage">(5);
+            CHECK(pvs.Load<"activeFwImage">() == 15);
+            CHECK(memory[activeFwImageAddress0] == 15_b);
+            CHECK(memory[activeFwImageAddress1] == 15_b);
+            CHECK(memory[activeFwImageAddress2] == 15_b);
+
+            memory[activeFwImageAddress1] = 42_b;
+            pvs.Add<"activeFwImage">(5);
+            CHECK(pvs.Load<"activeFwImage">() == 20);
+            CHECK(memory[activeFwImageAddress0] == 20_b);
+            CHECK(memory[activeFwImageAddress1] == 20_b);
+            CHECK(memory[activeFwImageAddress2] == 20_b);
+
+            memory[activeFwImageAddress2] = 42_b;
+            pvs.Add<"activeFwImage">(5);
+            CHECK(pvs.Load<"activeFwImage">() == 25);
+            CHECK(memory[activeFwImageAddress0] == 25_b);
+            CHECK(memory[activeFwImageAddress1] == 25_b);
+            CHECK(memory[activeFwImageAddress2] == 25_b);
+
+            memory[activeFwImageAddress0] = 42_b;
+            memory[activeFwImageAddress2] = 42_b;
+            pvs.Add<"activeFwImage">(5);
+            CHECK(pvs.Load<"activeFwImage">() == 47);
+            CHECK(memory[activeFwImageAddress0] == 47_b);
+            CHECK(memory[activeFwImageAddress1] == 47_b);
+            CHECK(memory[activeFwImageAddress2] == 47_b);
+        }
     }
 
     // SECTION("FRAM is not working")
@@ -226,6 +280,19 @@ TEST_CASE("PersistentVariables")
             memory[activeFwImageAddress2] = 17_b;
             pvs.Increment<"activeFwImage">();
             CHECK(pvs.Load<"activeFwImage">() == 1);
+            CHECK(memory[activeFwImageAddress0] == 17_b);
+            CHECK(memory[activeFwImageAddress1] == 17_b);
+            CHECK(memory[activeFwImageAddress2] == 17_b);
+        }
+
+        // SECTION("Add() does not load from or write to memory")
+        {
+            pvs.Store<"activeFwImage">(0);
+            memory[activeFwImageAddress0] = 17_b;
+            memory[activeFwImageAddress1] = 17_b;
+            memory[activeFwImageAddress2] = 17_b;
+            pvs.Add<"activeFwImage">(5);
+            CHECK(pvs.Load<"activeFwImage">() == 5);
             CHECK(memory[activeFwImageAddress0] == 17_b);
             CHECK(memory[activeFwImageAddress1] == 17_b);
             CHECK(memory[activeFwImageAddress2] == 17_b);
