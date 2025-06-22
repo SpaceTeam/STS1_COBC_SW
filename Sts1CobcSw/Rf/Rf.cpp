@@ -169,19 +169,19 @@ auto ReadAndClearInterruptStatus() -> Result<std::array<Byte, interruptStatusAns
 [[nodiscard]] auto SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>;
 [[nodiscard]] auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
 
-auto StartTx() -> Result<void>;
-auto StartRx() -> Result<void>;
+[[nodiscard]] auto StartTx() -> Result<void>;
+[[nodiscard]] auto StartRx() -> Result<void>;
 
-auto ResetFifos() -> Result<void>;
-auto WriteToFifo(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto ResetFifos() -> Result<void>;
+[[nodiscard]] auto WriteToFifo(std::span<Byte const> data) -> Result<void>;
 auto ReadFromFifo(std::span<Byte> data) -> void;
-auto ReadFreeTxFifoSpace() -> Result<std::uint8_t>;
-auto ReadRxFifoFillLevel() -> Result<std::uint8_t>;
+[[nodiscard]] auto ReadFreeTxFifoSpace() -> Result<std::uint8_t>;
+[[nodiscard]] auto ReadRxFifoFillLevel() -> Result<std::uint8_t>;
 
 auto DebugPrintModemStatus() -> void;
-auto ReadModemStatus() -> Result<ModemStatus>;
+[[nodiscard]] auto ReadModemStatus() -> Result<ModemStatus>;
 
-auto SendCommand(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto SendCommand(std::span<Byte const> data) -> Result<void>;
 template<std::size_t answerLength>
 [[nodiscard]] auto SendCommand(std::span<Byte const> data)
     -> Result<std::array<Byte, answerLength>>;
@@ -192,9 +192,9 @@ template<std::size_t answerLength>
 [[nodiscard]] auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>;
 template<std::size_t extent>
     requires(extent <= maxNProperties)
-auto SetProperties(PropertyGroup propertyGroup,
-                   Byte startIndex,
-                   std::span<Byte const, extent> propertyValues) -> Result<void>;
+[[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
+                                 Byte startIndex,
+                                 std::span<Byte const, extent> propertyValues) -> Result<void>;
 }
 
 
