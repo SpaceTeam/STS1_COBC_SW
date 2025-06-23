@@ -63,11 +63,13 @@ private:
                 (void)0;  // Silence warning about repeated branch in conditional
                 DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
+                continue;
             }
             else if(persistentVariables.Load<"eduProgramQueueIndex">() >= edu::programQueue.Size())
             {
                 DEBUG_PRINT("End of queue is reached, thread set to sleep until end of time\n");
                 SuspendUntil(endOfTime);
+                continue;
             }
 
             auto queueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
