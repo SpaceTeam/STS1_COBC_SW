@@ -54,8 +54,6 @@ private:
 
     void run() override
     {
-        DEBUG_PRINT("Entering EduProgramQueueThread\n");
-        DEBUG_PRINT_REAL_TIME();
         while(true)
         {
             if(edu::programQueue.IsEmpty())
@@ -73,21 +71,19 @@ private:
             }
 
             auto queueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
+            if(queueIndex == -1)
+            {
+                queueIndex = 0;
+            }
+
+
             auto queueEntry = edu::programQueue.Get(queueIndex);
             auto startDelay = ComputeStartDelay(queueEntry.startTime);
             nextProgramStartDelayTopic.publish(startDelay);
 
-            DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
-                        queueIndex,
-                        startDelay / s);
-
             // Suspend until delay time - 2 seconds
-            DEBUG_PRINT("Suspending for the first time for      : %" PRIi64 " s\n",
-                        (startDelay - eduCommunicationDelay) / s);
             SuspendFor(startDelay - eduCommunicationDelay);
 
-            DEBUG_PRINT("Resuming here after first wait.\n");
-            DEBUG_PRINT_REAL_TIME();
 
             auto updateTimeResult = edu::UpdateTime({CurrentRealTime()});
             if(updateTimeResult.has_error())
@@ -106,16 +102,16 @@ private:
             auto startDelay2 = ComputeStartDelay(queueEntry.startTime);
             nextProgramStartDelayTopic.publish(startDelay2);
 
-            DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
-                        queueIndex,
-                        startDelay2 / s);
+            // Before suspending a second time, we check if startDelay2 < eduCommunication because that would
+            // mean that we loaded a new and different entry compared to the one loaded at the beginning  of the processing queue.
+            // If that is the case, we jump back to the top of the loop. 
+            if(startDelay2 < eduCommunicationDelay)
+            {
+                continue;
+            }
 
-            // Suspend for delay a second time
-            DEBUG_PRINT("Suspending for the second time for     : %" PRIi64 " s\n",
-                        startDelay2 / s);
             SuspendFor(startDelay2);
 
-            DEBUG_PRINT("Done suspending for the second time\n");
 
             DEBUG_PRINT("Executing EDU program %" PRIu16 "\n", value_of(queueEntry.programId));
             // Start Process
@@ -138,10 +134,7 @@ private:
 
                 // Suspend Self for execution time
                 auto const executionTime = queueEntry.timeout * s + eduCommunicationDelay;
-                DEBUG_PRINT("Suspending for execution time\n");
                 SuspendFor(executionTime);
-                DEBUG_PRINT("Resuming from execution time\n");
-                DEBUG_PRINT_REAL_TIME();
 
                 // Set current queue ID to next
                 persistentVariables.Increment<"eduProgramQueueIndex">();
