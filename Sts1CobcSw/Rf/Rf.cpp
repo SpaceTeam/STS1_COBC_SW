@@ -24,10 +24,14 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 #include <array>
 #include <bit>
 #include <compare>
+#include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <span>
 #include <utility>
 
@@ -134,11 +138,18 @@ auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
 
 auto isInTxMode = false;
 
+constexpr auto errorHandlingRetryDelay = 1 * ms;
+constexpr auto errorHandlingCobcResetDelay = 1 * s;
+auto usedTxType = TxType{};
+
 
 using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
 
 
 // --- Private function declarations ---
+template<auto doFunction, typename... Args>
+    requires std::invocable<decltype(doFunction), Args...>
+auto ExecuteWithRecovery(Args &... args) -> decltype(auto);
 
 [[nodiscard]] auto DoInitialize(TxType txType) -> Result<void>;
 [[nodiscard]] auto DoReadPartNumber() -> Result<std::uint16_t>;
@@ -195,6 +206,41 @@ template<std::size_t extent>
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte startIndex,
                                  std::span<Byte const, extent> propertyValues) -> Result<void>;
+
+
+template<auto doFunction, typename... Args>
+    requires std::invocable<decltype(doFunction), Args...>
+auto ExecuteWithRecovery(Args &... args) -> decltype(auto)
+{
+    // First try
+    auto result = doFunction(args...);
+    if(not result.has_error())
+    {
+        return result;
+    }
+    SuspendFor(errorHandlingRetryDelay);
+    // Second try
+    result = doFunction(args...);
+    if(not result.has_error())
+    {
+        return result;
+    }
+    auto reinitResult = DoInitialize(usedTxType);
+    if(reinitResult.has_error())
+    {
+        // TODO: handle error
+    }
+    // Third try
+    result = doFunction(args...);
+    if(not result.has_error())
+    {
+        return result;
+    }
+    // Reset cobc
+    SuspendFor(errorHandlingCobcResetDelay);
+    RODOS::hwResetAndReboot();
+    return result;
+}
 }
 
 
@@ -202,8 +248,8 @@ template<std::size_t extent>
 
 auto Initialize(TxType txType) -> void
 {
-    // TODO: handle error
-    (void)DoInitialize(txType);
+    usedTxType = txType;
+    (void)ExecuteWithRecovery<DoInitialize>(txType);
 }
 
 
@@ -223,8 +269,7 @@ auto DisableTx() -> void
 
 auto ReadPartNumber() -> std::uint16_t
 {
-    // TODO: handle error
-    auto answer = DoReadPartNumber();
+    auto answer = ExecuteWithRecovery<DoReadPartNumber>();
     if(answer.has_error())
     {
         return {};
@@ -235,44 +280,38 @@ auto ReadPartNumber() -> std::uint16_t
 
 auto EnterStandbyMode() -> void
 {
-    // TODO: handle error
-    (void)DoEnterStandbyMode();
+    (void)ExecuteWithRecovery<DoEnterStandbyMode>();
 }
 
 
 auto SetTxType(TxType txType) -> void
 {
-    // TODO: handle error
-    (void)DoSetTxType(txType);
+    (void)ExecuteWithRecovery<DoSetTxType>(txType);
 }
 
 
 // Must be called before SendAndContinue()
 auto SetTxDataLength(std::uint16_t length) -> void
 {
-    // TODO: handle error
-    (void)DoSetTxDataLength(length);
+    (void)ExecuteWithRecovery<DoSetTxDataLength>(length);
 }
 
 
 auto SetTxDataRate(std::uint32_t dataRate) -> void
 {
-    // TODO: handle error
-    (void)DoSetTxDataRate(dataRate);
+    (void)ExecuteWithRecovery<DoSetTxDataRate>(dataRate);
 }
 
 
 auto SetRxDataRate(std::uint32_t dataRate) -> void
 {
-    // TODO: handle error
-    (void)DoSetRxDataRate(dataRate);
+    (void)ExecuteWithRecovery<DoSetRxDataRate>(dataRate);
 }
 
 
 auto GetTxDataRate() -> std::uint32_t
 {
-    // TODO: handle error
-    auto result = DoGetTxDataRate();
+    auto result = ExecuteWithRecovery<DoGetTxDataRate>();
     if(result.has_error())
     {
         return 0;
@@ -283,8 +322,7 @@ auto GetTxDataRate() -> std::uint32_t
 
 auto GetRxDataRate() -> std::uint32_t
 {
-    // TODO: handle error
-    auto result = DoGetRxDataRate();
+    auto result = ExecuteWithRecovery<DoGetRxDataRate>();
     if(result.has_error())
     {
         return 0;
@@ -295,8 +333,7 @@ auto GetRxDataRate() -> std::uint32_t
 
 auto SendAndWait(std::span<Byte const> data) -> Result<void>
 {
-    // TODO: handle error
-    return DoSendAndWait(data);
+    return ExecuteWithRecovery<DoSendAndWait>(data);
 }
 
 
@@ -304,22 +341,19 @@ auto SendAndWait(std::span<Byte const> data) -> Result<void>
 // allows sending multiple data packets without interruption.
 auto SendAndContinue(std::span<Byte const> data) -> Result<void>
 {
-    // TODO: handle error
-    return DoSendAndContinue(data);
+    return ExecuteWithRecovery<DoSendAndContinue>(data);
 }
 
 
 auto SuspendUntilDataSent(Duration timeout) -> Result<void>
 {
-    // TODO: handle error
-    return DoSuspendUntilDataSent(timeout);
+    return ExecuteWithRecovery<DoSuspendUntilDataSent>(timeout);
 }
 
 
 auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
 {
-    // TODO: handle error
-    return DoReceive(data, timeout);
+    return ExecuteWithRecovery<DoReceive>(data, timeout);
 }
 
 
