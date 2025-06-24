@@ -134,16 +134,7 @@ private:
         for(auto i = 0U; i < n; ++i)
         {
             led1GpioPin.Set();
-            auto sendAndWaitResult = rf::SendAndWait(Span(message));
-            if(sendAndWaitResult.has_error())
-            {
-                PRINTF("SendAndWait() %u/%u returned error code %i\n",
-                       i,
-                       n,
-                       static_cast<int>(sendAndWaitResult.error()));
-                led1GpioPin.Reset();
-                break;
-            }
+            rf::SendAndWait(Span(message));
             SuspendFor(100 * ms);
             led1GpioPin.Reset();
             SuspendFor(400 * ms);
@@ -164,22 +155,9 @@ private:
             for(auto i = 0U; i < n; ++i)
             {
                 led1GpioPin.Set();
-                auto sendAndContinueResult = rf::SendAndContinue(Span(message));
-                if(sendAndContinueResult.has_error())
-                {
-                    PRINTF("SendAndContinue() %u/%u returned error code %i\n",
-                           i,
-                           n,
-                           static_cast<int>(sendAndContinueResult.error()));
-                    return;
-                }
+                rf::SendAndContinue(Span(message));
             }
-            auto suspendUntilDataSentResult = rf::SuspendUntilDataSent(1 * s);
-            if(suspendUntilDataSentResult.has_error())
-            {
-                PRINTF("SuspendUntilDataSent() returned error code %i\n",
-                       static_cast<int>(suspendUntilDataSentResult.error()));
-            }
+            rf::SuspendUntilDataSent(1 * s);
         }();
         led1GpioPin.Reset();
         rf::EnterStandbyMode();

@@ -12,6 +12,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
@@ -331,29 +332,29 @@ auto GetRxDataRate() -> std::uint32_t
 }
 
 
-auto SendAndWait(std::span<Byte const> data) -> Result<void>
+auto SendAndWait(std::span<Byte const> data) -> void
 {
-    return ExecuteWithRecovery<DoSendAndWait>(data);
+    (void)ExecuteWithRecovery<DoSendAndWait>(data);
 }
 
 
 // Send the data to the RF module and return as soon as the last chunk was written to the FIFO. This
 // allows sending multiple data packets without interruption.
-auto SendAndContinue(std::span<Byte const> data) -> Result<void>
+auto SendAndContinue(std::span<Byte const> data) -> void
 {
-    return ExecuteWithRecovery<DoSendAndContinue>(data);
+    (void)ExecuteWithRecovery<DoSendAndContinue>(data);
 }
 
 
-auto SuspendUntilDataSent(Duration timeout) -> Result<void>
+auto SuspendUntilDataSent(Duration timeout) -> void
 {
-    return ExecuteWithRecovery<DoSuspendUntilDataSent>(timeout);
+    (void)ExecuteWithRecovery<DoSuspendUntilDataSent>(timeout);
 }
 
 
-auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
+auto Receive(std::span<Byte> data, Duration timeout) -> void
 {
-    return ExecuteWithRecovery<DoReceive>(data, timeout);
+    (void)ExecuteWithRecovery<DoReceive>(data, timeout);
 }
 
 

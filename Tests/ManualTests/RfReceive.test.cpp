@@ -58,12 +58,7 @@ private:
         PRINTF("Waiting %i s to receive %i bytes\n",
                static_cast<int>(rxTimeout / s),
                static_cast<int>(receivedData.size()));
-        auto receiveResult = rf::Receive(Span(&receivedData), rxTimeout);
-        if(receiveResult.has_error())
-        {
-            PRINTF("Error: %i\n", static_cast<int>(receiveResult.error()));
-            return;
-        }
+        rf::Receive(Span(&receivedData), rxTimeout);
         PRINTF("Received data:\n");
         Print(Span(receivedData));
         PRINTF("-> done\n");
