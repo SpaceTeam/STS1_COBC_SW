@@ -1,6 +1,12 @@
 target_sources(
-    Sts1CobcSw_RfProtocols PRIVATE Vocabulary.cpp Reports.cpp Requests.cpp SpacePacket.cpp
-                                   TcTransferFrame.cpp TmTransferFrame.cpp
+    Sts1CobcSw_RfProtocols
+    PRIVATE ProtocolDataUnitHeader.cpp
+            Reports.cpp
+            Requests.cpp
+            SpacePacket.cpp
+            TcTransferFrame.cpp
+            TmTransferFrame.cpp
+            Vocabulary.cpp
 )
 target_link_libraries(
     Sts1CobcSw_RfProtocols

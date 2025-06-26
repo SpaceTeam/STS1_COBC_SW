@@ -150,4 +150,27 @@ inline constexpr auto copyOperationId = Make<CopyOperationId, 0b0000'1111>();
 inline constexpr auto maxDumpedDataLength =
     tm::maxPacketDataLength - tm::packetSecondaryHeaderLength
     - totalSerialSize<std::uint8_t, fram::Address, std::uint8_t>;
+
+
+// ---- CCSDS File Delivery Protocol ----
+
+namespace tm
+{
+inline constexpr auto maxPduLength = transferFrameDataLength;
+inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
+}
+
+namespace tc
+{
+inline constexpr auto maxPduLength = transferFrameDataLength;
+inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
+}
+
+inline constexpr auto pduVersion = UInt<3>(1);
+
+using EntityId = Id<std::uint8_t, 0x0F, 0xF0>;  // NOLINT(*magic-numbers)
+inline constexpr auto groundStationEntityId = Make<EntityId, 0x0F>();
+inline constexpr auto cubeSatEntityId = Make<EntityId, 0xF0>();
 }

@@ -117,6 +117,7 @@
   { include: ["\"Sts1CobcSw/RfProtocols/IdCounters.hpp\"",                     "public", "<Sts1CobcSw/RfProtocols/IdCounters.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/Vocabulary.hpp\"",                     "public", "<Sts1CobcSw/RfProtocols/Vocabulary.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/Payload.hpp\"",                        "public", "<Sts1CobcSw/RfProtocols/Payload.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp\"",         "public", "<Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/Reports.hpp\"",                        "public", "<Sts1CobcSw/RfProtocols/Reports.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/Requests.hpp\"",                       "public", "<Sts1CobcSw/RfProtocols/Requests.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/RfProtocols/SpacePacket.hpp\"",                    "public", "<Sts1CobcSw/RfProtocols/SpacePacket.hpp>", "public"] },
