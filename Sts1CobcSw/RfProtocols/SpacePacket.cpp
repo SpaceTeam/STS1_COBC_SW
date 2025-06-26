@@ -46,7 +46,7 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
         return ErrorCode::bufferTooSmall;
     }
     auto packet = SpacePacket{};
-    (void)DeserializeFrom<std::endian::big>(buffer.data(), &packet.primaryHeader);
+    (void)DeserializeFrom<ccsdsEndianness>(buffer.data(), &packet.primaryHeader);
     auto packetIsValid = packet.primaryHeader.versionNumber == packetVersionNumber
                      and packet.primaryHeader.packetType == packettype::telecommand
                      and packet.primaryHeader.secondaryHeaderFlag == 1
@@ -61,7 +61,7 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     }
     if(packet.primaryHeader.packetDataLength + 1U > tc::maxPacketDataLength)
     {
-        return ErrorCode::invalidPacketLength;
+        return ErrorCode::invalidPacketDataLength;
     }
     if(buffer.size() < packetPrimaryHeaderLength
                            + static_cast<std::size_t>(packet.primaryHeader.packetDataLength) + 1)

@@ -180,6 +180,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 
+    add_test_program(ProtocolDataUnits)
+    target_link_libraries(
+        Sts1CobcSwTests_ProtocolDataUnits
+        PRIVATE etl::etl Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+    )
+    add_test(NAME ProtocolDataUnits COMMAND Sts1CobcSwTests_ProtocolDataUnits)
+
     add_test_program(Reports)
     target_link_libraries(
         Sts1CobcSwTests_Reports

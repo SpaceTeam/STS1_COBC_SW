@@ -192,10 +192,17 @@ TEST_CASE("Parsing Space Packets")
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidSpacePacket);
 
-    // Wrong packet data length
+    // Wrong packet data length (> tc::maxPacketDataLength)
     buffer[2] = 0b1100'0000_b;  // Sequence flags, packet sequence count
-    buffer[4] = 0_b;            // Packet data length (high byte)
-    buffer[5] = 17_b;           // Packet data length (low byte)
+    buffer[4] = 0x04_b;         // Packet data length (high byte)
+    buffer[5] = 0x00_b;         // Packet data length (low byte)
+    parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidPacketDataLength);
+
+    // Wrong packet data length (> buffer.size() < tc::maxPacketDataLength)
+    buffer[4] = 0_b;   // Packet data length (high byte)
+    buffer[5] = 17_b;  // Packet data length (low byte)
     parseResult = sts1cobcsw::ParseAsSpacePacket(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::bufferTooSmall);

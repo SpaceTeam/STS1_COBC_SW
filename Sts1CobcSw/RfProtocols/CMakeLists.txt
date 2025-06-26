@@ -1,6 +1,7 @@
 target_sources(
     Sts1CobcSw_RfProtocols
     PRIVATE ProtocolDataUnitHeader.cpp
+            ProtocolDataUnits.cpp
             Reports.cpp
             Requests.cpp
             SpacePacket.cpp

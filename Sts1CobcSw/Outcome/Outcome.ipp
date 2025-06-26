@@ -86,8 +86,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidSpacePacket";
         case ErrorCode::invalidApid:
             return "invalidApid";
-        case ErrorCode::invalidPacketLength:
-            return "invalidPacketLength";
+        case ErrorCode::invalidPacketDataLength:
+            return "invalidPacketDataLength";
         case ErrorCode::emptyPayload:
             return "emptyPayload";
         case ErrorCode::invalidMessageTypeId:
@@ -106,6 +106,12 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "emptyFilePath";
         case ErrorCode::invalidPartitionId:
             return "invalidPartitionId";
+        case ErrorCode::invalidProtocolDataUnit:
+            return "invalidProtocolDataUnit";
+        case ErrorCode::invalidPduDataLength:
+            return "invalidPduDataLength";
+        case ErrorCode::invalidEntityId:
+            return "invalidEntityId";
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:

@@ -63,7 +63,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     authenticationFailed,
     invalidSpacePacket,
     invalidApid,
-    invalidPacketLength,
+    invalidPacketDataLength,
     emptyPayload,
     invalidMessageTypeId,
     invalidSourceId,
@@ -73,6 +73,9 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidParameterId,
     emptyFilePath,
     invalidPartitionId,
+    invalidProtocolDataUnit,
+    invalidPduDataLength,
+    invalidEntityId,
     // Firmware
     misaligned,
     eraseFailed,
