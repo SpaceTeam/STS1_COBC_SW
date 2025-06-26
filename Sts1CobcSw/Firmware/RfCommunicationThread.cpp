@@ -127,6 +127,8 @@ auto SetTxDataLength(std::uint16_t nFrames) -> void;
 auto SendAndWait(Payload const & report) -> void;
 auto SendAndContinue(Payload const & report) -> void;
 auto PackageAndEncode(Payload const & report) -> void;
+auto SendAndWait(std::span<Byte const, blockLength> const & encodedFrame) -> void;
+auto SendAndContinue(std::span<Byte const, blockLength> const & encodedFrame) -> void;
 auto SuspendUntilEarliestTxTime() -> void;
 // Must be called after SendAndContinue()
 auto FinalizeTransmission() -> void;
@@ -217,8 +219,33 @@ auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>
 
 auto SendCfdpFrames() -> void
 {
-    DEBUG_PRINT("SendCfdpFrames()\n");
-    // TODO: Implement this
+    static constexpr auto sendWindowMargin = 1 * s;
+    // We know that the nextTelemetryRecordTimeMailbox is never empty here, because the telemetry
+    // thread has a higher priority and will always write to it before we read it.
+    auto sendWindowEnd = std::min(nextTelemetryRecordTimeMailbox.Peek().value(),
+                                  persistentVariables.Load<"fileTransferWindowEnd">())
+                       - sendWindowMargin;
+    auto frameSendDuration = fullyEncodedFrameLength * CHAR_BIT * s / rf::GetTxDataRate();
+    auto nFrames =
+        static_cast<std::uint16_t>((CurrentRodosTime() - sendWindowEnd) / frameSendDuration);
+    if(nFrames > 0)
+    {
+        SetTxDataLength(nFrames);
+    }
+    while(encodedCfdpFrameMailbox.IsFull()
+          and CurrentRodosTime() + frameSendDuration < sendWindowEnd)
+    {
+        // This wakes up the file transfer thread if it is waiting to send a new CFDP frame
+        auto encodedFrame = encodedCfdpFrameMailbox.Get().value();
+        SendAndContinue(encodedFrame);
+        // In case radiation affects the while condition, we add this additional check to break once
+        // a new telemetry record is available
+        if(telemetryRecordMailbox.IsFull())
+        {
+            return;
+        }
+    }
+    ResumeFileTransferThread();
 }
 
 
@@ -746,24 +773,14 @@ auto SetTxDataLength(std::uint16_t nFrames) -> void
 auto SendAndWait(Payload const & report) -> void
 {
     PackageAndEncode(report);
-    SuspendUntilEarliestTxTime();
-    // TODO: Once the RF driver implements full error handling (retrying, reconfiguring,
-    // and resetting). This should no longer return a Result<void>.
-    (void)rf::SendAndWait(tmBuffer);
+    SendAndWait(tmBuffer);
 }
 
 
 auto SendAndContinue(Payload const & report) -> void
 {
     PackageAndEncode(report);
-    if(nSentFrames >= maxNFramesToSendContinously)
-    {
-        FinalizeTransmission();
-        SetTxDataLength(nFramesToSend - nSentFrames);
-    }
-    SuspendUntilEarliestTxTime();
-    // TODO: Once the RF driver implements full error handling this should no longer return a Result
-    (void)rf::SendAndContinue(tmBuffer);
+    SendAndContinue(tmBuffer);
 }
 
 
@@ -773,6 +790,28 @@ auto PackageAndEncode(Payload const & report) -> void
     (void)AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
     tmFrame.Finish();
     tm::Encode(tmBuffer);
+}
+
+
+auto SendAndWait(std::span<Byte const, blockLength> const & encodedFrame) -> void
+{
+    SuspendUntilEarliestTxTime();
+    // TODO: Once the RF driver implements full error handling (retrying, reconfiguring,
+    // and resetting). This should no longer return a Result<void>.
+    (void)rf::SendAndWait(encodedFrame);
+}
+
+
+auto SendAndContinue(std::span<Byte const, blockLength> const & encodedFrame) -> void
+{
+    if(nSentFrames >= maxNFramesToSendContinously)
+    {
+        FinalizeTransmission();
+        SetTxDataLength(nFramesToSend - nSentFrames);
+    }
+    SuspendUntilEarliestTxTime();
+    // TODO: Once the RF driver implements full error handling this should no longer return a Result
+    (void)rf::SendAndContinue(encodedFrame);
 }
 
 
