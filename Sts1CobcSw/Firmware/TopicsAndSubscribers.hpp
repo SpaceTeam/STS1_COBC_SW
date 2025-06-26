@@ -46,6 +46,6 @@ inline auto txDataRateBuffer = RODOS::CommBuffer<std::int32_t>{};
 inline auto telemetryRecordMailbox = Mailbox<TelemetryRecord>{};
 inline auto nextTelemetryRecordTimeMailbox = Mailbox<RodosTime>{};
 inline auto fileTransferInfoMailbox = Mailbox<FileTransferInfo>{};
-inline auto receivedCfdpPduMailbox = Mailbox<tc::ProtocolDataUnit>{};
+inline auto receivedPduMailbox = Mailbox<tc::ProtocolDataUnit>{};
 inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
 }

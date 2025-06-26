@@ -22,6 +22,7 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
+#include <Sts1CobcSw/RfProtocols/ProtocolDataUnits.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 #include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
@@ -259,8 +260,17 @@ auto HandleReceivedData() -> void
 
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
 {
-    DEBUG_PRINT("HandleCfdpFrame()\n");
-    // TODO: Implement this
+    auto parseAsProtocolDataUnitResult = ParseAsProtocolDataUnit(frame.dataField);
+    if(parseAsProtocolDataUnitResult.has_error())
+    {
+        DEBUG_PRINT("Error parsing as Protocol Data Unit: %s\n",
+                    ToCZString(parseAsProtocolDataUnitResult.error()));
+        return;
+    }
+    auto const & pdu = parseAsProtocolDataUnitResult.value();
+    // This wakes up the file transfer thread if it is waiting for a new PDU
+    receivedPduMailbox.Overwrite(pdu);
+    SuspendUntilNewTelemetryRecordIsAvailable();
 }
 
 
@@ -550,13 +560,13 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
 
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
 {
+    // This wakes up the file transfer thread if it is waiting for a new file transfer info
     fileTransferInfoMailbox.Overwrite(FileTransferInfo{.sourcePath = request.sourceFilePath,
                                                        .destinationPath = request.targetFilePath});
     DEBUG_PRINT("Successfully initiated copying file %s to %s\n",
                 request.sourceFilePath.c_str(),
                 request.targetFilePath.c_str());
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
-    ResumeFileTransferThread();
     SuspendUntilNewTelemetryRecordIsAvailable();
 }
 
