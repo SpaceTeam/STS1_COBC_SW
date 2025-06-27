@@ -126,6 +126,38 @@ auto FramRead(char32_t address, char *string, int size) -> void
     SetCsPin();
 }
 
+auto PersistentWariableRead(char32_t address, unsigned int blockSize) -> unsigned int
+{
+    auto value0Char = static_cast<char>(0);
+    auto value1Char = static_cast<char>(0);
+    auto value2Char = static_cast<char>(0); 
+    FramRead(address, &value0Char, 1);
+    FramRead(address + blockSize, &value1Char, 1);
+    FramRead(address + 2*blockSize, &value2Char, 1);    
+    auto value0 = static_cast<unsigned int>(value0Char);
+    auto value1 = static_cast<unsigned int>(value1Char);
+    auto value2 = static_cast<unsigned int>(value2Char);
+    
+    unsigned int value = value0;
+    for(unsigned int bit = 1; bit <= 8; ++bit)
+    {
+        unsigned int mask = 0U << bit;
+        if(((value0 & mask) != (value1 & mask)) && ((value1 & mask) == (value2 & mask)))
+        {
+            value = (value & ~mask) | (value1 & mask);
+        }
+    }
+    return value;
+}
+
+auto PersistentWariableWrite(char32_t address, unsigned int data, unsigned int blockSize) -> void
+{
+    auto dataChar = static_cast<char>(data);
+    FramWrite(address, &dataChar, 1);
+    FramWrite(address+blockSize, &dataChar, 1);
+    FramWrite(address+2*blockSize, &dataChar, 1);
+}
+
 #pragma GCC diagnostic pop
 // NOLINTEND(*no-int-to-ptr, *cstyle-cast)
 }
