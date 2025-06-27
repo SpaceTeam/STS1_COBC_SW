@@ -1397,13 +1397,12 @@ auto ResetFifos() -> Result<void>
 
 auto WriteToFifo(std::span<Byte const> data) -> Result<void>
 {
+    OUTCOME_TRY(BusyWaitForCts(ctsTimeout));
     SelectChip();
     WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
     WriteTo(&rfSpi, data, spiTimeout);
     DeselectChip();
-    // TODO: What do we do in case of a timeout?
-    // TODO: Wouldn't it be more efficient to wait for CTS before writing instead of after it?
-    return BusyWaitForCts(ctsTimeout);
+    return outcome_v2::success();
 }
 
 
