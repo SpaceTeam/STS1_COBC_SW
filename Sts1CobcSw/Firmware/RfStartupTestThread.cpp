@@ -37,16 +37,30 @@ private:
     {
         SuspendUntil(endOfTime);
         DEBUG_PRINT("RF start-up test ...");
-        rf::Initialize(rf::TxType::packet);
-        auto partNumber = rf::ReadPartNumber();
-        if(partNumber == rf::correctPartNumber)
+        auto testSucceeded = [&]() -> bool
+        {
+            auto initializeResult = rf::Initialize(rf::TxType::packet);
+            if(initializeResult.has_error())
+            {
+                DEBUG_PRINT(" failed to initialize RF module");
+                return false;
+            }
+            auto partNumber = rf::ReadPartNumber();
+            if(partNumber != rf::correctPartNumber)
+            {
+                DEBUG_PRINT(" failed to read correct RF part number");
+                return false;
+            }
+            return true;
+        }();
+        if(testSucceeded)
         {
             persistentVariables.Store<"rfIsWorking">(true);
         }
         else
         {
-            DEBUG_PRINT(" failed to read correct RF part number");
             persistentVariables.Store<"rfIsWorking">(false);
+            persistentVariables.Increment<"nRfErrors">();
         }
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);

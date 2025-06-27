@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
@@ -47,7 +48,12 @@ private:
     {
         PRINTF("\nRF receive test\n\n");
 
-        rf::Initialize(rf::TxType::packet);
+        auto initializeResult = rf::Initialize(rf::TxType::packet);
+        if(initializeResult.has_error())
+        {
+            PRINTF("Failed to initialize RF module: %s\n", ToCZString(initializeResult.error()));
+            return;
+        }
         rf::DisableTx();
         PRINTF("RF module initialized, TX disabled\n");
 

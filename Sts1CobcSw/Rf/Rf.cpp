@@ -12,7 +12,6 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
-#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
@@ -219,10 +218,10 @@ template<std::size_t extent>
 
 // --- Public function definitions ---
 
-auto Initialize(TxType txType) -> void
+auto Initialize(TxType txType) -> Result<void>
 {
     currentTxType = txType;
-    ExecuteWithRecovery<DoInitialize>(txType);
+    return DoInitialize(txType);
 }
 
 

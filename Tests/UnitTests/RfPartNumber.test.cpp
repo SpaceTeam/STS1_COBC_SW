@@ -8,7 +8,8 @@ namespace rf = sts1cobcsw::rf;
 
 TEST_CASE("Check RF part number")
 {
-    rf::Initialize(rf::TxType::packet);
+    auto initializeResult = rf::Initialize(rf::TxType::packet);
+    REQUIRE(initializeResult.has_value());
     auto partNumber = rf::ReadPartNumber();
     CHECK(partNumber == rf::correctPartNumber);
 }

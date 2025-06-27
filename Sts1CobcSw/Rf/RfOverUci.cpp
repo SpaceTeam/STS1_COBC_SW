@@ -37,9 +37,10 @@ auto txDataRate = uartBaudRate;
 }
 
 
-auto Initialize([[maybe_unused]] TxType txType) -> void
+auto Initialize([[maybe_unused]] TxType txType) -> Result<void>
 {
     hal::Initialize(&uciUart, uartBaudRate);
+    return outcome_v2::success();
 }
 
 

@@ -1,4 +1,6 @@
-target_link_libraries(Sts1CobcSw_Rf PRIVATE Sts1CobcSw_Serial Sts1CobcSw_Vocabulary)
+target_link_libraries(
+    Sts1CobcSw_Rf PRIVATE Sts1CobcSw_Outcome Sts1CobcSw_Serial Sts1CobcSw_Vocabulary
+)
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     if(REDIRECT_RF_OVER_UCI)

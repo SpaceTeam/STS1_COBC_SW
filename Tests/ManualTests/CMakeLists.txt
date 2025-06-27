@@ -4,7 +4,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     add_test_program(DeviceIds)
     target_link_libraries(
         Sts1CobcSwTests_DeviceIds
-        PRIVATE rodos::rodos Sts1CobcSw_Flash Sts1CobcSw_Fram Sts1CobcSw_Hal Sts1CobcSw_Rf
+        PRIVATE rodos::rodos
+                Sts1CobcSw_Flash
+                Sts1CobcSw_Fram
+                Sts1CobcSw_Hal
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_Rf
                 Sts1CobcSwTests::HardwareSetup
     )
 
@@ -59,6 +64,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         PRIVATE rodos::rodos
                 strong_type::strong_type
                 Sts1CobcSw_Hal
+                Sts1CobcSw_Outcome
                 Sts1CobcSw_Rf
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
@@ -72,6 +78,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         PRIVATE rodos::rodos
                 strong_type::strong_type
                 Sts1CobcSw_Hal
+                Sts1CobcSw_Outcome
                 Sts1CobcSw_Rf
                 Sts1CobcSw_RodosTime
                 Sts1CobcSw_Serial
