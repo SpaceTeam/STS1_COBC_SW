@@ -32,8 +32,8 @@
 #include <compare>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <span>
+#include <type_traits>
 #include <utility>
 
 
@@ -120,8 +120,14 @@ constexpr auto spiTimeout = 1 * ms;
 constexpr auto ctsTimeout = 100 * ms;
 constexpr auto pollingInterval = 10 * us;
 
-constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settles after power up
+// Minimum time the SDN pin must be pulled high to reset the RF module (double the value from the
+// datasheet to be safe)
+constexpr auto minShutdownDuration = 20 * us;
+constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settle after power up
 constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to finish
+
+constexpr auto errorHandlingRetryDelay = 1 * ms;
+constexpr auto errorHandlingCobcResetDelay = 1 * s;
 
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
@@ -138,19 +144,19 @@ auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
 #endif
 
 auto isInTxMode = false;
-
-constexpr auto errorHandlingRetryDelay = 1 * ms;
-constexpr auto errorHandlingCobcResetDelay = 1 * s;
-auto usedTxType = TxType{};
+auto currentTxType = TxType::packet;
 
 
 using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
 
 
 // --- Private function declarations ---
+
 template<auto doFunction, typename... Args>
     requires std::invocable<decltype(doFunction), Args...>
-auto ExecuteWithRecovery(Args &... args) -> decltype(auto);
+auto ExecuteWithRecovery(Args... args)
+    -> std::invoke_result_t<decltype(doFunction), Args...>::value_type;
+
 
 [[nodiscard]] auto DoInitialize(TxType txType) -> Result<void>;
 [[nodiscard]] auto DoReadPartNumber() -> Result<std::uint16_t>;
@@ -166,6 +172,7 @@ auto ExecuteWithRecovery(Args &... args) -> decltype(auto);
 [[nodiscard]] auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>;
 [[nodiscard]] auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>;
 
+auto Reset() -> void;
 auto InitializeGpiosAndSpi() -> void;
 [[nodiscard]] auto ApplyPatch() -> Result<void>;
 [[nodiscard]] auto PowerUp() -> Result<void>;
@@ -207,41 +214,6 @@ template<std::size_t extent>
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte startIndex,
                                  std::span<Byte const, extent> propertyValues) -> Result<void>;
-
-
-template<auto doFunction, typename... Args>
-    requires std::invocable<decltype(doFunction), Args...>
-auto ExecuteWithRecovery(Args &... args) -> decltype(auto)
-{
-    // First try
-    auto result = doFunction(args...);
-    if(not result.has_error())
-    {
-        return result;
-    }
-    SuspendFor(errorHandlingRetryDelay);
-    // Second try
-    result = doFunction(args...);
-    if(not result.has_error())
-    {
-        return result;
-    }
-    auto reinitResult = DoInitialize(usedTxType);
-    if(reinitResult.has_error())
-    {
-        // TODO: handle error
-    }
-    // Third try
-    result = doFunction(args...);
-    if(not result.has_error())
-    {
-        return result;
-    }
-    // Reset cobc
-    SuspendFor(errorHandlingCobcResetDelay);
-    RODOS::hwResetAndReboot();
-    return result;
-}
 }
 
 
@@ -249,8 +221,8 @@ auto ExecuteWithRecovery(Args &... args) -> decltype(auto)
 
 auto Initialize(TxType txType) -> void
 {
-    usedTxType = txType;
-    (void)ExecuteWithRecovery<DoInitialize>(txType);
+    currentTxType = txType;
+    ExecuteWithRecovery<DoInitialize>(txType);
 }
 
 
@@ -270,71 +242,56 @@ auto DisableTx() -> void
 
 auto ReadPartNumber() -> std::uint16_t
 {
-    auto answer = ExecuteWithRecovery<DoReadPartNumber>();
-    if(answer.has_error())
-    {
-        return {};
-    }
-    return answer.value();
+    return ExecuteWithRecovery<DoReadPartNumber>();
 }
 
 
 auto EnterStandbyMode() -> void
 {
-    (void)ExecuteWithRecovery<DoEnterStandbyMode>();
+    ExecuteWithRecovery<DoEnterStandbyMode>();
 }
 
 
 auto SetTxType(TxType txType) -> void
 {
-    (void)ExecuteWithRecovery<DoSetTxType>(txType);
+    ExecuteWithRecovery<DoSetTxType>(txType);
 }
 
 
 // Must be called before SendAndContinue()
 auto SetTxDataLength(std::uint16_t length) -> void
 {
-    (void)ExecuteWithRecovery<DoSetTxDataLength>(length);
+    ExecuteWithRecovery<DoSetTxDataLength>(length);
 }
 
 
 auto SetTxDataRate(std::uint32_t dataRate) -> void
 {
-    (void)ExecuteWithRecovery<DoSetTxDataRate>(dataRate);
+    ExecuteWithRecovery<DoSetTxDataRate>(dataRate);
 }
 
 
 auto SetRxDataRate(std::uint32_t dataRate) -> void
 {
-    (void)ExecuteWithRecovery<DoSetRxDataRate>(dataRate);
+    ExecuteWithRecovery<DoSetRxDataRate>(dataRate);
 }
 
 
 auto GetTxDataRate() -> std::uint32_t
 {
-    auto result = ExecuteWithRecovery<DoGetTxDataRate>();
-    if(result.has_error())
-    {
-        return 0;
-    }
-    return result.value();
+    return ExecuteWithRecovery<DoGetTxDataRate>();
 }
 
 
 auto GetRxDataRate() -> std::uint32_t
 {
-    auto result = ExecuteWithRecovery<DoGetRxDataRate>();
-    if(result.has_error())
-    {
-        return 0;
-    }
-    return result.value();
+    return ExecuteWithRecovery<DoGetRxDataRate>();
 }
 
 
 auto SendAndWait(std::span<Byte const> data) -> void
 {
-    (void)ExecuteWithRecovery<DoSendAndWait>(data);
+    ExecuteWithRecovery<DoSendAndWait>(data);
 }
 
 
@@ -342,19 +299,19 @@ auto SendAndWait(std::span<Byte const> data) -> void
 // allows sending multiple data packets without interruption.
 auto SendAndContinue(std::span<Byte const> data) -> void
 {
-    (void)ExecuteWithRecovery<DoSendAndContinue>(data);
+    ExecuteWithRecovery<DoSendAndContinue>(data);
 }
 
 
 auto SuspendUntilDataSent(Duration timeout) -> void
 {
-    (void)ExecuteWithRecovery<DoSuspendUntilDataSent>(timeout);
+    ExecuteWithRecovery<DoSuspendUntilDataSent>(timeout);
 }
 
 
 auto Receive(std::span<Byte> data, Duration timeout) -> void
 {
-    (void)ExecuteWithRecovery<DoReceive>(data, timeout);
+    ExecuteWithRecovery<DoReceive>(data, timeout);
 }
 
 
@@ -362,6 +319,42 @@ auto Receive(std::span<Byte> data, Duration timeout) -> void
 
 namespace
 {
+template<auto doFunction, typename... Args>
+    requires std::invocable<decltype(doFunction), Args...>
+auto ExecuteWithRecovery(Args... args)
+    -> std::invoke_result_t<decltype(doFunction), Args...>::value_type
+{
+    // First try
+    auto result = doFunction(args...);
+    if(result.has_value())
+    {
+        return result.value();
+    }
+    SuspendFor(errorHandlingRetryDelay);
+    // Second try
+    result = doFunction(args...);
+    if(result.has_value())
+    {
+        return result.value();
+    }
+    Reset();
+    auto reinitResult = DoInitialize(currentTxType);
+    if(reinitResult.has_value())
+    {
+        // Third try
+        result = doFunction(args...);
+        if(result.has_value())
+        {
+            return result.value();
+        }
+    }
+    // Reset COBC
+    SuspendFor(errorHandlingCobcResetDelay);
+    RODOS::hwResetAndReboot();
+    __builtin_unreachable();  // Tell the compiler that hwResetAndReboot() never returns
+}
+
+
 auto DoInitialize(TxType txType) -> Result<void>
 {
     InitializeGpiosAndSpi();
@@ -590,6 +583,14 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>
     }
     OUTCOME_TRY(ReadAndClearInterruptStatus());
     return result;
+}
+
+
+auto Reset() -> void
+{
+    sdnGpioPin.Set();
+    SuspendFor(minShutdownDuration);
+    sdnGpioPin.Reset();
 }
 
 
