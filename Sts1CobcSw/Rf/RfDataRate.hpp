@@ -1,7 +1,136 @@
+//! @file
+//! @brief RX and TX configurations for Si4463 created by WDS3 Tool
+//!
+//! example: (RX 1.200)
+//! #define RF_MODEM_DSA_CTRL1_5 0x11, 0x20, 0x05, 0x5B,  0x40, 0x04, 0x06, 0x78, 0x20
+//!                               ^     ^     ^     ^     +- data[0]  (data start)
+//!                               |     |     |     +------- start-index  = 0x5B
+//!                               |     |     +------------- length  = 0x05 (5 data bytes) max = 12
+//!                               |     +------------------- Property Group  = 0x20 (MODEM group)
+//!                               +------------------------- SET_PROPERTY command byte = 0x11
 
+#pragma once
+
+#include <Sts1CobcSw/Rf/Rf.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
+
+#include <cstdint>
+
+// TODO: delete not needed includes
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Hal/Spi.hpp>
+#include <Sts1CobcSw/Hal/Spis.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Utility/FlatArray.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
+
+#include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
+#include <strong_type/ordered.hpp>
+#include <strong_type/type.hpp>
+
+#include <array>
+#include <bit>
+#include <compare>
+#include <cstddef>
+#include <span>
+#include <utility>
+
+
+namespace sts1cobcsw::rf
+{
+
+// Max nr of properties allowed to be set. More -> overflow into next register
+constexpr auto maxNProperties = 12;
+
+using sts1cobcsw::operator""_b;
+
+
+// Unchanging part of configuration
+template<sts1cobcsw::rf::PropertyGroup propertyGroup,
+         sts1cobcsw::Byte propertyStartIndex,
+         std::size_t nProperties>
+    requires(nProperties <= maxNProperties)
+class Properties
+{
+public:
+    static constexpr auto group = propertyGroup;
+    static constexpr auto startIndex = propertyStartIndex;
+
+    template<std::size_t size>
+        requires(size == nProperties)
+    explicit constexpr Properties(std::array<Byte, size> const & values) : values_(values)
+    {}
+
+
+private:
+    std::array<sts1cobcsw::Byte, nProperties> values_ = {};
+};
+
+// clang-format off
+// NOLINTBEGIN(*magic-numbers)
+using ModemModType12                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x00_b, 12>;
+using ModemFreqDev01                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x0C_b, 1>;
+using ModemTxRampDelay12            = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x18_b, 12>;
+using ModemBcrNcoOffset212          = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x24_b, 12>;
+using ModemAfcLimiter13             = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x30_b, 3>;
+using ModemAgcControl1              = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x35_b, 1>;
+using ModemAgcWindowSize12          = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x38_b, 12>;
+using ModemRawControl10             = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x45_b, 10>;
+using ModemRawSearch22              = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x50_b, 2>;
+using ModemSpikeDet2                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x54_b, 2>;
+using ModemRssiMute1                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x57_b, 1>;
+using ModemDsaCtrl15                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x5B_b, 5>;
+using ModemChfltRx1ChfltCoe137012   = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x00_b, 12>;
+using ModemChfltRx1ChfltCoe17012    = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x0C_b, 12>;
+using ModemChfltRx2ChfltCoe77012    = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x18_b, 12>;
+// NOLINTEND(*magic-numbers)
+// clang-format on
+
+struct RxDataRateConfig
+{
+    uint32_t dataRate = 0U;
+    ModemModType12 modType12;
+    // ModemFreqDev01 freqDev01;
+    // ModemTxRampDelay12 txRampDelay12;
+    // ModemBcrNcoOffset212 bcrNcoOffset212;
+    // ModemAfcLimiter13 afcLimiter13;
+    // ModemAgcControl1 agcControl1;
+    // ModemAgcWindowSize12 agcWindowSize12;
+    // ModemRawControl10 rawControl10;
+    // ModemRawSearch22 rawSearch22;
+    // ModemSpikeDet2 spikeDet2;
+    // ModemRssiMute1 rssiMute1;
+    // ModemDsaCtrl15 dsaCtrl15;
+    // ModemChfltRx1ChfltCoe137012 chfltRx1ChfltCoe137012;
+    // ModemChfltRx1ChfltCoe17012 chfltRx1ChfltCoe17012;
+    // ModemChfltRx2ChfltCoe77012 chfltRx2ChfltCoe77012;
+};
+
+// clang-format off
+constexpr auto rx1200Config = RxDataRateConfig{
+    0,
+    ModemModType12(std::array{0x03_b, 0x00_b, 0x07_b, 0x00_b, 0xBB_b, 0x80_b,
+                              0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x00_b})
+        // other configs from RxDataRateConfig
+};
+
+constexpr auto rx2400Config = RxDataRateConfig{
+    0,
+    ModemModType12(std::array{0x03_b, 0x00_b, 0x07_b, 0x01_b, 0x77_b, 0x00_b,
+                              0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x00_b})
+        // other configs from RxDataRateConfig
+};
+// clang-format on
+
+
+// clang-format off
 // // RX DataRate Modem config from WDS Tool:
 
-// // RX 1.200
+// RX 1.200
 // #define RF_MODEM_MOD_TYPE_12                    0x11, 0x20, 0x0C, 0x00, 0x03, 0x00, 0x07, 0x00, 0xBB, 0x80, 0x05, 0x8C, 0xBA, 0x80, 0x00, 0x00
 // #define RF_MODEM_FREQ_DEV_0_1                   0x11, 0x20, 0x01, 0x0C, 0x30
 // #define RF_MODEM_TX_RAMP_DELAY_12               0x11, 0x20, 0x0C, 0x18, 0x01, 0x00, 0x08, 0x03, 0x80, 0x00, 0xF0, 0x20, 0x0C, 0xE8, 0x00, 0xA9
@@ -216,6 +345,7 @@
 // #define RF_MODEM_CHFLT_RX2_CHFLT_COE7_7_0_12    0x11, 0x21, 0x0C, 0x18, 0xB9, 0xC9, 0xEA, 0x05, 0x12, 0x11, 0x0A, 0x04, 0x15, 0xFC, 0x03, 0x00
 
 // // TX 9.600
+// #define RF_MODEM_MOD_TYPE_12                    0x11, 0x20, 0x0C, 0x00, 0x03, 0x00, 0x07, 0x05, 0xDC, 0x00, 0x05, 0x8C, 0xBA, 0x80, 0x00, 0x01
 // #define RF_MODEM_FREQ_DEV_0_1                   0x11, 0x20, 0x01, 0x0C, 0x83
 // #define RF_MODEM_TX_RAMP_DELAY_12               0x11, 0x20, 0x0C, 0x18, 0x01, 0x00, 0x08, 0x03, 0x80, 0x00, 0x70, 0x20, 0x00, 0xE8, 0x00, 0x55
 // #define RF_MODEM_BCR_NCO_OFFSET_2_12            0x11, 0x20, 0x0C, 0x24, 0x06, 0x0C, 0xAB, 0x06, 0x06, 0x02, 0x00, 0x00, 0x00, 0x12, 0x80, 0x61
@@ -327,3 +457,5 @@
 // #define RF_MODEM_CHFLT_RX1_CHFLT_COE13_7_0_12   0x11, 0x21, 0x0C, 0x00, 0xFF, 0xC4, 0x30, 0x7F, 0xF5, 0xB5, 0xB8, 0xDE, 0x05, 0x17, 0x16, 0x0C
 // #define RF_MODEM_CHFLT_RX1_CHFLT_COE1_7_0_12    0x11, 0x21, 0x0C, 0x0C, 0x03, 0x00, 0x15, 0xFF, 0x00, 0x00, 0xFF, 0xC4, 0x30, 0x7F, 0xF5, 0xB5
 // #define RF_MODEM_CHFLT_RX2_CHFLT_COE7_7_0_12    0x11, 0x21, 0x0C, 0x18, 0xB8, 0xDE, 0x05, 0x17, 0x16, 0x0C, 0x03, 0x00, 0x15, 0xFF, 0x00, 0x00
+
+// clang-format on
