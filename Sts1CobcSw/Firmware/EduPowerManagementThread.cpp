@@ -1,10 +1,12 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -27,7 +29,6 @@ constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
 constexpr auto eduBootTimeMargin = 5 * s;
 constexpr auto eduPowerManagementThreadStartDelay = 15 * s;
 constexpr auto eduPowerManagementThreadPeriod = 2 * s;
-constexpr auto startDelayLimit = 60 * s;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 
@@ -49,6 +50,7 @@ private:
 
     void run() override
     {
+        SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         TIME_LOOP(value_of(eduPowerManagementThreadStartDelay),
                   value_of(eduPowerManagementThreadPeriod))
         {
@@ -61,9 +63,9 @@ private:
                 auto startDelay = Duration(0);
                 nextProgramStartDelayBuffer.get(startDelay);
                 auto eduHasUpdate = edu::updateGpioPin.Read() == hal::PinState::set;
-                auto noWorkMustBeDoneInTheNearFuture = not eduHasUpdate
-                                                   and not edu::ProgramsAreAvailableOnCobc()
-                                                   and startDelay >= startDelayLimit;
+                auto noWorkMustBeDoneInTheNearFuture =
+                    not eduHasUpdate and not edu::ProgramsAreAvailableOnCobc()
+                    and startDelay >= persistentVariables.Load<"eduStartDelayLimit">();
                 if(eduIsAlive and noWorkMustBeDoneInTheNearFuture)
                 {
                     DEBUG_PRINT("Turning EDU off\n");

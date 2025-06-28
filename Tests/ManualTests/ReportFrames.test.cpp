@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
@@ -74,7 +75,7 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 0,
             };
-            auto report = SuccessfulVerificationReport<VerificationStage::acceptance>(requestId);
+            auto report = SuccessfulAcceptanceVerificationReport(requestId);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
@@ -89,8 +90,7 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 0,
             };
-            auto report =
-                SuccessfulVerificationReport<VerificationStage::completionOfExecution>(requestId);
+            auto report = SuccessfulCompletionOfExecutionVerificationReport(requestId);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
@@ -105,8 +105,8 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 3,
             };
-            auto report = FailedVerificationReport<VerificationStage::acceptance>(
-                requestId, ErrorCode::invalidSpacePacket);
+            auto report =
+                FailedAcceptanceVerificationReport(requestId, ErrorCode::invalidSpacePacket);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
@@ -121,8 +121,8 @@ private:
                 .sequenceFlags = 0b11,
                 .packetSequenceCount = 4,
             };
-            auto report = FailedVerificationReport<VerificationStage::completionOfExecution>(
-                requestId, ErrorCode::timeout);
+            auto report =
+                FailedCompletionOfExecutionVerificationReport(requestId, ErrorCode::timeout);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
@@ -141,12 +141,12 @@ private:
                 .epsIsWorking = 1,
                 .flashIsWorking = 1,
                 .rfIsWorking = 1,
-                .lastTelecommandIdWasInvalid = 1,
-                .lastTelecommandArgumentsWereInvalid = 1,
+                .lastMessageTypeIdWasInvalid = 1,
+                .lastApplicationDataWasInvalid = 1,
                 .nTotalResets = 1U,
                 .nResetsSinceRf = 2U,
-                .activeSecondaryFwPartition = 3,
-                .backupSecondaryFwPartition = 4,
+                .activeSecondaryFwPartition = fw::PartitionId::secondary1,
+                .backupSecondaryFwPartition = fw::PartitionId::secondary2,
                 .eduProgramQueueIndex = 5U,
                 .programIdOfCurrentEduProgramQueueEntry = sts1cobcsw::ProgramId(6),
                 .nEduCommunicationErrors = 7U,
@@ -166,14 +166,14 @@ private:
             .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
             .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
                 // clang-format on
-                .rxBaudRate = 53,
-                .txBaudRate = 54,
+                .rxDataRate = 53,
+                .txDataRate = 54,
                 .nCorrectableUplinkErrors = 55U,
                 .nUncorrectableUplinkErrors = 56U,
                 .nGoodTransferFrames = 57U,
                 .nBadTransferFrames = 58U,
                 .lastFrameSequenceNumber = 59U,
-                .lastTelecommandId = 60U
+                .lastMessageTypeId = {60U, 61U},
             };
             auto report = sts1cobcsw::HousekeepingParameterReport(record);
             WriteToFileAsFrame(report, outputDir + reportName);
@@ -182,7 +182,7 @@ private:
         // Parameter value report
         {
             auto reportName = "ParameterValueReport.bin"s;
-            auto parameterId = Parameter::Id::rxBaudRate;
+            auto parameterId = Parameter::Id::rxDataRate;
             auto parameterValue = 9600U;
             auto report = ParameterValueReport(parameterId, parameterValue);
             WriteToFileAsFrame(report, outputDir + reportName);
@@ -204,21 +204,14 @@ private:
             auto repositoryPath = fs::Path("/programs");
             static constexpr auto maxNObjectsPerPacket =
                 RepositoryContentSummaryReport::maxNObjectsPerPacket;
-            auto objectTypes = etl::vector<ObjectType, maxNObjectsPerPacket>{
-                ObjectType::directory,
-                ObjectType::directory,
-                ObjectType::file,
-                ObjectType::file,
+            auto objects = etl::vector<FileSystemObject, maxNObjectsPerPacket>{
+                {FileSystemObject::Type::directory, fs::Path("/programs/.")         },
+                {FileSystemObject::Type::directory, fs::Path("/programs/..")        },
+                {FileSystemObject::Type::file,      fs::Path("/programs/00001")     },
+                {FileSystemObject::Type::file,      fs::Path("/programs/00001.lock")}
             };
-            auto objectNames = etl::vector<fs::Path, maxNObjectsPerPacket>{
-                fs::Path("/programs/."),
-                fs::Path("/programs/.."),
-                fs::Path("/programs/00001"),
-                fs::Path("/programs/00001.lock"),
-            };
-            auto nObjects = static_cast<std::uint8_t>(objectTypes.size());
-            auto report =
-                RepositoryContentSummaryReport(repositoryPath, nObjects, objectTypes, objectNames);
+            auto nObjects = static_cast<std::uint8_t>(objects.size());
+            auto report = RepositoryContentSummaryReport(repositoryPath, nObjects, objects);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 

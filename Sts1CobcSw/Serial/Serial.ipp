@@ -55,31 +55,9 @@ inline auto SerializeTo(void * destination, T const & t) -> void *
 }
 
 
-template<std::endian endianness, typename T>
-[[nodiscard]] auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *
-{
-    for(auto const & element : vector)
-    {
-        destination = SerializeTo<endianness>(destination, element);
-    }
-    return destination;
-}
-
-
-template<std::endian endianness, typename T, std::size_t size>
-auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *
-{
-    for(auto const & element : array)
-    {
-        destination = SerializeTo<endianness>(destination, element);
-    }
-    return destination;
-}
-
-
 template<std::endian endianness, std::size_t... nBits>
     requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
-[[nodiscard]] auto SerializeTo(void * destination, UInt<nBits>... uInts) -> void *
+auto SerializeTo(void * destination, UInt<nBits>... uInts) -> void *
 {
     static constexpr auto totalNBits = (nBits + ...);
     using Buffer = SmallestUnsignedType<totalNBits>;
@@ -98,6 +76,44 @@ template<std::endian endianness, std::size_t... nBits>
 }
 
 
+template<std::endian endianness, typename T>
+    requires(strong::is_strong_type<T>::value)
+auto SerializeTo(void * destination, T const & t) -> void *
+{
+    return SerializeTo<endianness>(destination, value_of(t));
+}
+
+
+template<std::endian endianness, typename T, std::size_t size>
+auto SerializeTo(void * destination, std::array<T, size> const & array) -> void *
+{
+    for(auto const & element : array)
+    {
+        destination = SerializeTo<endianness>(destination, element);
+    }
+    return destination;
+}
+
+
+template<std::endian endianness, typename T>
+auto SerializeTo(void * destination, etl::ivector<T> const & vector) -> void *
+{
+    for(auto const & element : vector)
+    {
+        destination = SerializeTo<endianness>(destination, element);
+    }
+    return destination;
+}
+
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, etl::istring const & string) -> void *
+{
+    destination = std::ranges::copy(string, static_cast<char *>(destination)).out;
+    return destination;
+}
+
+
 template<std::endian endianness, TriviallySerializable T>
 inline auto DeserializeFrom(void const * source, T * t) -> void const *
 {
@@ -108,6 +124,36 @@ inline auto DeserializeFrom(void const * source, T * t) -> void const *
     }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return static_cast<Byte const *>(source) + totalSerialSize<T>;
+}
+
+
+template<std::endian endianness, std::size_t... nBits>
+    requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
+auto DeserializeFrom(void const * source, UInt<nBits> *... uInts) -> void const *
+{
+    static constexpr auto totalNBits = (nBits + ...);
+    static constexpr auto totalNBytes = totalNBits / CHAR_BIT;
+    using Buffer = SmallestUnsignedType<totalNBits>;
+    auto serializedBuffer = SerialBuffer<Buffer>{};
+    std::memcpy(serializedBuffer.data(), source, totalNBytes);
+    auto buffer = Deserialize<endianness, Buffer>(serializedBuffer);
+    auto extractFromBuffer = [&buffer](auto * uInt)
+    {
+        *uInt = static_cast<typename std::remove_pointer_t<decltype(uInt)>::UnderlyingType>(
+            buffer >> (std::numeric_limits<Buffer>::digits - uInt->size));
+        buffer <<= uInt->size;
+    };
+    (extractFromBuffer(uInts), ...);
+    return static_cast<Byte const *>(source) + totalNBytes;  // NOLINT(*pointer-arithmetic)
+}
+
+
+template<std::endian endianness, typename T>
+    requires(strong::is_strong_type<T>::value)
+auto DeserializeFrom(void const * source, T * t) -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &(value_of(*t)));
+    return source;
 }
 
 
@@ -143,29 +189,8 @@ auto DeserializeFrom(void const * source, etl::istring * string) -> void const *
 }
 
 
-template<std::endian endianness, std::size_t... nBits>
-    requires(endianness == std::endian::big and ((nBits + ...) % CHAR_BIT) == 0)
-[[nodiscard]] auto DeserializeFrom(void const * source, UInt<nBits> *... uInts) -> void const *
-{
-    static constexpr auto totalNBits = (nBits + ...);
-    static constexpr auto totalNBytes = totalNBits / CHAR_BIT;
-    using Buffer = SmallestUnsignedType<totalNBits>;
-    auto serializedBuffer = SerialBuffer<Buffer>{};
-    std::memcpy(serializedBuffer.data(), source, totalNBytes);
-    auto buffer = Deserialize<endianness, Buffer>(serializedBuffer);
-    auto extractFromBuffer = [&buffer](auto * uInt)
-    {
-        *uInt = static_cast<typename std::remove_pointer_t<decltype(uInt)>::UnderlyingType>(
-            buffer >> (std::numeric_limits<Buffer>::digits - uInt->size));
-        buffer <<= uInt->size;
-    };
-    (extractFromBuffer(uInts), ...);
-    return static_cast<Byte const *>(source) + totalNBytes;  // NOLINT(*pointer-arithmetic)
-}
-
-
 template<HasEndianness T>
-inline constexpr auto ReverseBytes(T t) -> T
+constexpr auto ReverseBytes(T t) -> T
 {
     if constexpr(sizeof(T) == 1)
     {

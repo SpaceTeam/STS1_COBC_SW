@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -13,6 +14,7 @@
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/type.hpp>
 
@@ -71,7 +73,7 @@ struct DumpRawMemoryDataRequest
 struct PerformAFunctionRequest
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    tc::FunctionId functionId;
+    FunctionId functionId;
     std::span<Byte const> dataField;
 };
 
@@ -125,7 +127,7 @@ struct CopyAFileRequest
 struct ReportHousekeepingParameterReportFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::requestHousekeepingParameterReports;
+    static constexpr auto functionId = FunctionId::requestHousekeepingParameterReports;
     std::uint16_t firstReportIndex;
     std::uint16_t lastReportIndex;
 };
@@ -134,8 +136,16 @@ struct ReportHousekeepingParameterReportFunction
 struct EnableFileTransferFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::enableFileTransferFor;
+    static constexpr auto functionId = FunctionId::enableFileTransfer;
     std::uint16_t durationInS;
+};
+
+
+struct SynchronizeTimeFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
+    static constexpr auto functionId = FunctionId::synchronizeTime;
+    RealTime realTime;
 };
 
 
@@ -147,7 +157,7 @@ struct UpdateEduQueueFunction
     static_assert(edu::programQueue.FramCapacity() == maxNQueueEntries);
 
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::updateEduQueue;
+    static constexpr auto functionId = FunctionId::updateEduQueue;
     std::uint8_t nQueueEntries;
     etl::vector<edu::ProgramQueueEntry, maxNQueueEntries> queueEntries;
 };
@@ -156,24 +166,24 @@ struct UpdateEduQueueFunction
 struct SetActiveFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::setActiveFirmware;
-    tc::FirmwarePartitionId partitionId;
+    static constexpr auto functionId = FunctionId::setActiveFirmware;
+    fw::PartitionId partitionId;
 };
 
 
 struct SetBackupFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::setBackupFirmware;
-    tc::FirmwarePartitionId partitionId;
+    static constexpr auto functionId = FunctionId::setBackupFirmware;
+    fw::PartitionId partitionId;
 };
 
 
 struct CheckFirmwareIntegrityFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
-    static constexpr auto functionId = tc::FunctionId::checkFirmwareIntegrity;
-    tc::FirmwarePartitionId partitionId;
+    static constexpr auto functionId = FunctionId::checkFirmwareIntegrity;
+    fw::PartitionId partitionId;
 };
 
 
@@ -203,6 +213,8 @@ struct CheckFirmwareIntegrityFunction
     -> Result<ReportHousekeepingParameterReportFunction>;
 [[nodiscard]] auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
     -> Result<EnableFileTransferFunction>;
+[[nodiscard]] auto ParseAsSynchronizeTimeFunction(std::span<Byte const> buffer)
+    -> Result<SynchronizeTimeFunction>;
 [[nodiscard]] auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer)
     -> Result<UpdateEduQueueFunction>;
 [[nodiscard]] auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)

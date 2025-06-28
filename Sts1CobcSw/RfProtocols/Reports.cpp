@@ -3,11 +3,9 @@
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
-
-#include <etl/string.h>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
 #include <algorithm>
-#include <cassert>
 
 
 namespace sts1cobcsw
@@ -153,7 +151,7 @@ auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::ranges::copy(filePath_, static_cast<char *>(cursor)).out;
+    cursor = SerializeTo<ccsdsEndianness>(cursor, filePath_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     (void)SerializeTo<ccsdsEndianness>(cursor, fileStatus_);
 }
@@ -161,27 +159,23 @@ auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 
 auto FileAttributeReport::DoSize() const -> std::uint16_t
 {
-    return static_cast<std::uint16_t>(
-        totalSerialSize<decltype(secondaryHeader_), decltype(fileSize_), decltype(fileStatus_)>
-        + fs::Path::MAX_SIZE);
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(secondaryHeader_),
+                                                      decltype(filePath_),
+                                                      decltype(fileSize_),
+                                                      decltype(fileStatus_)>);
 }
 
 
 RepositoryContentSummaryReport::RepositoryContentSummaryReport(
     fs::Path const & repositoryPath,
     std::uint8_t nObjects,
-    etl::vector<ObjectType, maxNObjectsPerPacket> const & objectTypes,
-    etl::vector<fs::Path, maxNObjectsPerPacket> const & objectNames)
-    : repositoryPath_(repositoryPath),
-      nObjects_(nObjects),
-      objectTypes_(objectTypes),
-      objectNames_(objectNames)
+    etl::vector<FileSystemObject, maxNObjectsPerPacket> const & objects)
+    : repositoryPath_(repositoryPath), nObjects_(nObjects), objects_(objects)
 {
-    assert(objectTypes_.size() == objectNames_.size());  // NOLINT(*array*decay)
     repositoryPath_.resize(fs::Path::MAX_SIZE, '\0');
-    for(auto & objectName : objectNames_)
+    for(auto && object : objects_)
     {
-        objectName.resize(fs::Path::MAX_SIZE, '\0');
+        object.name.resize(fs::Path::MAX_SIZE, '\0');
     }
 }
 
@@ -191,13 +185,11 @@ auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) con
     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-    cursor = std::ranges::copy(repositoryPath_, static_cast<char *>(cursor)).out;
+    cursor = SerializeTo<ccsdsEndianness>(cursor, repositoryPath_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, nObjects_);
-    for(auto i = 0U; i < objectTypes_.size(); ++i)
+    for(auto && object : objects_)
     {
-        cursor = SerializeTo<ccsdsEndianness>(cursor, objectTypes_[i]);
-        cursor =
-            std::copy(objectNames_[i].begin(), objectNames_[i].end(), static_cast<char *>(cursor));
+        cursor = SerializeTo<ccsdsEndianness>(cursor, object);
     }
 }
 
@@ -205,8 +197,8 @@ auto RepositoryContentSummaryReport::DoAddTo(etl::ivector<Byte> * dataField) con
 auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
-        totalSerialSize<decltype(secondaryHeader_), decltype(nObjects_)> + fs::Path::MAX_SIZE
-        + objectTypes_.size() * (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE));
+        totalSerialSize<decltype(secondaryHeader_), decltype(repositoryPath_), decltype(nObjects_)>
+        + nObjects_ * totalSerialSize<FileSystemObject>);
 }
 
 

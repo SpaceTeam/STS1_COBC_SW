@@ -2,6 +2,7 @@
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -22,7 +23,6 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
-#include <etl/string.h>
 #include <etl/vector.h>
 
 #include <algorithm>
@@ -62,8 +62,6 @@ TEST_INIT("Initialize FRAM for reports")
 
 TEST_CASE("Successful verification reports")
 {
-    using sts1cobcsw::SuccessfulVerificationReport;
-
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
@@ -73,7 +71,7 @@ TEST_CASE("Successful verification reports")
         .sequenceFlags = 0b11,
         .packetSequenceCount = 0,
     };
-    auto acceptanceReport = SuccessfulVerificationReport<VerificationStage::acceptance>(requestId);
+    auto acceptanceReport = sts1cobcsw::SuccessfulAcceptanceVerificationReport(requestId);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
     auto addToResult = acceptanceReport.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
@@ -121,7 +119,7 @@ TEST_CASE("Successful verification reports")
         .packetSequenceCount = 0x3FFF,
     };
     auto completionOfExecutionReport =
-        SuccessfulVerificationReport<VerificationStage::completionOfExecution>(requestId);
+        sts1cobcsw::SuccessfulCompletionOfExecutionVerificationReport(requestId);
     addToResult = completionOfExecutionReport.AddTo(&dataField);
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == completionOfExecutionReport.Size());
@@ -150,8 +148,6 @@ TEST_CASE("Successful verification reports")
 
 TEST_CASE("Failed verification reports")
 {
-    using sts1cobcsw::FailedVerificationReport;
-
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
@@ -161,8 +157,8 @@ TEST_CASE("Failed verification reports")
         .sequenceFlags = 0b11,
         .packetSequenceCount = 0,
     };
-    auto acceptanceReport = FailedVerificationReport<VerificationStage::acceptance>(
-        requestId, ErrorCode::invalidSpacePacket);
+    auto acceptanceReport =
+        sts1cobcsw::FailedAcceptanceVerificationReport(requestId, ErrorCode::invalidSpacePacket);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
     auto addToResult = acceptanceReport.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
@@ -207,8 +203,7 @@ TEST_CASE("Failed verification reports")
         .packetSequenceCount = 0x3FFF,
     };
     auto completionOfExecutionReport =
-        FailedVerificationReport<VerificationStage::completionOfExecution>(requestId,
-                                                                           ErrorCode::timeout);
+        sts1cobcsw::FailedCompletionOfExecutionVerificationReport(requestId, ErrorCode::timeout);
     addToResult = completionOfExecutionReport.AddTo(&dataField);
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == completionOfExecutionReport.Size());
@@ -249,12 +244,12 @@ TEST_CASE("Housekeeping parameter report")
         .epsIsWorking = 1,
         .flashIsWorking = 1,
         .rfIsWorking = 1,
-        .lastTelecommandIdWasInvalid = 1,
-        .lastTelecommandArgumentsWereInvalid = 1,
+        .lastMessageTypeIdWasInvalid = 1,
+        .lastApplicationDataWasInvalid = 1,
         .nTotalResets = 1U,
         .nResetsSinceRf = 2U,
-        .activeSecondaryFwPartition = 3,
-        .backupSecondaryFwPartition = 4,
+        .activeSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary1,
+        .backupSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary2,
         .eduProgramQueueIndex = 5U,
         .programIdOfCurrentEduProgramQueueEntry = sts1cobcsw::ProgramId(6),
         .nEduCommunicationErrors = 7U,
@@ -274,14 +269,14 @@ TEST_CASE("Housekeeping parameter report")
             .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
             .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
         // clang-format on
-        .rxBaudRate = 53,
-        .txBaudRate = 54,
+        .rxDataRate = 53,
+        .txDataRate = 54,
         .nCorrectableUplinkErrors = 55U,
         .nUncorrectableUplinkErrors = 56U,
         .nGoodTransferFrames = 57U,
         .nBadTransferFrames = 58U,
         .lastFrameSequenceNumber = 59U,
-        .lastTelecommandId = 60U
+        .lastMessageTypeId = {60U, 61}
     };
     auto report = sts1cobcsw::HousekeepingParameterReport(record);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
@@ -311,7 +306,8 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[15] == 0_b);
     CHECK(dataField[16] == 0_b);
     CHECK(dataField[17] == 1_b);         // nTotalResets
-    CHECK(dataField[11 + 121] == 60_b);  // lastTelecommandId
+    CHECK(dataField[11 + 120] == 60_b);  // lastMessageTypeId
+    CHECK(dataField[11 + 121] == 61_b);  // lastMessageTypeId
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);
@@ -330,7 +326,7 @@ TEST_CASE("Parameter value report")
     using sts1cobcsw::ParameterValueReport;
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
-    auto parameterId = Parameter::Id::rxBaudRate;
+    auto parameterId = Parameter::Id::rxDataRate;
     auto parameterValue = 9600U;
     auto report = ParameterValueReport(parameterId, parameterValue);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
@@ -360,8 +356,8 @@ TEST_CASE("Parameter value report")
 
     dataField.clear();
     auto parameters = etl::vector<sts1cobcsw::Parameter, sts1cobcsw::maxNParameters>{
-        sts1cobcsw::Parameter{Parameter::Id::rxBaudRate,         9600U   },
-        sts1cobcsw::Parameter{Parameter::Id::txBaudRate,         115'200U},
+        sts1cobcsw::Parameter{Parameter::Id::rxDataRate,         9600U   },
+        sts1cobcsw::Parameter{Parameter::Id::txDataRate,         115'200U},
         sts1cobcsw::Parameter{Parameter::Id::eduStartDelayLimit, 17U     }
     };
     report = ParameterValueReport(parameters);
@@ -379,12 +375,12 @@ TEST_CASE("Parameter value report")
     // Number of parameters
     CHECK(dataField[11] == 3_b);
     // Parameters
-    CHECK(dataField[12] == static_cast<Byte>(Parameter::Id::rxBaudRate));
-    CHECK(parameters[0].parameterValue == (Deserialize<Parameter::Value, 13>(dataField)));
-    CHECK(dataField[17] == static_cast<Byte>(Parameter::Id::txBaudRate));
-    CHECK(parameters[1].parameterValue == (Deserialize<Parameter::Value, 18>(dataField)));
+    CHECK(dataField[12] == static_cast<Byte>(Parameter::Id::rxDataRate));
+    CHECK(parameters[0].value == (Deserialize<Parameter::Value, 13>(dataField)));
+    CHECK(dataField[17] == static_cast<Byte>(Parameter::Id::txDataRate));
+    CHECK(parameters[1].value == (Deserialize<Parameter::Value, 18>(dataField)));
     CHECK(dataField[22] == static_cast<Byte>(Parameter::Id::eduStartDelayLimit));
-    CHECK(parameters[2].parameterValue == (Deserialize<Parameter::Value, 23>(dataField)));
+    CHECK(parameters[2].value == (Deserialize<Parameter::Value, 23>(dataField)));
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);
@@ -413,8 +409,8 @@ TEST_CASE("File attribute report")
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
-          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
-              + totalSerialSize<decltype(fileSize), decltype(fileStatus)>));
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength
+              + totalSerialSize<decltype(filePath), decltype(fileSize), decltype(fileStatus)>));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
     CHECK(dataField[1] == 23_b);    // Service type ID
@@ -435,7 +431,7 @@ TEST_CASE("File attribute report")
     CHECK(fileSize == (Deserialize<std::uint32_t, 11 + fs::Path::MAX_SIZE>(dataField)));
     // File status
     static constexpr auto iFileStatus =
-        11 + fs::Path::MAX_SIZE + totalSerialSize<decltype(fileSize)>;
+        11 + totalSerialSize<decltype(filePath), decltype(fileSize)>;
     CHECK(fileStatus == (Deserialize<FileStatus, iFileStatus>(dataField)));
 
     dataField.clear();
@@ -451,38 +447,32 @@ TEST_CASE("File attribute report")
 
 TEST_CASE("Repository content summary report")
 {
-    using sts1cobcsw::ObjectType;
+    using sts1cobcsw::FileSystemObject;
     using sts1cobcsw::RepositoryContentSummaryReport;
+    using Type = sts1cobcsw::FileSystemObject::Type;
 
     static constexpr auto maxNObjectsPerPacket =
         RepositoryContentSummaryReport::maxNObjectsPerPacket;
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto repositoryPath = fs::Path("/programs");
-    auto objectTypes = etl::vector<ObjectType, maxNObjectsPerPacket>{
-        ObjectType::directory,
-        ObjectType::directory,
-        ObjectType::file,
-        ObjectType::file,
+    auto objects = etl::vector<FileSystemObject, maxNObjectsPerPacket>{
+        {Type::directory, fs::Path("/programs/.")         },
+        {Type::directory, fs::Path("/programs/..")        },
+        {Type::file,      fs::Path("/programs/00001")     },
+        {Type::file,      fs::Path("/programs/00001.lock")}
     };
-    auto objectNames = etl::vector<fs::Path, maxNObjectsPerPacket>{
-        fs::Path("/programs/."),
-        fs::Path("/programs/.."),
-        fs::Path("/programs/00001"),
-        fs::Path("/programs/00001.lock"),
-    };
-    auto nObjects = static_cast<std::uint8_t>(objectTypes.size());
-    auto report =
-        RepositoryContentSummaryReport(repositoryPath, nObjects, objectTypes, objectNames);
+    auto nObjects = static_cast<std::uint8_t>(objects.size());
+    auto report = RepositoryContentSummaryReport(repositoryPath, nObjects, objects);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
     auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
     CHECK(addToResult.has_error() == false);
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
-          == (sts1cobcsw::tm::packetSecondaryHeaderLength + fs::Path::MAX_SIZE
-              + totalSerialSize<decltype(nObjects)>
-              + nObjects * (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE)));
+          == (sts1cobcsw::tm::packetSecondaryHeaderLength
+              + totalSerialSize<decltype(repositoryPath), decltype(nObjects)>
+              + nObjects * (totalSerialSize<FileSystemObject>)));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
     CHECK(dataField[1] == 23_b);    // Service type ID
@@ -502,11 +492,11 @@ TEST_CASE("Repository content summary report")
     // Number of objects
     CHECK(dataField[11 + fs::Path::MAX_SIZE] == static_cast<Byte>(nObjects));
     // Object types and names
-    for(auto i = 0U; i < objectTypes.size(); ++i)
+    for(auto i = 0U; i < objects.size(); ++i)
     {
-        CHECK(dataField[47 + 36 * i] == static_cast<Byte>(objectTypes[i]));
-        CHECK(std::equal(objectNames[i].begin(),
-                         objectNames[i].end(),
+        CHECK(dataField[47 + 36 * i] == static_cast<Byte>(objects[i].type));
+        CHECK(std::equal(objects[i].name.begin(),
+                         objects[i].name.end(),
                          dataField.begin() + 48 + 36 * i,
                          [](char c, Byte b) { return c == static_cast<char>(b); }));
     }

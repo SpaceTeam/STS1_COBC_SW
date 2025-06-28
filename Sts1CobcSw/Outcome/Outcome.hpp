@@ -47,7 +47,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidStatusType,
     invalidLength,
     tooManyDataPackets,
-    // SingleBuffer
+    // Mailbox
     full,
     empty,
     // RF protocols
@@ -63,13 +63,19 @@ enum class ErrorCode : std::int8_t  // NOLINT
     authenticationFailed,
     invalidSpacePacket,
     invalidApid,
-    invalidPacketLength,
+    invalidPacketDataLength,
     emptyPayload,
     invalidMessageTypeId,
     invalidSourceId,
     invalidApplicationData,
     invalidDataLength,
+    invalidDataArea,
+    invalidParameterId,
     emptyFilePath,
+    invalidPartitionId,
+    invalidProtocolDataUnit,
+    invalidPduDataLength,
+    invalidEntityId,
     // Firmware
     misaligned,
     eraseFailed,
@@ -77,6 +83,8 @@ enum class ErrorCode : std::int8_t  // NOLINT
 };
 
 
+// TODO: Think about printing more information. For example, we could print the error code in case
+// the value check fails.
 struct RebootPolicy : outcome_v2::experimental::policy::base
 {
     template<class Impl>
@@ -141,4 +149,10 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
 
 template<typename T>
 using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolicy>;
+
+
+constexpr auto ToCZString(ErrorCode errorCode) -> char const *;
 }
+
+
+#include <Sts1CobcSw/Outcome/Outcome.ipp>  // IWYU pragma: keep

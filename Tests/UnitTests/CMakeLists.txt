@@ -147,6 +147,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME IdCounters COMMAND Sts1CobcSwTests_IdCounters)
 
+    add_test_program(Mailbox)
+    target_link_libraries(
+        Sts1CobcSwTests_Mailbox
+        PRIVATE strong_type::strong_type Sts1CobcSw_Outcome Sts1CobcSw_Mailbox
+                Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+    )
+    add_test(NAME Mailbox COMMAND Sts1CobcSwTests_Mailbox)
+
     add_test_program(MajorityVote)
     target_link_libraries(
         Sts1CobcSwTests_MajorityVote PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
@@ -172,11 +180,20 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME PersistentVariables COMMAND Sts1CobcSwTests_PersistentVariables)
 
+    add_test_program(ProtocolDataUnits)
+    target_link_libraries(
+        Sts1CobcSwTests_ProtocolDataUnits
+        PRIVATE etl::etl Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+    )
+    add_test(NAME ProtocolDataUnits COMMAND Sts1CobcSwTests_ProtocolDataUnits)
+
     add_test_program(Reports)
     target_link_libraries(
         Sts1CobcSwTests_Reports
         PRIVATE strong_type::strong_type
                 Sts1CobcSw_FileSystem
+                Sts1CobcSw_FirmwareManagement
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_RfProtocols
@@ -194,6 +211,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         PRIVATE etl::etl
                 strong_type::strong_type
                 Sts1CobcSw_Edu
+                Sts1CobcSw_FirmwareManagement
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RfProtocols
                 Sts1CobcSw_Serial
@@ -214,14 +232,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         Sts1CobcSwTests_Serial PRIVATE Catch2::Catch2WithMain etl::etl Sts1CobcSw_Serial
     )
     catch_discover_tests(Sts1CobcSwTests_Serial)
-
-    add_test_program(SingleBuffer)
-    target_link_libraries(
-        Sts1CobcSwTests_SingleBuffer
-        PRIVATE strong_type::strong_type Sts1CobcSw_Outcome Sts1CobcSw_SingleBuffer
-                Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos
-    )
-    add_test(NAME SingleBuffer COMMAND Sts1CobcSwTests_SingleBuffer)
 
     add_test_program(SpacePacket)
     target_link_libraries(
@@ -277,8 +287,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(TelemetryRecord)
     target_link_libraries(
         Sts1CobcSwTests_TelemetryRecord
-        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Edu Sts1CobcSw_Serial Sts1CobcSw_Telemetry
-                Sts1CobcSw_Vocabulary
+        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Edu Sts1CobcSw_FirmwareManagement
+                Sts1CobcSw_Serial Sts1CobcSw_Telemetry Sts1CobcSw_Vocabulary
     )
     catch_discover_tests(Sts1CobcSwTests_TelemetryRecord)
 

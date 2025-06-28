@@ -1,17 +1,25 @@
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
 
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/TcSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
+
+#include <strong_type/affine_point.hpp>
+#include <strong_type/ordered.hpp>
 
 
 namespace sts1cobcsw
 {
 
-[[nodiscard]] auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>
+auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>
 {
     if(buffer.size() < tc::packetSecondaryHeaderLength)
     {
@@ -39,7 +47,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
+auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
     -> Result<LoadRawMemoryDataAreasRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -52,14 +60,18 @@ namespace sts1cobcsw
     }
     auto request = LoadRawMemoryDataAreasRequest{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request);
-    if(not(request.nDataAreas == 1))
+    if(request.nDataAreas != 1)
     {
         return ErrorCode::invalidApplicationData;
     }
     static constexpr auto maxDataLength = tc::maxMessageDataLength - minApplicationDataLength;
-    if(request.dataLength > maxDataLength)
+    auto endAddress = request.startAddress + fram::Size(request.dataLength);
+    auto dataAreaIsValid = request.dataLength <= maxDataLength
+                       and request.startAddress >= framSections.Get<"testMemory">().begin
+                       and endAddress < framSections.Get<"testMemory">().end;
+    if(not dataAreaIsValid)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidDataArea;
     }
     if(buffer.size() != minApplicationDataLength + request.dataLength)
     {
@@ -70,7 +82,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsDumpRawMemoryDataRequest(std::span<Byte const> buffer)
+auto ParseAsDumpRawMemoryDataRequest(std::span<Byte const> buffer)
     -> Result<DumpRawMemoryDataRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -97,15 +109,14 @@ namespace sts1cobcsw
     {
         if(dataArea.length > maxDumpedDataLength)
         {
-            return ErrorCode::invalidApplicationData;
+            return ErrorCode::invalidDataArea;
         }
     }
     return request;
 }
 
 
-[[nodiscard]] auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer)
-    -> Result<PerformAFunctionRequest>
+auto ParseAsPerformAFunctionRequest(std::span<Byte const> buffer) -> Result<PerformAFunctionRequest>
 {
     if(buffer.empty())
     {
@@ -113,12 +124,12 @@ namespace sts1cobcsw
     }
     auto request = PerformAFunctionRequest{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &request.functionId);
-    request.dataField = buffer.subspan(totalSerialSize<tc::FunctionId>);
+    request.dataField = buffer.subspan(totalSerialSize<FunctionId>);
     return request;
 }
 
 
-[[nodiscard]] auto ParseAsReportParameterValuesRequest(std::span<Byte const> buffer)
+auto ParseAsReportParameterValuesRequest(std::span<Byte const> buffer)
     -> Result<ReportParameterValuesRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -141,11 +152,18 @@ namespace sts1cobcsw
     }
     request.parameterIds.resize(request.nParameters);
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &request.parameterIds);
+    for(auto parameterId : request.parameterIds)
+    {
+        if(not IsValid(parameterId))
+        {
+            return ErrorCode::invalidParameterId;
+        }
+    }
     return request;
 }
 
 
-[[nodiscard]] auto ParseAsSetParameterValuesRequest(std::span<Byte const> buffer)
+auto ParseAsSetParameterValuesRequest(std::span<Byte const> buffer)
     -> Result<SetParameterValuesRequest>
 {
     static constexpr auto minApplicationDataLength =
@@ -167,12 +185,18 @@ namespace sts1cobcsw
     }
     request.parameters.resize(request.nParameters);
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(cursor, &request.parameters);
+    for(auto parameter : request.parameters)
+    {
+        if(not IsValid(parameter.id))
+        {
+            return ErrorCode::invalidParameterId;
+        }
+    }
     return request;
 }
 
 
-[[nodiscard]] auto ParseAsDeleteAFileRequest(std::span<Byte const> buffer)
-    -> Result<DeleteAFileRequest>
+auto ParseAsDeleteAFileRequest(std::span<Byte const> buffer) -> Result<DeleteAFileRequest>
 {
     auto request = DeleteAFileRequest{};
     if(buffer.size() < request.filePath.capacity())
@@ -188,7 +212,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsReportTheAttributesOfAFileRequest(std::span<Byte const> buffer)
+auto ParseAsReportTheAttributesOfAFileRequest(std::span<Byte const> buffer)
     -> Result<ReportTheAttributesOfAFileRequest>
 {
     auto request = ReportTheAttributesOfAFileRequest{};
@@ -205,7 +229,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsSummaryReportTheContentOfARepositoryRequest(std::span<Byte const> buffer)
+auto ParseAsSummaryReportTheContentOfARepositoryRequest(std::span<Byte const> buffer)
     -> Result<SummaryReportTheContentOfARepositoryRequest>
 
 {
@@ -223,12 +247,13 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRequest>
+auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRequest>
 {
     auto request = CopyAFileRequest{};
-    auto const applicationDataLength = request.targetFilePath.capacity()
-                                     + request.sourceFilePath.capacity()
-                                     + totalSerialSize<decltype(CopyAFileRequest::operationId)>;
+    static constexpr auto applicationDataLength =
+        totalSerialSize<decltype(CopyAFileRequest::operationId),
+                        decltype(CopyAFileRequest::sourceFilePath),
+                        decltype(CopyAFileRequest::targetFilePath)>;
     if(buffer.size() != applicationDataLength)
     {
         return ErrorCode::invalidDataLength;
@@ -246,7 +271,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
+auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
     -> Result<ReportHousekeepingParameterReportFunction>
 {
     if(buffer.size()
@@ -265,7 +290,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
+auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
     -> Result<EnableFileTransferFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(EnableFileTransferFunction::durationInS)>)
@@ -278,8 +303,19 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer)
-    -> Result<UpdateEduQueueFunction>
+auto ParseAsSynchronizeTimeFunction(std::span<Byte const> buffer) -> Result<SynchronizeTimeFunction>
+{
+    if(buffer.size() != totalSerialSize<decltype(SynchronizeTimeFunction::realTime)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = SynchronizeTimeFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.realTime);
+    return function;
+}
+
+
+auto ParseAsUpdateEduQueueFunction(std::span<Byte const> buffer) -> Result<UpdateEduQueueFunction>
 {
     static constexpr auto minApplicationDataLength =
         totalSerialSize<decltype(UpdateEduQueueFunction::nQueueEntries)>;
@@ -306,7 +342,7 @@ namespace sts1cobcsw
 }
 
 
-[[nodiscard]] auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
+auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
     -> Result<SetActiveFirmwareFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(SetActiveFirmwareFunction::partitionId)>)
@@ -315,16 +351,16 @@ namespace sts1cobcsw
     }
     auto function = SetActiveFirmwareFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != tc::FirmwarePartitionId::secondary1
-       and function.partitionId != tc::FirmwarePartitionId::secondary2)
+    if(function.partitionId != fw::PartitionId::secondary1
+       and function.partitionId != fw::PartitionId::secondary2)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidPartitionId;
     }
     return function;
 }
 
 
-[[nodiscard]] auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
+auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
     -> Result<SetBackupFirmwareFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(SetBackupFirmwareFunction::partitionId)>)
@@ -333,16 +369,16 @@ namespace sts1cobcsw
     }
     auto function = SetBackupFirmwareFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != tc::FirmwarePartitionId::secondary1
-       && function.partitionId != tc::FirmwarePartitionId::secondary2)
+    if(function.partitionId != fw::PartitionId::secondary1
+       && function.partitionId != fw::PartitionId::secondary2)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidPartitionId;
     }
     return function;
 }
 
 
-[[nodiscard]] auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
+auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
     -> Result<CheckFirmwareIntegrityFunction>
 {
     if(buffer.size() != totalSerialSize<decltype(CheckFirmwareIntegrityFunction::partitionId)>)
@@ -351,19 +387,18 @@ namespace sts1cobcsw
     }
     auto function = CheckFirmwareIntegrityFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != tc::FirmwarePartitionId::primary
-       && function.partitionId != tc::FirmwarePartitionId::secondary1
-       && function.partitionId != tc::FirmwarePartitionId::secondary2)
+    if(function.partitionId != fw::PartitionId::primary
+       && function.partitionId != fw::PartitionId::secondary1
+       && function.partitionId != fw::PartitionId::secondary2)
     {
-        return ErrorCode::invalidApplicationData;
+        return ErrorCode::invalidPartitionId;
     }
     return function;
 }
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
-    -> void const *
+auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &header->nDataAreas);
     source = DeserializeFrom<endianness>(source, &header->startAddress);
@@ -373,8 +408,7 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, DumpRawMemoryDataArea * dataArea)
-    -> void const *
+auto DeserializeFrom(void const * source, DumpRawMemoryDataArea * dataArea) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &dataArea->startAddress);
     source = DeserializeFrom<endianness>(source, &dataArea->length);
@@ -383,7 +417,7 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *
+auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void const *
 {
     source = DeserializeFrom<endianness>(source, &header->operationId);
     source = DeserializeFrom<endianness>(source, &header->sourceFilePath);
@@ -393,8 +427,7 @@ template<std::endian endianness>
 
 
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source,
-                                   ReportHousekeepingParameterReportFunction * function)
+auto DeserializeFrom(void const * source, ReportHousekeepingParameterReportFunction * function)
     -> void const *
 {
     source = DeserializeFrom<endianness>(source, &function->firstReportIndex);

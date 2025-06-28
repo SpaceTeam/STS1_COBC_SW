@@ -8,6 +8,8 @@
 
 #include <etl/string.h>
 
+#include <cstdint>
+
 
 namespace sts1cobcsw::fs
 {
@@ -19,6 +21,9 @@ using Path = etl::string<maxPathLength>;
 [[nodiscard]] auto CreateDirectory(Path const & path) -> Result<void>;
 [[nodiscard]] auto Remove(Path const & path) -> Result<void>;
 [[nodiscard]] auto ForceRemove(Path const & path) -> Result<void>;
+
+[[nodiscard]] auto FileSize(Path const & path) -> Result<std::uint32_t>;
+[[nodiscard]] auto IsLocked(Path const & path) -> Result<bool>;
 
 
 namespace internal

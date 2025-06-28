@@ -1,38 +1,51 @@
 #pragma once
 
 
+#include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
+#include <Sts1CobcSw/Mailbox/Mailbox.hpp>
+#include <Sts1CobcSw/RfProtocols/ProtocolDataUnits.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <array>
 #include <cstdint>
 
 
+// TODO: If more mailboxes are added, think about renaming this module to InterThreadCommunication,
+// InterprocessCommunication, or something similar.
 namespace sts1cobcsw
 {
 // Topics and subscribers must be defined in the same file to prevent a static initialization order
 // fiasco
-extern RODOS::Topic<bool> eduIsAliveTopic;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForListener;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForPowerManagement;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForCommunicationError;
-extern RODOS::CommBuffer<bool> eduIsAliveBufferForTelemetry;
+inline auto eduIsAliveTopic = RODOS::Topic<bool>(-1, "eduIsAliveTopic");
+inline auto eduIsAliveBufferForListener = RODOS::CommBuffer<bool>{};
+inline auto eduIsAliveBufferForPowerManagement = RODOS::CommBuffer<bool>{};
+inline auto eduIsAliveBufferForCommunicationError = RODOS::CommBuffer<bool>{};
+inline auto eduIsAliveBufferForTelemetry = RODOS::CommBuffer<bool>{};
 
-extern RODOS::Topic<Duration> nextProgramStartDelayTopic;
-extern RODOS::CommBuffer<Duration> nextProgramStartDelayBuffer;
+inline auto nextProgramStartDelayTopic = RODOS::Topic<Duration>(-1, "nextProgramStartDelayTopic");
+inline auto nextProgramStartDelayBuffer = RODOS::CommBuffer<Duration>{};
 
-extern RODOS::Topic<ProgramId> programIdOfCurrentEduProgramQueueEntryTopic;
-extern RODOS::CommBuffer<ProgramId> programIdOfCurrentEduProgramQueueEntryBuffer;
+inline auto programIdOfCurrentEduProgramQueueEntryTopic =
+    RODOS::Topic<ProgramId>(-1, "programIdOfCurrentEduProgramQueueEntryTopic");
+inline auto programIdOfCurrentEduProgramQueueEntryBuffer = RODOS::CommBuffer<ProgramId>{};
 
-extern RODOS::Topic<std::int32_t> rxBaudRateTopic;
-extern RODOS::CommBuffer<std::int32_t> rxBaudRateBuffer;
+inline auto rxDataRateTopic = RODOS::Topic<std::int32_t>(-1, "rxDataRateTopic");
+inline auto rxDataRateBuffer = RODOS::CommBuffer<std::int32_t>{};
 
-extern RODOS::Topic<std::int32_t> txBaudRateTopic;
-extern RODOS::CommBuffer<std::int32_t> txBaudRateBuffer;
+inline auto txDataRateTopic = RODOS::Topic<std::int32_t>(-1, "txDataRateTopic");
+inline auto txDataRateBuffer = RODOS::CommBuffer<std::int32_t>{};
 
-extern RODOS::Topic<TelemetryRecord> telemetryTopic;
-// TODO: Look for a less memory-intensive solution than a CommBuffer
-extern RODOS::CommBuffer<TelemetryRecord> telemetryBuffer;
+// We only send the telemetry records from the telemetry thread to the RF communication thread, so
+// we don't need the whole publisher/subscriber mechanism here. A simple mailbox is enough.
+inline auto telemetryRecordMailbox = Mailbox<TelemetryRecord>{};
+inline auto nextTelemetryRecordTimeMailbox = Mailbox<RodosTime>{};
+inline auto fileTransferInfoMailbox = Mailbox<FileTransferInfo>{};
+inline auto receivedPduMailbox = Mailbox<tc::ProtocolDataUnit>{};
+inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
 }

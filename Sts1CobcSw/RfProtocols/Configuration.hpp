@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
 #include <array>
 #include <cstdint>
@@ -41,7 +42,7 @@ inline constexpr auto transferFrameDataLength = transferFrameLength
                                               - securityHeaderLength - securityTrailerLength;
 }
 
-inline constexpr std::uint16_t securityParameterIndex = 0x1717;
+inline constexpr std::uint16_t securityParameterIndex = 1;
 
 using SpacecraftId = Id<UInt<10>, 0x123>;  // NOLINT(*magic-numbers)
 inline constexpr auto spacecraftId = Make<SpacecraftId, 0x123>();
@@ -115,6 +116,7 @@ using MessageTypeId = Id<MessageTypeIdFields,
                          {23, 12},
                          {23, 14}>;
 // NOLINTEND(*magic-numbers)
+}
 
 enum class FunctionId : std::uint8_t
 {
@@ -123,19 +125,13 @@ enum class FunctionId : std::uint8_t
     disableCubeSatTx = 4,
     enableCubeSatTx = 7,
     resetNow = 8,
-    enableFileTransferFor = 9,
+    enableFileTransfer = 9,
+    synchronizeTime = 10,
     updateEduQueue = 22,
     setActiveFirmware = 23,
     setBackupFirmware = 25,
     checkFirmwareIntegrity = 31,
 };
-enum class FirmwarePartitionId : std::uint8_t
-{
-    primary = 0b0000'1111,
-    secondary1 = 0b0000'0000,
-    secondary2 = 0b1111'1111
-};
-}
 
 using ApplicationProcessUserId = Id<std::uint16_t, 0xAA33>;  // NOLINT(*magic-numbers)
 inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 0xAA33>();
@@ -148,16 +144,33 @@ enum class FileStatus : std::uint8_t
     locked = 0xFF,
 };
 
-enum class ObjectType : std::uint8_t
-{
-    file = 0,
-    directory = 1,
-};
-
 using CopyOperationId = Id<std::uint8_t, 0b0000'1111>;  // NOLINT(*magic-numbers)
 inline constexpr auto copyOperationId = Make<CopyOperationId, 0b0000'1111>();
 
 inline constexpr auto maxDumpedDataLength =
     tm::maxPacketDataLength - tm::packetSecondaryHeaderLength
     - totalSerialSize<std::uint8_t, fram::Address, std::uint8_t>;
+
+
+// ---- CCSDS File Delivery Protocol ----
+
+namespace tm
+{
+inline constexpr auto maxPduLength = transferFrameDataLength;
+inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
+}
+
+namespace tc
+{
+inline constexpr auto maxPduLength = transferFrameDataLength;
+inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
+}
+
+inline constexpr auto pduVersion = UInt<3>(1);
+
+using EntityId = Id<std::uint8_t, 0x0F, 0xF0>;  // NOLINT(*magic-numbers)
+inline constexpr auto groundStationEntityId = Make<EntityId, 0x0F>();
+inline constexpr auto cubeSatEntityId = Make<EntityId, 0xF0>();
 }

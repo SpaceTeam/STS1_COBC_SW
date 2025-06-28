@@ -15,8 +15,8 @@ auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const 
                                          &(data->epsIsWorking),
                                          &(data->flashIsWorking),
                                          &(data->rfIsWorking),
-                                         &(data->lastTelecommandIdWasInvalid),
-                                         &(data->lastTelecommandArgumentsWereInvalid),
+                                         &(data->lastMessageTypeIdWasInvalid),
+                                         &(data->lastApplicationDataWasInvalid),
                                          &(data->padding));
     source = DeserializeFrom<endianness>(source, &(data->nTotalResets));
     source = DeserializeFrom<endianness>(source, &(data->nResetsSinceRf));
@@ -35,14 +35,14 @@ auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const 
     source = DeserializeFrom<endianness>(source, &(data->cobcTemperature));
     source = DeserializeFrom<endianness>(source, &(data->rfTemperature));
     source = DeserializeFrom<endianness>(source, &(data->epsAdcData));
-    source = DeserializeFrom<endianness>(source, &(data->rxBaudRate));
-    source = DeserializeFrom<endianness>(source, &(data->txBaudRate));
+    source = DeserializeFrom<endianness>(source, &(data->rxDataRate));
+    source = DeserializeFrom<endianness>(source, &(data->txDataRate));
     source = DeserializeFrom<endianness>(source, &(data->nCorrectableUplinkErrors));
     source = DeserializeFrom<endianness>(source, &(data->nUncorrectableUplinkErrors));
     source = DeserializeFrom<endianness>(source, &(data->nGoodTransferFrames));
     source = DeserializeFrom<endianness>(source, &(data->nBadTransferFrames));
     source = DeserializeFrom<endianness>(source, &(data->lastFrameSequenceNumber));
-    source = DeserializeFrom<endianness>(source, &(data->lastTelecommandId));
+    source = DeserializeFrom<endianness>(source, &(data->lastMessageTypeId));
     return source;
 }
 
@@ -59,8 +59,8 @@ auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *
                                           data.epsIsWorking,
                                           data.flashIsWorking,
                                           data.rfIsWorking,
-                                          data.lastTelecommandIdWasInvalid,
-                                          data.lastTelecommandArgumentsWereInvalid,
+                                          data.lastMessageTypeIdWasInvalid,
+                                          data.lastApplicationDataWasInvalid,
                                           data.padding);
     destination = SerializeTo<endianness>(destination, data.nTotalResets);
     destination = SerializeTo<endianness>(destination, data.nResetsSinceRf);
@@ -79,14 +79,14 @@ auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *
     destination = SerializeTo<endianness>(destination, data.cobcTemperature);
     destination = SerializeTo<endianness>(destination, data.rfTemperature);
     destination = SerializeTo<endianness>(destination, data.epsAdcData);
-    destination = SerializeTo<endianness>(destination, data.rxBaudRate);
-    destination = SerializeTo<endianness>(destination, data.txBaudRate);
+    destination = SerializeTo<endianness>(destination, data.rxDataRate);
+    destination = SerializeTo<endianness>(destination, data.txDataRate);
     destination = SerializeTo<endianness>(destination, data.nCorrectableUplinkErrors);
     destination = SerializeTo<endianness>(destination, data.nUncorrectableUplinkErrors);
     destination = SerializeTo<endianness>(destination, data.nGoodTransferFrames);
     destination = SerializeTo<endianness>(destination, data.nBadTransferFrames);
     destination = SerializeTo<endianness>(destination, data.lastFrameSequenceNumber);
-    destination = SerializeTo<endianness>(destination, data.lastTelecommandId);
+    destination = SerializeTo<endianness>(destination, data.lastMessageTypeId);
     return destination;
 }
 

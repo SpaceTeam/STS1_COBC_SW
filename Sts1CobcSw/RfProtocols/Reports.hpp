@@ -68,6 +68,12 @@ private:
 };
 
 
+using SuccessfulAcceptanceVerificationReport =
+    SuccessfulVerificationReport<VerificationStage::acceptance>;
+using SuccessfulCompletionOfExecutionVerificationReport =
+    SuccessfulVerificationReport<VerificationStage::completionOfExecution>;
+
+
 template<VerificationStage stage>
 class FailedVerificationReport : public Payload
 {
@@ -86,6 +92,11 @@ private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
+
+
+using FailedAcceptanceVerificationReport = FailedVerificationReport<VerificationStage::acceptance>;
+using FailedCompletionOfExecutionVerificationReport =
+    FailedVerificationReport<VerificationStage::completionOfExecution>;
 
 
 class HousekeepingParameterReport : public Payload
@@ -145,15 +156,14 @@ class RepositoryContentSummaryReport : public Payload
 {
 public:
     static constexpr auto maxNObjectsPerPacket =
-        (tm::maxPacketDataLength - tm::packetSecondaryHeaderLength - fs::Path::MAX_SIZE
-         - totalSerialSize<std::uint8_t>)
-        / (totalSerialSize<ObjectType> + fs::Path::MAX_SIZE);
+        (tm::maxPacketDataLength - tm::packetSecondaryHeaderLength
+         - totalSerialSize<fs::Path, std::uint8_t>)
+        / (totalSerialSize<FileSystemObject>);
 
     RepositoryContentSummaryReport(
         fs::Path const & repositoryPath,
         std::uint8_t nObjects,
-        etl::vector<ObjectType, maxNObjectsPerPacket> const & objectTypes,
-        etl::vector<fs::Path, maxNObjectsPerPacket> const & objectNames);
+        etl::vector<FileSystemObject, maxNObjectsPerPacket> const & objects);
 
 
 private:
@@ -161,8 +171,7 @@ private:
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     fs::Path repositoryPath_;
     std::uint8_t nObjects_ = 0;
-    etl::vector<ObjectType, maxNObjectsPerPacket> objectTypes_;
-    etl::vector<fs::Path, maxNObjectsPerPacket> objectNames_;
+    etl::vector<FileSystemObject, maxNObjectsPerPacket> objects_;
 
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;

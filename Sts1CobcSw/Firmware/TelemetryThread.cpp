@@ -1,10 +1,12 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
@@ -12,7 +14,9 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -30,8 +34,8 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 4000U;
-constexpr auto telemetryThreadPeriod = 30 * s;
+constexpr auto stackSize = 1000U;
+constexpr auto telemetryThreadInterval = 30 * s;
 
 
 [[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
@@ -45,18 +49,18 @@ public:
 
 
 private:
-    void init() override
-    {}
-
-
     void run() override
     {
-        TIME_LOOP(0, value_of(telemetryThreadPeriod))
+        SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        DEBUG_PRINT("Starting telemetry thread\n");
+        TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
             persistentVariables.Store<"realTime">(CurrentRealTime());
             auto telemetryRecord = CollectTelemetryData();
             telemetryMemory.PushBack(telemetryRecord);
-            telemetryTopic.publish(telemetryRecord);
+            DEBUG_PRINT("Publishing telemetry record\n");
+            telemetryRecordMailbox.Overwrite(telemetryRecord);
+            nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
             ResumeRfCommunicationThread();
         }
     }
@@ -69,10 +73,10 @@ auto CollectTelemetryData() -> TelemetryRecord
     eduIsAliveBufferForTelemetry.get(eduIsAlive);
     auto programIdOfCurrentEduProgramQueueEntry = ProgramId(0);
     programIdOfCurrentEduProgramQueueEntryBuffer.get(programIdOfCurrentEduProgramQueueEntry);
-    std::int32_t rxBaudRate = 0;
-    rxBaudRateBuffer.get(rxBaudRate);
-    std::int32_t txBaudRate = 0;
-    txBaudRateBuffer.get(txBaudRate);
+    std::int32_t rxDataRate = 0;
+    rxDataRateBuffer.get(rxDataRate);
+    std::int32_t txDataRate = 0;
+    txDataRateBuffer.get(txDataRate);
     return TelemetryRecord{
         // Booleans: byte 1: EDU and housekeeping
         .eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">() ? 1 : 0,
@@ -84,10 +88,10 @@ auto CollectTelemetryData() -> TelemetryRecord
         .flashIsWorking = persistentVariables.Load<"flashIsWorking">() ? 1 : 0,
         .rfIsWorking = persistentVariables.Load<"rfIsWorking">() ? 1 : 0,
         // Booleans: byte 2:  and communication
-        .lastTelecommandIdWasInvalid =
-            persistentVariables.Load<"lastTelecommandIdWasInvalid">() ? 1 : 0,
-        .lastTelecommandArgumentsWereInvalid =
-            persistentVariables.Load<"lastTelecommandArgumentsWereInvalid">() ? 1 : 0,
+        .lastMessageTypeIdWasInvalid =
+            persistentVariables.Load<"lastMessageTypeIdWasInvalid">() ? 1 : 0,
+        .lastApplicationDataWasInvalid =
+            persistentVariables.Load<"lastApplicationDataWasInvalid">() ? 1 : 0,
         // BootLoader
         .nTotalResets = persistentVariables.Load<"nTotalResets">(),
         .nResetsSinceRf = persistentVariables.Load<"nResetsSinceRf">(),
@@ -110,14 +114,14 @@ auto CollectTelemetryData() -> TelemetryRecord
         .rfTemperature = rftemperaturesensor::Read(),
         .epsAdcData = eps::ReadAdcs(),
         // Communication
-        .rxBaudRate = rxBaudRate,
-        .txBaudRate = txBaudRate,
+        .rxDataRate = rxDataRate,
+        .txDataRate = txDataRate,
         .nCorrectableUplinkErrors = persistentVariables.Load<"nCorrectableUplinkErrors">(),
         .nUncorrectableUplinkErrors = persistentVariables.Load<"nUncorrectableUplinkErrors">(),
         .nGoodTransferFrames = persistentVariables.Load<"nGoodTransferFrames">(),
         .nBadTransferFrames = persistentVariables.Load<"nBadTransferFrames">(),
         .lastFrameSequenceNumber = persistentVariables.Load<"lastFrameSequenceNumber">(),
-        .lastTelecommandId = persistentVariables.Load<"lastTelecommandId">()};
+        .lastMessageTypeId = persistentVariables.Load<"lastMessageTypeId">()};
 }
 }
 }

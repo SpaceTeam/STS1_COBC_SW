@@ -1,4 +1,5 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
@@ -33,12 +34,12 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .epsIsWorking = 1,
             .flashIsWorking = 1,
             .rfIsWorking = 1,
-            .lastTelecommandIdWasInvalid = 1,
-            .lastTelecommandArgumentsWereInvalid = 1,
+            .lastMessageTypeIdWasInvalid = 1,
+            .lastApplicationDataWasInvalid = 1,
             .nTotalResets = 1U,
             .nResetsSinceRf = 2U,
-            .activeSecondaryFwPartition = 3,
-            .backupSecondaryFwPartition = 4,
+            .activeSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary1,
+            .backupSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary2,
             .eduProgramQueueIndex = 5U,
             .programIdOfCurrentEduProgramQueueEntry = ProgramId(6),
             .nEduCommunicationErrors = 7U,
@@ -58,14 +59,14 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
                 .adc5 = {33U, 34U, 35U, 36U, 37U, 38U, 39U, 40U, 41U, 42U},
                 .adc6 = {43U, 44U, 45U, 46U, 47U, 48U, 49U, 50U, 51U, 52U}},
             // clang-format on
-            .rxBaudRate = 53,
-            .txBaudRate = 54,
+            .rxDataRate = 53,
+            .txDataRate = 54,
             .nCorrectableUplinkErrors = 55U,
             .nUncorrectableUplinkErrors = 56U,
             .nGoodTransferFrames = 57U,
             .nBadTransferFrames = 58U,
             .lastFrameSequenceNumber = 59U,
-            .lastTelecommandId = 60U,
+            .lastMessageTypeId = {60U, 61U},
         };
         auto serializedRecord = Serialize<std::endian::big>(originalRecord);
         auto deserializedRecord = Deserialize<std::endian::big, TelemetryRecord>(serializedRecord);
@@ -91,8 +92,8 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
                                 .epsIsWorking = (booleans1 & (1U << 5U)),
                                 .flashIsWorking = (booleans1 & (1U << 6U)),
                                 .rfIsWorking = (booleans1 & (1U << 7U)),
-                                .lastTelecommandIdWasInvalid = (booleans2 & (1U << 0U)),
-                                .lastTelecommandArgumentsWereInvalid = (booleans2 & (1U << 1U))};
+                                .lastMessageTypeIdWasInvalid = (booleans2 & (1U << 0U)),
+                                .lastApplicationDataWasInvalid = (booleans2 & (1U << 1U))};
             auto serializedRecord = Serialize<std::endian::big>(originalRecord);
             auto deserializedRecord =
                 Deserialize<std::endian::big, TelemetryRecord>(serializedRecord);

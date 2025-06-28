@@ -30,20 +30,22 @@ public:
     template<StringLiteral name>
     [[nodiscard]] static auto Load() -> ValueType<name>;
     template<StringLiteral name>
-    [[nodiscard]] static auto Store(ValueType<name> const & value);
+    static auto Store(ValueType<name> const & value) -> void;
     template<StringLiteral name>
-    [[nodiscard]] static auto Increment();
+    static auto Increment() -> void;
+    template<StringLiteral name>
+    static auto Add(ValueType<name> const & value) -> void;
 
 
 private:
     template<StringLiteral name>
+    static auto WriteToFram(ValueType<name> const & value) -> void;
+    template<StringLiteral name>
+    static auto WriteToCache(ValueType<name> const & value) -> void;
+    template<StringLiteral name>
     [[nodiscard]] static auto ReadFromFram() -> std::array<ValueType<name>, 3>;
     template<StringLiteral name>
-    [[nodiscard]] static auto WriteToFram(ValueType<name> const & value);
-    template<StringLiteral name>
     [[nodiscard]] static auto ReadFromCache() -> std::array<ValueType<name>, 3>;
-    template<StringLiteral name>
-    [[nodiscard]] static auto WriteToCache(ValueType<name> const & value);
 
     static std::tuple<typename PersistentVariableInfos::ValueType...> cache0;
     static std::tuple<typename PersistentVariableInfos::ValueType...> cache1;

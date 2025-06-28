@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -65,6 +66,7 @@ private:
 
     void run() override
     {
+        SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         DEBUG_PRINT("Entering EduProgramQueueThread\n");
         DEBUG_PRINT_REAL_TIME();
         while(true)

@@ -45,7 +45,8 @@
       "cacheVariables": {
         "HSE_VALUE": "12000000",
         "HW_VERSION": "30",
-        "REDIRECT_RF_OVER_UCI": "ON"
+        "REDIRECT_RF_OVER_UCI": "ON",
+        "DISABLE_CHANNEL_CODING": "ON"
       }
     },
     {

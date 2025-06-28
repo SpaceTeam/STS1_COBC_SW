@@ -7,6 +7,6 @@
 namespace sts1cobcsw
 {
 // Stringification for CatchRodos
-auto Append(ValueString * string, ErrorCode const & errorCode) -> void;
-auto Append(ValueString * string, RealTime const & realTime) -> void;
+auto Append(ValueString * string, ErrorCode errorCode) -> void;
+auto Append(ValueString * string, RealTime realTime) -> void;
 }

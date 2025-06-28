@@ -1,12 +1,14 @@
 #pragma once
 
 
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/SubsectionInfo.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 
@@ -33,10 +35,11 @@ inline constexpr auto persistentVariables =
                         // Bootloader
                         PersistentVariableInfo<"nTotalResets", std::uint32_t>,
                         PersistentVariableInfo<"nResetsSinceRf", std::uint8_t>,
-                        PersistentVariableInfo<"activeSecondaryFwPartition", std::int8_t>,
-                        PersistentVariableInfo<"backupSecondaryFwPartition", std::int8_t>,
+                        PersistentVariableInfo<"activeSecondaryFwPartition", fw::PartitionId>,
+                        PersistentVariableInfo<"backupSecondaryFwPartition", fw::PartitionId>,
                         // Housekeeping
                         PersistentVariableInfo<"txIsOn", bool>,
+                        PersistentVariableInfo<"fileTransferWindowEnd", RodosTime>,
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
                         PersistentVariableInfo<"realTime", RealTime>,
                         PersistentVariableInfo<"realTimeOffset", Duration>,
@@ -50,6 +53,7 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"nFileSystemErrors", std::uint8_t>,
                         // EDU
                         PersistentVariableInfo<"eduShouldBePowered", bool>,
+                        PersistentVariableInfo<"eduStartDelayLimit", Duration>,
                         PersistentVariableInfo<"newEduResultIsAvailable", bool>,
                         PersistentVariableInfo<"eduProgramQueueIndex", std::uint8_t>,
                         PersistentVariableInfo<"nEduCommunicationErrors", std::uint8_t>,
@@ -59,7 +63,7 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"nGoodTransferFrames", std::uint16_t>,
                         PersistentVariableInfo<"nBadTransferFrames", std::uint16_t>,
                         PersistentVariableInfo<"lastFrameSequenceNumber", std::uint8_t>,
-                        PersistentVariableInfo<"lastTelecommandId", std::uint16_t>,
-                        PersistentVariableInfo<"lastTelecommandIdWasInvalid", bool>,
-                        PersistentVariableInfo<"lastTelecommandArgumentsWereInvalid", bool>>{};
+                        PersistentVariableInfo<"lastMessageTypeId", MessageTypeIdFields>,
+                        PersistentVariableInfo<"lastMessageTypeIdWasInvalid", bool>,
+                        PersistentVariableInfo<"lastApplicationDataWasInvalid", bool>>{};
 }

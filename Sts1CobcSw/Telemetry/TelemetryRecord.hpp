@@ -1,9 +1,11 @@
 #pragma once
 
 
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -27,15 +29,15 @@ struct TelemetryRecord
     UInt<1> flashIsWorking = 0;
     UInt<1> rfIsWorking = 0;
     // Booleans: byte 2: communication
-    UInt<1> lastTelecommandIdWasInvalid = 0;
-    UInt<1> lastTelecommandArgumentsWereInvalid = 0;
+    UInt<1> lastMessageTypeIdWasInvalid = 0;
+    UInt<1> lastApplicationDataWasInvalid = 0;
     UInt<6> padding = 0;  // NOLINT(*magic-numbers)
 
     // BootLoader
     std::uint32_t nTotalResets = 0U;
     std::uint8_t nResetsSinceRf = 0U;
-    std::int8_t activeSecondaryFwPartition = 0;
-    std::int8_t backupSecondaryFwPartition = 0;
+    fw::PartitionId activeSecondaryFwPartition = fw::PartitionId::secondary1;
+    fw::PartitionId backupSecondaryFwPartition = fw::PartitionId::secondary1;
 
     // EDU
     std::uint8_t eduProgramQueueIndex = 0;
@@ -57,15 +59,14 @@ struct TelemetryRecord
     eps::AdcData epsAdcData = {};
 
     // Communication
-    std::int32_t rxBaudRate = 0;
-    std::int32_t txBaudRate = 0;
+    std::int32_t rxDataRate = 0;
+    std::int32_t txDataRate = 0;
     std::uint16_t nCorrectableUplinkErrors = 0U;
     std::uint16_t nUncorrectableUplinkErrors = 0U;
     std::uint16_t nGoodTransferFrames = 0U;
     std::uint16_t nBadTransferFrames = 0U;
     std::uint8_t lastFrameSequenceNumber = 0U;
-    // TODO: I think this should be a tc::MessageTypeId
-    std::uint16_t lastTelecommandId = 0U;
+    MessageTypeIdFields lastMessageTypeId;
 
     friend auto operator==(TelemetryRecord const &, TelemetryRecord const &) -> bool = default;
 };
@@ -81,8 +82,8 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
                     decltype(TelemetryRecord::epsIsWorking),
                     decltype(TelemetryRecord::flashIsWorking),
                     decltype(TelemetryRecord::rfIsWorking),
-                    decltype(TelemetryRecord::lastTelecommandIdWasInvalid),
-                    decltype(TelemetryRecord::lastTelecommandArgumentsWereInvalid),
+                    decltype(TelemetryRecord::lastMessageTypeIdWasInvalid),
+                    decltype(TelemetryRecord::lastApplicationDataWasInvalid),
                     decltype(TelemetryRecord::padding)>
     + totalSerialSize<
         // Bootloader
@@ -107,14 +108,14 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
         decltype(TelemetryRecord::rfTemperature),
         decltype(TelemetryRecord::epsAdcData),
         // Communication
-        decltype(TelemetryRecord::rxBaudRate),
-        decltype(TelemetryRecord::txBaudRate),
+        decltype(TelemetryRecord::rxDataRate),
+        decltype(TelemetryRecord::txDataRate),
         decltype(TelemetryRecord::nCorrectableUplinkErrors),
         decltype(TelemetryRecord::nUncorrectableUplinkErrors),
         decltype(TelemetryRecord::nGoodTransferFrames),
         decltype(TelemetryRecord::nBadTransferFrames),
         decltype(TelemetryRecord::lastFrameSequenceNumber),
-        decltype(TelemetryRecord::lastTelecommandId)>;
+        decltype(TelemetryRecord::lastMessageTypeId)>;
 
 
 template<std::endian endianness>

@@ -1,13 +1,12 @@
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(
         Sts1CobcSw_Firmware
-        PRIVATE CommandParser.cpp
-                CommandParserThread.cpp
-                EduCommunicationErrorThread.cpp
+        PRIVATE EduCommunicationErrorThread.cpp
                 EduHeartbeatThread.cpp
                 EduListenerThread.cpp
                 EduPowerManagementThread.cpp
                 EduProgramQueueThread.cpp
+                FileTransferThread.cpp
                 FlashStartupTestThread.cpp
                 FramEpsStartupTestThread.cpp
                 RfCommunicationThread.cpp
@@ -21,19 +20,23 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         PRIVATE etl::etl
                 rodos::rodos
                 strong_type::strong_type
+                Sts1CobcSw_ChannelCoding
                 Sts1CobcSw_Edu
                 Sts1CobcSw_Flash
                 Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
+                Sts1CobcSw_Mailbox
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_Rf
+                Sts1CobcSw_RfProtocols
                 Sts1CobcSw_RodosTime
                 Sts1CobcSw_Sensors
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Telemetry
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
+                Sts1CobcSw_WatchdogTimers
     )
 endif()

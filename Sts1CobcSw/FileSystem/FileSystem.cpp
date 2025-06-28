@@ -106,4 +106,45 @@ auto ForceRemove(Path const & path) -> Result<void>
     }
     return static_cast<ErrorCode>(error);
 }
+
+
+auto FileSize(Path const & path) -> Result<std::uint32_t>
+{
+    if(not persistentVariables.Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
+    auto info = lfs_info{};
+    auto error = lfs_stat(&lfs, path.c_str(), &info);
+    if(error == 0)
+    {
+        if(info.type == LFS_TYPE_REG)
+        {
+            return info.size;
+        }
+        return ErrorCode::isADirectory;
+    }
+    return static_cast<ErrorCode>(error);
+}
+
+
+auto IsLocked(Path const & path) -> Result<bool>
+{
+    if(not persistentVariables.Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
+    auto info = lfs_info{};
+    // Get stats of lock file to see if it exists
+    auto error = lfs_stat(&lfs, Path(path).append(".lock").c_str(), &info);
+    if(error == 0)
+    {
+        return true;
+    }
+    if(error == LFS_ERR_NOENT)
+    {
+        return false;
+    }
+    return static_cast<ErrorCode>(error);
+}
 }
