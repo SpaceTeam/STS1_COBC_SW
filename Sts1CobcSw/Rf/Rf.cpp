@@ -13,6 +13,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
+#include <Sts1CobcSw/Rf/RfDataRate.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
@@ -41,25 +42,6 @@ namespace sts1cobcsw::rf
 {
 namespace
 {
-enum class PropertyGroup : std::uint8_t
-{
-    global = 0x00,       //
-    intCtl = 0x01,       // Interrupt control
-    frrCtl = 0x02,       // Fast response register control
-    preamble = 0x10,     //
-    sync = 0x11,         // Sync word
-    pkt = 0x12,          // Packet
-    modem = 0x20,        //
-    modemChflt = 0x21,   //
-    pa = 0x22,           // Power amplifier
-    synth = 0x23,        //
-    match = 0x30,        //
-    freqControl = 0x40,  //
-    rxHop = 0x50,        //
-    pti = 0xF0           // Packet trace interface
-};
-
-
 // --- Private globals ---
 
 constexpr auto endianness = std::endian::big;
@@ -446,8 +428,8 @@ auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>
 }
 
 
-// TODO: MR14.06.25 there are a buch of settings to set for SetRx. So there should be some standard data rates we want to set, and save all values for thouse rates.
-// we are in 437.395 MHz band
+// TODO: MR14.06.25 there are a buch of settings to set for SetRx. So there should be some standard
+// data rates we want to set, and save all values for thouse rates. we are in 437.395 MHz band
 auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
 {
     // TODO: check to not be in TX mode. Ignored for now.
@@ -455,7 +437,8 @@ auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
 
     // set Mandatory registers:
 
-    // TODO: set MODEM_BCR_OSR              RX BCR/Slicer oversampling rate (12-bit unsigned number).
+    // TODO: set MODEM_BCR_OSR              RX BCR/Slicer oversampling rate (12-bit unsigned
+    // number).
     //      Group:  0x20
     //      Indexes: 0x22 0x23
     //      Default 0x00    0x4b
@@ -474,7 +457,7 @@ auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
     // MODEM_BCR_MISC1:RXNCOCOMP
     // MODEM_CHFLT_*
     // MODEM_DECIMATION_CFGx
-    (void) dataRate;
+    (void)dataRate;
     return outcome_v2::success();
 }
 
