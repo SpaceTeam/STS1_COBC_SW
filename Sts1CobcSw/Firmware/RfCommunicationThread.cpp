@@ -68,6 +68,8 @@ namespace
 constexpr auto stackSize = 3000;
 constexpr auto rxTimeoutForAdditionalData = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
+// The ground station needs some time to switch from TX to RX so we need to wait for that when
+// switching from RX to TX
 constexpr auto rxToTxSwitchDuration = 300 * ms;
 constexpr auto maxNFramesToSendContinously = rf::maxTxDataLength / fullyEncodedFrameLength;
 
@@ -210,9 +212,12 @@ auto ThereIsEnoughTimeForRxAndDataHandling(Duration rxTimeout) -> bool
 
 auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>
 {
-    // TODO: Find out if a timeout occurs here
-    rf::Receive(tcBuffer, rxTimeout);
+    auto nReceivedBytes = rf::Receive(tcBuffer, rxTimeout);
     lastRxTime = CurrentRodosTime();
+    if(nReceivedBytes < tcBuffer.size())
+    {
+        return ErrorCode::timeout;
+    }
     HandleReceivedData();
     return outcome_v2::success();
 }

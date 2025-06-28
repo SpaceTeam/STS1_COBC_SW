@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <span>
 
@@ -36,5 +37,6 @@ auto SetRxDataRate(std::uint32_t dataRate) -> void;
 auto SendAndWait(std::span<Byte const> data) -> void;
 auto SendAndContinue(std::span<Byte const> data) -> void;
 auto SuspendUntilDataSent(Duration timeout) -> void;
-auto Receive(std::span<Byte> data, Duration timeout) -> void;
+// Return the number of received bytes
+auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t;
 }

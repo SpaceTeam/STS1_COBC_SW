@@ -64,9 +64,9 @@ private:
         PRINTF("Waiting %i s to receive %i bytes\n",
                static_cast<int>(rxTimeout / s),
                static_cast<int>(receivedData.size()));
-        rf::Receive(Span(&receivedData), rxTimeout);
-        PRINTF("Received data:\n");
-        Print(Span(receivedData));
+        auto nReceivedBytes = rf::Receive(Span(&receivedData), rxTimeout);
+        PRINTF("Received %i bytes:\n", static_cast<int>(nReceivedBytes));
+        Print(Span(receivedData).first(nReceivedBytes));
         PRINTF("-> done\n");
     }
 } rfReceiveTest;

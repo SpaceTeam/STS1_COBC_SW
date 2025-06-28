@@ -138,10 +138,15 @@ auto SuspendUntilDataSent([[maybe_unused]] Duration timeout) -> void
 {}
 
 
-auto Receive(std::span<Byte> data, Duration timeout) -> void
+auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 {
-    (void)hal::ReadFrom(&uciUart, data, timeout);
+    auto result = hal::ReadFrom(&uciUart, data, timeout);
+    if(result.has_error())
+    {
+        return 0;
+    }
     // Add a line break after receiving the data, for nicer formatting in HTerm.
     (void)hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout);
+    return data.size();
 }
 }

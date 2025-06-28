@@ -169,7 +169,8 @@ auto ExecuteWithRecovery(Args... args)
 [[nodiscard]] auto DoSendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>;
-[[nodiscard]] auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>;
+// Return the number of received bytes
+[[nodiscard]] auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>;
 
 auto Reset() -> void;
 auto InitializeGpiosAndSpi() -> void;
@@ -308,9 +309,9 @@ auto SuspendUntilDataSent(Duration timeout) -> void
 }
 
 
-auto Receive(std::span<Byte> data, Duration timeout) -> void
+auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 {
-    ExecuteWithRecovery<DoReceive>(data, timeout);
+    return ExecuteWithRecovery<DoReceive>(data, timeout);
 }
 
 
@@ -543,9 +544,9 @@ auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>
 // DoSendAndContinue().
 //
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>
+auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
 {
-    auto result = [&]() -> Result<void>
+    auto result = [&]() -> Result<std::size_t>
     {
         OUTCOME_TRY(ResetFifos());
         OUTCOME_TRY(SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt));
@@ -557,7 +558,11 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>
         auto dataIndex = 0U;
         while(dataIndex + rxFifoThreshold < static_cast<unsigned int>(data.size()))
         {
-            OUTCOME_TRY(SuspendUntilInterrupt(reactivationTime));
+            auto suspendUntilInterruptResult = SuspendUntilInterrupt(reactivationTime);
+            if(suspendUntilInterruptResult.has_error())
+            {
+                return dataIndex;
+            }
             DebugPrintModemStatus();
             ReadFromFifo(data.subspan(dataIndex, rxFifoThreshold));
             OUTCOME_TRY(ReadAndClearInterruptStatus());
@@ -568,17 +573,22 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<void>
         OUTCOME_TRY(auto fillLevel, ReadRxFifoFillLevel());
         if(fillLevel < remainingData.size())
         {
-            OUTCOME_TRY(SuspendUntilInterrupt(reactivationTime));
+            auto suspendUntilInterruptResult = SuspendUntilInterrupt(reactivationTime);
+            if(suspendUntilInterruptResult.has_error())
+            {
+                return dataIndex;
+            }
         }
         ReadFromFifo(remainingData);
         OUTCOME_TRY(SetRxFifoThreshold(static_cast<Byte>(rxFifoThreshold)));
-        return outcome_v2::success();
+        dataIndex += remainingData.size();
+        return dataIndex;
     }();
     auto setInterruptsResult = SetPacketHandlerInterrupts(noInterrupts);
     OUTCOME_TRY(DoEnterStandbyMode());
     if(setInterruptsResult.has_error())
     {
-        return setInterruptsResult;
+        return setInterruptsResult.error();
     }
     OUTCOME_TRY(ReadAndClearInterruptStatus());
     return result;
