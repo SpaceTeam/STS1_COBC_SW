@@ -35,8 +35,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(Eps)
     target_link_libraries(
-        Sts1CobcSwTests_Eps PRIVATE rodos::rodos Sts1CobcSw_FramSections Sts1CobcSw_Sensors
-                                    Sts1CobcSw_Serial Sts1CobcSwTests::HardwareSetup
+        Sts1CobcSwTests_Eps
+        PRIVATE rodos::rodos Sts1CobcSw_Fram Sts1CobcSw_FramSections Sts1CobcSw_Sensors
+                Sts1CobcSw_Serial Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(Gpio)
@@ -64,6 +65,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSwTests_RfReceive
         PRIVATE rodos::rodos
                 strong_type::strong_type
+                Sts1CobcSw_Fram
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_Rf
@@ -78,6 +80,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSwTests_RfSend
         PRIVATE rodos::rodos
                 strong_type::strong_type
+                Sts1CobcSw_Fram
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_Rf

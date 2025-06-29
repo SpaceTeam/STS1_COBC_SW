@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
@@ -31,7 +32,10 @@ private:
         PRINTF("\nEPS test\n\n");
 
         PRINTF("\n");
+        fram::Initialize();  // This is required for the persistent variables to work
         persistentVariables.Store<"epsIsWorking">(true);
+        PRINTF("epsIsWorking = %s\n",
+               persistentVariables.Load<"epsIsWorking">() ? "true" : "false");
         eps::InitializeAdcs();
         PRINTF("EPS ADCs initialized\n");
 

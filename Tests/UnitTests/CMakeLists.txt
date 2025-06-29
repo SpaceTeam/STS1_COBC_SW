@@ -79,7 +79,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
 
     add_test_program(RfPartNumber)
     target_link_libraries(
-        Sts1CobcSwTests_RfPartNumber PRIVATE Sts1CobcSw_Rf Sts1CobcSwTests::CatchRodos
+        Sts1CobcSwTests_RfPartNumber PRIVATE Sts1CobcSw_Fram Sts1CobcSw_Rf
+                                             Sts1CobcSwTests::CatchRodos
     )
 endif()
 

@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -121,7 +122,8 @@ private:
     void run() override
     {
         PRINTF("\nRF test\n\n");
-
+        // We need to initialize the FRAM too because the RF code uses persistent variables
+        fram::Initialize();
         auto initializeResult = rf::Initialize(rf::TxType::packet);
         if(initializeResult.has_error())
         {
