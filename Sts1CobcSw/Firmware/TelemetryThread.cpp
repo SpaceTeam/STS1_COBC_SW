@@ -73,9 +73,9 @@ auto CollectTelemetryData() -> TelemetryRecord
     eduIsAliveBufferForTelemetry.get(eduIsAlive);
     auto programIdOfCurrentEduProgramQueueEntry = ProgramId(0);
     programIdOfCurrentEduProgramQueueEntryBuffer.get(programIdOfCurrentEduProgramQueueEntry);
-    std::int32_t rxDataRate = 0;
+    std::uint32_t rxDataRate = 0;
     rxDataRateBuffer.get(rxDataRate);
-    std::int32_t txDataRate = 0;
+    std::uint32_t txDataRate = 0;
     txDataRateBuffer.get(txDataRate);
     return TelemetryRecord{
         // Booleans: byte 1: EDU and housekeeping

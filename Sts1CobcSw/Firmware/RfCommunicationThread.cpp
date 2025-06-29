@@ -750,9 +750,11 @@ auto Set(Parameter parameter) -> void
     {
         case Parameter::Id::rxDataRate:
             rf::SetRxDataRate(parameter.value);
+            rxDataRateTopic.publish(parameter.value);
             break;
         case Parameter::Id::txDataRate:
             rf::SetTxDataRate(parameter.value);
+            txDataRateTopic.publish(parameter.value);
             break;
         case Parameter::Id::realTimeOffsetCorrection:
             persistentVariables.Store<"realTimeOffsetCorrection">(parameter.value * s);

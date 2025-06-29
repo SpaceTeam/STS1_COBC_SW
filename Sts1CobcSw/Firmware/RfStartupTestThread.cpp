@@ -2,6 +2,7 @@
 
 #include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
+#include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
@@ -50,6 +51,8 @@ private:
                 DEBUG_PRINT("  failed to read correct RF part number\n");
                 return false;
             }
+            rxDataRateTopic.publish(rf::GetRxDataRate());
+            txDataRateTopic.publish(rf::GetTxDataRate());
             return true;
         }();
         if(testSucceeded)
