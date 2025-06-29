@@ -1,5 +1,7 @@
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -120,8 +122,14 @@ private:
     void run() override
     {
         PRINTF("\nRF test\n\n");
-
-        rf::Initialize(rf::TxType::packet);
+        // We need to initialize the FRAM too because the RF code uses persistent variables
+        fram::Initialize();
+        auto initializeResult = rf::Initialize(rf::TxType::packet);
+        if(initializeResult.has_error())
+        {
+            PRINTF("Failed to initialize RF module: %s\n", ToCZString(initializeResult.error()));
+            return;
+        }
         rf::EnableTx();
         PRINTF("RF module initialized, TX enabled\n");
 
@@ -134,16 +142,7 @@ private:
         for(auto i = 0U; i < n; ++i)
         {
             led1GpioPin.Set();
-            auto sendAndWaitResult = rf::SendAndWait(Span(message));
-            if(sendAndWaitResult.has_error())
-            {
-                PRINTF("SendAndWait() %u/%u returned error code %i\n",
-                       i,
-                       n,
-                       static_cast<int>(sendAndWaitResult.error()));
-                led1GpioPin.Reset();
-                break;
-            }
+            rf::SendAndWait(Span(message));
             SuspendFor(100 * ms);
             led1GpioPin.Reset();
             SuspendFor(400 * ms);
@@ -164,22 +163,9 @@ private:
             for(auto i = 0U; i < n; ++i)
             {
                 led1GpioPin.Set();
-                auto sendAndContinueResult = rf::SendAndContinue(Span(message));
-                if(sendAndContinueResult.has_error())
-                {
-                    PRINTF("SendAndContinue() %u/%u returned error code %i\n",
-                           i,
-                           n,
-                           static_cast<int>(sendAndContinueResult.error()));
-                    return;
-                }
+                rf::SendAndContinue(Span(message));
             }
-            auto suspendUntilDataSentResult = rf::SuspendUntilDataSent(1 * s);
-            if(suspendUntilDataSentResult.has_error())
-            {
-                PRINTF("SuspendUntilDataSent() returned error code %i\n",
-                       static_cast<int>(suspendUntilDataSentResult.error()));
-            }
+            rf::SuspendUntilDataSent(1 * s);
         }();
         led1GpioPin.Reset();
         rf::EnterStandbyMode();

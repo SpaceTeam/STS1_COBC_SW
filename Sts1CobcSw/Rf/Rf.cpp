@@ -6,6 +6,8 @@
 
 #include <Sts1CobcSw/Rf/Rf.hpp>
 
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
@@ -22,11 +24,15 @@
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 #include <array>
 #include <bit>
 #include <compare>
+#include <concepts>
 #include <cstddef>
 #include <span>
+#include <type_traits>
 #include <utility>
 
 
@@ -113,8 +119,14 @@ constexpr auto spiTimeout = 1 * ms;
 constexpr auto ctsTimeout = 100 * ms;
 constexpr auto pollingInterval = 10 * us;
 
-constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settles after power up
+// Minimum time the SDN pin must be pulled high to reset the RF module (double the value from the
+// datasheet to be safe)
+constexpr auto minShutdownDuration = 20 * us;
+constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settle after power up
 constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to finish
+
+constexpr auto errorHandlingRetryDelay = 1 * ms;
+constexpr auto errorHandlingCobcResetDelay = 1 * s;
 
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
@@ -131,6 +143,7 @@ auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
 #endif
 
 auto isInTxMode = false;
+auto currentTxType = TxType::packet;
 
 
 using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
@@ -138,36 +151,59 @@ using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
 
 // --- Private function declarations ---
 
+template<auto doFunction, typename... Args>
+    requires std::invocable<decltype(doFunction), Args...>
+auto ExecuteWithRecovery(Args... args)
+    -> std::invoke_result_t<decltype(doFunction), Args...>::value_type;
+
+
+[[nodiscard]] auto DoInitialize(TxType txType) -> Result<void>;
+[[nodiscard]] auto DoReadPartNumber() -> Result<std::uint16_t>;
+[[nodiscard]] auto DoEnterStandbyMode() -> Result<void>;
+[[nodiscard]] auto DoSetTxType(TxType txType) -> Result<void>;
+[[nodiscard]] auto DoSetTxDataLength(std::uint16_t length) -> Result<void>;
+[[nodiscard]] auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>;
+[[nodiscard]] auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>;
+[[nodiscard]] auto DoGetTxDataRate() -> Result<std::uint32_t>;
+[[nodiscard]] auto DoGetRxDataRate() -> Result<std::uint32_t>;
+[[nodiscard]] auto DoSendAndWait(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>;
+[[nodiscard]] auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>;
+// Return the number of received bytes
+[[nodiscard]] auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>;
+
+auto Reset() -> void;
 auto InitializeGpiosAndSpi() -> void;
-auto ApplyPatch() -> void;
-auto PowerUp() -> void;
-auto Configure(TxType txType) -> void;
+[[nodiscard]] auto ApplyPatch() -> Result<void>;
+[[nodiscard]] auto PowerUp() -> Result<void>;
+[[nodiscard]] auto Configure(TxType txType) -> Result<void>;
 
 auto EnableRfLatchupProtection() -> void;
 auto DisableRfLatchupProtection() -> void;
 
-auto SetRxFifoThreshold(Byte threshold) -> void;
-auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void;
+[[nodiscard]] auto SetRxFifoThreshold(Byte threshold) -> Result<void>;
+[[nodiscard]] auto SetPacketHandlerInterrupts(Byte interruptFlags) -> Result<void>;
 // auto SetModemInterrupts(Byte interruptFlags) -> void;
-auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>;
+auto ReadAndClearInterruptStatus() -> Result<std::array<Byte, interruptStatusAnswerLength>>;
 [[nodiscard]] auto SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>;
 [[nodiscard]] auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
 
-auto StartTx() -> void;
-auto StartRx() -> void;
+[[nodiscard]] auto StartTx() -> Result<void>;
+[[nodiscard]] auto StartRx() -> Result<void>;
 
-auto ResetFifos() -> void;
-auto WriteToFifo(std::span<Byte const> data) -> void;
+[[nodiscard]] auto ResetFifos() -> Result<void>;
+[[nodiscard]] auto WriteToFifo(std::span<Byte const> data) -> Result<void>;
 auto ReadFromFifo(std::span<Byte> data) -> void;
-auto ReadFreeTxFifoSpace() -> std::uint8_t;
-auto ReadRxFifoFillLevel() -> std::uint8_t;
+[[nodiscard]] auto ReadFreeTxFifoSpace() -> Result<std::uint8_t>;
+[[nodiscard]] auto ReadRxFifoFillLevel() -> Result<std::uint8_t>;
 
 auto DebugPrintModemStatus() -> void;
-auto ReadModemStatus() -> ModemStatus;
+[[nodiscard]] auto ReadModemStatus() -> Result<ModemStatus>;
 
-auto SendCommand(std::span<Byte const> data) -> void;
+[[nodiscard]] auto SendCommand(std::span<Byte const> data) -> Result<void>;
 template<std::size_t answerLength>
-[[nodiscard]] auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>;
+[[nodiscard]] auto SendCommand(std::span<Byte const> data)
+    -> Result<std::array<Byte, answerLength>>;
 auto SelectChip() -> void;
 auto DeselectChip() -> void;
 [[nodiscard]] auto BusyWaitForCts(Duration timeout) -> Result<void>;
@@ -175,54 +211,179 @@ template<std::size_t answerLength>
 [[nodiscard]] auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>;
 template<std::size_t extent>
     requires(extent <= maxNProperties)
-auto SetProperties(PropertyGroup propertyGroup,
-                   Byte startIndex,
-                   std::span<Byte const, extent> propertyValues) -> void;
+[[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
+                                 Byte startIndex,
+                                 std::span<Byte const, extent> propertyValues) -> Result<void>;
 }
 
 
 // --- Public function definitions ---
 
-auto Initialize(TxType txType) -> void
+auto Initialize(TxType txType) -> Result<void>
 {
-    InitializeGpiosAndSpi();
-    ApplyPatch();
-    PowerUp();
-    Configure(txType);
-    // The user is responsible for disabling TX if the related persistent variable is false
-    EnableTx();
+    currentTxType = txType;
+    return DoInitialize(txType);
 }
 
 
 auto EnableTx() -> void
 {
+    persistentVariables.Store<"txIsOn">(true);
     paEnablePin.Set();
 }
 
 
 auto DisableTx() -> void
 {
+    persistentVariables.Store<"txIsOn">(false);
     paEnablePin.Reset();
 }
 
 
 auto ReadPartNumber() -> std::uint16_t
 {
-    auto answer = SendCommand<partInfoAnswerLength>(Span(cmdPartInfo));
-    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+    return ExecuteWithRecovery<DoReadPartNumber>();
 }
 
 
 auto EnterStandbyMode() -> void
 {
-    static constexpr auto standbyMode = 0x01_b;
-    SendCommand(Span({cmdChangeState, standbyMode}));
-    isInTxMode = false;
-    EnableRfLatchupProtection();
+    ExecuteWithRecovery<DoEnterStandbyMode>();
 }
 
 
 auto SetTxType(TxType txType) -> void
+{
+    ExecuteWithRecovery<DoSetTxType>(txType);
+}
+
+
+// Must be called before SendAndContinue()
+auto SetTxDataLength(std::uint16_t length) -> void
+{
+    ExecuteWithRecovery<DoSetTxDataLength>(length);
+}
+
+
+auto SetTxDataRate(std::uint32_t dataRate) -> void
+{
+    ExecuteWithRecovery<DoSetTxDataRate>(dataRate);
+}
+
+
+auto SetRxDataRate(std::uint32_t dataRate) -> void
+{
+    ExecuteWithRecovery<DoSetRxDataRate>(dataRate);
+}
+
+
+auto GetTxDataRate() -> std::uint32_t
+{
+    return ExecuteWithRecovery<DoGetTxDataRate>();
+}
+
+
+auto GetRxDataRate() -> std::uint32_t
+{
+    return ExecuteWithRecovery<DoGetRxDataRate>();
+}
+
+
+auto SendAndWait(std::span<Byte const> data) -> void
+{
+    ExecuteWithRecovery<DoSendAndWait>(data);
+}
+
+
+// Send the data to the RF module and return as soon as the last chunk was written to the FIFO. This
+// allows sending multiple data packets without interruption.
+auto SendAndContinue(std::span<Byte const> data) -> void
+{
+    ExecuteWithRecovery<DoSendAndContinue>(data);
+}
+
+
+auto SuspendUntilDataSent(Duration timeout) -> void
+{
+    ExecuteWithRecovery<DoSuspendUntilDataSent>(timeout);
+}
+
+
+auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
+{
+    return ExecuteWithRecovery<DoReceive>(data, timeout);
+}
+
+
+// --- Private function definitions ---
+
+namespace
+{
+template<auto doFunction, typename... Args>
+    requires std::invocable<decltype(doFunction), Args...>
+auto ExecuteWithRecovery(Args... args)
+    -> std::invoke_result_t<decltype(doFunction), Args...>::value_type
+{
+    // First try
+    auto result = doFunction(args...);
+    if(result.has_value())
+    {
+        return result.value();
+    }
+    SuspendFor(errorHandlingRetryDelay);
+    // Second try
+    result = doFunction(args...);
+    if(result.has_value())
+    {
+        return result.value();
+    }
+    Reset();
+    auto reinitResult = DoInitialize(currentTxType);
+    if(reinitResult.has_value())
+    {
+        // Third try
+        result = doFunction(args...);
+        if(result.has_value())
+        {
+            return result.value();
+        }
+    }
+    // Reset COBC
+    SuspendFor(errorHandlingCobcResetDelay);
+    RODOS::hwResetAndReboot();
+    __builtin_unreachable();  // Tell the compiler that hwResetAndReboot() never returns
+}
+
+
+auto DoInitialize(TxType txType) -> Result<void>
+{
+    InitializeGpiosAndSpi();
+    OUTCOME_TRY(ApplyPatch());
+    OUTCOME_TRY(PowerUp());
+    OUTCOME_TRY(Configure(txType));
+    persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
+    return outcome_v2::success();
+}
+
+
+auto DoReadPartNumber() -> Result<std::uint16_t>
+{
+    OUTCOME_TRY(auto answer, SendCommand<partInfoAnswerLength>(Span(cmdPartInfo)));
+    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+}
+
+
+auto DoEnterStandbyMode() -> Result<void>
+{
+    static constexpr auto standbyMode = 0x01_b;
+    OUTCOME_TRY(SendCommand(Span({cmdChangeState, standbyMode})));
+    isInTxMode = false;
+    EnableRfLatchupProtection();
+    return outcome_v2::success();
+}
+
+
+auto DoSetTxType(TxType txType) -> Result<void>
 {
     // Constants for setting the TX type (morse, 2GFSK)
     // MODEM_DATA_RATE: unused, 20 kBaud
@@ -240,7 +401,7 @@ auto SetTxType(TxType txType) -> void
     static constexpr auto startIndex = 0x00_b;
     auto modemModeType = (txType == TxType::morse ? modemModeTypeMorse : modemModeType2Gfsk);
     auto dataRate = (txType == TxType::morse ? dataRateMorse : dataRate2Gfsk);
-    SetProperties(
+    return SetProperties(
         PropertyGroup::modem,
         startIndex,
         Span(FlatArray(modemModeType,
@@ -251,160 +412,197 @@ auto SetTxType(TxType txType) -> void
 }
 
 
-// Must be called before SendAndContinue()
-auto SetTxDataLength(std::uint16_t length) -> void
+auto DoSetTxDataLength(std::uint16_t length) -> Result<void>
 {
     static constexpr auto iPktField1Length = 0x0D_b;
-    SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
+    return SetProperties(
+        PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
 }
 
 
-auto SetTxDataRate(std::uint32_t dataRate) -> void
+auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>
 {
-    (void)dataRate;
     // TODO: Implement this
+    (void)dataRate;
+    return outcome_v2::success();
 }
 
 
-auto SetRxDataRate(std::uint32_t dataRate) -> void
+auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
 {
-    (void)dataRate;
     // TODO: Implement this
+    (void)dataRate;
+    return outcome_v2::success();
 }
 
 
-auto GetTxDataRate() -> std::uint32_t
+auto DoGetTxDataRate() -> Result<std::uint32_t>
 {
     // TODO: Implement this
     return 0;
 }
 
 
-auto GetRxDataRate() -> std::uint32_t
+auto DoGetRxDataRate() -> Result<std::uint32_t>
 {
     // TODO: Implement this
     return 0;
 }
 
 
-auto SendAndWait(std::span<Byte const> data) -> Result<void>
+auto DoSendAndWait(std::span<Byte const> data) -> Result<void>
 {
-    SetTxDataLength(static_cast<std::uint16_t>(data.size()));
+    if(not persistentVariables.Load<"txIsOn">())
+    {
+        return outcome_v2::success();
+    }
+    OUTCOME_TRY(DoSetTxDataLength(static_cast<std::uint16_t>(data.size())));
     auto result = [&]() -> Result<void>
     {
-        OUTCOME_TRY(SendAndContinue(data));
-        auto suspendUntilInterruptResult = SuspendUntilDataSent(interruptTimeout);
-        SetPacketHandlerInterrupts(noInterrupts);
-        return suspendUntilInterruptResult;
+        OUTCOME_TRY(DoSendAndContinue(data));
+        auto suspendUntilDataSentResult = DoSuspendUntilDataSent(interruptTimeout);
+        return suspendUntilDataSentResult;
     }();
-    EnterStandbyMode();
+    OUTCOME_TRY(DoEnterStandbyMode());
     return result;
 }
 
 
-// Send the data to the RF module and return as soon as the last chunk was written to the FIFO. This
-// allows sending multiple data packets without interruption.
-auto SendAndContinue(std::span<Byte const> data) -> Result<void>
+// The high cognitive complexity comes from the OUTCOME_TRY macros which expand to extra if
+// statements. However, you don't see them when reading the code so they shouldn't really count.
+// Also, even extracting the interrupt driven part of the sending into a separate function doesn't
+// help, since that function alone would have too high of a cognitive complexity.
+//
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
 {
+    if(not persistentVariables.Load<"txIsOn">())
+    {
+        return outcome_v2::success();
+    }
     if(not isInTxMode)
     {
-        ResetFifos();
+        OUTCOME_TRY(ResetFifos());
         DisableRfLatchupProtection();
     }
-    SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt);
     auto dataIndex = 0U;
     auto result = [&]() -> Result<void>
     {
-        auto chunkSize = ReadFreeTxFifoSpace();
+        OUTCOME_TRY(SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt));
+        OUTCOME_TRY(auto chunkSize, ReadFreeTxFifoSpace());
         while(dataIndex + chunkSize < static_cast<unsigned int>(data.size()))
         {
-            WriteToFifo(data.subspan(dataIndex, chunkSize));
-            ReadAndClearInterruptStatus();
+            OUTCOME_TRY(WriteToFifo(data.subspan(dataIndex, chunkSize)));
+            OUTCOME_TRY(ReadAndClearInterruptStatus());
             if(not isInTxMode)
             {
-                StartTx();
+                OUTCOME_TRY(StartTx());
             }
             dataIndex += chunkSize;
             OUTCOME_TRY(SuspendUntilInterrupt(interruptTimeout));
-            chunkSize = ReadFreeTxFifoSpace();
+            OUTCOME_TRY(chunkSize, ReadFreeTxFifoSpace());
         }
         return outcome_v2::success();
     }();
-    SetPacketHandlerInterrupts(noInterrupts);
+    OUTCOME_TRY(SetPacketHandlerInterrupts(noInterrupts));
     if(result.has_error())
     {
         return result;
     }
-    WriteToFifo(data.subspan(dataIndex));
+    OUTCOME_TRY(WriteToFifo(data.subspan(dataIndex)));
     if(not isInTxMode)
     {
-        StartTx();
+        OUTCOME_TRY(StartTx());
     }
     return outcome_v2::success();
 }
 
 
-auto SuspendUntilDataSent(Duration timeout) -> Result<void>
+auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>
 {
-    SetPacketHandlerInterrupts(packetSentInterrupt);
-    static constexpr auto iPacketHandlerStatus = 3;
-    auto packetHandlerStatus = ReadAndClearInterruptStatus()[iPacketHandlerStatus];
     auto result = [&]() -> Result<void>
     {
+        OUTCOME_TRY(SetPacketHandlerInterrupts(packetSentInterrupt));
+        static constexpr auto iPacketHandlerStatus = 3;
+        OUTCOME_TRY(auto interruptStatus, ReadAndClearInterruptStatus());
+        auto packetHandlerStatus = interruptStatus[iPacketHandlerStatus];
         if((packetHandlerStatus & packetSentInterrupt) == 0x00_b)
         {
             OUTCOME_TRY(SuspendUntilInterrupt(timeout));
         }
         return outcome_v2::success();
     }();
-    // We won't stay in TX mode, no matter if the transmission was completed successfully or not.
+    // We won't stay in TX mode, no matter if the transmission was completed successfully or not
     isInTxMode = false;
     EnableRfLatchupProtection();
+    OUTCOME_TRY(SetPacketHandlerInterrupts(noInterrupts));
     return result;
 }
 
 
-auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
+// I don't care too much about the high cognitive complexity here for the same reason as in
+// DoSendAndContinue().
+//
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
 {
-    auto result = [&]() -> Result<void>
+    auto result = [&]() -> Result<std::size_t>
     {
-        ResetFifos();
-        SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt);
-        ReadAndClearInterruptStatus();
+        OUTCOME_TRY(ResetFifos());
+        OUTCOME_TRY(SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt));
+        OUTCOME_TRY(ReadAndClearInterruptStatus());
         DisableRfLatchupProtection();
         auto reactivationTime = CurrentRodosTime() + timeout;
-        StartRx();
+        OUTCOME_TRY(StartRx());
         DebugPrintModemStatus();
         auto dataIndex = 0U;
         while(dataIndex + rxFifoThreshold < static_cast<unsigned int>(data.size()))
         {
-            OUTCOME_TRY(SuspendUntilInterrupt(reactivationTime));
+            auto suspendUntilInterruptResult = SuspendUntilInterrupt(reactivationTime);
+            if(suspendUntilInterruptResult.has_error())
+            {
+                return dataIndex;
+            }
             DebugPrintModemStatus();
             ReadFromFifo(data.subspan(dataIndex, rxFifoThreshold));
-            ReadAndClearInterruptStatus();
+            OUTCOME_TRY(ReadAndClearInterruptStatus());
             dataIndex += rxFifoThreshold;
         }
         auto remainingData = data.subspan(dataIndex);
-        SetRxFifoThreshold(static_cast<Byte>(remainingData.size()));
-        auto fillLevel = ReadRxFifoFillLevel();
+        OUTCOME_TRY(SetRxFifoThreshold(static_cast<Byte>(remainingData.size())));
+        OUTCOME_TRY(auto fillLevel, ReadRxFifoFillLevel());
         if(fillLevel < remainingData.size())
         {
-            OUTCOME_TRY(SuspendUntilInterrupt(reactivationTime));
+            auto suspendUntilInterruptResult = SuspendUntilInterrupt(reactivationTime);
+            if(suspendUntilInterruptResult.has_error())
+            {
+                return dataIndex;
+            }
         }
         ReadFromFifo(remainingData);
-        SetRxFifoThreshold(static_cast<Byte>(rxFifoThreshold));
-        return outcome_v2::success();
+        OUTCOME_TRY(SetRxFifoThreshold(static_cast<Byte>(rxFifoThreshold)));
+        dataIndex += remainingData.size();
+        return dataIndex;
     }();
-    EnterStandbyMode();
-    ReadAndClearInterruptStatus();
+    auto setInterruptsResult = SetPacketHandlerInterrupts(noInterrupts);
+    OUTCOME_TRY(DoEnterStandbyMode());
+    if(setInterruptsResult.has_error())
+    {
+        return setInterruptsResult.error();
+    }
+    OUTCOME_TRY(ReadAndClearInterruptStatus());
     return result;
 }
 
 
-// --- Private function definitions ---
-
-namespace
+auto Reset() -> void
 {
+    sdnGpioPin.Set();
+    SuspendFor(minShutdownDuration);
+    sdnGpioPin.Reset();
+}
+
+
 auto InitializeGpiosAndSpi() -> void
 {
     csGpioPin.SetDirection(hal::PinDirection::out);
@@ -451,7 +649,7 @@ auto InitializeGpiosAndSpi() -> void
 
 
 // This must be called after reset of the RF module but before rf::PowerUp()
-auto ApplyPatch() -> void
+auto ApplyPatch() -> Result<void>
 {
     // Template argument deduction for std::array doesn't work because the array is too large. Lol.
     // Every line of the patch array starts with a one-byte length and then as many data bytes. We
@@ -531,22 +729,24 @@ auto ApplyPatch() -> void
     static_assert(patch.size() % (dataLength + 1U) == 0);
     for(auto i = 1U; i < patch.size(); i += dataLength + 1U)
     {
-        SendCommand(Span(patch).subspan(i, dataLength));
+        OUTCOME_TRY(SendCommand(Span(patch).subspan(i, dataLength)));
     }
+    return outcome_v2::success();
 }
 
 
-auto PowerUp() -> void
+auto PowerUp() -> Result<void>
 {
     static constexpr auto bootOptions = 0x81_b;
     static constexpr auto xtalOptions = 0x01_b;          // Use external oscillator
     static constexpr std::uint32_t xoFreq = 26'000'000;  // MHz
-    SendCommand(FlatArray(
+    return SendCommand(FlatArray(
         cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
 }
 
 
-auto Configure(TxType txType) -> void
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+auto Configure(TxType txType) -> Result<void>
 {
     // Configure GPIO pins, NIRQ, and SDO
     // Weak pull-up enabled, no function (tristate)
@@ -563,26 +763,27 @@ auto Configure(TxType txType) -> void
     static constexpr auto sdoConfig = 0x4B_b;
     // GPIOs configured as outputs will have highest drive strength
     static constexpr auto genConfig = 0x00_b;
-    SendCommand(Span({cmdGpioPinCfg,
-                      gpio0Config,
-                      gpio1Config,
-                      gpio2Config,
-                      gpio3Config,
-                      nirqConfig,
-                      sdoConfig,
-                      genConfig}));
+    OUTCOME_TRY(SendCommand(Span({cmdGpioPinCfg,
+                                  gpio0Config,
+                                  gpio1Config,
+                                  gpio2Config,
+                                  gpio3Config,
+                                  nirqConfig,
+                                  sdoConfig,
+                                  genConfig})));
 
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
     static constexpr auto globalXoTune = 0x52_b;
     static constexpr auto globalClkCfg = 0x00_b;
-    SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTune, globalClkCfg}));
+    OUTCOME_TRY(
+        SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTune, globalClkCfg})));
 
     // Global config
     static constexpr auto iGlobalConfig = 0x03_b;
     // High performance mode, generic packet format, split FIFO mode, fast sequencer mode
     static constexpr auto globalConfig = 0x60_b;
-    SetProperties(PropertyGroup::global, iGlobalConfig, Span(globalConfig));
+    OUTCOME_TRY(SetProperties(PropertyGroup::global, iGlobalConfig, Span(globalConfig)));
 
     // Interrupt
     static constexpr auto iIntCtlEnable = 0x00_b;
@@ -593,9 +794,9 @@ auto Configure(TxType txType) -> void
     static constexpr auto intPhEnable = 0x00_b;
     static constexpr auto intModemEnable = 0x00_b;
     static constexpr auto intChipEnable = 0x00_b;
-    SetProperties(PropertyGroup::intCtl,
-                  iIntCtlEnable,
-                  Span({intCtlEnable, intPhEnable, intModemEnable, intChipEnable}));
+    OUTCOME_TRY(SetProperties(PropertyGroup::intCtl,
+                              iIntCtlEnable,
+                              Span({intCtlEnable, intPhEnable, intModemEnable, intChipEnable})));
 
     // Preamble
     static constexpr auto iPreambleTxLength = 0x00_b;
@@ -613,14 +814,14 @@ auto Configure(TxType txType) -> void
     static constexpr auto preambleConfig = 0b0001'0010_b;
     // Non-standard pattern
     static constexpr auto preamblePattern = std::array<Byte, 4>{};
-    SetProperties(PropertyGroup::preamble,
-                  iPreambleTxLength,
-                  Span(FlatArray(preambleTxLength,
-                                 preambleConfigStd1,
-                                 preambleConfigNstd,
-                                 preambleConfigStd2,
-                                 preambleConfig,
-                                 preamblePattern)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::preamble,
+                              iPreambleTxLength,
+                              Span(FlatArray(preambleTxLength,
+                                             preambleConfigStd1,
+                                             preambleConfigNstd,
+                                             preambleConfigStd2,
+                                             preambleConfig,
+                                             preamblePattern))));
 
     // Sync word
     static constexpr auto iSyncConfig = 0x00_b;
@@ -639,13 +840,14 @@ auto Configure(TxType txType) -> void
     // specifying the 4 bytes manually we should, serialize a 32-bit number.
     static constexpr auto syncBits =
         std::array{0b0101'1000_b, 0b1111'0011_b, 0b0011'1111_b, 0b1011'1000_b};
-    SetProperties(PropertyGroup::sync, iSyncConfig, Span(FlatArray(syncConfig, syncBits)));
+    OUTCOME_TRY(
+        SetProperties(PropertyGroup::sync, iSyncConfig, Span(FlatArray(syncConfig, syncBits))));
 
     // CRC
     static constexpr auto iPktCrcConfig = 0x00_b;
     // No CRC
     static constexpr auto pktCrcConfig = 0x00_b;
-    SetProperties(PropertyGroup::pkt, iPktCrcConfig, Span({pktCrcConfig}));
+    OUTCOME_TRY(SetProperties(PropertyGroup::pkt, iPktCrcConfig, Span({pktCrcConfig})));
 
     // Packet Whitening and Config
     static constexpr auto iPktWhiteConfig = 0x05_b;
@@ -654,7 +856,8 @@ auto Configure(TxType txType) -> void
     // Don't split RX and TX field information (length, ...), enable RX packet handler, use normal
     // (2)FSK, no Manchester coding, no CRC, data transmission with MSB first.
     static constexpr auto pktConfig1 = 0x00_b;
-    SetProperties(PropertyGroup::pkt, iPktWhiteConfig, Span({pktWhiteConfig, pktConfig1}));
+    OUTCOME_TRY(
+        SetProperties(PropertyGroup::pkt, iPktWhiteConfig, Span({pktWhiteConfig, pktConfig1})));
 
     // Packet length
     static constexpr auto iPktLen = 0x08_b;
@@ -667,19 +870,19 @@ auto Configure(TxType txType) -> void
     static constexpr auto pktField1Length = std::array{0x00_b, 0x01_b};
     static constexpr auto pktField1Config = 0x00_b;
     static constexpr auto pktField1CrcConfig = 0x00_b;
-    SetProperties(PropertyGroup::pkt,
-                  iPktLen,
-                  Span(FlatArray(pktLen,
-                                 pktLenFieldSource,
-                                 pktLenAdjust,
-                                 pktTxThreshold,
-                                 pktRxThreshold,
-                                 pktField1Length,
-                                 pktField1Config,
-                                 pktField1CrcConfig)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::pkt,
+                              iPktLen,
+                              Span(FlatArray(pktLen,
+                                             pktLenFieldSource,
+                                             pktLenAdjust,
+                                             pktTxThreshold,
+                                             pktRxThreshold,
+                                             pktField1Length,
+                                             pktField1Config,
+                                             pktField1CrcConfig))));
 
     // RF modem mod type
-    SetTxType(txType);
+    OUTCOME_TRY(DoSetTxType(txType));
     // SetTxType sets modem properties from 0x00 to 0x05
     static constexpr auto iModemTxNcoMode = 0x06_b;
     // TXOSR = x40 = 0, NCOMOD = F_XTAL = 26'000'000 = 0x018CBA80
@@ -688,8 +891,9 @@ auto Configure(TxType txType) -> void
     // to write to the property is (2^19 * outdiv * deviation_Hz) / (N_presc * F_xo) = (2^19 * 8 *
     // (9600 / 4)) / (2 * 26000000) = 194 = 0x0000C2
     static constexpr auto modemFreqDeviation = std::array{0x00_b, 0x00_b, 0xC2_b};
-    SetProperties(
-        PropertyGroup::modem, iModemTxNcoMode, Span(FlatArray(modemTxNcoMode, modemFreqDeviation)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              iModemTxNcoMode,
+                              Span(FlatArray(modemTxNcoMode, modemFreqDeviation))));
 
     // RF modem TX ramp delay, modem MDM control, modem IF control, modem IF frequency & modem
     // decimation
@@ -708,14 +912,14 @@ auto Configure(TxType txType) -> void
     // decimate-by-3 polyphase filter, enable droop compensation, channel selection filter in normal
     // mode (27 tap filter)
     static constexpr auto modemDecimationCfg0 = 0x20_b;
-    SetProperties(PropertyGroup::modem,
-                  iModemTxRampDelay,
-                  Span(FlatArray(modemTxRampDelay,
-                                 modemMdmCtrl,
-                                 modemIfControl,
-                                 modemIfFreq,
-                                 modemDecimationCfg1,
-                                 modemDecimationCfg0)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              iModemTxRampDelay,
+                              Span(FlatArray(modemTxRampDelay,
+                                             modemMdmCtrl,
+                                             modemIfControl,
+                                             modemIfFreq,
+                                             modemDecimationCfg1,
+                                             modemDecimationCfg0))));
 
     // RF modem BCR oversampling rate, modem BCR NCO offset, modem BCR gain, modem BCR gear & modem
     // BCR misc
@@ -732,10 +936,11 @@ auto Configure(TxType txType) -> void
     // BCR loop gear control, CRSLOW=2, CRFAST=0
     static constexpr auto modemBcrGear = 0x02_b;
     static constexpr auto modemBcrMisc1 = 0x00_b;
-    SetProperties(
+    OUTCOME_TRY(SetProperties(
         PropertyGroup::modem,
         iModemBcrOsr,
-        Span(FlatArray(modemBcrOsr, modemBcrNcoOffset, modemBcrGain, modemBcrGear, modemBcrMisc1)));
+        Span(
+            FlatArray(modemBcrOsr, modemBcrNcoOffset, modemBcrGain, modemBcrGear, modemBcrMisc1))));
 
     // RF modem AFC gear, modem AFC wait, modem AFC gain, modem AFC limiter & modem AFC misc
     //
@@ -759,10 +964,10 @@ auto Configure(TxType txType) -> void
     // - Disable AFC value feedback to PLL
     // - freeze AFC after gear switching
     static constexpr auto modemAfcMisc = 0xA0_b;
-    SetProperties(
+    OUTCOME_TRY(SetProperties(
         PropertyGroup::modem,
         iModemAfcGear,
-        Span(FlatArray(modemAfcGear, modemAfcWait, modemAfcGain, modemAfcLimiter, modemAfcMisc)));
+        Span(FlatArray(modemAfcGear, modemAfcWait, modemAfcGain, modemAfcLimiter, modemAfcMisc))));
 
     // RF modem AGC control
     //
@@ -776,7 +981,7 @@ auto Configure(TxType txType) -> void
     // - The IF programmable gain loop will always perform gain decreases in -3 dB steps.
     // - AGC function operates over the entire packet.
     static constexpr auto modemAgcControl = 0xE0_b;
-    SetProperties(PropertyGroup::modem, iModemAgcControl, Span({modemAgcControl}));
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem, iModemAgcControl, Span({modemAgcControl})));
 
     // RF modem AGC window size, AGC RF peak detector decay, AGC IF peak detector decay, 4FSK gain,
     // 4FSK slicer threshold, 4FSK symbol mapping code, OOK attack/decay times
@@ -799,16 +1004,16 @@ auto Configure(TxType txType) -> void
     static constexpr auto modemFsk4Map = 0x00_b;
     // OOK decay = 9, OOK attack = 2
     static constexpr auto modemOokPdtc = 0x29_b;
-    SetProperties(PropertyGroup::modem,
-                  iModemAgcWindowSize,
-                  Span(FlatArray(modemAgcWindowSize,
-                                 modemAgcRfpdDecay,
-                                 modemAgcIfpdDecay,
-                                 modemFsk4Gain1,
-                                 modemFsk4Gain0,
-                                 modemFsk4Th,
-                                 modemFsk4Map,
-                                 modemOokPdtc)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              iModemAgcWindowSize,
+                              Span(FlatArray(modemAgcWindowSize,
+                                             modemAgcRfpdDecay,
+                                             modemAgcIfpdDecay,
+                                             modemFsk4Gain1,
+                                             modemFsk4Gain0,
+                                             modemFsk4Th,
+                                             modemFsk4Map,
+                                             modemOokPdtc))));
 
     // RF modem OOK control, OOK misc, RAW search, RAW control, RAW eye, Antenna diversity mode,
     // antenna diversity control, RSSI threshold
@@ -829,7 +1034,8 @@ auto Configure(TxType txType) -> void
     //   for low input levels.
     // - Normal MA filter window.
     static constexpr auto modemOokMisc = 0x23_b;
-    SetProperties(PropertyGroup::modem, iModemOokCnt1, Span(FlatArray(modemOokCnt1, modemOokMisc)));
+    OUTCOME_TRY(SetProperties(
+        PropertyGroup::modem, iModemOokCnt1, Span(FlatArray(modemOokCnt1, modemOokMisc))));
 
     static constexpr auto iModemRawControl = 0x45_b;
     // - Gain = 1.
@@ -852,17 +1058,17 @@ auto Configure(TxType txType) -> void
     // Compensation/offset of measured RSSI value
     // TODO: Measure this
     static constexpr auto modemRssiComp = 0x40_b;
-    SetProperties(PropertyGroup::modem,
-                  iModemRawControl,
-                  Span(FlatArray(modemRawControl,
-                                 modemRawEye,
-                                 modemAntDivMode,
-                                 modemAntDivControl,
-                                 modemRssiThresh,
-                                 modemRssiJumpThresh,
-                                 modemRssiControl,
-                                 modemRssiControl2,
-                                 modemRssiComp)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              iModemRawControl,
+                              Span(FlatArray(modemRawControl,
+                                             modemRawEye,
+                                             modemAntDivMode,
+                                             modemAntDivControl,
+                                             modemRssiThresh,
+                                             modemRssiJumpThresh,
+                                             modemRssiControl,
+                                             modemRssiControl2,
+                                             modemRssiComp))));
 
     // RF modem clock generation band
     static constexpr auto iModemRawSearch = 0x50_b;
@@ -874,7 +1080,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto modemRawSearch = 0x84_b;
     // Band = FVCO_DIV_8, high performance mode fixed prescaler div2, force recalibration
     static constexpr auto modemClkgenBand = 0x0A_b;
-    SetProperties(PropertyGroup::modem, iModemRawSearch, Span({modemRawSearch, modemClkgenBand}));
+    OUTCOME_TRY(SetProperties(
+        PropertyGroup::modem, iModemRawSearch, Span({modemRawSearch, modemClkgenBand})));
 
     // RF modem spike detection
     static constexpr auto iModemSpikeDet = 0x54_b;
@@ -887,7 +1094,8 @@ auto Configure(TxType txType) -> void
     // - Allow BCR tracking prior to signal arrival.
     // - Disable One shot AFC function.
     static constexpr auto modemOneShotAfc = 0x07_b;
-    SetProperties(PropertyGroup::modem, iModemSpikeDet, Span({modemSpikeDet, modemOneShotAfc}));
+    OUTCOME_TRY(SetProperties(
+        PropertyGroup::modem, iModemSpikeDet, Span({modemSpikeDet, modemOneShotAfc})));
 
     // RF modem DSA control
     static constexpr auto iModemDsaCtrl1 = 0x5B_b;
@@ -896,9 +1104,10 @@ auto Configure(TxType txType) -> void
     static constexpr auto modemDsaQual = 0x04_b;
     static constexpr auto modemDsaRssi = 0x78_b;
     static constexpr auto modemDsaMisc = 0x20_b;
-    SetProperties(PropertyGroup::modem,
-                  iModemDsaCtrl1,
-                  Span({modemDsaCtrl1, modemDsaCtrl2, modemDsaQual, modemDsaRssi, modemDsaMisc}));
+    OUTCOME_TRY(SetProperties(
+        PropertyGroup::modem,
+        iModemDsaCtrl1,
+        Span({modemDsaCtrl1, modemDsaCtrl2, modemDsaQual, modemDsaRssi, modemDsaMisc})));
 
     // RX filter coefficients
     // Block 1
@@ -917,8 +1126,8 @@ auto Configure(TxType txType) -> void
         0x16_b,  // RX1_CHFLT_COE3[7:0]
         0x0C_b   // RX1_CHFLT_COE2[7:0]
     };
-    SetProperties(
-        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock1, Span(rxFilterCoefficientsBlock1));
+    OUTCOME_TRY(SetProperties(
+        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock1, Span(rxFilterCoefficientsBlock1)));
 
     // Block 2
     static constexpr auto iRxFilterCoefficientsBlock2 = 0x0C_b;
@@ -939,8 +1148,8 @@ auto Configure(TxType txType) -> void
         0xF5_b,  // RX2_CHFLT_COE9[7:0]
         0xB5_b   // RX2_CHFLT_COE8[7:0]
     };
-    SetProperties(
-        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock2, Span(rxFilterCoefficientsBlock2));
+    OUTCOME_TRY(SetProperties(
+        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock2, Span(rxFilterCoefficientsBlock2)));
 
     // Block 3
     static constexpr auto iRxFilterCoefficientsBlock3 = 0x18_b;
@@ -961,8 +1170,8 @@ auto Configure(TxType txType) -> void
                  // RX2_CHFLT_COE5[9:8]
         0x00_b   // 0 | 0 | 0 | 0         | RX2_CHFLT_COE0[9:8]   | RX2_CHFLT_COE1[9:8]  |
     };
-    SetProperties(
-        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock3, Span(rxFilterCoefficientsBlock3));
+    OUTCOME_TRY(SetProperties(
+        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock3, Span(rxFilterCoefficientsBlock3)));
 
     // RF PA mode
     static constexpr auto iPaMode = 0x00_b;
@@ -975,7 +1184,8 @@ auto Configure(TxType txType) -> void
     static constexpr auto paBiasClkduty = 0x00_b;
     // Ramping time constant = 0x1F (~56 µs to full - 0.5 dB), FSK modulation delay 30 µs
     static constexpr auto paTc = 0xFF_b;
-    SetProperties(PropertyGroup::pa, iPaMode, Span({paMode, paPwrLvl, paBiasClkduty, paTc}));
+    OUTCOME_TRY(
+        SetProperties(PropertyGroup::pa, iPaMode, Span({paMode, paPwrLvl, paBiasClkduty, paTc})));
 
     // RF synth feed forward charge pump current, integrated charge pump current, VCO gain scaling
     // factor, FF loop filter values
@@ -995,15 +1205,15 @@ auto Configure(TxType txType) -> void
     static constexpr auto synthLpfilt1 = 0x73_b;
     // SYNTH_LPFILT0: FF amp bias current 100 µA
     static constexpr auto synthLpfilt0 = 0x03_b;
-    SetProperties(PropertyGroup::synth,
-                  iSynthPfdcpCpff,
-                  Span({synthPfdcpCpff,
-                        synthPfdcpCpint,
-                        synthVcoKv,
-                        synthLpfilt3,
-                        synthLpfilt2,
-                        synthLpfilt1,
-                        synthLpfilt0}));
+    OUTCOME_TRY(SetProperties(PropertyGroup::synth,
+                              iSynthPfdcpCpff,
+                              Span({synthPfdcpCpff,
+                                    synthPfdcpCpint,
+                                    synthVcoKv,
+                                    synthLpfilt3,
+                                    synthLpfilt2,
+                                    synthLpfilt1,
+                                    synthLpfilt0})));
 
     // RF match mask
     static constexpr auto iMatchValue1 = 0x00_b;
@@ -1019,20 +1229,20 @@ auto Configure(TxType txType) -> void
     static constexpr auto matchValue4 = 0x00_b;
     static constexpr auto matchMask4 = 0x00_b;
     static constexpr auto matchCtrl4 = 0x00_b;
-    SetProperties(PropertyGroup::match,
-                  iMatchValue1,
-                  Span({matchValue1,
-                        matchMask1,
-                        matchCtrl1,
-                        matchValue2,
-                        matchMask2,
-                        matchCtrl2,
-                        matchValue3,
-                        matchMask3,
-                        matchCtrl3,
-                        matchValue4,
-                        matchMask4,
-                        matchCtrl4}));
+    OUTCOME_TRY(SetProperties(PropertyGroup::match,
+                              iMatchValue1,
+                              Span({matchValue1,
+                                    matchMask1,
+                                    matchCtrl1,
+                                    matchValue2,
+                                    matchMask2,
+                                    matchCtrl2,
+                                    matchValue3,
+                                    matchMask3,
+                                    matchCtrl3,
+                                    matchValue4,
+                                    matchMask4,
+                                    matchCtrl4})));
 
     // Frequency control
     static constexpr auto iFreqControlInte = 0x00_b;
@@ -1047,13 +1257,13 @@ auto Configure(TxType txType) -> void
     static constexpr auto freqControlWSize = 0x20_b;
     // Adjust target mode for VCO calibration in RX mode = 0xFE int8_t
     static constexpr auto freqControlVcontRxAdj = 0xFE_b;
-    SetProperties(PropertyGroup::freqControl,
-                  iFreqControlInte,
-                  Span(FlatArray(freqControlInte,
-                                 freqControlFrac,
-                                 freqControlChannelStepSize,
-                                 freqControlWSize,
-                                 freqControlVcontRxAdj)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::freqControl,
+                              iFreqControlInte,
+                              Span(FlatArray(freqControlInte,
+                                             freqControlFrac,
+                                             freqControlChannelStepSize,
+                                             freqControlWSize,
+                                             freqControlVcontRxAdj))));
 
     // Frequency adjust (stolen from Arduino demo code)
     // static constexpr auto globalXoTuneUpdated = 0x62_b;
@@ -1066,6 +1276,7 @@ auto Configure(TxType txType) -> void
     // Split FIFO and guaranteed sequencer mode
     // static constexpr auto newGlobalConfig = 0x40_b;
     // SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
+    return outcome_v2::success();
 }
 
 
@@ -1093,17 +1304,17 @@ auto DisableRfLatchupProtection() -> void
 }
 
 
-auto SetRxFifoThreshold(Byte threshold) -> void
+auto SetRxFifoThreshold(Byte threshold) -> Result<void>
 {
     static constexpr auto iFifoThreshold = 0x0c_b;
-    SetProperties(PropertyGroup::pkt, iFifoThreshold, Span({threshold}));
+    return SetProperties(PropertyGroup::pkt, iFifoThreshold, Span({threshold}));
 }
 
 
-auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void
+auto SetPacketHandlerInterrupts(Byte interruptFlags) -> Result<void>
 {
     static constexpr auto iIntCtlPhEnable = 0x01_b;
-    SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(interruptFlags));
+    return SetProperties(PropertyGroup::intCtl, iIntCtlPhEnable, Span(interruptFlags));
 }
 
 
@@ -1114,7 +1325,7 @@ auto SetPacketHandlerInterrupts(Byte interruptFlags) -> void
 // }
 
 
-auto ReadAndClearInterruptStatus() -> std::array<Byte, interruptStatusAnswerLength>
+auto ReadAndClearInterruptStatus() -> Result<std::array<Byte, interruptStatusAnswerLength>>
 {
     return SendCommand<interruptStatusAnswerLength>(
         Span({cmdGetIntStatus, 0x00_b, 0x00_b, 0x00_b}));
@@ -1147,7 +1358,7 @@ auto SuspendUntilInterrupt(Duration timeout) -> Result<void>
 }
 
 
-auto StartTx() -> void
+auto StartTx() -> Result<void>
 {
     static constexpr auto channel = 0x00_b;
     // [7:4]: TXCOMPLETE_STATE = 0b0011 -> READY state
@@ -1159,12 +1370,14 @@ auto StartTx() -> void
     static constexpr auto txLen = std::array{0x00_b, 0x00_b};
     static constexpr auto txDelay = 0x00_b;
     static constexpr auto numRepeat = 0x00_b;
-    SendCommand(Span(FlatArray(cmdStartTx, channel, condition, txLen, txDelay, numRepeat)));
+    OUTCOME_TRY(
+        SendCommand(Span(FlatArray(cmdStartTx, channel, condition, txLen, txDelay, numRepeat))));
     isInTxMode = true;
+    return outcome_v2::success();
 }
 
 
-auto StartRx() -> void
+auto StartRx() -> Result<void>
 {
     static constexpr auto channel = 0x00_b;
     // [0]: START: 0b0 -> Start RX immediately
@@ -1177,28 +1390,28 @@ auto StartRx() -> void
     static constexpr auto nextState2 = 0x00_b;
     // [3:0] RXINVALID_STATE = 0 -> Remain in RX state if CRC check fails (we don't check CRC)
     static constexpr auto nextState3 = 0x00_b;
-    SendCommand(
-        Span(FlatArray(cmdStartRx, channel, condition, rxLen, nextState1, nextState2, nextState3)));
+    OUTCOME_TRY(SendCommand(Span(
+        FlatArray(cmdStartRx, channel, condition, rxLen, nextState1, nextState2, nextState3))));
     isInTxMode = false;
+    return outcome_v2::success();
 }
 
 
-auto ResetFifos() -> void
+auto ResetFifos() -> Result<void>
 {
     static constexpr auto resetBothFifos = 0b11_b;
-    SendCommand(Span({cmdFifoInfo, resetBothFifos}));
+    return SendCommand(Span({cmdFifoInfo, resetBothFifos}));
 }
 
 
-auto WriteToFifo(std::span<Byte const> data) -> void
+auto WriteToFifo(std::span<Byte const> data) -> Result<void>
 {
+    OUTCOME_TRY(BusyWaitForCts(ctsTimeout));
     SelectChip();
     WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);
     WriteTo(&rfSpi, data, spiTimeout);
     DeselectChip();
-    // TODO: What do we do in case of a timeout?
-    // TODO: Wouldn't it be more efficient to wait for CTS before writing instead of after it?
-    (void)BusyWaitForCts(ctsTimeout);
+    return outcome_v2::success();
 }
 
 
@@ -1214,16 +1427,16 @@ auto ReadFromFifo(std::span<Byte> data) -> void
 }
 
 
-auto ReadFreeTxFifoSpace() -> std::uint8_t
+auto ReadFreeTxFifoSpace() -> Result<std::uint8_t>
 {
-    auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+    OUTCOME_TRY(auto fifoInfo, SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b})));
     return static_cast<std::uint8_t>(fifoInfo[1]);
 }
 
 
-auto ReadRxFifoFillLevel() -> std::uint8_t
+auto ReadRxFifoFillLevel() -> Result<std::uint8_t>
 {
-    auto fifoInfo = SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b}));
+    OUTCOME_TRY(auto fifoInfo, SendCommand<fifoInfoAnswerLength>(Span({cmdFifoInfo, 0x00_b})));
     return static_cast<std::uint8_t>(fifoInfo[0]);
 }
 
@@ -1231,49 +1444,52 @@ auto ReadRxFifoFillLevel() -> std::uint8_t
 auto DebugPrintModemStatus() -> void
 {
 #ifdef ENABLE_DEBUG_PRINT
-    auto modemStatus = ReadModemStatus();
-    // NOLINTBEGIN(*magic-numbers)
-    DEBUG_PRINT(
-        "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
-        "%4.1fdBm, Latched RSSI: %4.1fdBm, AFC Frequency Offset: %6d\n",
-        static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
-        static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
-        (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
-        (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
-        // static_cast<int>(modemStatus[4]), // ANT1 RSSI
-        // static_cast<int>(modemStatus[5]), // ANT2 RSSI
-        (static_cast<unsigned>(modemStatus[6]) << 8U)
-            + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
-// NOLINTEND(*magic-numbers)
+    auto modemStatusResult = ReadModemStatus();
+    if(modemStatusResult.has_error())
+    {
+        DEBUG_PRINT("Reading modem status failed: %s\n", ToCZString(modemStatusResult.error()));
+    }
+    else
+    {
+        auto modemStatus = modemStatusResult.value();
+        // NOLINTBEGIN(*magic-numbers)
+        DEBUG_PRINT(
+            "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
+            "%4.1fdBm, Latched RSSI: %4.1fdBm, AFC Frequency Offset: %6d\n",
+            static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
+            static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
+            (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
+            (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
+            // static_cast<int>(modemStatus[4]), // ANT1 RSSI
+            // static_cast<int>(modemStatus[5]), // ANT2 RSSI
+            (static_cast<unsigned>(modemStatus[6]) << 8U)
+                + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
+        // NOLINTEND(*magic-numbers)
+    }
 #endif
 }
 
 
-[[maybe_unused]] auto ReadModemStatus() -> ModemStatus
+[[maybe_unused]] auto ReadModemStatus() -> Result<ModemStatus>
 {
     return SendCommand<modemStatusAnswerLength>(Span(cmdGetModemStatus));
 }
 
 
-auto SendCommand(std::span<Byte const> data) -> void
+auto SendCommand(std::span<Byte const> data) -> Result<void>
 {
-    (void)SendCommand<0>(data);
+    OUTCOME_TRY(SendCommand<0>(data));
+    return outcome_v2::success();
 }
 
 
 template<std::size_t answerLength>
-auto SendCommand(std::span<Byte const> data) -> std::array<Byte, answerLength>
+auto SendCommand(std::span<Byte const> data) -> Result<std::array<Byte, answerLength>>
 {
     SelectChip();
     hal::WriteTo(&rfSpi, data, spiTimeout);
     DeselectChip();
-    auto busyWaitForAnswerResult = BusyWaitForAnswer<answerLength>(ctsTimeout);
-    if(busyWaitForAnswerResult.has_error())
-    {
-        // TODO: What do we do in case of a timeout?
-        return {};
-    }
-    return busyWaitForAnswerResult.value();
+    return BusyWaitForAnswer<answerLength>(ctsTimeout);
 }
 
 
@@ -1338,13 +1554,13 @@ template<std::size_t extent>
     requires(extent <= maxNProperties)
 inline auto SetProperties(PropertyGroup propertyGroup,
                           Byte startIndex,
-                          std::span<Byte const, extent> propertyValues) -> void
+                          std::span<Byte const, extent> propertyValues) -> Result<void>
 {
-    SendCommand(FlatArray(cmdSetProperty,
-                          static_cast<Byte>(propertyGroup),
-                          static_cast<Byte>(extent),
-                          startIndex,
-                          propertyValues));
+    return SendCommand(FlatArray(cmdSetProperty,
+                                 static_cast<Byte>(propertyGroup),
+                                 static_cast<Byte>(extent),
+                                 startIndex,
+                                 propertyValues));
 }
 }
 }

@@ -96,14 +96,17 @@ private:
             DEBUG_PRINT("%s", errorMessage);
             persistentVariables.Store<"rfIsWorking">(false);
             persistentVariables.Increment<"nRfErrors">();
-            DEBUG_PRINT("Resetting and rebooting in 2 s\n");
-            // TODO: Add a named constant for this delay
-            SuspendFor(2 * s);
-            RODOS::hwResetAndReboot();
         }
         else
         {
             DEBUG_PRINT("%s", successMessage);
+        }
+        if(not persistentVariables.Load<"rfIsWorking">())
+        {
+            DEBUG_PRINT("Resetting and rebooting in 2 s\n");
+            // TODO: Add a named constant for this delay
+            SuspendFor(2 * s);
+            RODOS::hwResetAndReboot();
         }
 
         TIME_LOOP(0, value_of(supervisionPeriod))

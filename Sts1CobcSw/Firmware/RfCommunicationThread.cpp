@@ -65,9 +65,11 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 3000;
+constexpr auto stackSize = 4000;
 constexpr auto rxTimeoutForAdditionalData = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
+// The ground station needs some time to switch from TX to RX so we need to wait for that when
+// switching from RX to TX
 constexpr auto rxToTxSwitchDuration = 300 * ms;
 constexpr auto maxNFramesToSendContinously = rf::maxTxDataLength / fullyEncodedFrameLength;
 
@@ -210,8 +212,12 @@ auto ThereIsEnoughTimeForRxAndDataHandling(Duration rxTimeout) -> bool
 
 auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>
 {
-    OUTCOME_TRY(rf::Receive(tcBuffer, rxTimeout));
+    auto nReceivedBytes = rf::Receive(tcBuffer, rxTimeout);
     lastRxTime = CurrentRodosTime();
+    if(nReceivedBytes < tcBuffer.size())
+    {
+        return ErrorCode::timeout;
+    }
     HandleReceivedData();
     return outcome_v2::success();
 }
@@ -787,6 +793,8 @@ auto SendAndContinue(Payload const & report) -> void
 auto PackageAndEncode(Payload const & report) -> void
 {
     tmFrame.StartNew(pusVcid);
+    // We know that we only get reports here and that they have a valid size so AddSpacePacketTo()
+    // will never fail.
     (void)AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
     tmFrame.Finish();
     tm::Encode(tmBuffer);
@@ -796,9 +804,7 @@ auto PackageAndEncode(Payload const & report) -> void
 auto SendAndWait(std::span<Byte const, blockLength> const & encodedFrame) -> void
 {
     SuspendUntilEarliestTxTime();
-    // TODO: Once the RF driver implements full error handling (retrying, reconfiguring,
-    // and resetting). This should no longer return a Result<void>.
-    (void)rf::SendAndWait(encodedFrame);
+    rf::SendAndWait(encodedFrame);
 }
 
 
@@ -810,8 +816,7 @@ auto SendAndContinue(std::span<Byte const, blockLength> const & encodedFrame) ->
         SetTxDataLength(nFramesToSend - nSentFrames);
     }
     SuspendUntilEarliestTxTime();
-    // TODO: Once the RF driver implements full error handling this should no longer return a Result
-    (void)rf::SendAndContinue(encodedFrame);
+    rf::SendAndContinue(encodedFrame);
 }
 
 
@@ -830,7 +835,7 @@ auto FinalizeTransmission() -> void
     // TX FIFO buffer size <= 128 B, slowest data rate = 1.2 kbps → max. send time = 128 B * 8 b/B /
     // 1200 b/s = 0.853 s → timeout = 1 s
     static constexpr auto timeout = 1 * s;
-    (void)rf::SuspendUntilDataSent(timeout);
+    rf::SuspendUntilDataSent(timeout);
     rf::EnterStandbyMode();
 }
 }

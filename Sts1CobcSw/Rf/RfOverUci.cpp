@@ -1,6 +1,10 @@
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <strong_type/difference.hpp>
@@ -28,28 +32,27 @@ constexpr auto endOfFrame = std::array{0x0D_b, 0x0A_b};  // = \r\n
 constexpr auto frameDelimiterTimeout = 10 * ms;  // Timeout for writing the start or end of frame
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
-// FIXME: There is actually a persistent variable for this: "txIsOn"
-auto txIsEnabled = true;
 auto rxDataRate = uartBaudRate;
 auto txDataRate = uartBaudRate;
 }
 
 
-auto Initialize([[maybe_unused]] TxType txType) -> void
+auto Initialize([[maybe_unused]] TxType txType) -> Result<void>
 {
     hal::Initialize(&uciUart, uartBaudRate);
+    return outcome_v2::success();
 }
 
 
 auto EnableTx() -> void
 {
-    txIsEnabled = true;
+    persistentVariables.Store<"txIsOn">(true);
 }
 
 
 auto DisableTx() -> void
 {
-    txIsEnabled = false;
+    persistentVariables.Store<"txIsOn">(false);
 }
 
 
@@ -95,44 +98,55 @@ auto GetRxDataRate() -> std::uint32_t
 }
 
 
-auto SendAndWait(std::span<Byte const> data) -> Result<void>
+auto SendAndWait(std::span<Byte const> data) -> void
 {
-    if(not txIsEnabled)
+    if(not persistentVariables.Load<"txIsOn">())
     {
-        return outcome_v2::success();
+        DEBUG_PRINT("TX is off, not sending data\n");
+        return;
     }
     auto const txByteRate = txDataRate / 10;
     static constexpr auto safetyFactor = 2;
     static constexpr auto safetyMargin = 10 * ms;
     auto const timeout =
         static_cast<int>(data.size()) * s / txByteRate * safetyFactor + safetyMargin;
-    OUTCOME_TRY(hal::WriteTo(&uciUart, Span(startOfFrame), frameDelimiterTimeout));
-    OUTCOME_TRY(hal::WriteTo(&uciUart, data, timeout));
-    return (hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout));
+    auto result = [&]() -> Result<void>
+    {
+        OUTCOME_TRY(hal::WriteTo(&uciUart, Span(startOfFrame), frameDelimiterTimeout));
+        OUTCOME_TRY(hal::WriteTo(&uciUart, data, timeout));
+        return hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout);
+    }();
+    if(result.has_error())
+    {
+        DEBUG_PRINT("Failed to send data: %s\n", ToCZString(result.error()));
+        return;
+    }
 }
 
 
 // UART does not support send-and-continue semantics. It either busy waits, or suspends until the
 // data is sent, so we just call SendAndWait().
-auto SendAndContinue(std::span<Byte const> data) -> Result<void>
+auto SendAndContinue(std::span<Byte const> data) -> void
 {
-    return SendAndWait(data);
+    SendAndWait(data);
 }
 
 
 // UART does not support send-and-continue semantics. Every send either busy waits, or suspends
 // until the data is sent, so this always returns success.
-auto SuspendUntilDataSent([[maybe_unused]] Duration timeout) -> Result<void>
-{
-    return outcome_v2::success();
-}
+auto SuspendUntilDataSent([[maybe_unused]] Duration timeout) -> void
+{}
 
 
-auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>
+auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 {
     auto result = hal::ReadFrom(&uciUart, data, timeout);
+    if(result.has_error())
+    {
+        return 0;
+    }
     // Add a line break after receiving the data, for nicer formatting in HTerm.
-    OUTCOME_TRY(hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout));
-    return result;
+    (void)hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout);
+    return data.size();
 }
 }

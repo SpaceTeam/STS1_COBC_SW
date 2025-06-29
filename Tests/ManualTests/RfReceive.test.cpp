@@ -1,5 +1,7 @@
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
@@ -46,8 +48,14 @@ private:
     void run() override
     {
         PRINTF("\nRF receive test\n\n");
-
-        rf::Initialize(rf::TxType::packet);
+        // We need to initialize the FRAM too because the RF code uses persistent variables
+        fram::Initialize();
+        auto initializeResult = rf::Initialize(rf::TxType::packet);
+        if(initializeResult.has_error())
+        {
+            PRINTF("Failed to initialize RF module: %s\n", ToCZString(initializeResult.error()));
+            return;
+        }
         rf::DisableTx();
         PRINTF("RF module initialized, TX disabled\n");
 
@@ -58,14 +66,9 @@ private:
         PRINTF("Waiting %i s to receive %i bytes\n",
                static_cast<int>(rxTimeout / s),
                static_cast<int>(receivedData.size()));
-        auto receiveResult = rf::Receive(Span(&receivedData), rxTimeout);
-        if(receiveResult.has_error())
-        {
-            PRINTF("Error: %i\n", static_cast<int>(receiveResult.error()));
-            return;
-        }
-        PRINTF("Received data:\n");
-        Print(Span(receivedData));
+        auto nReceivedBytes = rf::Receive(Span(&receivedData), rxTimeout);
+        PRINTF("Received %i bytes:\n", static_cast<int>(nReceivedBytes));
+        Print(Span(receivedData).first(nReceivedBytes));
         PRINTF("-> done\n");
     }
 } rfReceiveTest;

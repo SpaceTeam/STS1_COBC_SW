@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -55,9 +56,16 @@ private:
         fram::Initialize();
         PRINTF("FRAM initialized\n");
         DisableRfLatchupProtection();
-        rf::Initialize(rf::TxType::morse);
-        EnableRfLatchupProtection();
-        PRINTF("RF module initialized\n");
+        auto rfInitializeResult = rf::Initialize(rf::TxType::morse);
+        if(rfInitializeResult.has_error())
+        {
+            PRINTF("Failed to initialize RF module: %s\n", ToCZString(rfInitializeResult.error()));
+        }
+        else
+        {
+            EnableRfLatchupProtection();
+            PRINTF("RF module initialized\n");
+        }
 
         PRINTF("\nFlash:\n");
         auto jedecId = flash::ReadJedecId();
@@ -79,12 +87,16 @@ private:
         PrintFramDeviceId(fram::correctDeviceId);
         auto framIdsMatch = deviceId == fram::correctDeviceId;
 
-        PRINTF("\nRF:\n");
-        DisableRfLatchupProtection();
-        auto partInfo = rf::ReadPartNumber();
-        EnableRfLatchupProtection();
-        PRINTF("Part info: 0x%4x == 0x%4x\n", partInfo, rf::correctPartNumber);
-        auto rfIdsMatch = partInfo == rf::correctPartNumber;
+        auto rfIdsMatch = false;
+        if(rfInitializeResult.has_value())
+        {
+            PRINTF("\nRF:\n");
+            DisableRfLatchupProtection();
+            auto partInfo = rf::ReadPartNumber();
+            EnableRfLatchupProtection();
+            PRINTF("Part info: 0x%4x == 0x%4x\n", partInfo, rf::correctPartNumber);
+            rfIdsMatch = partInfo == rf::correctPartNumber;
+        }
 
         auto const successBlinkDuration = 1;       // s
         auto const successBlinkFrequency = 0;      // Hz (0 means LED is on)
@@ -117,9 +129,12 @@ private:
             flashIdsMatch = jedecId.manufacturerId == flash::correctJedecId.manufacturerId
                         and jedecId.deviceId == flash::correctJedecId.deviceId;
             framIdsMatch = fram::ReadDeviceId() == fram::correctDeviceId;
-            DisableRfLatchupProtection();
-            rfIdsMatch = rf::ReadPartNumber() == rf::correctPartNumber;
-            EnableRfLatchupProtection();
+            if(rfInitializeResult.has_value())
+            {
+                DisableRfLatchupProtection();
+                rfIdsMatch = rf::ReadPartNumber() == rf::correctPartNumber;
+                EnableRfLatchupProtection();
+            }
         }
     }
 } deviceIdsTest;

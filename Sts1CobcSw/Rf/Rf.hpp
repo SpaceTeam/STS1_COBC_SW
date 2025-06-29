@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <span>
 
@@ -22,7 +23,7 @@ inline constexpr auto correctPartNumber = 0x4463;
 inline constexpr auto maxTxDataLength = (1U << 13U) - 1U;
 
 
-auto Initialize(TxType txType) -> void;
+auto Initialize(TxType txType) -> Result<void>;
 auto EnableTx() -> void;
 auto DisableTx() -> void;
 auto ReadPartNumber() -> std::uint16_t;
@@ -33,8 +34,9 @@ auto SetTxDataRate(std::uint32_t dataRate) -> void;
 auto SetRxDataRate(std::uint32_t dataRate) -> void;
 [[nodiscard]] auto GetTxDataRate() -> std::uint32_t;
 [[nodiscard]] auto GetRxDataRate() -> std::uint32_t;
-[[nodiscard]] auto SendAndWait(std::span<Byte const> data) -> Result<void>;
-[[nodiscard]] auto SendAndContinue(std::span<Byte const> data) -> Result<void>;
-[[nodiscard]] auto SuspendUntilDataSent(Duration timeout) -> Result<void>;
-[[nodiscard]] auto Receive(std::span<Byte> data, Duration timeout) -> Result<void>;
+auto SendAndWait(std::span<Byte const> data) -> void;
+auto SendAndContinue(std::span<Byte const> data) -> void;
+auto SuspendUntilDataSent(Duration timeout) -> void;
+// Return the number of received bytes
+auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t;
 }

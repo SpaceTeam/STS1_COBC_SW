@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
@@ -79,7 +80,7 @@ private:
                     auto updateTimeResult = edu::UpdateTime({.currentTime = currentTime});
                     if(updateTimeResult.has_error())
                     {
-                        PRINTF("  Error code: %d\n", static_cast<int>(updateTimeResult.error()));
+                        PRINTF("  Error code: %s\n", ToCZString(updateTimeResult.error()));
                     }
                     else
                     {
@@ -114,8 +115,7 @@ private:
                         {.programId = programId, .startTime = startTime, .timeout = timeout});
                     if(executeProgramResult.has_error())
                     {
-                        PRINTF("  Error code: %d\n",
-                               static_cast<int>(executeProgramResult.error()));
+                        PRINTF("  Error code: %s\n", ToCZString(executeProgramResult.error()));
                     }
                     else
                     {
@@ -129,7 +129,7 @@ private:
                     auto getStatusResult = edu::GetStatus();
                     if(getStatusResult.has_error())
                     {
-                        PRINTF("  Error code: %d\n", static_cast<int>(getStatusResult.error()));
+                        PRINTF("  Error code: %s\n", ToCZString(getStatusResult.error()));
                     }
                     else
                     {
@@ -164,7 +164,7 @@ private:
                         edu::ReturnResultData{.programId = programId, .startTime = startTime});
                     if(returnResultResult.has_error())
                     {
-                        PRINTF("  Error code: %d\n", static_cast<int>(returnResultResult.error()));
+                        PRINTF("  Error code: %s\n", ToCZString(returnResultResult.error()));
                     }
                     else
                     {
