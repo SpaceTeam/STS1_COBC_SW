@@ -26,12 +26,26 @@ execute_process(COMMAND "${TEST_EXECUTABLE}" OUTPUT_VARIABLE output)
 
 set(rodos_header_regex ".*--------------- Application running ------------\n")
 string(REGEX REPLACE "${rodos_header_regex}" "" output_without_rodos_header ${output})
+set(stack_usage_regex "\\[[^\n]*\n")
+string(REGEX REPLACE "${stack_usage_regex}" "" output_without_rodos_header_and_stack_usage
+                     ${output_without_rodos_header}
+)
 
 file(READ "${EXPECTED_OUTPUT_FILE}" expected_output)
 
-if(output_without_rodos_header STREQUAL expected_output)
+if(output_without_rodos_header_and_stack_usage STREQUAL expected_output)
     message("Test passed ✔️")
 else()
     # TODO: Upgrade CMake to version 3.29 for cmake_language(EXIT 1)
-    message(FATAL_ERROR "Test failed ❌")
+    message("Test failed ❌")
+    message("--------------------------------------------------------------------------------")
+    message("Expected output:")
+    message("--------------------------------------------------------------------------------")
+    message("${expected_output}")
+    message("--------------------------------------------------------------------------------")
+    message("Actual output:")
+    message("--------------------------------------------------------------------------------")
+    message("${output_without_rodos_header_and_stack_usage}")
+    message("--------------------------------------------------------------------------------")
+    cmake_language(EXIT 1)
 endif()
