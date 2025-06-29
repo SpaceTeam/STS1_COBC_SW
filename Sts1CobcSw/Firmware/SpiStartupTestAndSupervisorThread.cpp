@@ -28,8 +28,9 @@ namespace sts1cobcsw
 {
 namespace
 {
-// Running the golden test for the supervisor thread showed that at least 850 bytes are needed
-constexpr auto stackSize = 900 + EXTRA_SANITIZER_STACK_SIZE;
+// Running the SpiSupervisor HW test in debug mode showed a max. stack usage of < 700 B. The golden
+// test needs < 800 B.
+constexpr auto stackSize = 1000 + EXTRA_SANITIZER_STACK_SIZE;
 
 inline constexpr auto initialSleepTime = 10 * ms;
 // TODO: Think about how often the supervision should run
@@ -64,7 +65,7 @@ private:
         [[maybe_unused]] static constexpr auto successMessage = " completed in time\n";
 
         auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
-        DEBUG_PRINT(fram::framIsWorking.Load() ? "\n" : " and");
+        DEBUG_PRINT(fram::framIsWorking.Load() ? " " : " and");
         if(not testWasSuccessful)
         {
             DEBUG_PRINT("%s", errorMessage);
@@ -77,7 +78,7 @@ private:
         }
 
         testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
-        DEBUG_PRINT(persistentVariables.Load<"flashIsWorking">() ? "\n" : " and");
+        DEBUG_PRINT(persistentVariables.Load<"flashIsWorking">() ? " " : " and");
         if(not testWasSuccessful)
         {
             DEBUG_PRINT("%s", errorMessage);
@@ -90,7 +91,7 @@ private:
         }
 
         testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
-        DEBUG_PRINT(persistentVariables.Load<"rfIsWorking">() ? "\n" : " and");
+        DEBUG_PRINT(persistentVariables.Load<"rfIsWorking">() ? " " : " and");
         if(not testWasSuccessful)
         {
             DEBUG_PRINT("%s", errorMessage);
@@ -101,6 +102,7 @@ private:
         {
             DEBUG_PRINT("%s", successMessage);
         }
+        DEBUG_PRINT_STACK_USAGE();
         if(not persistentVariables.Load<"rfIsWorking">())
         {
             DEBUG_PRINT("Resetting and rebooting in 2 s\n");
@@ -109,6 +111,7 @@ private:
             RODOS::hwResetAndReboot();
         }
 
+        auto i = 0U;
         TIME_LOOP(0, value_of(supervisionPeriod))
         {
             auto timeoutHappened = false;
@@ -133,6 +136,11 @@ private:
             if(timeoutHappened)
             {
                 RODOS::hwResetAndReboot();
+            }
+            if(i < 2)
+            {
+                DEBUG_PRINT_STACK_USAGE();
+                ++i;
             }
         }
     }

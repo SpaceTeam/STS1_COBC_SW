@@ -16,8 +16,8 @@ namespace sts1cobcsw
 {
 namespace
 {
-// Running the SpiSupervisor HW test showed that the minimum required stack size is ~560 bytes
-constexpr auto stackSize = 600;
+// Running the SpiSupervisor HW test in debug mode showed a max. stack usage of < 600 B
+constexpr auto stackSize = 800;
 
 
 class FlashStartupTestThread : public RODOS::StaticThread<stackSize>
@@ -36,7 +36,7 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("Flash start-up test ...");
+        DEBUG_PRINT("Flash start-up test ...\n");
         flash::Initialize();
         auto jedecId = flash::ReadJedecId();
         if(jedecId.deviceId == flash::correctJedecId.deviceId
@@ -46,9 +46,10 @@ private:
         }
         else
         {
-            DEBUG_PRINT(" failed to read correct flash JEDEC ID");
+            DEBUG_PRINT("  failed to read correct flash JEDEC ID\n");
             persistentVariables.Store<"flashIsWorking">(false);
         }
+        DEBUG_PRINT_STACK_USAGE();
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }

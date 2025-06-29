@@ -16,9 +16,8 @@ namespace sts1cobcsw
 {
 namespace
 {
-// Running the SpiSupervisor HW test in debug mode showed that the minimum required stack size is
-// between 1400 and 1800 bytes
-constexpr auto stackSize = 1800;
+// Running the SpiSupervisor HW test in debug mode showed a max. stack usage of < 1500 B
+constexpr auto stackSize = 2000;
 
 
 class RfStartupTestThread : public RODOS::StaticThread<stackSize>
@@ -36,19 +35,19 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("RF start-up test ...");
+        DEBUG_PRINT("RF start-up test ...\n");
         auto testSucceeded = [&]() -> bool
         {
             auto initializeResult = rf::Initialize(rf::TxType::packet);
             if(initializeResult.has_error())
             {
-                DEBUG_PRINT(" failed to initialize RF module");
+                DEBUG_PRINT("  failed to initialize RF module\n");
                 return false;
             }
             auto partNumber = rf::ReadPartNumber();
             if(partNumber != rf::correctPartNumber)
             {
-                DEBUG_PRINT(" failed to read correct RF part number");
+                DEBUG_PRINT("  failed to read correct RF part number\n");
                 return false;
             }
             return true;
@@ -62,6 +61,7 @@ private:
             persistentVariables.Store<"rfIsWorking">(false);
             persistentVariables.Increment<"nRfErrors">();
         }
+        DEBUG_PRINT_STACK_USAGE();
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
     }
