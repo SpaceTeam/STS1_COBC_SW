@@ -26,6 +26,7 @@ if(REDIRECT_RF_OVER_UCI AND CMAKE_SYSTEM_NAME STREQUAL Linux)
 endif()
 
 option(DISABLE_CHANNEL_CODING "Do not encode and decode transfer frames" OFF)
+option(ENABLE_DEBUG_PRINT_STACK_USAGE "Enable printing of stack usage in debug builds" OFF)
 
 set(HW_VERSION 30 CACHE STRING "Hardware version")
 
