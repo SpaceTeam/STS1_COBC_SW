@@ -115,6 +115,9 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void;
 auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void;
 auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues;
 auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void;
+
+auto SelectChip(hal::GpioPin * adcCsPin) -> void;
+auto DeselectChip(hal::GpioPin * adcCsPin) -> void;
 }
 
 
@@ -127,11 +130,11 @@ auto InitializeAdcs() -> void
         return;
     }
     adc4CsGpioPin.SetDirection(hal::PinDirection::out);
-    adc4CsGpioPin.Set();
+    DeselectChip(&adc4CsGpioPin);
     adc5CsGpioPin.SetDirection(hal::PinDirection::out);
-    adc5CsGpioPin.Set();
+    DeselectChip(&adc5CsGpioPin);
     adc6CsGpioPin.SetDirection(hal::PinDirection::out);
-    adc6CsGpioPin.Set();
+    DeselectChip(&adc6CsGpioPin);
 
     static constexpr auto baudrate = 6'000'000;
     Initialize(&framEpsSpi, baudrate);
@@ -152,7 +155,7 @@ auto ReadAdcs() -> AdcData
 {
     if(not persistentVariables.Load<"epsIsWorking">())
     {
-        return AdcData{};
+        return {};
     }
     auto adcData = AdcData{};
     adcData.adc4 = ReadAdc(&adc4CsGpioPin);
@@ -216,9 +219,9 @@ auto ConfigureSetupRegister(hal::GpioPin * adcCsPin) -> void
     // So statically check that bit 5 is set to 1
     static_assert((setupData & (1_b << 5)) > 0_b);  // NOLINT(*magic-numbers*)
 
-    adcCsPin->Reset();
+    SelectChip(adcCsPin);
     hal::WriteTo(&framEpsSpi, Span(setupData), spiTimeout);
-    adcCsPin->Set();
+    DeselectChip(adcCsPin);
 }
 
 
@@ -237,9 +240,9 @@ auto ConfigureAveragingRegister(hal::GpioPin * adcCsPin) -> void
     static constexpr auto nSingleScans = 0b00_b;
     static constexpr auto averagingData =
         (averagingRegister << 5) | (enableAveraging << 4) | (nAverages << 2) | nSingleScans;
-    adcCsPin->Reset();
+    SelectChip(adcCsPin);
     hal::WriteTo(&framEpsSpi, Span(averagingData), spiTimeout);
-    adcCsPin->Set();
+    DeselectChip(adcCsPin);
 }
 
 
@@ -257,9 +260,9 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
     static constexpr auto scanMode = 0b00_b;
     static constexpr auto conversionCommand =
         (conversionRegister << 7) | (channel << 3) | (scanMode << 1);
-    adcCsPin->Reset();
+    SelectChip(adcCsPin);
     hal::WriteTo(&framEpsSpi, Span(conversionCommand), spiTimeout);
-    adcCsPin->Set();
+    DeselectChip(adcCsPin);
 
     // According to the datasheet at most 514 conversions are done after a conversion command
     // (depends on averaging and channels). This takes 514 * (t_acq + t_conv) + wakeup = 514 * (0.6
@@ -269,9 +272,9 @@ auto ReadAdc(hal::GpioPin * adcCsPin) -> AdcValues
 
     // Resolution is 12 bit, sent like this: [0 0 0 0 MSB x x x], [x x x x x x x LSB]
     auto adcData = SerialBuffer<AdcValues>{};
-    adcCsPin->Reset();
+    SelectChip(adcCsPin);
     hal::ReadFrom(&framEpsSpi, Span(&adcData), spiTimeout);
-    adcCsPin->Set();
+    DeselectChip(adcCsPin);
     return Deserialize<std::endian::big, AdcValues>(Span(adcData));
 }
 
@@ -285,9 +288,29 @@ auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void
     // [2:0]: Don't care
     auto data = 0b0001_b << 4;
     data = resetType == ResetType::fifo ? data | 1_b << 3 : data;
-    adcCsPin->Reset();
+    SelectChip(adcCsPin);
     WriteTo(&framEpsSpi, Span(data), spiTimeout);
+    DeselectChip(adcCsPin);
+}
+
+
+auto SelectChip(hal::GpioPin * adcCsPin) -> void
+{
+    // I was too lazy to look at the datasheet so I just used an educated guess for the delay
+    static constexpr auto postChipSelectionDelay = 100 * ns;
+    // The CS pins are "double inverted" on COBC 3.0
     adcCsPin->Set();
+    BusyWaitFor(postChipSelectionDelay);
+}
+
+
+auto DeselectChip(hal::GpioPin * adcCsPin) -> void
+{
+    // I was too lazy to look at the datasheet so I just used an educated guess for the delay
+    static constexpr auto preChipDeselectionDelay = 100 * ns;
+    BusyWaitFor(preChipDeselectionDelay);
+    // The CS pins are "double inverted" on COBC 3.0
+    adcCsPin->Reset();
 }
 }
 }
