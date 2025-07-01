@@ -34,7 +34,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 1000U;
+constexpr auto stackSize = 1200U;
 constexpr auto telemetryThreadInterval = 30 * s;
 
 
@@ -62,6 +62,7 @@ private:
             telemetryRecordMailbox.Overwrite(telemetryRecord);
             nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
             ResumeRfCommunicationThread();
+            DEBUG_PRINT_STACK_USAGE();
         }
     }
 } telemetryThread;

@@ -65,7 +65,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 4000;
+constexpr auto stackSize = 6000;
 constexpr auto rxTimeoutForAdditionalData = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 // The ground station needs some time to switch from TX to RX so we need to wait for that when
@@ -159,6 +159,7 @@ private:
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 auto receiveResult = ReceiveAndHandleData(rxTimeoutAfterTelemetryRecord);
                 moreDataShouldBeReceived = receiveResult.has_value();
+                DEBUG_PRINT_STACK_USAGE();
                 continue;
             }
             if(encodedCfdpFrameMailbox.IsFull())
