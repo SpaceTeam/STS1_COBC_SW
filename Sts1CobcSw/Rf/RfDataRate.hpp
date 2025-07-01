@@ -1,15 +1,15 @@
 //! @file
-//! @brief RX and TX configurations for Si4463 created by WDS3 Tool
+//! @brief RX and TX configurations for different DataRates for Si4463 (created by WDS3 Tool)
 //!
 //! example: (RX 1.200)
 //! #define RF_MODEM_DSA_CTRL1_5 0x11, 0x20, 0x05, 0x5B,  0x40, 0x04, 0x06, 0x78, 0x20
 //!                               ^     ^     ^     ^      ^
 //!                               ^-----|-----|-----|------|--- SET_PROPERTY command byte = 0x11
 //!                                     ^-----|-----|------|--- Property Group  = 0x20 (MODEM group)
-//!                                           ^-----|------|--- length  = 0x05 (5 data bytes) max = 12
+//!                                           ^-----|------|--- length  = 0x05 (5 data bytes) max =
+//!                                           12
 //!                                                 ^------|--- start-index  = 0x5B
 //!                                                        ^--- data[0]  (first data value)
-
 
 
 #pragma once
@@ -53,9 +53,7 @@ using sts1cobcsw::operator""_b;
 
 
 // Unchanging part of configuration
-template<sts1cobcsw::rf::PropertyGroup propertyGroup,
-         sts1cobcsw::Byte propertyStartIndex,
-         std::size_t nProperties>
+template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 class Properties
 {
@@ -75,25 +73,24 @@ private:
 
 // clang-format off
 // NOLINTBEGIN(*magic-numbers)
-                                                                  // Group, StartIndex, nProperties
-using ModemModType12                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x00_b, 12>;
-using ModemFreqDev01                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x0C_b, 1>;
-using ModemTxRampDelay12            = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x18_b, 12>;
-using ModemBcrNcoOffset212          = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x24_b, 12>;
-using ModemAfcLimiter13             = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x30_b, 3>;
-using ModemAgcControl1              = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x35_b, 1>;
-using ModemAgcWindowSize12          = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x38_b, 12>;
-// the RX ModemRawControl10 is used for TX and RX.  It containes all data from TX ModemRawControl5
-using ModemRawControl10             = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x45_b, 10>;
-using ModemRssiJumpThresh1          = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x4B_b, 1>;
-using ModemRssiControl22            = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x4D_b, 2>;
-using ModemRawSearch22              = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x50_b, 2>;
-using ModemSpikeDet2                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x54_b, 2>;
-using ModemRssiMute1                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x57_b, 1>;
-using ModemDsaCtrl15                = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x5B_b, 5>;
-using ModemChfltRx1ChfltCoe137012   = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x00_b, 12>;
-using ModemChfltRx1ChfltCoe17012    = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x0C_b, 12>;
-using ModemChfltRx2ChfltCoe77012    = Properties<sts1cobcsw::rf::PropertyGroup::modem, 0x18_b, 12>;
+                                                        // Group, StartIndex, nProperties
+using ModemModType12                = Properties<PropertyGroup::modem, 0x00_b, 12>;
+using ModemFreqDev01                = Properties<PropertyGroup::modem, 0x0C_b, 1>;
+using ModemTxRampDelay12            = Properties<PropertyGroup::modem, 0x18_b, 12>;
+using ModemBcrNcoOffset212          = Properties<PropertyGroup::modem, 0x24_b, 12>;
+using ModemAfcLimiter13             = Properties<PropertyGroup::modem, 0x30_b, 3>;
+using ModemAgcControl1              = Properties<PropertyGroup::modem, 0x35_b, 1>;
+using ModemAgcWindowSize12          = Properties<PropertyGroup::modem, 0x38_b, 12>;
+using ModemRawControl10             = Properties<PropertyGroup::modem, 0x45_b, 10>;     // the RX ModemRawControl10 is used for TX and RX.  It containes all data from TX ModemRawControl5
+using ModemRssiJumpThresh1          = Properties<PropertyGroup::modem, 0x4B_b, 1>;      // Only needed for TX
+using ModemRssiControl22            = Properties<PropertyGroup::modem, 0x4D_b, 2>;      // Only needed for TX
+using ModemRawSearch22              = Properties<PropertyGroup::modem, 0x50_b, 2>;
+using ModemSpikeDet2                = Properties<PropertyGroup::modem, 0x54_b, 2>;
+using ModemRssiMute1                = Properties<PropertyGroup::modem, 0x57_b, 1>;
+using ModemDsaCtrl15                = Properties<PropertyGroup::modem, 0x5B_b, 5>;
+using ModemChfltRx1ChfltCoe137012   = Properties<PropertyGroup::modem, 0x00_b, 12>;
+using ModemChfltRx1ChfltCoe17012    = Properties<PropertyGroup::modem, 0x0C_b, 12>;
+using ModemChfltRx2ChfltCoe77012    = Properties<PropertyGroup::modem, 0x18_b, 12>;
 // NOLINTEND(*magic-numbers)
 // clang-format on
 
@@ -101,49 +98,119 @@ struct DataRateConfig
 {
     uint32_t dataRate = 0U;
     ModemModType12 modType12;
-    // ModemFreqDev01 freqDev01;
-    // ModemTxRampDelay12 txRampDelay12;
-    // ModemBcrNcoOffset212 bcrNcoOffset212;
-    // ModemAfcLimiter13 afcLimiter13;
-    // ModemAgcControl1 agcControl1;
-    // ModemAgcWindowSize12 agcWindowSize12;
-    // ModemRawControl10 rawControl10;
-    // ModemRssiJumpThresh1;
-    // ModemRssiControl22;
-    // ModemRawSearch22 rawSearch22;
-    // ModemSpikeDet2 spikeDet2;
-    // ModemRssiMute1 rssiMute1;
-    // ModemDsaCtrl15 dsaCtrl15;
-    // ModemChfltRx1ChfltCoe137012 chfltRx1ChfltCoe137012;
-    // ModemChfltRx1ChfltCoe17012 chfltRx1ChfltCoe17012;
-    // ModemChfltRx2ChfltCoe77012 chfltRx2ChfltCoe77012;
+    ModemFreqDev01 freqDev01;
+    ModemTxRampDelay12 txRampDelay12;
+    ModemBcrNcoOffset212 bcrNcoOffset212;
+    ModemAfcLimiter13 afcLimiter13;
+    ModemAgcControl1 agcControl1;
+    ModemAgcWindowSize12 agcWindowSize12;
+    ModemRawControl10 rawControl10;
+    ModemRssiJumpThresh1 rssiJumpThresh1;
+    ModemRssiControl22 rssiControl22;
+    ModemRawSearch22 rawSearch22;
+    ModemSpikeDet2 spikeDet2;
+    ModemRssiMute1 rssiMute1;
+    ModemDsaCtrl15 dsaCtrl15;
+    ModemChfltRx1ChfltCoe137012 chfltRx1ChfltCoe137012;
+    ModemChfltRx1ChfltCoe17012 chfltRx1ChfltCoe17012;
+    ModemChfltRx2ChfltCoe77012 chfltRx2ChfltCoe77012;
 };
-
 
 
 // clang-format off
 constexpr auto rx1200Config = DataRateConfig{
-    0,
-    ModemModType12(std::array{0x03_b, 0x00_b, 0x07_b, 0x00_b, 0xBB_b, 0x80_b,
-                              0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x00_b})
-        // other configs from RxDataRateConfig
+    1200,
+    ModemModType12(std::array{              0x03_b, 0x00_b, 0x07_b, 0x00_b, 0xBB_b, 0x80_b,
+                                            0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x00_b}),
+    ModemFreqDev01(std::array{              0x30_b}),
+    ModemTxRampDelay12(std::array{          0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b,
+                                            0xF0_b, 0x20_b, 0x0C_b, 0xE8_b, 0x00_b, 0xA9_b}),
+    ModemBcrNcoOffset212(std::array{        0x03_b, 0x06_b, 0x55_b, 0x03_b, 0x08_b, 0x02_b,
+                                            0x00_b, 0x00_b, 0x00_b, 0x12_b, 0x80_b, 0x0C_b}),
+    ModemAfcLimiter13(std::array{           0x03_b, 0xB5_b, 0xA0_b}),
+    ModemAgcControl1(std::array{            0xE0_b}),
+    ModemAgcWindowSize12(std::array{        0x11_b, 0x25_b, 0x25_b, 0x80_b, 0x1A_b, 0x40_b,
+                                            0x00_b, 0x00_b, 0x29_b, 0x0C_b, 0xA4_b, 0x23_b}),
+    ModemRawControl10(std::array{           0x03_b, 0x00_b, 0x7B_b, 0x01_b, 0x00_b, 0xFF_b,
+                                            0x06_b, 0x00_b, 0x18_b, 0x40_b}),
+    ModemRssiJumpThresh1(std::array{        0x06_b}),
+    ModemRssiControl22(std::array{          0x18_b, 0x40_b}),
+    ModemRawSearch22(std::array{            0x84_b, 0x0A_b}),
+    ModemSpikeDet2(std::array{              0x03_b, 0x07_b}),
+    ModemRssiMute1(std::array{              0x00_b}),
+    ModemDsaCtrl15(std::array{              0x40_b, 0x04_b, 0x06_b, 0x78_b, 0x20_b}),
+    ModemChfltRx1ChfltCoe137012(std::array{ 0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b,
+                                            0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b}),
+    ModemChfltRx1ChfltCoe17012(std::array{  0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b,
+                                            0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
+    ModemChfltRx2ChfltCoe77012(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
+                                            0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
 };
 
-constexpr auto rx2400Config = DataRateConfig{
-    0,
-    ModemModType12(std::array{0x03_b, 0x00_b, 0x07_b, 0x01_b, 0x77_b, 0x00_b,
-                              0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x00_b})
-        // other configs from RxDataRateConfig
+constexpr auto rx9600Config = DataRateConfig{
+    9600,
+    ModemModType12(std::array{              0x03_b, 0x00_b, 0x07_b, 0x05_b, 0xDC_b, 0x00_b,
+                                            0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x01_b}),
+    ModemFreqDev01(std::array{              0x83_b}),
+    ModemTxRampDelay12(std::array{          0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b,
+                                            0x70_b, 0x20_b, 0x00_b, 0xE8_b, 0x00_b, 0x55_b}),
+    ModemBcrNcoOffset212(std::array{        0x06_b, 0x0C_b, 0xAB_b, 0x06_b, 0x06_b, 0x02_b,
+                                            0x00_b, 0x00_b, 0x00_b, 0x12_b, 0x80_b, 0x61_b}),
+    ModemAfcLimiter13(std::array{           0x01_b, 0xD5_b, 0xA0_b}),
+    ModemAgcControl1(std::array{            0xE0_b}),
+    ModemAgcWindowSize12(std::array{        0x11_b, 0x13_b, 0x13_b, 0x80_b, 0x1A_b, 0x40_b,
+                                            0x00_b, 0x00_b, 0x28_b, 0x0C_b, 0xA4_b, 0x23_b}),
+    ModemRawControl10(std::array{           0x03_b, 0x00_b, 0xF5_b, 0x01_b, 0x00_b, 0xFF_b,
+                                            0x06_b, 0x00_b, 0x18_b, 0x40_b}),
+    ModemRssiJumpThresh1(std::array{        0x06_b}),
+    ModemRssiControl22(std::array{          0x18_b, 0x40_b}),
+    ModemRawSearch22(std::array{            0x84_b, 0x0A_b}),
+    ModemSpikeDet2(std::array{              0x03_b, 0x07_b}),
+    ModemRssiMute1(std::array{              0x00_b}),
+    ModemDsaCtrl15(std::array{              0x40_b, 0x04_b, 0x07_b, 0x78_b, 0x20_b}),
+    ModemChfltRx1ChfltCoe137012(std::array{ 0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b,
+                                            0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b}),
+    ModemChfltRx1ChfltCoe17012(std::array{  0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b,
+                                            0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
+    ModemChfltRx2ChfltCoe77012(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
+                                            0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
 };
+
+
+// constexpr auto rx1200Config = DataRateConfig{
+//     0,
+//     ModemModType12(std::array{              }),
+//     ModemFreqDev01(std::array{              }),
+//     ModemTxRampDelay12(std::array{          }),
+//     ModemBcrNcoOffset212(std::array{        }),
+//     ModemAfcLimiter13(std::array{           }),
+//     ModemAgcControl1(std::array{            }),
+//     ModemAgcWindowSize12(std::array{        }),
+//     ModemRawControl10(std::array{           }),
+//     ModemRssiJumpThresh1(std::array{        }),
+//     ModemRssiControl22(std::array{          }),
+//     ModemRawSearch22(std::array{            }),
+//     ModemSpikeDet2(std::array{              }),
+//     ModemRssiMute1(std::array{              }),
+//     ModemDsaCtrl15(std::array{              }),
+//     ModemChfltRx1ChfltCoe137012(std::array{ }),
+//     ModemChfltRx1ChfltCoe17012(std::array{  }),
+//     ModemChfltRx2ChfltCoe77012(std::array{  }),
+// };
+
 // clang-format on
 
 }
 
 
-
-
-
-
+//! #define RF_MODEM_DSA_CTRL1_5 0x11, 0x20, 0x05, 0x5B,  0x40, 0x04, 0x06, 0x78, 0x20
+//!                               ^     ^     ^     ^      ^
+//!                               ^-----|-----|-----|------|--- SET_PROPERTY command byte = 0x11
+//!                                     ^-----|-----|------|--- Property Group  = 0x20 (MODEM group)
+//!                                           ^-----|------|--- length  = 0x05 (5 data bytes) max =
+//!                                           12
+//!                                                 ^------|--- start-index  = 0x5B
+//!                                                        ^--- data[0]  (first data value)
 
 // clang-format off
 // // RX DataRate Modem config from WDS Tool:
@@ -785,12 +852,6 @@ constexpr auto rx2400Config = DataRateConfig{
 // #define RF_MODEM_CHFLT_RX2_CHFLT_COE7_7_0_12    0x11, 0x21, 0x0C, 0x18, 0xB8, 0xDE, 0x05, 0x17, 0x16, 0x0C, 0x03, 0x00, 0x15, 0xFF, 0x00, 0x00
 // #define RF_MODEM_CHFLT_RX2_CHFLT_COE7_7_0_12    0x11, 0x21, 0x0C, 0x18, 0xB9, 0xC9, 0xEA, 0x05, 0x12, 0x11, 0x0A, 0x04, 0x15, 0xFC, 0x03, 0x00
 // #define RF_MODEM_CHFLT_RX2_CHFLT_COE7_7_0_12    0x11, 0x21, 0x0C, 0x18, 0xB8, 0xDE, 0x05, 0x17, 0x16, 0x0C, 0x03, 0x00, 0x15, 0xFF, 0x00, 0x00
-
-
-
-
-
-
 
 
 // clang-format on
