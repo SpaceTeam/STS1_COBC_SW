@@ -159,6 +159,7 @@ private:
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 auto receiveResult = ReceiveAndHandleData(rxTimeoutAfterTelemetryRecord);
                 moreDataShouldBeReceived = receiveResult.has_value();
+                DEBUG_PRINT_STACK_USAGE();
                 continue;
             }
             if(encodedCfdpFrameMailbox.IsFull())
