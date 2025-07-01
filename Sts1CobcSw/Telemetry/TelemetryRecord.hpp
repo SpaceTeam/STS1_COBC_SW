@@ -59,8 +59,8 @@ struct TelemetryRecord
     eps::AdcData epsAdcData = {};
 
     // Communication
-    std::int32_t rxDataRate = 0;
-    std::int32_t txDataRate = 0;
+    std::uint32_t rxDataRate = 0;
+    std::uint32_t txDataRate = 0;
     std::uint16_t nCorrectableUplinkErrors = 0U;
     std::uint16_t nUncorrectableUplinkErrors = 0U;
     std::uint16_t nGoodTransferFrames = 0U;

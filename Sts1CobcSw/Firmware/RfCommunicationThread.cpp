@@ -159,6 +159,7 @@ private:
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 auto receiveResult = ReceiveAndHandleData(rxTimeoutAfterTelemetryRecord);
                 moreDataShouldBeReceived = receiveResult.has_value();
+                DEBUG_PRINT_STACK_USAGE();
                 continue;
             }
             if(encodedCfdpFrameMailbox.IsFull())
@@ -750,9 +751,11 @@ auto Set(Parameter parameter) -> void
     {
         case Parameter::Id::rxDataRate:
             rf::SetRxDataRate(parameter.value);
+            rxDataRateTopic.publish(parameter.value);
             break;
         case Parameter::Id::txDataRate:
             rf::SetTxDataRate(parameter.value);
+            txDataRateTopic.publish(parameter.value);
             break;
         case Parameter::Id::realTimeOffsetCorrection:
             persistentVariables.Store<"realTimeOffsetCorrection">(parameter.value * s);

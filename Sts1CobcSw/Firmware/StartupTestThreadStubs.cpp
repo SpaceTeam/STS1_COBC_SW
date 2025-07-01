@@ -34,7 +34,7 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("FRAM/EPS start-up test ...");
+        DEBUG_PRINT("FRAM/EPS start-up test ...\n");
         fram::framIsWorking.Store(true);
         persistentVariables.Store<"epsIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
@@ -59,7 +59,7 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("Flash start-up test ...");
+        DEBUG_PRINT("Flash start-up test ...\n");
         persistentVariables.Store<"flashIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);
@@ -82,7 +82,7 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("RF start-up test ...");
+        DEBUG_PRINT("RF start-up test ...\n");
         persistentVariables.Store<"rfIsWorking">(true);
         ResumeSpiStartupTestAndSupervisorThread();
         SuspendUntil(endOfTime);

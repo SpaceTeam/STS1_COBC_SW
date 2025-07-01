@@ -13,3 +13,11 @@
 #else
     #define DEBUG_PRINT(fmt, ...)
 #endif
+
+#ifdef ENABLE_DEBUG_PRINT_STACK_USAGE
+    #define DEBUG_PRINT_STACK_USAGE() \
+        DEBUG_PRINT( \
+            "[%s#%i] max. stack usage = %5u B\n", __FILE_NAME__, __LINE__, getMaxStackUsage())
+#else
+    #define DEBUG_PRINT_STACK_USAGE()
+#endif

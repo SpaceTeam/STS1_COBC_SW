@@ -35,11 +35,11 @@ inline auto programIdOfCurrentEduProgramQueueEntryTopic =
     RODOS::Topic<ProgramId>(-1, "programIdOfCurrentEduProgramQueueEntryTopic");
 inline auto programIdOfCurrentEduProgramQueueEntryBuffer = RODOS::CommBuffer<ProgramId>{};
 
-inline auto rxDataRateTopic = RODOS::Topic<std::int32_t>(-1, "rxDataRateTopic");
-inline auto rxDataRateBuffer = RODOS::CommBuffer<std::int32_t>{};
+inline auto rxDataRateTopic = RODOS::Topic<std::uint32_t>(-1, "rxDataRateTopic");
+inline auto rxDataRateBuffer = RODOS::CommBuffer<std::uint32_t>{};
 
-inline auto txDataRateTopic = RODOS::Topic<std::int32_t>(-1, "txDataRateTopic");
-inline auto txDataRateBuffer = RODOS::CommBuffer<std::int32_t>{};
+inline auto txDataRateTopic = RODOS::Topic<std::uint32_t>(-1, "txDataRateTopic");
+inline auto txDataRateBuffer = RODOS::CommBuffer<std::uint32_t>{};
 
 // We only send the telemetry records from the telemetry thread to the RF communication thread, so
 // we don't need the whole publisher/subscriber mechanism here. A simple mailbox is enough.

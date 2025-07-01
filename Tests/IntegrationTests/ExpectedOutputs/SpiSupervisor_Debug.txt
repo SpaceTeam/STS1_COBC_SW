@@ -1,9 +1,9 @@
 FRAM/EPS start-up test ...
- completed in time
+  completed in time
 Flash start-up test ...
- completed in time
+  completed in time
 RF start-up test ...
- completed in time
+  completed in time
 
 SPI supervisor test
 
