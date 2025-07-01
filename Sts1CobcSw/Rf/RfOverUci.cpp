@@ -40,6 +40,11 @@ auto txDataRate = uartBaudRate;
 auto Initialize([[maybe_unused]] TxType txType) -> Result<void>
 {
     hal::Initialize(&uciUart, uartBaudRate);
+    // The real RF module takes > 100 ms to initialize so we simulate this with a busy wait. Without
+    // this delay, the SPI supervisor test crashes for some reason when printing stack usage is
+    // enabled. I suspect that RODOS::PRINTF() is non-blocking and with all the printing we overflow
+    // the UART buffer.
+    BusyWaitFor(100 * ms);  // NOLINT(*magic-numbers)
     return outcome_v2::success();
 }
 
