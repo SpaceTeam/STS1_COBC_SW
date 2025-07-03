@@ -2,7 +2,7 @@
 #include <Sts1CobcSw/Bootloader/BusyWait.hpp>
 
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
-
+#include <Sts1CobcSw/Bootloader/UciUart.hpp> //test only
 
 namespace sts1cobcsw::ucispi
 {
@@ -16,6 +16,7 @@ namespace opcode
 {
 constexpr auto writeData = 0x02U;
 constexpr auto readData = 0x03U;
+constexpr auto readDeviceId = 0x9FU;
 constexpr auto setWriteEnableLatch = 0x06U;
 }
 }
@@ -23,23 +24,28 @@ constexpr auto setWriteEnableLatch = 0x06U;
 auto Initialize() -> void
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; // Enable GPIOB clock
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; // Enable GPIOB clock
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN; // Enable GPIOC clock
     RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;  // Enable SPI3 clock
 
     // Configure GPIO for SPI3 - Sck, MISO, MOSI, CsPin
-    GPIOC->MODER |= (GPIO_MODER_MODER10_0 | GPIO_MODER_MODER12_0); // Output functoin mode
-    GPIOC->OSPEEDR |= (GPIO_OSPEEDR_OSPEED10 | GPIO_MODER_MODER11_0 | GPIO_MODER_MODER12_0);
+    // Configure PC10 (SCK) and PC12 (MOSI) as output, PC11 (MISO) as input
+    GPIOC->MODER |= (GPIO_MODER_MODER10_0 | GPIO_MODER_MODER12_0); // PC10, PC12 output
+    GPIOC->MODER &= ~GPIO_MODER_MODER11; // PC11 input (reset both bits to 00)
+    GPIOC->OSPEEDR |= (GPIO_OSPEEDR_OSPEED10 | GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12); // High speed for SCK, MISO, MOSI
     
     GPIOB->MODER |= (GPIO_MODER_MODER13_0);    // Output functoin mode
     GPIOB->OSPEEDR |= (GPIO_OSPEEDR_OSPEED13); // High speed
     
     // Configure SPI3 
-    SPI3->CR1 |= SPI_CR1_BR;                  // Define the serial clock baud rate
-    //SPI3->CR1 |= SPI_CR1_DFF;               // 16 bit data frame format
-    SPI3->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI;   //NSS software mode
-    //SPI3->I2SPR |= SPI_I2SPR_ODD;           // Prescaler
-    SPI3->CR1 |= SPI_CR1_MSTR;                // Set master mode
-    SPI3->CR1 |= SPI_CR1_SPE;                 // Enable SPI3
+    SPI3->CR1 &= ~SPI_CR1_SPE;                      // Disable SPI before configuration
+    SPI3->CR1 |= SPI_CR1_MSTR;                      // Set master mode
+    SPI3->CR1 &= ~SPI_CR1_BR;                       // Define the serial clock baud rate
+    SPI3->CR1 &= ~(SPI_CR1_CPOL | SPI_CR1_CPHA);    // Clock polarity and phase
+    SPI3->CR1 &= ~SPI_CR1_DFF;                      // 8 bit data frame format
+    SPI3->CR1 &= ~SPI_CR1_LSBFIRST;                 //Most significant bit first
+    SPI3->CR1 &= ~SPI_CR1_RXONLY;                   // Full-duplex
+    SPI3->CR1 |= SPI_CR1_SSM | SPI_CR1_SSI;         //NSS software mode
+    SPI3->CR1 |= SPI_CR1_SPE;                       // Enable SPI3
 }
 
 
@@ -72,25 +78,57 @@ auto Write(unsigned char character) -> void
 
 auto Read(char *character) -> void
 {
+    //Write(0xFF);
     while(SPI_SR_RXNE == 0) {}  // Wait until RX data register is not empty
     *character = static_cast<char>(SPI3->DR); // Read received data
 }
 
 auto SetCsPin() -> void
 {
-    static constexpr auto chipSelectDelay = 1;
+    static constexpr auto chipSelectDelay = 50;
     GPIOB->ODR |= (GPIO_ODR_OD13); //Set Cs Pin
     BusyWaitUs(chipSelectDelay);
 }
 
 auto ResetCsPin() -> void
 {
-    static constexpr auto chipSelectDelay = 1;
+    static constexpr auto chipSelectDelay = 50;
     GPIOB->ODR &= ~(GPIO_ODR_OD13); //Reset Cs Pin
     BusyWaitUs(chipSelectDelay);
 }
 
-auto FramWrite(char32_t address, char const * string, int size) -> void
+auto FramInitialize()->void
+{
+    GPIOB->ODR |= (GPIO_ODR_OD13);    
+}
+
+auto FramReset()->void
+{
+    GPIOB->ODR &= ~(GPIO_ODR_OD13);    
+}
+
+auto FramReadId() -> void
+{
+    uint8_t tx[4] = {opcode::readDeviceId, 0xFF, 0xFF, 0xFF };
+    char rx[4] = { 0 };
+    
+    sts1cobcsw::uciuart::Write("Fram ID: ");
+    
+    ResetCsPin();
+
+    for (int i = 0; i < 4; ++i) {
+        // Wait for TX ready
+        Write(tx[i]);
+       
+        // Wait for RX ready
+        Read(& rx[i]);
+        sts1cobcsw::uciuart::Write(rx[i]);
+    }
+    
+    SetCsPin();
+}
+
+auto FramWrite(unsigned long address, char const * string, int size) -> void
 {  
     ResetCsPin();
     Write(opcode::setWriteEnableLatch);    
@@ -101,26 +139,31 @@ auto FramWrite(char32_t address, char const * string, int size) -> void
     Write((address & 0x00FF0000)>>16);
     Write((address & 0x0000FF00)>>8);
     Write(address & 0x000000FF);
-    for(int i=0;i<size;i++)  // NOLINT(*pointer-arithmetic)
+    for(int i=0;i<size;i++)
     {
         Write(string[i]);
     }
     while((SPI3->SR & SPI_SR_TXE) == 0) {}   // Wait until transmission is complete
-    
     SetCsPin();
 }
 
-auto FramRead(char32_t address, char *string, int size) -> void
+auto FramRead(unsigned long address, char *string, int size) -> void
 {
+   unsigned int adressByte0 = (address & 0x00FF0000)>>16;
+   unsigned int adressByte1 = (address & 0x0000FF00)>>8;
+   unsigned int adressByte2 = address & 0x000000FF;
+    
     ResetCsPin();
     Write(opcode::readData);    
-    Write((address & 0x00FF0000)>>16);
-    Write((address & 0x0000FF00)>>8);
-    Write(address & 0x000000FF);
+    Write(static_cast<char>(adressByte0));
+    Write(static_cast<char>(adressByte1));
+    Write(static_cast<char>(adressByte2));
     while((SPI3->SR & SPI_SR_TXE) == 0) {}
     for(int i=0;i<size;i++)
     {
-       Read(&string[i]); 
+       Read(&string[i]);
+       sts1cobcsw::uciuart::Write(string[i]);
+       sts1cobcsw::uciuart::Write("\n");
     }
     while(SPI_SR_RXNE == 0) {}
     SetCsPin();
