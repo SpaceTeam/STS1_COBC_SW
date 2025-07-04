@@ -66,6 +66,10 @@ public:
     explicit constexpr Properties(std::array<Byte, size> const & values) : values_(values)
     {}
 
+    [[nodiscard]] auto GetValues() const -> std::array<sts1cobcsw::Byte, nProperties> const &
+    {
+        return values_;
+    }
 
 private:
     std::array<sts1cobcsw::Byte, nProperties> values_ = {};
@@ -115,7 +119,6 @@ struct DataRateConfig
     ModemChfltRx1ChfltCoe17012 chfltRx1ChfltCoe17012;
     ModemChfltRx2ChfltCoe77012 chfltRx2ChfltCoe77012;
 };
-
 
 // clang-format off
 constexpr auto dataRateConfig1200 = DataRateConfig{
