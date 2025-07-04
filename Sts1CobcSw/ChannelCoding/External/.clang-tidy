@@ -1,0 +1,3 @@
+InheritParentConfig: true
+# Clang-tidy throws an error if all checks are disabled
+Checks: "-*,misc-confusable-identifiers"

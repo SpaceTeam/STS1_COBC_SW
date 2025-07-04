@@ -97,7 +97,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(ChannelCoding)
     target_link_libraries(
-        Sts1CobcSwTests_ChannelCoding PRIVATE Sts1CobcSw_ChannelCoding Sts1CobcSw_Outcome
+        Sts1CobcSwTests_ChannelCoding PRIVATE etl::etl Sts1CobcSw_ChannelCoding Sts1CobcSw_Outcome
                                               Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME ChannelCoding COMMAND Sts1CobcSwTests_ChannelCoding)
