@@ -6,6 +6,7 @@
 
 #include <Sts1CobcSw/Rf/Rf.hpp>
 
+#include <Sts1CobcSw/ChannelCoding/External/ConvolutionalCoding.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -486,13 +487,18 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
         DisableRfLatchupProtection();
     }
     auto dataIndex = 0U;
+    auto convolutionalCoder = cc::ViterbiCodec{};
     auto result = [&]() -> Result<void>
     {
         OUTCOME_TRY(SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt));
-        OUTCOME_TRY(auto chunkSize, ReadFreeTxFifoSpace());
-        while(dataIndex + chunkSize < static_cast<unsigned int>(data.size()))
+        OUTCOME_TRY(auto freeSpace, ReadFreeTxFifoSpace());
+        auto finalChunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, true);
+        while(dataIndex + finalChunkSize < static_cast<unsigned int>(data.size()))
         {
-            OUTCOME_TRY(WriteToFifo(data.subspan(dataIndex, chunkSize)));
+            auto chunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, false);
+            auto encodedChunk =
+                convolutionalCoder.Encode(data.subspan(dataIndex, chunkSize), /*flush=*/false);
+            OUTCOME_TRY(WriteToFifo(encodedChunk));
             OUTCOME_TRY(ReadAndClearInterruptStatus());
             if(not isInTxMode)
             {
@@ -500,7 +506,8 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
             }
             dataIndex += chunkSize;
             OUTCOME_TRY(SuspendUntilInterrupt(interruptTimeout));
-            OUTCOME_TRY(chunkSize, ReadFreeTxFifoSpace());
+            OUTCOME_TRY(freeSpace, ReadFreeTxFifoSpace());
+            finalChunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, true);
         }
         return outcome_v2::success();
     }();
@@ -509,7 +516,8 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
     {
         return result;
     }
-    OUTCOME_TRY(WriteToFifo(data.subspan(dataIndex)));
+    auto encodedData = convolutionalCoder.Encode(data.subspan(dataIndex), /*flush=*/true);
+    OUTCOME_TRY(WriteToFifo(encodedData));
     if(not isInTxMode)
     {
         OUTCOME_TRY(StartTx());
