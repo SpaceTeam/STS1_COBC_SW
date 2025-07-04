@@ -118,7 +118,7 @@ struct DataRateConfig
 
 
 // clang-format off
-constexpr auto rx1200Config = DataRateConfig{
+constexpr auto dataRateConfig1200 = DataRateConfig{
     1200,
     ModemModType12(std::array{              0x03_b, 0x00_b, 0x07_b, 0x00_b, 0xBB_b, 0x80_b,
                                             0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x00_b}),
@@ -147,7 +147,7 @@ constexpr auto rx1200Config = DataRateConfig{
                                             0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
 };
 
-constexpr auto rx9600Config = DataRateConfig{
+constexpr auto dataRateConfig9600 = DataRateConfig{
     9600,
     ModemModType12(std::array{              0x03_b, 0x00_b, 0x07_b, 0x05_b, 0xDC_b, 0x00_b,
                                             0x05_b, 0x8C_b, 0xBA_b, 0x80_b, 0x00_b, 0x01_b}),
