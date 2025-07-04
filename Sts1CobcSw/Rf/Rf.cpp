@@ -154,8 +154,8 @@ auto ExecuteWithRecovery(Args... args)
 [[nodiscard]] auto DoSetTxDataLength(std::uint16_t length) -> Result<void>;
 [[nodiscard]] auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>;
 [[nodiscard]] auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>;
-[[nodiscard]] auto DoGetTxDataRate() -> Result<std::uint32_t>;
 [[nodiscard]] auto DoGetRxDataRate() -> Result<std::uint32_t>;
+[[nodiscard]] auto DoGetTxDataRate() -> Result<std::uint32_t>;
 [[nodiscard]] auto DoSendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>;
@@ -167,6 +167,8 @@ auto InitializeGpiosAndSpi() -> void;
 [[nodiscard]] auto ApplyPatch() -> Result<void>;
 [[nodiscard]] auto PowerUp() -> Result<void>;
 [[nodiscard]] auto Configure(TxType txType) -> Result<void>;
+
+[[nodiscard]] auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>;
 
 auto EnableRfLatchupProtection() -> void;
 auto DisableRfLatchupProtection() -> void;
@@ -204,6 +206,9 @@ template<std::size_t extent>
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte startIndex,
                                  std::span<Byte const, extent> propertyValues) -> Result<void>;
+template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
+[[nodiscard]] auto SetProperties(
+    Properties<propertyGroup, propertyStartIndex, nProperties> property) -> Result<void>;
 template<std::size_t size>
     requires(size <= maxNProperties)
 [[nodiscard]] auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
@@ -413,14 +418,20 @@ auto DoSetTxDataLength(std::uint16_t length) -> Result<void>
 }
 
 
+// TODO: functions below are in the process to be rewritten correctly
+
 auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>
 {
-    // The property field for the data rate is only 20 bits
-    static constexpr std::uint32_t maxDataRate = (1U << 20U) - 1U;
-    dataRate = std::min(dataRate, maxDataRate);
-    auto serializedDataRate = Serialize<endianness>(dataRate);
-    return SetProperties(
-        PropertyGroup::modem, iModemDataRate, Span(serializedDataRate).last<modemDataRateSize>());
+    (void)dataRate;
+    return outcome_v2::success();
+
+    // // The property field for the data rate is only 20 bits
+    // static constexpr std::uint32_t maxDataRate = (1U << 20U) - 1U;
+    // dataRate = std::min(dataRate, maxDataRate);
+    // auto serializedDataRate = Serialize<endianness>(dataRate);
+    // return SetProperties(
+    //     PropertyGroup::modem, iModemDataRate,
+    //     Span(serializedDataRate).last<modemDataRateSize>());
 }
 
 
@@ -458,19 +469,19 @@ auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
 }
 
 
+auto DoGetRxDataRate() -> Result<std::uint32_t>
+{
+    // TODO: Implement this
+    return 0;
+}
+
+
 auto DoGetTxDataRate() -> Result<std::uint32_t>
 {
     OUTCOME_TRY(auto answer,
                 GetProperties<modemDataRateSize>(PropertyGroup::modem, iModemDataRate));
     auto serializedDataRate = FlatArray(0x00_b, answer);
     return Deserialize<endianness, std::uint32_t>(serializedDataRate);
-}
-
-
-auto DoGetRxDataRate() -> Result<std::uint32_t>
-{
-    // TODO: Implement this
-    return 0;
 }
 
 
@@ -1304,6 +1315,29 @@ auto Configure(TxType txType) -> Result<void>
 }
 
 
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
+{
+    OUTCOME_TRY(SetProperties(dataRateConfig.modType12));
+    OUTCOME_TRY(SetProperties(dataRateConfig.freqDev01));
+    OUTCOME_TRY(SetProperties(dataRateConfig.txRampDelay12));
+    OUTCOME_TRY(SetProperties(dataRateConfig.bcrNcoOffset212));
+    OUTCOME_TRY(SetProperties(dataRateConfig.afcLimiter13));
+    OUTCOME_TRY(SetProperties(dataRateConfig.agcControl1));
+    OUTCOME_TRY(SetProperties(dataRateConfig.agcWindowSize12));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rawControl10));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rssiJumpThresh1));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rssiControl22));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rawSearch22));
+    OUTCOME_TRY(SetProperties(dataRateConfig.spikeDet2));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rssiMute1));
+    OUTCOME_TRY(SetProperties(dataRateConfig.dsaCtrl15));
+    OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe137012));
+    OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe17012));
+    return SetProperties(dataRateConfig.chfltRx2ChfltCoe77012);
+}
+
+
 auto EnableRfLatchupProtection() -> void
 {
 #if 27 <= HW_VERSION and HW_VERSION < 30
@@ -1585,6 +1619,14 @@ inline auto SetProperties(PropertyGroup propertyGroup,
                                  static_cast<Byte>(extent),
                                  startIndex,
                                  propertyValues));
+}
+
+
+template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
+[[nodiscard]] auto SetProperties(
+    Properties<propertyGroup, propertyStartIndex, nProperties> property) -> Result<void>
+{
+    return SetProperties(property.group, property.startIndex, Span(property.GetValues()));
 }
 
 
