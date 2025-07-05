@@ -31,7 +31,7 @@ TEST_CASE("Parsing Protocol Data Units")
     buffer[0] = 0b0010'0100_b;  // Version, PDU type, direction, transmission mode, CRC flag, large
                                 // file flag
     buffer[1] = 0x00_b;         // PDU data field length (high byte)
-    buffer[2] = 0x00_b;         // PDU data field length (low byte)
+    buffer[2] = 0x01_b;         // PDU data field length (low byte)
     buffer[3] = 0b0000'0001_b;  // Segmentation control, length of entity IDs, segment metadata
                                 // flag, length of transaction sequence number
     buffer[4] = 0x0F_b;         // Source entity ID
@@ -48,7 +48,7 @@ TEST_CASE("Parsing Protocol Data Units")
     CHECK(pdu.header.transmissionMode == sts1cobcsw::acknowledgedTransmissionMode);
     CHECK(pdu.header.crcFlag == 0);
     CHECK(pdu.header.largeFileFlag == 0);
-    CHECK(pdu.header.pduDataFieldLength == 0);
+    CHECK(pdu.header.pduDataFieldLength == 1);
     CHECK(pdu.header.segmentationControl == 0);
     CHECK(pdu.header.lengthOfEntityIds == sts1cobcsw::totalSerialSize<sts1cobcsw::EntityId> - 1);
     CHECK(pdu.header.segmentMetadataFlag == 0);
@@ -108,11 +108,11 @@ TEST_CASE("Parsing Protocol Data Units")
     CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
     buffer[3] ^= 0x07_b;
 
-    buffer[2] = Byte{sts1cobcsw::tc::maxPduDataLength};  // Invalid PDU data field length
+    buffer[2] = Byte{sts1cobcsw::tc::maxPduDataLength + 1U};  // Invalid PDU data field length
     parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidPduDataLength);
-    buffer[2] = 0x00_b;
+    buffer[2] = 0x01_b;
 
     buffer[4] = 0x00_b;  // Invalid source entity ID
     parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
