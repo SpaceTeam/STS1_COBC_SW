@@ -1274,11 +1274,15 @@ auto Configure(TxType txType) -> Result<void>
 
 auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
 {
-    if(dataRate < (dataRateConfig9600.dataRate / 2))
+    if(dataRate > ((dataRateConfig38400.dataRate + dataRateConfig9600.dataRate) / 2))
     {
-        return dataRateConfig1200;
+        return dataRateConfig38400;
     }
-    return dataRateConfig9600;
+    if(dataRate > ((dataRateConfig9600.dataRate + dataRateConfig1200.dataRate) / 2))
+    {
+        return dataRateConfig9600;
+    }
+    return dataRateConfig1200;
 }
 
 
