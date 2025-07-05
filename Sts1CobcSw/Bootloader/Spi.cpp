@@ -10,6 +10,8 @@ namespace sts1cobcsw::bootloader::spi
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
+constexpr unsigned char spiDummyByte = 0xFF;
+
 auto Initialize() -> void
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;  // Enable GPIOB clock
@@ -65,12 +67,15 @@ auto Write(unsigned char character) -> void
 {
     while((SPI3->SR & SPI_SR_TXE) == 0) {}  // Wait until TX data register is empty
     SPI3->DR = character;                   // Send character
+    while((SPI3->SR & SPI_SR_RXNE) == 0) {}   
+    (void)static_cast<char>(SPI3->DR);
 }
 
 
 auto Read(char * character) -> void
 {
-    Write(0xFF);
+    while((SPI3->SR & SPI_SR_TXE) == 0) {}  // Wait until TX data register is empty
+    SPI3->DR = spiDummyByte;                // Send dummy byte
     while((SPI3->SR & SPI_SR_RXNE) == 0) {}    // Wait until RX data register is not empty
     *character = static_cast<char>(SPI3->DR);  // Read received data
 }

@@ -10,9 +10,9 @@ namespace sts1cobcsw::bootloader::utilities
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
-auto ToHexString(char const * string, int stringLenght, char ** idStringPass) -> void
+auto PrintHexString(char const * string, int stringLenght) -> void
 {
-    char idString[3*stringLenght-1];
+    char idString[3*stringLenght];
     int len = 0;
     for(unsigned int i = 0; i < stringLenght; ++i)
     {
@@ -26,16 +26,9 @@ auto ToHexString(char const * string, int stringLenght, char ** idStringPass) ->
             idString[len++] = ' ';
         }
     }
-    
-    // Copy the local idString to the memory pointed to by idStringPass
-    if(idStringPass && *idStringPass)
-    {
-        for(int i = 0; i < len; ++i)
-        {
-            (*idStringPass)[i] = idString[i];
-        }
-        (*idStringPass)[len] = '\0'; // Null-terminate the string
-    }
+    idString[len] = '\0';
+
+    uciuart::Write(idString);
 }
 
 #pragma GCC diagnostic pop

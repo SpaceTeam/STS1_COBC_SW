@@ -3,6 +3,7 @@
 #include <Sts1CobcSw/Bootloader/RunFirmware.hpp>
 #include <Sts1CobcSw/Bootloader/Spi.hpp>
 #include <Sts1CobcSw/Bootloader/UciUart.hpp>
+#include <Sts1CobcSw/Bootloader/Utilities.hpp>
 
 namespace
 {
@@ -26,14 +27,16 @@ auto main() -> int
     sts1cobcsw::bootloader::fram::Initialize();
 
     sts1cobcsw::bootloader::fram::ReadId();
-
-    char nResetsSinceRf = 0;
+    
+    char *nResetsSinceRf = new char;
     sts1cobcsw::bootloader::fram::Read(persvar::nResetsSinceRfAdress, &nResetsSinceRf, 1);
+    
     sts1cobcsw::bootloader::uciuart::Write("Number of resets since Rf: ");
-    sts1cobcsw::bootloader::uciuart::Write(nResetsSinceRf);
+    sts1cobcsw::bootloader::utilities::PrintHexString(nResetsSinceRf, 1);
     sts1cobcsw::bootloader::uciuart::Write("\n");
-    nResetsSinceRf = static_cast<char>(static_cast<int>(nResetsSinceRf) + 1);
-    sts1cobcsw::bootloader::fram::Write(persvar::nResetsSinceRfAdress, &nResetsSinceRf, 1);
+    
+    *nResetsSinceRf = static_cast<char>(static_cast<int>(*nResetsSinceRf) + 1);
+    sts1cobcsw::bootloader::fram::Write(persvar::nResetsSinceRfAdress, nResetsSinceRf, 1);
 
     sts1cobcsw::bootloader::RunFirmware();
 }
