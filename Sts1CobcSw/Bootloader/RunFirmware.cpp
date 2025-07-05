@@ -1,10 +1,10 @@
 #include <Sts1CobcSw/Bootloader/RunFirmware.hpp>
 
+#include <Sts1CobcSw/Bootloader/Fram.hpp>
 #include <Sts1CobcSw/Bootloader/Leds.hpp>
+#include <Sts1CobcSw/Bootloader/Spi.hpp>
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 #include <Sts1CobcSw/Bootloader/UciUart.hpp>
-#include <Sts1CobcSw/Bootloader/Spi.hpp>
-#include <Sts1CobcSw/Bootloader/Fram.hpp>
 
 #include <cstdint>
 

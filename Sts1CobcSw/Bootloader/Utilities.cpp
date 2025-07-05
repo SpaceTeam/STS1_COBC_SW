@@ -11,7 +11,7 @@ namespace sts1cobcsw::utilities
 
 auto PrintHexString(char const * string, int stringLenght) -> void
 {
-    char idString[3*stringLenght];
+    char idString[3 * stringLenght];
     int len = 0;
     for(unsigned int i = 0; i < stringLenght; ++i)
     {
@@ -20,7 +20,7 @@ auto PrintHexString(char const * string, int stringLenght) -> void
         idString[len++] = "0123456789ABCDEF"[byte >> 4];
         // Low nibble
         idString[len++] = "0123456789ABCDEF"[byte & 0x0F];
-        if(len < 3*stringLenght-1)
+        if(len < 3 * stringLenght - 1)
         {
             idString[len++] = ' ';
         }
@@ -32,7 +32,7 @@ auto PrintHexString(char const * string, int stringLenght) -> void
 
 auto PrintBinString(char const * string, int stringLength) -> void
 {
-    char binString[9 * stringLength]; // 8 bits + space per byte
+    char binString[9 * stringLength];  // 8 bits + space per byte
     int len = 0;
     for(unsigned int i = 0; i < stringLength; ++i)
     {
@@ -53,7 +53,7 @@ auto PrintBinString(char const * string, int stringLength) -> void
 
 auto PrintDecString(char const * string, int stringLength) -> void
 {
-    char decString[5 * stringLength]; // Up to 3 digits + space + null terminator per byte
+    char decString[5 * stringLength];  // Up to 3 digits + space + null terminator per byte
     int len = 0;
     for(unsigned int i = 0; i < stringLength; ++i)
     {

@@ -1,8 +1,8 @@
 #include <Sts1CobcSw/Bootloader/Fram.hpp>
 
-#include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 #include <Sts1CobcSw/Bootloader/BusyWait.hpp>
 #include <Sts1CobcSw/Bootloader/Spi.hpp>
+#include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 #include <Sts1CobcSw/Bootloader/UciUart.hpp>
 #include <Sts1CobcSw/Bootloader/Utilities.hpp>
 
@@ -59,7 +59,7 @@ auto ReadId() -> void
 
     ResetCsPin();
     spi::Write(opcode::readDeviceId);
-    //spi::Read(&rx[0]);
+    // spi::Read(&rx[0]);
 
     for(char & i : rx)
     {
@@ -67,7 +67,7 @@ auto ReadId() -> void
     }
 
     SetCsPin();
-    
+
     utilities::PrintHexString(static_cast<char *>(rx), 9);
     uciuart::Write("\n");
 }
@@ -84,7 +84,7 @@ auto Write(unsigned long address, char const * string, int size) -> void
     spi::Write((address & 0x00FF'0000) >> 16);
     spi::Write((address & 0x0000'FF00) >> 8);
     spi::Write(address & 0x0000'00FF);
-    
+
     for(int i = 0; i < size; i++)
     {
         spi::Write(string[i]);
@@ -99,9 +99,9 @@ auto Read(unsigned long address, char * string, int size) -> void
     unsigned int adressByte0 = (address & 0x00FF'0000) >> 16;
     unsigned int adressByte1 = (address & 0x0000'FF00) >> 8;
     unsigned int adressByte2 = address & 0x0000'00FF;
-    
+
     ResetCsPin();
-    
+
     spi::Write(opcode::readData);
     spi::Write(static_cast<char>(adressByte0));
     spi::Write(static_cast<char>(adressByte1));
@@ -117,7 +117,7 @@ auto Read(unsigned long address, char * string, int size) -> void
 }
 
 
-auto PersistentWariableRead(unsigned long address, unsigned long blockSize) -> unsigned int 
+auto PersistentWariableRead(unsigned long address, unsigned long blockSize) -> unsigned int
 {
     auto value0Char = static_cast<char>(0);
     auto value1Char = static_cast<char>(0);
@@ -128,7 +128,7 @@ auto PersistentWariableRead(unsigned long address, unsigned long blockSize) -> u
     auto value0 = static_cast<unsigned int>(value0Char);
     auto value1 = static_cast<unsigned int>(value1Char);
     auto value2 = static_cast<unsigned int>(value2Char);
-    
+
     unsigned int value = value0;
     for(unsigned int bit = 0; bit < 8; ++bit)
     {
@@ -142,7 +142,8 @@ auto PersistentWariableRead(unsigned long address, unsigned long blockSize) -> u
 }
 
 
-auto PersistentWariableWrite(unsigned long address, unsigned int data, unsigned long blockSize) -> void
+auto PersistentWariableWrite(unsigned long address, unsigned int data, unsigned long blockSize)
+    -> void
 {
     auto dataChar = static_cast<char>(data);
     Write(address, &dataChar, 1);
