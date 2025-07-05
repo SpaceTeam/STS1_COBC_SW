@@ -9,8 +9,8 @@ namespace
 {
 namespace persvar
 {
-constexpr auto persistentVariableBlockSize = 100;  // There are 3 blocks together
-constexpr unsigned long nResetsSinceRfAdress = 1;
+constexpr auto persistentVariableBlockSize = static_cast<unsigned long>(100);  // There are 3 blocks together
+constexpr auto nResetsSinceRfAdress = static_cast<unsigned long>(1);
 constexpr auto activeSecondaryFwPartitionAdress = 1;  // O or 255
 constexpr auto backupSecondaryFwPartitionAdress = 2;  // O or 255
 constexpr auto nTotalResetsAdress = 6;                // TODO: check this //Together 4 bytes
@@ -25,18 +25,17 @@ auto main() -> int
     sts1cobcsw::bootloader::uciuart::Write("Hello from the bootloader!\n");
 
     sts1cobcsw::bootloader::fram::Initialize();
-
     sts1cobcsw::bootloader::fram::ReadId();
     
-    char *nResetsSinceRf = new char;
-    sts1cobcsw::bootloader::fram::Read(persvar::nResetsSinceRfAdress, &nResetsSinceRf, 1);
+    auto nResetsSinceRf = sts1cobcsw::bootloader::fram::PersistentWariableRead(persvar::nResetsSinceRfAdress, 
+                                                         persvar::persistentVariableBlockSize);
+    sts1cobcsw::bootloader::fram::PersistentWariableWrite(persvar::nResetsSinceRfAdress, 
+                                                          nResetsSinceRf+1, 
+                                                          persvar::persistentVariableBlockSize);
     
     sts1cobcsw::bootloader::uciuart::Write("Number of resets since Rf: ");
-    sts1cobcsw::bootloader::utilities::PrintHexString(nResetsSinceRf, 1);
+    sts1cobcsw::bootloader::utilities::PrintHexString(reinterpret_cast<const char*>(&nResetsSinceRf), 1);
     sts1cobcsw::bootloader::uciuart::Write("\n");
     
-    *nResetsSinceRf = static_cast<char>(static_cast<int>(*nResetsSinceRf) + 1);
-    sts1cobcsw::bootloader::fram::Write(persvar::nResetsSinceRfAdress, nResetsSinceRf, 1);
-
     sts1cobcsw::bootloader::RunFirmware();
 }

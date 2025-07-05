@@ -66,9 +66,7 @@ auto ReadId() -> void
 
     SetCsPin();
     
-    //char *idString = new char;
     utilities::PrintHexString(static_cast<char *>(rx), 9);
-    //uciuart::Write(idString);
     uciuart::Write("\n");
 }
 
@@ -94,13 +92,11 @@ auto Write(unsigned long address, char const * string, int size) -> void
 }
 
 
-auto Read(unsigned long address, char ** stringPass, int size) -> void
+auto Read(unsigned long address, char * stringPass, int size) -> void
 {
     unsigned int adressByte0 = (address & 0x00FF'0000) >> 16;
     unsigned int adressByte1 = (address & 0x0000'FF00) >> 8;
     unsigned int adressByte2 = address & 0x0000'00FF;
-    char *character = 0;
-    char string[size];
     
     ResetCsPin();
     
@@ -112,40 +108,29 @@ auto Read(unsigned long address, char ** stringPass, int size) -> void
     while((SPI3->SR & SPI_SR_TXE) == 0) {}
     for(int i = 0; i < size; i++)
     {
-        spi::Read(&string[i]);
+        spi::Read(&stringPass[i]);
     }
     while(SPI_SR_RXNE == 0) {}
     SetCsPin();
-    
-    // Copy the local idString to the memory pointed to by idStringPass
-    if(stringPass && *stringPass)
-    {
-        for(int i = 0; i < size; ++i)
-        {
-            (*stringPass)[i] = string[i];
-        }
-        //(*stringPass)[len] = '\0'; // Null-terminate the string
-    }
-    
 }
 
 
-auto PersistentWariableRead(char32_t address, unsigned long int blockSize) -> unsigned int
+auto PersistentWariableRead(unsigned long address, unsigned long blockSize) -> unsigned int 
 {
-    auto *value0Char = static_cast<char*>(nullptr);
-    auto *value1Char = static_cast<char*>(nullptr);
-    auto *value2Char = static_cast<char*>(nullptr);
+    auto value0Char = static_cast<char>(0);
+    auto value1Char = static_cast<char>(0);
+    auto value2Char = static_cast<char>(0);
     Read(address, &value0Char, 1);
     Read(address + blockSize, &value1Char, 1);
     Read(address + 2 * blockSize, &value2Char, 1);
-    auto value0 = static_cast<unsigned int>(*value0Char);
-    auto value1 = static_cast<unsigned int>(*value1Char);
-    auto value2 = static_cast<unsigned int>(*value2Char);
-
+    auto value0 = static_cast<unsigned int>(value0Char);
+    auto value1 = static_cast<unsigned int>(value1Char);
+    auto value2 = static_cast<unsigned int>(value2Char);
+    
     unsigned int value = value0;
-    for(unsigned int bit = 1; bit <= 8; ++bit)
+    for(unsigned int bit = 0; bit < 8; ++bit)
     {
-        unsigned int mask = 0U << bit;
+        unsigned int mask = 1U << bit;
         if(((value0 & mask) != (value1 & mask)) && ((value1 & mask) == (value2 & mask)))
         {
             value = (value & ~mask) | (value1 & mask);
@@ -155,7 +140,7 @@ auto PersistentWariableRead(char32_t address, unsigned long int blockSize) -> un
 }
 
 
-auto PersistentWariableWrite(char32_t address, unsigned int data, unsigned long int blockSize) -> void
+auto PersistentWariableWrite(unsigned int address, unsigned int data, unsigned long int blockSize) -> void
 {
     auto dataChar = static_cast<char>(data);
     Write(address, &dataChar, 1);
