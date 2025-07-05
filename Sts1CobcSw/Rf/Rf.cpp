@@ -357,6 +357,7 @@ auto ExecuteWithRecovery(Args... args)
 }
 
 
+// TODO: Remove txType. We no longer support morsing
 auto DoInitialize(TxType txType) -> Result<void>
 {
     InitializeGpiosAndSpi();
@@ -364,6 +365,7 @@ auto DoInitialize(TxType txType) -> Result<void>
     OUTCOME_TRY(PowerUp());
     OUTCOME_TRY(Configure(txType));
     persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
+    OUTCOME_TRY(SetDataRate(txDataRateConfig));
     return outcome_v2::success();
 }
 
@@ -385,6 +387,8 @@ auto DoEnterStandbyMode() -> Result<void>
 }
 
 
+// TODO: This sets some of the things that are part of the data rate config. We should remove those
+// properties from here or just delete the whole function and no longer support morsing.
 auto DoSetTxType(TxType txType) -> Result<void>
 {
     // Constants for setting the TX type (morse, 2GFSK)
