@@ -195,29 +195,36 @@ constexpr auto dataRateConfig9600 = DataRateConfig{
                                             0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
 };
 
+constexpr auto dataRateConfig38400 = DataRateConfig{
+    38400,
+    ModemModType12(std::array{              0x03_b,  0x00_b,  0x07_b,  0x0B_b,  0xB8_b,  0x00_b,
+                                            0x09_b,  0x8C_b,  0xBA_b,  0x80_b,  0x00_b,  0x06_b}),
+    ModemFreqDev01(std::array{              0x0D_b}),
+    ModemTxRampDelay12(std::array{          0x01_b,  0x00_b,  0x08_b,  0x03_b,  0x80_b,  0x00_b,
+                                            0x20_b,  0x20_b,  0x00_b,  0xE8_b,  0x00_b,  0x55_b}),
+    ModemBcrNcoOffset212(std::array{        0x06_b,  0x0C_b,  0xAB_b,  0x06_b,  0x06_b,  0x02_b,
+                                            0x00_b,  0x00_b,  0x00_b,  0x12_b,  0x81_b,  0x83_b}),
+    ModemAfcLimiter13(std::array{           0x01_b,  0xD3_b,  0xA0_b}),
+    ModemAgcControl1(std::array{            0xE0_b}),
+    ModemAgcWindowSize12(std::array{        0x11_b,  0x13_b,  0x13_b,  0x80_b,  0x1A_b,  0x40_b,
+                                            0x00_b,  0x00_b,  0x28_b,  0x0C_b,  0xA4_b,  0x23_b}),
+    ModemRawControl10(std::array{           0x03_b, 0x00_b, 0xF5_b, 0x01_b, 0x00_b, 0xFF_b, 0x06_b,
+                                            0x00_b, 0x18_b, 0x40_b}),
+    ModemRssiJumpThresh1(std::array{        0x06_b}),
+    ModemRssiControl22(std::array{          0x18_b,  0x40_b}),
+    ModemRawSearch22(std::array{            0x84_b,  0x0A_b}),
+    ModemSpikeDet2(std::array{              0x03_b,  0x07_b}),
+    ModemRssiMute1(std::array{              0x00_b}),
+    ModemDsaCtrl15(std::array{              0x40_b,  0x04_b,  0x07_b,  0x78_b,  0x20_b}),
+    ModemChfltRx1ChfltCoe137012(std::array{ 0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b,
+                                            0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b}),
+    ModemChfltRx1ChfltCoe17012(std::array{  0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b,
+                                            0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b}),
+    ModemChfltRx2ChfltCoe77012(std::array{  0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b,
+                                            0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b}),
+};
 
-// constexpr auto rx19200Config = DataRateConfig{
-//     19200,
-//     ModemModType12(std::array{              }),
-//     ModemFreqDev01(std::array{              }),
-//     ModemTxRampDelay12(std::array{          }),
-//     ModemBcrNcoOffset212(std::array{        }),
-//     ModemAfcLimiter13(std::array{           }),
-//     ModemAgcControl1(std::array{            }),
-//     ModemAgcWindowSize12(std::array{        }),
-//     ModemRawControl10(std::array{           }),
-//     ModemRssiJumpThresh1(std::array{        }),
-//     ModemRssiControl22(std::array{          }),
-//     ModemRawSearch22(std::array{            }),
-//     ModemSpikeDet2(std::array{              }),
-//     ModemRssiMute1(std::array{              }),
-//     ModemDsaCtrl15(std::array{              }),
-//     ModemChfltRx1ChfltCoe137012(std::array{ }),
-//     ModemChfltRx1ChfltCoe17012(std::array{  }),
-//     ModemChfltRx2ChfltCoe77012(std::array{  }),
-// };
-
-// constexpr auto rx1200Config = DataRateConfig{
+// constexpr auto dataRateConfig = DataRateConfig{
 //     0,
 //     ModemModType12(std::array{              }),
 //     ModemFreqDev01(std::array{              }),
