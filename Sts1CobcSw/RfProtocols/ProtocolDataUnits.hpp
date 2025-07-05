@@ -41,7 +41,28 @@ private:
 };
 
 
+enum class DirectiveCode : std::uint8_t
+{
+    endOfFile = 4,
+    finished = 5,
+    ack = 6,
+    metadata = 7,
+    nack = 8,
+};
+
+
+struct FileDirectivePdu
+{
+    DirectiveCode directiveCode = DirectiveCode::endOfFile;
+    std::span<Byte const> parameterField;
+};
+
+
 [[nodiscard]] auto ParseAsProtocolDataUnit(std::span<Byte const> buffer)
     -> Result<tc::ProtocolDataUnit>;
 [[nodiscard]] auto ParseAsFileDataPdu(std::span<Byte const> buffer) -> Result<FileDataPdu>;
+[[nodiscard]] auto ParseAsFileDirectivePdu(std::span<Byte const> buffer)
+    -> Result<FileDirectivePdu>;
+
+[[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
 }
