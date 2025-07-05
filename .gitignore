@@ -11,3 +11,5 @@ CMakeLists.txt.user
 CMakeUserPresets.json
 compile_commands.json
 FramMock.bin
+# ODS and their lock files
+*.ods*
