@@ -114,6 +114,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidEntityId";
         case ErrorCode::invalidFileDirectiveCode:
             return "invalidFileDirectiveCode";
+        case ErrorCode::invalidFaultLocation:
+            return "invalidFaultLocation";
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:
