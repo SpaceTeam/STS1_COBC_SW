@@ -1,8 +1,6 @@
 #include <Sts1CobcSw/Bootloader/Spi.hpp>
 
-#include <Sts1CobcSw/Bootloader/BusyWait.hpp>
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
-#include <Sts1CobcSw/Bootloader/UciUart.hpp>  //test only
 
 namespace sts1cobcsw::bootloader::spi
 {

@@ -1,6 +1,8 @@
+#include <Sts1CobcSw/Bootloader/Fram.hpp>
+
+#include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 #include <Sts1CobcSw/Bootloader/BusyWait.hpp>
 #include <Sts1CobcSw/Bootloader/Spi.hpp>
-#include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 #include <Sts1CobcSw/Bootloader/UciUart.hpp>
 #include <Sts1CobcSw/Bootloader/Utilities.hpp>
 
@@ -23,7 +25,7 @@ constexpr auto setWriteEnableLatch = 0x06U;
 
 auto SetCsPin() -> void
 {
-    static constexpr auto chipSelectDelay = 50;
+    static constexpr auto chipSelectDelay = 1;
     GPIOB->ODR |= (GPIO_ODR_OD13);  // Set Cs Pin
     BusyWaitUs(chipSelectDelay);
 }
@@ -31,7 +33,7 @@ auto SetCsPin() -> void
 
 auto ResetCsPin() -> void
 {
-    static constexpr auto chipSelectDelay = 50;
+    static constexpr auto chipSelectDelay = 1;
     GPIOB->ODR &= ~(GPIO_ODR_OD13);  // Reset Cs Pin
     BusyWaitUs(chipSelectDelay);
 }
@@ -140,7 +142,7 @@ auto PersistentWariableRead(unsigned long address, unsigned long blockSize) -> u
 }
 
 
-auto PersistentWariableWrite(unsigned int address, unsigned int data, unsigned long blockSize) -> void
+auto PersistentWariableWrite(unsigned long address, unsigned int data, unsigned long blockSize) -> void
 {
     auto dataChar = static_cast<char>(data);
     Write(address, &dataChar, 1);
