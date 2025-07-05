@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
+#include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -65,7 +66,7 @@ TEST_CASE("Successful verification reports")
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
-        .packetType = 0,
+        .packetType = sts1cobcsw::PacketType(0),
         .secondaryHeaderFlag = 1,
         .apid = sts1cobcsw::Apid(0),
         .sequenceFlags = 0b11,
@@ -112,7 +113,7 @@ TEST_CASE("Successful verification reports")
     dataField.clear();
     requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0,
-        .packetType = 1,
+        .packetType = sts1cobcsw::PacketType(1),
         .secondaryHeaderFlag = 0,
         .apid = sts1cobcsw::Apid(0x7FF),
         .sequenceFlags = 0,
@@ -151,7 +152,7 @@ TEST_CASE("Failed verification reports")
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
-        .packetType = 0,
+        .packetType = sts1cobcsw::PacketType(0),
         .secondaryHeaderFlag = 1,
         .apid = sts1cobcsw::Apid(0),
         .sequenceFlags = 0b11,
@@ -196,7 +197,7 @@ TEST_CASE("Failed verification reports")
     dataField.clear();
     requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0,
-        .packetType = 1,
+        .packetType = sts1cobcsw::PacketType(1),
         .secondaryHeaderFlag = 0,
         .apid = sts1cobcsw::Apid(0x7FF),
         .sequenceFlags = 0,

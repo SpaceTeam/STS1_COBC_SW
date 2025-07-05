@@ -4,10 +4,13 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
+#include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnits.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+
+#include <strong_type/equality.hpp>
 
 #include <etl/vector.h>
 
@@ -38,8 +41,8 @@ TEST_CASE("Parsing Protocol Data Units")
     REQUIRE(parseResult.has_value());
     auto & pdu = parseResult.value();
     CHECK(pdu.header.version == sts1cobcsw::pduVersion);
-    CHECK(pdu.header.pduType == sts1cobcsw::pdutype::fileDirective);
-    CHECK(pdu.header.direction == sts1cobcsw::direction::towardsFileReceiver);
+    CHECK(pdu.header.pduType == sts1cobcsw::fileDirectivePduType);
+    CHECK(pdu.header.direction == sts1cobcsw::towardsFileReceiverDirection);
     CHECK(pdu.header.transmissionMode == sts1cobcsw::acknowledgedTransmissionMode);
     CHECK(pdu.header.crcFlag == 0);
     CHECK(pdu.header.largeFileFlag == 0);
