@@ -137,6 +137,9 @@ auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
 
 auto isInTxMode = false;
 auto currentTxType = TxType::packet;
+auto rxDataRateConfig = dataRateConfig1200;
+auto txDataRateConfig = dataRateConfig1200;
+auto lastSetDataRate = dataRateConfig1200.dataRate;
 
 
 using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
@@ -155,10 +158,6 @@ auto ExecuteWithRecovery(Args... args)
 [[nodiscard]] auto DoEnterStandbyMode() -> Result<void>;
 [[nodiscard]] auto DoSetTxType(TxType txType) -> Result<void>;
 [[nodiscard]] auto DoSetTxDataLength(std::uint16_t length) -> Result<void>;
-[[nodiscard]] auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>;
-[[nodiscard]] auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>;
-[[nodiscard]] auto DoGetRxDataRate() -> Result<std::uint32_t>;
-[[nodiscard]] auto DoGetTxDataRate() -> Result<std::uint32_t>;
 [[nodiscard]] auto DoSendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>;
@@ -171,6 +170,7 @@ auto InitializeGpiosAndSpi() -> void;
 [[nodiscard]] auto PowerUp() -> Result<void>;
 [[nodiscard]] auto Configure(TxType txType) -> Result<void>;
 
+[[nodiscard]] auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig;
 [[nodiscard]] auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>;
 
 auto EnableRfLatchupProtection() -> void;
@@ -269,25 +269,25 @@ auto SetTxDataLength(std::uint16_t length) -> void
 
 auto SetTxDataRate(std::uint32_t dataRate) -> void
 {
-    ExecuteWithRecovery<DoSetTxDataRate>(dataRate);
+    txDataRateConfig = GetDataRateConfig(dataRate);
 }
 
 
 auto SetRxDataRate(std::uint32_t dataRate) -> void
 {
-    ExecuteWithRecovery<DoSetRxDataRate>(dataRate);
+    rxDataRateConfig = GetDataRateConfig(dataRate);
 }
 
 
 auto GetTxDataRate() -> std::uint32_t
 {
-    return ExecuteWithRecovery<DoGetTxDataRate>();
+    return txDataRateConfig.dataRate;
 }
 
 
 auto GetRxDataRate() -> std::uint32_t
 {
-    return ExecuteWithRecovery<DoGetRxDataRate>();
+    return rxDataRateConfig.dataRate;
 }
 
 
@@ -422,73 +422,6 @@ auto DoSetTxDataLength(std::uint16_t length) -> Result<void>
 }
 
 
-// TODO: functions below are in the process to be rewritten correctly
-
-auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>
-{
-    (void)dataRate;
-    return outcome_v2::success();
-
-    // // The property field for the data rate is only 20 bits
-    // static constexpr std::uint32_t maxDataRate = (1U << 20U) - 1U;
-    // dataRate = std::min(dataRate, maxDataRate);
-    // auto serializedDataRate = Serialize<endianness>(dataRate);
-    // return SetProperties(
-    //     PropertyGroup::modem, iModemDataRate,
-    //     Span(serializedDataRate).last<modemDataRateSize>());
-}
-
-
-// TODO: MR14.06.25 there are a buch of settings to set for SetRx. So there should be some standard
-// data rates we want to set, and save all values for thouse rates. we are in 437.395 MHz band
-auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
-{
-    // TODO: check to not be in TX mode. Ignored for now.
-
-
-    // set Mandatory registers:
-
-    // TODO: set MODEM_BCR_OSR              RX BCR/Slicer oversampling rate (12-bit unsigned
-    // number).
-    //      Group:  0x20
-    //      Indexes: 0x22 0x23
-    //      Default 0x00    0x4b
-    // Summary:
-    // Oversampling ratio OSR that the Bit-Clock-Recovery (BCR) loop and slicer run at
-
-    // TODO: set MODEM_BCR_NCO_OFFSET       RX BCR NCO offset value (an unsigned 22-bit number).
-    //      Group:  0x20
-    //      Indexes: 0x24 0x25 0x26
-    //      Default 0x06 0xd3 0xa0
-
-
-    // TODO: set Recommended support registers:
-    // MODEM_BCR_GAIN
-    // MODEM_BCR_GEAR
-    // MODEM_BCR_MISC1:RXNCOCOMP
-    // MODEM_CHFLT_*
-    // MODEM_DECIMATION_CFGx
-    (void)dataRate;
-    return outcome_v2::success();
-}
-
-
-auto DoGetRxDataRate() -> Result<std::uint32_t>
-{
-    // TODO: Implement this
-    return 0;
-}
-
-
-auto DoGetTxDataRate() -> Result<std::uint32_t>
-{
-    OUTCOME_TRY(auto answer,
-                GetProperties<modemDataRateSize>(PropertyGroup::modem, iModemDataRate));
-    auto serializedDataRate = FlatArray(0x00_b, answer);
-    return Deserialize<endianness, std::uint32_t>(serializedDataRate);
-}
-
-
 auto DoSendAndWait(std::span<Byte const> data) -> Result<void>
 {
     if(not persistentVariables.Load<"txIsOn">())
@@ -518,6 +451,11 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
     if(not persistentVariables.Load<"txIsOn">())
     {
         return outcome_v2::success();
+    }
+    if(lastSetDataRate != txDataRateConfig.dataRate)
+    {
+        OUTCOME_TRY(SetDataRate(txDataRateConfig));
+        lastSetDataRate = txDataRateConfig.dataRate;
     }
     if(not isInTxMode)
     {
@@ -594,8 +532,14 @@ auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
 {
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     auto result = [&]() -> Result<std::size_t>
     {
+        if(lastSetDataRate != rxDataRateConfig.dataRate)
+        {
+            OUTCOME_TRY(SetDataRate(rxDataRateConfig));
+            lastSetDataRate = rxDataRateConfig.dataRate;
+        }
         OUTCOME_TRY(ResetFifos());
         OUTCOME_TRY(SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt));
         OUTCOME_TRY(ReadAndClearInterruptStatus());
@@ -1325,6 +1269,16 @@ auto Configure(TxType txType) -> Result<void>
     // static constexpr auto newGlobalConfig = 0x40_b;
     // SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
     return outcome_v2::success();
+}
+
+
+auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
+{
+    if(dataRate < (dataRateConfig9600.dataRate / 2))
+    {
+        return dataRateConfig1200;
+    }
+    return dataRateConfig9600;
 }
 
 

@@ -53,7 +53,7 @@ using sts1cobcsw::operator""_b;
 
 
 // Unchanging part of configuration
-template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties, >
+template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 class Properties
 {
