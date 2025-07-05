@@ -15,13 +15,12 @@ TEST_CASE("RF module")
     REQUIRE(initializeResult.has_value());
     auto partNumber = rf::ReadPartNumber();
     CHECK(partNumber == rf::correctPartNumber);
-    CHECK(rf::GetTxDataRate() == 384'000U);
+    CHECK(rf::GetTxDataRate() == 1200U);
+    CHECK(rf::GetRxDataRate() == 1200U);
 
-    auto dataRate = 1'200U;
+    auto dataRate = 9600U;
     rf::SetTxDataRate(dataRate);
+    rf::SetRxDataRate(dataRate);
     CHECK(rf::GetTxDataRate() == dataRate);
-
-    dataRate = 9'600U;
-    rf::SetTxDataRate(dataRate);
-    CHECK(rf::GetTxDataRate() == dataRate);
+    CHECK(rf::GetRxDataRate() == dataRate);
 }
