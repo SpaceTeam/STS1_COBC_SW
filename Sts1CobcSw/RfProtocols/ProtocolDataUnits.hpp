@@ -6,12 +6,20 @@
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
+
+#include <strong_type/regular.hpp>
+#include <strong_type/type.hpp>
 
 #include <etl/utility.h>
 #include <etl/vector.h>
 
+#include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -58,11 +66,86 @@ struct FileDirectivePdu
 };
 
 
+using ConditionCode = strong::type<UInt<4>, struct ConditionCodeTag, strong::regular>;
+
+
+enum TlvType : std::uint8_t
+{
+    entityId = 6,
+};
+
+
+struct FaultLocation
+{
+    TlvType type = TlvType::entityId;
+    std::uint8_t length = 0;
+    EntityId value;
+};
+
+
+class EndOfFilePdu : public Payload
+{
+public:
+    static constexpr auto directiveCode = DirectiveCode::endOfFile;
+
+    ConditionCode conditionCode = ConditionCode(0);
+    UInt<4> spare;
+    std::uint32_t fileChecksum = 0;
+    std::uint32_t fileSize = 0;
+    FaultLocation faultLocation;  // omitted if conditionCode == noError
+
+    static constexpr auto minParameterFieldLength =
+        totalSerialSize<strong::underlying_type_t<ConditionCode>, decltype(spare)>
+        + totalSerialSize<decltype(fileChecksum), decltype(fileSize)>;
+
+
+private:
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
+inline constexpr auto noErrorConditionCode = ConditionCode(0);
+inline constexpr auto positiveAckLimitReachedConditionCode = ConditionCode(1);
+inline constexpr auto keepAliveLimitReachedConditionCode = ConditionCode(2);
+inline constexpr auto invalidTransmissionModeConditionCode = ConditionCode(3);
+inline constexpr auto filestoreRejectionConditionCode = ConditionCode(4);
+inline constexpr auto fileChecksumFailureConditionCode = ConditionCode(5);
+inline constexpr auto fileSizeErrorConditionCode = ConditionCode(6);
+inline constexpr auto nackLimitReachedConditionCode = ConditionCode(7);
+inline constexpr auto inactivityDetectedConditionCode = ConditionCode(8);
+inline constexpr auto invalidFileStructureConditionCode = ConditionCode(9);
+inline constexpr auto checkLimitReachedConditionCode = ConditionCode(10);
+inline constexpr auto unsupportedChecksumTypeConditionCode = ConditionCode(11);
+inline constexpr auto reserved1ConditionCode = ConditionCode(12);
+inline constexpr auto reserved2ConditionCode = ConditionCode(13);
+inline constexpr auto suspendRequestReceivedConditionCode = ConditionCode(14);
+inline constexpr auto cancelRequestReceivedConditionCode = ConditionCode(15);
+
+
 [[nodiscard]] auto ParseAsProtocolDataUnit(std::span<Byte const> buffer)
     -> Result<tc::ProtocolDataUnit>;
 [[nodiscard]] auto ParseAsFileDataPdu(std::span<Byte const> buffer) -> Result<FileDataPdu>;
 [[nodiscard]] auto ParseAsFileDirectivePdu(std::span<Byte const> buffer)
     -> Result<FileDirectivePdu>;
+[[nodiscard]] auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>;
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
+
+
+// --- De-/Serialization ---
+
+template<>
+inline constexpr std::size_t serialSize<FaultLocation> =
+    totalSerialSize<decltype(FaultLocation::type),
+                    decltype(FaultLocation::length),
+                    decltype(FaultLocation::value)>;
+
+
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, FaultLocation const & faultLocation) -> void *;
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, FaultLocation * faultLocation)
+    -> void const *;
 }
