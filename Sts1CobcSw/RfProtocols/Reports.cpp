@@ -2,6 +2,7 @@
 
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
+#include <Sts1CobcSw/RfProtocols/Utility.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
@@ -17,8 +18,6 @@ auto messageTypeCounters = IdCounters<std::uint16_t, tm::MessageTypeId>{};
 
 template<tm::MessageTypeId id>
 auto UpdateMessageTypeCounterAndTime(tm::SpacePacketSecondaryHeader<id> * secondaryHeader) -> void;
-
-auto IncreaseSize(etl::ivector<Byte> * dataField, std::size_t sizeIncrease) -> std::size_t;
 }
 
 
@@ -241,7 +240,7 @@ auto SerializeTo(void * destination, RequestId const & requestId) -> void *
 {
     destination = SerializeTo<endianness>(destination,
                                           requestId.packetVersionNumber,
-                                          requestId.packetType,
+                                          value_of(requestId.packetType),
                                           requestId.secondaryHeaderFlag,
                                           requestId.apid.Value(),
                                           requestId.sequenceFlags,
@@ -255,22 +254,22 @@ template auto SerializeTo<std::endian::big>(void * destination, RequestId const 
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, RequestId & requestId) -> void const *
+auto DeserializeFrom(void const * source, RequestId * requestId) -> void const *
 {
     auto apidValue = Apid::ValueType{};
     source = DeserializeFrom<endianness>(source,
-                                         &requestId.packetVersionNumber,
-                                         &requestId.packetType,
-                                         &requestId.secondaryHeaderFlag,
+                                         &requestId->packetVersionNumber,
+                                         &value_of(requestId->packetType),
+                                         &requestId->secondaryHeaderFlag,
                                          &apidValue,
-                                         &requestId.sequenceFlags,
-                                         &requestId.packetSequenceCount);
-    requestId.apid = Apid(apidValue);
+                                         &requestId->sequenceFlags,
+                                         &requestId->packetSequenceCount);
+    requestId->apid = Apid(apidValue);
     return source;
 }
 
 
-template auto DeserializeFrom<std::endian::big>(void const * source, RequestId & requestId)
+template auto DeserializeFrom<std::endian::big>(void const * source, RequestId * requestId)
     -> void const *;
 
 
@@ -284,14 +283,6 @@ auto UpdateMessageTypeCounterAndTime(tm::SpacePacketSecondaryHeader<id> * second
     secondaryHeader->messageTypeCounter =
         messageTypeCounters.PostIncrement(secondaryHeader->messageTypeId);
     secondaryHeader->time = CurrentRealTime();
-}
-
-
-auto IncreaseSize(etl::ivector<Byte> * dataField, std::size_t sizeIncrease) -> std::size_t
-{
-    auto oldSize = dataField->size();
-    dataField->resize(oldSize + sizeIncrease);
-    return oldSize;
 }
 }
 }
