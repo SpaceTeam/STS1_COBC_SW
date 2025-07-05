@@ -92,9 +92,9 @@ using ModemRawSearch22              = Properties<PropertyGroup::modem, 0x50_b, 2
 using ModemSpikeDet2                = Properties<PropertyGroup::modem, 0x54_b, 2>;
 using ModemRssiMute1                = Properties<PropertyGroup::modem, 0x57_b, 1>;
 using ModemDsaCtrl15                = Properties<PropertyGroup::modem, 0x5B_b, 5>;
-using ModemChfltRx1ChfltCoe137012   = Properties<PropertyGroup::modem, 0x00_b, 12>;
-using ModemChfltRx1ChfltCoe17012    = Properties<PropertyGroup::modem, 0x0C_b, 12>;
-using ModemChfltRx2ChfltCoe77012    = Properties<PropertyGroup::modem, 0x18_b, 12>;
+using ModemChfltRx1ChfltCoe137012   = Properties<PropertyGroup::modemChflt, 0x00_b, 12>;
+using ModemChfltRx1ChfltCoe17012    = Properties<PropertyGroup::modemChflt, 0x0C_b, 12>;
+using ModemChfltRx2ChfltCoe77012    = Properties<PropertyGroup::modemChflt, 0x18_b, 12>;
 // NOLINTEND(*magic-numbers)
 // clang-format on
 
