@@ -12,6 +12,7 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
+#include <Sts1CobcSw/Rf/RfDataRate.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
@@ -40,32 +41,16 @@ namespace sts1cobcsw::rf
 {
 namespace
 {
-enum class PropertyGroup : std::uint8_t
-{
-    global = 0x00,       //
-    intCtl = 0x01,       // Interrupt control
-    frrCtl = 0x02,       // Fast response register control
-    preamble = 0x10,     //
-    sync = 0x11,         // Sync word
-    pkt = 0x12,          // Packet
-    modem = 0x20,        //
-    modemChflt = 0x21,   //
-    pa = 0x22,           // Power amplifier
-    synth = 0x23,        //
-    match = 0x30,        //
-    freqControl = 0x40,  //
-    rxHop = 0x50,        //
-    pti = 0xF0           // Packet trace interface
-};
-
-
 // --- Private globals ---
+
+constexpr auto endianness = std::endian::big;
 
 // Commands
 [[maybe_unused]] constexpr auto cmdPartInfo = 0x01_b;
 [[maybe_unused]] constexpr auto cmdPowerUp = 0x02_b;
-[[maybe_unused]] constexpr auto cmdFuncInfo = 0x11_b;
+[[maybe_unused]] constexpr auto cmdFuncInfo = 0x10_b;
 [[maybe_unused]] constexpr auto cmdSetProperty = 0x11_b;
+[[maybe_unused]] constexpr auto cmdGetProperty = 0x12_b;
 [[maybe_unused]] constexpr auto cmdGpioPinCfg = 0x13_b;
 [[maybe_unused]] constexpr auto cmdFifoInfo = 0x15_b;
 [[maybe_unused]] constexpr auto cmdGetIntStatus = 0x20_b;
@@ -87,7 +72,12 @@ enum class PropertyGroup : std::uint8_t
 [[maybe_unused]] constexpr auto fifoInfoAnswerLength = 2U;
 [[maybe_unused]] constexpr auto interruptStatusAnswerLength = 8U;
 [[maybe_unused]] constexpr auto modemStatusAnswerLength = 8U;
-// Max. number of properties that can be set in a single command
+
+// Property indexes and sizes
+[[maybe_unused]] constexpr auto iModemDataRate = 0x03_b;
+[[maybe_unused]] constexpr auto modemDataRateSize = 3U;
+// Max. number of properties that can be set in a single command. We could read 16 properties
+// at once, but I don't want to make a second constant.
 constexpr auto maxNProperties = 12;
 
 // Packet handler interrupt flags
@@ -144,6 +134,9 @@ auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
 
 auto isInTxMode = false;
 auto currentTxType = TxType::packet;
+auto rxDataRateConfig = dataRateConfig1200;
+auto txDataRateConfig = dataRateConfig1200;
+auto lastSetDataRate = dataRateConfig1200.dataRate;
 
 
 using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
@@ -162,10 +155,6 @@ auto ExecuteWithRecovery(Args... args)
 [[nodiscard]] auto DoEnterStandbyMode() -> Result<void>;
 [[nodiscard]] auto DoSetTxType(TxType txType) -> Result<void>;
 [[nodiscard]] auto DoSetTxDataLength(std::uint16_t length) -> Result<void>;
-[[nodiscard]] auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>;
-[[nodiscard]] auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>;
-[[nodiscard]] auto DoGetTxDataRate() -> Result<std::uint32_t>;
-[[nodiscard]] auto DoGetRxDataRate() -> Result<std::uint32_t>;
 [[nodiscard]] auto DoSendAndWait(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>;
 [[nodiscard]] auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>;
@@ -177,6 +166,9 @@ auto InitializeGpiosAndSpi() -> void;
 [[nodiscard]] auto ApplyPatch() -> Result<void>;
 [[nodiscard]] auto PowerUp() -> Result<void>;
 [[nodiscard]] auto Configure(TxType txType) -> Result<void>;
+
+[[nodiscard]] auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig;
+[[nodiscard]] auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>;
 
 auto EnableRfLatchupProtection() -> void;
 auto DisableRfLatchupProtection() -> void;
@@ -214,6 +206,13 @@ template<std::size_t extent>
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte startIndex,
                                  std::span<Byte const, extent> propertyValues) -> Result<void>;
+template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
+[[nodiscard]] auto SetProperties(
+    Properties<propertyGroup, propertyStartIndex, nProperties> property) -> Result<void>;
+template<std::size_t size>
+    requires(size <= maxNProperties)
+[[nodiscard]] auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
+    -> Result<std::array<Byte, size>>;
 }
 
 
@@ -267,25 +266,25 @@ auto SetTxDataLength(std::uint16_t length) -> void
 
 auto SetTxDataRate(std::uint32_t dataRate) -> void
 {
-    ExecuteWithRecovery<DoSetTxDataRate>(dataRate);
+    txDataRateConfig = GetDataRateConfig(dataRate);
 }
 
 
 auto SetRxDataRate(std::uint32_t dataRate) -> void
 {
-    ExecuteWithRecovery<DoSetRxDataRate>(dataRate);
+    rxDataRateConfig = GetDataRateConfig(dataRate);
 }
 
 
 auto GetTxDataRate() -> std::uint32_t
 {
-    return ExecuteWithRecovery<DoGetTxDataRate>();
+    return txDataRateConfig.dataRate;
 }
 
 
 auto GetRxDataRate() -> std::uint32_t
 {
-    return ExecuteWithRecovery<DoGetRxDataRate>();
+    return rxDataRateConfig.dataRate;
 }
 
 
@@ -355,6 +354,7 @@ auto ExecuteWithRecovery(Args... args)
 }
 
 
+// TODO: Remove txType. We no longer support morsing
 auto DoInitialize(TxType txType) -> Result<void>
 {
     InitializeGpiosAndSpi();
@@ -362,6 +362,7 @@ auto DoInitialize(TxType txType) -> Result<void>
     OUTCOME_TRY(PowerUp());
     OUTCOME_TRY(Configure(txType));
     persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
+    OUTCOME_TRY(SetDataRate(txDataRateConfig));
     return outcome_v2::success();
 }
 
@@ -369,7 +370,7 @@ auto DoInitialize(TxType txType) -> Result<void>
 auto DoReadPartNumber() -> Result<std::uint16_t>
 {
     OUTCOME_TRY(auto answer, SendCommand<partInfoAnswerLength>(Span(cmdPartInfo)));
-    return Deserialize<std::endian::big, std::uint16_t>(Span(answer).subspan<1, 2>());
+    return Deserialize<endianness, std::uint16_t>(Span(answer).subspan<1, 2>());
 }
 
 
@@ -383,6 +384,8 @@ auto DoEnterStandbyMode() -> Result<void>
 }
 
 
+// TODO: This sets some of the things that are part of the data rate config. We should remove those
+// properties from here or just delete the whole function and no longer support morsing.
 auto DoSetTxType(TxType txType) -> Result<void>
 {
     // Constants for setting the TX type (morse, 2GFSK)
@@ -408,45 +411,14 @@ auto DoSetTxType(TxType txType) -> Result<void>
                        modemMapControl,
                        modemDsmCtrl,
                        // The data rate property is only 3 bytes wide, so drop the first byte
-                       Span(Serialize<std::endian::big>(dataRate)).subspan<1>())));
+                       Span(Serialize<endianness>(dataRate)).subspan<1>())));
 }
 
 
 auto DoSetTxDataLength(std::uint16_t length) -> Result<void>
 {
     static constexpr auto iPktField1Length = 0x0D_b;
-    return SetProperties(
-        PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
-}
-
-
-auto DoSetTxDataRate(std::uint32_t dataRate) -> Result<void>
-{
-    // TODO: Implement this
-    (void)dataRate;
-    return outcome_v2::success();
-}
-
-
-auto DoSetRxDataRate(std::uint32_t dataRate) -> Result<void>
-{
-    // TODO: Implement this
-    (void)dataRate;
-    return outcome_v2::success();
-}
-
-
-auto DoGetTxDataRate() -> Result<std::uint32_t>
-{
-    // TODO: Implement this
-    return 0;
-}
-
-
-auto DoGetRxDataRate() -> Result<std::uint32_t>
-{
-    // TODO: Implement this
-    return 0;
+    return SetProperties(PropertyGroup::pkt, iPktField1Length, Span(Serialize<endianness>(length)));
 }
 
 
@@ -479,6 +451,11 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
     if(not persistentVariables.Load<"txIsOn">())
     {
         return outcome_v2::success();
+    }
+    if(lastSetDataRate != txDataRateConfig.dataRate)
+    {
+        OUTCOME_TRY(SetDataRate(txDataRateConfig));
+        lastSetDataRate = txDataRateConfig.dataRate;
     }
     if(not isInTxMode)
     {
@@ -546,8 +523,14 @@ auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
 {
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     auto result = [&]() -> Result<std::size_t>
     {
+        if(lastSetDataRate != rxDataRateConfig.dataRate)
+        {
+            OUTCOME_TRY(SetDataRate(rxDataRateConfig));
+            lastSetDataRate = rxDataRateConfig.dataRate;
+        }
         OUTCOME_TRY(ResetFifos());
         OUTCOME_TRY(SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt));
         OUTCOME_TRY(ReadAndClearInterruptStatus());
@@ -741,7 +724,7 @@ auto PowerUp() -> Result<void>
     static constexpr auto xtalOptions = 0x01_b;          // Use external oscillator
     static constexpr std::uint32_t xoFreq = 26'000'000;  // MHz
     return SendCommand(FlatArray(
-        cmdPowerUp, bootOptions, xtalOptions, Serialize<std::endian::big, std::uint32_t>(xoFreq)));
+        cmdPowerUp, bootOptions, xtalOptions, Serialize<endianness, std::uint32_t>(xoFreq)));
 }
 
 
@@ -1280,6 +1263,43 @@ auto Configure(TxType txType) -> Result<void>
 }
 
 
+auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
+{
+    if(dataRate > ((dataRateConfig38400.dataRate + dataRateConfig9600.dataRate) / 2))
+    {
+        return dataRateConfig38400;
+    }
+    if(dataRate > ((dataRateConfig9600.dataRate + dataRateConfig1200.dataRate) / 2))
+    {
+        return dataRateConfig9600;
+    }
+    return dataRateConfig1200;
+}
+
+
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
+{
+    OUTCOME_TRY(SetProperties(dataRateConfig.modType12));
+    OUTCOME_TRY(SetProperties(dataRateConfig.freqDev01));
+    OUTCOME_TRY(SetProperties(dataRateConfig.txRampDelay12));
+    OUTCOME_TRY(SetProperties(dataRateConfig.bcrNcoOffset212));
+    OUTCOME_TRY(SetProperties(dataRateConfig.afcLimiter13));
+    OUTCOME_TRY(SetProperties(dataRateConfig.agcControl1));
+    OUTCOME_TRY(SetProperties(dataRateConfig.agcWindowSize12));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rawControl10));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rssiJumpThresh1));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rssiControl22));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rawSearch22));
+    OUTCOME_TRY(SetProperties(dataRateConfig.spikeDet2));
+    OUTCOME_TRY(SetProperties(dataRateConfig.rssiMute1));
+    OUTCOME_TRY(SetProperties(dataRateConfig.dsaCtrl15));
+    OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe137012));
+    OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe17012));
+    return SetProperties(dataRateConfig.chfltRx2ChfltCoe77012);
+}
+
+
 auto EnableRfLatchupProtection() -> void
 {
 #if 27 <= HW_VERSION and HW_VERSION < 30
@@ -1561,6 +1581,24 @@ inline auto SetProperties(PropertyGroup propertyGroup,
                                  static_cast<Byte>(extent),
                                  startIndex,
                                  propertyValues));
+}
+
+
+template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
+[[nodiscard]] auto SetProperties(
+    Properties<propertyGroup, propertyStartIndex, nProperties> property) -> Result<void>
+{
+    return SetProperties(property.group, property.startIndex, Span(property.GetValues()));
+}
+
+
+template<std::size_t size>
+    requires(size <= maxNProperties)
+inline auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
+    -> Result<std::array<Byte, size>>
+{
+    return SendCommand<size>(Span(
+        {cmdGetProperty, static_cast<Byte>(propertyGroup), static_cast<Byte>(size), startIndex}));
 }
 }
 }
