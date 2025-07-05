@@ -29,11 +29,13 @@ auto Initialize() -> void
 
     // Configure GPIO for SPI3 - Sck, MISO, MOSI, CsPin
     // Configure PC10 (SCK) and PC12 (MOSI) as output, PC11 (MISO) as input
-    GPIOC->MODER |= (GPIO_MODER_MODER10_0 | GPIO_MODER_MODER12_0); // PC10, PC12 output
-    GPIOC->MODER &= ~GPIO_MODER_MODER11; // PC11 input (reset both bits to 00)
+    GPIOC->MODER |= (GPIO_MODER_MODER10_1 | GPIO_MODER_MODER11_1 | GPIO_MODER_MODER12_1); // PC10, PC11, PC12 Alternate
+    static constexpr auto af6 = 6U;                               // AF6 for SPI3
+    GPIOC->AFR[1] |= (af6 << GPIO_AFRH_AFSEL10_Pos) | (af6 << GPIO_AFRH_AFSEL11_Pos) | (af6 << GPIO_AFRH_AFSEL12_Pos);
+    //GPIOC->MODER &= ~GPIO_MODER_MODER11_1; // PC11 input (reset both bits to 00)
     GPIOC->OSPEEDR |= (GPIO_OSPEEDR_OSPEED10 | GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12); // High speed for SCK, MISO, MOSI
     
-    GPIOB->MODER |= (GPIO_MODER_MODER13_0);    // Output functoin mode
+    GPIOB->MODER |= (GPIO_MODER_MODER13_0);    // Output mode functoin mode
     GPIOB->OSPEEDR |= (GPIO_OSPEEDR_OSPEED13); // High speed
     
     // Configure SPI3 
@@ -58,8 +60,8 @@ auto Reset() -> void
     SPI3->CR1 &= ~SPI_CR1_BR;                  // Reset baud rate register
     
     // Reset GPIO to default state
-    GPIOC->MODER &= ~(GPIO_MODER_MODER10_0 | GPIO_MODER_MODER12_0);
-    GPIOC->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED10 | GPIO_MODER_MODER11_0 | GPIO_MODER_MODER12_0);
+    GPIOC->MODER &= ~(GPIO_MODER_MODER10_1 | GPIO_MODER_MODER11_1 | GPIO_MODER_MODER12_1);
+    GPIOC->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED10 | GPIO_OSPEEDR_OSPEED11 | GPIO_OSPEEDR_OSPEED12);
     
     GPIOB->MODER &= ~(GPIO_MODER_MODER13_0);
     GPIOB->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED13);
@@ -78,8 +80,8 @@ auto Write(unsigned char character) -> void
 
 auto Read(char *character) -> void
 {
-    //Write(0xFF);
-    while(SPI_SR_RXNE == 0) {}  // Wait until RX data register is not empty
+    Write(0xFF);
+    while((SPI3->SR &SPI_SR_RXNE) == 0) {}  // Wait until RX data register is not empty
     *character = static_cast<char>(SPI3->DR); // Read received data
 }
 
@@ -109,23 +111,39 @@ auto FramReset()->void
 
 auto FramReadId() -> void
 {
-    uint8_t tx[4] = {opcode::readDeviceId, 0xFF, 0xFF, 0xFF };
-    char rx[4] = { 0 };
-    
-    sts1cobcsw::uciuart::Write("Fram ID: ");
-    
-    ResetCsPin();
+    char rx[9] = {0};
 
-    for (int i = 0; i < 4; ++i) {
-        // Wait for TX ready
-        Write(tx[i]);
-       
-        // Wait for RX ready
-        Read(& rx[i]);
-        sts1cobcsw::uciuart::Write(rx[i]);
+    sts1cobcsw::uciuart::Write("Fram ID: ");
+
+    ResetCsPin();
+    Write(opcode::readDeviceId);
+    Read(&rx[0]);
+        
+    for (char & i : rx) 
+    {
+        Read(&i);
+        //sts1cobcsw::uciuart::Write(rx[i]);
     }
     
     SetCsPin();
+    
+    // Convert rx to a printable hex string
+    char idString[26];
+    int len = 0;
+    for(char i : rx) // skip the first byte (command echo)
+    {
+        auto byte = static_cast<unsigned char>(i);
+        // High nibble
+        idString[len++] = "0123456789ABCDEF"[byte >> 4];
+        // Low nibble
+        idString[len++] = "0123456789ABCDEF"[byte & 0x0F];
+        if(len < 26)
+        {
+            idString[len++] = ' ';
+        }
+    }
+    
+    sts1cobcsw::uciuart::Write(static_cast<const char *>(&idString[0]));
 }
 
 auto FramWrite(unsigned long address, char const * string, int size) -> void

@@ -29,11 +29,13 @@ auto main() -> int
 
     char nResetsSinceRf = 0;
     sts1cobcsw::ucispi::FramRead(persvar::nResetsSinceRfAdress, &nResetsSinceRf, 1);
-    sts1cobcsw::uciuart::Write("Number of resets since Rf:");
+    sts1cobcsw::uciuart::Write("Number of resets since Rf: ");
     sts1cobcsw::uciuart::Write(nResetsSinceRf);
     sts1cobcsw::uciuart::Write("\n");
     nResetsSinceRf = static_cast<char>(static_cast<int>(nResetsSinceRf)+1);
     sts1cobcsw::ucispi::FramWrite(persvar::nResetsSinceRfAdress, &nResetsSinceRf, 1);
+    
+    sts1cobcsw::ucispi::Reset();
     
     //sts1cobcsw::RunFirmware();
 }
