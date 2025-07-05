@@ -164,7 +164,7 @@ inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 namespace tc
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
-inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto pduHeaderLength = 8U;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 }
 

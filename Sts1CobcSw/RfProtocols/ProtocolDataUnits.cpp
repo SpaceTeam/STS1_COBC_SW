@@ -48,9 +48,7 @@ auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::Protoco
     {
         return ErrorCode::invalidProtocolDataUnit;
     }
-    // TODO: I think this time it not length - 1, but the actual length
-    auto realDataFieldLength = pdu.header.pduDataFieldLength + 1U;
-    if(realDataFieldLength > tc::maxPduDataLength)
+    if(pdu.header.pduDataFieldLength > tc::maxPduDataLength)
     {
         return ErrorCode::invalidPduDataLength;
     }
@@ -61,12 +59,12 @@ auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::Protoco
     {
         return ErrorCode::invalidEntityId;
     }
-    if(buffer.size() < tc::pduHeaderLength + realDataFieldLength)
+    if(buffer.size() < tc::pduHeaderLength + pdu.header.pduDataFieldLength)
     {
         return ErrorCode::bufferTooSmall;
     }
-    pdu.dataField.uninitialized_resize(realDataFieldLength);
-    std::ranges::copy(buffer.subspan(tc::pduHeaderLength, realDataFieldLength),
+    pdu.dataField.uninitialized_resize(pdu.header.pduDataFieldLength);
+    std::ranges::copy(buffer.subspan(tc::pduHeaderLength, pdu.header.pduDataFieldLength),
                       pdu.dataField.begin());
     return pdu;
 }
