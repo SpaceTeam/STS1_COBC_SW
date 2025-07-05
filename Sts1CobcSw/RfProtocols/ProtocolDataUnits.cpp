@@ -28,6 +28,28 @@ auto FileDataPdu::DoSize() const -> std::uint16_t
 }
 
 
+auto EndOfFilePdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor =
+        SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, value_of(conditionCode), spare);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, fileChecksum);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize);
+    if(conditionCode != noErrorConditionCode)
+    {
+        (void)SerializeTo<ccsdsEndianness>(cursor, faultLocation);
+    }
+}
+
+
+auto EndOfFilePdu::DoSize() const -> std::uint16_t
+{
+    return conditionCode == noErrorConditionCode
+             ? minParameterFieldLength
+             : minParameterFieldLength + totalSerialSize<FaultLocation>;
+}
+
+
 auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::ProtocolDataUnit>
 {
     if(buffer.size() < tc::pduHeaderLength)
@@ -101,6 +123,36 @@ auto ParseAsFileDirectivePdu(std::span<Byte const> buffer) -> Result<FileDirecti
 }
 
 
+auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
+{
+    if(buffer.size() < EndOfFilePdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto endOfFilePdu = EndOfFilePdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(
+        buffer.data(), &value_of(endOfFilePdu.conditionCode), &endOfFilePdu.spare);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &endOfFilePdu.fileChecksum);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &endOfFilePdu.fileSize);
+    if(endOfFilePdu.conditionCode != noErrorConditionCode)
+    {
+        if(buffer.size() != EndOfFilePdu::minParameterFieldLength + totalSerialSize<FaultLocation>)
+        {
+            return ErrorCode::invalidDataLength;
+        }
+        (void)DeserializeFrom<ccsdsEndianness>(cursor, &endOfFilePdu.faultLocation);
+        auto faultLocationIsValid = endOfFilePdu.faultLocation.type == TlvType::entityId
+                                and endOfFilePdu.faultLocation.length == totalSerialSize<EntityId>
+                                and IsValid(endOfFilePdu.faultLocation.value);
+        if(not faultLocationIsValid)
+        {
+            return ErrorCode::invalidFaultLocation;
+        }
+    }
+    return endOfFilePdu;
+}
+
+
 auto IsValid(DirectiveCode directiveCode) -> bool
 {
     switch(directiveCode)
@@ -114,4 +166,32 @@ auto IsValid(DirectiveCode directiveCode) -> bool
     }
     return false;
 }
+
+
+// --- De-/Serialization ---
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, FaultLocation const & faultLocation) -> void *
+{
+    destination = SerializeTo<endianness>(destination, faultLocation.type);
+    destination = SerializeTo<endianness>(destination, faultLocation.length);
+    destination = SerializeTo<endianness>(destination, faultLocation.value);
+    return destination;
+}
+
+
+template auto SerializeTo<std::endian::big>(void *, FaultLocation const &) -> void *;
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, FaultLocation * faultLocation) -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &faultLocation->type);
+    source = DeserializeFrom<endianness>(source, &faultLocation->length);
+    source = DeserializeFrom<endianness>(source, &faultLocation->value);
+    return source;
+}
+
+
+template auto DeserializeFrom<std::endian::big>(void const *, FaultLocation *) -> void const *;
 }
