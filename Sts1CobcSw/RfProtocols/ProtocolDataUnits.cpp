@@ -2,6 +2,7 @@
 
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
+#include <Sts1CobcSw/RfProtocols/Utility.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
@@ -13,6 +14,20 @@
 
 namespace sts1cobcsw
 {
+auto FileDataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, offset);
+    std::ranges::copy(fileData, static_cast<Byte *>(cursor));
+}
+
+
+auto FileDataPdu::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(offset)> + fileData.size());
+}
+
+
 auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::ProtocolDataUnit>
 {
     if(buffer.size() < tc::pduHeaderLength)
@@ -33,6 +48,7 @@ auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::Protoco
     {
         return ErrorCode::invalidProtocolDataUnit;
     }
+    // TODO: I think this time it not length - 1, but the actual length
     auto realDataFieldLength = pdu.header.pduDataFieldLength + 1U;
     if(realDataFieldLength > tc::maxPduDataLength)
     {
@@ -53,5 +69,18 @@ auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::Protoco
     std::ranges::copy(buffer.subspan(tc::pduHeaderLength, realDataFieldLength),
                       pdu.dataField.begin());
     return pdu;
+}
+
+
+auto ParseAsFileDataPdu(std::span<Byte const> buffer) -> Result<FileDataPdu>
+{
+    if(buffer.size() < totalSerialSize<decltype(FileDataPdu::offset)>)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto fileDataPdu = FileDataPdu{};
+    (void)DeserializeFrom<ccsdsEndianness>(buffer.data(), &fileDataPdu.offset);
+    fileDataPdu.fileData = buffer.subspan<totalSerialSize<decltype(FileDataPdu::offset)>>();
+    return fileDataPdu;
 }
 }
