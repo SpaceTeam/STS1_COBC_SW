@@ -14,6 +14,8 @@
 
 #include <etl/vector.h>
 
+#include <array>
+#include <cstddef>
 #include <span>
 
 
@@ -58,7 +60,82 @@ TEST_CASE("Parsing Protocol Data Units")
     CHECK(pdu.dataField.size() == 1U);
     CHECK(pdu.dataField[0] == 0xAB_b);
 
-    // TODO: Add tests for invalid PDU headers
+    buffer[0] ^= 0xE0_b;  // Invalid version
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[0] ^= 0xE0_b;
+
+    buffer[0] ^= 0x04_b;  // Invalid transmission mode
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[0] ^= 0x04_b;
+
+    buffer[0] ^= 0x02_b;  // Invalid CRC flag
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[0] ^= 0x02_b;
+
+    buffer[0] ^= 0x01_b;  // Invalid large file flag
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[0] ^= 0x01_b;
+
+    buffer[3] ^= 0x80_b;  // Invalid segmentation control
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[3] ^= 0x80_b;
+
+    buffer[3] ^= 0x70_b;  // Invalid length of entity IDs
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[3] ^= 0x70_b;
+
+    buffer[3] ^= 0x08_b;  // Invalid segment metadata flag
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[3] ^= 0x08_b;
+
+    buffer[3] ^= 0x07_b;  // Invalid length of transaction sequence number
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidProtocolDataUnit);
+    buffer[3] ^= 0x07_b;
+
+    buffer[2] = Byte{sts1cobcsw::tc::maxPduDataLength};  // Invalid PDU data field length
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidPduDataLength);
+    buffer[2] = 0x00_b;
+
+    buffer[4] = 0x00_b;  // Invalid source entity ID
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidEntityId);
+    buffer[4] = 0x0F_b;
+
+    buffer[7] = 0x00_b;  // Invalid destination entity ID
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidEntityId);
+    buffer[7] = 0xF0_b;
+
+    buffer[7] = buffer[4];  // Source and destination entity IDs must not be equal
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidEntityId);
+    buffer[7] = 0xF0_b;
+
+    buffer.resize(sts1cobcsw::tc::pduHeaderLength - 1);  // Buffer too small
+    parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 }
 
 
