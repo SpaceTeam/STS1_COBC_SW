@@ -85,9 +85,12 @@ using ModemBcrNcoOffset212          = Properties<PropertyGroup::modem, 0x24_b, 1
 using ModemAfcLimiter13             = Properties<PropertyGroup::modem, 0x30_b, 3>;
 using ModemAgcControl1              = Properties<PropertyGroup::modem, 0x35_b, 1>;
 using ModemAgcWindowSize12          = Properties<PropertyGroup::modem, 0x38_b, 12>;
-using ModemRawControl10             = Properties<PropertyGroup::modem, 0x45_b, 10>;     // the RX ModemRawControl10 is used for TX and RX.  It containes all data from TX ModemRawControl5
-using ModemRssiJumpThresh1          = Properties<PropertyGroup::modem, 0x4B_b, 1>;      // Only needed for TX
-using ModemRssiControl22            = Properties<PropertyGroup::modem, 0x4D_b, 2>;      // Only needed for TX
+// The RX ModemRawControl10 is used for TX and RX. It contains all data from TX ModemRawControl5
+using ModemRawControl10             = Properties<PropertyGroup::modem, 0x45_b, 10>;
+// Only needed for TX
+using ModemRssiJumpThresh1          = Properties<PropertyGroup::modem, 0x4B_b, 1>;
+// Only needed for TX
+using ModemRssiControl22            = Properties<PropertyGroup::modem, 0x4D_b, 2>;
 using ModemRawSearch22              = Properties<PropertyGroup::modem, 0x50_b, 2>;
 using ModemSpikeDet2                = Properties<PropertyGroup::modem, 0x54_b, 2>;
 using ModemRssiMute1                = Properties<PropertyGroup::modem, 0x57_b, 1>;
@@ -123,17 +126,20 @@ struct DataRateConfig
 // NOLINTBEGIN(*identifier-naming)
 
 // Constants and Naming taken from WDS tool
-                                                        // Group,  Index, nProperties,    Properties
+// Group,  Index, nProperties,    Properties
 constexpr auto MODEM_AGC_CONTROL = Properties<PropertyGroup::modem, 0x35_b, 1>(std::array{0xE0_b});
-constexpr auto MODEM_RSSI_JUMP_THRESH = Properties<PropertyGroup::modem, 0x4B_b, 1>(std::array{0x06_b});
-constexpr auto MODEM_RSSI_CONTROL2 = Properties<PropertyGroup::modem, 0x4D_b, 2>(std::array{0x84_b, 0x40_b});
-constexpr auto MODEM_RAW_SEARCH2 = Properties<PropertyGroup::modem, 0x50_b, 2>(std::array{0x18_b, 0x0A_b});
+constexpr auto MODEM_RSSI_JUMP_THRESH =
+    Properties<PropertyGroup::modem, 0x4B_b, 1>(std::array{0x06_b});
+constexpr auto MODEM_RSSI_CONTROL2 =
+    Properties<PropertyGroup::modem, 0x4D_b, 2>(std::array{0x84_b, 0x40_b});
+constexpr auto MODEM_RAW_SEARCH2 =
+    Properties<PropertyGroup::modem, 0x50_b, 2>(std::array{0x18_b, 0x0A_b});
 
-// Spike detection threshold is disabled. It is set to 0x04 only on 57.600 and 115.200. So Iset it globally to 0x03
-constexpr auto MODEM_SPIKE_DET = Properties<PropertyGroup::modem, 0x54_b, 2>(std::array{0x03_b, 0x07_b});
+// Spike detection threshold is disabled. It is set to 0x04 only on 57.600 and 115.200. So Iset it
+// globally to 0x03
+constexpr auto MODEM_SPIKE_DET =
+    Properties<PropertyGroup::modem, 0x54_b, 2>(std::array{0x03_b, 0x07_b});
 constexpr auto MODEM_RSSI_MUTE = Properties<PropertyGroup::modem, 0x57_b, 1>(std::array{0x00_b});
-
-
 // NOLINTEND(*identifier-naming)
 
 // clang-format off
@@ -911,7 +917,7 @@ constexpr auto dataRateConfig38400 = DataRateConfig{
 // the WDS tool gave us 9 different datarate configuratios,
 // they are split into fixed values and changed values.
 // so fixed values can be set once at start and will not changed again
-// changing values are eighter saved for standard frequencies or tried to be computed for every frequency
+// changing values are either saved for standard frequencies or tried to be computed for every frequency
 
 
 // RX & TX                              StartIndex: 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b
