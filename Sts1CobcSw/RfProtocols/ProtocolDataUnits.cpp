@@ -81,4 +81,37 @@ auto ParseAsFileDataPdu(std::span<Byte const> buffer) -> Result<FileDataPdu>
     fileDataPdu.fileData = buffer.subspan<totalSerialSize<decltype(FileDataPdu::offset)>>();
     return fileDataPdu;
 }
+
+
+auto ParseAsFileDirectivePdu(std::span<Byte const> buffer) -> Result<FileDirectivePdu>
+{
+    if(buffer.size() < totalSerialSize<decltype(FileDirectivePdu::directiveCode)>)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto fileDirectivePdu = FileDirectivePdu{};
+    (void)DeserializeFrom<ccsdsEndianness>(buffer.data(), &fileDirectivePdu.directiveCode);
+    fileDirectivePdu.parameterField =
+        buffer.subspan<totalSerialSize<decltype(fileDirectivePdu.directiveCode)>>();
+    if(not IsValid(fileDirectivePdu.directiveCode))
+    {
+        return ErrorCode::invalidFileDirectiveCode;
+    }
+    return fileDirectivePdu;
+}
+
+
+auto IsValid(DirectiveCode directiveCode) -> bool
+{
+    switch(directiveCode)
+    {
+        case DirectiveCode::endOfFile:
+        case DirectiveCode::finished:
+        case DirectiveCode::ack:
+        case DirectiveCode::metadata:
+        case DirectiveCode::nack:
+            return true;
+    }
+    return false;
+}
 }
