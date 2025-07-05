@@ -241,7 +241,7 @@ auto SerializeTo(void * destination, RequestId const & requestId) -> void *
 {
     destination = SerializeTo<endianness>(destination,
                                           requestId.packetVersionNumber,
-                                          requestId.packetType,
+                                          value_of(requestId.packetType),
                                           requestId.secondaryHeaderFlag,
                                           requestId.apid.Value(),
                                           requestId.sequenceFlags,
@@ -255,22 +255,22 @@ template auto SerializeTo<std::endian::big>(void * destination, RequestId const 
 
 
 template<std::endian endianness>
-auto DeserializeFrom(void const * source, RequestId & requestId) -> void const *
+auto DeserializeFrom(void const * source, RequestId * requestId) -> void const *
 {
     auto apidValue = Apid::ValueType{};
     source = DeserializeFrom<endianness>(source,
-                                         &requestId.packetVersionNumber,
-                                         &requestId.packetType,
-                                         &requestId.secondaryHeaderFlag,
+                                         &requestId->packetVersionNumber,
+                                         &value_of(requestId->packetType),
+                                         &requestId->secondaryHeaderFlag,
                                          &apidValue,
-                                         &requestId.sequenceFlags,
-                                         &requestId.packetSequenceCount);
-    requestId.apid = Apid(apidValue);
+                                         &requestId->sequenceFlags,
+                                         &requestId->packetSequenceCount);
+    requestId->apid = Apid(apidValue);
     return source;
 }
 
 
-template auto DeserializeFrom<std::endian::big>(void const * source, RequestId & requestId)
+template auto DeserializeFrom<std::endian::big>(void const * source, RequestId * requestId)
     -> void const *;
 
 

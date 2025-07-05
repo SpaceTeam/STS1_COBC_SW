@@ -3,8 +3,12 @@
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
+
+#include <strong_type/equality.hpp>
 
 #include <algorithm>
+#include <utility>
 
 
 namespace sts1cobcsw
