@@ -2,6 +2,7 @@
 
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
+#include <Sts1CobcSw/RfProtocols/Utility.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
@@ -17,8 +18,6 @@ auto messageTypeCounters = IdCounters<std::uint16_t, tm::MessageTypeId>{};
 
 template<tm::MessageTypeId id>
 auto UpdateMessageTypeCounterAndTime(tm::SpacePacketSecondaryHeader<id> * secondaryHeader) -> void;
-
-auto IncreaseSize(etl::ivector<Byte> * dataField, std::size_t sizeIncrease) -> std::size_t;
 }
 
 
@@ -284,14 +283,6 @@ auto UpdateMessageTypeCounterAndTime(tm::SpacePacketSecondaryHeader<id> * second
     secondaryHeader->messageTypeCounter =
         messageTypeCounters.PostIncrement(secondaryHeader->messageTypeId);
     secondaryHeader->time = CurrentRealTime();
-}
-
-
-auto IncreaseSize(etl::ivector<Byte> * dataField, std::size_t sizeIncrease) -> std::size_t
-{
-    auto oldSize = dataField->size();
-    dataField->resize(oldSize + sizeIncrease);
-    return oldSize;
 }
 }
 }
