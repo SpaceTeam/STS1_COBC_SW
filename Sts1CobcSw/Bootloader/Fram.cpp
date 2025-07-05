@@ -92,7 +92,7 @@ auto Write(unsigned long address, char const * string, int size) -> void
 }
 
 
-auto Read(unsigned long address, char * stringPass, int size) -> void
+auto Read(unsigned long address, char * string, int size) -> void
 {
     unsigned int adressByte0 = (address & 0x00FF'0000) >> 16;
     unsigned int adressByte1 = (address & 0x0000'FF00) >> 8;
@@ -108,7 +108,7 @@ auto Read(unsigned long address, char * stringPass, int size) -> void
     while((SPI3->SR & SPI_SR_TXE) == 0) {}
     for(int i = 0; i < size; i++)
     {
-        spi::Read(&stringPass[i]);
+        spi::Read(&string[i]);
     }
     while(SPI_SR_RXNE == 0) {}
     SetCsPin();
@@ -140,7 +140,7 @@ auto PersistentWariableRead(unsigned long address, unsigned long blockSize) -> u
 }
 
 
-auto PersistentWariableWrite(unsigned int address, unsigned int data, unsigned long int blockSize) -> void
+auto PersistentWariableWrite(unsigned int address, unsigned int data, unsigned long blockSize) -> void
 {
     auto dataChar = static_cast<char>(data);
     Write(address, &dataChar, 1);

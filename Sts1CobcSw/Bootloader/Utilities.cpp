@@ -58,7 +58,7 @@ auto PrintDecString(char const * string, int stringLength) -> void
     int len = 0;
     for(unsigned int i = 0; i < stringLength; ++i)
     {
-        unsigned char byte = static_cast<unsigned char>(string[i]);
+        auto byte = static_cast<unsigned char>(string[i]);
         // Convert byte to decimal string
         if(byte >= 100)
         {
