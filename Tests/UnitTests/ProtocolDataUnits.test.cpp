@@ -17,6 +17,7 @@
 #include <array>
 #include <cstddef>
 #include <span>
+#include <utility>
 
 
 using sts1cobcsw::Byte;
@@ -24,7 +25,7 @@ using sts1cobcsw::ErrorCode;
 using sts1cobcsw::operator""_b;
 
 
-TEST_CASE("Parsing Protocol Data Units")
+TEST_CASE("Parsing ProtocolDataUnit")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
     buffer.resize(sts1cobcsw::tc::pduHeaderLength);
@@ -139,10 +140,9 @@ TEST_CASE("Parsing Protocol Data Units")
 }
 
 
-TEST_CASE("Adding File Data PDUs to data fields")
+TEST_CASE("Adding FileDataPdu to data field")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
-    dataField.resize(0);
     auto fileDataPdu = sts1cobcsw::FileDataPdu{};
     fileDataPdu.offset = 0x0102'0304U;
     static constexpr auto fileData = std::array{0xAB_b, 0xCD_b};
@@ -169,7 +169,7 @@ TEST_CASE("Adding File Data PDUs to data fields")
 }
 
 
-TEST_CASE("Parsing File Data PDUs")
+TEST_CASE("Parsing FileDataPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
     buffer.resize(4 + 2);
@@ -195,7 +195,7 @@ TEST_CASE("Parsing File Data PDUs")
 }
 
 
-TEST_CASE("Parsing File Directive PDUs")
+TEST_CASE("Parsing FileDirectivePdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
     buffer.resize(1 + 2);
@@ -210,7 +210,7 @@ TEST_CASE("Parsing File Directive PDUs")
     CHECK(fileDirectivePdu.parameterField[0] == 0xAB_b);
     CHECK(fileDirectivePdu.parameterField[1] == 0xCD_b);
 
-    // Buffer must be > serialSize(directiveCode)
+    // Buffer must be >= serialSize(directiveCode)
     buffer.resize(0);
     parseResult = sts1cobcsw::ParseAsFileDirectivePdu(buffer);
     CHECK(parseResult.has_error());
@@ -222,4 +222,102 @@ TEST_CASE("Parsing File Directive PDUs")
     parseResult = sts1cobcsw::ParseAsFileDirectivePdu(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidFileDirectiveCode);
+}
+
+
+TEST_CASE("Adding EndOfFilePdu to data field")
+{
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto endOfFilePdu = sts1cobcsw::EndOfFilePdu{};
+    endOfFilePdu.conditionCode = sts1cobcsw::noErrorConditionCode;
+    endOfFilePdu.fileChecksum = 0x1234'5678U;
+    endOfFilePdu.fileSize = 0x9ABC'DEF0U;
+
+    CHECK(endOfFilePdu.Size() == 9U);  // 1 B condition code + 4 B file checksum + 4 B file size
+
+    auto addResult = endOfFilePdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == endOfFilePdu.Size());
+    CHECK(dataField[0] == 0x00_b);  // Condition code (no error)
+    CHECK(dataField[1] == 0x12_b);  // File checksum (high byte)
+    CHECK(dataField[2] == 0x34_b);  // File checksum
+    CHECK(dataField[3] == 0x56_b);  // File checksum
+    CHECK(dataField[4] == 0x78_b);  // File checksum (low byte)
+    CHECK(dataField[5] == 0x9A_b);  // File size (high byte)
+    CHECK(dataField[6] == 0xBC_b);  // File size
+    CHECK(dataField[7] == 0xDE_b);  // File size
+    CHECK(dataField[8] == 0xF0_b);  // File size (low byte)
+
+    endOfFilePdu.conditionCode = sts1cobcsw::invalidTransmissionModeConditionCode;
+    endOfFilePdu.faultLocation.type = sts1cobcsw::TlvType::entityId;
+    endOfFilePdu.faultLocation.length = 1;
+    endOfFilePdu.faultLocation.value = sts1cobcsw::EntityId(0x0F);
+
+    CHECK(endOfFilePdu.Size() == 12U);  // 9 B + 3 B fault location
+
+    dataField.clear();
+    addResult = endOfFilePdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == endOfFilePdu.Size());
+    CHECK(dataField[0] == 0x30_b);   // Condition code (invalid transmission mode)
+    CHECK(dataField[9] == 0x06_b);   // Fault location type (entity ID)
+    CHECK(dataField[10] == 0x01_b);  // Fault location length
+    CHECK(dataField[11] == 0x0F_b);  // Fault location value (entity ID)
+}
+
+
+TEST_CASE("Parsing EndOfFilePdu")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+    buffer.resize(9);
+    buffer[0] = 0x00_b;  // Condition code (no error)
+    buffer[1] = 0x12_b;  // File checksum (high byte)
+    buffer[2] = 0x34_b;  // File checksum
+    buffer[3] = 0x56_b;  // File checksum
+    buffer[4] = 0x78_b;  // File checksum (low byte)
+    buffer[5] = 0x9A_b;  // File size (high byte)
+    buffer[6] = 0xBC_b;  // File size
+    buffer[7] = 0xDE_b;  // File size
+    buffer[8] = 0xF0_b;  // File size (low byte)
+
+    auto parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
+    REQUIRE(parseResult.has_value());
+    auto & endOfFilePdu = parseResult.value();
+    CHECK(endOfFilePdu.conditionCode == sts1cobcsw::noErrorConditionCode);
+    CHECK(endOfFilePdu.fileChecksum == 0x1234'5678U);
+    CHECK(endOfFilePdu.fileSize == 0x9ABC'DEF0U);
+
+    // Buffer must be >= serialSize(conditionCode, fileChecksum, fileSize)
+    buffer.resize(8);
+    parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+
+    buffer.resize(12);
+    buffer[9] = 6_b;      // Fault location type (entity ID)
+    buffer[10] = 1_b;     // Fault location length
+    buffer[11] = 0x0F_b;  // Fault location value (entity ID)
+    parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
+    REQUIRE(parseResult.has_value());
+    endOfFilePdu = parseResult.value();
+    // Condition code is still no error, so we don't parse the fault location
+    CHECK(endOfFilePdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
+    CHECK(endOfFilePdu.faultLocation.length == 0);
+    CHECK(endOfFilePdu.faultLocation.value == sts1cobcsw::EntityId(0));
+
+    buffer[0] = 0x10_b;  // Condition code (positive ACK limit reached)
+    parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
+    REQUIRE(parseResult.has_value());
+    endOfFilePdu = parseResult.value();
+    CHECK(endOfFilePdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(endOfFilePdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
+    CHECK(endOfFilePdu.faultLocation.length == 1);
+    CHECK(endOfFilePdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+
+    // Buffer must be == serialSize(conditionCode, fileChecksum, fileSize, faultLocation)
+    buffer.resize(13);
+    parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+    buffer.resize(12);
 }
