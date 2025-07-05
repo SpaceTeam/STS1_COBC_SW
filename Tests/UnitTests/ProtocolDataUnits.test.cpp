@@ -193,3 +193,33 @@ TEST_CASE("Parsing File Data PDUs")
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 }
+
+
+TEST_CASE("Parsing File Directive PDUs")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+    buffer.resize(1 + 2);
+    buffer[0] = 0x04_b;  // Directive code (EOF)
+    buffer[1] = 0xAB_b;  // Parameter field
+    buffer[2] = 0xCD_b;  // Parameter field
+    auto parseResult = sts1cobcsw::ParseAsFileDirectivePdu(buffer);
+    REQUIRE(parseResult.has_value());
+    auto & fileDirectivePdu = parseResult.value();
+    CHECK(fileDirectivePdu.directiveCode == sts1cobcsw::DirectiveCode::endOfFile);
+    CHECK(fileDirectivePdu.parameterField.size() == 2U);
+    CHECK(fileDirectivePdu.parameterField[0] == 0xAB_b);
+    CHECK(fileDirectivePdu.parameterField[1] == 0xCD_b);
+
+    // Buffer must be > serialSize(directiveCode)
+    buffer.resize(0);
+    parseResult = sts1cobcsw::ParseAsFileDirectivePdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+
+    // Invalid directive code
+    buffer.resize(3);
+    buffer[0] = 0xFF_b;  // Invalid directive code
+    parseResult = sts1cobcsw::ParseAsFileDirectivePdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidFileDirectiveCode);
+}
