@@ -7,5 +7,7 @@ target_sources(
             RunFirmware.cpp
             Startup.s
             UciUart.cpp
-            UciSpi.cpp
+            Spi.cpp
+            Fram.cpp
+            Utilities.cpp
 )

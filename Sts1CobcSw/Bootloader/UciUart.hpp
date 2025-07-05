@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace sts1cobcsw::uciuart
+namespace sts1cobcsw::bootloader::uciuart
 {
 auto Initialize() -> void;
 auto Reset() -> void;
