@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace sts1cobcsw::bootloader
+namespace sts1cobcsw
 {
 // This function must be marked as [[noreturn]] to tell the compiler that it doesn't need to clean
 // up the stack before jumping to the firmware. Without this, calling a function in RunFirmware()

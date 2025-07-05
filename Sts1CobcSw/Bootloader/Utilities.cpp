@@ -3,7 +3,7 @@
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 #include <Sts1CobcSw/Bootloader/UciUart.hpp>  //test only
 
-namespace sts1cobcsw::bootloader::utilities
+namespace sts1cobcsw::utilities
 {
 // NOLINTBEGIN(*no-int-to-ptr, *cstyle-cast)
 #pragma GCC diagnostic push

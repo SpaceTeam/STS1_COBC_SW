@@ -1,6 +1,6 @@
 #pragma once
 
-namespace sts1cobcsw::bootloader::utilities
+namespace sts1cobcsw::utilities
 {
 auto PrintHexString(char const * string, int stringLenght) -> void;
 auto PrintBinString(char const * string, int stringLength) -> void;

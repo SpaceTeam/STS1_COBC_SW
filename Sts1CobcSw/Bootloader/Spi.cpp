@@ -2,7 +2,7 @@
 
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 
-namespace sts1cobcsw::bootloader::spi
+namespace sts1cobcsw::spi
 {
 // NOLINTBEGIN(*no-int-to-ptr, *cstyle-cast)
 #pragma GCC diagnostic push

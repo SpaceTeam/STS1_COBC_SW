@@ -1,6 +1,6 @@
 #pragma once
 
-namespace sts1cobcsw::bootloader::spi
+namespace sts1cobcsw::spi
 {
 auto Initialize() -> void;
 auto Reset() -> void;

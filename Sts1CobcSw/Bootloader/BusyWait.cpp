@@ -1,7 +1,7 @@
 #include <Sts1CobcSw/Bootloader/BusyWait.hpp>
 
 
-namespace sts1cobcsw::bootloader
+namespace sts1cobcsw
 {
 auto BusyWaitUs(int duration) -> void
 {

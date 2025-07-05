@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace sts1cobcsw::bootloader::leds
+namespace sts1cobcsw::leds
 {
 auto Initialize() -> void;
 auto Reset() -> void;

@@ -19,24 +19,24 @@ constexpr auto nTotalResetsAdress = 6;                // TODO: check this //Toge
 
 auto main() -> int
 {
-    sts1cobcsw::bootloader::leds::Initialize();
-    sts1cobcsw::bootloader::leds::TurnOn();
-    sts1cobcsw::bootloader::uciuart::Initialize();
-    sts1cobcsw::bootloader::uciuart::Write("Hello from the bootloader!\n");
+    sts1cobcsw::leds::Initialize();
+    sts1cobcsw::leds::TurnOn();
+    sts1cobcsw::uciuart::Initialize();
+    sts1cobcsw::uciuart::Write("Hello from the bootloader!\n");
 
-    sts1cobcsw::bootloader::fram::Initialize();
-    sts1cobcsw::bootloader::fram::ReadId();
+    sts1cobcsw::fram::Initialize();
+    sts1cobcsw::fram::ReadId();
     
     //increment the number of total resets
     //read the variable from the fram
     unsigned int byte[4] = {0x00};
-    byte[0] = sts1cobcsw::bootloader::fram::PersistentWariableRead(persvar::nTotalResetsAdress,
+    byte[0] = sts1cobcsw::fram::PersistentWariableRead(persvar::nTotalResetsAdress,
                                                                    persvar::persistentVariableBlockSize);
-    byte[1] = sts1cobcsw::bootloader::fram::PersistentWariableRead(persvar::nTotalResetsAdress + 1,
+    byte[1] = sts1cobcsw::fram::PersistentWariableRead(persvar::nTotalResetsAdress + 1,
                                                                    persvar::persistentVariableBlockSize);
-    byte[2] = sts1cobcsw::bootloader::fram::PersistentWariableRead(persvar::nTotalResetsAdress + 2,
+    byte[2] = sts1cobcsw::fram::PersistentWariableRead(persvar::nTotalResetsAdress + 2,
                                                                    persvar::persistentVariableBlockSize);
-    byte[3] = sts1cobcsw::bootloader::fram::PersistentWariableRead(persvar::nTotalResetsAdress + 3,
+    byte[3] = sts1cobcsw::fram::PersistentWariableRead(persvar::nTotalResetsAdress + 3,
                                                                    persvar::persistentVariableBlockSize);
     unsigned long value = byte[0]*(256*256*256) + byte[1]*(256*256) + byte[2]*256 + byte[3];
     //write the incremented value back to the fram
@@ -45,34 +45,34 @@ auto main() -> int
     byte[1] = (value & 0x00FF0000)>>16;
     byte[2] = (value & 0x0000FF00)>>8;
     byte[3] = (value & 0x000000FF);
-    sts1cobcsw::bootloader::fram::PersistentWariableWrite(persvar::nTotalResetsAdress,
+    sts1cobcsw::fram::PersistentWariableWrite(persvar::nTotalResetsAdress,
                                                           byte[0],
                                                           persvar::persistentVariableBlockSize);
-    sts1cobcsw::bootloader::fram::PersistentWariableWrite(persvar::nTotalResetsAdress+1,
+    sts1cobcsw::fram::PersistentWariableWrite(persvar::nTotalResetsAdress+1,
                                                           byte[1],
                                                           persvar::persistentVariableBlockSize);
-    sts1cobcsw::bootloader::fram::PersistentWariableWrite(persvar::nTotalResetsAdress+2,
+    sts1cobcsw::fram::PersistentWariableWrite(persvar::nTotalResetsAdress+2,
                                                           byte[2],
                                                           persvar::persistentVariableBlockSize);
-    sts1cobcsw::bootloader::fram::PersistentWariableWrite(persvar::nTotalResetsAdress+3,
+    sts1cobcsw::fram::PersistentWariableWrite(persvar::nTotalResetsAdress+3,
                                                           byte[3],
                                                           persvar::persistentVariableBlockSize);
   
     //increment the number of resets since the last Rf
-    auto nResetsSinceRf = sts1cobcsw::bootloader::fram::PersistentWariableRead(persvar::nResetsSinceRfAdress, 
+    auto nResetsSinceRf = sts1cobcsw::fram::PersistentWariableRead(persvar::nResetsSinceRfAdress, 
                                                          persvar::persistentVariableBlockSize);
-    sts1cobcsw::bootloader::fram::PersistentWariableWrite(persvar::nResetsSinceRfAdress, 
+    sts1cobcsw::fram::PersistentWariableWrite(persvar::nResetsSinceRfAdress, 
                                                           nResetsSinceRf+1, 
                                                           persvar::persistentVariableBlockSize);
     
-    sts1cobcsw::bootloader::uciuart::Write("Number of resets since Rf: ");
-    sts1cobcsw::bootloader::utilities::PrintDecString(reinterpret_cast<const char*>(&nResetsSinceRf), 1);
-    sts1cobcsw::bootloader::uciuart::Write("\n");
+    sts1cobcsw::uciuart::Write("Number of resets since Rf: ");
+    sts1cobcsw::utilities::PrintDecString(reinterpret_cast<const char*>(&nResetsSinceRf), 1);
+    sts1cobcsw::uciuart::Write("\n");
     
     value--;
-    sts1cobcsw::bootloader::uciuart::Write("Number of total resets: ");
-    sts1cobcsw::bootloader::utilities::PrintDecString(reinterpret_cast<const char*>(&value), 4);
-    sts1cobcsw::bootloader::uciuart::Write("\n");
+    sts1cobcsw::uciuart::Write("Number of total resets: ");
+    sts1cobcsw::utilities::PrintDecString(reinterpret_cast<const char*>(&value), 4);
+    sts1cobcsw::uciuart::Write("\n");
     
-    sts1cobcsw::bootloader::RunFirmware();
+    sts1cobcsw::RunFirmware();
 }

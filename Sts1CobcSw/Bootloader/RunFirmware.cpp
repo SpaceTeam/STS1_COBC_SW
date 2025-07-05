@@ -9,7 +9,7 @@
 #include <cstdint>
 
 
-namespace sts1cobcsw::bootloader
+namespace sts1cobcsw
 {
 namespace
 {

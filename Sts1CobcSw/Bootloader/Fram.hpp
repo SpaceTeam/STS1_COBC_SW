@@ -1,6 +1,6 @@
 #pragma once
 
-namespace sts1cobcsw::bootloader::fram
+namespace sts1cobcsw::fram
 {
 auto SetCsPin() -> void;
 auto ResetCsPin() -> void;

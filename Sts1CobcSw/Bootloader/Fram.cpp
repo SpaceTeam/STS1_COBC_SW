@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/Bootloader/UciUart.hpp>
 #include <Sts1CobcSw/Bootloader/Utilities.hpp>
 
-namespace sts1cobcsw::bootloader::fram
+namespace sts1cobcsw::fram
 {
 // NOLINTBEGIN(*no-int-to-ptr, *cstyle-cast)
 #pragma GCC diagnostic push
