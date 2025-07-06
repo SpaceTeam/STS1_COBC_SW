@@ -138,7 +138,7 @@ inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 
 
 inline constexpr auto maxNParameters = 5U;  // Chosen to be the number of different parameters
 
-enum class FileStatus : std::uint8_t
+enum class LockState : std::uint8_t
 {
     unlocked = 0,
     locked = 0xFF,

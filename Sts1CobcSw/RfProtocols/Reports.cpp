@@ -138,8 +138,8 @@ auto ParameterValueReport::DoSize() const -> std::uint16_t
 
 FileAttributeReport::FileAttributeReport(fs::Path const & filePath,
                                          std::uint32_t fileSize,
-                                         FileStatus fileStatus)
-    : filePath_(filePath), fileSize_(fileSize), fileStatus_(fileStatus)
+                                         LockState lockState)
+    : filePath_(filePath), fileSize_(fileSize), lockState_(lockState)
 {
     filePath_.resize(fs::Path::MAX_SIZE, '\0');
 }
@@ -152,7 +152,7 @@ auto FileAttributeReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, filePath_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
-    (void)SerializeTo<ccsdsEndianness>(cursor, fileStatus_);
+    (void)SerializeTo<ccsdsEndianness>(cursor, lockState_);
 }
 
 
@@ -161,7 +161,7 @@ auto FileAttributeReport::DoSize() const -> std::uint16_t
     return static_cast<std::uint16_t>(totalSerialSize<decltype(secondaryHeader_),
                                                       decltype(filePath_),
                                                       decltype(fileSize_),
-                                                      decltype(fileStatus_)>);
+                                                      decltype(lockState_)>);
 }
 
 

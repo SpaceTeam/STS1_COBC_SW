@@ -531,9 +531,9 @@ auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const &
     {
         OUTCOME_TRY(auto isLocked, fs::IsLocked(request.filePath));
         OUTCOME_TRY(auto fileSize, fs::FileSize(request.filePath));
-        auto fileStatus = isLocked ? FileStatus::locked : FileStatus::unlocked;
+        auto lockState = isLocked ? LockState::locked : LockState::unlocked;
         DEBUG_PRINT("Sending file attribute report for %s\n", request.filePath.c_str());
-        SendAndWait(FileAttributeReport(request.filePath, fileSize, fileStatus));
+        SendAndWait(FileAttributeReport(request.filePath, fileSize, lockState));
         return outcome_v2::success();
     }();
     if(result.has_error())

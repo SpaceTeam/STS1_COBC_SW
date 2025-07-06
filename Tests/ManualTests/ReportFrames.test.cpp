@@ -196,8 +196,8 @@ private:
             auto reportName = "FileAttributeReport.bin"s;
             auto filePath = fs::Path("/results/12345_67890.zip");
             auto fileSize = 0xDEAD'BEEFU;
-            auto fileStatus = FileStatus::locked;
-            auto report = FileAttributeReport(filePath, fileSize, fileStatus);
+            auto lockState = LockState::locked;
+            auto report = FileAttributeReport(filePath, fileSize, lockState);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
