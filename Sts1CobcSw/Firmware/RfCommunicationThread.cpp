@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
 #include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
@@ -149,6 +150,13 @@ private:
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         DEBUG_PRINT("Starting RF communication thread\n");
         rdt::Initialize();
+        fs::Initialize();
+        auto mountResult = fs::Mount();
+        if(mountResult.has_error())
+        {
+            DEBUG_PRINT("Failed to mount file system: %s\n", ToCZString(mountResult.error()));
+            persistentVariables.Increment<"nFileSystemErrors">();
+        }
         auto moreDataShouldBeReceived = false;
         while(true)
         {
