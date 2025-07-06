@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
+#include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
 #include <Sts1CobcSw/RfProtocols/TmSpacePacketSecondaryHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -29,7 +30,7 @@ namespace sts1cobcsw
 struct RequestId
 {
     UInt<3> packetVersionNumber;
-    UInt<1> packetType;
+    PacketType packetType;
     UInt<1> secondaryHeaderFlag;
     Apid apid;
     UInt<2> sequenceFlags;
@@ -137,7 +138,7 @@ private:
 class FileAttributeReport : public Payload
 {
 public:
-    FileAttributeReport(fs::Path const & filePath, std::uint32_t fileSize, FileStatus fileStatus);
+    FileAttributeReport(fs::Path const & filePath, std::uint32_t fileSize, LockState lockState);
 
 
 private:
@@ -145,7 +146,7 @@ private:
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     fs::Path filePath_;
     std::uint32_t fileSize_;
-    FileStatus fileStatus_;
+    LockState lockState_;
 
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
@@ -204,7 +205,7 @@ private:
 template<>
 inline constexpr std::size_t serialSize<RequestId> =
     totalSerialSize<decltype(RequestId::packetVersionNumber),
-                    decltype(RequestId::packetType),
+                    strong::underlying_type_t<PacketType>,
                     decltype(RequestId::secondaryHeaderFlag),
                     decltype(RequestId::apid.Value()),
                     decltype(RequestId::sequenceFlags),
@@ -214,5 +215,5 @@ inline constexpr std::size_t serialSize<RequestId> =
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, RequestId const & requestId) -> void *;
 template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, RequestId & requestId) -> void const *;
+[[nodiscard]] auto DeserializeFrom(void const * source, RequestId * requestId) -> void const *;
 }

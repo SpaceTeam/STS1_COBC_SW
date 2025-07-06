@@ -138,7 +138,7 @@ inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 
 
 inline constexpr auto maxNParameters = 5U;  // Chosen to be the number of different parameters
 
-enum class FileStatus : std::uint8_t
+enum class LockState : std::uint8_t
 {
     unlocked = 0,
     locked = 0xFF,
@@ -164,7 +164,7 @@ inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 namespace tc
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
-inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto pduHeaderLength = 8U;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 }
 
