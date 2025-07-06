@@ -1414,6 +1414,10 @@ auto ResetFifos() -> Result<void>
 
 auto WriteToFifo(std::span<Byte const> data) -> Result<void>
 {
+    if(data.empty())
+    {
+        return outcome_v2::success();
+    }
     OUTCOME_TRY(BusyWaitForCts(ctsTimeout));
     SelectChip();
     WriteTo(&rfSpi, Span(cmdWriteTxFifo), spiTimeout);

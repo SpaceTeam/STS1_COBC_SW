@@ -44,7 +44,12 @@ auto HardwareSpi::Read(void * data, std::size_t nBytes, Duration timeout) -> voi
 
 auto HardwareSpi::Write(void const * data, std::size_t nBytes, Duration timeout) -> void
 {
-    // spi.write() only returns -1 or the given buffer length. It only returns -1 if the SPI is not
+    if(nBytes == 0)
+    {
+        // spi_.write() can get stuck in an infinite loop if nBytes is 0, so we return early
+        return;
+    }
+    // spi_.write() only returns -1 or the given buffer length. It only returns -1 if the SPI is not
     // initialized, which we can check/ensure statically. Therefore, we do not need to check the
     // return value at runtime.
     {
