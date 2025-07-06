@@ -416,8 +416,9 @@ auto DoSetTxType(TxType txType) -> Result<void>
 auto DoSetTxDataLength(std::uint16_t length) -> Result<void>
 {
     static constexpr auto iPktField1Length = 0x0D_b;
+    auto encodedLength = static_cast<uint16_t>(cc::ViterbiCodec::EncodedSize(length, true));
     return SetProperties(
-        PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(length)));
+        PropertyGroup::pkt, iPktField1Length, Span(Serialize<std::endian::big>(encodedLength)));
 }
 
 
@@ -487,15 +488,14 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
         DisableRfLatchupProtection();
     }
     auto dataIndex = 0U;
-    auto convolutionalCoder = cc::ViterbiCodec{};
+    static auto convolutionalCoder = cc::ViterbiCodec{};
     auto result = [&]() -> Result<void>
     {
         OUTCOME_TRY(SetPacketHandlerInterrupts(txFifoAlmostEmptyInterrupt));
         OUTCOME_TRY(auto freeSpace, ReadFreeTxFifoSpace());
-        auto finalChunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, true);
-        while(dataIndex + finalChunkSize < static_cast<unsigned int>(data.size()))
+        auto chunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, true);
+        while(dataIndex + chunkSize < static_cast<unsigned int>(data.size()))
         {
-            auto chunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, false);
             auto encodedChunk =
                 convolutionalCoder.Encode(data.subspan(dataIndex, chunkSize), /*flush=*/false);
             OUTCOME_TRY(WriteToFifo(encodedChunk));
@@ -507,7 +507,7 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
             dataIndex += chunkSize;
             OUTCOME_TRY(SuspendUntilInterrupt(interruptTimeout));
             OUTCOME_TRY(freeSpace, ReadFreeTxFifoSpace());
-            finalChunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, true);
+            chunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, true);
         }
         return outcome_v2::success();
     }();

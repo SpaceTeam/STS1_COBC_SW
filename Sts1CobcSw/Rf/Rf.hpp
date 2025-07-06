@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <Sts1CobcSw/ChannelCoding/External/ConvolutionalCoding.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -20,7 +21,7 @@ enum class TxType : std::uint8_t
 
 
 inline constexpr auto correctPartNumber = 0x4463;
-inline constexpr auto maxTxDataLength = (1U << 13U) - 1U;
+inline constexpr auto maxTxDataLength = cc::ViterbiCodec::UnencodedSize((1U << 13U) - 1U, true);
 
 
 auto Initialize(TxType txType) -> Result<void>;

@@ -98,7 +98,7 @@ public:
         return encodedSize;
 #else
         auto flushingBits = withFlushBits ? nFlushBits : 0U;
-        auto size = ((encodedSize * CHAR_BIT - flushingBits) * 2 / 3) / CHAR_BIT;
+        auto size = (((encodedSize * CHAR_BIT) * 2 / 3) - flushingBits) / CHAR_BIT;
         return size % 2 == 0 ? size : size - 1;
 #endif
     }
