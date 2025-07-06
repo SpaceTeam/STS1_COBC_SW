@@ -138,7 +138,7 @@ private:
 class FileAttributeReport : public Payload
 {
 public:
-    FileAttributeReport(fs::Path const & filePath, std::uint32_t fileSize, FileStatus fileStatus);
+    FileAttributeReport(fs::Path const & filePath, std::uint32_t fileSize, LockState lockState);
 
 
 private:
@@ -146,7 +146,7 @@ private:
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     fs::Path filePath_;
     std::uint32_t fileSize_;
-    FileStatus fileStatus_;
+    LockState lockState_;
 
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
