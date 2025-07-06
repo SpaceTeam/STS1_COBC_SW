@@ -554,14 +554,15 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
         auto dataIndex = 0U;
         while(dataIndex + rxFifoThreshold < static_cast<unsigned int>(data.size()))
         {
+            // RODOS::PRINTF("Fill: %d\n", ReadRxFifoFillLevel().value());
             auto suspendUntilInterruptResult = SuspendUntilInterrupt(reactivationTime);
+            DebugPrintModemStatus();
             if(suspendUntilInterruptResult.has_error())
             {
                 return dataIndex;
             }
-            DebugPrintModemStatus();
-            ReadFromFifo(data.subspan(dataIndex, rxFifoThreshold));
             OUTCOME_TRY(ReadAndClearInterruptStatus());
+            ReadFromFifo(data.subspan(dataIndex, rxFifoThreshold));
             dataIndex += rxFifoThreshold;
         }
         auto remainingData = data.subspan(dataIndex);
@@ -1491,14 +1492,10 @@ auto DebugPrintModemStatus() -> void
         auto modemStatus = modemStatusResult.value();
         // NOLINTBEGIN(*magic-numbers)
         DEBUG_PRINT(
-            "Modem status: Pending Interrupt Flags: %02x, Interrupt Flags: %02x, Current RSSI: "
+            "Current RSSI: "
             "%4.1fdBm, Latched RSSI: %4.1fdBm, AFC Frequency Offset: %6d\n",
-            static_cast<int>(modemStatus[0]),  // Pending Modem Interrupt Flags
-            static_cast<int>(modemStatus[1]),  // Modem Interrupt Flags
-            (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0) - 70,  // Current RSSI
-            (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0) - 70,  // Latched RSSI
-            // static_cast<int>(modemStatus[4]), // ANT1 RSSI
-            // static_cast<int>(modemStatus[5]), // ANT2 RSSI
+            (static_cast<double>(static_cast<int>(modemStatus[2])) / 2.0f) - 70,  // Current RSSI
+            (static_cast<double>(static_cast<int>(modemStatus[3])) / 2.0f) - 70,  // Latched RSSI
             (static_cast<unsigned>(modemStatus[6]) << 8U)
                 + static_cast<unsigned>(modemStatus[7]));  // AFC Offset
         // NOLINTEND(*magic-numbers)
