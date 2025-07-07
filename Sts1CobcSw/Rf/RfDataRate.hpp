@@ -127,7 +127,8 @@ struct DataRateConfig
 
 // Constants and Naming taken from WDS tool
 // Group,  Index, nProperties,    Properties
-constexpr auto MODEM_AGC_CONTROL = Properties<PropertyGroup::modem, 0x35_b, 1>(std::array{0xE0_b});
+constexpr auto MODEM_AGC_CONTROL =
+    Properties<PropertyGroup::modem, 0x35_b, 1>(std::array{0xE0_b});
 constexpr auto MODEM_RSSI_JUMP_THRESH =
     Properties<PropertyGroup::modem, 0x4B_b, 1>(std::array{0x06_b});
 constexpr auto MODEM_RSSI_CONTROL2 =
@@ -914,7 +915,7 @@ constexpr auto dataRateConfig38400 = DataRateConfig{
 
 
 // What happens below:
-// the WDS tool gave us 9 different datarate configuratios,
+// the WDS tool gave us 9 different datarate configurations,
 // they are split into fixed values and changed values.
 // so fixed values can be set once at start and will not changed again
 // changing values are either saved for standard frequencies or tried to be computed for every frequency
@@ -930,11 +931,6 @@ constexpr auto dataRateConfig38400 = DataRateConfig{
 // #define RF_MODEM_MOD_TYPE_12                    0x03, 0x00, 0x07, 0x11, 0x94, 0x00, 0x09, 0x8C, 0xBA, 0x80, 0x00, 0x09
 // #define RF_MODEM_MOD_TYPE_12                    0x03, 0x00, 0x07, 0x17, 0x70, 0x00, 0x09, 0x8C, 0xBA, 0x80, 0x00, 0x0C
 // #define RF_MODEM_MOD_TYPE_12                    0x03, 0x00, 0x07, 0x23, 0x28, 0x00, 0x09, 0x8C, 0xBA, 0x80, 0x00, 0x12
-
-// RF_MODEM_MOD_TYPE_12 gesplitted auf:
-// MODEM_MOD_TYPE (0x00)                           0x03, 0x00, 0x07
-// MODEM_DATA_RATE
-
 
 
 

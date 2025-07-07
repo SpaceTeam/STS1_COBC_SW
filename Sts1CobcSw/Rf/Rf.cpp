@@ -171,6 +171,7 @@ auto InitializeGpiosAndSpi() -> void;
 [[nodiscard]] auto Configure(TxType txType) -> Result<void>;
 
 [[nodiscard]] auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig;
+[[nodiscard]] auto SetConstantModemProperties() -> Result<void>;
 [[nodiscard]] auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>;
 
 auto EnableRfLatchupProtection() -> void;
@@ -365,6 +366,7 @@ auto DoInitialize(TxType txType) -> Result<void>
     OUTCOME_TRY(PowerUp());
     OUTCOME_TRY(Configure(txType));
     persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
+    OUTCOME_TRY(SetConstantModemProperties());
     OUTCOME_TRY(SetDataRate(txDataRateConfig));
     return outcome_v2::success();
 }
@@ -627,7 +629,7 @@ auto InitializeGpiosAndSpi() -> void
 #endif
     EnableRfLatchupProtection();
     wdt::Initialize();
-    // The watchdog must be fed regularely for the TX to work. Even without the watchdog timer on
+    // The watchdog must be fed regularly for the TX to work. Even without the watchdog timer on
     // the PCB it needs to be triggered at least once after boot to enable the TX.
     wdt::Feed();
 
@@ -1290,6 +1292,79 @@ auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
     return dataRateConfig1200;
 }
 
+// clang-format off
+// NOLINTBEGIN(*identifier-naming)
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto SetConstantModemProperties() -> Result<void>
+{
+    // Set Properties that don't change for different DataRates ONE time in the beginning.
+
+    // Values acquired by comparing 9 WDS DataRate configurations.
+    // Fore Some Properties only parts are here. The changing parts will be set per DataRate
+    // Naming taken from Datasheet
+
+    //                              Group,  Index, nProperties,    Properties
+    static constexpr auto MODEM_MOD_TYPE =
+        Properties<PropertyGroup::modem, 0x00_b, 3>(std::array{0x03_b, 0x00_b, 0x07_b});
+    static constexpr auto MODEM_TX_NCO_MODE =
+        Properties<PropertyGroup::modem, 0x07_b, 4>(std::array{0x8C_b, 0xBA_b, 0x80_b, 0x00_b});
+    static constexpr auto MODEM_TX_RAMP_DELAY =
+        Properties<PropertyGroup::modem, 0x18_b, 6>(std::array{0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b});
+    static constexpr auto MODEM_IFPKD_THRESHOLDS =
+        Properties<PropertyGroup::modem, 0x21_b, 2>(std::array{0xE8_b, 0x00_b});
+    static constexpr auto MODEM_BCR_GEAR =
+        Properties<PropertyGroup::modem, 0x29_b, 4>(std::array{0x02_b, 0x00_b, 0x00_b, 0x00_b});
+    static constexpr auto MODEM_AFC_MISC =
+        Properties<PropertyGroup::modem, 0x32_b, 1>(std::array{0xA0_b});
+    static constexpr auto MODEM_AGC_CONTROL =
+        Properties<PropertyGroup::modem, 0x35_b, 1>(std::array{0xE0_b});
+    static constexpr auto MODEM_AGC_WINDOW_SIZE =
+        Properties<PropertyGroup::modem, 0x38_b, 1>(std::array{0x11_b});
+    static constexpr auto MODEM_FSK4_GAIN1 =
+        Properties<PropertyGroup::modem, 0x3b_b, 5>(std::array{0x80_b, 0x1A_b, 0x40_b, 0x00_b, 0x00_b});
+    static constexpr auto MODEM_OOK_BLOPK =
+        Properties<PropertyGroup::modem, 0x41_b, 3>(std::array{0x0C_b, 0xA4_b, 0x23_b});
+    static constexpr auto MODEM_RAW_CONTROL =
+        Properties<PropertyGroup::modem, 0x45_b, 1>(std::array{0x03_b});
+    static constexpr auto MODEM_ANT_DIV_MODE =
+        Properties<PropertyGroup::modem, 0x48_b, 7>(std::array{0x01_b, 0x00_b, 0xFF_b, 0x06_b, 0x00_b, 0x18_b, 0x40_b});
+    static constexpr auto MODEM_RAW_SEARCH2 =
+        Properties<PropertyGroup::modem, 0x50_b, 2>(std::array{0x84_b, 0x0A_b});
+    static constexpr auto MODEM_ONE_SHOT_AFC =
+        Properties<PropertyGroup::modem, 0x55_b, 1>(std::array{0x07_b});
+    static constexpr auto MODEM_RSSI_MUTE =
+        Properties<PropertyGroup::modem, 0x57_b, 1>(std::array{0x00_b});
+    static constexpr auto MODEM_DSA_CTRL1 =
+        Properties<PropertyGroup::modem, 0x5b_b, 2>(std::array{0x40_b, 0x04_b});
+    static constexpr auto MODEM_DSA_RSSI =
+        Properties<PropertyGroup::modem, 0x5e_b, 2>(std::array{0x78_b, 0x20_b});
+    static constexpr auto MODEM_CHFLT_RX1_CHFLT_COE =
+        Properties<PropertyGroup::modemChflt, 0x0e_b, 1>(std::array{0x15_b});
+    static constexpr auto MODEM_CHFLT_RX2_CHFLT_COE =
+        Properties<PropertyGroup::modemChflt, 0x20_b, 1>(std::array{0x15_b});
+
+    OUTCOME_TRY(SetProperties(MODEM_MOD_TYPE));
+    OUTCOME_TRY(SetProperties(MODEM_TX_NCO_MODE));
+    OUTCOME_TRY(SetProperties(MODEM_TX_RAMP_DELAY));
+    OUTCOME_TRY(SetProperties(MODEM_IFPKD_THRESHOLDS));
+    OUTCOME_TRY(SetProperties(MODEM_BCR_GEAR));
+    OUTCOME_TRY(SetProperties(MODEM_AFC_MISC));
+    OUTCOME_TRY(SetProperties(MODEM_AGC_CONTROL));
+    OUTCOME_TRY(SetProperties(MODEM_AGC_WINDOW_SIZE));
+    OUTCOME_TRY(SetProperties(MODEM_FSK4_GAIN1));
+    OUTCOME_TRY(SetProperties(MODEM_OOK_BLOPK));
+    OUTCOME_TRY(SetProperties(MODEM_RAW_CONTROL));
+    OUTCOME_TRY(SetProperties(MODEM_ANT_DIV_MODE));
+    OUTCOME_TRY(SetProperties(MODEM_RAW_SEARCH2));
+    OUTCOME_TRY(SetProperties(MODEM_ONE_SHOT_AFC));
+    OUTCOME_TRY(SetProperties(MODEM_RSSI_MUTE));
+    OUTCOME_TRY(SetProperties(MODEM_DSA_CTRL1));
+    OUTCOME_TRY(SetProperties(MODEM_DSA_RSSI));
+    OUTCOME_TRY(SetProperties(MODEM_CHFLT_RX1_CHFLT_COE));
+    return SetProperties(MODEM_CHFLT_RX2_CHFLT_COE);
+}
+// NOLINTEND(*identifier-naming)
+// clang-format on
 
 // NOLINTNEXTLINE(*cognitive-complexity)
 auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
