@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
@@ -34,7 +34,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 1000U;
+constexpr auto stackSize = 1200U;
 constexpr auto telemetryThreadInterval = 30 * s;
 
 
@@ -62,6 +62,7 @@ private:
             telemetryRecordMailbox.Overwrite(telemetryRecord);
             nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
             ResumeRfCommunicationThread();
+            DEBUG_PRINT_STACK_USAGE();
         }
     }
 } telemetryThread;
@@ -73,9 +74,9 @@ auto CollectTelemetryData() -> TelemetryRecord
     eduIsAliveBufferForTelemetry.get(eduIsAlive);
     auto programIdOfCurrentEduProgramQueueEntry = ProgramId(0);
     programIdOfCurrentEduProgramQueueEntryBuffer.get(programIdOfCurrentEduProgramQueueEntry);
-    std::int32_t rxDataRate = 0;
+    std::uint32_t rxDataRate = 0;
     rxDataRateBuffer.get(rxDataRate);
-    std::int32_t txDataRate = 0;
+    std::uint32_t txDataRate = 0;
     txDataRateBuffer.get(txDataRate);
     return TelemetryRecord{
         // Booleans: byte 1: EDU and housekeeping

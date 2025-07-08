@@ -74,6 +74,10 @@ TEST_CASE("File system without data corruption")
     createDirResult = fs::CreateDirectory(dirPath);
     CHECK(createDirResult.has_error() == false);
 
+    createDirResult = fs::CreateDirectory(dirPath);
+    REQUIRE(createDirResult.has_error());
+    CHECK(createDirResult.error() == ErrorCode::alreadyExists);
+
     auto filePath = fs::Path("/MyDir/MyFile");
     auto openResult = fs::Open(filePath, LFS_O_WRONLY | LFS_O_CREAT);
     CHECK(openResult.has_value());

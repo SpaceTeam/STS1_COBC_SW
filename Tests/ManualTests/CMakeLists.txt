@@ -97,12 +97,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/FlashStartupTestThread.cpp
                 ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/FramEpsStartupTestThread.cpp
                 ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/RfStartupTestThread.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.cpp
     )
     target_link_libraries(
         Sts1CobcSwTests_SpiSupervisor
         PRIVATE rodos::rodos
                 strong_type::strong_type
+                Sts1CobcSw_Edu
+                Sts1CobcSw_FileSystem
                 Sts1CobcSw_Flash
                 Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
@@ -113,6 +115,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Sensors
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
+                Sts1CobcSw_WatchdogTimers
                 Sts1CobcSwTests::HardwareSetup
     )
 

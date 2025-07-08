@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -34,10 +34,10 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("FRAM/EPS start-up test ...");
+        DEBUG_PRINT("FRAM/EPS start-up test ...\n");
         fram::framIsWorking.Store(true);
         persistentVariables.Store<"epsIsWorking">(true);
-        ResumeSpiStartupTestAndSupervisorThread();
+        ResumeStartupAndSpiSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } framEpsStartupTestThread;
@@ -59,9 +59,9 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("Flash start-up test ...");
+        DEBUG_PRINT("Flash start-up test ...\n");
         persistentVariables.Store<"flashIsWorking">(true);
-        ResumeSpiStartupTestAndSupervisorThread();
+        ResumeStartupAndSpiSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } flashStartupTestThread;
@@ -82,9 +82,9 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("RF start-up test ...");
+        DEBUG_PRINT("RF start-up test ...\n");
         persistentVariables.Store<"rfIsWorking">(true);
-        ResumeSpiStartupTestAndSupervisorThread();
+        ResumeStartupAndSpiSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } rfStartupTestThread;

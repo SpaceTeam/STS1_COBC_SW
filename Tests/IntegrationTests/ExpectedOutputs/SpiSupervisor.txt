@@ -1,3 +1,4 @@
+/littlefs/lfs.c:1369:error: Corrupted dir pair at {0x0, 0x1}
 
 SPI supervisor test
 

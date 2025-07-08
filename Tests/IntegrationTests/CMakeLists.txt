@@ -18,11 +18,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_sources(
         Sts1CobcSwTests_SpiSupervisor
         PRIVATE ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/StartupTestThreadStubs.cpp
-                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.cpp
+                ${CMAKE_SOURCE_DIR}/Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.cpp
     )
     target_link_libraries(
         Sts1CobcSwTests_SpiSupervisor
         PRIVATE rodos::rodos
+                Sts1CobcSw_Edu
+                Sts1CobcSw_FileSystem
                 Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal

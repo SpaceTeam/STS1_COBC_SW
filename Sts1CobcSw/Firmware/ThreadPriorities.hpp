@@ -17,6 +17,6 @@ inline constexpr auto eduHeartbeatThreadPriority = 260;
 inline constexpr auto fileTransferThreadPriority = 800;
 inline constexpr auto rfCommunicationThreadPriority = 900;
 inline constexpr auto telemetryThreadPriority = 910;
-inline constexpr auto spiStartupTestAndSupervisorThreadPriority = MAX_THREAD_PRIORITY;
+inline constexpr auto startupAndSpiSupervisorThreadPriority = MAX_THREAD_PRIORITY;
 static_assert(MAX_THREAD_PRIORITY == 1000);  // NOLINT(*magic-numbers)
 }

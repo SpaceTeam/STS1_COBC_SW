@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Firmware/FramEpsStartupTestThread.hpp>
 
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -20,8 +20,8 @@ namespace sts1cobcsw
 {
 namespace
 {
-// Running a reduced version of the firmware (without the EDU threads) showed that >900 B are needed
-constexpr auto stackSize = 1000;
+// Running the SpiSupervisor HW test in debug mode showed a max. stack usage of < 1000 B
+constexpr auto stackSize = 1200;
 
 
 class FramEpsStartupTestThread : public RODOS::StaticThread<stackSize>
@@ -40,7 +40,7 @@ private:
     void run() override
     {
         SuspendUntil(endOfTime);
-        DEBUG_PRINT("FRAM/EPS start-up test ...");
+        DEBUG_PRINT("FRAM/EPS start-up test ...\n");
         fram::Initialize();
         auto deviceId = fram::ReadDeviceId();
         if(deviceId == fram::correctDeviceId)
@@ -49,7 +49,7 @@ private:
         }
         else
         {
-            DEBUG_PRINT(" failed to read correct FRAM device ID");
+            DEBUG_PRINT("  failed to read correct FRAM device ID\n");
             fram::framIsWorking.Store(false);
         }
         persistentVariables.Store<"epsIsWorking">(true);
@@ -57,13 +57,15 @@ private:
         auto adcData = eps::ReadAdcs();
         if(adcData == eps::AdcData{})
         {
+            DEBUG_PRINT("  failed to read ADC data from EPS\n");
             persistentVariables.Store<"epsIsWorking">(false);
         }
         else
         {
             persistentVariables.Store<"epsIsWorking">(true);
         }
-        ResumeSpiStartupTestAndSupervisorThread();
+        DEBUG_PRINT_STACK_USAGE();
+        ResumeStartupAndSpiSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } framEpsStartupTestThread;

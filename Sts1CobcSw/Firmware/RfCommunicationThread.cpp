@@ -6,7 +6,7 @@
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
@@ -65,7 +65,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 4000;
+constexpr auto stackSize = 6000;
 constexpr auto rxTimeoutForAdditionalData = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 // The ground station needs some time to switch from TX to RX so we need to wait for that when
@@ -148,7 +148,6 @@ private:
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         DEBUG_PRINT("Starting RF communication thread\n");
-        rdt::Initialize();
         auto moreDataShouldBeReceived = false;
         while(true)
         {
@@ -159,6 +158,7 @@ private:
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 auto receiveResult = ReceiveAndHandleData(rxTimeoutAfterTelemetryRecord);
                 moreDataShouldBeReceived = receiveResult.has_value();
+                DEBUG_PRINT_STACK_USAGE();
                 continue;
             }
             if(encodedCfdpFrameMailbox.IsFull())
@@ -750,9 +750,11 @@ auto Set(Parameter parameter) -> void
     {
         case Parameter::Id::rxDataRate:
             rf::SetRxDataRate(parameter.value);
+            rxDataRateTopic.publish(parameter.value);
             break;
         case Parameter::Id::txDataRate:
             rf::SetTxDataRate(parameter.value);
+            txDataRateTopic.publish(parameter.value);
             break;
         case Parameter::Id::realTimeOffsetCorrection:
             persistentVariables.Store<"realTimeOffsetCorrection">(parameter.value * s);

@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Fram/FramMock.hpp>
 #include <Sts1CobcSw/Hal/Spi.hpp>

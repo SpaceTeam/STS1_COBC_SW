@@ -78,7 +78,7 @@
   { include: ["\"Sts1CobcSw/Firmware/FramEpsStartupTestThread.hpp\"",          "public", "<Sts1CobcSw/Firmware/FramEpsStartupTestThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Firmware/RfCommunicationThread.hpp\"",             "public", "<Sts1CobcSw/Firmware/RfCommunicationThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Firmware/RfStartupTestThread.hpp\"",               "public", "<Sts1CobcSw/Firmware/RfStartupTestThread.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp\"", "public", "<Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp\"", "public", "<Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Firmware/ThreadPriorites.hpp\"",                   "public", "<Sts1CobcSw/Firmware/ThreadPriorites.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp\"",              "public", "<Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Edu/Edu.hpp\"",                                    "public", "<Sts1CobcSw/Edu/Edu.hpp>", "public"] },
