@@ -103,6 +103,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSwTests_SpiSupervisor
         PRIVATE rodos::rodos
                 strong_type::strong_type
+                Sts1CobcSw_Edu
+                Sts1CobcSw_FileSystem
                 Sts1CobcSw_Flash
                 Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
@@ -113,6 +115,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Sensors
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
+                Sts1CobcSw_WatchdogTimers
                 Sts1CobcSwTests::HardwareSetup
     )
 

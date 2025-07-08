@@ -14,10 +14,7 @@
 namespace sts1cobcsw::edu
 {
 auto Initialize() -> void
-{
-    DEBUG_PRINT_REAL_TIME();
-    DEBUG_PRINT("Call to Initialize()\n");
-}
+{}
 
 
 auto TurnOn() -> void

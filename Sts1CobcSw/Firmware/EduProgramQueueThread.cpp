@@ -50,8 +50,6 @@ public:
 private:
     void init() override
     {
-        edu::Initialize();
-
         // auto queueEntry1 = EduQueueEntry{
         //    .programId = 0, .timestamp = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
 

@@ -23,6 +23,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_link_libraries(
         Sts1CobcSwTests_SpiSupervisor
         PRIVATE rodos::rodos
+                Sts1CobcSw_Edu
+                Sts1CobcSw_FileSystem
                 Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
