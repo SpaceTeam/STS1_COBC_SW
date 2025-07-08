@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Firmware/FlashStartupTestThread.hpp>
 
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Flash/Flash.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -50,7 +50,7 @@ private:
             persistentVariables.Store<"flashIsWorking">(false);
         }
         DEBUG_PRINT_STACK_USAGE();
-        ResumeSpiStartupTestAndSupervisorThread();
+        ResumeStartupAndSpiSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } flashStartupTestThread;

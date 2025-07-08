@@ -1,5 +1,5 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>

@@ -7,7 +7,7 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>

@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Firmware/RfStartupTestThread.hpp>
 
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -65,7 +65,7 @@ private:
             persistentVariables.Increment<"nRfErrors">();
         }
         DEBUG_PRINT_STACK_USAGE();
-        ResumeSpiStartupTestAndSupervisorThread();
+        ResumeStartupAndSpiSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } rfStartupTestThread;

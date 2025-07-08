@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 
 #include <Sts1CobcSw/Firmware/FlashStartupTestThread.hpp>
 #include <Sts1CobcSw/Firmware/FramEpsStartupTestThread.hpp>
@@ -40,12 +40,11 @@ constexpr auto supervisionPeriod = 1 * s;
 auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool;
 
 
-class SpiStartupTestAndSupervisorThread : public RODOS::StaticThread<stackSize>
+class StartupAndSpiSupervisorThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    SpiStartupTestAndSupervisorThread()
-        : StaticThread("SpiStartupTestAndSupervisorThread",
-                       spiStartupTestAndSupervisorThreadPriority)
+    StartupAndSpiSupervisorThread()
+        : StaticThread("StartupAndSpiSupervisorThread", startupAndSpiSupervisorThreadPriority)
     {}
 
 
@@ -144,13 +143,13 @@ private:
             }
         }
     }
-} spiStartupTestAndSupervisorThread;
+} startupAndSpiSupervisorThread;
 }
 
 
-auto ResumeSpiStartupTestAndSupervisorThread() -> void
+auto ResumeStartupAndSpiSupervisorThread() -> void
 {
-    spiStartupTestAndSupervisorThread.resume();
+    startupAndSpiSupervisorThread.resume();
 }
 
 

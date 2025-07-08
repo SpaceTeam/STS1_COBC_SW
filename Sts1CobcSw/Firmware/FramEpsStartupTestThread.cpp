@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Firmware/FramEpsStartupTestThread.hpp>
 
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -65,7 +65,7 @@ private:
             persistentVariables.Store<"epsIsWorking">(true);
         }
         DEBUG_PRINT_STACK_USAGE();
-        ResumeSpiStartupTestAndSupervisorThread();
+        ResumeStartupAndSpiSupervisorThread();
         SuspendUntil(endOfTime);
     }
 } framEpsStartupTestThread;

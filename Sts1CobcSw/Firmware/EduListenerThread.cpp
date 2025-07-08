@@ -3,7 +3,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
-#include <Sts1CobcSw/Firmware/SpiStartupTestAndSupervisorThread.hpp>
+#include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
