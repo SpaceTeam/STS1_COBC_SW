@@ -1,20 +1,24 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/ChannelCoding/External/ConvolutionalCoding.hpp>
 #include <Sts1CobcSw/ChannelCoding/ReedSolomon.hpp>
 #include <Sts1CobcSw/ChannelCoding/Scrambler.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
+#include <etl/vector.h>
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <random>
 #include <span>
 
 
 namespace rs = sts1cobcsw::rs;
-
+namespace cc = sts1cobcsw::cc;
 using sts1cobcsw::Byte;
 using sts1cobcsw::operator""_b;
 
@@ -31,6 +35,117 @@ constexpr auto GenerateSequentialBytes(Byte startValue = 0_b) -> std::array<Byte
     }
     return result;
 }
+}
+
+
+TEST_CASE("Convolutional coding")
+{
+    // EncodedSize() and UnencodedSize()
+    {
+        static_assert(cc::ViterbiCodec::EncodedSize(100, false) == 150);
+        static_assert(cc::ViterbiCodec::EncodedSize(100, true) == 152);
+        static_assert(cc::ViterbiCodec::EncodedSize(101, false) == 152);
+        static_assert(cc::ViterbiCodec::EncodedSize(101, true) == 153);
+        static_assert(cc::ViterbiCodec::EncodedSize(102, false) == 153);
+        static_assert(cc::ViterbiCodec::EncodedSize(102, true) == 155);
+        static_assert(cc::ViterbiCodec::EncodedSize(103, false) == 155);
+        static_assert(cc::ViterbiCodec::EncodedSize(103, true) == 156);
+
+        static_assert(cc::ViterbiCodec::UnencodedSize(152, false) == 100);
+        static_assert(cc::ViterbiCodec::UnencodedSize(152, true) == 100);
+        static_assert(cc::ViterbiCodec::UnencodedSize(153, false) == 102);
+        static_assert(cc::ViterbiCodec::UnencodedSize(155, false) == 102);
+        static_assert(cc::ViterbiCodec::UnencodedSize(156, false) == 104);
+        static_assert(cc::ViterbiCodec::UnencodedSize(275, false) == 182);
+        static_assert(cc::ViterbiCodec::UnencodedSize(275, true) == 182);
+        static_assert(cc::ViterbiCodec::UnencodedSize(276, true) == 182);
+        static_assert(cc::ViterbiCodec::UnencodedSize(383, false) == 254);
+    }
+
+    // Encode() returns the correct amount of data
+    {
+        auto cc = cc::ViterbiCodec();
+        REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/false).size() == 15U);
+        REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/false).size() == 17U);
+        REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/true).size() == 17U);
+        REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/true).size() == 18U);
+    }
+
+    static constexpr auto inputSize = 255U;
+    static constexpr auto message = GenerateSequentialBytes<inputSize>();
+    // We have to use std::to_array here because deducing the type of the array with 384
+    // elements exceeds the fold expression limit of 256
+    static constexpr auto correctlyEncodedMessage = std::to_array<Byte>(
+        {0_b,   0_b,   1_b,   185_b, 238_b, 119_b, 94_b,  92_b,  204_b, 117_b, 50_b,  186_b, 145_b,
+         243_b, 182_b, 130_b, 157_b, 192_b, 101_b, 47_b,  123_b, 78_b,  65_b,  13_b,  172_b, 102_b,
+         111_b, 223_b, 8_b,   25_b,  56_b,  186_b, 162_b, 19_b,  212_b, 212_b, 247_b, 21_b,  216_b,
+         228_b, 123_b, 174_b, 3_b,   201_b, 21_b,  40_b,  167_b, 99_b,  209_b, 29_b,  184_b, 98_b,
+         115_b, 206_b, 133_b, 193_b, 117_b, 174_b, 175_b, 3_b,   74_b,  110_b, 15_b,  89_b,  0_b,
+         121_b, 190_b, 178_b, 194_b, 149_b, 220_b, 180_b, 119_b, 251_b, 214_b, 4_b,   149_b, 160_b,
+         227_b, 39_b,  27_b,  200_b, 73_b,  109_b, 44_b,  136_b, 97_b,  63_b,  230_b, 23_b,  216_b,
+         84_b,  172_b, 243_b, 58_b,  218_b, 61_b,  179_b, 114_b, 142_b, 221_b, 4_b,   105_b, 111_b,
+         191_b, 66_b,  1_b,   201_b, 166_b, 192_b, 197_b, 181_b, 174_b, 179_b, 82_b,  28_b,  8_b,
+         121_b, 114_b, 126_b, 155_b, 85_b,  28_b,  232_b, 59_b,  106_b, 15_b,  137_b, 209_b, 36_b,
+         231_b, 167_b, 192_b, 38_b,  171_b, 211_b, 72_b,  221_b, 52_b,  250_b, 102_b, 31_b,  148_b,
+         16_b,  230_b, 46_b,  203_b, 85_b,  64_b,  189_b, 178_b, 242_b, 6_b,   153_b, 156_b, 112_b,
+         125_b, 93_b,  124_b, 110_b, 51_b,  10_b,  137_b, 129_b, 177_b, 162_b, 239_b, 199_b, 64_b,
+         200_b, 165_b, 51_b,  166_b, 211_b, 212_b, 20_b,  104_b, 255_b, 122_b, 30_b,  27_b,  187_b,
+         18_b,  8_b,   213_b, 100_b, 239_b, 103_b, 223_b, 196_b, 9_b,   169_b, 214_b, 109_b, 207_b,
+         101_b, 3_b,   185_b, 130_b, 177_b, 2_b,   169_b, 223_b, 116_b, 77_b,  30_b,  120_b, 94_b,
+         112_b, 14_b,  185_b, 194_b, 181_b, 146_b, 172_b, 195_b, 112_b, 139_b, 161_b, 3_b,   229_b,
+         215_b, 228_b, 87_b,  108_b, 207_b, 57_b,  26_b,  43_b,  248_b, 22_b,  56_b,  150_b, 96_b,
+         223_b, 36_b,  219_b, 244_b, 74_b,  173_b, 13_b,  240_b, 118_b, 190_b, 158_b, 0_b,   89_b,
+         44_b,  187_b, 114_b, 66_b,  205_b, 150_b, 131_b, 193_b, 133_b, 237_b, 183_b, 98_b,  95_b,
+         12_b,  73_b,  49_b,  122_b, 171_b, 22_b,  24_b,  216_b, 120_b, 110_b, 63_b,  202_b, 213_b,
+         20_b,  164_b, 163_b, 240_b, 101_b, 175_b, 227_b, 11_b,  217_b, 4_b,   185_b, 98_b,  47_b,
+         215_b, 20_b,  225_b, 94_b,  188_b, 82_b,  48_b,  202_b, 181_b, 130_b, 113_b, 158_b, 236_b,
+         7_b,   122_b, 45_b,  11_b,  105_b, 67_b,  125_b, 142_b, 241_b, 198_b, 165_b, 159_b, 176_b,
+         71_b,  184_b, 210_b, 52_b,  214_b, 164_b, 211_b, 100_b, 31_b,  248_b, 10_b,  105_b, 28_b,
+         203_b, 101_b, 15_b,  165_b, 19_b,  232_b, 23_b,  168_b, 195_b, 121_b, 222_b, 58_b,  195_b,
+         5_b,   137_b, 173_b, 115_b, 110_b, 31_b,  200_b, 69_b,  113_b, 190_b, 161_b, 176_b, 178_b,
+         178_b, 222_b, 196_b, 85_b,  108_b, 127_b, 126_b, 2_b,   9_b,   156_b, 37_b,  107_b, 239_b,
+         75_b,  29_b,  8_b,   249_b, 166_b, 35_b,  151_b, 208_b, 199_b, 86_b,  220_b, 212_b, 56_b,
+         170_b, 51_b,  138_b, 17_b,  24_b,  235_b, 48_b});
+    auto cc = cc::ViterbiCodec();
+
+    // Endode() returns the correct data
+    {
+        auto encodedMessage = cc.Encode(message, /*flush=*/true);
+        REQUIRE(encodedMessage.size() == correctlyEncodedMessage.size());
+        // There is no operator==() for etl::vector and std:array. Since CHECK(array == array) gives
+        // a better error message when the test fails than looping over all elements, we copy the
+        // elements to a new array and compare that.
+        auto encodedMessageArray = decltype(correctlyEncodedMessage){};
+        std::ranges::copy(encodedMessage, encodedMessageArray.begin());
+        CHECK(encodedMessageArray == correctlyEncodedMessage);
+    }
+
+    // Encoding the message in randomly-sized chunks gives the same result
+    {
+        auto rd = std::random_device{};
+        auto gen = std::mt19937(rd());
+        auto distribution = std::uniform_int_distribution(25, 98);
+        auto freeSpace = static_cast<unsigned>(distribution(gen));
+        auto finalChunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, /*withFlushBits*/ true);
+        auto dataIndex = 0U;
+        auto buffer = etl::vector<Byte, correctlyEncodedMessage.size()>{};
+        while(dataIndex + finalChunkSize < message.size())
+        {
+            auto chunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, /*withFlushBits*/ false);
+            auto encodedChunk =
+                cc.Encode(std::span(message).subspan(dataIndex, chunkSize), /*flush=*/false);
+            buffer.insert(buffer.end(), encodedChunk.begin(), encodedChunk.end());
+            dataIndex += chunkSize;
+            freeSpace = static_cast<unsigned>(distribution(gen));
+            finalChunkSize = cc::ViterbiCodec::UnencodedSize(freeSpace, /*withFlushBits*/ true);
+        }
+        auto encodedChunk = cc.Encode(std::span(message).subspan(dataIndex), /*flush=*/true);
+        buffer.insert(buffer.end(), encodedChunk.begin(), encodedChunk.end());
+        REQUIRE(buffer.size() == correctlyEncodedMessage.size());
+        auto encodedMessage = decltype(correctlyEncodedMessage){};
+        std::ranges::copy(buffer, encodedMessage.begin());
+        CHECK(encodedMessage == correctlyEncodedMessage);
+    }
 }
 
 
