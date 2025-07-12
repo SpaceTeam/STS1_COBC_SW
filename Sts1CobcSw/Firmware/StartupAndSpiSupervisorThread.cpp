@@ -14,6 +14,7 @@
 #include <Sts1CobcSw/Hal/Spis.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -76,6 +77,7 @@ private:
         InitializeAndFeedResetDog();
         SetUpFileSystem();
         edu::Initialize();
+        rftemperaturesensor::Initialize();
         auto i = 0U;
         TIME_LOOP(0, value_of(supervisionPeriod))
         {
