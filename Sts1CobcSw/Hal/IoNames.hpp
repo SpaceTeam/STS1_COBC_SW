@@ -20,6 +20,8 @@ inline constexpr auto dosiEnablePin = pb10;
 inline constexpr auto watchdogClearPin = pa9;
 #endif
 
+inline constexpr auto antennaDeploymentPin = pc13;
+
 inline constexpr auto epsBatteryGoodPin = pc15;
 inline constexpr auto epsChargingPin = pc14;
 
