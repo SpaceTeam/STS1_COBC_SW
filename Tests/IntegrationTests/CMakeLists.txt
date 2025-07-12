@@ -30,6 +30,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_Hal
                 Sts1CobcSw_RealTime
                 Sts1CobcSw_RodosTime
+                Sts1CobcSw_Sensors
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
     )
