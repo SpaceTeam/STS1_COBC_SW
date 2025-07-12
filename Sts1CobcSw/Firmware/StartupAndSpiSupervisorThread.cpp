@@ -17,6 +17,7 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #ifndef __linux__
@@ -84,6 +85,7 @@ private:
         DEBUG_PRINT_REAL_TIME();
         SetUpFileSystem();
         edu::Initialize();
+        rftemperaturesensor::Initialize();
         auto i = 0U;
         TIME_LOOP(0, value_of(supervisionPeriod))
         {
