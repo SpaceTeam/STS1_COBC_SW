@@ -53,7 +53,7 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"nFileSystemErrors", std::uint8_t>,
                         // EDU
                         PersistentVariableInfo<"eduShouldBePowered", bool>,
-                        PersistentVariableInfo<"eduStartDelayLimit", Duration>,
+                        PersistentVariableInfo<"maxEduIdleDuration", Duration>,
                         PersistentVariableInfo<"newEduResultIsAvailable", bool>,
                         PersistentVariableInfo<"eduProgramQueueIndex", std::uint8_t>,
                         PersistentVariableInfo<"nEduCommunicationErrors", std::uint8_t>,
