@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/ChannelCoding/External/ConvolutionalCoding.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -110,15 +111,17 @@ auto SendAndWait(std::span<Byte const> data) -> void
         DEBUG_PRINT("TX is off, not sending data\n");
         return;
     }
-    auto const txByteRate = txDataRate / 10;
-    static constexpr auto safetyFactor = 2;
-    static constexpr auto safetyMargin = 10 * ms;
-    auto const timeout =
-        static_cast<int>(data.size()) * s / txByteRate * safetyFactor + safetyMargin;
     auto result = [&]() -> Result<void>
     {
+        auto convolutionalCoder = sts1cobcsw::cc::ViterbiCodec{};
+        auto encodedData = convolutionalCoder.Encode(data, /*flush=*/true);
+        auto const txByteRate = txDataRate / 10;
+        static constexpr auto safetyFactor = 2;
+        static constexpr auto safetyMargin = 10 * ms;
+        auto const timeout =
+            static_cast<int>(encodedData.size()) * s / txByteRate * safetyFactor + safetyMargin;
         OUTCOME_TRY(hal::WriteTo(&uciUart, Span(startOfFrame), frameDelimiterTimeout));
-        OUTCOME_TRY(hal::WriteTo(&uciUart, data, timeout));
+        OUTCOME_TRY(hal::WriteTo(&uciUart, Span(encodedData), timeout));
         return hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout);
     }();
     if(result.has_error())
