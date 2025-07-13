@@ -18,7 +18,7 @@ struct Parameter
         rxDataRate = 1,
         txDataRate,
         realTimeOffsetCorrection,
-        eduStartDelayLimit,
+        maxEduIdleDuration,
         newEduResultIsAvailable,
     };
     using Value = std::uint32_t;

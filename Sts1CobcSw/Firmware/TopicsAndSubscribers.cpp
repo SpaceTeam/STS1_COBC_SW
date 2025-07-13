@@ -19,9 +19,9 @@ RODOS::Subscriber eduIsAliveSubscriberForListener(eduIsAliveTopic,
 RODOS::Subscriber eduIsAliveSubscriberForTelemetry(eduIsAliveTopic,
                                                    eduIsAliveBufferForListener,
                                                    "eduIsAliveSubscriber");
-RODOS::Subscriber nextProgramStartDelaySubscriber(nextProgramStartDelayTopic,
-                                                  nextProgramStartDelayBuffer,
-                                                  "nextProgramStartDelaySubscriber");
+RODOS::Subscriber nextEduProgramStartTimeSubscriber(nextEduProgramStartTimeTopic,
+                                                    nextEduProgramStartTimeBuffer,
+                                                    "nextProgramStartTimeSubscriber");
 RODOS::Subscriber programIdOfCurrentEduProgramQueueEntrySubscriber(
     programIdOfCurrentEduProgramQueueEntryTopic,
     programIdOfCurrentEduProgramQueueEntryBuffer,

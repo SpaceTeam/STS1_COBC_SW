@@ -6,10 +6,12 @@
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
+#include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
@@ -60,18 +62,21 @@ private:
             {
                 auto eduIsAlive = false;
                 eduIsAliveBufferForPowerManagement.get(eduIsAlive);
-                auto startDelay = Duration(0);
-                nextProgramStartDelayBuffer.get(startDelay);
+                auto nextEduProgramStartTime = RealTime(0);
+                nextEduProgramStartTimeBuffer.get(nextEduProgramStartTime);
+                auto timeTillNextEduProgram =
+                    ToRodosTime(nextEduProgramStartTime) - CurrentRodosTime();
                 auto eduHasUpdate = edu::updateGpioPin.Read() == hal::PinState::set;
                 auto noWorkMustBeDoneInTheNearFuture =
                     not eduHasUpdate and not edu::ProgramsAreAvailableOnCobc()
-                    and startDelay >= persistentVariables.Load<"eduStartDelayLimit">();
+                    and timeTillNextEduProgram > persistentVariables.Load<"maxEduIdleDuration">();
                 if(eduIsAlive and noWorkMustBeDoneInTheNearFuture)
                 {
                     DEBUG_PRINT("Turning EDU off\n");
                     edu::TurnOff();
                 }
-                else if(not eduIsAlive and startDelay < (eduBootTime + eduBootTimeMargin))
+                else if(not eduIsAlive
+                        and timeTillNextEduProgram < (eduBootTime + eduBootTimeMargin))
                 {
                     DEBUG_PRINT("Turning EDU on\n");
                     edu::TurnOn();
