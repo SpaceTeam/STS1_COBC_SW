@@ -28,8 +28,9 @@ inline auto eduIsAliveBufferForPowerManagement = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForCommunicationError = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForTelemetry = RODOS::CommBuffer<bool>{};
 
-inline auto nextProgramStartDelayTopic = RODOS::Topic<Duration>(-1, "nextProgramStartDelayTopic");
-inline auto nextProgramStartDelayBuffer = RODOS::CommBuffer<Duration>{};
+inline auto nextEduProgramStartTimeTopic =
+    RODOS::Topic<RealTime>(-1, "nextEduProgramStartTimeTopic");
+inline auto nextEduProgramStartTimeBuffer = RODOS::CommBuffer<RealTime>{};
 
 inline auto programIdOfCurrentEduProgramQueueEntryTopic =
     RODOS::Topic<ProgramId>(-1, "programIdOfCurrentEduProgramQueueEntryTopic");
