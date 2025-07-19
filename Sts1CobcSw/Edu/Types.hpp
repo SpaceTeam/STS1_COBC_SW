@@ -36,6 +36,8 @@ enum class StatusType : std::uint8_t
     noEvent,
     programFinished,
     resultsReady,
+    enableDosimeter,
+    disableDosimeter,
     invalid,
 };
 

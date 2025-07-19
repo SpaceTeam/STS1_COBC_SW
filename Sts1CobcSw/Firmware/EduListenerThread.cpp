@@ -133,6 +133,8 @@ private:
                                 edu::ProgramStatus::resultFileTransfered);
                             break;
                         }
+                        case edu::StatusType::enableDosimeter:
+                        case edu::StatusType::disableDosimeter:
                         case edu::StatusType::invalid:
                         case edu::StatusType::noEvent:
                         {
