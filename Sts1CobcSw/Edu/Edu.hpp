@@ -9,6 +9,7 @@
 namespace sts1cobcsw::edu
 {
 extern hal::GpioPin updateGpioPin;
+extern hal::GpioPin dosiEnableGpioPin;
 
 
 auto Initialize() -> void;
