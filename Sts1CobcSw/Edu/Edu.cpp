@@ -41,6 +41,7 @@ namespace sts1cobcsw::edu
 // --- Public globals ---
 
 hal::GpioPin updateGpioPin(hal::eduUpdatePin);
+hal::GpioPin dosiEnableGpioPin(hal::dosiEnablePin);
 
 
 namespace

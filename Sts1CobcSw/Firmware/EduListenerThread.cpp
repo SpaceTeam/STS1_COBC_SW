@@ -36,6 +36,7 @@ private:
     void init() override
     {
         edu::updateGpioPin.SetDirection(hal::PinDirection::in);
+        edu::dosiEnableGpioPin.SetDirection(hal::PinDirection::out);
     }
 
 
@@ -131,6 +132,16 @@ private:
                                 status.programId,
                                 status.startTime,
                                 edu::ProgramStatus::resultFileTransfered);
+                            break;
+                        }
+                        case edu::StatusType::enableDosimeter:
+                        {
+                            edu::dosiEnableGpioPin.Set();
+                            break;
+                        }
+                        case edu::StatusType::disableDosimeter:
+                        {
+                            edu::dosiEnableGpioPin.Reset();
                             break;
                         }
                         case edu::StatusType::invalid:
