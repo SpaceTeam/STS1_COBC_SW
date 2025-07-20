@@ -20,14 +20,14 @@ using sts1cobcsw::operator""_b;
 enum class ProgramStatus : std::uint8_t
 {
     programRunning,
+    // TODO: The following is unused. Can we remove it or did we forget it somewhere?
     programCouldNotBeStarted,
     programExecutionFailed,
     programExecutionSucceeded,
-    // TODO: Rename the following states
-    resultFileTransfered,  // resultStoredInFileSystem
-    resultFileSentToRf,    // resultSentToGround or resultRequestedByGround/FromGround
-    ackFromGround,         // resultAcknowledgedByGround or resultSentToGround
-    resultFileDeleted      // resultDeleted
+    resultStoredInFileSystem,
+    resultRequestedByGround,
+    resultAcknowledgedByGround,
+    resultDeleted
 };
 
 
