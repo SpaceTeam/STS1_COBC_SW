@@ -24,13 +24,12 @@ namespace sts1cobcsw
 {
 namespace
 {
-// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 2000U;
+constexpr auto stackSize = 4000U;
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
 constexpr auto eduBootTimeMargin = 5 * s;
 constexpr auto eduPowerManagementThreadStartDelay = 15 * s;
-constexpr auto eduPowerManagementThreadPeriod = 2 * s;
+constexpr auto eduPowerManagementThreadInterval = 2 * s;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 
@@ -53,39 +52,37 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        DEBUG_PRINT("Starting EDU power management thread\n");
         TIME_LOOP(value_of(eduPowerManagementThreadStartDelay),
-                  value_of(eduPowerManagementThreadPeriod))
+                  value_of(eduPowerManagementThreadInterval))
         {
-            auto batteryIsGood = epsBatteryGoodGpioPin.Read() == hal::PinState::set;
-            auto flashIsWorking = persistentVariables.Load<"flashIsWorking">();
-            if(batteryIsGood and flashIsWorking)
+            if(epsBatteryGoodGpioPin.Read() == hal::PinState::reset
+               or not persistentVariables.Load<"flashIsWorking">())
             {
-                auto eduIsAlive = false;
-                eduIsAliveBufferForPowerManagement.get(eduIsAlive);
-                auto nextEduProgramStartTime = RealTime(0);
-                nextEduProgramStartTimeBuffer.get(nextEduProgramStartTime);
-                auto timeTillNextEduProgram =
-                    ToRodosTime(nextEduProgramStartTime) - CurrentRodosTime();
-                auto eduHasUpdate = edu::updateGpioPin.Read() == hal::PinState::set;
-                auto noWorkMustBeDoneInTheNearFuture =
-                    not eduHasUpdate and not edu::ProgramsAreAvailableOnCobc()
-                    and timeTillNextEduProgram > persistentVariables.Load<"maxEduIdleDuration">();
-                if(eduIsAlive and noWorkMustBeDoneInTheNearFuture)
-                {
-                    DEBUG_PRINT("Turning EDU off\n");
-                    edu::TurnOff();
-                }
-                else if(not eduIsAlive
-                        and timeTillNextEduProgram < (eduBootTime + eduBootTimeMargin))
-                {
-                    DEBUG_PRINT("Turning EDU on\n");
-                    edu::TurnOn();
-                }
+                DEBUG_PRINT(
+                    "%s",
+                    persistentVariables.Load<"eduShouldBePowered">() ? "Turning EDU off\n" : "");
+                edu::TurnOff();
+                continue;
             }
-            else
+            auto eduIsAlive = false;
+            eduIsAliveBufferForPowerManagement.get(eduIsAlive);
+            auto nextEduProgramStartTime = RealTime(0);
+            nextEduProgramStartTimeBuffer.get(nextEduProgramStartTime);
+            auto timeTillNextEduProgram = ToRodosTime(nextEduProgramStartTime) - CurrentRodosTime();
+            auto eduHasUpdate = edu::updateGpioPin.Read() == hal::PinState::set;
+            auto noWorkMustBeDoneInTheNearFuture =
+                not eduHasUpdate and not edu::ProgramsAreAvailableOnCobc()
+                and timeTillNextEduProgram > persistentVariables.Load<"maxEduIdleDuration">();
+            if(eduIsAlive and noWorkMustBeDoneInTheNearFuture)
             {
                 DEBUG_PRINT("Turning EDU off\n");
                 edu::TurnOff();
+            }
+            else if(not eduIsAlive and timeTillNextEduProgram < (eduBootTime + eduBootTimeMargin))
+            {
+                DEBUG_PRINT("Turning EDU on\n");
+                edu::TurnOn();
             }
         }
     }
