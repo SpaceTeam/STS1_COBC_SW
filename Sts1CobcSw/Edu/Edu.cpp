@@ -3,7 +3,6 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
-#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -47,9 +46,6 @@ hal::GpioPin dosiEnableGpioPin(hal::dosiEnablePin);
 namespace
 {
 // --- Private globals ---
-
-auto const programsDirectory = fs::Path("programs/");
-auto const resultsDirectory = fs::Path("results/");
 
 // Low-level CEP commands
 constexpr auto cepAck = 0xd7_b;   //! Acknowledging a data packet
