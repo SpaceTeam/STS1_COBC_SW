@@ -35,38 +35,28 @@ public:
 
 
 private:
-    void init() override
-    {}
-
-
     void run() override
     {
+        SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        DEBUG_PRINT("Starting EDU communication error thread\n");
         while(true)
         {
-            SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
             SuspendUntil(endOfTime);
-
             persistentVariables.Increment<"nEduCommunicationErrors">();
-
-            DEBUG_PRINT("[EduCommunicationErrorThread] Resetting the Edu\n");
-            // Reset EDU
-
+            DEBUG_PRINT("Resetting the EDU\n");
             edu::TurnOff();
-            SuspendFor(eduShutDownDelay);
+            BusyWaitFor(eduShutDownDelay);
+            // TODO: This thread must not turn on the EDU unconditionally. The power management
+            // thread should take care of that probably because it already has the right conditions.
             edu::TurnOn();
-
-            // TODO: Why is this here?
-            [[maybe_unused]] auto status = edu::GetStatus();
-
-            // Busy wait
-            DEBUG_PRINT("[EduCommunicationErrorThread] Entering busy wait\n");
             auto eduIsAlive = false;
             while(not eduIsAlive)
             {
+                // TODO: Is this really necessary?
                 yield();  // Force recalculation of scheduling!
                 eduIsAliveBufferForCommunicationError.get(eduIsAlive);
             }
-            DEBUG_PRINT("[EduCommunicationErrorThread] Leaving busy wait\n");
+            DEBUG_PRINT_STACK_USAGE();
         }
     }
 } eduCommunicationErrorThread;
@@ -76,6 +66,5 @@ private:
 auto ResumeEduCommunicationErrorThread() -> void
 {
     eduCommunicationErrorThread.resume();
-    DEBUG_PRINT("[EduCommunicationErrorThread] EduCommunicationErrorThread resumed\n");
 }
 }
