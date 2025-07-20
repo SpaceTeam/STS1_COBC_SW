@@ -89,8 +89,9 @@ private:
                 DEBUG_PRINT("Received and stored EDU result for program %i with start time %u\n",
                             value_of(status.programId),
                             static_cast<unsigned>(value_of(status.startTime)));
-                edu::UpdateProgramStatusHistory(
-                    status.programId, status.startTime, edu::ProgramStatus::resultFileTransfered);
+                edu::UpdateProgramStatusHistory(status.programId,
+                                                status.startTime,
+                                                edu::ProgramStatus::resultStoredInFileSystem);
             }
             else if(status.statusType == edu::StatusType::enableDosimeter)
             {
