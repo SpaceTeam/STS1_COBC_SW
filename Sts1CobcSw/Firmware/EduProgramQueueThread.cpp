@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
@@ -36,6 +37,10 @@ namespace sts1cobcsw
 namespace
 {
 constexpr auto stackSize = 1500U;
+// This thread must start before the EDU power management thread to ensure the correct start time
+// is published
+constexpr auto eduProgramQueueThreadStartDelay = eduPowerManagementThreadStartDelay - 1 * s;
+static_assert(eduProgramQueueThreadStartDelay > 0 * s);
 constexpr auto eduCommunicationMargin = 2 * s;
 constexpr auto maxScheduleDelay = 1 * min;
 
@@ -57,6 +62,7 @@ private:
         // TODO: Only communicate with the EDU if it's alive!
 
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        SuspendFor(eduProgramQueueThreadStartDelay);
         DEBUG_PRINT("Starting EDU program queue thread\n");
         while(true)
         {
