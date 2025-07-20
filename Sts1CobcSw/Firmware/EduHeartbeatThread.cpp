@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -49,14 +50,18 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        DEBUG_PRINT("Starting EDU heartbeat thread\n");
         auto edgeCounter = 0;
+        auto eduIsAlive = false;
         while(true)
         {
             auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(interruptTimeout);
             if(result.has_error())
             {
                 edgeCounter = 0;
-                eduIsAliveTopic.publish(false);
+                DEBUG_PRINT("%s", eduIsAlive ? "EDU is not alive\n" : "");
+                eduIsAlive = false;
+                eduIsAliveTopic.publish(eduIsAlive);
             }
             else
             {
@@ -64,7 +69,9 @@ private:
                 edgeCounter = std::min(edgeCounter, edgeCounterThreshold);
                 if(edgeCounter == edgeCounterThreshold)
                 {
-                    eduIsAliveTopic.publish(true);
+                    DEBUG_PRINT("%s", eduIsAlive ? "" : "EDU is alive\n");
+                    eduIsAlive = true;
+                    eduIsAliveTopic.publish(eduIsAlive);
                 }
             }
         }
