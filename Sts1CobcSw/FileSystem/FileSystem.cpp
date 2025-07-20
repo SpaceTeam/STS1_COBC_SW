@@ -3,6 +3,8 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 
+#include <cassert>
+
 
 namespace sts1cobcsw::fs
 {
@@ -58,6 +60,7 @@ auto Unmount() -> Result<void>
 
 auto CreateDirectory(Path const & path) -> Result<void>
 {
+    assert(path.back() != '/');
     if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
