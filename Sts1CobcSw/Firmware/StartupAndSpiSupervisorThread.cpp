@@ -196,19 +196,21 @@ auto SetUpFileSystem() -> void
         DEBUG_PRINT("Failed to mount file system: %s\n", ToCZString(mountResult.error()));
         persistentVariables.Increment<"nFileSystemErrors">();
     }
-    auto createDirectoryResult = fs::CreateDirectory("/programs");
+    auto createDirectoryResult = fs::CreateDirectory(edu::programsDirectory);
     if(createDirectoryResult.has_error()
        and createDirectoryResult.error() != ErrorCode::alreadyExists)
     {
-        DEBUG_PRINT("Failed to create directory /programs: %s\n",
+        DEBUG_PRINT("Failed to create directory '%s': %s\n",
+                    edu::programsDirectory.c_str(),
                     ToCZString(createDirectoryResult.error()));
         persistentVariables.Increment<"nFileSystemErrors">();
     }
-    createDirectoryResult = fs::CreateDirectory("/results");
+    createDirectoryResult = fs::CreateDirectory(edu::resultsDirectory);
     if(createDirectoryResult.has_error()
        and createDirectoryResult.error() != ErrorCode::alreadyExists)
     {
-        DEBUG_PRINT("Failed to create directory /results: %s\n",
+        DEBUG_PRINT("Failed to create directory '%s': %s\n",
+                    edu::resultsDirectory.c_str(),
                     ToCZString(createDirectoryResult.error()));
         persistentVariables.Increment<"nFileSystemErrors">();
     }
