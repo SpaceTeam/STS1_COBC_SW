@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
+
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
@@ -28,7 +30,6 @@ constexpr auto stackSize = 4000U;
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
 constexpr auto eduBootTimeMargin = 5 * s;
-constexpr auto eduPowerManagementThreadStartDelay = 15 * s;
 constexpr auto eduPowerManagementThreadInterval = 2 * s;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
@@ -52,9 +53,9 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        SuspendFor(eduPowerManagementThreadStartDelay);
         DEBUG_PRINT("Starting EDU power management thread\n");
-        TIME_LOOP(value_of(eduPowerManagementThreadStartDelay),
-                  value_of(eduPowerManagementThreadInterval))
+        TIME_LOOP(0, value_of(eduPowerManagementThreadInterval))
         {
             if(epsBatteryGoodGpioPin.Read() == hal::PinState::reset
                or not persistentVariables.Load<"flashIsWorking">())
@@ -84,6 +85,7 @@ private:
                 DEBUG_PRINT("Turning EDU on\n");
                 edu::TurnOn();
             }
+            DEBUG_PRINT_STACK_USAGE();
         }
     }
 } eduPowerManagementThread;
