@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
+#include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
 
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
@@ -27,8 +28,9 @@ namespace
 constexpr auto stackSize = 1000U;
 constexpr auto antennaDeploymentDelay = 5 * min;
 constexpr auto antennaDeploymentHeatDuration = 10 * s;
+constexpr auto feedWatchdogIntervall = 800 * ms;
 constexpr auto threadPeriode = 200 * ms;
-constexpr auto maxNTasks = 2U;
+constexpr auto maxNTasks = 3U;
 
 auto antennaDeploymentPin = hal::GpioPin(hal::antennaDeploymentPin);
 auto semaphore = RODOS::Semaphore();
@@ -46,6 +48,7 @@ struct TaskMetaData
 
 auto DeployAntennaTask() -> void;
 auto FinishDeployAntennaTask() -> void;
+auto FeedWatchDog() -> void;
 
 
 class WatchdogAndAntennaDeploymentThread : public RODOS::StaticThread<stackSize>
@@ -83,6 +86,7 @@ private:
     {
         antennaDeploymentPin.SetDirection(hal::PinDirection::out);
         RegisterTask(etl::function<void, void>(DeployAntennaTask), false, antennaDeploymentDelay);
+        RegisterTask(etl::function<void, void>(FeedWatchDog), true, feedWatchdogIntervall);
     }
 
 
@@ -133,6 +137,12 @@ auto DeployAntennaTask() -> void
 auto FinishDeployAntennaTask() -> void
 {
     antennaDeploymentPin.Reset();
+}
+
+
+auto FeedWatchDog() -> void
+{
+    wdt::Feed();
 }
 }
 }
