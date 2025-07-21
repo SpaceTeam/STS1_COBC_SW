@@ -21,7 +21,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 2000U;
+constexpr auto stackSize = 1000U;
 constexpr auto heartbeatFrequency = 10;
 constexpr auto heartbeatPeriod = 1 * s / heartbeatFrequency;
 // Due to integer arithmetic, we cannot store the safety margin of 12 / 10 in a separate variable
@@ -53,9 +53,11 @@ private:
         DEBUG_PRINT("Starting EDU heartbeat thread\n");
         auto edgeCounter = 0;
         auto eduIsAlive = false;
+        eduIsAliveTopic.publish(eduIsAlive);
         while(true)
         {
             auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(interruptTimeout);
+            eduHeartbeatGpioPin.ResetInterruptStatus();
             if(result.has_error())
             {
                 edgeCounter = 0;
