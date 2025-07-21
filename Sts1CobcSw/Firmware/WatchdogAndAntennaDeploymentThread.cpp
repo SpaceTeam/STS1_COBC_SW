@@ -48,11 +48,12 @@ auto DeployAntennaTask() -> void;
 auto FinishDeployAntennaTask() -> void;
 
 
-class AntennaDeploymentThread : public RODOS::StaticThread<stackSize>
+class WatchdogAndAntennaDeploymentThread : public RODOS::StaticThread<stackSize>
 {
 public:
-    AntennaDeploymentThread()
-        : StaticThread("AntennaDeploymentThread", antennaDeploymentThreadPriority)
+    WatchdogAndAntennaDeploymentThread()
+        : StaticThread("WatchdogAndAntennaDeploymentThread",
+                       watchdogAndAntennaDeploymentThreadPriority)
     {}
 
 
@@ -88,7 +89,7 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);
-        DEBUG_PRINT("Starting antenna deployment thread\n");
+        DEBUG_PRINT("Starting watchdog and antenna deployment thread\n");
         DEBUG_PRINT_STACK_USAGE();
 
         TIME_LOOP(0, value_of(threadPeriode))
@@ -112,7 +113,7 @@ private:
             semaphore.leave();
         }
     }
-} antennaDeploymentThread;
+} watchdogAndAntennaDeploymentThread;
 
 
 auto DeployAntennaTask() -> void
@@ -121,9 +122,10 @@ auto DeployAntennaTask() -> void
     {
         DEBUG_PRINT("Start deploying antenna\n");
         antennaDeploymentPin.Set();
-        antennaDeploymentThread.RegisterTask(etl::function<void, void>(FinishDeployAntennaTask),
-                                             false,
-                                             antennaDeploymentHeatDuration);
+        watchdogAndAntennaDeploymentThread.RegisterTask(
+            etl::function<void, void>(FinishDeployAntennaTask),
+            false,
+            antennaDeploymentHeatDuration);
     }
 }
 

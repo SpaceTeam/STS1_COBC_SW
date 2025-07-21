@@ -14,7 +14,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 StartupAndSpiSupervisorThread.cpp
                 TelemetryThread.cpp
                 TopicsAndSubscribers.cpp
-                AntennaDeploymentThread.cpp
+                WatchdogAndAntennaDeploymentThread.cpp
     )
     target_link_libraries(
         Sts1CobcSw_Firmware
