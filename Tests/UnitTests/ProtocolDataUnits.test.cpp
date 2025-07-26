@@ -321,3 +321,66 @@ TEST_CASE("Parsing EndOfFilePdu")
     CHECK(parseResult.error() == ErrorCode::invalidDataLength);
     buffer.resize(12);
 }
+
+
+TEST_CASE("Parsing FinishedPdu")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+    // Minimum parameter field length for FinishedPdu is 1 byte
+    CHECK(sts1cobcsw::FinishedPdu::minParameterFieldLength == 1U);
+    buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength);
+
+    buffer[0] = 0x05_b;
+
+    auto parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
+    REQUIRE(parseResult.has_value());
+    auto & finishedPdu = parseResult.value();
+    CHECK(finishedPdu.conditionCode == sts1cobcsw::noErrorConditionCode);
+    CHECK(finishedPdu.deliveryCode == sts1cobcsw::DeliveryCode(1));
+    CHECK(finishedPdu.fileStatus == sts1cobcsw::FileStatus(1));
+
+    // Buffer size must >= serialSize(conditionCode, spare, deliveryCode, fileStatus)
+    buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength - 1);
+    parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+    buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength);
+
+    // Extra bytes should be ignored when no error
+    buffer.resize(
+        sts1cobcsw::FinishedPdu::minParameterFieldLength
+        + static_cast<std::size_t>(sts1cobcsw::totalSerialSize<sts1cobcsw::FaultLocation>));
+    buffer[1] = 6_b;
+    buffer[2] = 1_b;
+    buffer[3] = 0x0F_b;
+    parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
+    REQUIRE(parseResult.has_value());
+    finishedPdu = parseResult.value();
+    CHECK(finishedPdu.conditionCode == sts1cobcsw::noErrorConditionCode);
+    CHECK(finishedPdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
+    CHECK(finishedPdu.faultLocation.length == 0);
+    CHECK(finishedPdu.faultLocation.value == sts1cobcsw::EntityId(0));
+
+    // Error condition: positive ACK limit reached (ConditionCode = 1)
+    buffer[0] = 0x10_b;
+    parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
+    REQUIRE(parseResult.has_value());
+    finishedPdu = parseResult.value();
+    CHECK(finishedPdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(finishedPdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
+    CHECK(finishedPdu.faultLocation.length
+          == static_cast<std::uint8_t>(sts1cobcsw::totalSerialSize<sts1cobcsw::EntityId>));
+    CHECK(finishedPdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+
+    // Invalid data length for error condition
+    buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength
+                  + static_cast<std::size_t>(sts1cobcsw::totalSerialSize<sts1cobcsw::FaultLocation>)
+                  + 1);
+    parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+    // Restore correct buffer size
+    buffer.resize(
+        sts1cobcsw::FinishedPdu::minParameterFieldLength
+        + static_cast<std::size_t>(sts1cobcsw::totalSerialSize<sts1cobcsw::FaultLocation>));
+}
