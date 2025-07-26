@@ -50,6 +50,29 @@ auto EndOfFilePdu::DoSize() const -> std::uint16_t
 }
 
 
+auto FinishedPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
+                                                 value_of(conditionCode),
+                                                 spare,
+                                                 value_of(deliveryCode),
+                                                 value_of(fileStatus));
+    if(conditionCode != noErrorConditionCode)
+    {
+        (void)SerializeTo<ccsdsEndianness>(cursor, faultLocation);
+    }
+}
+
+
+auto FinishedPdu::DoSize() const -> std::uint16_t
+{
+    return conditionCode == noErrorConditionCode
+             ? minParameterFieldLength
+             : minParameterFieldLength + totalSerialSize<FaultLocation>;
+}
+
+
 auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::ProtocolDataUnit>
 {
     if(buffer.size() < tc::pduHeaderLength)
@@ -150,6 +173,39 @@ auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
         }
     }
     return endOfFilePdu;
+}
+
+
+auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>
+{
+    if(buffer.size() < FinishedPdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto finishedPdu = FinishedPdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(),
+                                                           &value_of(finishedPdu.conditionCode),
+                                                           &finishedPdu.spare,
+                                                           &value_of(finishedPdu.deliveryCode),
+                                                           &value_of(finishedPdu.fileStatus));
+    if(finishedPdu.conditionCode == noErrorConditionCode
+       or finishedPdu.conditionCode == unsupportedChecksumTypeConditionCode)
+    {
+        return finishedPdu;
+    }
+    if(buffer.size() != FinishedPdu::minParameterFieldLength + totalSerialSize<FaultLocation>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    (void)DeserializeFrom<ccsdsEndianness>(cursor, &finishedPdu.faultLocation);
+    auto faultLocationIsValid = finishedPdu.faultLocation.type == TlvType::entityId
+                            and finishedPdu.faultLocation.length == totalSerialSize<EntityId>
+                            and IsValid(finishedPdu.faultLocation.value);
+    if(not faultLocationIsValid)
+    {
+        return ErrorCode::invalidFaultLocation;
+    }
+    return finishedPdu;
 }
 
 

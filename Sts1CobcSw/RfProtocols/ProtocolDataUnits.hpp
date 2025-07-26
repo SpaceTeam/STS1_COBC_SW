@@ -105,6 +105,33 @@ private:
 };
 
 
+using DeliveryCode = strong::type<UInt<1>, struct DeliveryCodeTag, strong::regular>;
+using FileStatus = strong::type<UInt<2>, struct FileStatusTag, strong::regular>;
+
+
+class FinishedPdu : public Payload
+{
+public:
+    static constexpr auto directiveCode = DirectiveCode::finished;
+
+    ConditionCode conditionCode = ConditionCode(0);
+    UInt<1> spare = 0;
+    DeliveryCode deliveryCode = DeliveryCode(0);
+    FileStatus fileStatus = FileStatus(0);
+    FaultLocation faultLocation;  // omitted if conditionCode == noError or unsupportedChecksumType
+
+    static constexpr auto minParameterFieldLength =
+        totalSerialSize<strong::underlying_type_t<ConditionCode>,
+                        decltype(spare),
+                        strong::underlying_type_t<DeliveryCode>,
+                        strong::underlying_type_t<FileStatus>>;
+
+private:
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
 inline constexpr auto noErrorConditionCode = ConditionCode(0);
 inline constexpr auto positiveAckLimitReachedConditionCode = ConditionCode(1);
 inline constexpr auto keepAliveLimitReachedConditionCode = ConditionCode(2);
@@ -122,6 +149,14 @@ inline constexpr auto reserved2ConditionCode = ConditionCode(13);
 inline constexpr auto suspendRequestReceivedConditionCode = ConditionCode(14);
 inline constexpr auto cancelRequestReceivedConditionCode = ConditionCode(15);
 
+inline constexpr auto dataCompleteDeliveryCode = DeliveryCode(0);
+inline constexpr auto dataIncompleteDeliveryCode = DeliveryCode(1);
+
+inline constexpr auto fileDiscardedFileStatus = FileStatus(0b00);
+inline constexpr auto fileRejectedFileStatus = FileStatus(0b01);
+inline constexpr auto fileRetainedFileStatus = FileStatus(0b10);
+inline constexpr auto unreportedFileStatus = FileStatus(0b11);
+
 
 [[nodiscard]] auto ParseAsProtocolDataUnit(std::span<Byte const> buffer)
     -> Result<tc::ProtocolDataUnit>;
@@ -129,6 +164,7 @@ inline constexpr auto cancelRequestReceivedConditionCode = ConditionCode(15);
 [[nodiscard]] auto ParseAsFileDirectivePdu(std::span<Byte const> buffer)
     -> Result<FileDirectivePdu>;
 [[nodiscard]] auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>;
+[[nodiscard]] auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>;
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
 
