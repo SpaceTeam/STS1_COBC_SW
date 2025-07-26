@@ -24,36 +24,74 @@ auto Mailbox<Message>::IsFull() -> bool
 template<typename Message>
 auto Mailbox<Message>::SuspendUntilFull(Duration duration) -> Result<void>
 {
-    semaphore_.enter();
-    if(isFull_)
+    auto endTime = CurrentRodosTime() + duration;
+    
+    while(true)
     {
+        semaphore_.enter();
+        if(isFull_)
+        {
+            semaphore_.leave();
+            return outcome_v2::success();
+        }
+        
+        auto currentTime = CurrentRodosTime();
+        if(currentTime >= endTime)
+        {
+            semaphore_.leave();
+            return ErrorCode::timeout;
+        }
+        
+        auto remainingTime = endTime - currentTime;
+        thread_ = RODOS::Thread::getCurrentThread();
+        RODOS::PRIORITY_CEILER_IN_SCOPE();
         semaphore_.leave();
-        return outcome_v2::success();
+        
+        auto result = SuspendUntilResumed(remainingTime);
+        thread_ = nullptr;
+        
+        if(result.has_error())
+        {
+            return result;
+        }
     }
-    thread_ = RODOS::Thread::getCurrentThread();
-    RODOS::PRIORITY_CEILER_IN_SCOPE();
-    semaphore_.leave();
-    auto result = SuspendUntilResumed(duration);
-    thread_ = nullptr;
-    return result;
 }
 
 
 template<typename Message>
 auto Mailbox<Message>::SuspendUntilEmpty(Duration duration) -> Result<void>
 {
-    semaphore_.enter();
-    if(!isFull_)
+    auto endTime = CurrentRodosTime() + duration;
+    
+    while(true)
     {
+        semaphore_.enter();
+        if(!isFull_)
+        {
+            semaphore_.leave();
+            return outcome_v2::success();
+        }
+        
+        auto currentTime = CurrentRodosTime();
+        if(currentTime >= endTime)
+        {
+            semaphore_.leave();
+            return ErrorCode::timeout;
+        }
+        
+        auto remainingTime = endTime - currentTime;
+        thread_ = RODOS::Thread::getCurrentThread();
+        RODOS::PRIORITY_CEILER_IN_SCOPE();
         semaphore_.leave();
-        return outcome_v2::success();
+        
+        auto result = SuspendUntilResumed(remainingTime);
+        thread_ = nullptr;
+        
+        if(result.has_error())
+        {
+            return result;
+        }
     }
-    thread_ = RODOS::Thread::getCurrentThread();
-    RODOS::PRIORITY_CEILER_IN_SCOPE();
-    semaphore_.leave();
-    auto result = SuspendUntilResumed(duration);
-    thread_ = nullptr;
-    return result;
 }
 
 
