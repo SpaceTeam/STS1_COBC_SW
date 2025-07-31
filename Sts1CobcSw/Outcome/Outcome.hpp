@@ -47,6 +47,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidStatusType,
     invalidLength,
     tooManyDataPackets,
+    eduIsNotAlive,
     // Mailbox
     full,
     empty,

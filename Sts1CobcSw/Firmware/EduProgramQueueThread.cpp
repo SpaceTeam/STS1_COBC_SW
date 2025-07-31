@@ -43,10 +43,12 @@ constexpr auto eduProgramQueueThreadStartDelay = eduPowerManagementThreadStartDe
 static_assert(eduProgramQueueThreadStartDelay > 0 * s);
 constexpr auto eduCommunicationMargin = 2 * s;
 constexpr auto maxScheduleDelay = 1 * min;
+constexpr auto eduIsAliveCheckInterval = 1 * s;
 
 
 [[nodiscard]] auto PublishAndConvert(RealTime startTime) -> RodosTime;
 [[nodiscard]] auto ProcessQueueEntry() -> Result<void>;
+auto SuspendUntilEduIsAlive() -> void;
 
 
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
@@ -59,8 +61,6 @@ public:
 private:
     void run() override
     {
-        // TODO: Only communicate with the EDU if it's alive!
-
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         SuspendFor(eduProgramQueueThreadStartDelay);
         DEBUG_PRINT("Starting EDU program queue thread\n");
@@ -95,7 +95,12 @@ private:
                         entry.timeout);
             SuspendUntil(startTime - eduCommunicationMargin);
             auto result = ProcessQueueEntry();
-            if(result.has_error())
+            if(result.has_error() and result.error() == ErrorCode::eduIsNotAlive)
+            {
+                DEBUG_PRINT("EDU is not alive, suspending until it's back\n");
+                SuspendUntilEduIsAlive();
+            }
+            else if(result.has_error())
             {
                 DEBUG_PRINT("Failed to process EDU program queue entry: %s\n",
                             ToCZString(result.error()));
@@ -133,6 +138,12 @@ auto ProcessQueueEntry() -> Result<void>
     auto queueEntry = edu::programQueue.Get(queueIndex);
     auto startTime = PublishAndConvert(queueEntry.startTime);
     DEBUG_PRINT("Updating EDU time to %u\n", static_cast<unsigned>(value_of(CurrentRealTime())));
+    auto eduIsAlive = false;
+    eduIsAliveBufferForProgramQueue.get(eduIsAlive);
+    if(not eduIsAlive)
+    {
+        return ErrorCode::eduIsNotAlive;
+    }
     OUTCOME_TRY(edu::UpdateTime({CurrentRealTime()}));
     SuspendUntil(startTime);
 
@@ -151,6 +162,11 @@ auto ProcessQueueEntry() -> Result<void>
                 static_cast<int>(value_of(queueEntry.programId)),
                 static_cast<unsigned>(value_of(queueEntry.startTime)),
                 static_cast<int>(queueEntry.timeout));
+    eduIsAliveBufferForProgramQueue.get(eduIsAlive);
+    if(not eduIsAlive)
+    {
+        return ErrorCode::eduIsNotAlive;
+    }
     OUTCOME_TRY(
         edu::ExecuteProgram({queueEntry.programId, queueEntry.startTime, queueEntry.timeout}));
     edu::programStatusHistory.PushBack(
@@ -162,6 +178,21 @@ auto ProcessQueueEntry() -> Result<void>
     }
     persistentVariables.Increment<"eduProgramQueueIndex">();
     return outcome_v2::success();
+}
+
+
+auto SuspendUntilEduIsAlive() -> void
+{
+    while(true)
+    {
+        auto eduIsAlive = false;
+        eduIsAliveBufferForProgramQueue.get(eduIsAlive);
+        if(eduIsAlive)
+        {
+            return;
+        }
+        SuspendFor(eduIsAliveCheckInterval);
+    }
 }
 }
 }

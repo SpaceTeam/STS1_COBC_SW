@@ -7,15 +7,18 @@ namespace sts1cobcsw
 // fiasco
 namespace
 {
-RODOS::Subscriber eduIsAliveSubscriberForPowerManagement(eduIsAliveTopic,
-                                                         eduIsAliveBufferForPowerManagement,
-                                                         "eduIsAliveSubscriber");
 RODOS::Subscriber eduIsAliveSubscriberForCommunicationError(eduIsAliveTopic,
                                                             eduIsAliveBufferForCommunicationError,
                                                             "eduIsAliveSubscriber");
 RODOS::Subscriber eduIsAliveSubscriberForListener(eduIsAliveTopic,
                                                   eduIsAliveBufferForListener,
                                                   "eduIsAliveSubscriber");
+RODOS::Subscriber eduIsAliveSubscriberForPowerManagement(eduIsAliveTopic,
+                                                         eduIsAliveBufferForPowerManagement,
+                                                         "eduIsAliveSubscriber");
+RODOS::Subscriber eduIsAliveSubscriberForProgramQueue(eduIsAliveTopic,
+                                                      eduIsAliveBufferForProgramQueue,
+                                                      "eduIsAliveSubscriber");
 RODOS::Subscriber eduIsAliveSubscriberForTelemetry(eduIsAliveTopic,
                                                    eduIsAliveBufferForListener,
                                                    "eduIsAliveSubscriber");
