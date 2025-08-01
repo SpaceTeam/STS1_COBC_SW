@@ -226,7 +226,7 @@ TEST_CASE("ReportParameterValuesRequest")
     CHECK(request.parameterIds[0] == sts1cobcsw::Parameter::Id::rxDataRate);
     CHECK(request.parameterIds[1] == sts1cobcsw::Parameter::Id::txDataRate);
     CHECK(request.parameterIds[2] == sts1cobcsw::Parameter::Id::realTimeOffsetCorrection);
-    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::eduStartDelayLimit);
+    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::maxEduIdleDuration);
     CHECK(request.parameterIds[4] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
 
     // No more than 5 Parameters are allowed

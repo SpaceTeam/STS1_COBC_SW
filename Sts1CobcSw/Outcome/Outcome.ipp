@@ -62,6 +62,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidLength";
         case ErrorCode::tooManyDataPackets:
             return "tooManyDataPackets";
+        case ErrorCode::eduIsNotAlive:
+            return "eduIsNotAlive";
         case ErrorCode::full:
             return "full";
         case ErrorCode::empty:

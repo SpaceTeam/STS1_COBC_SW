@@ -3,7 +3,6 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
-#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -46,9 +45,6 @@ hal::GpioPin updateGpioPin(hal::eduUpdatePin);
 namespace
 {
 // --- Private globals ---
-
-auto const programsDirectory = fs::Path("programs/");
-auto const resultsDirectory = fs::Path("results/");
 
 // Low-level CEP commands
 constexpr auto cepAck = 0xd7_b;   //! Acknowledging a data packet
@@ -105,11 +101,13 @@ auto FlushUartReceiveBuffer() -> void;
 
 // --- Public function definitions ---
 
-//! @brief  Must be called in an init() function of a thread.
 auto Initialize() -> void
 {
     eduEnableGpioPin.SetDirection(hal::PinDirection::out);
-    persistentVariables.Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
+    TurnOff();
+    // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
+    auto const baudRate = 115'200;
+    hal::Initialize(&uart, baudRate);
 }
 
 
@@ -117,10 +115,6 @@ auto TurnOn() -> void
 {
     persistentVariables.Store<"eduShouldBePowered">(true);
     eduEnableGpioPin.Set();
-
-    // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    auto const baudRate = 115'200;
-    hal::Initialize(&uart, baudRate);
 }
 
 
@@ -128,7 +122,6 @@ auto TurnOff() -> void
 {
     persistentVariables.Store<"eduShouldBePowered">(false);
     eduEnableGpioPin.Reset();
-    hal::Deinitialize(&uart);
 }
 
 

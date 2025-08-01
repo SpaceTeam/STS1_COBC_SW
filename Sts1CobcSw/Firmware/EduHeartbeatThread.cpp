@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -20,11 +21,13 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 2000U;
+constexpr auto stackSize = 1000U;
 constexpr auto heartbeatFrequency = 10;
 constexpr auto heartbeatPeriod = 1 * s / heartbeatFrequency;
-// Due to integer arithmetic, we cannot store the safety margin of 12 / 10 in a separate variable
-constexpr auto interruptTimeout = heartbeatPeriod / 2 * 12 / 10;
+// We use a high safety factor to ensure that we don't falsely detect the EDU as dead just because
+// higher-priority threads have a lot of work to do.
+constexpr auto safetyFactor = 2;
+constexpr auto interruptTimeout = heartbeatPeriod / 2 * safetyFactor;
 constexpr auto edgeCounterThreshold = 3;
 
 auto eduHeartbeatGpioPin = hal::GpioPin(hal::eduHeartbeatPin);
@@ -49,14 +52,20 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
+        DEBUG_PRINT("Starting EDU heartbeat thread\n");
         auto edgeCounter = 0;
+        auto eduIsAlive = false;
+        eduIsAliveTopic.publish(eduIsAlive);
         while(true)
         {
             auto result = eduHeartbeatGpioPin.SuspendUntilInterrupt(interruptTimeout);
+            eduHeartbeatGpioPin.ResetInterruptStatus();
             if(result.has_error())
             {
                 edgeCounter = 0;
-                eduIsAliveTopic.publish(false);
+                DEBUG_PRINT("%s", eduIsAlive ? "EDU is not alive\n" : "");
+                eduIsAlive = false;
+                eduIsAliveTopic.publish(eduIsAlive);
             }
             else
             {
@@ -64,7 +73,9 @@ private:
                 edgeCounter = std::min(edgeCounter, edgeCounterThreshold);
                 if(edgeCounter == edgeCounterThreshold)
                 {
-                    eduIsAliveTopic.publish(true);
+                    DEBUG_PRINT("%s", eduIsAlive ? "" : "EDU is alive\n");
+                    eduIsAlive = true;
+                    eduIsAliveTopic.publish(eduIsAlive);
                 }
             }
         }
