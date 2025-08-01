@@ -12,4 +12,7 @@
 namespace sts1cobcsw
 {
 inline constexpr auto eduPowerManagementThreadStartDelay = 15 * s;
+
+
+auto ResetEdu() -> void;
 }

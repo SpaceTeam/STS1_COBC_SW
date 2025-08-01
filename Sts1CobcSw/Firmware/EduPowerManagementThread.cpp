@@ -33,6 +33,8 @@ constexpr auto eduBootTimeMargin = 5 * s;
 constexpr auto eduPowerManagementThreadInterval = 2 * s;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
+RODOS::Semaphore semaphore{};
+auto eduShouldBeReset = false;
 
 
 class EduPowerManagementThread : public RODOS::StaticThread<stackSize>
@@ -57,6 +59,16 @@ private:
         DEBUG_PRINT("Starting EDU power management thread\n");
         TIME_LOOP(0, value_of(eduPowerManagementThreadInterval))
         {
+            {
+                auto protector = RODOS::ScopeProtector(&semaphore);
+                if(eduShouldBeReset)
+                {
+                    DEBUG_PRINT("Resetting EDU\n");
+                    edu::TurnOff();
+                    eduShouldBeReset = false;
+                    continue;
+                }
+            }
             if(epsBatteryGoodGpioPin.Read() == hal::PinState::reset
                or not persistentVariables.Load<"flashIsWorking">())
             {
@@ -89,5 +101,16 @@ private:
         }
     }
 } eduPowerManagementThread;
+}
+
+
+auto ResetEdu() -> void
+{
+    {
+        auto protector = RODOS::ScopeProtector(&semaphore);
+        eduShouldBeReset = true;
+    }
+    // Wait long enough to ensure that the power management thread has a chance to reset the EDU
+    SuspendFor(eduPowerManagementThreadInterval);
 }
 }

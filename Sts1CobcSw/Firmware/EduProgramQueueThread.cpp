@@ -4,7 +4,6 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
 #include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
@@ -48,6 +47,7 @@ constexpr auto eduIsAliveCheckInterval = 1 * s;
 
 [[nodiscard]] auto PublishAndConvert(RealTime startTime) -> RodosTime;
 [[nodiscard]] auto ProcessQueueEntry() -> Result<void>;
+auto HandleError(ErrorCode error) -> void;
 auto SuspendUntilEduIsAlive() -> void;
 
 
@@ -95,16 +95,9 @@ private:
                         entry.timeout);
             SuspendUntil(startTime - eduCommunicationMargin);
             auto result = ProcessQueueEntry();
-            if(result.has_error() and result.error() == ErrorCode::eduIsNotAlive)
+            if(result.has_error())
             {
-                DEBUG_PRINT("EDU is not alive, suspending until it's back\n");
-                SuspendUntilEduIsAlive();
-            }
-            else if(result.has_error())
-            {
-                DEBUG_PRINT("Failed to process EDU program queue entry: %s\n",
-                            ToCZString(result.error()));
-                ResumeEduCommunicationErrorThread();
+                HandleError(result.error());
             }
             DEBUG_PRINT_STACK_USAGE();
         }
@@ -178,6 +171,24 @@ auto ProcessQueueEntry() -> Result<void>
     }
     persistentVariables.Increment<"eduProgramQueueIndex">();
     return outcome_v2::success();
+}
+
+
+auto HandleError(ErrorCode error) -> void
+{
+    if(error == ErrorCode::eduIsNotAlive)
+    {
+        (void)0;  // Suppress empty branch warning in not-debug builds
+        DEBUG_PRINT("EDU is not alive\n");
+    }
+    else
+    {
+        DEBUG_PRINT("Failed to process EDU program queue entry: %s\n", ToCZString(error));
+        persistentVariables.Increment<"nEduCommunicationErrors">();
+        ResetEdu();
+    }
+    DEBUG_PRINT("Suspending until EDU is alive\n");
+    SuspendUntilEduIsAlive();
 }
 
 
