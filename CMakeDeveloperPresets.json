@@ -50,8 +50,9 @@
         "HSE_VALUE": "12000000",
         "HW_VERSION": "30",
         "REDIRECT_RF_OVER_UCI": "OFF",
-        "DISABLE_CHANNEL_CODING": "OFF",
         "USE_PUNCTURING": "OFF",
+        "DISABLE_CHANNEL_CODING": "OFF",
+        "DISABLE_CONVOLUTIONAL_CODING": "OFF",
         "ENABLE_DEBUG_PRINT_STACK_USAGE": "OFF"
       }
     },

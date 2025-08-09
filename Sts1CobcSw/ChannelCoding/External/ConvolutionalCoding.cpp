@@ -13,7 +13,7 @@
 
 #include <etl/utility.h>
 
-#ifdef DISABLE_CHANNEL_CODING
+#if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
     #include <algorithm>
 #endif
 #include <cassert>
@@ -43,7 +43,7 @@ auto ViterbiCodec::Encode(std::span<Byte const> data, [[maybe_unused]] bool flus
 {
     assert(data.size() <= ViterbiCodec::maxUnencodedSize);
 
-#ifdef DISABLE_CHANNEL_CODING
+#if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
     auto dst = etl::vector<Byte, ViterbiCodec::maxEncodedSize>();
     dst.uninitialized_resize(std::min(data.size(), dst.max_size()));
     std::copy_n(data.begin(), dst.size(), dst.begin());
