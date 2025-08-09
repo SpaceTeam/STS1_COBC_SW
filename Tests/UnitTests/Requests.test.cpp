@@ -219,8 +219,8 @@ TEST_CASE("ReportParameterValuesRequest")
     buffer[5] = 0x05_b;  // ParameterID 5
 
     auto parseResult = sts1cobcsw::ParseAsReportParameterValuesRequest(buffer);
-    CHECK(parseResult.has_value());
-    auto request = parseResult.value();
+    REQUIRE(parseResult.has_value());
+    auto const & request = parseResult.value();
 
     CHECK(request.nParameters == 0x05);
     CHECK(request.parameterIds[0] == sts1cobcsw::Parameter::Id::rxDataRate);
