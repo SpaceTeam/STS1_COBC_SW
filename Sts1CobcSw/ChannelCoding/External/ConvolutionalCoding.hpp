@@ -27,7 +27,12 @@ namespace sts1cobcsw::cc
 // This class implements both a Viterbi Decoder and a Convolutional Encoder.
 class ViterbiCodec
 {
-    static constexpr auto maxSize = (255 * 3 / 2) + 1;
+    #ifdef USE_PUNCTURING
+        static constexpr auto maxEncodedSize = 384U;
+    #else
+        static constexpr auto maxEncodedSize = 512U;
+    #endif
+    static constexpr auto maxUnencodedSize = 255U;
     static constexpr auto constraint = 7U;
     static constexpr auto nFlushBits = constraint - 1U;
     static constexpr auto polynomials = std::array<std::uint8_t, 2>{0b111'1001, 0b101'1011};
@@ -41,8 +46,6 @@ class ViterbiCodec
     // 0b10 (= 2), and the current input is 0b1 (= 1), then the index is 0b110 (=
     // 6).
     static inline auto outputs = std::array<std::uint8_t, 1U << constraint>();
-
-    static constexpr auto puncturingPattern = std::array{true, true, false, true};
 
     [[nodiscard]] auto NumParityBits() const -> std::size_t;
 
@@ -84,7 +87,11 @@ public:
         return unencodedSize;
 #else
         auto flushingBits = withFlushBits ? nFlushBits : 0U;
-        auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 3 / 2;
+        #ifdef USE_PUNCTURING
+            auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 3 / 2;
+        #else
+            auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 2;
+        #endif
         auto size = (bits + CHAR_BIT - 1) / CHAR_BIT;
         return size;
 #endif
@@ -98,12 +105,17 @@ public:
         return encodedSize;
 #else
         auto flushingBits = withFlushBits ? nFlushBits : 0U;
-        auto size = (((encodedSize * CHAR_BIT) * 2 / 3) - flushingBits) / CHAR_BIT;
-        return size % 2 == 0 ? size : size - 1;
+        #ifdef USE_PUNCTURING
+            auto size = (((encodedSize * CHAR_BIT) * 2 / 3) - flushingBits) / CHAR_BIT;
+            return size % 2 == 0 ? size : size - 1;
+        #else
+            auto size = (((encodedSize * CHAR_BIT) / 2) - flushingBits) / CHAR_BIT;
+            return size;
+        #endif
 #endif
     }
 
-    [[nodiscard]] auto Encode(std::span<Byte const> data, bool flush) -> etl::vector<Byte, maxSize>;
+    [[nodiscard]] auto Encode(std::span<Byte const> data, bool flush) -> etl::vector<Byte, maxEncodedSize>;
 
     [[nodiscard]] static auto Constraint() -> int;
 
