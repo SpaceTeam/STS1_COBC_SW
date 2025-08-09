@@ -100,6 +100,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         Sts1CobcSwTests_ChannelCoding PRIVATE etl::etl Sts1CobcSw_ChannelCoding Sts1CobcSw_Outcome
                                               Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
     )
+    if(USE_PUNCTURING)
+        target_compile_definitions(Sts1CobcSwTests_ChannelCoding PUBLIC USE_PUNCTURING)
+    endif()
     add_test(NAME ChannelCoding COMMAND Sts1CobcSwTests_ChannelCoding)
 
     add_test_program(EdacVariable)
