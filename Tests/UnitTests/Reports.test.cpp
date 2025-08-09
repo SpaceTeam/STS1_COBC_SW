@@ -358,7 +358,7 @@ TEST_CASE("Parameter value report")
     auto parameters = etl::vector<sts1cobcsw::Parameter, sts1cobcsw::maxNParameters>{
         sts1cobcsw::Parameter{Parameter::Id::rxDataRate,         9600U   },
         sts1cobcsw::Parameter{Parameter::Id::txDataRate,         115'200U},
-        sts1cobcsw::Parameter{Parameter::Id::eduStartDelayLimit, 17U     }
+        sts1cobcsw::Parameter{Parameter::Id::maxEduIdleDuration, 17U     }
     };
     report = ParameterValueReport(parameters);
     addToResult = report.AddTo(&dataField);
@@ -379,7 +379,7 @@ TEST_CASE("Parameter value report")
     CHECK(parameters[0].value == (Deserialize<Parameter::Value, 13>(dataField)));
     CHECK(dataField[17] == static_cast<Byte>(Parameter::Id::txDataRate));
     CHECK(parameters[1].value == (Deserialize<Parameter::Value, 18>(dataField)));
-    CHECK(dataField[22] == static_cast<Byte>(Parameter::Id::eduStartDelayLimit));
+    CHECK(dataField[22] == static_cast<Byte>(Parameter::Id::maxEduIdleDuration));
     CHECK(parameters[2].value == (Deserialize<Parameter::Value, 23>(dataField)));
 
     dataField.clear();

@@ -19,16 +19,20 @@ add_subdirectory(CatchRodos EXCLUDE_FROM_ALL)
 add_subdirectory(HardwareSetup EXCLUDE_FROM_ALL)
 add_subdirectory(Utility EXCLUDE_FROM_ALL)
 
+# ---- Support programs ----
+
+add_subdirectory(SupportPrograms EXCLUDE_FROM_ALL)
+
 # ---- Tests ----
 
-add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
 add_subdirectory(IntegrationTests EXCLUDE_FROM_ALL)
 add_subdirectory(ManualTests EXCLUDE_FROM_ALL)
+add_subdirectory(UnitTests EXCLUDE_FROM_ALL)
 
 add_custom_target(AllTests)
 add_dependencies(AllTests Sts1CobcSwTests_CatchRodos_Example)
 add_dependencies(AllTests Sts1CobcSwTests_CatchRodos_FailMessages)
-add_dependencies(AllTests AllUnitTests AllIntegrationTests AllManualTests)
+add_dependencies(AllTests AllSupportPrograms AllUnitTests AllIntegrationTests AllManualTests)
 
 # ---- End-of-file commands ----
 
