@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <span>
@@ -65,9 +66,10 @@ constexpr auto maxNNackRetries = 4;
 // Max. number of data packets for a single command
 constexpr auto maxNPackets = 100;
 // Max. length of a single data packet
-constexpr auto maxDataLength = 11 * 1024;
+constexpr auto maxDataSize = 11 * 1024;
+constexpr auto maxFileSize = maxNPackets * maxDataSize;
 // Data buffer for potentially large data packets (ReturnResult and StoreProgram)
-auto cepDataBuffer = etl::vector<Byte, maxDataLength>{};
+auto cepDataBuffer = etl::vector<Byte, maxDataSize>{};
 
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
 auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
@@ -133,20 +135,22 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
     auto path = BuildProgramFilePath(data.programId);
     // NOLINTNEXTLINE(*signed-bitwise)
     OUTCOME_TRY(auto file, fs::Open(path, LFS_O_RDONLY));
-    // TODO: Check if program file is not too large
+    OUTCOME_TRY(auto fileSize, file.Size());
+    if(fileSize > maxFileSize)
+    {
+        DEBUG_PRINT("Program file %s is too large: %d B\n", path.c_str(), fileSize);
+        return ErrorCode::fileTooLarge;
+    }
     while(true)
     {
-        OUTCOME_TRY(file.Read(Span(&cepDataBuffer)));
+        cepDataBuffer.uninitialized_resize(cepDataBuffer.MAX_SIZE);
+        OUTCOME_TRY(auto nReadBytes, file.Read(Span(&cepDataBuffer)));
+        cepDataBuffer.resize(static_cast<std::size_t>(nReadBytes));
         if(cepDataBuffer.empty())
         {
             break;
         }
-        auto sendDataPacketResult = SendDataPacket(Span(cepDataBuffer));
-        if(sendDataPacketResult.has_error())
-        {
-            // TODO: Why not return the error from SendDataPacket here, i.e., use OUTCOME_TRY?
-            return ErrorCode::nack;
-        }
+        OUTCOME_TRY(SendDataPacket(Span(cepDataBuffer)));
     }
     return WaitForAck();
 }
@@ -360,7 +364,7 @@ auto ParseStatusData() -> Result<Status>
 //! @param data The data to be sent
 auto SendDataPacket(std::span<Byte const> data) -> Result<void>
 {
-    if(data.size() >= maxDataLength)
+    if(data.size() >= maxDataSize)
     {
         return ErrorCode::dataPacketTooLong;
     }
@@ -445,12 +449,12 @@ auto ReceiveDataPacket() -> Result<void>
         return ErrorCode::invalidAnswer;
     }
 
-    OUTCOME_TRY(auto dataLength, Receive<std::uint16_t>());
-    if(dataLength == 0 or dataLength > maxDataLength)
+    OUTCOME_TRY(auto dataSize, Receive<std::uint16_t>());
+    if(dataSize == 0 or dataSize > maxDataSize)
     {
         return ErrorCode::invalidLength;
     }
-    cepDataBuffer.resize(dataLength);
+    cepDataBuffer.resize(dataSize);
 
     OUTCOME_TRY(Receive(Span(&cepDataBuffer)));
     OUTCOME_TRY(ReceiveAndCheckCrc32(Span(cepDataBuffer)));
@@ -478,7 +482,7 @@ auto Receive<Byte>() -> Result<Byte>
 
 auto Receive(std::span<Byte> data) -> Result<void>
 {
-    if(data.size() > maxDataLength)
+    if(data.size() > maxDataSize)
     {
         return ErrorCode::dataPacketTooLong;
     }

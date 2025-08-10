@@ -22,7 +22,8 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField, Apid apid, Payload const &
     if(dataField->available()
        < packetPrimaryHeaderLength + static_cast<std::size_t>(payload.Size()))
     {
-        return ErrorCode::tooLarge;
+            // TODO: Use dataFieldTooSmall
+        return ErrorCode::bufferTooSmall;
     }
     auto * packetBegin = dataField->data() + dataField->size();
     dataField->resize(dataField->size() + packetPrimaryHeaderLength);

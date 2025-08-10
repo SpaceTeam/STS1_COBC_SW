@@ -30,8 +30,8 @@ public:
     {
         if(dataField->available() < DoSize())
         {
-            // TODO: Think about what error to return here
-            return ErrorCode::tooLarge;
+            // TODO: Use dataFieldTooSmall
+            return ErrorCode::bufferTooSmall;
         }
         DoAddTo(dataField);
         return outcome_v2::success();

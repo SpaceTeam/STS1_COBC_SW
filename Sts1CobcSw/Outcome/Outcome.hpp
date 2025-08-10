@@ -26,7 +26,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     isADirectory = LFS_ERR_ISDIR,       // Entry is a dir
     notEmpty = LFS_ERR_NOTEMPTY,        // Dir is not empty
     badFileNumber = LFS_ERR_BADF,       // Bad file number
-    tooLarge = LFS_ERR_FBIG,            // File too large
+    fileTooLarge = LFS_ERR_FBIG,        // File too large
     invalidParameter = LFS_ERR_INVAL,   // Invalid parameter
     noSpace = LFS_ERR_NOSPC,            // No space left on device
     noMemory = LFS_ERR_NOMEM,           // No more memory available
@@ -55,6 +55,8 @@ enum class ErrorCode : std::int8_t  // NOLINT
     // TODO: Rework the EDU and RF protocol errors once they are fully implemented. Since we send
     // down the error code with the NACK report, we benefit from fine-grained error codes.
     errorCorrectionFailed,
+    // TODO: Add dataFieldTooSmall
+    // TODO: Move down to before invalidSpacePacket
     bufferTooSmall,
     invalidTransferFrame,
     invalidSpacecraftId,
@@ -69,6 +71,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidMessageTypeId,
     invalidSourceId,
     invalidApplicationData,
+    // TODO: Rename to invalidApplicationDataLength
     invalidDataLength,
     invalidDataArea,
     invalidParameterId,

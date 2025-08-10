@@ -26,8 +26,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "notEmpty";
         case ErrorCode::badFileNumber:
             return "badFileNumber";
-        case ErrorCode::tooLarge:
-            return "tooLarge";
+        case ErrorCode::fileTooLarge:
+            return "fileTooLarge";
         case ErrorCode::invalidParameter:
             return "invalidParameter";
         case ErrorCode::noSpace:
