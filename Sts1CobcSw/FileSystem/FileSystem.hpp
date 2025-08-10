@@ -21,9 +21,11 @@ using Path = etl::string<maxPathLength>;
 [[nodiscard]] auto CreateDirectory(Path const & path) -> Result<void>;
 [[nodiscard]] auto Remove(Path const & path) -> Result<void>;
 [[nodiscard]] auto ForceRemove(Path const & path) -> Result<void>;
+[[nodiscard]] auto BuildLockFilePath(Path path) -> Path;
 
 [[nodiscard]] auto FileSize(Path const & path) -> Result<std::uint32_t>;
 [[nodiscard]] auto IsLocked(Path const & path) -> Result<bool>;
+[[nodiscard]] auto IsLockFile(Path const & path) -> bool;
 
 
 namespace internal
