@@ -113,7 +113,7 @@ TEST_CASE("Adding Space Packets")
     addSpacePacketResult =
         sts1cobcsw::AddSpacePacketTo(&dataField, sts1cobcsw::normalApid, payload);
     CHECK(addSpacePacketResult.has_error());
-    CHECK(addSpacePacketResult.error() == ErrorCode::bufferTooSmall);
+    CHECK(addSpacePacketResult.error() == ErrorCode::dataFieldTooShort);
     CHECK(dataField.size() == 0U);
 }
 

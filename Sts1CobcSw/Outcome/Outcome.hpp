@@ -55,15 +55,14 @@ enum class ErrorCode : std::int8_t  // NOLINT
     // TODO: Rework the EDU and RF protocol errors once they are fully implemented. Since we send
     // down the error code with the NACK report, we benefit from fine-grained error codes.
     errorCorrectionFailed,
-    // TODO: Add dataFieldTooSmall
-    // TODO: Move down to before invalidSpacePacket
-    bufferTooSmall,
+    dataFieldTooShort,
     invalidTransferFrame,
     invalidSpacecraftId,
     invalidVcid,
     invalidFrameLength,
     invalidSecurityParameterIndex,
     authenticationFailed,
+    bufferTooSmall,
     invalidSpacePacket,
     invalidApid,
     invalidPacketDataLength,

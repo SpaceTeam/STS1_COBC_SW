@@ -70,8 +70,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "empty";
         case ErrorCode::errorCorrectionFailed:
             return "errorCorrectionFailed";
-        case ErrorCode::bufferTooSmall:
-            return "bufferTooSmall";
+        case ErrorCode::dataFieldTooShort:
+            return "dataFieldTooShort";
         case ErrorCode::invalidTransferFrame:
             return "invalidTransferFrame";
         case ErrorCode::invalidSpacecraftId:
@@ -84,6 +84,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidSecurityParameterIndex";
         case ErrorCode::authenticationFailed:
             return "authenticationFailed";
+        case ErrorCode::bufferTooSmall:
+            return "bufferTooSmall";
         case ErrorCode::invalidSpacePacket:
             return "invalidSpacePacket";
         case ErrorCode::invalidApid:
