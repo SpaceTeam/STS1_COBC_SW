@@ -604,7 +604,7 @@ auto Handle(SetParameterValuesRequest const & request, [[maybe_unused]] RequestI
 
 auto Handle(DeleteAFileRequest const & request, RequestId const & requestId) -> void
 {
-    auto result = fs::Remove(request.filePath);
+    auto result = fs::ForceRemove(request.filePath);
     if(result.has_error())
     {
         DEBUG_PRINT(
