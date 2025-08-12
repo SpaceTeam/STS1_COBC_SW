@@ -29,5 +29,10 @@ auto main() -> int
     DEBUG_PRINT("backupSecondaryFwPartition = %02x\n",
                 static_cast<unsigned>(backupSecondaryFwPartition));
 
+    nTotalResets++;
+    nResetsSinceRf++;
+    sts1cobcsw::Store(sts1cobcsw::nTotalResets, nTotalResets);
+    sts1cobcsw::Store(sts1cobcsw::nResetsSinceRf, nResetsSinceRf);
+
     sts1cobcsw::RunFirmware();
 }
