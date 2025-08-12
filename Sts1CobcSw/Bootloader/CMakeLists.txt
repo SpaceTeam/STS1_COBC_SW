@@ -1,6 +1,7 @@
 target_sources(
     Sts1CobcSw_Bootloader
     PRIVATE BusyWait.cpp
+            Fram.cpp
             Leds.cpp
             Main.cpp
             MemoryInitialization.cpp

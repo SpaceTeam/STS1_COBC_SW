@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Bootloader/RunFirmware.hpp>
 
+#include <Sts1CobcSw/Bootloader/Fram.hpp>
 #include <Sts1CobcSw/Bootloader/Print.hpp>
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
 #ifdef ENABLE_DEBUG_PRINT
@@ -35,6 +36,7 @@ auto RunFirmware() -> void
     // NOLINTEND(*reinterpret-cast, *no-int-to-ptr, *pointer-arithmetic)
 
     DEBUG_PRINT("Jumping to firmware...\n\n");
+    sts1cobcsw::fram::Reset();
 #ifdef ENABLE_DEBUG_PRINT
     sts1cobcsw::uciuart::Reset();
     sts1cobcsw::leds::TurnOff();
