@@ -6,9 +6,11 @@ target_sources(
             MemoryInitialization.cpp
             Print.cpp
             RunFirmware.cpp
+            Spi.cpp
             Startup.s
             UciUart.cpp
 )
 target_compile_definitions(
-    Sts1CobcSw_Bootloader PUBLIC $<$<CONFIG:Debug,RelWithDebInfo>:ENABLE_DEBUG_PRINT>
+    Sts1CobcSw_Bootloader PRIVATE $<$<CONFIG:Debug,RelWithDebInfo>:ENABLE_DEBUG_PRINT>
 )
+target_link_libraries(Sts1CobcSw_Bootloader PRIVATE Sts1CobcSw_Serial)
