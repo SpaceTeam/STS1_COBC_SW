@@ -323,6 +323,54 @@ TEST_CASE("Parsing EndOfFilePdu")
 }
 
 
+TEST_CASE("Adding FinishedPdu")
+{
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto finishedPdu = sts1cobcsw::FinishedPdu{};
+    finishedPdu.conditionCode = sts1cobcsw::noErrorConditionCode;
+    finishedPdu.deliveryCode = sts1cobcsw::DeliveryCode(0);
+    finishedPdu.fileStatus = sts1cobcsw::FileStatus(0);
+
+    CHECK(finishedPdu.Size() == 1U);
+
+    auto addResult = finishedPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == finishedPdu.Size());
+    CHECK(dataField[0]
+          == 0x00_b);  // Condition code (no error), Delivery code (0), and FileStatus(0)
+
+    finishedPdu.conditionCode = sts1cobcsw::invalidTransmissionModeConditionCode;
+    finishedPdu.deliveryCode = sts1cobcsw::DeliveryCode(0);
+    finishedPdu.fileStatus = sts1cobcsw::FileStatus(0);
+    finishedPdu.faultLocation.length = 1;
+    finishedPdu.faultLocation.value = sts1cobcsw::EntityId(0x0F);
+
+    CHECK(finishedPdu.Size() == 4U);  // 1 B + 3 B fault location
+
+    dataField.clear();
+    addResult = finishedPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == finishedPdu.Size());
+    CHECK(dataField[0] == 0x30_b);  // Condition code (invalid transmission mode)
+    CHECK(dataField[1] == 0x06_b);  // Fault location type (entity ID)
+    CHECK(dataField[2] == 0x01_b);  // Fault location length
+    CHECK(dataField[3] == 0x0F_b);  // Fault location value (entity ID)
+
+    finishedPdu.conditionCode = sts1cobcsw::unsupportedChecksumTypeConditionCode;
+    finishedPdu.deliveryCode = sts1cobcsw::DeliveryCode(1);
+    finishedPdu.fileStatus = sts1cobcsw::FileStatus(1);
+
+    CHECK(finishedPdu.Size() == 1U);  // Fault Location is omitted
+
+    dataField.clear();
+    addResult = finishedPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == finishedPdu.Size());
+    CHECK(dataField[0]
+          == 0xB5_b);  // Unsupported Checksum Type (0xB), Delivery Code and File Status (0b0101)
+}
+
+
 TEST_CASE("Parsing FinishedPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
@@ -383,4 +431,49 @@ TEST_CASE("Parsing FinishedPdu")
     buffer.resize(
         sts1cobcsw::FinishedPdu::minParameterFieldLength
         + static_cast<std::size_t>(sts1cobcsw::totalSerialSize<sts1cobcsw::FaultLocation>));
+}
+
+
+TEST_CASE("Adding AckPdu")
+{
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto ackPdu = sts1cobcsw::AckPdu{};
+    ackPdu.acknowledgedPduDirectiveCode =
+        static_cast<std::uint32_t>(sts1cobcsw::DirectiveCode::finished);
+    ackPdu.directiveSubtypeCode = 0;
+    ackPdu.conditionCode = sts1cobcsw::noErrorConditionCode;
+    ackPdu.transactionStatus = 0;
+
+    CHECK(ackPdu.minParameterFieldLength == 2U);
+    CHECK(ackPdu.Size() == 2U);
+
+    auto addResult = ackPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == ackPdu.Size());
+    CHECK(dataField[0] == 0x50_b);
+    CHECK(dataField[1] == 0x00_b);
+}
+
+
+TEST_CASE("Parsing AckPdu")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+    CHECK(sts1cobcsw::AckPdu::minParameterFieldLength == 2U);
+    buffer.resize(sts1cobcsw::AckPdu::minParameterFieldLength);
+
+    buffer[0] = 0x00_b;
+    buffer[1] = 0x12_b;
+
+    auto parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
+    REQUIRE(parseResult.has_value());
+    auto & ackPdu = parseResult.value();
+    CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 0);
+    CHECK(ackPdu.directiveSubtypeCode == 0);
+    CHECK(value_of(ackPdu.conditionCode) == 1);
+    CHECK(ackPdu.transactionStatus.ToUnderlying() == 2);
+
+    buffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 }
