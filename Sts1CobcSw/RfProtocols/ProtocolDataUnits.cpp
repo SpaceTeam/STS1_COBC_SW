@@ -188,20 +188,22 @@ auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>
                                                            &finishedPdu.spare,
                                                            &value_of(finishedPdu.deliveryCode),
                                                            &value_of(finishedPdu.fileStatus));
-    if(finishedPdu.conditionCode != noErrorConditionCode)
+    if(finishedPdu.conditionCode == noErrorConditionCode
+       or finishedPdu.conditionCode == unsupportedChecksumTypeConditionCode)
     {
-        if(buffer.size() != FinishedPdu::minParameterFieldLength + totalSerialSize<FaultLocation>)
-        {
-            return ErrorCode::invalidDataLength;
-        }
-        (void)DeserializeFrom<ccsdsEndianness>(cursor, &finishedPdu.faultLocation);
-        auto faultLocationIsValid = finishedPdu.faultLocation.type == TlvType::entityId
-                                and finishedPdu.faultLocation.length == totalSerialSize<EntityId>
-                                and IsValid(finishedPdu.faultLocation.value);
-        if(not faultLocationIsValid)
-        {
-            return ErrorCode::invalidFaultLocation;
-        }
+        return finishedPdu;
+    }
+    if(buffer.size() != FinishedPdu::minParameterFieldLength + totalSerialSize<FaultLocation>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    (void)DeserializeFrom<ccsdsEndianness>(cursor, &finishedPdu.faultLocation);
+    auto faultLocationIsValid = finishedPdu.faultLocation.type == TlvType::entityId
+                            and finishedPdu.faultLocation.length == totalSerialSize<EntityId>
+                            and IsValid(finishedPdu.faultLocation.value);
+    if(not faultLocationIsValid)
+    {
+        return ErrorCode::invalidFaultLocation;
     }
     return finishedPdu;
 }

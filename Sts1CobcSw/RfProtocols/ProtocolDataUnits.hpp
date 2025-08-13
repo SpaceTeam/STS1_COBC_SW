@@ -121,9 +121,10 @@ public:
     FaultLocation faultLocation;  // omitted if conditionCode == noError or unsupportedChecksumType
 
     static constexpr auto minParameterFieldLength =
-        totalSerialSize<strong::underlying_type_t<ConditionCode>, decltype(spare)>
-        + totalSerialSize<decltype(deliveryCode), decltype(fileStatus)>;
-
+        totalSerialSize<strong::underlying_type_t<ConditionCode>,
+                        decltype(spare),
+                        strong::underlying_type_t<DeliveryCode>,
+                        strong::underlying_type_t<FileStatus>>;
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;

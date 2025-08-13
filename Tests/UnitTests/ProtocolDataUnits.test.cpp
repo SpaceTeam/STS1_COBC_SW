@@ -326,7 +326,8 @@ TEST_CASE("Parsing EndOfFilePdu")
 TEST_CASE("Parsing FinishedPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
-    // Minimum parameter field length for FinishedPdu is 2 bytes
+    // Minimum parameter field length for FinishedPdu is 1 byte
+    CHECK(sts1cobcsw::FinishedPdu::minParameterFieldLength == 1U);
     buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength);
 
     buffer[0] = 0x05_b;
