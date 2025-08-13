@@ -40,6 +40,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Serial Sts1CobcSwTests::HardwareSetup
     )
 
+    add_test_program(FramTool)
+    target_link_libraries(
+        Sts1CobcSwTests_FramTool PRIVATE rodos::rodos Sts1CobcSw_Fram Sts1CobcSw_FramSections
+                                         Sts1CobcSw_Serial Sts1CobcSwTests::HardwareSetup
+    )
+
     add_test_program(Gpio)
     target_link_libraries(
         Sts1CobcSwTests_Gpio
