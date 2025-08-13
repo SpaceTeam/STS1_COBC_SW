@@ -58,7 +58,8 @@ auto FinishedPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
                                                  spare,
                                                  value_of(deliveryCode),
                                                  value_of(fileStatus));
-    if(conditionCode != noErrorConditionCode)
+    if(conditionCode != noErrorConditionCode
+       and conditionCode != unsupportedChecksumTypeConditionCode)
     {
         (void)SerializeTo<ccsdsEndianness>(cursor, faultLocation);
     }
@@ -67,7 +68,8 @@ auto FinishedPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 
 auto FinishedPdu::DoSize() const -> std::uint16_t
 {
-    return conditionCode == noErrorConditionCode
+    return (conditionCode == noErrorConditionCode
+            or conditionCode == unsupportedChecksumTypeConditionCode)
              ? minParameterFieldLength
              : minParameterFieldLength + totalSerialSize<FaultLocation>;
 }

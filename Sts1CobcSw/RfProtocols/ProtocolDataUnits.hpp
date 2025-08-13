@@ -131,6 +131,32 @@ private:
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
+class AckPdu : public Payload
+{
+public:
+    static constexpr auto directiveCode = DirectiveCode::ack;
+
+    // TODO: Change the default value here
+    DirectiveCode acknowledgedPduDirectiveCode =
+        DirectiveCode::ack;  // Only EOF and FinishedPdu are acknowledged.
+    UInt<4> directiveSubtypeCode =
+        0;  // Depend on the directive code of the PDU that this ACK PDU acknowledges.
+            // For ACK of Finished PDU: 0b0001. For ACKs of all other file directives: 0b0000.
+    ConditionCode conditionCode = ConditionCode(0);
+    UInt<2> spare = 0;
+    UInt<2> transactionStatus = 0;  // 0b00 is undefined
+
+    static constexpr auto minParameterFieldLength =
+        totalSerialSize<decltype(directiveSubtypeCode),
+                        strong::underlying_type_t<ConditionCode>,
+                        decltype(spare),
+                        decltype(transactionStatus)>;
+
+private:
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
 
 inline constexpr auto noErrorConditionCode = ConditionCode(0);
 inline constexpr auto positiveAckLimitReachedConditionCode = ConditionCode(1);
