@@ -33,10 +33,11 @@ using RODOS::PRINTF;
 
 namespace
 {
-constexpr auto maxMessageLength = 50U;
+constexpr auto stackSize = 60'000U;
+constexpr auto maxMessageLength = 100U;
 constexpr auto maxWords = 10U;
-constexpr auto maxWordLength = 15U;
-constexpr auto maxValueLength = 11U;
+constexpr auto maxWordLength = 30U;
+constexpr auto maxValueLength = 16U;
 auto uart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
@@ -54,7 +55,7 @@ auto ParseToPartitionId(etl::istring & string) -> Result<fw::PartitionId>;
 auto PartitionIdToString(fw::PartitionId id, etl::istring & string) -> void;
 
 
-class FramTool : public RODOS::StaticThread<>
+class FramTool : public RODOS::StaticThread<stackSize>
 {
 public:
     FramTool() : StaticThread("FramTool")
@@ -71,7 +72,7 @@ private:
 
     void run() override
     {
-        PRINTF("\nFram Tool\n\n");
+        PRINTF("\nFram Tool\n");
         PrintHelpMessage();
         fram::Initialize();  // This is required for the persistent variables to work
 
@@ -80,8 +81,10 @@ private:
 
         while(true)
         {
+            PRINTF("\n\n");
             // readData
             inputWords.clear();
+            inputWords.emplace_back();  // Add first word
             for(auto readCharacters = 0U; readCharacters < maxMessageLength; readCharacters++)
             {
                 hal::ReadFrom(&uart, Span(&nextChar));
@@ -165,7 +168,6 @@ private:
 
 auto PrintAllVariables() -> void
 {
-    PRINTF("\nToDo: Print all\n\n");
     auto variable = etl::string<maxMessageLength>{};
 
     // Bootloader
@@ -374,8 +376,8 @@ auto PrintVariable(etl::istring & variable) -> void
     }
     else if(variable == "lastMessageTypeId")
     {
-        PRINTF("NOT SUPPORTED!\n");
-        // ToDo: implemnt MessageTypeId
+        value = "NOT SUPPORTED!";
+        // ToDo: implement MessageTypeId
         // etl::to_string(persistentVariables.Load<"lastMessageTypeId">(), value);
     }
     else if(variable == "lastMessageTypeIdWasInvalid")
@@ -550,7 +552,7 @@ auto SetVariable(etl::istring & variable, etl::istring & value) -> void
 
 auto InvalidMessage() -> void
 {
-    PRINTF("\nInvalid message received\n");
+    PRINTF("\nInvalid message received\n\n");
     PrintHelpMessage();
 }
 
@@ -625,7 +627,7 @@ auto ParseToPartitionId(etl::istring & string) -> Result<fw::PartitionId>
     {
         return fw::PartitionId::secondary1;
     }
-    if(string == "secondary2" || string == "1")
+    if(string == "secondary2" || string == "2")
     {
         return fw::PartitionId::secondary2;
     }
