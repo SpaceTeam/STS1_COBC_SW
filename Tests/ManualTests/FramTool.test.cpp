@@ -8,6 +8,9 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
+
+#include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
@@ -20,6 +23,7 @@
 #include <iterator>
 #include <new>
 #include <type_traits>
+#include <utility>
 
 
 namespace sts1cobcsw
@@ -164,18 +168,81 @@ auto PrintAllVariables() -> void
     PRINTF("\nToDo: Print all\n\n");
     auto variable = etl::string<maxMessageLength>{};
 
+    // Bootloader
     PrintVariable(variable = "nTotalResets");
     PrintVariable(variable = "nResetsSinceRf");
     PrintVariable(variable = "activeSecondaryFwPartition");
+    PrintVariable(variable = "backupSecondaryFwPartition");
+    // Housekeeping
+    PrintVariable(variable = "txIsOn");
+    PrintVariable(variable = "fileTransferWindowEnd");
+    PrintVariable(variable = "antennasShouldBeDeployed");
+    PrintVariable(variable = "realTime");
+    PrintVariable(variable = "realTimeOffset");
+    PrintVariable(variable = "realTimeOffsetCorrection");
+    PrintVariable(variable = "nFirmwareChecksumErrors");
+    PrintVariable(variable = "epsIsWorking");
+    PrintVariable(variable = "flashIsWorking");
+    PrintVariable(variable = "rfIsWorking");
+    PrintVariable(variable = "nFlashErrors");
+    PrintVariable(variable = "nRfErrors");
+    PrintVariable(variable = "nFileSystemErrors");
+    // EDU
+    PrintVariable(variable = "eduShouldBePowered");
+    PrintVariable(variable = "eduStartDelayLimit");
+    PrintVariable(variable = "newEduResultIsAvailable");
+    PrintVariable(variable = "eduProgramQueueIndex");
+    PrintVariable(variable = "nEduCommunicationErrors");
+    // Communication
+    PrintVariable(variable = "nCorrectableUplinkErrors");
+    PrintVariable(variable = "nUncorrectableUplinkErrors");
+    PrintVariable(variable = "nGoodTransferFrames");
+    PrintVariable(variable = "nBadTransferFrames");
+    PrintVariable(variable = "lastFrameSequenceNumber");
+    PrintVariable(variable = "lastMessageTypeId");
+    PrintVariable(variable = "lastMessageTypeIdWasInvalid");
+    PrintVariable(variable = "lastApplicationDataWasInvalid");
 }
 
 
 auto SetAllVariables() -> void
 {
     PRINTF("\nToDo: Set all\n\n");
+    // Bootloader
     persistentVariables.Store<"nTotalResets">(0);
     persistentVariables.Store<"nResetsSinceRf">(0);
     persistentVariables.Store<"activeSecondaryFwPartition">(sts1cobcsw::fw::PartitionId::primary);
+    persistentVariables.Store<"backupSecondaryFwPartition">(sts1cobcsw::fw::PartitionId::primary);
+    // Housekeeping
+    persistentVariables.Store<"txIsOn">(false);
+    persistentVariables.Store<"fileTransferWindowEnd">(static_cast<RodosTime>(0));
+    persistentVariables.Store<"antennasShouldBeDeployed">(false);
+    persistentVariables.Store<"realTime">(static_cast<RealTime>(0));
+    persistentVariables.Store<"realTimeOffset">(static_cast<Duration>(0));
+    persistentVariables.Store<"realTimeOffsetCorrection">(static_cast<Duration>(0));
+    persistentVariables.Store<"nFirmwareChecksumErrors">(0);
+    persistentVariables.Store<"epsIsWorking">(false);
+    persistentVariables.Store<"flashIsWorking">(false);
+    persistentVariables.Store<"rfIsWorking">(false);
+    persistentVariables.Store<"nFlashErrors">(0);
+    persistentVariables.Store<"nRfErrors">(0);
+    persistentVariables.Store<"nFileSystemErrors">(0);
+    // EDU
+    persistentVariables.Store<"eduShouldBePowered">(false);
+    persistentVariables.Store<"eduStartDelayLimit">(static_cast<Duration>(0));
+    persistentVariables.Store<"newEduResultIsAvailable">(false);
+    persistentVariables.Store<"eduProgramQueueIndex">(0);
+    persistentVariables.Store<"nEduCommunicationErrors">(0);
+    // Communication
+    persistentVariables.Store<"nCorrectableUplinkErrors">(0);
+    persistentVariables.Store<"nUncorrectableUplinkErrors">(0);
+    persistentVariables.Store<"nGoodTransferFrames">(0);
+    persistentVariables.Store<"nBadTransferFrames">(0);
+    persistentVariables.Store<"lastFrameSequenceNumber">(0);
+    // ToDo: implement MessageTypeId
+    // persistentVariables.Store<"lastMessageTypeId">(0);
+    persistentVariables.Store<"lastMessageTypeIdWasInvalid">(false);
+    persistentVariables.Store<"lastApplicationDataWasInvalid">(false);
 
     PrintAllVariables();
 }
@@ -193,6 +260,7 @@ auto PrintHelpMessage() -> void
 auto PrintVariable(etl::istring & variable) -> void
 {
     auto value = etl::string<maxValueLength>{};
+    // Bootloader
     if(variable == "nTotalResets")
     {
         etl::to_string(persistentVariables.Load<"nTotalResets">(), value);
@@ -209,9 +277,114 @@ auto PrintVariable(etl::istring & variable) -> void
     {
         PartitionIdToString(persistentVariables.Load<"backupSecondaryFwPartition">(), value);
     }
+    // Housekeeping
     else if(variable == "txIsOn")
     {
         etl::to_string(persistentVariables.Load<"txIsOn">(), value);
+    }
+    else if(variable == "fileTransferWindowEnd")
+    {
+        etl::to_string(persistentVariables.Load<"fileTransferWindowEnd">().value_of(), value);
+    }
+    else if(variable == "antennasShouldBeDeployed")
+    {
+        etl::to_string(persistentVariables.Load<"antennasShouldBeDeployed">(), value);
+    }
+    else if(variable == "realTime")
+    {
+        etl::to_string(persistentVariables.Load<"realTime">().value_of(), value);
+    }
+    else if(variable == "realTimeOffset")
+    {
+        etl::to_string(persistentVariables.Load<"realTimeOffset">().value_of(), value);
+    }
+    else if(variable == "realTimeOffsetCorrection")
+    {
+        etl::to_string(persistentVariables.Load<"realTimeOffsetCorrection">().value_of(), value);
+    }
+    else if(variable == "nFirmwareChecksumErrors")
+    {
+        etl::to_string(persistentVariables.Load<"nFirmwareChecksumErrors">(), value);
+    }
+    else if(variable == "epsIsWorking")
+    {
+        etl::to_string(persistentVariables.Load<"epsIsWorking">(), value);
+    }
+    else if(variable == "flashIsWorking")
+    {
+        etl::to_string(persistentVariables.Load<"flashIsWorking">(), value);
+    }
+    else if(variable == "rfIsWorking")
+    {
+        etl::to_string(persistentVariables.Load<"rfIsWorking">(), value);
+    }
+    else if(variable == "nFlashErrors")
+    {
+        etl::to_string(persistentVariables.Load<"nFlashErrors">(), value);
+    }
+    else if(variable == "nRfErrors")
+    {
+        etl::to_string(persistentVariables.Load<"nRfErrors">(), value);
+    }
+    else if(variable == "nFileSystemErrors")
+    {
+        etl::to_string(persistentVariables.Load<"nFileSystemErrors">(), value);
+    }
+    // EDU
+    else if(variable == "eduShouldBePowered")
+    {
+        etl::to_string(persistentVariables.Load<"eduShouldBePowered">(), value);
+    }
+    else if(variable == "eduStartDelayLimit")
+    {
+        etl::to_string(persistentVariables.Load<"eduStartDelayLimit">().value_of(), value);
+    }
+    else if(variable == "newEduResultIsAvailable")
+    {
+        etl::to_string(persistentVariables.Load<"newEduResultIsAvailable">(), value);
+    }
+    else if(variable == "eduProgramQueueIndex")
+    {
+        etl::to_string(persistentVariables.Load<"eduProgramQueueIndex">(), value);
+    }
+    else if(variable == "nEduCommunicationErrors")
+    {
+        etl::to_string(persistentVariables.Load<"nEduCommunicationErrors">(), value);
+    }
+    // Communication
+    else if(variable == "nCorrectableUplinkErrors")
+    {
+        etl::to_string(persistentVariables.Load<"nCorrectableUplinkErrors">(), value);
+    }
+    else if(variable == "nUncorrectableUplinkErrors")
+    {
+        etl::to_string(persistentVariables.Load<"nUncorrectableUplinkErrors">(), value);
+    }
+    else if(variable == "nGoodTransferFrames")
+    {
+        etl::to_string(persistentVariables.Load<"nGoodTransferFrames">(), value);
+    }
+    else if(variable == "nBadTransferFrames")
+    {
+        etl::to_string(persistentVariables.Load<"nBadTransferFrames">(), value);
+    }
+    else if(variable == "lastFrameSequenceNumber")
+    {
+        etl::to_string(persistentVariables.Load<"lastFrameSequenceNumber">(), value);
+    }
+    else if(variable == "lastMessageTypeId")
+    {
+        PRINTF("NOT SUPPORTED!\n");
+        // ToDo: implemnt MessageTypeId
+        // etl::to_string(persistentVariables.Load<"lastMessageTypeId">(), value);
+    }
+    else if(variable == "lastMessageTypeIdWasInvalid")
+    {
+        etl::to_string(persistentVariables.Load<"lastMessageTypeIdWasInvalid">(), value);
+    }
+    else if(variable == "lastApplicationDataWasInvalid")
+    {
+        etl::to_string(persistentVariables.Load<"lastApplicationDataWasInvalid">(), value);
     }
     else
     {
@@ -225,6 +398,7 @@ auto PrintVariable(etl::istring & variable) -> void
 
 auto SetVariable(etl::istring & variable, etl::istring & value) -> void
 {
+    // Bootloader
     if(variable == "nTotalResets")
     {
         WriteAndConvertFunction<"nTotalResets", std::uint32_t, ParseToUint32>(variable, value);
@@ -243,9 +417,126 @@ auto SetVariable(etl::istring & variable, etl::istring & value) -> void
         WriteAndConvertFunction<"backupSecondaryFwPartition", fw::PartitionId, ParseToPartitionId>(
             variable, value);
     }
+    // Housekeeping
     else if(variable == "txIsOn")
     {
         WriteAndConvertFunction<"txIsOn", bool, ParseToBool>(variable, value);
+    }
+    else if(variable == "fileTransferWindowEnd")
+    {
+        WriteAndConvertFunction<"fileTransferWindowEnd", RodosTime, ParseToUint32>(variable, value);
+    }
+    else if(variable == "antennasShouldBeDeployed")
+    {
+        WriteAndConvertFunction<"antennasShouldBeDeployed", bool, ParseToBool>(variable, value);
+    }
+    else if(variable == "realTime")
+    {
+        WriteAndConvertFunction<"realTime", RealTime, ParseToUint32>(variable, value);
+    }
+    else if(variable == "realTimeOffset")
+    {
+        WriteAndConvertFunction<"realTimeOffset", Duration, ParseToUint32>(variable, value);
+    }
+    else if(variable == "realTimeOffsetCorrection")
+    {
+        WriteAndConvertFunction<"realTimeOffsetCorrection", Duration, ParseToUint32>(variable,
+                                                                                     value);
+    }
+    else if(variable == "nFirmwareChecksumErrors")
+    {
+        WriteAndConvertFunction<"nFirmwareChecksumErrors", std::uint8_t, ParseToUint32>(variable,
+                                                                                        value);
+    }
+    else if(variable == "epsIsWorking")
+    {
+        WriteAndConvertFunction<"epsIsWorking", bool, ParseToBool>(variable, value);
+    }
+    else if(variable == "flashIsWorking")
+    {
+        WriteAndConvertFunction<"flashIsWorking", bool, ParseToBool>(variable, value);
+    }
+    else if(variable == "rfIsWorking")
+    {
+        WriteAndConvertFunction<"rfIsWorking", bool, ParseToBool>(variable, value);
+    }
+    else if(variable == "nFlashErrors")
+    {
+        WriteAndConvertFunction<"nFlashErrors", std::uint8_t, ParseToUint32>(variable, value);
+    }
+    else if(variable == "nRfErrors")
+    {
+        WriteAndConvertFunction<"nRfErrors", std::uint8_t, ParseToUint32>(variable, value);
+    }
+    else if(variable == "nFileSystemErrors")
+    {
+        WriteAndConvertFunction<"nFileSystemErrors", std::uint8_t, ParseToUint32>(variable, value);
+    }
+    // EDU
+    else if(variable == "eduShouldBePowered")
+    {
+        WriteAndConvertFunction<"eduShouldBePowered", bool, ParseToBool>(variable, value);
+    }
+    else if(variable == "eduStartDelayLimit")
+    {
+        WriteAndConvertFunction<"eduStartDelayLimit", Duration, ParseToUint32>(variable, value);
+    }
+    else if(variable == "newEduResultIsAvailable")
+    {
+        WriteAndConvertFunction<"newEduResultIsAvailable", bool, ParseToBool>(variable, value);
+    }
+    else if(variable == "eduProgramQueueIndex")
+    {
+        WriteAndConvertFunction<"eduProgramQueueIndex", std::uint8_t, ParseToUint32>(variable,
+                                                                                     value);
+    }
+    else if(variable == "nEduCommunicationErrors")
+    {
+        WriteAndConvertFunction<"nEduCommunicationErrors", std::uint8_t, ParseToUint32>(variable,
+                                                                                        value);
+    }
+    // Communication
+    else if(variable == "nCorrectableUplinkErrors")
+    {
+        WriteAndConvertFunction<"nCorrectableUplinkErrors", std::uint16_t, ParseToUint32>(variable,
+                                                                                          value);
+    }
+    else if(variable == "nUncorrectableUplinkErrors")
+    {
+        WriteAndConvertFunction<"nUncorrectableUplinkErrors", std::uint16_t, ParseToUint32>(
+            variable, value);
+    }
+    else if(variable == "nGoodTransferFrames")
+    {
+        WriteAndConvertFunction<"nGoodTransferFrames", std::uint16_t, ParseToUint32>(variable,
+                                                                                     value);
+    }
+    else if(variable == "nBadTransferFrames")
+    {
+        WriteAndConvertFunction<"nBadTransferFrames", std::uint16_t, ParseToUint32>(variable,
+                                                                                    value);
+    }
+    else if(variable == "lastFrameSequenceNumber")
+    {
+        WriteAndConvertFunction<"lastFrameSequenceNumber", std::uint8_t, ParseToUint32>(variable,
+                                                                                        value);
+    }
+    else if(variable == "lastMessageTypeId")
+    {
+        PRINTF("NOT SUPPORTED!\n");
+        // ToDo: implement messageType Field
+        // WriteAndConvertFunction<"lastMessageTypeId", MessageTypeIdFields,
+        // ParseToUint32>(variable, value);
+    }
+    else if(variable == "lastMessageTypeIdWasInvalid")
+    {
+        WriteAndConvertFunction<"lastMessageTypeIdWasInvalid", bool, ParseToUint32>(variable,
+                                                                                    value);
+    }
+    else if(variable == "lastApplicationDataWasInvalid")
+    {
+        WriteAndConvertFunction<"lastApplicationDataWasInvalid", bool, ParseToUint32>(variable,
+                                                                                      value);
     }
     else
     {
