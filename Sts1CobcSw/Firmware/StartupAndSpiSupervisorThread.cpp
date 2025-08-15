@@ -14,6 +14,7 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
@@ -81,6 +82,8 @@ private:
             RODOS::hwResetAndReboot();
         }
         InitializeAndFeedResetDog();
+        UpdateRealTimeOffset(persistentVariables.Load<"realTime">(), /*useOffsetCorrection=*/false);
+        DEBUG_PRINT_REAL_TIME();
         SetUpFileSystem();
         edu::Initialize();
         auto i = 0U;
