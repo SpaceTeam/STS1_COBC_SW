@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/type.hpp>
@@ -20,8 +21,10 @@
 #include <etl/utility.h>
 #include <etl/vector.h>
 
+#include <charconv>
 #include <cstdint>
 #include <span>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 
@@ -57,6 +60,7 @@ auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) 
 auto ParseAsUInt32(etl::string_view string) -> Result<std::uint32_t>;
 auto ParseAsBool(etl::string_view string) -> Result<bool>;
 auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>;
+auto ParseAsMessageTypeIdFields(etl::string_view string) -> Result<MessageTypeIdFields>;
 auto ToString(fw::PartitionId id, etl::istring * string) -> void;
 
 
@@ -238,11 +242,11 @@ auto ResetAllVariables() -> void
     persistentVariables.Store<"backupSecondaryFwPartition">(sts1cobcsw::fw::PartitionId::primary);
     // Housekeeping
     persistentVariables.Store<"txIsOn">(false);
-    persistentVariables.Store<"fileTransferWindowEnd">(static_cast<RodosTime>(0));
+    persistentVariables.Store<"fileTransferWindowEnd">(RodosTime(0));
     persistentVariables.Store<"antennasShouldBeDeployed">(false);
-    persistentVariables.Store<"realTime">(static_cast<RealTime>(0));
-    persistentVariables.Store<"realTimeOffset">(static_cast<Duration>(0));
-    persistentVariables.Store<"realTimeOffsetCorrection">(static_cast<Duration>(0));
+    persistentVariables.Store<"realTime">(RealTime(0));
+    persistentVariables.Store<"realTimeOffset">(Duration(0));
+    persistentVariables.Store<"realTimeOffsetCorrection">(Duration(0));
     persistentVariables.Store<"nFirmwareChecksumErrors">(0);
     persistentVariables.Store<"epsIsWorking">(false);
     persistentVariables.Store<"flashIsWorking">(false);
@@ -252,7 +256,7 @@ auto ResetAllVariables() -> void
     persistentVariables.Store<"nFileSystemErrors">(0);
     // EDU
     persistentVariables.Store<"eduShouldBePowered">(false);
-    persistentVariables.Store<"eduStartDelayLimit">(static_cast<Duration>(0));
+    persistentVariables.Store<"eduStartDelayLimit">(Duration(0));
     persistentVariables.Store<"newEduResultIsAvailable">(false);
     persistentVariables.Store<"eduProgramQueueIndex">(0);
     persistentVariables.Store<"nEduCommunicationErrors">(0);
@@ -262,8 +266,7 @@ auto ResetAllVariables() -> void
     persistentVariables.Store<"nGoodTransferFrames">(0);
     persistentVariables.Store<"nBadTransferFrames">(0);
     persistentVariables.Store<"lastFrameSequenceNumber">(0);
-    // TODO: Implement MessageTypeId
-    // persistentVariables.Store<"lastMessageTypeId">(0);
+    persistentVariables.Store<"lastMessageTypeId">(MessageTypeIdFields{});
     persistentVariables.Store<"lastMessageTypeIdWasInvalid">(false);
     persistentVariables.Store<"lastApplicationDataWasInvalid">(false);
 
@@ -388,9 +391,10 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     }
     else if(variable == "lastMessageTypeId")
     {
-        value = "NOT SUPPORTED!";
-        // ToDo: implement MessageTypeId
-        // etl::to_string(persistentVariables.Load<"lastMessageTypeId">(), value);
+        auto messageTypeId = persistentVariables.Load<"lastMessageTypeId">();
+        etl::to_string(messageTypeId.serviceTypeId, value);
+        value += ",";
+        etl::to_string(messageTypeId.messageSubtypeId, value, /*append=*/true);
     }
     else if(variable == "lastMessageTypeIdWasInvalid")
     {
@@ -536,10 +540,9 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     }
     else if(variable == "lastMessageTypeId")
     {
-        PRINTF("NOT SUPPORTED!\n");
-        // TODO: Implement messageType Field
-        // WriteAndConvertFunction<"lastMessageTypeId", MessageTypeIdFields,
-        // ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"lastMessageTypeId",
+                                MessageTypeIdFields,
+                                ParseAsMessageTypeIdFields>(variable, value);
     }
     else if(variable == "lastMessageTypeIdWasInvalid")
     {
@@ -553,10 +556,7 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     else
     {
         PRINTF("Variable %s not found!\n", Message(variable).c_str());
-        return;
     }
-
-    PRINTF("%s <- %s\n", Message(variable).c_str(), Message(value).c_str());
 }
 
 
@@ -569,7 +569,6 @@ auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) 
         PRINTF("Value %s for variable %s could not be converted!\n",
                Message(value).c_str(),
                Message(variable).c_str());
-
         if constexpr(std::is_same_v<decltype(parseFunction), decltype(&ParseAsPartitionId)>)
         {
             PRINTF("Use:\n0 or primary\n1 or secondary1\n2 or secondary2\n");
@@ -578,30 +577,19 @@ auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) 
     else
     {
         persistentVariables.Store<name>(static_cast<T>(convertedValueResult.value()));
+        PRINTF("%s <- %s\n", Message(variable).c_str(), Message(value).c_str());
     }
 }
 
 
 auto ParseAsUInt32(etl::string_view string) -> Result<std::uint32_t>  // NOLINT(*value-param)
 {
-    auto value = 0U;
-    for(auto ch : string)
+    std::uint32_t value = 0;
+    auto result = std::from_chars(string.data(), string.data() + string.size(), value);
+    if(result.ec != std::errc{})
     {
-        if(ch < '0' || ch > '9')
-        {
-            return ErrorCode::invalidParameter;
-        }
-
-        auto digit = static_cast<std::uint32_t>(ch - '0');
-        if(value > (UINT32_MAX - digit) / 10)
-        {
-            // Overflow
-            return ErrorCode::invalidParameter;
-        }
-
-        value = value * 10 + digit;
+        return ErrorCode::invalidParameter;
     }
-
     return value;
 }
 
@@ -616,7 +604,6 @@ auto ParseAsBool(etl::string_view string) -> Result<bool>  // NOLINT(*value-para
     {
         return false;
     }
-
     return ErrorCode::invalidParameter;
 }
 
@@ -635,8 +622,28 @@ auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>  // 
     {
         return fw::PartitionId::secondary2;
     }
-
     return ErrorCode::invalidParameter;
+}
+
+
+// NOLINTNEXTLINE(*value-param)
+auto ParseAsMessageTypeIdFields(etl::string_view string) -> Result<MessageTypeIdFields>
+{
+    auto messageTypeId = MessageTypeIdFields{};
+    auto result =
+        std::from_chars(string.data(), string.data() + string.size(), messageTypeId.serviceTypeId);
+    if(result.ec != std::errc{} or (*result.ptr != ',' and *result.ptr != '.'))
+    {
+        return ErrorCode::invalidParameter;
+    }
+    result = std::from_chars(result.ptr + 1,  // NOLINT(*pointer-arithmetic)
+                             string.data() + string.size(),
+                             messageTypeId.messageSubtypeId);
+    if(result.ec != std::errc{})
+    {
+        return ErrorCode::invalidParameter;
+    }
+    return messageTypeId;
 }
 
 
