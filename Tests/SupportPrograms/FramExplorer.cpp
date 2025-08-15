@@ -5,7 +5,6 @@
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -14,14 +13,15 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <etl/list.h>
+#include <etl/char_traits.h>
 #include <etl/string.h>
+#include <etl/string_view.h>
 #include <etl/to_string.h>
+#include <etl/utility.h>
+#include <etl/vector.h>
 
-#include <array>
 #include <cstdint>
-#include <iterator>
-#include <new>
+#include <span>
 #include <type_traits>
 #include <utility>
 
@@ -33,26 +33,31 @@ using RODOS::PRINTF;
 
 namespace
 {
+using Message = etl::string<100>;
+using Token = etl::string<30>;
+using Input = etl::vector<Token, 10>;
+using ValueString = etl::string<16>;
+
+
 constexpr auto stackSize = 60'000U;
-constexpr auto maxMessageLength = 100U;
-constexpr auto maxWords = 10U;
-constexpr auto maxWordLength = 30U;
-constexpr auto maxValueLength = 16U;
 auto uart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
+auto PrintUsageInfo() -> void;
+auto ReadFromUart() -> Input;
+auto HandleInvalidInput() -> void;
+auto HandleGetCommand(Input const & input) -> void;
+auto HandleSetCommand(Input const & input) -> void;
 auto PrintAllVariables() -> void;
-auto SetAllVariables() -> void;
-auto PrintVariable(etl::istring & variable) -> void;
-auto SetVariable(etl::istring & variable, etl::istring & value) -> void;
-auto PrintHelpMessage() -> void;
-auto InvalidMessage() -> void;
-template<StringLiteral name, typename T, auto parseFunction>
-auto WriteAndConvertFunction(etl::istring & variable, etl::istring & value) -> void;
-auto ParseToUint32(etl::istring & string) -> Result<std::uint32_t>;
-auto ParseToBool(etl::istring & string) -> Result<bool>;
-auto ParseToPartitionId(etl::istring & string) -> Result<fw::PartitionId>;
-auto PartitionIdToString(fw::PartitionId id, etl::istring & string) -> void;
+auto ResetAllVariables() -> void;
+auto PrintVariable(etl::string_view variable) -> void;
+auto SetVariable(etl::string_view variable, etl::string_view value) -> void;
+template<StringLiteral name, typename T, auto parseFunction>  // NOLINTNEXTLINE(*value-param)
+auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) -> void;
+auto ParseAsUInt32(etl::string_view string) -> Result<std::uint32_t>;
+auto ParseAsBool(etl::string_view string) -> Result<bool>;
+auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>;
+auto ToString(fw::PartitionId id, etl::istring * string) -> void;
 
 
 class FramExplorer : public RODOS::StaticThread<stackSize>
@@ -63,153 +68,169 @@ public:
 
 
 private:
-    void init() override
+    auto init() -> void override
     {
         auto const baudRate = 115'200;
         hal::Initialize(&uart, baudRate);
     }
 
 
-    void run() override
+    auto run() -> void override
     {
-        PRINTF("\nFRAM explorer\n");
-        PrintHelpMessage();
-        fram::Initialize();  // This is required for the persistent variables to work
-
-        auto nextChar = std::array<Byte, 1>{};
-        auto inputWords = etl::list<etl::string<maxWordLength>, maxWords>{};
-
+        PRINTF("\nFRAM explorer\n\n");
+        PrintUsageInfo();
+        fram::Initialize();
         while(true)
         {
-            PRINTF("\n\n");
-            // readData
-            inputWords.clear();
-            inputWords.emplace_back();  // Add first word
-            for(auto readCharacters = 0U; readCharacters < maxMessageLength; readCharacters++)
+            PRINTF("\n");
+            auto input = ReadFromUart();
+            if(input.size() < 2)
             {
-                hal::ReadFrom(&uart, Span(&nextChar));
-                auto character = static_cast<char>(nextChar[0]);
-                if(character == '\n')
-                {
-                    break;
-                }
-                if(character == ' ')
-                {
-                    if(inputWords.full())
-                    {
-                        break;
-                    }
-                    inputWords.emplace_back();  // Add a new word
-                }
-                else
-                {
-                    inputWords.back().push_back(character);
-                }
-            }
-
-            // Validate min size
-            if(inputWords.size() < 2)
-            {
-                InvalidMessage();
+                HandleInvalidInput();
                 continue;
             }
-
-            // Interpret data
-            auto const & command = inputWords.front();
-            auto it = ++inputWords.begin();  // Iterator to the second element
-
-            if(command == "get")
+            auto const & commandName = input.front();
+            if(commandName == "get")
             {
-                if(*it == "--all")
-                {
-                    PrintAllVariables();
-                }
-                else
-                {
-                    for(; it != inputWords.end(); ++it)
-                    {
-                        PrintVariable(*it);
-                    }
-                }
+                HandleGetCommand(input);
             }
-            else if(command == "set")
+            else if(commandName == "set")
             {
-                if(*it == "--all")
-                {
-                    SetAllVariables();
-                }
-                else
-                {
-                    // there should be pairs of two and the initial set word
-                    auto remaining = std::distance(it, inputWords.end());
-                    if(remaining % 2 != 0)
-                    {
-                        InvalidMessage();
-                    }
-                    else
-                    {
-                        while(it != inputWords.end())
-                        {
-                            auto & variable = *it++;
-                            auto & value = *it++;
-                            SetVariable(variable, value);
-                        }
-                    }
-                }
+                HandleSetCommand(input);
             }
             else
             {
-                InvalidMessage();
+                HandleInvalidInput();
             }
         }
     }
 } framExplorer;
 
 
-auto PrintAllVariables() -> void
+auto PrintUsageInfo() -> void
 {
-    auto variable = etl::string<maxMessageLength>{};
-
-    // Bootloader
-    PrintVariable(variable = "nTotalResets");
-    PrintVariable(variable = "nResetsSinceRf");
-    PrintVariable(variable = "activeSecondaryFwPartition");
-    PrintVariable(variable = "backupSecondaryFwPartition");
-    // Housekeeping
-    PrintVariable(variable = "txIsOn");
-    PrintVariable(variable = "fileTransferWindowEnd");
-    PrintVariable(variable = "antennasShouldBeDeployed");
-    PrintVariable(variable = "realTime");
-    PrintVariable(variable = "realTimeOffset");
-    PrintVariable(variable = "realTimeOffsetCorrection");
-    PrintVariable(variable = "nFirmwareChecksumErrors");
-    PrintVariable(variable = "epsIsWorking");
-    PrintVariable(variable = "flashIsWorking");
-    PrintVariable(variable = "rfIsWorking");
-    PrintVariable(variable = "nFlashErrors");
-    PrintVariable(variable = "nRfErrors");
-    PrintVariable(variable = "nFileSystemErrors");
-    // EDU
-    PrintVariable(variable = "eduShouldBePowered");
-    PrintVariable(variable = "eduStartDelayLimit");
-    PrintVariable(variable = "newEduResultIsAvailable");
-    PrintVariable(variable = "eduProgramQueueIndex");
-    PrintVariable(variable = "nEduCommunicationErrors");
-    // Communication
-    PrintVariable(variable = "nCorrectableUplinkErrors");
-    PrintVariable(variable = "nUncorrectableUplinkErrors");
-    PrintVariable(variable = "nGoodTransferFrames");
-    PrintVariable(variable = "nBadTransferFrames");
-    PrintVariable(variable = "lastFrameSequenceNumber");
-    PrintVariable(variable = "lastMessageTypeId");
-    PrintVariable(variable = "lastMessageTypeIdWasInvalid");
-    PrintVariable(variable = "lastApplicationDataWasInvalid");
+    PRINTF("Usage:\n");
+    PRINTF("  get --all                to get all variables\n");
+    PRINTF("  get <variable>           to get one variable\n");
+    PRINTF("  set <variable> <value>   to set one variable\n");
+    PRINTF("  set --all                to reset all variables to 0\n");
 }
 
 
-auto SetAllVariables() -> void
+auto ReadFromUart() -> Input
 {
-    PRINTF("\nToDo: Set all\n\n");
+    auto input = Input{};
+    auto token = Token{};
+    for(auto i = 0U; i < Message::MAX_SIZE; ++i)
+    {
+        char character;  // NOLINT(*init-variables)
+        hal::ReadFrom(&uart, Span(&character));
+        if(character == ' ' or character == '\n')
+        {
+            if(not token.empty())
+            {
+                input.push_back(token);
+                token.clear();
+            }
+            if(character == '\n' or input.full())
+            {
+                break;
+            }
+        }
+        else
+        {
+            token.push_back(character);
+        }
+    }
+    return input;
+}
+
+
+auto HandleInvalidInput() -> void
+{
+    PRINTF("Invalid input received\n\n");
+    PrintUsageInfo();
+}
+
+
+auto HandleGetCommand(Input const & input) -> void
+{
+    if(input[1] == "--all")
+    {
+        PrintAllVariables();
+        return;
+    }
+    for(auto && variableName : std::span(input).subspan<1>())
+    {
+        PrintVariable(variableName);
+    }
+}
+
+
+auto HandleSetCommand(Input const & input) -> void
+{
+    if(input[1] == "--all")
+    {
+        ResetAllVariables();
+        return;
+    }
+    // The set command requires variable-value pairs -> even number of arguments
+    auto nArguments = input.size() - 1;
+    if(nArguments % 2 != 0)
+    {
+        HandleInvalidInput();
+        return;
+    }
+    for(auto i = 1U; i < input.size(); i += 2)
+    {
+        auto const & variable = input[i];
+        auto const & value = input[i + 1];
+        SetVariable(variable, value);
+    }
+}
+
+
+auto PrintAllVariables() -> void
+{
+    // Bootloader
+    PrintVariable("nTotalResets");
+    PrintVariable("nResetsSinceRf");
+    PrintVariable("activeSecondaryFwPartition");
+    PrintVariable("backupSecondaryFwPartition");
+    // Housekeeping
+    PrintVariable("txIsOn");
+    PrintVariable("fileTransferWindowEnd");
+    PrintVariable("antennasShouldBeDeployed");
+    PrintVariable("realTime");
+    PrintVariable("realTimeOffset");
+    PrintVariable("realTimeOffsetCorrection");
+    PrintVariable("nFirmwareChecksumErrors");
+    PrintVariable("epsIsWorking");
+    PrintVariable("flashIsWorking");
+    PrintVariable("rfIsWorking");
+    PrintVariable("nFlashErrors");
+    PrintVariable("nRfErrors");
+    PrintVariable("nFileSystemErrors");
+    // EDU
+    PrintVariable("eduShouldBePowered");
+    PrintVariable("eduStartDelayLimit");
+    PrintVariable("newEduResultIsAvailable");
+    PrintVariable("eduProgramQueueIndex");
+    PrintVariable("nEduCommunicationErrors");
+    // Communication
+    PrintVariable("nCorrectableUplinkErrors");
+    PrintVariable("nUncorrectableUplinkErrors");
+    PrintVariable("nGoodTransferFrames");
+    PrintVariable("nBadTransferFrames");
+    PrintVariable("lastFrameSequenceNumber");
+    PrintVariable("lastMessageTypeId");
+    PrintVariable("lastMessageTypeIdWasInvalid");
+    PrintVariable("lastApplicationDataWasInvalid");
+}
+
+
+auto ResetAllVariables() -> void
+{
     // Bootloader
     persistentVariables.Store<"nTotalResets">(0);
     persistentVariables.Store<"nResetsSinceRf">(0);
@@ -241,7 +262,7 @@ auto SetAllVariables() -> void
     persistentVariables.Store<"nGoodTransferFrames">(0);
     persistentVariables.Store<"nBadTransferFrames">(0);
     persistentVariables.Store<"lastFrameSequenceNumber">(0);
-    // ToDo: implement MessageTypeId
+    // TODO: Implement MessageTypeId
     // persistentVariables.Store<"lastMessageTypeId">(0);
     persistentVariables.Store<"lastMessageTypeIdWasInvalid">(false);
     persistentVariables.Store<"lastApplicationDataWasInvalid">(false);
@@ -250,18 +271,9 @@ auto SetAllVariables() -> void
 }
 
 
-auto PrintHelpMessage() -> void
+auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
 {
-    PRINTF("Write: get --all                to get all variables\n");
-    PRINTF("Write: get <variable>           to get one variable\n");
-    PRINTF("Write: set <variable> <value>   to write one variable\n");
-    PRINTF("Write: set --all                to write all variables to 0\n");
-}
-
-
-auto PrintVariable(etl::istring & variable) -> void
-{
-    auto value = etl::string<maxValueLength>{};
+    auto value = Message{};
     // Bootloader
     if(variable == "nTotalResets")
     {
@@ -273,11 +285,11 @@ auto PrintVariable(etl::istring & variable) -> void
     }
     else if(variable == "activeSecondaryFwPartition")
     {
-        PartitionIdToString(persistentVariables.Load<"activeSecondaryFwPartition">(), value);
+        ToString(persistentVariables.Load<"activeSecondaryFwPartition">(), &value);
     }
     else if(variable == "backupSecondaryFwPartition")
     {
-        PartitionIdToString(persistentVariables.Load<"backupSecondaryFwPartition">(), value);
+        ToString(persistentVariables.Load<"backupSecondaryFwPartition">(), &value);
     }
     // Housekeeping
     else if(variable == "txIsOn")
@@ -390,183 +402,175 @@ auto PrintVariable(etl::istring & variable) -> void
     }
     else
     {
-        PRINTF("Variable %s not found!\n", variable.c_str());
+        PRINTF("Variable %s not found!\n", Message(variable).c_str());
         return;
     }
-
-    PRINTF("%s = %s\n", variable.c_str(), value.c_str());
+    PRINTF("%s = %s\n", Message(variable).c_str(), value.c_str());
 }
 
 
-auto SetVariable(etl::istring & variable, etl::istring & value) -> void
+auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // NOLINT(*value-param)
 {
     // Bootloader
     if(variable == "nTotalResets")
     {
-        WriteAndConvertFunction<"nTotalResets", std::uint32_t, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"nTotalResets", std::uint32_t, ParseAsUInt32>(variable, value);
     }
     else if(variable == "nResetsSinceRf")
     {
-        WriteAndConvertFunction<"nResetsSinceRf", std::uint8_t, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"nResetsSinceRf", std::uint8_t, ParseAsUInt32>(variable, value);
     }
     else if(variable == "activeSecondaryFwPartition")
     {
-        WriteAndConvertFunction<"activeSecondaryFwPartition", fw::PartitionId, ParseToPartitionId>(
+        WriteAndConvertFunction<"activeSecondaryFwPartition", fw::PartitionId, ParseAsPartitionId>(
             variable, value);
     }
     else if(variable == "backupSecondaryFwPartition")
     {
-        WriteAndConvertFunction<"backupSecondaryFwPartition", fw::PartitionId, ParseToPartitionId>(
+        WriteAndConvertFunction<"backupSecondaryFwPartition", fw::PartitionId, ParseAsPartitionId>(
             variable, value);
     }
     // Housekeeping
     else if(variable == "txIsOn")
     {
-        WriteAndConvertFunction<"txIsOn", bool, ParseToBool>(variable, value);
+        WriteAndConvertFunction<"txIsOn", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "fileTransferWindowEnd")
     {
-        WriteAndConvertFunction<"fileTransferWindowEnd", RodosTime, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"fileTransferWindowEnd", RodosTime, ParseAsUInt32>(variable, value);
     }
     else if(variable == "antennasShouldBeDeployed")
     {
-        WriteAndConvertFunction<"antennasShouldBeDeployed", bool, ParseToBool>(variable, value);
+        WriteAndConvertFunction<"antennasShouldBeDeployed", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "realTime")
     {
-        WriteAndConvertFunction<"realTime", RealTime, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"realTime", RealTime, ParseAsUInt32>(variable, value);
     }
     else if(variable == "realTimeOffset")
     {
-        WriteAndConvertFunction<"realTimeOffset", Duration, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"realTimeOffset", Duration, ParseAsUInt32>(variable, value);
     }
     else if(variable == "realTimeOffsetCorrection")
     {
-        WriteAndConvertFunction<"realTimeOffsetCorrection", Duration, ParseToUint32>(variable,
+        WriteAndConvertFunction<"realTimeOffsetCorrection", Duration, ParseAsUInt32>(variable,
                                                                                      value);
     }
     else if(variable == "nFirmwareChecksumErrors")
     {
-        WriteAndConvertFunction<"nFirmwareChecksumErrors", std::uint8_t, ParseToUint32>(variable,
+        WriteAndConvertFunction<"nFirmwareChecksumErrors", std::uint8_t, ParseAsUInt32>(variable,
                                                                                         value);
     }
     else if(variable == "epsIsWorking")
     {
-        WriteAndConvertFunction<"epsIsWorking", bool, ParseToBool>(variable, value);
+        WriteAndConvertFunction<"epsIsWorking", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "flashIsWorking")
     {
-        WriteAndConvertFunction<"flashIsWorking", bool, ParseToBool>(variable, value);
+        WriteAndConvertFunction<"flashIsWorking", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "rfIsWorking")
     {
-        WriteAndConvertFunction<"rfIsWorking", bool, ParseToBool>(variable, value);
+        WriteAndConvertFunction<"rfIsWorking", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "nFlashErrors")
     {
-        WriteAndConvertFunction<"nFlashErrors", std::uint8_t, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"nFlashErrors", std::uint8_t, ParseAsUInt32>(variable, value);
     }
     else if(variable == "nRfErrors")
     {
-        WriteAndConvertFunction<"nRfErrors", std::uint8_t, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"nRfErrors", std::uint8_t, ParseAsUInt32>(variable, value);
     }
     else if(variable == "nFileSystemErrors")
     {
-        WriteAndConvertFunction<"nFileSystemErrors", std::uint8_t, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"nFileSystemErrors", std::uint8_t, ParseAsUInt32>(variable, value);
     }
     // EDU
     else if(variable == "eduShouldBePowered")
     {
-        WriteAndConvertFunction<"eduShouldBePowered", bool, ParseToBool>(variable, value);
+        WriteAndConvertFunction<"eduShouldBePowered", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "eduStartDelayLimit")
     {
-        WriteAndConvertFunction<"eduStartDelayLimit", Duration, ParseToUint32>(variable, value);
+        WriteAndConvertFunction<"eduStartDelayLimit", Duration, ParseAsUInt32>(variable, value);
     }
     else if(variable == "newEduResultIsAvailable")
     {
-        WriteAndConvertFunction<"newEduResultIsAvailable", bool, ParseToBool>(variable, value);
+        WriteAndConvertFunction<"newEduResultIsAvailable", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "eduProgramQueueIndex")
     {
-        WriteAndConvertFunction<"eduProgramQueueIndex", std::uint8_t, ParseToUint32>(variable,
+        WriteAndConvertFunction<"eduProgramQueueIndex", std::uint8_t, ParseAsUInt32>(variable,
                                                                                      value);
     }
     else if(variable == "nEduCommunicationErrors")
     {
-        WriteAndConvertFunction<"nEduCommunicationErrors", std::uint8_t, ParseToUint32>(variable,
+        WriteAndConvertFunction<"nEduCommunicationErrors", std::uint8_t, ParseAsUInt32>(variable,
                                                                                         value);
     }
     // Communication
     else if(variable == "nCorrectableUplinkErrors")
     {
-        WriteAndConvertFunction<"nCorrectableUplinkErrors", std::uint16_t, ParseToUint32>(variable,
+        WriteAndConvertFunction<"nCorrectableUplinkErrors", std::uint16_t, ParseAsUInt32>(variable,
                                                                                           value);
     }
     else if(variable == "nUncorrectableUplinkErrors")
     {
-        WriteAndConvertFunction<"nUncorrectableUplinkErrors", std::uint16_t, ParseToUint32>(
+        WriteAndConvertFunction<"nUncorrectableUplinkErrors", std::uint16_t, ParseAsUInt32>(
             variable, value);
     }
     else if(variable == "nGoodTransferFrames")
     {
-        WriteAndConvertFunction<"nGoodTransferFrames", std::uint16_t, ParseToUint32>(variable,
+        WriteAndConvertFunction<"nGoodTransferFrames", std::uint16_t, ParseAsUInt32>(variable,
                                                                                      value);
     }
     else if(variable == "nBadTransferFrames")
     {
-        WriteAndConvertFunction<"nBadTransferFrames", std::uint16_t, ParseToUint32>(variable,
+        WriteAndConvertFunction<"nBadTransferFrames", std::uint16_t, ParseAsUInt32>(variable,
                                                                                     value);
     }
     else if(variable == "lastFrameSequenceNumber")
     {
-        WriteAndConvertFunction<"lastFrameSequenceNumber", std::uint8_t, ParseToUint32>(variable,
+        WriteAndConvertFunction<"lastFrameSequenceNumber", std::uint8_t, ParseAsUInt32>(variable,
                                                                                         value);
     }
     else if(variable == "lastMessageTypeId")
     {
         PRINTF("NOT SUPPORTED!\n");
-        // ToDo: implement messageType Field
+        // TODO: Implement messageType Field
         // WriteAndConvertFunction<"lastMessageTypeId", MessageTypeIdFields,
         // ParseToUint32>(variable, value);
     }
     else if(variable == "lastMessageTypeIdWasInvalid")
     {
-        WriteAndConvertFunction<"lastMessageTypeIdWasInvalid", bool, ParseToUint32>(variable,
-                                                                                    value);
+        WriteAndConvertFunction<"lastMessageTypeIdWasInvalid", bool, ParseAsBool>(variable, value);
     }
     else if(variable == "lastApplicationDataWasInvalid")
     {
-        WriteAndConvertFunction<"lastApplicationDataWasInvalid", bool, ParseToUint32>(variable,
-                                                                                      value);
+        WriteAndConvertFunction<"lastApplicationDataWasInvalid", bool, ParseAsBool>(variable,
+                                                                                    value);
     }
     else
     {
-        PRINTF("Variable %s not found!\n", variable.c_str());
+        PRINTF("Variable %s not found!\n", Message(variable).c_str());
         return;
     }
 
-    PRINTF("%s <- %s\n", variable.c_str(), value.c_str());
+    PRINTF("%s <- %s\n", Message(variable).c_str(), Message(value).c_str());
 }
 
 
-auto InvalidMessage() -> void
-{
-    PRINTF("\nInvalid message received\n\n");
-    PrintHelpMessage();
-}
-
-
-template<StringLiteral name, typename T, auto parseFunction>
-auto WriteAndConvertFunction(etl::istring & variable, etl::istring & value) -> void
+template<StringLiteral name, typename T, auto parseFunction>  // NOLINTNEXTLINE(*value-param)
+auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) -> void
 {
     auto convertedValueResult = parseFunction(value);
     if(convertedValueResult.has_error())
     {
-        PRINTF(
-            "Value %s for variable %s could not be converted!\n", value.c_str(), variable.c_str());
+        PRINTF("Value %s for variable %s could not be converted!\n",
+               Message(value).c_str(),
+               Message(variable).c_str());
 
-        if constexpr(std::is_same_v<decltype(parseFunction), decltype(&ParseToPartitionId)>)
+        if constexpr(std::is_same_v<decltype(parseFunction), decltype(&ParseAsPartitionId)>)
         {
             PRINTF("Use:\n0 or primary\n1 or secondary1\n2 or secondary2\n");
         }
@@ -578,7 +582,7 @@ auto WriteAndConvertFunction(etl::istring & variable, etl::istring & value) -> v
 }
 
 
-auto ParseToUint32(etl::istring & string) -> Result<std::uint32_t>
+auto ParseAsUInt32(etl::string_view string) -> Result<std::uint32_t>  // NOLINT(*value-param)
 {
     auto value = 0U;
     for(auto ch : string)
@@ -602,7 +606,7 @@ auto ParseToUint32(etl::istring & string) -> Result<std::uint32_t>
 }
 
 
-auto ParseToBool(etl::istring & string) -> Result<bool>
+auto ParseAsBool(etl::string_view string) -> Result<bool>  // NOLINT(*value-param)
 {
     if(string == "true" || string == "1")
     {
@@ -617,7 +621,7 @@ auto ParseToBool(etl::istring & string) -> Result<bool>
 }
 
 
-auto ParseToPartitionId(etl::istring & string) -> Result<fw::PartitionId>
+auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>  // NOLINT(*value-param)
 {
     if(string == "primary" || string == "0")
     {
@@ -636,18 +640,18 @@ auto ParseToPartitionId(etl::istring & string) -> Result<fw::PartitionId>
 }
 
 
-auto PartitionIdToString(fw::PartitionId id, etl::istring & string) -> void
+auto ToString(fw::PartitionId id, etl::istring * string) -> void
 {
     switch(id)
     {
         case fw::PartitionId::primary:
-            string = "primary";
+            *string = "primary";
             break;
         case fw::PartitionId::secondary1:
-            string = "secondary1";
+            *string = "secondary1";
             break;
         case fw::PartitionId::secondary2:
-            string = "secondary2";
+            *string = "secondary2";
             break;
     }
 }
