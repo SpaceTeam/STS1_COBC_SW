@@ -26,4 +26,4 @@ target_link_libraries(
            Sts1CobcSw_Telemetry
            Sts1CobcSw_Vocabulary
 )
-target_link_libraries(Sts1CobcSw_RfProtocols PRIVATE Sts1CobcSw_RealTime)
+target_link_libraries(Sts1CobcSw_RfProtocols PRIVATE Sts1CobcSw_RealTime Sts1CobcSw_Utility)
