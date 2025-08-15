@@ -55,10 +55,10 @@ auto ParseToPartitionId(etl::istring & string) -> Result<fw::PartitionId>;
 auto PartitionIdToString(fw::PartitionId id, etl::istring & string) -> void;
 
 
-class FramTool : public RODOS::StaticThread<stackSize>
+class FramExplorer : public RODOS::StaticThread<stackSize>
 {
 public:
-    FramTool() : StaticThread("FramTool")
+    FramExplorer() : StaticThread("FramExplorer")
     {}
 
 
@@ -72,7 +72,7 @@ private:
 
     void run() override
     {
-        PRINTF("\nFram Tool\n");
+        PRINTF("\nFRAM explorer\n");
         PrintHelpMessage();
         fram::Initialize();  // This is required for the persistent variables to work
 
@@ -163,7 +163,7 @@ private:
             }
         }
     }
-} framTool;
+} framExplorer;
 
 
 auto PrintAllVariables() -> void
