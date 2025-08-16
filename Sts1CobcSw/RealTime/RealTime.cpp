@@ -15,12 +15,13 @@
 
 namespace sts1cobcsw
 {
-auto UpdateRealTimeOffset(RealTime telecommandTimestamp) -> void
+auto UpdateRealTimeOffset(RealTime realTime, bool useOffsetCorrection) -> void
 {
     auto currentRodosTime = CurrentRodosTime();
-    auto offsetCorrection = persistentVariables.Load<"realTimeOffsetCorrection">();
-    auto newRealTimeOffset = RodosTime(value_of(telecommandTimestamp) * RODOS::SECONDS)
-                           - currentRodosTime + offsetCorrection;
+    auto offsetCorrection =
+        useOffsetCorrection ? persistentVariables.Load<"realTimeOffsetCorrection">() : Duration(0);
+    auto newRealTimeOffset =
+        RodosTime(value_of(realTime) * RODOS::SECONDS) - currentRodosTime + offsetCorrection;
     persistentVariables.Store<"realTimeOffset">(newRealTimeOffset);
 }
 }

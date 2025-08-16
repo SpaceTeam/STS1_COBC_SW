@@ -47,11 +47,15 @@ auto Open(Path const & path, unsigned int flags) -> Result<File>
     auto file = File();
     // We need to create a temporary with Path(path) here since append() modifies the object and we
     // don't want to change the original path
-    file.lockFilePath_ = Path(path).append(".lock");
+    file.lockFilePath_ = BuildLockFilePath(path);
     auto createLockFileResult = file.CreateLockFile();
     if(createLockFileResult.has_error())
     {
-        return ErrorCode::fileLocked;
+        if(createLockFileResult.error() == ErrorCode::alreadyExists)
+        {
+            return ErrorCode::fileLocked;
+        }
+        return createLockFileResult.error();
     }
     auto error = lfs_file_opencfg(
         &lfs, &file.lfsFile_, path.c_str(), static_cast<int>(flags), &file.lfsFileConfig_);

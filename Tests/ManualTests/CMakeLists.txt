@@ -110,6 +110,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Hal
                 Sts1CobcSw_Serial
+                Sts1CobcSw_RealTime
                 Sts1CobcSw_Rf
                 Sts1CobcSw_RodosTime
                 Sts1CobcSw_Sensors

@@ -1,13 +1,17 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
 #include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -22,10 +26,15 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto timeLoopPeriod = 1 * s;
+constexpr auto stackSize = 5000U;
+constexpr auto eduIsAliveCheckInterval = 1 * s;
 
 
-class EduListenerThread : public RODOS::StaticThread<>
+auto SuspendUntilEduIsAliveAndHasUpdate() -> void;
+auto ProcessEduUpdate() -> Result<void>;
+
+
+class EduListenerThread : public RODOS::StaticThread<stackSize>
 {
 public:
     EduListenerThread() : StaticThread("EduListenerThread", eduListenerThreadPriority)
@@ -36,6 +45,7 @@ private:
     void init() override
     {
         edu::updateGpioPin.SetDirection(hal::PinDirection::in);
+        edu::updateGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::risingEdge);
         edu::dosiEnableGpioPin.SetDirection(hal::PinDirection::out);
     }
 
@@ -43,118 +53,96 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
-        TIME_LOOP(0, value_of(timeLoopPeriod))
+        DEBUG_PRINT("Starting EDU listener thread\n");
+        while(true)
         {
-            // DEBUG_PRINT("[EduListenerThread] Start of TimeLoop Iteration\n");
-            auto eduHasUpdate = (edu::updateGpioPin.Read() == hal::PinState::set);
-
-            auto eduIsAlive = false;
-            eduIsAliveBufferForListener.get(eduIsAlive);
-            // DEBUG_PRINT("[EduListenerThread] Read eduHasUpdate pin\n");
-
-            // TODO: Check if EDU is alive
-            if(eduIsAlive and eduHasUpdate)
+            SuspendUntilEduIsAliveAndHasUpdate();
+            auto result = ProcessEduUpdate();
+            DEBUG_PRINT_STACK_USAGE();
+            if(result.has_error())
             {
-                // DEBUG_PRINT("[EduListenerThread] Edu is alive and has an update\n");
-                // Communicate with EDU
-
-                auto getStatusResult = edu::GetStatus();
-                // DEBUG_PRINT("EduStatus : %d, EduErrorcode %d\n", status.statusType,
-                // status.errorCode);
-
-                if(getStatusResult.has_error())
-                {
-                    // DEBUG_PRINT("[EduListenerThread] GetStatus() error code : %d.\n",
-                    // status.errorCode);
-                    // DEBUG_PRINT(
-                    //   "[EduListenerThread] Edu communication error after call to
-                    //   GetStatus().\n");
-                    ResumeEduCommunicationErrorThread();
-                }
-
-                if(getStatusResult.has_value())
-                {
-                    // DEBUG_PRINT("[EduListenerThread] Call to GetStatus() resulted in
-                    // success.\n");
-                    auto status = getStatusResult.value();
-                    switch(status.statusType)
-                    {
-                        case edu::StatusType::programFinished:
-                        {
-                            // Program has finished
-                            // Find the correspongind queue entry and update it, then resume EDU
-                            // queue thread
-                            if(status.exitCode == 0)
-                            {
-                                edu::UpdateProgramStatusHistory(
-                                    status.programId,
-                                    status.startTime,
-                                    edu::ProgramStatus::programExecutionSucceeded);
-                            }
-                            else
-                            {
-                                edu::UpdateProgramStatusHistory(
-                                    status.programId,
-                                    status.startTime,
-                                    edu::ProgramStatus::programExecutionFailed);
-                            }
-                            ResumeEduProgramQueueThread();
-                            break;
-                        }
-                        case edu::StatusType::resultsReady:
-                        {
-                            // Edu wants to send result file
-                            // Send return result to Edu, Communicate, and interpret the results to
-                            // update the S&H Entry from 3 or 4 to 5.
-                            auto returnResultResult = edu::ReturnResult(
-                                {.programId = status.programId, .startTime = status.startTime});
-                            if(returnResultResult.has_error())
-                            {
-                                /*
-                                DEBUG_PRINT(
-                                    "[EduListenerThread] Error Code From ReturnResult() : %d.\n",
-                                    errorCode);
-                                DEBUG_PRINT(
-                                    "[EduListenerThread] Communication error after call to "
-                                    "ReturnResult().\n");
-                                    */
-                                ResumeEduCommunicationErrorThread();
-                            }
-                            else
-                            {
-                                // DEBUG_PRINT(
-                                //    "[EduListenerThread] Call to ReturnResults() resulted in "
-                                //    "success.\n");
-                            }
-                            // break;
-
-                            edu::UpdateProgramStatusHistory(
-                                status.programId,
-                                status.startTime,
-                                edu::ProgramStatus::resultFileTransfered);
-                            break;
-                        }
-                        case edu::StatusType::enableDosimeter:
-                        {
-                            edu::dosiEnableGpioPin.Set();
-                            break;
-                        }
-                        case edu::StatusType::disableDosimeter:
-                        {
-                            edu::dosiEnableGpioPin.Reset();
-                            break;
-                        }
-                        case edu::StatusType::invalid:
-                        case edu::StatusType::noEvent:
-                        {
-                            break;
-                        }
-                    }
-                }
+                persistentVariables.Increment<"nEduCommunicationErrors">();
+                ResetEdu();
             }
-            // DEBUG_PRINT("[EduListenerThread] Edu Has no uppdate\n");
         }
     }
 } eduListenerThread;
+
+
+auto SuspendUntilEduIsAliveAndHasUpdate() -> void
+{
+    while(true)
+    {
+        auto eduIsAlive = false;
+        eduIsAliveBufferForListener.get(eduIsAlive);
+        if(eduIsAlive and edu::updateGpioPin.Read() == hal::PinState::set)
+        {
+            return;
+        }
+        SuspendFor(eduIsAliveCheckInterval);
+    }
+}
+
+
+auto ProcessEduUpdate() -> Result<void>
+{
+    auto getStatusResult = edu::GetStatus();
+    if(getStatusResult.has_error())
+    {
+        DEBUG_PRINT("Failed to get EDU status: %s\n", ToCZString(getStatusResult.error()));
+        return getStatusResult.error();
+    }
+    auto const & status = getStatusResult.value();
+    switch(status.statusType)
+    {
+        case edu::StatusType::programFinished:
+        {
+            auto programStatus = status.exitCode == 0
+                                   ? edu::ProgramStatus::programExecutionSucceeded
+                                   : edu::ProgramStatus::programExecutionFailed;
+            DEBUG_PRINT("EDU program %i finished with exit code %i\n",
+                        value_of(status.programId),
+                        status.exitCode);
+            edu::UpdateProgramStatusHistory(status.programId, status.startTime, programStatus);
+            ResumeEduProgramQueueThread();
+            break;
+        }
+        case edu::StatusType::resultsReady:
+        {
+            // ReturnResult is sent right after GetStatus, so we assume that the EDU is still alive
+            // here.
+            auto returnResultResult =
+                edu::ReturnResult({.programId = status.programId, .startTime = status.startTime});
+            if(returnResultResult.has_error())
+            {
+                DEBUG_PRINT("Failed to get EDU result: %s\n",
+                            ToCZString(returnResultResult.error()));
+                return returnResultResult.error();
+            }
+            DEBUG_PRINT("Received and stored EDU result for program %i with start time %u\n",
+                        value_of(status.programId),
+                        static_cast<unsigned>(value_of(status.startTime)));
+            persistentVariables.Store<"newEduResultIsAvailable">(true);
+            edu::UpdateProgramStatusHistory(
+                status.programId, status.startTime, edu::ProgramStatus::resultStoredInFileSystem);
+            break;
+        }
+        case edu::StatusType::enableDosimeter:
+            DEBUG_PRINT("Enabling dosimeter\n");
+            edu::dosiEnableGpioPin.Set();
+            break;
+        case edu::StatusType::disableDosimeter:
+            DEBUG_PRINT("Disabling dosimeter\n");
+            edu::dosiEnableGpioPin.Reset();
+            break;
+        case edu::StatusType::noEvent:  // NOLINT(bugprone-branch-clone)
+            DEBUG_PRINT("No EDU event\n");
+            break;
+        case edu::StatusType::invalid:
+            DEBUG_PRINT("Received invalid EDU status\n");
+            break;
+    }
+    return outcome_v2::success();
+}
 }
 }

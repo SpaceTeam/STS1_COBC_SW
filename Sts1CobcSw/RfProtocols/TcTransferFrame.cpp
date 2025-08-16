@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/RfProtocols/TcTransferFrame.hpp>
 
 #include <Sts1CobcSw/Blake2s/Blake2s.hpp>
+#include <Sts1CobcSw/Utility/DebugPrint.hpp>  // IWYU pragma: keep
 
 #include <array>
 
@@ -44,6 +45,19 @@ auto ParseAsTransferFrame(std::span<Byte const, transferFrameLength> buffer)
         blake2s::ComputeHash(buffer.first<transferFrameLength - securityTrailerLength>());
     if(frame.messageAuthenticationCode != messageAuthenticationCode)
     {
+#ifdef ENABLE_DEBUG_PRINT
+        DEBUG_PRINT("MAC does not match: computed = ");
+        for(auto && byte : messageAuthenticationCode)
+        {
+            DEBUG_PRINT("%02x", static_cast<unsigned>(byte));
+        }
+        DEBUG_PRINT(", received = ");
+        for(auto && byte : frame.messageAuthenticationCode)
+        {
+            DEBUG_PRINT("%02x", static_cast<unsigned>(byte));
+        }
+        DEBUG_PRINT("\n");
+#endif
         return ErrorCode::authenticationFailed;
     }
     return frame;

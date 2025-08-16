@@ -3,13 +3,11 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
-#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
-#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
@@ -30,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <span>
@@ -47,9 +46,6 @@ hal::GpioPin dosiEnableGpioPin(hal::dosiEnablePin);
 namespace
 {
 // --- Private globals ---
-
-auto const programsDirectory = fs::Path("programs/");
-auto const resultsDirectory = fs::Path("results/");
 
 // Low-level CEP commands
 constexpr auto cepAck = 0xd7_b;   //! Acknowledging a data packet
@@ -70,9 +66,10 @@ constexpr auto maxNNackRetries = 4;
 // Max. number of data packets for a single command
 constexpr auto maxNPackets = 100;
 // Max. length of a single data packet
-constexpr auto maxDataLength = 11 * 1024;
+constexpr auto maxDataSize = 11 * 1024;
+constexpr auto maxFileSize = maxNPackets * maxDataSize;
 // Data buffer for potentially large data packets (ReturnResult and StoreProgram)
-auto cepDataBuffer = etl::vector<Byte, maxDataLength>{};
+auto cepDataBuffer = etl::vector<Byte, maxDataSize>{};
 
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
 auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
@@ -101,16 +98,21 @@ template<>
 template<typename T>
 [[nodiscard]] auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
 auto FlushUartReceiveBuffer() -> void;
+
+auto BuildProgramFilePath(ProgramId programId) -> fs::Path;
+auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path;
 }
 
 
 // --- Public function definitions ---
 
-//! @brief  Must be called in an init() function of a thread.
 auto Initialize() -> void
 {
     eduEnableGpioPin.SetDirection(hal::PinDirection::out);
-    persistentVariables.Load<"eduShouldBePowered">() ? TurnOn() : TurnOff();
+    TurnOff();
+    // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
+    auto const baudRate = 115'200;
+    hal::Initialize(&uart, baudRate);
 }
 
 
@@ -118,10 +120,6 @@ auto TurnOn() -> void
 {
     persistentVariables.Store<"eduShouldBePowered">(true);
     eduEnableGpioPin.Set();
-
-    // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    auto const baudRate = 115'200;
-    hal::Initialize(&uart, baudRate);
 }
 
 
@@ -129,33 +127,30 @@ auto TurnOff() -> void
 {
     persistentVariables.Store<"eduShouldBePowered">(false);
     eduEnableGpioPin.Reset();
-    hal::Deinitialize(&uart);
 }
 
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
-    auto path = programsDirectory;
-    static constexpr auto width =
-        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
-    etl::to_string(
-        value_of(data.programId), path, etl::format_spec().width(width).fill('0'), /*append=*/true);
+    auto path = BuildProgramFilePath(data.programId);
     // NOLINTNEXTLINE(*signed-bitwise)
-    OUTCOME_TRY(auto file, fs::Open(path, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));
-    // TODO: Check if program file is not too large
+    OUTCOME_TRY(auto file, fs::Open(path, LFS_O_RDONLY));
+    OUTCOME_TRY(auto fileSize, file.Size());
+    if(fileSize > maxFileSize)
+    {
+        DEBUG_PRINT("Program file %s is too large: %d B\n", path.c_str(), fileSize);
+        return ErrorCode::fileTooLarge;
+    }
     while(true)
     {
-        OUTCOME_TRY(file.Read(Span(&cepDataBuffer)));
+        cepDataBuffer.uninitialized_resize(cepDataBuffer.MAX_SIZE);
+        OUTCOME_TRY(auto nReadBytes, file.Read(Span(&cepDataBuffer)));
+        cepDataBuffer.resize(static_cast<std::size_t>(nReadBytes));
         if(cepDataBuffer.empty())
         {
             break;
         }
-        auto sendDataPacketResult = SendDataPacket(Span(cepDataBuffer));
-        if(sendDataPacketResult.has_error())
-        {
-            // TODO: Why not return the error from SendDataPacket here, i.e., use OUTCOME_TRY?
-            return ErrorCode::nack;
-        }
+        OUTCOME_TRY(SendDataPacket(Span(cepDataBuffer)));
     }
     return WaitForAck();
 }
@@ -230,8 +225,16 @@ auto GetStatus() -> Result<Status>
 }
 
 
+// The high cognitive complexity comes from the OUTCOME_TRY macros which expand to extra if
+// statements. However, you don't see them when reading the code so they don't really count. In
+// fact, I think they make the code easier to read.
+//
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto ReturnResult(ReturnResultData const & data) -> Result<void>
 {
+    auto path = BuildResultFilePath(data.programId, data.startTime);
+    // NOLINTNEXTLINE(*signed-bitwise)
+    OUTCOME_TRY(auto file, fs::Open(path, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     for(auto nPackets = 0; nPackets < maxNPackets; ++nPackets)
     {
@@ -239,18 +242,23 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
         // If the buffer is empty we received an EOF and are done with the transmission
         if(cepDataBuffer.empty())
         {
+            // The first ACK confirms that the packet was received correctly, the second ACK
+            // confirms that the whole transmission completed successfully
             OUTCOME_TRY(SendCommand(cepAck));
-            // TODO: Not sure if we actually have a CRC32 over the whole file that needs to be
-            // checked here, but we need to send two ACKs anyway
-            DEBUG_PRINT("Pretending to check the whole file's CRC32 ...\n");
             OUTCOME_TRY(SendCommand(cepAck));
             return outcome_v2::success();
         }
-        // TODO: Actually store the result in the COBC file system
-        DEBUG_PRINT("Pretending to write %d bytes to the file system ...\n",
-                    static_cast<int>(cepDataBuffer.size()));
-        SuspendFor(3 * ms);
-        OUTCOME_TRY(SendCommand(cepAck));
+        auto writeResult = file.Write(Span(cepDataBuffer));
+        if(writeResult.has_value())
+        {
+            OUTCOME_TRY(SendCommand(cepAck));
+            continue;
+        }
+        DEBUG_PRINT("Failed to write %d bytes to %s: %s\n",
+                    static_cast<int>(cepDataBuffer.size()),
+                    path.c_str(),
+                    ToCZString(writeResult.error()));
+        OUTCOME_TRY(SendCommand(cepNack));
     }
     return ErrorCode::tooManyDataPackets;
 }
@@ -356,7 +364,7 @@ auto ParseStatusData() -> Result<Status>
 //! @param data The data to be sent
 auto SendDataPacket(std::span<Byte const> data) -> Result<void>
 {
-    if(data.size() >= maxDataLength)
+    if(data.size() >= maxDataSize)
     {
         return ErrorCode::dataPacketTooLong;
     }
@@ -441,12 +449,12 @@ auto ReceiveDataPacket() -> Result<void>
         return ErrorCode::invalidAnswer;
     }
 
-    OUTCOME_TRY(auto dataLength, Receive<std::uint16_t>());
-    if(dataLength == 0 or dataLength > maxDataLength)
+    OUTCOME_TRY(auto dataSize, Receive<std::uint16_t>());
+    if(dataSize == 0 or dataSize > maxDataSize)
     {
         return ErrorCode::invalidLength;
     }
-    cepDataBuffer.resize(dataLength);
+    cepDataBuffer.resize(dataSize);
 
     OUTCOME_TRY(Receive(Span(&cepDataBuffer)));
     OUTCOME_TRY(ReceiveAndCheckCrc32(Span(cepDataBuffer)));
@@ -474,7 +482,7 @@ auto Receive<Byte>() -> Result<Byte>
 
 auto Receive(std::span<Byte> data) -> Result<void>
 {
-    if(data.size() > maxDataLength)
+    if(data.size() > maxDataSize)
     {
         return ErrorCode::dataPacketTooLong;
     }
@@ -533,6 +541,43 @@ auto FlushUartReceiveBuffer() -> void
             break;
         }
     }
+}
+
+
+auto BuildProgramFilePath(ProgramId programId) -> fs::Path
+{
+    auto path = programsDirectory;
+    path.append("/");
+    static constexpr auto nProgramIdDigits =
+        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
+    etl::to_string(value_of(programId),
+                   path,
+                   etl::format_spec().width(nProgramIdDigits).fill('0'),
+                   /*append=*/true);
+    path.append(".zip");
+    return path;
+}
+
+
+auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
+{
+    auto path = resultsDirectory;
+    path.append("/");
+    static constexpr auto nProgramIdDigits =
+        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
+    etl::to_string(value_of(programId),
+                   path,
+                   etl::format_spec().width(nProgramIdDigits).fill('0'),
+                   /*append=*/true);
+    path.append("_");
+    static constexpr auto nStartTimeDigits =
+        std::numeric_limits<strong::underlying_type_t<RealTime>>::digits10 + 1;
+    etl::to_string(value_of(startTime),
+                   path,
+                   etl::format_spec().width(nStartTimeDigits).fill('0'),
+                   /*append=*/true);
+    path.append(".zip");
+    return path;
 }
 }
 }

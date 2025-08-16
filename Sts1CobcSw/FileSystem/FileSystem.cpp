@@ -3,6 +3,10 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 
+#include <etl/string_view.h>
+
+#include <cassert>
+
 
 namespace sts1cobcsw::fs
 {
@@ -58,6 +62,7 @@ auto Unmount() -> Result<void>
 
 auto CreateDirectory(Path const & path) -> Result<void>
 {
+    assert(path.back() != '/');
     if(not persistentVariables.Load<"flashIsWorking">())
     {
         return ErrorCode::io;
@@ -78,7 +83,7 @@ auto Remove(Path const & path) -> Result<void>
         return ErrorCode::io;
     }
     auto info = lfs_info{};
-    auto error = lfs_stat(&lfs, Path(path).append(".lock").c_str(), &info);
+    auto error = lfs_stat(&lfs, BuildLockFilePath(path).c_str(), &info);
     auto lockFileExists = error == 0;
     if(lockFileExists)
     {
@@ -99,12 +104,18 @@ auto ForceRemove(Path const & path) -> Result<void>
     {
         return ErrorCode::io;
     }
-    auto error = lfs_remove(&lfs, Path(path).append(".lock").c_str());
+    auto error = lfs_remove(&lfs, BuildLockFilePath(path).c_str());
     if(error == 0 || error == LFS_ERR_NOENT)
     {
         return Remove(path);
     }
     return static_cast<ErrorCode>(error);
+}
+
+
+auto BuildLockFilePath(Path path) -> Path
+{
+    return path.append(".lock");
 }
 
 
@@ -136,7 +147,7 @@ auto IsLocked(Path const & path) -> Result<bool>
     }
     auto info = lfs_info{};
     // Get stats of lock file to see if it exists
-    auto error = lfs_stat(&lfs, Path(path).append(".lock").c_str(), &info);
+    auto error = lfs_stat(&lfs, BuildLockFilePath(path).c_str(), &info);
     if(error == 0)
     {
         return true;
@@ -146,5 +157,11 @@ auto IsLocked(Path const & path) -> Result<bool>
         return false;
     }
     return static_cast<ErrorCode>(error);
+}
+
+
+auto IsLockFile(Path const & path) -> bool
+{
+    return etl::string_view(path).ends_with(".lock");
 }
 }

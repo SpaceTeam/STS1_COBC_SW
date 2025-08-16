@@ -217,7 +217,7 @@ auto PrintAllVariables() -> void
     PrintVariable("nFileSystemErrors");
     // EDU
     PrintVariable("eduShouldBePowered");
-    PrintVariable("eduStartDelayLimit");
+    PrintVariable("maxEduIdleDuration");
     PrintVariable("newEduResultIsAvailable");
     PrintVariable("eduProgramQueueIndex");
     PrintVariable("nEduCommunicationErrors");
@@ -256,7 +256,7 @@ auto ResetAllVariables() -> void
     persistentVariables.Store<"nFileSystemErrors">(0);
     // EDU
     persistentVariables.Store<"eduShouldBePowered">(false);
-    persistentVariables.Store<"eduStartDelayLimit">(Duration(0));
+    persistentVariables.Store<"maxEduIdleDuration">(Duration(0));
     persistentVariables.Store<"newEduResultIsAvailable">(false);
     persistentVariables.Store<"eduProgramQueueIndex">(0);
     persistentVariables.Store<"nEduCommunicationErrors">(0);
@@ -352,9 +352,9 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     {
         etl::to_string(persistentVariables.Load<"eduShouldBePowered">(), value);
     }
-    else if(variable == "eduStartDelayLimit")
+    else if(variable == "maxEduIdleDuration")
     {
-        etl::to_string(persistentVariables.Load<"eduStartDelayLimit">().value_of(), value);
+        etl::to_string(persistentVariables.Load<"maxEduIdleDuration">().value_of(), value);
     }
     else if(variable == "newEduResultIsAvailable")
     {
@@ -494,9 +494,9 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     {
         WriteAndConvertFunction<"eduShouldBePowered", bool, ParseAsBool>(variable, value);
     }
-    else if(variable == "eduStartDelayLimit")
+    else if(variable == "maxEduIdleDuration")
     {
-        WriteAndConvertFunction<"eduStartDelayLimit", Duration, ParseAsUInt32>(variable, value);
+        WriteAndConvertFunction<"maxEduIdleDuration", Duration, ParseAsUInt32>(variable, value);
     }
     else if(variable == "newEduResultIsAvailable")
     {

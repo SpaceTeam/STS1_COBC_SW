@@ -4,7 +4,7 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/Firmware/EduCommunicationErrorThread.hpp>
+#include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
@@ -12,6 +12,7 @@
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
@@ -20,11 +21,13 @@
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
 #include <cinttypes>  // IWYU pragma: keep
+#include <compare>
 #include <utility>
 
 
@@ -32,12 +35,20 @@ namespace sts1cobcsw
 {
 namespace
 {
-[[nodiscard]] auto ComputeStartDelay(RealTime startTime) -> Duration;
+constexpr auto stackSize = 1500U;
+// This thread must start before the EDU power management thread to ensure the correct start time
+// is published
+constexpr auto eduProgramQueueThreadStartDelay = eduPowerManagementThreadStartDelay - 1 * s;
+static_assert(eduProgramQueueThreadStartDelay > 0 * s);
+constexpr auto eduCommunicationMargin = 2 * s;
+constexpr auto maxScheduleDelay = 1 * min;
+constexpr auto eduIsAliveCheckInterval = 1 * s;
 
 
-// TODO: Get a better estimation for the required stack size. We only have 128 kB of RAM.
-constexpr auto stackSize = 8000U;
-constexpr auto eduCommunicationDelay = 2 * s;
+[[nodiscard]] auto PublishAndConvert(RealTime startTime) -> RodosTime;
+[[nodiscard]] auto ProcessQueueEntry() -> Result<void>;
+auto HandleError(ErrorCode error) -> void;
+auto SuspendUntilEduIsAlive() -> void;
 
 
 class EduProgramQueueThread : public RODOS::StaticThread<stackSize>
@@ -48,133 +59,151 @@ public:
 
 
 private:
-    void init() override
-    {
-        // auto queueEntry1 = EduQueueEntry{
-        //    .programId = 0, .timestamp = 1, .startTime = 946'684'807, .timeout = 10};  // NOLINT
-
-        // auto queueEntry2 = EduQueueEntry{
-        //    .programId = 0, .timestamp = 2, .startTime = 946'684'820, .timeout = 20};  // NOLINT
-
-        // eduProgramQueue.push_back(queueEntry1);
-        // eduProgramQueue.push_back(queueEntry2);
-
-        DEBUG_PRINT("Size of EDU program queue = %" PRIu32 "\n", edu::programQueue.Size());
-    }
-
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
-        DEBUG_PRINT("Entering EduProgramQueueThread\n");
-        DEBUG_PRINT_REAL_TIME();
+        SuspendFor(eduProgramQueueThreadStartDelay);
+        DEBUG_PRINT("Starting EDU program queue thread\n");
         while(true)
         {
-            if(edu::programQueue.IsEmpty())
-            {
-                (void)0;  // Silence warning about repeated branch in conditional
-                DEBUG_PRINT("Edu Program Queue is empty, thread set to sleep until end of time\n");
-                SuspendUntil(endOfTime);
-            }
-            else if(persistentVariables.Load<"eduProgramQueueIndex">() >= edu::programQueue.Size())
-            {
-                DEBUG_PRINT("End of queue is reached, thread set to sleep until end of time\n");
-                SuspendUntil(endOfTime);
-            }
-
             auto queueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
-            auto queueEntry = edu::programQueue.Get(queueIndex);
-            auto startDelay = ComputeStartDelay(queueEntry.startTime);
-            nextProgramStartDelayTopic.publish(startDelay);
-
-            DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
+            DEBUG_PRINT("EDU program queue: index = %i, size = %i\n",
                         queueIndex,
-                        startDelay / s);
-
-            // Suspend until delay time - 2 seconds
-            DEBUG_PRINT("Suspending for the first time for      : %" PRIi64 " s\n",
-                        (startDelay - eduCommunicationDelay) / s);
-            SuspendFor(startDelay - eduCommunicationDelay);
-
-            DEBUG_PRINT("Resuming here after first wait.\n");
+                        static_cast<int>(edu::programQueue.Size()));
+            if(queueIndex == eduProgramQueueIndexResetValue)
+            {
+                queueIndex = 0;
+                persistentVariables.Store<"eduProgramQueueIndex">(0);
+            }
+            if(queueIndex >= edu::programQueue.Size())
+            {
+                DEBUG_PRINT("Reached end of EDU program queue\n");
+                // This variable is necessary since publish() does not accept constants
+                auto startTime = endOfRealTime;
+                nextEduProgramStartTimeTopic.publish(startTime);
+                programIdOfCurrentEduProgramQueueEntryTopic.publish(ProgramId(-1));
+                SuspendUntil(endOfTime);
+                continue;
+            }
+            auto entry = edu::programQueue.Get(queueIndex);
+            auto startTime = PublishAndConvert(entry.startTime);
+            programIdOfCurrentEduProgramQueueEntryTopic.publish(entry.programId);
             DEBUG_PRINT_REAL_TIME();
-
-            auto updateTimeResult = edu::UpdateTime({CurrentRealTime()});
-            if(updateTimeResult.has_error())
+            DEBUG_PRINT("Next EDU queue entry: program ID = %i, start time = %u, timeout = %i s\n",
+                        value_of(entry.programId),
+                        static_cast<unsigned>(value_of(entry.startTime)),
+                        entry.timeout);
+            SuspendUntil(startTime - eduCommunicationMargin);
+            auto result = ProcessQueueEntry();
+            if(result.has_error())
             {
-                DEBUG_PRINT("UpdateTime error code : %d\n",
-                            static_cast<int>(updateTimeResult.error()));
-                DEBUG_PRINT(
-                    "[EduProgramQueueThread] Communication error after call to UpdateTime().\n");
-                ResumeEduCommunicationErrorThread();
+                HandleError(result.error());
             }
-
-            // Reload queue index and entry because the start delay might be very long and the
-            // variables might have been corrupted in the meantime
-            queueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
-            queueEntry = edu::programQueue.Get(queueIndex);
-            auto startDelay2 = ComputeStartDelay(queueEntry.startTime);
-            nextProgramStartDelayTopic.publish(startDelay2);
-
-            DEBUG_PRINT("Program at queue index %d will start in : %" PRIi64 " s\n",
-                        queueIndex,
-                        startDelay2 / s);
-
-            // Suspend for delay a second time
-            DEBUG_PRINT("Suspending for the second time for     : %" PRIi64 " s\n",
-                        startDelay2 / s);
-            SuspendFor(startDelay2);
-
-            // Never reached
-            DEBUG_PRINT("Done suspending for the second time\n");
-
-            DEBUG_PRINT("Executing EDU program %" PRIu16 "\n", value_of(queueEntry.programId));
-            // Start Process
-            auto executeProgramResult = edu::ExecuteProgram(
-                {queueEntry.programId, queueEntry.startTime, queueEntry.timeout});
-            // errorCode = edu::ErrorCode::success;
-
-            if(executeProgramResult.has_error())
-            {
-                DEBUG_PRINT(
-                    "[EduProgramQueueThread] Communication error after call to "
-                    "ExecuteProgram().\n");
-                ResumeEduCommunicationErrorThread();
-            }
-            else
-            {
-                edu::programStatusHistory.PushBack({queueEntry.programId,
-                                                    queueEntry.startTime,
-                                                    edu::ProgramStatus::programRunning});
-
-                // Suspend Self for execution time
-                auto const executionTime = queueEntry.timeout * s + eduCommunicationDelay;
-                DEBUG_PRINT("Suspending for execution time\n");
-                SuspendFor(executionTime);
-                DEBUG_PRINT("Resuming from execution time\n");
-                DEBUG_PRINT_REAL_TIME();
-
-                // Set current queue ID to next
-                persistentVariables.Increment<"eduProgramQueueIndex">();
-            }
+            DEBUG_PRINT_STACK_USAGE();
         }
     }
 } eduProgramQueueThread;
-
-
-// TODO: We should just use time points instead of delays in the thread. Then we won't need this
-// function.
-//! Compute the delay in nanoseconds before the start of program at current queue index
-auto ComputeStartDelay(RealTime startTime) -> Duration
-{
-    auto delay = ToRodosTime(startTime) - CurrentRodosTime();
-    return delay < Duration(0) ? Duration(0) : delay;
-}
 }
 
 
 auto ResumeEduProgramQueueThread() -> void
 {
     eduProgramQueueThread.resume();
-    DEBUG_PRINT("[EduProgramQueueThread] EduProgramQueueThread resumed\n");
+}
+
+
+namespace
+{
+auto PublishAndConvert(RealTime startTime) -> RodosTime
+{
+    nextEduProgramStartTimeTopic.publish(startTime);
+    return ToRodosTime(startTime);
+}
+
+
+auto ProcessQueueEntry() -> Result<void>
+{
+    auto queueIndex = persistentVariables.Load<"eduProgramQueueIndex">();
+    if(queueIndex == eduProgramQueueIndexResetValue)
+    {
+        return outcome_v2::success();
+    }
+    auto queueEntry = edu::programQueue.Get(queueIndex);
+    auto startTime = PublishAndConvert(queueEntry.startTime);
+    DEBUG_PRINT("Updating EDU time to %u\n", static_cast<unsigned>(value_of(CurrentRealTime())));
+    auto eduIsAlive = false;
+    eduIsAliveBufferForProgramQueue.get(eduIsAlive);
+    if(not eduIsAlive)
+    {
+        return ErrorCode::eduIsNotAlive;
+    }
+    OUTCOME_TRY(edu::UpdateTime({CurrentRealTime()}));
+    SuspendUntil(startTime);
+
+    if(persistentVariables.Load<"eduProgramQueueIndex">() == eduProgramQueueIndexResetValue)
+    {
+        return outcome_v2::success();
+    }
+    if(CurrentRodosTime() > startTime + maxScheduleDelay)
+    {
+        DEBUG_PRINT("Skipping EDU program %i because it is too late\n",
+                    static_cast<int>(value_of(queueEntry.programId)));
+        persistentVariables.Increment<"eduProgramQueueIndex">();
+        return outcome_v2::success();
+    }
+    DEBUG_PRINT("Executing EDU program: ID = %i, start time = %u, timeout = %i s\n",
+                static_cast<int>(value_of(queueEntry.programId)),
+                static_cast<unsigned>(value_of(queueEntry.startTime)),
+                static_cast<int>(queueEntry.timeout));
+    eduIsAliveBufferForProgramQueue.get(eduIsAlive);
+    if(not eduIsAlive)
+    {
+        return ErrorCode::eduIsNotAlive;
+    }
+    OUTCOME_TRY(
+        edu::ExecuteProgram({queueEntry.programId, queueEntry.startTime, queueEntry.timeout}));
+    edu::programStatusHistory.PushBack(
+        {queueEntry.programId, queueEntry.startTime, edu::ProgramStatus::programRunning});
+    SuspendFor(queueEntry.timeout * s + eduCommunicationMargin);
+    if(persistentVariables.Load<"eduProgramQueueIndex">() == eduProgramQueueIndexResetValue)
+    {
+        return outcome_v2::success();
+    }
+    persistentVariables.Increment<"eduProgramQueueIndex">();
+    return outcome_v2::success();
+}
+
+
+auto HandleError(ErrorCode error) -> void
+{
+    if(error == ErrorCode::eduIsNotAlive)
+    {
+        (void)0;  // Suppress empty branch warning in not-debug builds
+        DEBUG_PRINT("EDU is not alive\n");
+    }
+    else
+    {
+        DEBUG_PRINT("Failed to process EDU program queue entry: %s\n", ToCZString(error));
+        persistentVariables.Increment<"nEduCommunicationErrors">();
+        ResetEdu();
+    }
+    DEBUG_PRINT("Suspending until EDU is alive\n");
+    SuspendUntilEduIsAlive();
+}
+
+
+auto SuspendUntilEduIsAlive() -> void
+{
+    while(true)
+    {
+        auto eduIsAlive = false;
+        eduIsAliveBufferForProgramQueue.get(eduIsAlive);
+        if(eduIsAlive)
+        {
+            return;
+        }
+        SuspendFor(eduIsAliveCheckInterval);
+    }
+}
 }
 }

@@ -16,6 +16,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::HardwareSetup
     )
+
+    add_program(ListEduFiles)
+    target_sources(Sts1CobcSwTests_ListEduFiles PRIVATE ListEduFiles.cpp)
+    target_link_libraries(
+        Sts1CobcSwTests_ListEduFiles
+        PRIVATE rodos::rodos Sts1CobcSw_Edu Sts1CobcSw_FileSystem Sts1CobcSw_Fram
+                Sts1CobcSw_Outcome Sts1CobcSwTests::HardwareSetup
+    )
 endif()
 
 get_property(

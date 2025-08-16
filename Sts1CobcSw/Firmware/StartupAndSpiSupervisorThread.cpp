@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
 #include <Sts1CobcSw/Firmware/FlashStartupTestThread.hpp>
@@ -13,6 +14,7 @@
 #include <Sts1CobcSw/Hal/Spi.hpp>
 #include <Sts1CobcSw/Hal/Spis.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
@@ -28,7 +30,12 @@
 
 #include <rodos_no_using_namespace.h>
 
+#ifdef ENABLE_DEBUG_PRINT
+    #include <etl/string.h>
+#endif
+
 #include <compare>
+#include <initializer_list>
 
 
 namespace sts1cobcsw
@@ -37,7 +44,7 @@ namespace
 {
 // Running the SpiSupervisor HW test in debug mode showed a max. stack usage of < 1600 B. The golden
 // test needs < 2400 B.
-constexpr auto stackSize = 2500 + EXTRA_SANITIZER_STACK_SIZE;
+constexpr auto stackSize = 3500 + EXTRA_SANITIZER_STACK_SIZE;
 
 inline constexpr auto initialSleepTime = 10 * ms;
 // TODO: Think about how often the supervision should run
@@ -48,6 +55,7 @@ auto ExecuteStartupTests() -> void;
 auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool;
 auto InitializeAndFeedResetDog() -> void;
 auto SetUpFileSystem() -> void;
+auto RemoveAllLockFiles() -> void;
 
 
 class StartupAndSpiSupervisorThread : public RODOS::StaticThread<stackSize>
@@ -74,6 +82,8 @@ private:
             RODOS::hwResetAndReboot();
         }
         InitializeAndFeedResetDog();
+        UpdateRealTimeOffset(persistentVariables.Load<"realTime">(), /*useOffsetCorrection=*/false);
+        DEBUG_PRINT_REAL_TIME();
         SetUpFileSystem();
         edu::Initialize();
         auto i = 0U;
@@ -196,21 +206,54 @@ auto SetUpFileSystem() -> void
         DEBUG_PRINT("Failed to mount file system: %s\n", ToCZString(mountResult.error()));
         persistentVariables.Increment<"nFileSystemErrors">();
     }
-    auto createDirectoryResult = fs::CreateDirectory("/programs");
-    if(createDirectoryResult.has_error()
-       and createDirectoryResult.error() != ErrorCode::alreadyExists)
+    for(auto && directory : {edu::programsDirectory, edu::resultsDirectory})
     {
-        DEBUG_PRINT("Failed to create directory /programs: %s\n",
-                    ToCZString(createDirectoryResult.error()));
-        persistentVariables.Increment<"nFileSystemErrors">();
+        auto createDirectoryResult = fs::CreateDirectory(directory);
+        if(createDirectoryResult.has_error()
+           and createDirectoryResult.error() != ErrorCode::alreadyExists)
+        {
+            DEBUG_PRINT("Failed to create directory '%s': %s\n",
+                        directory.c_str(),
+                        ToCZString(createDirectoryResult.error()));
+            persistentVariables.Increment<"nFileSystemErrors">();
+        }
     }
-    createDirectoryResult = fs::CreateDirectory("/results");
-    if(createDirectoryResult.has_error()
-       and createDirectoryResult.error() != ErrorCode::alreadyExists)
+    RemoveAllLockFiles();
+}
+
+
+auto RemoveAllLockFiles() -> void
+{
+    for(auto && directory : {edu::programsDirectory, edu::resultsDirectory})
     {
-        DEBUG_PRINT("Failed to create directory /results: %s\n",
-                    ToCZString(createDirectoryResult.error()));
-        persistentVariables.Increment<"nFileSystemErrors">();
+        auto makeIteratorResult = fs::MakeIterator(directory);
+        if(makeIteratorResult.has_error())
+        {
+            DEBUG_PRINT("Failed to create directory iterator for '%s': %s\n",
+                        directory.c_str(),
+                        ToCZString(makeIteratorResult.error()));
+            persistentVariables.Increment<"nFileSystemErrors">();
+            continue;
+        }
+        for(auto && entryResult : makeIteratorResult.value())
+        {
+            if(entryResult.has_error())
+            {
+                continue;
+            }
+            auto const & entry = entryResult.value();
+            if(fs::IsLockFile(entry.name))
+            {
+                auto removeResult = fs::ForceRemove(entry.name);
+                if(removeResult.has_error())
+                {
+                    DEBUG_PRINT("Failed to remove lock file '%s': %s\n",
+                                entry.name.c_str(),
+                                ToCZString(removeResult.error()));
+                    persistentVariables.Increment<"nFileSystemErrors">();
+                }
+            }
+        }
     }
 }
 }

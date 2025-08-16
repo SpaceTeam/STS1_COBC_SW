@@ -10,6 +10,7 @@
 #include <rodos/api/timemodel.h>
 
 #include <cstdint>
+#include <limits>
 
 
 namespace sts1cobcsw
@@ -40,4 +41,6 @@ constexpr auto h = Duration(RODOS::HOURS);
 constexpr auto days = Duration(RODOS::DAYS);
 constexpr auto weeks = Duration(RODOS::WEEKS);
 constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
+constexpr auto endOfRealTime =
+    RealTime(std::numeric_limits<strong::underlying_type_t<RealTime>>::max());
 }

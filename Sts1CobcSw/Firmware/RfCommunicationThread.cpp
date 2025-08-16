@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
@@ -666,6 +667,7 @@ auto Handle(SynchronizeTimeFunction const & function, RequestId const & requestI
 
 auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId) -> void
 {
+    persistentVariables.Store<"eduProgramQueueIndex">(eduProgramQueueIndexResetValue);
     edu::programQueue.Clear();
     for(auto && entry : function.queueEntries)
     {
@@ -673,6 +675,7 @@ auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId
     }
     DEBUG_PRINT("Updated EDU queue with %u entries\n", function.queueEntries.size());
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    ResumeEduProgramQueueThread();
 }
 
 
@@ -735,8 +738,8 @@ auto GetValue(Parameter::Id parameterId) -> Parameter::Value
         case Parameter::Id::realTimeOffsetCorrection:
             return static_cast<std::uint32_t>(persistentVariables.Load<"realTimeOffsetCorrection">()
                                               / s);
-        case Parameter::Id::eduStartDelayLimit:
-            return static_cast<std::uint32_t>(persistentVariables.Load<"eduStartDelayLimit">() / s);
+        case Parameter::Id::maxEduIdleDuration:
+            return static_cast<std::uint32_t>(persistentVariables.Load<"maxEduIdleDuration">() / s);
         case Parameter::Id::newEduResultIsAvailable:
             return persistentVariables.Load<"newEduResultIsAvailable">() ? 1 : 0;
     }
@@ -759,8 +762,8 @@ auto Set(Parameter parameter) -> void
         case Parameter::Id::realTimeOffsetCorrection:
             persistentVariables.Store<"realTimeOffsetCorrection">(parameter.value * s);
             break;
-        case Parameter::Id::eduStartDelayLimit:
-            persistentVariables.Store<"eduStartDelayLimit">(parameter.value * s);
+        case Parameter::Id::maxEduIdleDuration:
+            persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
             break;
         case Parameter::Id::newEduResultIsAvailable:
             persistentVariables.Store<"newEduResultIsAvailable">(parameter.value != 0U);
