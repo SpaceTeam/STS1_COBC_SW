@@ -1,8 +1,11 @@
 #include <Sts1CobcSw/Bootloader/RunFirmware.hpp>
 
-#include <Sts1CobcSw/Bootloader/Leds.hpp>
+#include <Sts1CobcSw/Bootloader/Print.hpp>
 #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
-#include <Sts1CobcSw/Bootloader/UciUart.hpp>
+#ifdef ENABLE_DEBUG_PRINT
+    #include <Sts1CobcSw/Bootloader/Leds.hpp>
+    #include <Sts1CobcSw/Bootloader/UciUart.hpp>
+#endif
 
 #include <cstdint>
 
@@ -31,10 +34,12 @@ auto RunFirmware() -> void
     auto resetHandler = reinterpret_cast<void (*)()>(vectorTable[1]);
     // NOLINTEND(*reinterpret-cast, *no-int-to-ptr, *pointer-arithmetic)
 
-    sts1cobcsw::uciuart::Write("Jumping to firmware...\n\n");
+    DEBUG_PRINT("Jumping to firmware...\n\n");
+#ifdef ENABLE_DEBUG_PRINT
     sts1cobcsw::uciuart::Reset();
     sts1cobcsw::leds::TurnOff();
     sts1cobcsw::leds::Reset();
+#endif
 
     DisableConfigurableExceptions();
     SetVectorTableOffsetRegister<firmwareStartAddress>();
