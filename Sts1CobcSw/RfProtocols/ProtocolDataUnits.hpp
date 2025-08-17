@@ -136,9 +136,8 @@ class AckPdu : public Payload
 public:
     static constexpr auto directiveCode = DirectiveCode::ack;
 
-    // TODO: Change the default value here
-    DirectiveCode acknowledgedPduDirectiveCode =
-        DirectiveCode::ack;  // Only EOF and FinishedPdu are acknowledged.
+    UInt<4> acknowledgedPduDirectiveCode =
+        static_cast<std::uint8_t>(DirectiveCode::finished);  // EOF or Finished
     UInt<4> directiveSubtypeCode =
         0;  // Depend on the directive code of the PDU that this ACK PDU acknowledges.
             // For ACK of Finished PDU: 0b0001. For ACKs of all other file directives: 0b0000.
@@ -147,10 +146,10 @@ public:
     UInt<2> transactionStatus = 0;  // 0b00 is undefined
 
     static constexpr auto minParameterFieldLength =
-        totalSerialSize<decltype(directiveSubtypeCode),
-                        strong::underlying_type_t<ConditionCode>,
-                        decltype(spare),
-                        decltype(transactionStatus)>;
+        totalSerialSize<decltype(acknowledgedPduDirectiveCode), decltype(directiveSubtypeCode)>
+        + totalSerialSize<strong::underlying_type_t<ConditionCode>,
+                          decltype(spare),
+                          decltype(transactionStatus)>;
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
@@ -191,6 +190,7 @@ inline constexpr auto unreportedFileStatus = FileStatus(0b11);
     -> Result<FileDirectivePdu>;
 [[nodiscard]] auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>;
 [[nodiscard]] auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>;
+[[nodiscard]] auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>;
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
 

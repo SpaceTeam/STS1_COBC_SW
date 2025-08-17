@@ -434,9 +434,46 @@ TEST_CASE("Parsing FinishedPdu")
 }
 
 
+TEST_CASE("Adding AckPdu")
+{
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto ackPdu = sts1cobcsw::AckPdu{};
+    ackPdu.acknowledgedPduDirectiveCode =
+        static_cast<std::uint32_t>(sts1cobcsw::DirectiveCode::finished);
+    ackPdu.directiveSubtypeCode = 0;
+    ackPdu.conditionCode = sts1cobcsw::noErrorConditionCode;
+    ackPdu.transactionStatus = 0;
+
+    CHECK(ackPdu.minParameterFieldLength == 2U);
+    CHECK(ackPdu.Size() == 2U);
+
+    auto addResult = ackPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == ackPdu.Size());
+    CHECK(dataField[0] == 0x50_b);
+    CHECK(dataField[1] == 0x00_b);
+}
+
+
 TEST_CASE("Parsing AckPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
     CHECK(sts1cobcsw::AckPdu::minParameterFieldLength == 2U);
     buffer.resize(sts1cobcsw::AckPdu::minParameterFieldLength);
+
+    buffer[0] = 0x00_b;
+    buffer[1] = 0x12_b;
+
+    auto parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
+    REQUIRE(parseResult.has_value());
+    auto & ackPdu = parseResult.value();
+    CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 0);
+    CHECK(ackPdu.directiveSubtypeCode == 0);
+    CHECK(value_of(ackPdu.conditionCode) == 1);
+    CHECK(ackPdu.transactionStatus.ToUnderlying() == 2);
+
+    buffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 }

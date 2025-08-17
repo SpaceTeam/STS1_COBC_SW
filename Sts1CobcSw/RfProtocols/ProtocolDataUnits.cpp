@@ -75,6 +75,24 @@ auto FinishedPdu::DoSize() const -> std::uint16_t
 }
 
 
+auto AckPdu::DoSize() const -> std::uint16_t
+{
+    return minParameterFieldLength;
+}
+
+
+auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
+                                                 acknowledgedPduDirectiveCode,
+                                                 directiveSubtypeCode,
+                                                 value_of(conditionCode),
+                                                 spare,
+                                                 transactionStatus);
+}
+
+
 auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::ProtocolDataUnit>
 {
     if(buffer.size() < tc::pduHeaderLength)
@@ -210,6 +228,20 @@ auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>
     return finishedPdu;
 }
 
+
+auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
+{
+    if(buffer.size() < AckPdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto ackPdu = AckPdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(
+        buffer.data(), &ackPdu.acknowledgedPduDirectiveCode, &ackPdu.directiveSubtypeCode);
+    cursor = DeserializeFrom<ccsdsEndianness>(
+        cursor, &value_of(ackPdu.conditionCode), &ackPdu.spare, &ackPdu.transactionStatus);
+    return ackPdu;
+}
 
 auto IsValid(DirectiveCode directiveCode) -> bool
 {
