@@ -34,11 +34,11 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # add it here.
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel")
 # I thought setting the default flags for the configurations is done with the *_INIT variables but
-# that appends to the existing default flags instead of replacing them.
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-O0 -g3 -gdwarf-2")
-set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g3 -gdwarf-2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_MINSIZEREL_INIT "-Os -DNDEBUG")
+# that prepends to the existing default flags instead of replacing them.
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3 -gdwarf-2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g3 -gdwarf-2 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -flto -DNDEBUG")
 
 set(compile_and_link_options -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
                              --specs=nano.specs
