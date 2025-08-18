@@ -1,3 +1,5 @@
+add_subdirectory(Serial)
+
 if(BUILD_BOOTLOADER)
     add_subdirectory(Bootloader)
 else()
@@ -18,7 +20,6 @@ else()
     add_subdirectory(RfProtocols)
     add_subdirectory(RodosTime)
     add_subdirectory(Sensors)
-    add_subdirectory(Serial)
     add_subdirectory(Telemetry)
     add_subdirectory(Utility)
     add_subdirectory(Vocabulary)
