@@ -165,7 +165,7 @@ TEST_CASE("Adding FileDataPdu to data field")
     dataField.resize(sts1cobcsw::tc::maxPduDataLength);
     addResult = fileDataPdu.AddTo(&dataField);
     CHECK(addResult.has_error());
-    CHECK(addResult.error() == ErrorCode::tooLarge);
+    CHECK(addResult.error() == ErrorCode::dataFieldTooShort);
 }
 
 
