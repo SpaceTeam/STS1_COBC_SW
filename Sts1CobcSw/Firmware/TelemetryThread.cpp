@@ -56,7 +56,9 @@ private:
     void init() override
     {
         epsFaultGpioPin.SetDirection(hal::PinDirection::in);
+        epsFaultGpioPin.ActivatePullUp();
         epsChargingGpioPin.SetDirection(hal::PinDirection::in);
+        epsChargingGpioPin.ActivatePullUp();
     }
 
 
