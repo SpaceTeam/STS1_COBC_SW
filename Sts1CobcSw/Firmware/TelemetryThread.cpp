@@ -6,6 +6,8 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/Hal/GpioPin.hpp>
+#include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
@@ -36,6 +38,8 @@ namespace
 {
 constexpr auto stackSize = 1200U;
 constexpr auto telemetryThreadInterval = 30 * s;
+auto epsFaultGpioPin = hal::GpioPin(hal::epsFaultPin);
+auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 
 
 [[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
@@ -49,6 +53,13 @@ public:
 
 
 private:
+    void init() override
+    {
+        epsFaultGpioPin.SetDirection(hal::PinDirection::in);
+        epsChargingGpioPin.SetDirection(hal::PinDirection::in);
+    }
+
+
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
@@ -84,6 +95,8 @@ auto CollectTelemetryData() -> TelemetryRecord
         .eduIsAlive = eduIsAlive ? 1 : 0,
         .newEduResultIsAvailable = persistentVariables.Load<"newEduResultIsAvailable">() ? 1 : 0,
         .antennasShouldBeDeployed = persistentVariables.Load<"antennasShouldBeDeployed">() ? 1 : 0,
+        .epsIsCharging = (epsChargingGpioPin.Read() == hal::PinState::set) ? 1 : 0,
+        .epsDetectedFault = (epsFaultGpioPin.Read() == hal::PinState::set) ? 1 : 0,
         .framIsWorking = fram::framIsWorking.Load() ? 1 : 0,
         .epsIsWorking = persistentVariables.Load<"epsIsWorking">() ? 1 : 0,
         .flashIsWorking = persistentVariables.Load<"flashIsWorking">() ? 1 : 0,

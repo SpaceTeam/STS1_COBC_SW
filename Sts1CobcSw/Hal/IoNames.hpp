@@ -24,6 +24,7 @@ inline constexpr auto antennaDeploymentPin = pc13;
 
 inline constexpr auto epsBatteryGoodPin = pc15;
 inline constexpr auto epsChargingPin = pc14;
+inline constexpr auto epsFaultPin = pc1;
 
 inline constexpr auto eduEnablePin = pb0;
 inline constexpr auto eduHeartbeatPin = pc5;

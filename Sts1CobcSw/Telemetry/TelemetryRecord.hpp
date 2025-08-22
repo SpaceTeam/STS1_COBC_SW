@@ -24,14 +24,16 @@ struct TelemetryRecord
     UInt<1> eduIsAlive = 0;
     UInt<1> newEduResultIsAvailable = 0;
     UInt<1> antennasShouldBeDeployed = 0;
+    UInt<1> epsIsCharging = 0;
+    UInt<1> epsDetectedFault = 0;
     UInt<1> framIsWorking = 0;
     UInt<1> epsIsWorking = 0;
+    // Booleans: byte 2: communication
     UInt<1> flashIsWorking = 0;
     UInt<1> rfIsWorking = 0;
-    // Booleans: byte 2: communication
     UInt<1> lastMessageTypeIdWasInvalid = 0;
     UInt<1> lastApplicationDataWasInvalid = 0;
-    UInt<6> padding = 0;  // NOLINT(*magic-numbers)
+    UInt<4> padding = 0;  // NOLINT(*magic-numbers)
 
     // BootLoader
     std::uint32_t nTotalResets = 0U;
@@ -78,6 +80,8 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
                     decltype(TelemetryRecord::eduIsAlive),
                     decltype(TelemetryRecord::newEduResultIsAvailable),
                     decltype(TelemetryRecord::antennasShouldBeDeployed),
+                    decltype(TelemetryRecord::epsIsCharging),
+                    decltype(TelemetryRecord::epsDetectedFault),
                     decltype(TelemetryRecord::framIsWorking),
                     decltype(TelemetryRecord::epsIsWorking),
                     decltype(TelemetryRecord::flashIsWorking),
