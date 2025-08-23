@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <utility>
 
+#include "Sts1CobcSw/RfProtocols/Configuration.hpp"
+#include "Sts1CobcSw/RfProtocols/Vocabulary.hpp"
+
 
 namespace sts1cobcsw
 {
@@ -90,6 +93,35 @@ auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
                                                  value_of(conditionCode),
                                                  spare,
                                                  transactionStatus);
+}
+
+
+auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(
+        dataField->data() + oldSize, reserved, closureRequestd, checksumType, reserved2);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize);
+
+    // Source filename
+    cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameLength);
+    cursor = std::ranges::copy(sourceFileNameValue, static_cast<Byte *>(cursor)).out;
+
+    // Destination filename
+    cursor = SerializeTo<ccsdsEndianness>(cursor, destinationFileNameLength);
+    std::ranges::copy(destinationFileNameValue, static_cast<Byte *>(cursor));
+}
+
+auto MetadataPdu::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(
+        totalSerialSize<decltype(reserved),
+                        decltype(closureRequestd),
+                        decltype(checksumType),
+                        decltype(reserved2)>
+        + totalSerialSize<decltype(fileSize)> + totalSerialSize<decltype(sourceFileNameLength)>
+        + totalSerialSize<decltype(destinationFileNameLength)>
+        + sourceFileNameValue.size() + destinationFileNameValue.size());
 }
 
 
@@ -241,6 +273,21 @@ auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
     cursor = DeserializeFrom<ccsdsEndianness>(
         cursor, &value_of(ackPdu.conditionCode), &ackPdu.spare, &ackPdu.transactionStatus);
     return ackPdu;
+}
+
+auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
+{
+    auto metadataPdu = MetadataPdu{};
+
+    auto const * cursor = static_cast<void const *>(buffer.data());
+
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor,
+                                              &metadataPdu.reserved,
+                                              &metadataPdu.closureRequestd,
+                                              &metadataPdu.reserved2,
+                                              &metadataPdu.checksumType);
+
+    return metadataPdu;
 }
 
 auto IsValid(DirectiveCode directiveCode) -> bool
