@@ -13,8 +13,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <random>
 #include <span>
+#ifdef USE_PUNCTURING
+    #include <random>
+#endif
 
 
 namespace rs = sts1cobcsw::rs;
@@ -36,6 +38,7 @@ constexpr auto GenerateSequentialBytes(Byte startValue = 0_b) -> std::array<Byte
     return result;
 }
 }
+
 
 #ifdef USE_PUNCTURING
 TEST_CASE("Convolutional coding")
@@ -149,6 +152,7 @@ TEST_CASE("Convolutional coding")
     }
 }
 #endif
+
 
 #ifndef USE_PUNCTURING
 TEST_CASE("Convolutional-Coding Without Puncturing")

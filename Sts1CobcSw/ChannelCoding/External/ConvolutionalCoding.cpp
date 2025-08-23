@@ -3,9 +3,10 @@
 // Author: Min Xu <xukmin@gmail.com>
 // Date: 01/30/2015
 // Modified by: Tomoya Hagen <tomoya.hagen@spaceteam.at>
-// Date: 25/06/2025
+// Modified by: Patrick Kappl <patrick.kappl@spaceteam.at>
 // Copyright (C) 2015 Min Xu
 // Copyright (C) 2025 Tomoya Hagen
+// Copyright (C) 2025 Patrick Kappl
 // License: Apache-2.0
 
 #include <Sts1CobcSw/ChannelCoding/External/ConvolutionalCoding.hpp>
@@ -36,36 +37,12 @@ ViterbiCodec::ViterbiCodec()
     bytes_ = 0;
 }
 
-auto ViterbiCodec::NumParityBits() const -> std::size_t
-{
-    return polynomials.size();
-}
-
-auto ViterbiCodec::NextState(unsigned int currentState, unsigned int input) const -> unsigned int
-{
-    return (currentState >> 1U) | (input << (constraint - 2U));
-}
-
-auto ViterbiCodec::Output(unsigned int currentState, unsigned int input) const -> std::uint8_t
-{
-    return outputs[currentState | (input << (constraint - 1U))];
-}
-
-auto ViterbiCodec::ProcessTwoBits(std::uint8_t bit1, std::uint8_t bit2) -> std::uint8_t
-{
-    auto output1 = Output(state_, bit1);
-    state_ = NextState(state_, bit1);
-    auto output2 = Output(state_, bit2);
-    state_ = NextState(state_, bit2);
-    auto output = (output1 << 1) | (output2 & 1);
-    assert(output >= 0 && output <= 0b111);
-    return static_cast<std::uint8_t>(output);
-}
 
 auto ViterbiCodec::Encode(std::span<Byte const> data, [[maybe_unused]] bool flush)
     -> etl::vector<Byte, ViterbiCodec::maxEncodedSize>
 {
     assert(data.size() <= ViterbiCodec::maxUnencodedSize);
+
 #ifdef DISABLE_CHANNEL_CODING
     auto dst = etl::vector<Byte, ViterbiCodec::maxEncodedSize>();
     dst.uninitialized_resize(std::min(data.size(), dst.max_size()));
@@ -135,12 +112,37 @@ auto ViterbiCodec::Encode(std::span<Byte const> data, [[maybe_unused]] bool flus
 #endif
 }
 
+
+auto ViterbiCodec::NextState(unsigned int currentState, unsigned int input) const -> unsigned int
+{
+    return (currentState >> 1U) | (input << (constraint - 2U));
+}
+
+
+auto ViterbiCodec::Output(unsigned int currentState, unsigned int input) const -> std::uint8_t
+{
+    return outputs[currentState | (input << (constraint - 1U))];
+}
+
+
+auto ViterbiCodec::ProcessTwoBits(std::uint8_t bit1, std::uint8_t bit2) -> std::uint8_t
+{
+    auto output1 = Output(state_, bit1);
+    state_ = NextState(state_, bit1);
+    auto output2 = Output(state_, bit2);
+    state_ = NextState(state_, bit2);
+    auto output = (output1 << 1) | (output2 & 1);
+    assert(output >= 0 && output <= 0b111);
+    return static_cast<std::uint8_t>(output);
+}
+
+
 auto ViterbiCodec::InitializeOutputs() -> void
 {
     for(auto i = 0U; i < outputs.size(); ++i)
     {
         outputs[i] = 0U;
-        for(auto j = 0U; j < NumParityBits(); ++j)
+        for(auto j = 0U; j < nParityBits; ++j)
         {
             auto polynomial = polynomials[j];
             auto input = static_cast<std::uint8_t>(i);
