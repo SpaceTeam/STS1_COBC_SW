@@ -13,8 +13,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <random>
 #include <span>
+#ifdef USE_PUNCTURING
+    #include <random>
+#endif
 
 
 namespace rs = sts1cobcsw::rs;
@@ -38,6 +40,7 @@ constexpr auto GenerateSequentialBytes(Byte startValue = 0_b) -> std::array<Byte
 }
 
 
+#ifdef USE_PUNCTURING
 TEST_CASE("Convolutional coding")
 {
     // EncodedSize() and UnencodedSize()
@@ -50,6 +53,7 @@ TEST_CASE("Convolutional coding")
         static_assert(cc::ViterbiCodec::EncodedSize(102, true) == 155);
         static_assert(cc::ViterbiCodec::EncodedSize(103, false) == 155);
         static_assert(cc::ViterbiCodec::EncodedSize(103, true) == 156);
+        static_assert(cc::ViterbiCodec::EncodedSize(255, true) == 384);
 
         static_assert(cc::ViterbiCodec::UnencodedSize(152, false) == 100);
         static_assert(cc::ViterbiCodec::UnencodedSize(152, true) == 100);
@@ -147,6 +151,95 @@ TEST_CASE("Convolutional coding")
         CHECK(encodedMessage == correctlyEncodedMessage);
     }
 }
+#endif
+
+
+#ifndef USE_PUNCTURING
+TEST_CASE("Convolutional-Coding Without Puncturing")
+{
+    {
+        static_assert(cc::ViterbiCodec::EncodedSize(100, false) == 200);
+        static_assert(cc::ViterbiCodec::EncodedSize(100, true) == 202);
+        static_assert(cc::ViterbiCodec::EncodedSize(101, false) == 202);
+        static_assert(cc::ViterbiCodec::EncodedSize(101, true) == 204);
+        static_assert(cc::ViterbiCodec::EncodedSize(102, false) == 204);
+        static_assert(cc::ViterbiCodec::EncodedSize(102, true) == 206);
+        static_assert(cc::ViterbiCodec::EncodedSize(255, true) == 512);
+
+        static_assert(cc::ViterbiCodec::UnencodedSize(201, true) == 99);
+        static_assert(cc::ViterbiCodec::UnencodedSize(201, false) == 100);
+        static_assert(cc::ViterbiCodec::UnencodedSize(202, true) == 100);
+        static_assert(cc::ViterbiCodec::UnencodedSize(202, false) == 101);
+        static_assert(cc::ViterbiCodec::UnencodedSize(203, true) == 100);
+        static_assert(cc::ViterbiCodec::UnencodedSize(203, false) == 101);
+        static_assert(cc::ViterbiCodec::UnencodedSize(204, true) == 101);
+        static_assert(cc::ViterbiCodec::UnencodedSize(204, false) == 102);
+    }
+
+    // Encode() returns the correct amount of data
+    {
+        auto cc = cc::ViterbiCodec();
+        REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/false).size() == 20U);
+        REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/false).size() == 22U);
+        REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/true).size() == 22U);
+        REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/true).size() == 24U);
+    }
+
+
+    static constexpr auto inputSize = 255U;
+    static constexpr auto message = GenerateSequentialBytes<inputSize>();
+    static constexpr auto correctlyEncodedMessage = std::to_array<Byte>(
+        {0_b,   0_b,   0_b,   3_b,   188_b, 126_b, 241_b, 205_b, 77_b,  139_b, 199_b, 56_b,  123_b,
+         69_b,  54_b,  246_b, 138_b, 95_b,  28_b,  236_b, 160_b, 145_b, 237_b, 34_b,  81_b,  100_b,
+         219_b, 215_b, 103_b, 170_b, 42_b,  25_b,  149_b, 12_b,  115_b, 191_b, 207_b, 194_b, 130_b,
+         113_b, 62_b,  55_b,  180_b, 132_b, 8_b,   249_b, 69_b,  74_b,  249_b, 227_b, 111_b, 80_b,
+         211_b, 45_b,  158_b, 158_b, 34_b,  216_b, 168_b, 107_b, 20_b,  22_b,  89_b,  165_b, 232_b,
+         65_b,  206_b, 242_b, 114_b, 143_b, 63_b,  60_b,  131_b, 122_b, 9_b,   201_b, 181_b, 180_b,
+         248_b, 7_b,   68_b,  174_b, 210_b, 29_b,  110_b, 96_b,  35_b,  211_b, 159_b, 149_b, 21_b,
+         38_b,  169_b, 91_b,  228_b, 232_b, 91_b,  253_b, 189_b, 78_b,  1_b,   51_b,  76_b,  128_b,
+         240_b, 198_b, 122_b, 117_b, 198_b, 8_b,   139_b, 187_b, 55_b,  18_b,  161_b, 161_b, 29_b,
+         220_b, 80_b,  111_b, 236_b, 41_b,  102_b, 154_b, 218_b, 231_b, 151_b, 84_b,  29_b,  119_b,
+         59_b,  196_b, 135_b, 185_b, 202_b, 10_b,  118_b, 76_b,  252_b, 255_b, 64_b,  130_b, 13_b,
+         49_b,  177_b, 152_b, 39_b,  43_b,  155_b, 86_b,  214_b, 229_b, 106_b, 163_b, 224_b, 16_b,
+         92_b,  109_b, 17_b,  222_b, 174_b, 203_b, 72_b,  120_b, 244_b, 5_b,   185_b, 182_b, 5_b,
+         240_b, 143_b, 67_b,  51_b,  62_b,  126_b, 141_b, 194_b, 36_b,  84_b,  151_b, 232_b, 234_b,
+         165_b, 89_b,  25_b,  31_b,  147_b, 172_b, 47_b,  209_b, 98_b,  98_b,  211_b, 134_b, 245_b,
+         53_b,  73_b,  72_b,  4_b,   251_b, 184_b, 189_b, 50_b,  14_b,  142_b, 115_b, 195_b, 192_b,
+         127_b, 105_b, 233_b, 218_b, 85_b,  167_b, 24_b,  20_b,  164_b, 82_b,  46_b,  225_b, 146_b,
+         156_b, 223_b, 47_b,  96_b,  58_b,  134_b, 137_b, 58_b,  244_b, 119_b, 71_b,  203_b, 1_b,
+         65_b,  178_b, 253_b, 207_b, 176_b, 124_b, 12_b,  213_b, 154_b, 102_b, 38_b,  27_b,  107_b,
+         168_b, 215_b, 238_b, 93_b,  93_b,  225_b, 32_b,  172_b, 147_b, 201_b, 172_b, 239_b, 31_b,
+         83_b,  98_b,  30_b,  209_b, 162_b, 151_b, 40_b,  36_b,  148_b, 89_b,  217_b, 234_b, 101_b,
+         67_b,  243_b, 240_b, 79_b,  141_b, 2_b,   62_b,  190_b, 120_b, 52_b,  203_b, 136_b, 182_b,
+         197_b, 5_b,   122_b, 16_b,  156_b, 163_b, 32_b,  222_b, 109_b, 109_b, 209_b, 43_b,  91_b,
+         152_b, 231_b, 229_b, 170_b, 86_b,  22_b,  255_b, 128_b, 76_b,  60_b,  49_b,  113_b, 130_b,
+         205_b, 196_b, 71_b,  119_b, 251_b, 10_b,  182_b, 185_b, 7_b,   93_b,  33_b,  238_b, 157_b,
+         147_b, 208_b, 32_b,  108_b, 102_b, 230_b, 213_b, 90_b,  168_b, 23_b,  27_b,  171_b, 178_b,
+         61_b,  1_b,   129_b, 124_b, 204_b, 207_b, 112_b, 137_b, 250_b, 58_b,  70_b,  71_b,  11_b,
+         244_b, 180_b, 225_b, 82_b,  82_b,  238_b, 47_b,  163_b, 156_b, 31_b,  218_b, 149_b, 105_b,
+         41_b,  20_b,  100_b, 167_b, 216_b, 14_b,  78_b,  189_b, 242_b, 192_b, 191_b, 115_b, 3_b,
+         53_b,  137_b, 134_b, 53_b,  251_b, 120_b, 72_b,  242_b, 107_b, 212_b, 216_b, 104_b, 165_b,
+         37_b,  22_b,  153_b, 80_b,  19_b,  227_b, 175_b, 158_b, 226_b, 45_b,  94_b,  132_b, 200_b,
+         55_b,  116_b, 74_b,  57_b,  249_b, 133_b, 191_b, 15_b,  12_b,  179_b, 113_b, 254_b, 194_b,
+         65_b,  215_b, 167_b, 100_b, 27_b,  25_b,  86_b,  170_b, 234_b, 236_b, 96_b,  95_b,  220_b,
+         34_b,  145_b, 145_b, 45_b,  56_b,  187_b, 139_b, 7_b,   246_b, 74_b,  69_b,  246_b, 3_b,
+         124_b, 176_b, 192_b, 205_b, 141_b, 126_b, 60_b,  154_b, 26_b,  41_b,  166_b, 84_b,  235_b,
+         231_b, 87_b,  161_b, 221_b, 18_b,  97_b,  111_b, 44_b,  220_b, 144_b, 117_b, 6_b,   198_b,
+         186_b, 187_b, 247_b, 8_b,   75_b,  78_b,  193_b, 253_b, 125_b, 128_b, 48_b,  51_b,  143_b,
+         38_b,  105_b, 149_b, 213_b, 232_b, 152_b, 91_b,  36_b,  29_b,  174_b, 174_b, 18_b,  211_b,
+         95_b,  96_b,  227_b, 201_b, 117_b, 122_b, 201_b, 7_b,   132_b, 180_b, 56_b,  242_b, 178_b,
+         65_b,  14_b,  60_b,  154_b, 192_b});
+    auto cc = cc::ViterbiCodec();
+
+    {
+        auto encodedMessage = cc.Encode(message, /*flush=*/true);
+        REQUIRE(encodedMessage.size() == correctlyEncodedMessage.size());
+        auto encodedMessageArray = decltype(correctlyEncodedMessage){};
+        std::ranges::copy(encodedMessage, encodedMessageArray.begin());
+        CHECK(encodedMessageArray == correctlyEncodedMessage);
+    }
+}
+#endif
 
 
 TEST_CASE("Reed-Solomon")

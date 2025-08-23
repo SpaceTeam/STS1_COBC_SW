@@ -3,13 +3,13 @@
 // Author: Min Xu <xukmin@gmail.com>
 // Date: 01/30/2015
 // Modified by: Tomoya Hagen <tomoya.hagen@spaceteam.at>
-// Date: 25/06/2025
+// Modified by: Patrick Kappl <patrick.kappl@spaceteam.at>
 // Copyright (C) 2015 Min Xu
 // Copyright (C) 2025 Tomoya Hagen
+// Copyright (C) 2025 Patrick Kappl
 // License: Apache-2.0
 
-#ifndef VITERBI_H_
-#define VITERBI_H_
+#pragma once
 
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
@@ -24,38 +24,30 @@
 
 namespace sts1cobcsw::cc
 {
-// This class implements both a Viterbi Decoder and a Convolutional Encoder.
+// This class implements a convolutional Encoder.
 class ViterbiCodec
 {
-    static constexpr auto maxSize = (255 * 3 / 2) + 1;
+public:
     static constexpr auto constraint = 7U;
     static constexpr auto nFlushBits = constraint - 1U;
-    static constexpr auto polynomials = std::array<std::uint8_t, 2>{0b111'1001, 0b101'1011};
-    unsigned int state_;
-    unsigned int bytes_;
+    static constexpr auto polynomials = std::to_array<std::uint8_t>({0b111'1001, 0b101'1011});
+    static constexpr auto nParityBits = polynomials.size();
 
-    // The output table.
-    // The index is current input bit combined with previous inputs in the shift
-    // register. The value is the output parity bits in string format for
-    // convenience, e.g. "10". For example, suppose the shift register contains
-    // 0b10 (= 2), and the current input is 0b1 (= 1), then the index is 0b110 (=
-    // 6).
-    static inline auto outputs = std::array<std::uint8_t, 1U << constraint>();
+    static constexpr auto maxUnencodedSize = 255U;
+    // EncodedSize() cannot be used in a constant expression until the class is complete
+#ifdef USE_PUNCTURING
+    static constexpr auto maxEncodedSize = 384U;
+#else
+    static constexpr auto maxEncodedSize = 512U;
+#endif
 
-    static constexpr auto puncturingPattern = std::array{true, true, false, true};
+    [[nodiscard]] static constexpr auto EncodedSize(std::size_t unencodedSize,
+                                                    [[maybe_unused]] bool withFlushBits)
+        -> std::size_t;
+    [[nodiscard]] static constexpr auto UnencodedSize(std::size_t encodedSize,
+                                                      [[maybe_unused]] bool withFlushBits)
+        -> std::size_t;
 
-    [[nodiscard]] auto NumParityBits() const -> std::size_t;
-
-    auto InitializeOutputs() -> void;
-
-    [[nodiscard]] auto NextState(unsigned int currentState, unsigned int input) const
-        -> unsigned int;
-
-    [[nodiscard]] auto Output(unsigned int currentState, unsigned int input) const -> std::uint8_t;
-
-    auto ProcessTwoBits(std::uint8_t bit1, std::uint8_t bit2) -> std::uint8_t;
-
-public:
     // Note about Polynomial Descriptor of a Convolutional Encoder / Decoder.
     // A generator polymonial is built as follows: Build a binary number
     // representation by placing a 1 in each spot where a connection line from
@@ -75,39 +67,66 @@ public:
     //    Generator. See http://www.spiral.net/software/viterbi.html
     // We use 2.
     ViterbiCodec();
+    [[nodiscard]] auto Encode(std::span<Byte const> data, bool flush)
+        -> etl::vector<Byte, maxEncodedSize>;
 
-    [[nodiscard]] static constexpr auto EncodedSize(std::size_t unencodedSize,
-                                                    [[maybe_unused]] bool withFlushBits)
-        -> std::size_t
-    {
-#ifdef DISABLE_CHANNEL_CODING
-        return unencodedSize;
-#else
-        auto flushingBits = withFlushBits ? nFlushBits : 0U;
-        auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 3 / 2;
-        auto size = (bits + CHAR_BIT - 1) / CHAR_BIT;
-        return size;
-#endif
-    }
 
-    [[nodiscard]] static constexpr auto UnencodedSize(std::size_t encodedSize,
-                                                      [[maybe_unused]] bool withFlushBits)
-        -> std::size_t
-    {
-#ifdef DISABLE_CHANNEL_CODING
-        return encodedSize;
-#else
-        auto flushingBits = withFlushBits ? nFlushBits : 0U;
-        auto size = (((encodedSize * CHAR_BIT) * 2 / 3) - flushingBits) / CHAR_BIT;
-        return size % 2 == 0 ? size : size - 1;
-#endif
-    }
+private:
+    // The output table.
+    // The index is current input bit combined with previous inputs in the shift
+    // register. The value is the output parity bits in string format for
+    // convenience, e.g. "10". For example, suppose the shift register contains
+    // 0b10 (= 2), and the current input is 0b1 (= 1), then the index is 0b110 (=
+    // 6).
+    static inline auto outputs = std::array<std::uint8_t, 1U << constraint>();
 
-    [[nodiscard]] auto Encode(std::span<Byte const> data, bool flush) -> etl::vector<Byte, maxSize>;
+    unsigned int state_;
+    unsigned int bytes_;
 
-    [[nodiscard]] static auto Constraint() -> int;
-
-    [[nodiscard]] static auto Polynomials() -> std::array<std::uint8_t, 2> const &;
+    auto InitializeOutputs() -> void;
+    [[nodiscard]] auto NextState(unsigned int currentState, unsigned int input) const
+        -> unsigned int;
+    [[nodiscard]] auto Output(unsigned int currentState, unsigned int input) const -> std::uint8_t;
+    [[nodiscard]] auto ProcessTwoBits(std::uint8_t bit1, std::uint8_t bit2) -> std::uint8_t;
 };
+
+
+constexpr auto ViterbiCodec::EncodedSize(std::size_t unencodedSize,
+                                         [[maybe_unused]] bool withFlushBits) -> std::size_t
+{
+#ifdef DISABLE_CHANNEL_CODING
+    return unencodedSize;
+#else
+    auto flushingBits = withFlushBits ? nFlushBits : 0U;
+    #ifdef USE_PUNCTURING
+    auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 3 / 2;
+    #else
+    auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 2;
+    #endif
+    auto size = (bits + CHAR_BIT - 1) / CHAR_BIT;
+    return size;
+#endif
 }
-#endif  // VITERBI_H_
+
+
+constexpr auto ViterbiCodec::UnencodedSize(std::size_t encodedSize,
+                                           [[maybe_unused]] bool withFlushBits) -> std::size_t
+{
+#ifdef DISABLE_CHANNEL_CODING
+    return encodedSize;
+#else
+    auto flushingBits = withFlushBits ? nFlushBits : 0U;
+    #ifdef USE_PUNCTURING
+    auto size = (((encodedSize * CHAR_BIT) * 2 / 3) - flushingBits) / CHAR_BIT;
+    return size % 2 == 0 ? size : size - 1;
+    #else
+    auto size = (((encodedSize * CHAR_BIT) / 2) - flushingBits) / CHAR_BIT;
+    return size;
+    #endif
+#endif
+}
+
+
+static_assert(ViterbiCodec::maxEncodedSize
+              == ViterbiCodec::EncodedSize(ViterbiCodec::maxUnencodedSize, true));
+}

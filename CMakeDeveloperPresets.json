@@ -30,6 +30,7 @@
       "inherits": "dev-common",
       "toolchainFile": "/linux-x86.cmake",
       "cacheVariables": {
+        "USE_PUNCTURING": "OFF",
         "ENABLE_DEBUG_PRINT_STACK_USAGE": "OFF"
       }
     },
@@ -50,6 +51,7 @@
         "HW_VERSION": "30",
         "REDIRECT_RF_OVER_UCI": "OFF",
         "DISABLE_CHANNEL_CODING": "OFF",
+        "USE_PUNCTURING": "OFF",
         "ENABLE_DEBUG_PRINT_STACK_USAGE": "OFF"
       }
     },
