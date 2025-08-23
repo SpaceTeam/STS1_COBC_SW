@@ -5,7 +5,6 @@ target_sources(
             Leds.cpp
             Main.cpp
             MemoryInitialization.cpp
-            Print.cpp
             RunFirmware.cpp
             Spi.cpp
             Startup.s
