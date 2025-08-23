@@ -13,6 +13,7 @@
 
 #include "Sts1CobcSw/RfProtocols/Configuration.hpp"
 #include "Sts1CobcSw/RfProtocols/Vocabulary.hpp"
+#include "Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp"
 
 
 namespace sts1cobcsw
@@ -277,15 +278,47 @@ auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
 
 auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
 {
+    if(buffer.size() < MetadataPdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+
     auto metadataPdu = MetadataPdu{};
 
     auto const * cursor = static_cast<void const *>(buffer.data());
-
     cursor = DeserializeFrom<ccsdsEndianness>(cursor,
                                               &metadataPdu.reserved,
                                               &metadataPdu.closureRequestd,
                                               &metadataPdu.reserved2,
                                               &metadataPdu.checksumType);
+
+    // TODO: Error handling
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.fileSize);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.sourceFileNameLength);
+    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength - 1)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+
+    // TODO: Named constant
+    metadataPdu.sourceFileNameValue =
+        buffer.subspan(6U, static_cast<std::uint32_t>(metadataPdu.sourceFileNameLength));
+
+    cursor = DeserializeFrom<ccsdsEndianness>(
+        buffer.data() + 6U + static_cast<std::size_t>(metadataPdu.sourceFileNameLength),
+        &metadataPdu.destinationFileNameLength);
+
+    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength - 1
+                           + metadataPdu.destinationFileNameLength - 1)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+
+
+    metadataPdu.destinationFileNameValue =
+        buffer.subspan(6U + 1U + static_cast<std::size_t>(metadataPdu.sourceFileNameLength),
+                       static_cast<std::uint32_t>(metadataPdu.sourceFileNameLength));
+
 
     return metadataPdu;
 }

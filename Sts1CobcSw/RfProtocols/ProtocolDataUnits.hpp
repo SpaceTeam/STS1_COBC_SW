@@ -170,23 +170,16 @@ public:
 
     std::uint8_t sourceFileNameLength = 0;
     std::span<Byte const> sourceFileNameValue;
-
     std::uint8_t destinationFileNameLength = 0;
     std::span<Byte const> destinationFileNameValue;
 
-    // static constexpr auto minParameterFieldLength =
-    //     totalSerialSize<
-    //         decltype(reserved),
-    //         decltype(closureRequestd),
-    //         decltype(checksumType),
-    //         decltype(reserved2)>
-    //     +
-    //     totalSerialSize<decltype(fileSize)> +
-    //     totalSerialSize<decltype(sourceFileNameLength)>+
-    //     totalSerialSize<decltype(destinationFileNameLength)>+
-    //     sourceFileNameValue.size()+
-    //     destinationFileNameValue.size();
-
+    static constexpr auto minParameterFieldLength =
+        totalSerialSize<decltype(reserved),
+                        decltype(closureRequestd),
+                        decltype(checksumType),
+                        decltype(reserved2)>
+        + totalSerialSize<decltype(fileSize)>
+        + 4U;  // Assuming a minimum length of 1 for each file name
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;

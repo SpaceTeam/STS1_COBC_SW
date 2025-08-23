@@ -520,19 +520,47 @@ TEST_CASE("Adding MetadataPdu")
 TEST_CASE("Parsing MetadataPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+    CHECK(sts1cobcsw::MetadataPdu::minParameterFieldLength == 9U);
     buffer.resize(11);
 
     buffer[0] = 0x00_b;
-    buffer[1] = 0x12_b;
+    buffer[1] = 0x00_b;
     buffer[2] = 0x00_b;
-    buffer[3] = 0x12_b;
+    buffer[3] = 0x00_b;
     buffer[4] = 0x12_b;
-    buffer[5] = 0x12_b;
-    buffer[6] = 0x12_b;
-    buffer[7] = 0x12_b;
-    buffer[8] = 0x12_b;
-    buffer[9] = 0x12_b;
-    buffer[10] = 0x12_b;
+    buffer[5] = 0x02_b;
+    buffer[6] = 0xAA_b;
+    buffer[7] = 0xAA_b;
+    buffer[8] = 0x02_b;
+    buffer[9] = 0xAA_b;
+    buffer[10] = 0xAA_b;
 
     auto parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    REQUIRE(parseResult.has_value());
+
+    auto & metadataPdu = parseResult.value();
+
+    CHECK(metadataPdu.fileSize == 18U);
+    CHECK(metadataPdu.sourceFileNameLength == 2U);
+    CHECK(metadataPdu.sourceFileNameValue[0] == 0xAA_b);
+    CHECK(metadataPdu.sourceFileNameValue[1] == 0xAA_b);
+
+    CHECK(metadataPdu.destinationFileNameLength == 2U);
+    CHECK(metadataPdu.destinationFileNameValue[0] == 0xAA_b);
+    CHECK(metadataPdu.destinationFileNameValue[1] == 0xAA_b);
+
+    buffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+
+    buffer.resize(10);
+    buffer[5] = 0x0A_b;  // Size of source file name length
+    parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+
+    buffer.resize(11);
+    buffer[5] = 0x02_b;  // Size of source file name length
+    buffer[8] = 0x04_b;  // Size of destination file name length
+    parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
 }
