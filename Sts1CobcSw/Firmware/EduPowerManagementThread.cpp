@@ -26,7 +26,7 @@ namespace sts1cobcsw
 {
 namespace
 {
-constexpr auto stackSize = 4000U;
+constexpr auto stackSize = 6000U;
 // TODO: Come up with the "right" numbers
 constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
 constexpr auto eduBootTimeMargin = 5 * s;
