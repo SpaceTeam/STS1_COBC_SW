@@ -157,6 +157,36 @@ private:
 };
 
 
+class MetadataPdu : public Payload
+{
+public:
+    static constexpr auto directiveCode = DirectiveCode::metadata;
+
+    UInt<1> reserved = 0;
+    UInt<1> closureRequestd = 0;  // 0 in ACK mode
+    UInt<4> checksumType = 15;    // NOLINT(*-magic-numbers)
+    UInt<2> reserved2 = 0;
+    std::uint32_t fileSize;
+
+    std::uint8_t sourceFileNameLength = 0;
+    std::span<Byte const> sourceFileNameValue;
+    std::uint8_t destinationFileNameLength = 0;
+    std::span<Byte const> destinationFileNameValue;
+
+    static constexpr auto minParameterFieldLength =
+        totalSerialSize<decltype(reserved),
+                        decltype(closureRequestd),
+                        decltype(checksumType),
+                        decltype(reserved2)>
+        + totalSerialSize<decltype(fileSize)>
+        + 4U;  // Assuming a minimum length of 1 for each file name
+
+private:
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
 inline constexpr auto noErrorConditionCode = ConditionCode(0);
 inline constexpr auto positiveAckLimitReachedConditionCode = ConditionCode(1);
 inline constexpr auto keepAliveLimitReachedConditionCode = ConditionCode(2);
@@ -191,6 +221,7 @@ inline constexpr auto unreportedFileStatus = FileStatus(0b11);
 [[nodiscard]] auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>;
 [[nodiscard]] auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>;
 [[nodiscard]] auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>;
+[[nodiscard]] auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>;
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
 

@@ -477,3 +477,90 @@ TEST_CASE("Parsing AckPdu")
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 }
+
+
+TEST_CASE("Adding MetadataPdu")
+{
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto metadataPdu = sts1cobcsw::MetadataPdu{};
+
+    metadataPdu.fileSize = 42;
+
+    static constexpr auto sourceFileName = std::array{0xAB_b, 0xCD_b};
+    static constexpr auto destinationFileName = std::array{0x01_b, 0x23_b};
+
+    metadataPdu.sourceFileNameLength = sourceFileName.size();
+    metadataPdu.sourceFileNameValue = sourceFileName;
+
+    metadataPdu.destinationFileNameLength = destinationFileName.size();
+    metadataPdu.destinationFileNameValue = destinationFileName;
+
+    CHECK(metadataPdu.Size() == (1 + 4 + 1 + 2 + 1 + 2));
+
+    auto addResult = metadataPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+
+    CHECK(dataField.size() == metadataPdu.Size());
+    CHECK(dataField[0] == 0x3C_b);
+    CHECK(dataField[1] == 0x00_b);
+    CHECK(dataField[2] == 0x00_b);
+    CHECK(dataField[3] == 0x00_b);
+    CHECK(dataField[4] == 0x2A_b);
+
+    CHECK(dataField[5] == 0x02_b);
+    CHECK(dataField[6] == 0xAB_b);
+    CHECK(dataField[7] == 0xCD_b);
+
+    CHECK(dataField[8] == 0x02_b);
+    CHECK(dataField[9] == 0x01_b);
+    CHECK(dataField[10] == 0x23_b);
+}
+
+
+TEST_CASE("Parsing MetadataPdu")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+    CHECK(sts1cobcsw::MetadataPdu::minParameterFieldLength == 9U);
+    buffer.resize(11);
+
+    buffer[0] = 0x00_b;
+    buffer[1] = 0x00_b;
+    buffer[2] = 0x00_b;
+    buffer[3] = 0x00_b;
+    buffer[4] = 0x12_b;
+    buffer[5] = 0x02_b;
+    buffer[6] = 0xAA_b;
+    buffer[7] = 0xAA_b;
+    buffer[8] = 0x02_b;
+    buffer[9] = 0xAA_b;
+    buffer[10] = 0xAA_b;
+
+    auto parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    REQUIRE(parseResult.has_value());
+
+    auto & metadataPdu = parseResult.value();
+
+    CHECK(metadataPdu.fileSize == 18U);
+    CHECK(metadataPdu.sourceFileNameLength == 2U);
+    CHECK(metadataPdu.sourceFileNameValue[0] == 0xAA_b);
+    CHECK(metadataPdu.sourceFileNameValue[1] == 0xAA_b);
+
+    CHECK(metadataPdu.destinationFileNameLength == 2U);
+    CHECK(metadataPdu.destinationFileNameValue[0] == 0xAA_b);
+    CHECK(metadataPdu.destinationFileNameValue[1] == 0xAA_b);
+
+    buffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+
+    buffer.resize(10);
+    buffer[5] = 0x0A_b;  // Size of source file name length
+    parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+
+    buffer.resize(11);
+    buffer[5] = 0x02_b;  // Size of source file name length
+    buffer[8] = 0x04_b;  // Size of destination file name length
+    parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+}
