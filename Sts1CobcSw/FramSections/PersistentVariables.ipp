@@ -17,8 +17,7 @@ auto PersistentVariables<section, PersistentVariableInfos...>::Load() -> ValueTy
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     auto [value0, value1, value2] =
         fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto voteResult = ComputeMajorityVote(value0, value1, value2);
-    auto value = voteResult.value_or(value0);
+    auto value = ComputeMajorityVote(value0, value1, value2);
     auto allVotesAreEqual = (value0 == value1) && (value1 == value2);
     if(not allVotesAreEqual and fram::framIsWorking.Load())
     {
@@ -52,8 +51,7 @@ auto PersistentVariables<section, PersistentVariableInfos...>::Increment() -> vo
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
     auto [value0, value1, value2] =
         fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto voteResult = ComputeMajorityVote(value0, value1, value2);
-    auto value = voteResult.value_or(value0);
+    auto value = ComputeMajorityVote(value0, value1, value2);
     value++;
     if(fram::framIsWorking.Load())
     {
@@ -70,10 +68,10 @@ auto PersistentVariables<section, PersistentVariableInfos...>::Add(ValueType<nam
     -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto [value0, value1, value2] =
+    auto [oldValue0, oldValue1, oldValue2] =
         fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto voteResult = ComputeMajorityVote(value0, value1, value2);
-    auto newValue = static_cast<ValueType<name>>(voteResult.value_or(value0) + value);
+    auto oldValue = ComputeMajorityVote(oldValue0, oldValue1, oldValue2);
+    auto newValue = static_cast<ValueType<name>>(oldValue + value);
     if(fram::framIsWorking.Load())
     {
         WriteToFram<name>(newValue);

@@ -4,7 +4,6 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 
 #include <cstdint>
-#include <optional>
 #include <span>
 
 
@@ -19,7 +18,7 @@ namespace sts1cobcsw
 template<typename T>
 [[nodiscard]] constexpr auto ComputeMajorityVote(T const & value0,
                                                  T const & value1,
-                                                 T const & value2) -> std::optional<T>
+                                                 T const & value2) -> T
 {
     if(value0 == value1 or value0 == value2)
     {
@@ -29,6 +28,6 @@ template<typename T>
     {
         return value1;
     }
-    return std::nullopt;
+    return value0;  // If all values are different, returning the first one is as good as any
 }
 }
