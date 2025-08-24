@@ -1,7 +1,7 @@
 #pragma once
 
-
-#include <rodos/api/rodos-semaphore.h>
+#ifndef BUILD_BOOTLOADER
+    #include <rodos/api/rodos-semaphore.h>
 
 
 namespace sts1cobcsw
@@ -30,4 +30,5 @@ private:
 }
 
 
-#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.ipp>  // IWYU pragma: keep
+    #include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.ipp>  // IWYU pragma: keep
+#endif

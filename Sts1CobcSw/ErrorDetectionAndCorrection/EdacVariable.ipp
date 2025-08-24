@@ -1,9 +1,9 @@
 #pragma once
 
+#ifndef BUILD_BOOTLOADER
+    #include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
 
-#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
-
-#include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
+    #include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 
 
 namespace sts1cobcsw
@@ -44,3 +44,4 @@ constexpr auto EdacVariable<T>::SetAllValues(T const & value) const -> void
     value2_ = value;
 }
 }
+#endif
