@@ -7,7 +7,6 @@
 
 #include <etl/vector.h>
 
-#include <optional>
 #include <span>
 
 
@@ -46,22 +45,14 @@ TEST_CASE("Majority vote")
 {
     using sts1cobcsw::ComputeMajorityVote;
 
-    auto voteResult = ComputeMajorityVote(173, 173, 173);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-    voteResult = ComputeMajorityVote(-2, 173, 173);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-    voteResult = ComputeMajorityVote(173, -2, 173);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-    voteResult = ComputeMajorityVote(173, 173, -2);
-    CHECK(voteResult.has_value());
-    CHECK(voteResult.value() == 173);  // NOLINT(*unchecked-optional-access)
-
-    voteResult = ComputeMajorityVote(17, 173, -2);
-    CHECK(voteResult.has_value() == false);
+    auto value = ComputeMajorityVote(173, 173, 173);
+    CHECK(value == 173);
+    value = ComputeMajorityVote(-2, 173, 173);
+    CHECK(value == 173);
+    value = ComputeMajorityVote(173, -2, 173);
+    CHECK(value == 173);
+    value = ComputeMajorityVote(173, 173, -2);
+    CHECK(value == 173);
+    value = ComputeMajorityVote(17, 173, -2);
+    CHECK(value == 17);  // If all values are different, the first one is returned
 }
