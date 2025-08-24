@@ -1,3 +1,4 @@
+add_subdirectory(ErrorDetectionAndCorrection)
 add_subdirectory(Serial)
 
 if(BUILD_BOOTLOADER)
@@ -6,7 +7,6 @@ else()
     add_subdirectory(Blake2s)
     add_subdirectory(ChannelCoding)
     add_subdirectory(Edu)
-    add_subdirectory(ErrorDetectionAndCorrection)
     add_subdirectory(FileSystem)
     add_subdirectory(Firmware)
     add_subdirectory(FirmwareManagement)
