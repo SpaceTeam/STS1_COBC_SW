@@ -22,6 +22,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 strong_type::strong_type
                 Sts1CobcSw_ChannelCoding
                 Sts1CobcSw_Edu
+                Sts1CobcSw_ErrorDetectionAndCorrection
                 Sts1CobcSw_Flash
                 Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections

@@ -3,7 +3,7 @@
 
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 
-#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 
