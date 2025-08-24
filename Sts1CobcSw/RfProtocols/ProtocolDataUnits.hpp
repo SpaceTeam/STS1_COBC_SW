@@ -131,6 +131,8 @@ private:
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
+using TransactionStatus = strong::type<UInt<2>, struct TransactionStatusTag, strong::regular>;
+
 class AckPdu : public Payload
 {
 public:
@@ -143,13 +145,13 @@ public:
             // For ACK of Finished PDU: 0b0001. For ACKs of all other file directives: 0b0000.
     ConditionCode conditionCode = ConditionCode(0);
     UInt<2> spare = 0;
-    UInt<2> transactionStatus = 0;  // 0b00 is undefined
+    TransactionStatus transactionStatus = TransactionStatus(0);
 
     static constexpr auto minParameterFieldLength =
         totalSerialSize<decltype(acknowledgedPduDirectiveCode), decltype(directiveSubtypeCode)>
         + totalSerialSize<strong::underlying_type_t<ConditionCode>,
                           decltype(spare),
-                          decltype(transactionStatus)>;
+                          strong::underlying_type_t<TransactionStatus>>;
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
@@ -168,9 +170,9 @@ public:
     UInt<2> reserved2 = 0;
     std::uint32_t fileSize;
 
-    std::uint8_t sourceFileNameLength = 0;
+    std::uint8_t sourceFileNameLength;
     std::span<Byte const> sourceFileNameValue;
-    std::uint8_t destinationFileNameLength = 0;
+    std::uint8_t destinationFileNameLength;
     std::span<Byte const> destinationFileNameValue;
 
     static constexpr auto minParameterFieldLength =
@@ -178,8 +180,22 @@ public:
                         decltype(closureRequestd),
                         decltype(checksumType),
                         decltype(reserved2)>
-        + totalSerialSize<decltype(fileSize)>
-        + 4U;  // Assuming a minimum length of 1 for each file name
+        + totalSerialSize<decltype(fileSize), decltype(sourceFileNameLength)>;
+
+private:
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
+class NackPdu : public Payload
+{
+public:
+    static constexpr auto directiveCode = DirectiveCode::nack;
+
+    std::uint32_t startOfScope;
+    std::uint32_t endOfScope;
+    std::span<std::uint64_t const> segmentRequests;
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
@@ -212,6 +228,11 @@ inline constexpr auto fileRejectedFileStatus = FileStatus(0b01);
 inline constexpr auto fileRetainedFileStatus = FileStatus(0b10);
 inline constexpr auto unreportedFileStatus = FileStatus(0b11);
 
+inline constexpr auto undefinedTransactionstatus = TransactionStatus(0b00);
+inline constexpr auto activeTransactionStatus = TransactionStatus(0b01);
+inline constexpr auto terminatedTransactionStatus = TransactionStatus(0b10);
+inline constexpr auto unrecognizedTransactionStatus = TransactionStatus(0b11);
+
 
 [[nodiscard]] auto ParseAsProtocolDataUnit(std::span<Byte const> buffer)
     -> Result<tc::ProtocolDataUnit>;
@@ -222,6 +243,8 @@ inline constexpr auto unreportedFileStatus = FileStatus(0b11);
 [[nodiscard]] auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>;
 [[nodiscard]] auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>;
 [[nodiscard]] auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>;
+[[nodiscard]] auto ParseAsNackPdu(std::span<Byte const> buffer) -> Result<NackPdu>;
+
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
 
