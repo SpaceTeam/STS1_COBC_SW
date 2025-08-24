@@ -6,6 +6,10 @@
 
 #include <etl/vector.h>
 
+#ifndef __linux__
+    #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
+#endif
+
 #include <algorithm>
 #ifdef __linux__
     #include <array>
@@ -18,6 +22,20 @@ namespace sts1cobcsw::fw
 {
 constexpr auto maxFirmwareLength = 0x2'0000U;
 
+namespace
+{
+auto const flashSector5 = (static_cast<uint16_t>(0x0028));
+auto const flashSector6 = (static_cast<uint16_t>(0x0030));
+auto const flashSector7 = (static_cast<uint16_t>(0x0038));
+auto const key1 = (static_cast<uint32_t>(0x4567'0123));
+auto const key2 = (static_cast<uint32_t>(0xCDEF'89AB));
+
+
+auto UnlockFlash() -> void;
+auto LockFlash() -> void;
+auto ProgramFlashByte(std::uintptr_t address, std::uint8_t data) -> bool;
+auto EraseFlashSector(std::uint16_t sector) -> bool;
+}
 
 #ifdef __linux__
 namespace
@@ -38,9 +56,9 @@ Partition const secondaryPartition2{
     .flashSector = 2};
 // NOLINTEND(*reinterpret-cast)
 #else
-Partition const primaryPartition{.startAddress = 0x0802'0000U, .flashSector = FLASH_Sector_5};
-Partition const secondaryPartition1{.startAddress = 0x0804'0000U, .flashSector = FLASH_Sector_6};
-Partition const secondaryPartition2{.startAddress = 0x0806'0000U, .flashSector = FLASH_Sector_7};
+Partition const primaryPartition{.startAddress = 0x0802'0000U, .flashSector = flashSector5};
+Partition const secondaryPartition1{.startAddress = 0x0804'0000U, .flashSector = flashSector6};
+Partition const secondaryPartition2{.startAddress = 0x0806'0000U, .flashSector = flashSector7};
 #endif
 
 
@@ -63,11 +81,13 @@ auto GetPartition(PartitionId partitionId) -> Result<Partition>
 // - Length: without CRC at the end, 4 bytes, in little endian
 // - Data
 // - Checksum: CRC-32 over length + data, in little endian
-auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
+auto GetCrcs(std::uintptr_t startAddress) -> Crcs
 {
+    Crcs crcs;
     if((startAddress % sizeof(std::uint32_t)) != 0)
     {
-        return ErrorCode::misaligned;
+        crcs.aligned = false;
+        return crcs;
     }
     // NOLINTNEXTLINE(*reinterpret-cast, performance-no-int-to-ptr)
     auto length = *reinterpret_cast<std::uint32_t volatile *>(startAddress);
@@ -77,22 +97,39 @@ auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
                      and (length % sizeof(std::uint32_t)) == 0;
     if(not lengthIsValid)
     {
-        return ErrorCode::invalidLength;
+        crcs.validLength = false;
+        return crcs;
     }
     auto buffer = etl::vector<Byte, 128>{};  // NOLINT(*magic-numbers)
     buffer.resize(sizeof(length));
     Read(startAddress, Span(&buffer));
-    auto crc = ComputeCrc32(Span(buffer));
-    auto lengthWithChecksum = length + sizeof(crc);
-    for(auto i = sizeof(length); i < lengthWithChecksum;)
+    auto newCrc = ComputeCrc32(Span(buffer));
+    buffer.resize(4);
+    Read(startAddress + length, Span(&buffer));
+// NOLINTBEGIN(*magic-numbers, readability-magic-numbers)
+#pragma GCC diagnostic push
+    auto oldCrc = static_cast<std::uint32_t>(buffer[0])
+                | (static_cast<std::uint32_t>(buffer[1]) << 8U)
+                | (static_cast<std::uint32_t>(buffer[2]) << 16U)
+                | (static_cast<std::uint32_t>(buffer[3]) << 24U);
+#pragma GCC diagnostic pop
+    // NOLINTEND(*magic-numbers, readability-magic-numbers)
+    return Crcs{.validLength = true, .aligned = true, .newCheckSum = newCrc, .oldCheckSum = oldCrc};
+}
+
+
+auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
+{
+    auto crcs = GetCrcs(startAddress);
+    if(not crcs.aligned)
     {
-        auto nBytes = std::min<std::size_t>(lengthWithChecksum - i, buffer.capacity());
-        buffer.resize(nBytes);
-        Read(startAddress + i, Span(&buffer));
-        crc = ComputeCrc32(crc, Span(buffer));
-        i += nBytes;
+        return ErrorCode::misaligned;
     }
-    if(crc != 0)
+    if(not crcs.validLength)
+    {
+        return ErrorCode::invalidLength;
+    }
+    if(crcs.newCheckSum != crcs.oldCheckSum)
     {
         return ErrorCode::corrupt;
     }
@@ -122,10 +159,10 @@ auto Erase(std::uint16_t flashSector) -> Result<void>
     }
     return outcome_v2::success();
 #else
-    FLASH_Unlock();
-    auto flashStatus = FLASH_EraseSector(flashSector, VoltageRange_3);
-    FLASH_Lock();
-    if(flashStatus != FLASH_COMPLETE)
+    UnlockFlash();
+    auto flashStatus = EraseFlashSector(flashSector);
+    LockFlash();
+    if(!flashStatus)
     {
         return ErrorCode::eraseFailed;
     }
@@ -141,20 +178,20 @@ auto Program(std::uintptr_t address, std::span<Byte const> data) -> Result<std::
     std::ranges::copy(data, reinterpret_cast<Byte *>(address));
     return address + data.size();
 #else
-    FLASH_Unlock();
+    UnlockFlash();
     auto result = [&]() -> Result<std::uintptr_t>
     {
         for(auto i = 0U; i < data.size(); ++i)
         {
-            auto flashStatus = FLASH_ProgramByte(address + i, static_cast<std::uint8_t>(data[i]));
-            if(flashStatus != FLASH_COMPLETE)
+            auto flashStatus = ProgramFlashByte(address + i, static_cast<std::uint8_t>(data[i]));
+            if(!flashStatus)
             {
                 return ErrorCode::programFailed;
             }
         }
         return address + data.size();
     }();
-    FLASH_Lock();
+    LockFlash();
     return result;
 #endif
 }
@@ -165,5 +202,100 @@ auto Read(std::uintptr_t address, std::span<Byte> data) -> void
     // NOLINTNEXTLINE(*reinterpret-cast, performance-no-int-to-ptr)
     auto bytes = std::span(reinterpret_cast<Byte const volatile *>(address), data.size());
     std::ranges::copy(bytes, data.begin());
+}
+
+
+namespace
+{
+// NOLINTBEGIN(*no-int-to-ptr, *cstyle-cast)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
+auto UnlockFlash() -> void
+{
+    if((FLASH->CR & FLASH_CR_LOCK) != 0)
+    {
+        // Authorize the FLASH Registers access
+        FLASH->KEYR = key1;
+        FLASH->KEYR = key2;
+    }
+}
+
+auto LockFlash() -> void
+{
+    FLASH->CR |= FLASH_CR_LOCK;
+}
+
+
+auto ProgramFlashByte(std::uintptr_t address, std::uint8_t data) -> bool
+{
+    // Wait for last operation to be completed
+    while(FLASH->SR & FLASH_SR_BSY) {}
+
+    FLASH->CR &= ~FLASH_CR_PSIZE;
+    auto const psizeShift = static_cast<std::uint32_t>(8U);
+    FLASH->CR |= (0x0U << psizeShift);
+    FLASH->CR |= FLASH_CR_PG;
+
+    // NOLINTNEXTLINE(*reinterpret-cast, performance-no-int-to-ptr)
+    *(reinterpret_cast<uint8_t volatile *>(address)) = data;
+
+    // Wait for last operation to be completed
+    while(FLASH->SR & FLASH_SR_BSY) {}
+
+    // check for errors
+    if(FLASH->SR & (FLASH_SR_PGSERR | FLASH_SR_PGPERR | FLASH_SR_PGAERR | FLASH_SR_WRPERR))
+    {
+        // Clear error flags
+        FLASH->SR |= FLASH_SR_PGSERR | FLASH_SR_PGPERR | FLASH_SR_PGAERR | FLASH_SR_WRPERR;
+        // disable the PG bit
+        FLASH->CR &= (~FLASH_CR_PG);
+        return false;
+    }
+    // disable the PG bit
+    FLASH->CR &= (~FLASH_CR_PG);
+    return true;
+}
+
+auto EraseFlashSector(std::uint16_t sector) -> bool
+{
+    int const numberOfSectors = 12;
+    if(sector > numberOfSectors - 1)
+    {
+        return false;
+    }
+
+    // Wait for last operation to be completed
+    while(FLASH->SR & FLASH_SR_BSY) {}
+
+    FLASH->CR &= ~FLASH_CR_PSIZE;
+    FLASH->CR |= FLASH_CR_PSIZE_1;  // voltageRange
+    FLASH->CR &= ~FLASH_CR_SNB;
+    FLASH->CR |= FLASH_CR_SER | (static_cast<std::uint32_t>(sector) << FLASH_CR_SNB_Pos);
+    FLASH->CR |= FLASH_CR_STRT;
+
+    // Wait for last operation to be completed
+    while(FLASH->SR & FLASH_SR_BSY) {}
+
+    if(FLASH->SR & (FLASH_SR_PGSERR | FLASH_SR_PGPERR | FLASH_SR_PGAERR | FLASH_SR_WRPERR))
+    {
+        // Clear error flags
+        FLASH->SR |= FLASH_SR_PGSERR | FLASH_SR_PGPERR | FLASH_SR_PGAERR | FLASH_SR_WRPERR;
+
+        // disable the sector erase
+        FLASH->CR &= (~FLASH_CR_SER);
+
+        return false;
+    }
+
+    // disable sector erase
+    FLASH->CR &= (~FLASH_CR_SER);
+
+    // Return the Erase Status
+    return true;
+}
+
+#pragma GCC diagnostic pop
+// NOLINTEND(*no-int-to-ptr, *cstyle-cast)
 }
 }
