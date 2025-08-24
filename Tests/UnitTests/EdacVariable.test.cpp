@@ -1,6 +1,6 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
-#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
 
 #include <algorithm>
 #include <array>

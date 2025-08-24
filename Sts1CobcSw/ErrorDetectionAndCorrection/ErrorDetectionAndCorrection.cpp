@@ -1,4 +1,4 @@
-#include <Sts1CobcSw/Utility/Crc32.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 
 #include <littlefs/lfs_util.h>
 

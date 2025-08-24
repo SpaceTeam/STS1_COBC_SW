@@ -1,7 +1,9 @@
 #pragma once
 
 
-#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
+
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 
 
 namespace sts1cobcsw
@@ -41,21 +43,5 @@ constexpr auto EdacVariable<T>::SetAllValues(T const & value) const -> void
     value0_ = value;
     value1_ = value;
     value2_ = value;
-}
-
-
-template<typename T>
-constexpr auto ComputeMajorityVote(T const & value0, T const & value1, T const & value2)
-    -> std::optional<T>
-{
-    if(value0 == value1 or value0 == value2)
-    {
-        return value0;
-    }
-    if(value1 == value2)
-    {
-        return value1;
-    }
-    return std::nullopt;
 }
 }
