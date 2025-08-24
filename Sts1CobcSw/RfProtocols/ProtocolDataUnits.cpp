@@ -8,6 +8,8 @@
 
 #include <strong_type/equality.hpp>
 
+#include <etl/vector.h>
+
 #include <algorithm>
 #include <utility>
 
@@ -113,6 +115,7 @@ auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     std::ranges::copy(destinationFileNameValue, static_cast<Byte *>(cursor));
 }
 
+
 auto MetadataPdu::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
@@ -123,6 +126,23 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
         + totalSerialSize<decltype(fileSize)> + totalSerialSize<decltype(sourceFileNameLength)>
         + totalSerialSize<decltype(destinationFileNameLength)>
         + sourceFileNameValue.size() + destinationFileNameValue.size());
+}
+
+
+auto NackPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, startOfScope);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, endOfScope);
+    std::ranges::copy(segmentRequests, static_cast<std::uint64_t *>(cursor));
+}
+
+
+auto NackPdu::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(startOfScope), decltype(endOfScope)>
+                                      + segmentRequests.size() * sizeof(std::uint64_t));
 }
 
 
@@ -276,6 +296,7 @@ auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
     return ackPdu;
 }
 
+
 auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
 {
     if(buffer.size() < MetadataPdu::minParameterFieldLength)
@@ -322,6 +343,7 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
 
     return metadataPdu;
 }
+
 
 auto IsValid(DirectiveCode directiveCode) -> bool
 {

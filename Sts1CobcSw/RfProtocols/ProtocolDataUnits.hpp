@@ -187,6 +187,21 @@ private:
 };
 
 
+class NackPdu : public Payload
+{
+public:
+    static constexpr auto directiveCode = DirectiveCode::nack;
+
+    std::uint32_t startOfScope;
+    std::uint32_t endOfScope;
+    std::span<std::uint64_t const> segmentRequests;
+
+private:
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
 inline constexpr auto noErrorConditionCode = ConditionCode(0);
 inline constexpr auto positiveAckLimitReachedConditionCode = ConditionCode(1);
 inline constexpr auto keepAliveLimitReachedConditionCode = ConditionCode(2);
@@ -222,6 +237,8 @@ inline constexpr auto unreportedFileStatus = FileStatus(0b11);
 [[nodiscard]] auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>;
 [[nodiscard]] auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>;
 [[nodiscard]] auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>;
+[[nodiscard]] auto ParseAsNackPdu(std::span<Byte const> buffer) -> Result<NackPdu>;
+
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
 

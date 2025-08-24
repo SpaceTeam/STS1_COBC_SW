@@ -506,11 +506,9 @@ TEST_CASE("Adding MetadataPdu")
     CHECK(dataField[2] == 0x00_b);
     CHECK(dataField[3] == 0x00_b);
     CHECK(dataField[4] == 0x2A_b);
-
     CHECK(dataField[5] == 0x02_b);
     CHECK(dataField[6] == 0xAB_b);
     CHECK(dataField[7] == 0xCD_b);
-
     CHECK(dataField[8] == 0x02_b);
     CHECK(dataField[9] == 0x01_b);
     CHECK(dataField[10] == 0x23_b);
@@ -544,7 +542,6 @@ TEST_CASE("Parsing MetadataPdu")
     CHECK(metadataPdu.sourceFileNameLength == 2U);
     CHECK(metadataPdu.sourceFileNameValue[0] == 0xAA_b);
     CHECK(metadataPdu.sourceFileNameValue[1] == 0xAA_b);
-
     CHECK(metadataPdu.destinationFileNameLength == 2U);
     CHECK(metadataPdu.destinationFileNameValue[0] == 0xAA_b);
     CHECK(metadataPdu.destinationFileNameValue[1] == 0xAA_b);
@@ -563,4 +560,49 @@ TEST_CASE("Parsing MetadataPdu")
     buffer[8] = 0x04_b;  // Size of destination file name length
     parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
     CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+}
+
+
+TEST_CASE("Adding NackPdu")
+{
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto nackPdu = sts1cobcsw::NackPdu{};
+
+    nackPdu.startOfScope = 0;
+    nackPdu.endOfScope = 0;
+    static constexpr auto segmentRequests = std::array<std::uint64_t, 2>{0xAB, 0xCD};
+    nackPdu.segmentRequests = segmentRequests;
+
+    CHECK(nackPdu.Size() == 24U);  // NOLINT(*magic-numbers)
+
+    auto addResult = nackPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+
+    CHECK(dataField.size() == nackPdu.Size());
+    CHECK(dataField[0] == 0x00_b);
+    CHECK(dataField[1] == 0x00_b);
+    CHECK(dataField[2] == 0x00_b);
+    CHECK(dataField[3] == 0x00_b);
+    CHECK(dataField[4] == 0x00_b);
+    CHECK(dataField[5] == 0x00_b);
+    CHECK(dataField[6] == 0x00_b);
+    CHECK(dataField[7] == 0x00_b);
+
+    CHECK(dataField[8] == 0xAB_b);
+    CHECK(dataField[9] == 0x00_b);
+    CHECK(dataField[10] == 0x00_b);
+    CHECK(dataField[11] == 0x00_b);
+    CHECK(dataField[12] == 0x00_b);
+    CHECK(dataField[13] == 0x00_b);
+    CHECK(dataField[14] == 0x00_b);
+    CHECK(dataField[15] == 0x00_b);
+
+    CHECK(dataField[16] == 0xCD_b);
+    CHECK(dataField[17] == 0x00_b);
+    CHECK(dataField[18] == 0x00_b);
+    CHECK(dataField[19] == 0x00_b);
+    CHECK(dataField[20] == 0x00_b);
+    CHECK(dataField[21] == 0x00_b);
+    CHECK(dataField[22] == 0x00_b);
+    CHECK(dataField[23] == 0x00_b);
 }
