@@ -35,10 +35,14 @@ public:
 
     static constexpr auto maxUnencodedSize = 255U;
     // EncodedSize() cannot be used in a constant expression until the class is complete
-#ifdef USE_PUNCTURING
-    static constexpr auto maxEncodedSize = 384U;
+#if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
+    static constexpr auto maxEncodedSize = maxUnencodedSize;
 #else
+    #ifdef USE_PUNCTURING
+    static constexpr auto maxEncodedSize = 384U;
+    #else
     static constexpr auto maxEncodedSize = 512U;
+    #endif
 #endif
 
     [[nodiscard]] static constexpr auto EncodedSize(std::size_t unencodedSize,
@@ -94,7 +98,7 @@ private:
 constexpr auto ViterbiCodec::EncodedSize(std::size_t unencodedSize,
                                          [[maybe_unused]] bool withFlushBits) -> std::size_t
 {
-#ifdef DISABLE_CHANNEL_CODING
+#if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
     return unencodedSize;
 #else
     auto flushingBits = withFlushBits ? nFlushBits : 0U;
@@ -112,7 +116,7 @@ constexpr auto ViterbiCodec::EncodedSize(std::size_t unencodedSize,
 constexpr auto ViterbiCodec::UnencodedSize(std::size_t encodedSize,
                                            [[maybe_unused]] bool withFlushBits) -> std::size_t
 {
-#ifdef DISABLE_CHANNEL_CODING
+#if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
     return encodedSize;
 #else
     auto flushingBits = withFlushBits ? nFlushBits : 0U;
