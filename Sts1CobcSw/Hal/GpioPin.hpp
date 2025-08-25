@@ -49,6 +49,9 @@ public:
 
     auto SetDirection(PinDirection pinDirection) -> void;
     auto SetOutputType(PinOutputType pinOutputType) -> void;
+    auto ActivatePullUp() -> void;
+    auto ActivatePullDown() -> void;
+    auto DeactivatePullResistors() -> void;
     auto Set() -> void;
     auto Reset() -> void;
 

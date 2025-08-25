@@ -137,6 +137,8 @@ private:
                 .eduIsAlive = 1,
                 .newEduResultIsAvailable = 1,
                 .antennasShouldBeDeployed = 1,
+                .epsIsCharging = 1,
+                .epsDetectedFault = 1,
                 .framIsWorking = 1,
                 .epsIsWorking = 1,
                 .flashIsWorking = 1,

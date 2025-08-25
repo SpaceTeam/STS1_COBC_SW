@@ -24,6 +24,27 @@ inline auto GpioPin::SetOutputType(PinOutputType pinOutputType) -> void
 }
 
 
+inline auto GpioPin::ActivatePullUp() -> void
+{
+    pin_.config(RODOS::GPIO_CFG_PULLUP_ENABLE, 1U);
+    pin_.config(RODOS::GPIO_CFG_PULLDOWN_ENABLE, 0U);
+}
+
+
+inline auto GpioPin::ActivatePullDown() -> void
+{
+    pin_.config(RODOS::GPIO_CFG_PULLUP_ENABLE, 0U);
+    pin_.config(RODOS::GPIO_CFG_PULLDOWN_ENABLE, 1U);
+}
+
+
+inline auto GpioPin::DeactivatePullResistors() -> void
+{
+    pin_.config(RODOS::GPIO_CFG_PULLUP_ENABLE, 0U);
+    pin_.config(RODOS::GPIO_CFG_PULLDOWN_ENABLE, 0U);
+}
+
+
 inline auto GpioPin::Set() -> void
 {
     pin_.setPins(1U);
