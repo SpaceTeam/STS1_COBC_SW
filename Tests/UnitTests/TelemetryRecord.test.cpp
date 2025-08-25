@@ -3,7 +3,7 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <catch2/catch_test_macros.hpp>
@@ -41,8 +41,8 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .lastApplicationDataWasInvalid = 1,
             .nTotalResets = 1U,
             .nResetsSinceRf = 2U,
-            .activeSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary1,
-            .backupSecondaryFwPartition = sts1cobcsw::fw::PartitionId::secondary2,
+            .activeSecondaryFwPartition = sts1cobcsw::PartitionId::secondary1,
+            .backupSecondaryFwPartition = sts1cobcsw::PartitionId::secondary2,
             .eduProgramQueueIndex = 5U,
             .programIdOfCurrentEduProgramQueueEntry = ProgramId(6),
             .nEduCommunicationErrors = 7U,

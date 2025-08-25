@@ -1,3 +1,7 @@
-target_link_libraries(
-    Sts1CobcSw_Vocabulary INTERFACE rodos::rodos strong_type::strong_type Sts1CobcSw_Serial
-)
+target_sources(Sts1CobcSw_Vocabulary PRIVATE Ids.cpp)
+target_link_libraries(Sts1CobcSw_Vocabulary PUBLIC strong_type::strong_type Sts1CobcSw_Serial)
+if(BUILD_BOOTLOADER)
+    target_compile_definitions(Sts1CobcSw_Vocabulary PUBLIC BUILD_BOOTLOADER)
+else()
+    target_link_libraries(Sts1CobcSw_Vocabulary PUBLIC rodos::rodos)
+endif()
