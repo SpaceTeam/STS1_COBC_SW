@@ -18,8 +18,7 @@ auto PersistentVariables<section, PersistentVariableInfos...>::Load() -> ValueTy
     auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
     auto value = Deserialize<ValueType<name>>(
         ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
-    auto allVotesAreEqual = (data[0] == data[1]) && (data[1] == data[2]);
-    if(not allVotesAreEqual and fram::framIsWorking.Load())
+    if(fram::framIsWorking.Load())
     {
         WriteToFram<name>(value);
     }

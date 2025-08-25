@@ -28,10 +28,7 @@ auto Load(PersistentVariable<T> variable) -> T
     auto data1 = fram::Read<totalSerialSize<T>>(address1);
     auto data2 = fram::Read<totalSerialSize<T>>(address2);
     auto value = Deserialize<T>(ComputeBitwiseMajorityVote(Span(data0), Span(data1), Span(data2)));
-    if(not(data0 == data1 && data1 == data2))
-    {
-        Store(variable, value);
-    }
+    Store(variable, value);
     return value;
 }
 
