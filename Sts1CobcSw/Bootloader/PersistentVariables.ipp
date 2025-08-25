@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <Sts1CobcSw/Bootloader/PersistentVariables.hpp>
 
 #include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
@@ -27,6 +28,14 @@ auto Load(PersistentVariable<T> variable) -> T
     auto data0 = fram::Read<totalSerialSize<T>>(address0);
     auto data1 = fram::Read<totalSerialSize<T>>(address1);
     auto data2 = fram::Read<totalSerialSize<T>>(address2);
+    if constexpr(std::is_same_v<T, PartitionId>)
+    {
+        static_assert(std::is_same_v<decltype(data0), std::array<Byte, 1>>);
+        static_assert(std::is_same_v<decltype(data0), SerialBuffer<PartitionId>>);
+        data0[0] = ToClosestSecondaryPartitionId(data0);
+        data1[0] = ToClosestSecondaryPartitionId(data1);
+        data2[0] = ToClosestSecondaryPartitionId(data2);
+    }
     auto value = Deserialize<T>(ComputeBitwiseMajorityVote(Span(data0), Span(data1), Span(data2)));
     Store(variable, value);
     return value;

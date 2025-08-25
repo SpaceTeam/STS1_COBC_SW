@@ -5,6 +5,7 @@
 
 #include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 
 
 namespace sts1cobcsw
@@ -15,9 +16,7 @@ template<StringLiteral name>
 auto PersistentVariables<section, PersistentVariableInfos...>::Load() -> ValueType<name>
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto value = Deserialize<ValueType<name>>(
-        ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
+    auto value = LoadValue<name>();
     if(fram::framIsWorking.Load())
     {
         WriteToFram<name>(value);
@@ -48,9 +47,7 @@ template<StringLiteral name>
 auto PersistentVariables<section, PersistentVariableInfos...>::Increment() -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto value = Deserialize<ValueType<name>>(
-        ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
+    auto value = LoadValue<name>();
     value++;
     if(fram::framIsWorking.Load())
     {
@@ -67,15 +64,34 @@ auto PersistentVariables<section, PersistentVariableInfos...>::Add(ValueType<nam
     -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto oldValue = Deserialize<ValueType<name>>(
-        ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
+    auto oldValue = LoadValue<name>();
     auto newValue = static_cast<ValueType<name>>(oldValue + value);
     if(fram::framIsWorking.Load())
     {
         WriteToFram<name>(newValue);
     }
     WriteToCache<name>(newValue);
+}
+
+
+// TODO: Look at this function and the special treatment of PartitionId again, once we use LTO and
+// the binary is still too large. At the time of writing this comment, using LoadValue() alone
+// increases the binary size by 1100–1200 B and the special treatment of PartitionId adds another
+// 130–180 B.
+template<Section section, APersistentVariableInfo... PersistentVariableInfos>
+    requires(sizeof...(PersistentVariableInfos) > 0)
+template<StringLiteral name>
+auto PersistentVariables<section, PersistentVariableInfos...>::LoadValue() -> ValueType<name>
+{
+    auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
+    if constexpr(std::is_same_v<ValueType<name>, PartitionId>)
+    {
+        data[0][0] = ToClosestSecondaryPartitionId(data[0]);
+        data[1][0] = ToClosestSecondaryPartitionId(data[1]);
+        data[2][0] = ToClosestSecondaryPartitionId(data[2]);
+    }
+    return Deserialize<ValueType<name>>(
+        ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
 }
 
 
