@@ -43,16 +43,18 @@ TEST_CASE("CRC-32")
 
 TEST_CASE("Majority vote")
 {
-    using sts1cobcsw::ComputeMajorityVote;
+    using sts1cobcsw::ComputeBitwiseMajorityVote;
 
-    auto value = ComputeMajorityVote(173, 173, 173);
-    CHECK(value == 173);
-    value = ComputeMajorityVote(-2, 173, 173);
-    CHECK(value == 173);
-    value = ComputeMajorityVote(173, -2, 173);
-    CHECK(value == 173);
-    value = ComputeMajorityVote(173, 173, -2);
-    CHECK(value == 173);
-    value = ComputeMajorityVote(17, 173, -2);
-    CHECK(value == 17);  // If all values are different, the first one is returned
+    auto value = ComputeBitwiseMajorityVote(Span(0xAB_b), Span(0xAB_b), Span(0xAB_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0x02_b), Span(0xAB_b), Span(0xAB_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0xAB_b), Span(0x02_b), Span(0xAB_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0xAB_b), Span(0xAB_b), Span(0x02_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0x11_b), Span(0xAB_b), Span(0x02_b))[0];
+    CHECK(value == 0x03_b);
+    value = ComputeBitwiseMajorityVote(Span(0xA4_b), Span(0xAB_b), Span(0x5B_b))[0];
+    CHECK(value == 0xAB_b);
 }

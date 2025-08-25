@@ -4,6 +4,7 @@
 
 #include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Utility/Span.hpp>
 
 
 namespace sts1cobcsw
@@ -23,11 +24,11 @@ auto Load(PersistentVariable<T> variable) -> T
     auto address0 = internal::section0StartAddress + variable.offset;
     auto address1 = internal::section1StartAddress + variable.offset;
     auto address2 = internal::section2StartAddress + variable.offset;
-    auto value0 = Deserialize<T>(fram::Read<totalSerialSize<T>>(address0));
-    auto value1 = Deserialize<T>(fram::Read<totalSerialSize<T>>(address1));
-    auto value2 = Deserialize<T>(fram::Read<totalSerialSize<T>>(address2));
-    auto value = ComputeMajorityVote(value0, value1, value2);
-    if(not(value0 == value1 && value1 == value2))
+    auto data0 = fram::Read<totalSerialSize<T>>(address0);
+    auto data1 = fram::Read<totalSerialSize<T>>(address1);
+    auto data2 = fram::Read<totalSerialSize<T>>(address2);
+    auto value = Deserialize<T>(ComputeBitwiseMajorityVote(Span(data0), Span(data1), Span(data2)));
+    if(not(data0 == data1 && data1 == data2))
     {
         Store(variable, value);
     }

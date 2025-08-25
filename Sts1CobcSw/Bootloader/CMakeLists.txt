@@ -15,4 +15,5 @@ target_compile_definitions(
 )
 target_link_libraries(
     Sts1CobcSw_Bootloader PRIVATE Sts1CobcSw_ErrorDetectionAndCorrection Sts1CobcSw_Serial
+                                  Sts1CobcSw_Utility
 )

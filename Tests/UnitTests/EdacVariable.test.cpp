@@ -1,26 +1,18 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
 #include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstring>
 
 
 namespace
 {
-struct S
-{
-    char c = 's';
-
-    [[nodiscard]] friend constexpr auto operator==(S const & lhs, S const & rhs) -> bool
-    {
-        return lhs.c == rhs.c;
-    }
-};
-
-
 auto ApproximatelyEqual(double lhs, double rhs, double relativeTolerance = 1e-6) -> bool
 {
     return std::abs(lhs - rhs) < relativeTolerance * std::max(std::abs(lhs), std::abs(rhs));
@@ -34,12 +26,10 @@ TEST_CASE("EdacVariable")
 
     // Construction
     {
-        auto variable1 = EdacVariable<S>();
-        auto variable2 = EdacVariable<int>();
-        auto variable3 = EdacVariable<double>(-3.14);
-        CHECK(variable1.Load().c == 's');
-        CHECK(variable2.Load() == 0);
-        CHECK(ApproximatelyEqual(variable3.Load(), -3.14));
+        auto variable1 = EdacVariable<int>();
+        auto variable2 = EdacVariable<double>(-3.14);
+        CHECK(variable1.Load() == 0);
+        CHECK(ApproximatelyEqual(variable2.Load(), -3.14));
     }
 
     // You load what you store
