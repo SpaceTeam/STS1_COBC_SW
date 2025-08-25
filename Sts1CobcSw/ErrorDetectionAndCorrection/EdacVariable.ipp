@@ -4,6 +4,8 @@
     #include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
 
     #include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
+    #include <Sts1CobcSw/Serial/Serial.hpp>
+    #include <Sts1CobcSw/Utility/Span.hpp>
 
 
 namespace sts1cobcsw
@@ -22,7 +24,8 @@ template<typename T>
 auto EdacVariable<T>::Load() const -> T
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto value = ComputeMajorityVote(value0_, value1_, value2_);
+    auto value = Deserialize<T>(ComputeBitwiseMajorityVote(
+        Span(Serialize(value0_)), Span(Serialize(value1_)), Span(Serialize(value2_))));
     SetAllValues(value);
     return value;
 }

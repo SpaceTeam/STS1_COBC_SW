@@ -4,5 +4,7 @@ target_link_libraries(Sts1CobcSw_ErrorDetectionAndCorrection PRIVATE littlefs::l
 if(BUILD_BOOTLOADER)
     target_compile_definitions(Sts1CobcSw_ErrorDetectionAndCorrection PUBLIC BUILD_BOOTLOADER)
 else()
-    target_link_libraries(Sts1CobcSw_ErrorDetectionAndCorrection PUBLIC rodos::rodos)
+    target_link_libraries(
+        Sts1CobcSw_ErrorDetectionAndCorrection PUBLIC rodos::rodos Sts1CobcSw_Utility
+    )
 endif()

@@ -15,10 +15,10 @@ template<StringLiteral name>
 auto PersistentVariables<section, PersistentVariableInfos...>::Load() -> ValueType<name>
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto [value0, value1, value2] =
-        fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto value = ComputeMajorityVote(value0, value1, value2);
-    auto allVotesAreEqual = (value0 == value1) && (value1 == value2);
+    auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
+    auto value = Deserialize<ValueType<name>>(
+        ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
+    auto allVotesAreEqual = (data[0] == data[1]) && (data[1] == data[2]);
     if(not allVotesAreEqual and fram::framIsWorking.Load())
     {
         WriteToFram<name>(value);
@@ -49,9 +49,9 @@ template<StringLiteral name>
 auto PersistentVariables<section, PersistentVariableInfos...>::Increment() -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto [value0, value1, value2] =
-        fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto value = ComputeMajorityVote(value0, value1, value2);
+    auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
+    auto value = Deserialize<ValueType<name>>(
+        ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
     value++;
     if(fram::framIsWorking.Load())
     {
@@ -68,9 +68,9 @@ auto PersistentVariables<section, PersistentVariableInfos...>::Add(ValueType<nam
     -> void
 {
     auto protector = RODOS::ScopeProtector(&semaphore);  // NOLINT(google-readability-casting)
-    auto [oldValue0, oldValue1, oldValue2] =
-        fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
-    auto oldValue = ComputeMajorityVote(oldValue0, oldValue1, oldValue2);
+    auto data = fram::framIsWorking.Load() ? ReadFromFram<name>() : ReadFromCache<name>();
+    auto oldValue = Deserialize<ValueType<name>>(
+        ComputeBitwiseMajorityVote(Span(data[0]), Span(data[1]), Span(data[2])));
     auto newValue = static_cast<ValueType<name>>(oldValue + value);
     if(fram::framIsWorking.Load())
     {
@@ -112,7 +112,7 @@ template<Section section, APersistentVariableInfo... PersistentVariableInfos>
     requires(sizeof...(PersistentVariableInfos) > 0)
 template<StringLiteral name>
 auto PersistentVariables<section, PersistentVariableInfos...>::ReadFromFram()
-    -> std::array<ValueType<name>, 3>
+    -> std::array<SerialBuffer<ValueType<name>>, 3>
 {
     constexpr auto address0 = variables0.template Get<name>().begin;
     constexpr auto address1 = variables1.template Get<name>().begin;
@@ -120,10 +120,10 @@ auto PersistentVariables<section, PersistentVariableInfos...>::ReadFromFram()
     constexpr auto size0 = value_of(variables0.template Get<name>().size);
     constexpr auto size1 = value_of(variables1.template Get<name>().size);
     constexpr auto size2 = value_of(variables2.template Get<name>().size);
-    auto value0 = Deserialize<ValueType<name>>(fram::ReadFrom<size0>(address0, spiTimeout));
-    auto value1 = Deserialize<ValueType<name>>(fram::ReadFrom<size1>(address1, spiTimeout));
-    auto value2 = Deserialize<ValueType<name>>(fram::ReadFrom<size2>(address2, spiTimeout));
-    return {value0, value1, value2};
+    auto data0 = fram::ReadFrom<size0>(address0, spiTimeout);
+    auto data1 = fram::ReadFrom<size1>(address1, spiTimeout);
+    auto data2 = fram::ReadFrom<size2>(address2, spiTimeout);
+    return {data0, data1, data2};
 }
 
 
@@ -131,10 +131,12 @@ template<Section section, APersistentVariableInfo... PersistentVariableInfos>
     requires(sizeof...(PersistentVariableInfos) > 0)
 template<StringLiteral name>
 auto PersistentVariables<section, PersistentVariableInfos...>::ReadFromCache()
-    -> std::array<ValueType<name>, 3>
+    -> std::array<SerialBuffer<ValueType<name>>, 3>
 {
     constexpr auto index = variables0.template Index<name>();
-    return {get<index>(cache0), get<index>(cache1), get<index>(cache2)};
+    return {Serialize(get<index>(cache0)),
+            Serialize(get<index>(cache1)),
+            Serialize(get<index>(cache2))};
 }
 
 

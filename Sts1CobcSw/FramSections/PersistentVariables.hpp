@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/FramSections/PersistentVariableInfo.hpp>
 #include <Sts1CobcSw/FramSections/Section.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos/api/rodos-semaphore.h>
@@ -43,9 +44,9 @@ private:
     template<StringLiteral name>
     static auto WriteToCache(ValueType<name> const & value) -> void;
     template<StringLiteral name>
-    [[nodiscard]] static auto ReadFromFram() -> std::array<ValueType<name>, 3>;
+    [[nodiscard]] static auto ReadFromFram() -> std::array<SerialBuffer<ValueType<name>>, 3>;
     template<StringLiteral name>
-    [[nodiscard]] static auto ReadFromCache() -> std::array<ValueType<name>, 3>;
+    [[nodiscard]] static auto ReadFromCache() -> std::array<SerialBuffer<ValueType<name>>, 3>;
 
     static std::tuple<typename PersistentVariableInfos::ValueType...> cache0;
     static std::tuple<typename PersistentVariableInfos::ValueType...> cache1;

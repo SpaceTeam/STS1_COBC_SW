@@ -15,19 +15,17 @@ namespace sts1cobcsw
 
 
 // I am too lazy to add an .ipp file just for this function
-template<typename T>
-[[nodiscard]] constexpr auto ComputeMajorityVote(T const & value0,
-                                                 T const & value1,
-                                                 T const & value2) -> T
+template<std::size_t size>
+[[nodiscard]] constexpr auto ComputeBitwiseMajorityVote(std::span<Byte const, size> data0,
+                                                        std::span<Byte const, size> data1,
+                                                        std::span<Byte const, size> data2)
+    -> std::array<Byte, size>
 {
-    if(value0 == value1 or value0 == value2)
+    auto result = std::array<Byte, size>{};
+    for(auto i = 0U; i < size; ++i)
     {
-        return value0;
+        result[i] = (data0[i] & data1[i]) | (data0[i] & data2[i]) | (data1[i] & data2[i]);
     }
-    if(value1 == value2)
-    {
-        return value1;
-    }
-    return value0;  // If all values are different, returning the first one is as good as any
+    return result;
 }
 }
