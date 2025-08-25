@@ -223,6 +223,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RfProtocols
                 Sts1CobcSw_Serial
+                Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::CatchRodos
                 Sts1CobcSwTests::Utility
     )

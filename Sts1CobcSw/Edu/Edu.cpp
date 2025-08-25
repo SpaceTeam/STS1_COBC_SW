@@ -13,7 +13,7 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <littlefs/lfs.h>

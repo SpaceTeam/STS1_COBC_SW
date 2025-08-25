@@ -142,7 +142,7 @@
   { include: ["\"Sts1CobcSw/Utility/Span.hpp\"",                                            "public", "<Sts1CobcSw/Utility/Span.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Utility/StringLiteral.hpp\"",                                   "public", "<Sts1CobcSw/Utility/StringLiteral.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp\"",                          "public", "<Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Vocabulary/ProgramId.hpp\"",                                    "public", "<Sts1CobcSw/Vocabulary/ProgramId.hpp>", "public"] },
+  { include: ["\"Sts1CobcSw/Vocabulary/Ids.hpp\"",                                          "public", "<Sts1CobcSw/Vocabulary/Ids.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Vocabulary/Time.hpp\"",                                         "public", "<Sts1CobcSw/Vocabulary/Time.hpp>", "public"] },
   { include: ["\"Tests/CatchRodos/Assertion.hpp\"",                                         "public", "<Tests/CatchRodos/Assertion.hpp>", "public"] },
   { include: ["\"Tests/CatchRodos/AssertionDecomposition.hpp\"",                            "public", "<Tests/CatchRodos/AssertionDecomposition.hpp>", "public"] },

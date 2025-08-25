@@ -1,7 +1,6 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
@@ -15,8 +14,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -77,9 +76,9 @@ template<StringLiteral name, typename T, auto parseFunction>  // NOLINTNEXTLINE(
 auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) -> void;
 auto ParseAsUInt32(etl::string_view string) -> Result<std::uint32_t>;
 auto ParseAsBool(etl::string_view string) -> Result<bool>;
-auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>;
+auto ParseAsPartitionId(etl::string_view string) -> Result<PartitionId>;
 auto ParseAsMessageTypeIdFields(etl::string_view string) -> Result<MessageTypeIdFields>;
-auto ToString(fw::PartitionId id, etl::istring * string) -> void;
+auto ToString(PartitionId id, etl::istring * string) -> void;
 auto ToCZString(edu::ProgramStatus status) -> char const *;
 
 
@@ -430,8 +429,8 @@ auto ResetAllVariables() -> void
     // Bootloader
     persistentVariables.Store<"nTotalResets">(0);
     persistentVariables.Store<"nResetsSinceRf">(0);
-    persistentVariables.Store<"activeSecondaryFwPartition">(sts1cobcsw::fw::PartitionId::primary);
-    persistentVariables.Store<"backupSecondaryFwPartition">(sts1cobcsw::fw::PartitionId::primary);
+    persistentVariables.Store<"activeSecondaryFwPartition">(sts1cobcsw::PartitionId::primary);
+    persistentVariables.Store<"backupSecondaryFwPartition">(sts1cobcsw::PartitionId::primary);
     // Housekeeping
     persistentVariables.Store<"txIsOn">(false);
     persistentVariables.Store<"fileTransferWindowEnd">(RodosTime(0));
@@ -618,12 +617,12 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     }
     else if(variable == "activeSecondaryFwPartition")
     {
-        WriteAndConvertFunction<"activeSecondaryFwPartition", fw::PartitionId, ParseAsPartitionId>(
+        WriteAndConvertFunction<"activeSecondaryFwPartition", PartitionId, ParseAsPartitionId>(
             variable, value);
     }
     else if(variable == "backupSecondaryFwPartition")
     {
-        WriteAndConvertFunction<"backupSecondaryFwPartition", fw::PartitionId, ParseAsPartitionId>(
+        WriteAndConvertFunction<"backupSecondaryFwPartition", PartitionId, ParseAsPartitionId>(
             variable, value);
     }
     // Housekeeping
@@ -800,19 +799,19 @@ auto ParseAsBool(etl::string_view string) -> Result<bool>  // NOLINT(*value-para
 }
 
 
-auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>  // NOLINT(*value-param)
+auto ParseAsPartitionId(etl::string_view string) -> Result<PartitionId>  // NOLINT(*value-param)
 {
     if(string == "primary" || string == "0")
     {
-        return fw::PartitionId::primary;
+        return PartitionId::primary;
     }
     if(string == "secondary1" || string == "1")
     {
-        return fw::PartitionId::secondary1;
+        return PartitionId::secondary1;
     }
     if(string == "secondary2" || string == "2")
     {
-        return fw::PartitionId::secondary2;
+        return PartitionId::secondary2;
     }
     return ErrorCode::invalidParameter;
 }
@@ -839,17 +838,17 @@ auto ParseAsMessageTypeIdFields(etl::string_view string) -> Result<MessageTypeId
 }
 
 
-auto ToString(fw::PartitionId id, etl::istring * string) -> void
+auto ToString(PartitionId id, etl::istring * string) -> void
 {
     switch(id)
     {
-        case fw::PartitionId::primary:
+        case PartitionId::primary:
             *string = "primary";
             break;
-        case fw::PartitionId::secondary1:
+        case PartitionId::secondary1:
             *string = "secondary1";
             break;
-        case fw::PartitionId::secondary2:
+        case PartitionId::secondary2:
             *string = "secondary2";
             break;
     }

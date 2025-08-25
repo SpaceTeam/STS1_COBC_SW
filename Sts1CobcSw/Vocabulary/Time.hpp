@@ -1,16 +1,17 @@
 #pragma once
 
 
-#include <strong_type/affine_point.hpp>
-#include <strong_type/difference.hpp>
-#include <strong_type/equality.hpp>
-#include <strong_type/ordered.hpp>
-#include <strong_type/type.hpp>
+#ifndef BUILD_BOOTLOADER
+    #include <strong_type/affine_point.hpp>
+    #include <strong_type/difference.hpp>
+    #include <strong_type/equality.hpp>
+    #include <strong_type/ordered.hpp>
+    #include <strong_type/type.hpp>
 
-#include <rodos/api/timemodel.h>
+    #include <rodos/api/timemodel.h>
 
-#include <cstdint>
-#include <limits>
+    #include <cstdint>
+    #include <limits>
 
 
 namespace sts1cobcsw
@@ -44,3 +45,4 @@ constexpr auto endOfTime = RodosTime(RODOS::END_OF_TIME);
 constexpr auto endOfRealTime =
     RealTime(std::numeric_limits<strong::underlying_type_t<RealTime>>::max());
 }
+#endif

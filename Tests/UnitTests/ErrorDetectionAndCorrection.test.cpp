@@ -7,6 +7,7 @@
 
 #include <etl/vector.h>
 
+#include <array>
 #include <span>
 
 
