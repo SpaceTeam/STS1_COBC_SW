@@ -40,6 +40,8 @@ public:
 
 private:
     template<StringLiteral name>
+    static auto LoadValue() -> ValueType<name>;
+    template<StringLiteral name>
     static auto WriteToFram(ValueType<name> const & value) -> void;
     template<StringLiteral name>
     static auto WriteToCache(ValueType<name> const & value) -> void;
