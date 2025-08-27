@@ -26,7 +26,8 @@ private:
     Message message_ = {};
     bool isFull_ = false;
 
-    RODOS::Thread * thread_ = nullptr;
+    RODOS::Thread * threadWaitingForFull_ = nullptr;
+    RODOS::Thread * threadWaitingForEmpty_ = nullptr;
     mutable RODOS::Semaphore semaphore_;
 };
 }
