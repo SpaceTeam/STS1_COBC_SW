@@ -33,7 +33,11 @@ auto Mailbox<Message>::SuspendUntilFullOr(RodosTime time) -> Result<void>
     thread_ = RODOS::Thread::getCurrentThread();
     RODOS::PRIORITY_CEILER_IN_SCOPE();
     semaphore_.leave();
-    result = SuspendUntilResumedOr(time);
+    auto result = Result<void>(outcome_v2::success());
+    while(not isFull_ and result.has_value())
+    {
+        result = SuspendUntilResumedOr(time);
+    }
     thread_ = nullptr;
     return result;
 }
@@ -51,7 +55,11 @@ auto Mailbox<Message>::SuspendUntilEmptyOr(RodosTime time) -> Result<void>
     thread_ = RODOS::Thread::getCurrentThread();
     RODOS::PRIORITY_CEILER_IN_SCOPE();
     semaphore_.leave();
-    result = SuspendUntilResumedOr(time);
+    auto result = Result<void>(outcome_v2::success());
+    while(isFull_ and result.has_value())
+    {
+        result = SuspendUntilResumedOr(time);
+    }
     thread_ = nullptr;
     return result;
 }
