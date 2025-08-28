@@ -10,7 +10,7 @@ namespace sts1cobcsw
 template<typename Message>
 auto Mailbox<Message>::IsEmpty() -> bool
 {
-    return !isFull_;
+    return not isFull_;
 }
 
 
@@ -22,7 +22,7 @@ auto Mailbox<Message>::IsFull() -> bool
 
 
 template<typename Message>
-auto Mailbox<Message>::SuspendUntilFull(Duration duration) -> Result<void>
+auto Mailbox<Message>::SuspendUntilFullOr(RodosTime time) -> Result<void>
 {
     semaphore_.enter();
     if(isFull_)
@@ -33,17 +33,21 @@ auto Mailbox<Message>::SuspendUntilFull(Duration duration) -> Result<void>
     thread_ = RODOS::Thread::getCurrentThread();
     RODOS::PRIORITY_CEILER_IN_SCOPE();
     semaphore_.leave();
-    auto result = SuspendUntilResumed(duration);
+    auto result = Result<void>(outcome_v2::success());
+    while(not isFull_ and result.has_value())
+    {
+        result = SuspendUntilResumedOr(time);
+    }
     thread_ = nullptr;
     return result;
 }
 
 
 template<typename Message>
-auto Mailbox<Message>::SuspendUntilEmpty(Duration duration) -> Result<void>
+auto Mailbox<Message>::SuspendUntilEmptyOr(RodosTime time) -> Result<void>
 {
     semaphore_.enter();
-    if(!isFull_)
+    if(not isFull_)
     {
         semaphore_.leave();
         return outcome_v2::success();
@@ -51,7 +55,11 @@ auto Mailbox<Message>::SuspendUntilEmpty(Duration duration) -> Result<void>
     thread_ = RODOS::Thread::getCurrentThread();
     RODOS::PRIORITY_CEILER_IN_SCOPE();
     semaphore_.leave();
-    auto result = SuspendUntilResumed(duration);
+    auto result = Result<void>(outcome_v2::success());
+    while(isFull_ and result.has_value())
+    {
+        result = SuspendUntilResumedOr(time);
+    }
     thread_ = nullptr;
     return result;
 }
@@ -92,7 +100,7 @@ template<typename Message>
 auto Mailbox<Message>::Get() -> Result<Message>
 {
     auto protector = RODOS::ScopeProtector(&semaphore_);  // NOLINT(*readability-casting)
-    if(!isFull_)
+    if(not isFull_)
     {
         return ErrorCode::empty;
     }
@@ -109,7 +117,7 @@ template<typename Message>
 auto Mailbox<Message>::Peek() const -> Result<Message>
 {
     auto protector = RODOS::ScopeProtector(&semaphore_);
-    if(!isFull_)
+    if(not isFull_)
     {
         return ErrorCode::empty;
     }

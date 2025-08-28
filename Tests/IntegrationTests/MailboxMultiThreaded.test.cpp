@@ -2,6 +2,7 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
@@ -30,7 +31,7 @@ class Sender : public RODOS::StaticThread<>
             {
                 errorCounter++;
             }
-            result = mailbox.SuspendUntilEmpty(15 * ms);
+            result = mailbox.SuspendUntilEmptyOr(CurrentRodosTime() + 15 * ms);
             if(result.has_error())
             {
                 errorCounter++;
@@ -65,7 +66,7 @@ class Receiver : public RODOS::StaticThread<>
                 errorCounter++;
             }
             counter++;
-            auto result = mailbox.SuspendUntilFull(15 * ms);
+            auto result = mailbox.SuspendUntilFullOr(CurrentRodosTime() + 15 * ms);
             if(result.has_error())
             {
                 errorCounter++;

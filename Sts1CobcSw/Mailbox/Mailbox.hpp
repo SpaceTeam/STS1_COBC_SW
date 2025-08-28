@@ -14,8 +14,8 @@ class Mailbox
 public:
     [[nodiscard]] auto IsEmpty() -> bool;
     [[nodiscard]] auto IsFull() -> bool;
-    [[nodiscard]] auto SuspendUntilFull(Duration duration) -> Result<void>;
-    [[nodiscard]] auto SuspendUntilEmpty(Duration duration) -> Result<void>;
+    [[nodiscard]] auto SuspendUntilFullOr(RodosTime time) -> Result<void>;
+    [[nodiscard]] auto SuspendUntilEmptyOr(RodosTime time) -> Result<void>;
     [[nodiscard]] auto Put(Message const & message) -> Result<void>;
     auto Overwrite(Message const & message) -> void;
     [[nodiscard]] auto Get() -> Result<Message>;
