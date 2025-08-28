@@ -10,14 +10,19 @@
 
 namespace sts1cobcsw
 {
-auto SuspendUntilResumed(Duration timeout) -> Result<void>
+auto SuspendUntilResumedOr(RodosTime time) -> Result<void>
 {
-    auto suspendTime = CurrentRodosTime();
-    SuspendFor(timeout);
-    if(CurrentRodosTime() >= suspendTime + timeout)
+    SuspendUntil(time);
+    if(CurrentRodosTime() >= time)
     {
         return ErrorCode::timeout;
     }
     return outcome_v2::success();
+}
+
+
+auto SuspendUntilResumed(Duration timeout) -> Result<void>
+{
+    return SuspendUntilResumedOr(CurrentRodosTime() + timeout);
 }
 }
