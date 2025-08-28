@@ -43,14 +43,12 @@ auto ViterbiCodec::Encode(std::span<Byte const> data, [[maybe_unused]] bool flus
 {
     assert(data.size() <= ViterbiCodec::maxUnencodedSize);
 
-#if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
     auto dst = etl::vector<Byte, ViterbiCodec::maxEncodedSize>();
+#if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
     dst.uninitialized_resize(std::min(data.size(), dst.max_size()));
     std::copy_n(data.begin(), dst.size(), dst.begin());
-    return dst;
-#else
+#elif defined(USE_PUNCTURING)
     auto i = 0U;
-    auto dst = etl::vector<Byte, ViterbiCodec::maxEncodedSize>();
     for(; i < data.size(); i++)
     {
         auto inputBits = static_cast<std::uint8_t>(data[i]);
@@ -108,8 +106,39 @@ auto ViterbiCodec::Encode(std::span<Byte const> data, [[maybe_unused]] bool flus
             dst.push_back(static_cast<Byte>((bytes_ & 0xF) << 4));
         }
     }
-    return dst;
+#else
+    for(auto i = 0U; i < data.size(); i++)
+    {
+        auto inputBits = static_cast<std::uint8_t>(data[i]);
+        for(auto j = CHAR_BIT - 1; j > 0; j -= 2)
+        {
+            std::uint8_t bit1 = (inputBits >> static_cast<std::uint8_t>(j)) & 1U;
+            std::uint8_t bit2 = (inputBits >> (static_cast<std::uint8_t>(j) - 1U)) & 1U;
+            bytes_ = (bytes_ << 4) | ProcessTwoBits(bit1, bit2);
+        }
+
+        assert(bytes_ <= 0xFFFF);
+        auto mask = 0xFF00U;
+
+        dst.push_back(static_cast<Byte>((bytes_ & mask) >> CHAR_BIT));
+        dst.push_back(static_cast<Byte>(bytes_ & (mask >> CHAR_BIT)));
+        bytes_ = 0;
+    }
+    if(flush)
+    {
+        for(int j = constraint - 1; j > 0; j -= 2)
+        {
+            bytes_ = (bytes_ << 4) | ProcessTwoBits(0, 0);
+        }
+
+        assert(bytes_ <= 0xFFF);
+        dst.push_back(static_cast<Byte>((bytes_ >> 4) & 0xFF));
+        dst.push_back(static_cast<Byte>((bytes_ & 0xF) << 4));
+        state_ = 0;
+        bytes_ = 0;
+    }
 #endif
+    return dst;
 }
 
 
@@ -131,8 +160,13 @@ auto ViterbiCodec::ProcessTwoBits(std::uint8_t bit1, std::uint8_t bit2) -> std::
     state_ = NextState(state_, bit1);
     auto output2 = Output(state_, bit2);
     state_ = NextState(state_, bit2);
+#ifdef USE_PUNCTURING
     auto output = (output1 << 1) | (output2 & 1);
-    assert(output >= 0 && output <= 0b111);
+    assert(output <= 0b111);
+#else
+    auto output = (output1 << 2) | output2;
+    assert(output <= 0b1111);
+#endif
     return static_cast<std::uint8_t>(output);
 }
 
