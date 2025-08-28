@@ -151,8 +151,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(Mailbox)
     target_link_libraries(
         Sts1CobcSwTests_Mailbox
-        PRIVATE strong_type::strong_type Sts1CobcSw_Outcome Sts1CobcSw_Mailbox
-                Sts1CobcSw_Vocabulary Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+        PRIVATE strong_type::strong_type
+                Sts1CobcSw_Mailbox
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_RodosTime
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::CatchRodos
+                Sts1CobcSwTests::Utility
     )
     add_test(NAME Mailbox COMMAND Sts1CobcSwTests_Mailbox)
 

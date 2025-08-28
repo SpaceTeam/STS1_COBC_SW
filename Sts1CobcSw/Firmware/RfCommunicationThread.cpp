@@ -193,10 +193,7 @@ namespace
 {
 auto SuspendUntilNewTelemetryRecordIsAvailable() -> void
 {
-    // We cannot use endOfTime here since SuspendUntilFull() takes a duration and not a time point.
-    // 2 days is basically the end of time, though, since if we don't receive any data for about 1
-    // day the reset dog will reset the COBC anyway.
-    (void)telemetryRecordMailbox.SuspendUntilFull(2 * days);
+    (void)telemetryRecordMailbox.SuspendUntilFullOr(endOfTime);
 }
 
 

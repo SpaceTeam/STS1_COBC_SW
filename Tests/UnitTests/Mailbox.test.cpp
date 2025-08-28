@@ -3,8 +3,10 @@
 
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
@@ -46,21 +48,21 @@ TEST_CASE("Mailbox")
     CHECK(mailbox.IsEmpty());
     CHECK(mailbox.IsFull() == false);
 
-    auto suspendResult = mailbox.SuspendUntilEmpty(1 * ms);
+    auto suspendResult = mailbox.SuspendUntilEmptyOr(CurrentRodosTime() + 1 * ms);
     CHECK(suspendResult.has_value());
 
-    suspendResult = mailbox.SuspendUntilFull(1 * ms);
+    suspendResult = mailbox.SuspendUntilFullOr(CurrentRodosTime() + 1 * ms);
     CHECK(suspendResult.has_error());
     CHECK(suspendResult.error() == ErrorCode::timeout);
 
     putResult = mailbox.Put(1);
     CHECK(putResult.has_value());
 
-    suspendResult = mailbox.SuspendUntilEmpty(1 * ms);
+    suspendResult = mailbox.SuspendUntilEmptyOr(CurrentRodosTime() + 1 * ms);
     CHECK(suspendResult.has_error());
     CHECK(suspendResult.error() == ErrorCode::timeout);
 
-    suspendResult = mailbox.SuspendUntilFull(1 * ms);
+    suspendResult = mailbox.SuspendUntilFullOr(CurrentRodosTime() + 1 * ms);
     CHECK(suspendResult.has_value());
 }
 }
