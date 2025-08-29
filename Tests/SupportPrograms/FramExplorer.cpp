@@ -1,7 +1,9 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
@@ -9,6 +11,7 @@
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/type.hpp>
@@ -119,12 +122,12 @@ private:
 auto PrintUsageInfo() -> void
 {
     PRINTF("Usage:\n");
-    PRINTF("  get var --all                      to get all variables\n");
-    PRINTF("  get var <variable>                 to get one variable\n");
-    PRINTF("  set var <variable> <value>         to set one variable\n");
-    PRINTF("  set var --all                      to reset all variables to 0\n");
-    PRINTF("  get edu queue                      to get the edu queue\n");
-    PRINTF("  set edu queue <id> <prog> <stuff>  to set the edu queue\n");
+    PRINTF("  get var --all                             to get all variables\n");
+    PRINTF("  get var <variable>                        to get one variable\n");
+    PRINTF("  set var <variable> <value>                to set one variable\n");
+    PRINTF("  set var --all                             to reset all variables to 0\n");
+    PRINTF("  get edu queue                             to get the edu queue\n");
+    PRINTF("  set edu queue <id> <startTime> <timeout>  to set the edu queue\n");
 }
 
 
@@ -199,8 +202,19 @@ auto HandleEduGetCommand(Input const & input) -> void
 {
     if(input[2] == "queue")
     {
-        PRINTF("Print EDU Queue\n\n");
-        // ToDo: print edu queue
+        PRINTF("EDU program queue: current index = %i, size = %i\n",
+               persistentVariables.Load<"eduProgramQueueIndex">(),
+               static_cast<int>(edu::programQueue.Size()));
+
+        for(auto index = 0U; index < edu::programQueue.Size(); index++)
+        {
+            auto entry = edu::programQueue.Get(index);
+            PRINTF("    [%i]: program ID = %i, start time = %u, timeout = %i s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+        }
     }
     else
     {
@@ -249,12 +263,50 @@ auto HandleVarSetCommand(Input const & input) -> void
 }
 
 
-auto HandleEduSetCommand([[maybe_unused]] Input const & input) -> void
+auto HandleEduSetCommand(Input const & input) -> void
 {
     if(input[2] == "queue")
     {
-        PRINTF("Set EDU Queue\n\n");
-        // ToDo: add edu set
+        // The set command requires programId-startTime-timeout pairs -> dividable by 3
+        auto nArguments = input.size() - 3;
+        if(nArguments % 3 != 0)
+        {
+            HandleInvalidInput();
+            return;
+        }
+
+        for(auto i = 3U; i < input.size(); i += 3)
+        {
+            auto programIdResult = ParseAsUInt32(input[i]);
+            auto startTimeResult = ParseAsUInt32(input[i + 1]);
+            auto timeoutResult = ParseAsUInt32(input[i + 2]);
+
+            if(programIdResult.has_error() or startTimeResult.has_error()
+               or timeoutResult.has_error())
+            {
+                PRINTF(
+                    "Invalid input for edu program entry: programId = %s startTime = %s timeout = "
+                    "%s\n\n",
+                    input[i].c_str(),
+                    input[i + 1].c_str(),
+                    input[i + 2].c_str());
+                return;
+            }
+            if(edu::programQueue.IsFull())
+            {
+                PRINTF("Edu ProgramQueue full, cant add more!\n\n");
+                return;
+            }
+
+            auto entry = edu::ProgramQueueEntry{ProgramId(programIdResult.value()),
+                                                RealTime(startTimeResult.value()),
+                                                static_cast<std::int16_t>(timeoutResult.value())};
+            PRINTF("Added program: program ID = %i, start time = %u, timeout = %i s\n",
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+            edu::programQueue.PushBack(entry);
+        }
     }
     else
     {
