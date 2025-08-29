@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -50,7 +51,11 @@ auto PrintUsageInfo() -> void;
 auto ReadFromUart() -> Input;
 auto HandleInvalidInput() -> void;
 auto HandleGetCommand(Input const & input) -> void;
+auto HandleVarGetCommand(Input const & input) -> void;
+auto HandleEduGetCommand(Input const & input) -> void;
 auto HandleSetCommand(Input const & input) -> void;
+auto HandleVarSetCommand(Input const & input) -> void;
+auto HandleEduSetCommand(Input const & input) -> void;
 auto PrintAllVariables() -> void;
 auto ResetAllVariables() -> void;
 auto PrintVariable(etl::string_view variable) -> void;
@@ -114,10 +119,12 @@ private:
 auto PrintUsageInfo() -> void
 {
     PRINTF("Usage:\n");
-    PRINTF("  get --all                to get all variables\n");
-    PRINTF("  get <variable>           to get one variable\n");
-    PRINTF("  set <variable> <value>   to set one variable\n");
-    PRINTF("  set --all                to reset all variables to 0\n");
+    PRINTF("  get var --all                      to get all variables\n");
+    PRINTF("  get var <variable>                 to get one variable\n");
+    PRINTF("  set var <variable> <value>         to set one variable\n");
+    PRINTF("  set var --all                      to reset all variables to 0\n");
+    PRINTF("  get edu queue                      to get the edu queue\n");
+    PRINTF("  set edu queue <id> <prog> <stuff>  to set the edu queue\n");
 }
 
 
@@ -159,37 +166,99 @@ auto HandleInvalidInput() -> void
 
 auto HandleGetCommand(Input const & input) -> void
 {
-    if(input[1] == "--all")
+    if(input[1] == "var")
+    {
+        HandleVarGetCommand(input);
+    }
+    else if(input[1] == "edu")
+    {
+        HandleEduGetCommand(input);
+    }
+    else
+    {
+        HandleInvalidInput();
+    }
+}
+
+
+auto HandleVarGetCommand(Input const & input) -> void
+{
+    if(input[2] == "--all")
     {
         PrintAllVariables();
         return;
     }
-    for(auto && variableName : std::span(input).subspan<1>())
+    for(auto && variableName : std::span(input).subspan<2>())
     {
         PrintVariable(variableName);
     }
 }
 
 
+auto HandleEduGetCommand(Input const & input) -> void
+{
+    if(input[2] == "queue")
+    {
+        PRINTF("Print EDU Queue\n\n");
+        // ToDo: print edu queue
+    }
+    else
+    {
+        HandleInvalidInput();
+    }
+}
+
+
 auto HandleSetCommand(Input const & input) -> void
 {
-    if(input[1] == "--all")
+    if(input[1] == "var")
+    {
+        HandleVarSetCommand(input);
+    }
+    else if(input[1] == "edu")
+    {
+        HandleEduSetCommand(input);
+    }
+    else
+    {
+        HandleInvalidInput();
+    }
+}
+
+
+auto HandleVarSetCommand(Input const & input) -> void
+{
+    if(input[2] == "--all")
     {
         ResetAllVariables();
         return;
     }
     // The set command requires variable-value pairs -> even number of arguments
-    auto nArguments = input.size() - 1;
+    auto nArguments = input.size() - 2;
     if(nArguments % 2 != 0)
     {
         HandleInvalidInput();
         return;
     }
-    for(auto i = 1U; i < input.size(); i += 2)
+    for(auto i = 2U; i < input.size(); i += 2)
     {
         auto const & variable = input[i];
         auto const & value = input[i + 1];
         SetVariable(variable, value);
+    }
+}
+
+
+auto HandleEduSetCommand([[maybe_unused]] Input const & input) -> void
+{
+    if(input[2] == "queue")
+    {
+        PRINTF("Set EDU Queue\n\n");
+        // ToDo: add edu set
+    }
+    else
+    {
+        HandleInvalidInput();
     }
 }
 
