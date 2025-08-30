@@ -131,6 +131,8 @@ private:
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
+using TransactionStatus = strong::type<UInt<2>, struct TransactionStatusTag, strong::regular>;
+
 class AckPdu : public Payload
 {
 public:
@@ -143,13 +145,13 @@ public:
             // For ACK of Finished PDU: 0b0001. For ACKs of all other file directives: 0b0000.
     ConditionCode conditionCode = ConditionCode(0);
     UInt<2> spare = 0;
-    UInt<2> transactionStatus = 0;  // 0b00 is undefined
+    TransactionStatus transactionStatus = TransactionStatus(0);
 
     static constexpr auto minParameterFieldLength =
         totalSerialSize<decltype(acknowledgedPduDirectiveCode), decltype(directiveSubtypeCode)>
         + totalSerialSize<strong::underlying_type_t<ConditionCode>,
                           decltype(spare),
-                          decltype(transactionStatus)>;
+                          strong::underlying_type_t<TransactionStatus>>;
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
@@ -226,6 +228,11 @@ inline constexpr auto fileDiscardedFileStatus = FileStatus(0b00);
 inline constexpr auto fileRejectedFileStatus = FileStatus(0b01);
 inline constexpr auto fileRetainedFileStatus = FileStatus(0b10);
 inline constexpr auto unreportedFileStatus = FileStatus(0b11);
+
+inline constexpr auto undefinedTransactionstatus = TransactionStatus(0b00);
+inline constexpr auto activeTransactionStatus = TransactionStatus(0b01);
+inline constexpr auto terminatedTransactionStatus = TransactionStatus(0b10);
+inline constexpr auto unrecognizedTransactionStatus = TransactionStatus(0b11);
 
 
 [[nodiscard]] auto ParseAsProtocolDataUnit(std::span<Byte const> buffer)

@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "Sts1CobcSw/Outcome/Outcome.hpp"
 #include "Sts1CobcSw/RfProtocols/Configuration.hpp"
 #include "Sts1CobcSw/RfProtocols/Vocabulary.hpp"
 #include "Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp"
@@ -95,7 +96,7 @@ auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
                                                  directiveSubtypeCode,
                                                  value_of(conditionCode),
                                                  spare,
-                                                 transactionStatus);
+                                                 value_of(transactionStatus));
 }
 
 
@@ -289,10 +290,13 @@ auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
         return ErrorCode::bufferTooSmall;
     }
     auto ackPdu = AckPdu{};
+    // TODO: Check for validity of both the acknowlegedPduDirectiveCode and directiveSubtypeCode
     auto const * cursor = DeserializeFrom<ccsdsEndianness>(
         buffer.data(), &ackPdu.acknowledgedPduDirectiveCode, &ackPdu.directiveSubtypeCode);
-    cursor = DeserializeFrom<ccsdsEndianness>(
-        cursor, &value_of(ackPdu.conditionCode), &ackPdu.spare, &ackPdu.transactionStatus);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor,
+                                              &value_of(ackPdu.conditionCode),
+                                              &ackPdu.spare,
+                                              &value_of(ackPdu.transactionStatus));
     return ackPdu;
 }
 
@@ -342,6 +346,24 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
 
 
     return metadataPdu;
+}
+
+auto ParseAsNackPdu(std::span<Byte const> buffer) -> Result<NackPdu>
+{
+    auto nackPdu = NackPdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nackPdu.startOfScope);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nackPdu.endOfScope);
+
+
+    auto const headerSize =
+        totalSerialSize<decltype(nackPdu.startOfScope), decltype(nackPdu.endOfScope)>;
+    auto const remainingSize = buffer.size() - headerSize;
+    auto const segmentRequestsCount = remainingSize / sizeof(std::uint64_t);
+
+    nackPdu.segmentRequests = std::span<std::uint64_t const>(
+        reinterpret_cast<std::uint64_t const *>(buffer.data() + headerSize), segmentRequestsCount);
+
+    return nackPdu;
 }
 
 

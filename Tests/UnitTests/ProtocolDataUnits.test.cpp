@@ -378,14 +378,15 @@ TEST_CASE("Parsing FinishedPdu")
     CHECK(sts1cobcsw::FinishedPdu::minParameterFieldLength == 1U);
     buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength);
 
-    buffer[0] = 0x05_b;
+    buffer[0] = 0x05_b;  // Condition Code : 0b0000
+                         // Spare, Delivery Code, FileStatus : 0b0101
 
     auto parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
     REQUIRE(parseResult.has_value());
     auto & finishedPdu = parseResult.value();
     CHECK(finishedPdu.conditionCode == sts1cobcsw::noErrorConditionCode);
-    CHECK(finishedPdu.deliveryCode == sts1cobcsw::DeliveryCode(1));
-    CHECK(finishedPdu.fileStatus == sts1cobcsw::FileStatus(1));
+    CHECK(finishedPdu.deliveryCode == sts1cobcsw::dataIncompleteDeliveryCode);
+    CHECK(finishedPdu.fileStatus == sts1cobcsw::fileRejectedFileStatus);
 
     // Buffer size must >= serialSize(conditionCode, spare, deliveryCode, fileStatus)
     buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength - 1);
@@ -398,8 +399,8 @@ TEST_CASE("Parsing FinishedPdu")
     buffer.resize(
         sts1cobcsw::FinishedPdu::minParameterFieldLength
         + static_cast<std::size_t>(sts1cobcsw::totalSerialSize<sts1cobcsw::FaultLocation>));
-    buffer[1] = 6_b;
-    buffer[2] = 1_b;
+    buffer[1] = 0x06_b;
+    buffer[2] = 0x01_b;
     buffer[3] = 0x0F_b;
     parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
     REQUIRE(parseResult.has_value());
@@ -442,7 +443,7 @@ TEST_CASE("Adding AckPdu")
         static_cast<std::uint32_t>(sts1cobcsw::DirectiveCode::finished);
     ackPdu.directiveSubtypeCode = 0;
     ackPdu.conditionCode = sts1cobcsw::noErrorConditionCode;
-    ackPdu.transactionStatus = 0;
+    ackPdu.transactionStatus = sts1cobcsw::undefinedTransactionstatus;
 
     CHECK(ackPdu.minParameterFieldLength == 2U);
     CHECK(ackPdu.Size() == 2U);
@@ -470,7 +471,7 @@ TEST_CASE("Parsing AckPdu")
     CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 0);
     CHECK(ackPdu.directiveSubtypeCode == 0);
     CHECK(value_of(ackPdu.conditionCode) == 1);
-    CHECK(ackPdu.transactionStatus.ToUnderlying() == 2);
+    CHECK(ackPdu.transactionStatus == sts1cobcsw::terminatedTransactionStatus);
 
     buffer.resize(1);
     parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
@@ -605,4 +606,37 @@ TEST_CASE("Adding NackPdu")
     CHECK(dataField[21] == 0x00_b);
     CHECK(dataField[22] == 0x00_b);
     CHECK(dataField[23] == 0x00_b);
+}
+
+TEST_CASE("Parsing NackPdu")
+{
+    auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+    CHECK(sts1cobcsw::MetadataPdu::minParameterFieldLength == 9U);
+    buffer.resize(24U);
+
+    buffer[0] = 0x00_b;
+    buffer[1] = 0x00_b;
+    buffer[2] = 0x00_b;
+    buffer[3] = 0x00_b;
+    buffer[4] = 0x12_b;
+    buffer[5] = 0x02_b;
+    buffer[6] = 0xAA_b;
+    buffer[7] = 0xAA_b;
+    buffer[8] = 0x02_b;
+    buffer[9] = 0xAA_b;
+    buffer[10] = 0xAA_b;
+    buffer[11] = 0xAA_b;
+    buffer[12] = 0xAA_b;
+    buffer[13] = 0xAA_b;
+    buffer[14] = 0xAA_b;
+    buffer[15] = 0xAA_b;
+
+    auto parseResult = sts1cobcsw::ParseAsNackPdu(buffer);
+    REQUIRE(parseResult.has_value());
+
+    auto & nackPdu = parseResult.value();
+
+    CHECK(nackPdu.startOfScope == 0x0000);
+    CHECK(nackPdu.endOfScope == 0x1202'AAAA);
+    CHECK(nackPdu.segmentRequests[0] == 0xAAAA'AAAA'AAAA'AA02U);
 }
