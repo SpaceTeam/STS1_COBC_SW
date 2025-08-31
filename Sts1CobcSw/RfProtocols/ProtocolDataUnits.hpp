@@ -170,9 +170,9 @@ public:
     UInt<2> reserved2 = 0;
     std::uint32_t fileSize;
 
-    std::uint8_t sourceFileNameLength = 0;
+    std::uint8_t sourceFileNameLength;
     std::span<Byte const> sourceFileNameValue;
-    std::uint8_t destinationFileNameLength = 0;
+    std::uint8_t destinationFileNameLength;
     std::span<Byte const> destinationFileNameValue;
 
     static constexpr auto minParameterFieldLength =
@@ -180,8 +180,7 @@ public:
                         decltype(closureRequestd),
                         decltype(checksumType),
                         decltype(reserved2)>
-        + totalSerialSize<decltype(fileSize)>
-        + 4U;  // Assuming a minimum length of 1 for each file name
+        + totalSerialSize<decltype(fileSize), decltype(sourceFileNameLength)>;
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;

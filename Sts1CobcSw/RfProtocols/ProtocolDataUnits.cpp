@@ -91,12 +91,12 @@ auto AckPdu::DoSize() const -> std::uint16_t
 auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
-                                                 acknowledgedPduDirectiveCode,
-                                                 directiveSubtypeCode,
-                                                 value_of(conditionCode),
-                                                 spare,
-                                                 value_of(transactionStatus));
+    (void)SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
+                                       acknowledgedPduDirectiveCode,
+                                       directiveSubtypeCode,
+                                       value_of(conditionCode),
+                                       spare,
+                                       value_of(transactionStatus));
 }
 
 
@@ -290,9 +290,19 @@ auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
         return ErrorCode::bufferTooSmall;
     }
     auto ackPdu = AckPdu{};
-    // TODO: Check for validity of both the acknowlegedPduDirectiveCode and directiveSubtypeCode
     auto const * cursor = DeserializeFrom<ccsdsEndianness>(
         buffer.data(), &ackPdu.acknowledgedPduDirectiveCode, &ackPdu.directiveSubtypeCode);
+    if(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying()
+           != static_cast<uint8_t>(DirectiveCode::finished)
+       and ackPdu.acknowledgedPduDirectiveCode.ToUnderlying()
+               != static_cast<uint8_t>(DirectiveCode::endOfFile))
+    {
+        return ErrorCode::invalidAckPduDirectiveCode;
+    }
+    if(ackPdu.directiveSubtypeCode != 0b0000 and ackPdu.directiveSubtypeCode != 0b0001)
+    {
+        return ErrorCode::invalidDirectiveSubtypeCode;
+    }
     cursor = DeserializeFrom<ccsdsEndianness>(cursor,
                                               &value_of(ackPdu.conditionCode),
                                               &ackPdu.spare,
@@ -320,7 +330,7 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
     // TODO: Error handling
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.fileSize);
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.sourceFileNameLength);
-    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength - 1)
+    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength)
     {
         return ErrorCode::bufferTooSmall;
     }
@@ -333,8 +343,8 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
         buffer.data() + 6U + static_cast<std::size_t>(metadataPdu.sourceFileNameLength),
         &metadataPdu.destinationFileNameLength);
 
-    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength - 1
-                           + metadataPdu.destinationFileNameLength - 1)
+    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength
+                           + metadataPdu.destinationFileNameLength + 1)
     {
         return ErrorCode::bufferTooSmall;
     }

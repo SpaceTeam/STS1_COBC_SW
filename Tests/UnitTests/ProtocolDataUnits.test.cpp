@@ -462,13 +462,13 @@ TEST_CASE("Parsing AckPdu")
     CHECK(sts1cobcsw::AckPdu::minParameterFieldLength == 2U);
     buffer.resize(sts1cobcsw::AckPdu::minParameterFieldLength);
 
-    buffer[0] = 0x00_b;
+    buffer[0] = 0x50_b;
     buffer[1] = 0x12_b;
 
     auto parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
     REQUIRE(parseResult.has_value());
     auto & ackPdu = parseResult.value();
-    CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 0);
+    CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 5);
     CHECK(ackPdu.directiveSubtypeCode == 0);
     CHECK(value_of(ackPdu.conditionCode) == 1);
     CHECK(ackPdu.transactionStatus == sts1cobcsw::terminatedTransactionStatus);
@@ -477,6 +477,16 @@ TEST_CASE("Parsing AckPdu")
     parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+
+    buffer.resize(2);
+    buffer[0] = 0x00_b;
+    parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidAckPduDirectiveCode);
+    buffer[0] = 0x52_b;
+    parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDirectiveSubtypeCode);
 }
 
 
@@ -519,7 +529,7 @@ TEST_CASE("Adding MetadataPdu")
 TEST_CASE("Parsing MetadataPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
-    CHECK(sts1cobcsw::MetadataPdu::minParameterFieldLength == 9U);
+    CHECK(sts1cobcsw::MetadataPdu::minParameterFieldLength == 6U);
     buffer.resize(11);
 
     buffer[0] = 0x00_b;
@@ -554,13 +564,19 @@ TEST_CASE("Parsing MetadataPdu")
     buffer.resize(10);
     buffer[5] = 0x0A_b;  // Size of source file name length
     parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
-    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
 
-    buffer.resize(11);
+    buffer.resize(12);
     buffer[5] = 0x02_b;  // Size of source file name length
     buffer[8] = 0x04_b;  // Size of destination file name length
     parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
-    CHECK((parseResult.has_error() and parseResult.error() == ErrorCode::bufferTooSmall));
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
+
+    buffer.resize(13);
+    parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
+    CHECK(parseResult.has_value());
 }
 
 
@@ -611,7 +627,6 @@ TEST_CASE("Adding NackPdu")
 TEST_CASE("Parsing NackPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
-    CHECK(sts1cobcsw::MetadataPdu::minParameterFieldLength == 9U);
     buffer.resize(24U);
 
     buffer[0] = 0x00_b;
