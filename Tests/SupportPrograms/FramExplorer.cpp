@@ -59,6 +59,8 @@ auto HandleEduGetCommand(Input const & input) -> void;
 auto HandleSetCommand(Input const & input) -> void;
 auto HandleVarSetCommand(Input const & input) -> void;
 auto HandleEduSetCommand(Input const & input) -> void;
+auto HandleResetCommand(Input const & input) -> void;
+auto HandleEduResetCommand(Input const & input) -> void;
 auto PrintAllVariables() -> void;
 auto ResetAllVariables() -> void;
 auto PrintVariable(etl::string_view variable) -> void;
@@ -110,6 +112,10 @@ private:
             {
                 HandleSetCommand(input);
             }
+            else if(commandName == "reset")
+            {
+                HandleResetCommand(input);
+            }
             else
             {
                 HandleInvalidInput();
@@ -125,9 +131,10 @@ auto PrintUsageInfo() -> void
     PRINTF("  get var --all                             to get all variables\n");
     PRINTF("  get var <variable>                        to get one variable\n");
     PRINTF("  set var <variable> <value>                to set one variable\n");
-    PRINTF("  set var --all                             to reset all variables to 0\n");
+    PRINTF("  reset var                                 to reset all variables to 0\n");
     PRINTF("  get edu queue                             to get the edu queue\n");
     PRINTF("  set edu queue <id> <startTime> <timeout>  to set the edu queue\n");
+    PRINTF("  reset edu queue                           to clear the edu queue\n");
 }
 
 
@@ -169,18 +176,19 @@ auto HandleInvalidInput() -> void
 
 auto HandleGetCommand(Input const & input) -> void
 {
-    if(input[1] == "var")
+    auto const & commandName = input[1];
+    if(commandName == "var")
     {
         HandleVarGetCommand(input);
+        return;
     }
-    else if(input[1] == "edu")
+    if(commandName == "edu")
     {
         HandleEduGetCommand(input);
+        return;
     }
-    else
-    {
-        HandleInvalidInput();
-    }
+
+    HandleInvalidInput();
 }
 
 
@@ -215,38 +223,33 @@ auto HandleEduGetCommand(Input const & input) -> void
                    static_cast<unsigned>(value_of(entry.startTime)),
                    entry.timeout);
         }
+        return;
     }
-    else
-    {
-        HandleInvalidInput();
-    }
+
+    HandleInvalidInput();
 }
 
 
 auto HandleSetCommand(Input const & input) -> void
 {
-    if(input[1] == "var")
+    auto const & commandName = input[1];
+    if(commandName == "var")
     {
         HandleVarSetCommand(input);
+        return;
     }
-    else if(input[1] == "edu")
+    if(commandName == "edu")
     {
         HandleEduSetCommand(input);
+        return;
     }
-    else
-    {
-        HandleInvalidInput();
-    }
+
+    HandleInvalidInput();
 }
 
 
 auto HandleVarSetCommand(Input const & input) -> void
 {
-    if(input[2] == "--all")
-    {
-        ResetAllVariables();
-        return;
-    }
     // The set command requires variable-value pairs -> even number of arguments
     auto nArguments = input.size() - 2;
     if(nArguments % 2 != 0)
@@ -307,11 +310,42 @@ auto HandleEduSetCommand(Input const & input) -> void
                    entry.timeout);
             edu::programQueue.PushBack(entry);
         }
+
+        return;
     }
-    else
+
+    HandleInvalidInput();
+}
+
+
+auto HandleResetCommand(Input const & input) -> void
+{
+    auto const & commandName = input[1];
+    if(commandName == "var")
     {
-        HandleInvalidInput();
+        ResetAllVariables();
+        return;
     }
+    if(commandName == "edu")
+    {
+        HandleEduResetCommand(input);
+        return;
+    }
+
+    HandleInvalidInput();
+}
+
+
+auto HandleEduResetCommand(Input const & input) -> void
+{
+    if(input[2] == "queue")
+    {
+        edu::programQueue.Clear();
+        PRINTF("Cleared EDU Queue\n");
+        return;
+    }
+
+    HandleInvalidInput();
 }
 
 
