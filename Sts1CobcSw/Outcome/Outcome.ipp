@@ -116,6 +116,14 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidPduDataLength";
         case ErrorCode::invalidEntityId:
             return "invalidEntityId";
+        case ErrorCode::identityIdsAreIdentical:
+            return "identityIdsAreIdentical";
+        case ErrorCode::invalidSts1FilePath:
+            return "invalidSts1FilePath";
+        case ErrorCode::invalidEduProgramPath:
+            return "invalidEduProgramPath";
+        case ErrorCode::invalidFirmwarePath:
+            return "invalidFirmwarePath";
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:

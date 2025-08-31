@@ -1,9 +1,11 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/File.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
@@ -259,6 +261,8 @@ auto SendCfdpFrames() -> void
             return;
         }
     }
+    // TODO: It looks like we are missing a FinalizeTransmission() are something here. Having just a
+    // SendAndContinue() seems wrong.
     ResumeFileTransferThread();
 }
 
@@ -601,10 +605,66 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
 
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
 {
+    // TODO: Refactor this by extracting a function or more
+    auto result = [&]() -> Result<FileTransferInfo>
+    {
+        static constexpr auto groundStationPathPrefix = "/gs/";
+        auto sourceIsGroundStation = request.sourceFilePath.starts_with(groundStationPathPrefix);
+        auto targetIsGroundStation = request.targetFilePath.starts_with(groundStationPathPrefix);
+        if(sourceIsGroundStation == targetIsGroundStation)
+        {
+            DEBUG_PRINT("Both source and target paths are on %s\n",
+                        sourceIsGroundStation ? "the ground" : "STS1");
+            return ErrorCode::identityIdsAreIdentical;
+        }
+        if(targetIsGroundStation)  // i.e. source is STS1
+        {
+            OUTCOME_TRY(fs::Open(request.sourceFilePath, LFS_O_RDONLY));
+        }
+        else
+        {
+            static constexpr auto firmwarePathPrefix = "/firmware/";
+            // len("/12345.zip") = 10
+            static auto const eduProgramFilePathLength = edu::programsDirectory.size() + 10;
+            if(request.targetFilePath.starts_with(edu::programsDirectory))
+            {
+                if(not request.targetFilePath.ends_with(".zip")
+                   and request.targetFilePath.size() != eduProgramFilePathLength)
+                {
+                    return ErrorCode::invalidEduProgramPath;
+                }
+            }
+            else if(request.targetFilePath.starts_with(firmwarePathPrefix))
+            {
+                if(request.targetFilePath != "/firmware/1"
+                   and request.targetFilePath != "/firmware/2")
+                {
+                    return ErrorCode::invalidFirmwarePath;
+                }
+            }
+            else
+            {
+                return ErrorCode::invalidSts1FilePath;
+            }
+        }
+        return FileTransferInfo{
+            .sourcePath = request.sourceFilePath,
+            .destinationPath = request.targetFilePath,
+            .sourceEntityId = sourceIsGroundStation ? groundStationEntityId : cubeSatEntityId,
+            .destinationEntityId = targetIsGroundStation ? groundStationEntityId : cubeSatEntityId};
+    }();
+    if(result.has_error())
+    {
+        DEBUG_PRINT("Failed to initiate copying file '%s' to '%s': %s\n",
+                    request.sourceFilePath.c_str(),
+                    request.targetFilePath.c_str(),
+                    ToCZString(result.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        return;
+    }
     // This wakes up the file transfer thread if it is waiting for a new file transfer info
-    fileTransferInfoMailbox.Overwrite(FileTransferInfo{.sourcePath = request.sourceFilePath,
-                                                       .destinationPath = request.targetFilePath});
-    DEBUG_PRINT("Successfully initiated copying file %s to %s\n",
+    fileTransferInfoMailbox.Overwrite(result.value());
+    DEBUG_PRINT("Successfully initiated copying file '%s' to '%s'\n",
                 request.sourceFilePath.c_str(),
                 request.targetFilePath.c_str());
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));

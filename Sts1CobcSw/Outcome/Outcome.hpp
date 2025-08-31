@@ -79,6 +79,10 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidProtocolDataUnit,
     invalidPduDataLength,
     invalidEntityId,
+    identityIdsAreIdentical,
+    invalidSts1FilePath,
+    invalidEduProgramPath,
+    invalidFirmwarePath,
     // Firmware
     misaligned,
     eraseFailed,
