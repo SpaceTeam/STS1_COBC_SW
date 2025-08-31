@@ -52,6 +52,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidLength,
     tooManyDataPackets,
     eduIsNotAlive,
+    invalidEduProgramFilename,
     // Mailbox
     full,
     empty,
@@ -88,6 +89,9 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidAckPduDirectiveCode,
     invalidDirectiveSubtypeCode,
     invalidNakPdu,
+    entityIdsAreIdentical,
+    invalidCubeSatFilePath,
+    invalidFirmwarePath,
     // Firmware
     misaligned,
     eraseFailed,

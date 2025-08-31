@@ -1,9 +1,11 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/File.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
@@ -42,6 +44,7 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
 
+#include <littlefs/lfs.h>
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
 #include <strong_type/ordered.hpp>
@@ -49,6 +52,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/string.h>
 #include <etl/vector.h>
 
 #include <algorithm>
@@ -122,9 +126,12 @@ auto Handle(SetActiveFirmwareFunction const & function, RequestId const & reques
 auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void;
 auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & requestId) -> void;
 
-auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
-auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
+[[nodiscard]] auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
+[[nodiscard]] auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
 auto Set(Parameter parameter) -> void;
+[[nodiscard]] auto ValidateAndBuildFileTransferInfo(CopyAFileRequest const & request)
+    -> Result<FileTransferInfo>;
+[[nodiscard]] auto GetPartitionId(fs::Path const & filePath) -> Result<PartitionId>;
 
 // Must be called before SendAndContinue()
 auto SetTxDataLength(std::uint16_t nFrames) -> void;
@@ -260,6 +267,8 @@ auto SendCfdpFrames() -> void
             return;
         }
     }
+    // TODO: It looks like we are missing a FinalizeTransmission() are something here. Having just a
+    // SendAndContinue() seems wrong.
     ResumeFileTransferThread();
 }
 
@@ -603,10 +612,20 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
 
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
 {
+    auto fileTransferInfoResult = ValidateAndBuildFileTransferInfo(request);
+    if(fileTransferInfoResult.has_error())
+    {
+        DEBUG_PRINT("Failed to initiate copying file '%s' to '%s': %s\n",
+                    request.sourceFilePath.c_str(),
+                    request.targetFilePath.c_str(),
+                    ToCZString(fileTransferInfoResult.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId,
+                                                                  fileTransferInfoResult.error()));
+        return;
+    }
     // This wakes up the file transfer thread if it is waiting for a new file transfer info
-    fileTransferInfoMailbox.Overwrite(FileTransferInfo{.sourcePath = request.sourceFilePath,
-                                                       .destinationPath = request.targetFilePath});
-    DEBUG_PRINT("Successfully initiated copying file %s to %s\n",
+    fileTransferInfoMailbox.Overwrite(fileTransferInfoResult.value());
+    DEBUG_PRINT("Successfully initiated copying file '%s' to '%s'\n",
                 request.sourceFilePath.c_str(),
                 request.targetFilePath.c_str());
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
@@ -779,6 +798,65 @@ auto Set(Parameter parameter) -> void
             persistentVariables.Store<"newEduResultIsAvailable">(parameter.value != 0U);
             break;
     }
+}
+
+
+auto ValidateAndBuildFileTransferInfo(CopyAFileRequest const & request) -> Result<FileTransferInfo>
+{
+    static constexpr auto groundStationPathPrefix = "/gs/";
+    auto sourceIsCubeSat = not request.sourceFilePath.starts_with(groundStationPathPrefix);
+    auto targetIsCubeSat = not request.targetFilePath.starts_with(groundStationPathPrefix);
+    if(sourceIsCubeSat == targetIsCubeSat)
+    {
+        DEBUG_PRINT("Both source and target paths are on %s\n",
+                    sourceIsCubeSat ? "STS1" : "the ground");
+        return ErrorCode::entityIdsAreIdentical;
+    }
+    auto fileTransferInfo = FileTransferInfo{
+        .sourceEntityId = sourceIsCubeSat ? cubeSatEntityId : groundStationEntityId,
+        .destinationEntityId = targetIsCubeSat ? cubeSatEntityId : groundStationEntityId,
+        .fileIsFirmware = false,
+        .sourcePath = request.sourceFilePath,
+        .destinationPath = request.targetFilePath};
+    if(sourceIsCubeSat)
+    {
+        OUTCOME_TRY(fs::Open(request.sourceFilePath, LFS_O_RDONLY));
+    }
+    else
+    {
+        static constexpr auto firmwarePathPrefix = "/firmware/";
+        if(request.targetFilePath.starts_with(edu::programsDirectory))
+        {
+            // The + 1 is to account for the '/' after edu::programsDirectory
+            auto filename = request.targetFilePath.substr(edu::programsDirectory.size() + 1);
+            OUTCOME_TRY(edu::GetProgramId(filename));
+        }
+        else if(request.targetFilePath.starts_with(firmwarePathPrefix))
+        {
+            OUTCOME_TRY(auto partitionId, GetPartitionId(request.targetFilePath));
+            fileTransferInfo.destinationPartitionId = partitionId;
+            fileTransferInfo.fileIsFirmware = true;
+        }
+        else
+        {
+            return ErrorCode::invalidCubeSatFilePath;
+        }
+    }
+    return fileTransferInfo;
+}
+
+
+auto GetPartitionId(fs::Path const & filePath) -> Result<PartitionId>
+{
+    if(filePath == "/firmware/1")
+    {
+        return PartitionId::secondary1;
+    }
+    if(filePath == "/firmware/2")
+    {
+        return PartitionId::secondary2;
+    }
+    return ErrorCode::invalidFirmwarePath;
 }
 
 

@@ -75,7 +75,10 @@ constexpr auto maxFileSize = maxNPackets * maxDataSize;
 
 constexpr auto nProgramIdDigits =
     std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
+constexpr auto nStartTimeDigits =
+    std::numeric_limits<strong::underlying_type_t<RealTime>>::digits10 + 1;
 constexpr auto * programFileExtension = ".zip";
+constexpr auto * resultFileExtension = ".cpio";
 
 // Data buffer for potentially large data packets (ReturnResult and StoreProgram)
 auto cepDataBuffer = etl::vector<Byte, maxDataSize>{};
@@ -109,9 +112,6 @@ template<>
 template<typename T>
 [[nodiscard]] auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
 auto FlushUartReceiveBuffer() -> void;
-
-auto BuildProgramFilePath(ProgramId programId) -> fs::Path;
-auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path;
 }
 
 
@@ -331,11 +331,42 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 }
 
 
+auto BuildProgramFilePath(ProgramId programId) -> fs::Path
+{
+    auto path = programsDirectory;
+    path.append("/");
+    etl::to_string(value_of(programId),
+                   path,
+                   etl::format_spec().width(nProgramIdDigits).fill('0'),
+                   /*append=*/true);
+    path.append(programFileExtension);
+    return path;
+}
+
+
+auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
+{
+    auto path = resultsDirectory;
+    path.append("/");
+    etl::to_string(value_of(programId),
+                   path,
+                   etl::format_spec().width(nProgramIdDigits).fill('0'),
+                   /*append=*/true);
+    path.append("_");
+    etl::to_string(value_of(startTime),
+                   path,
+                   etl::format_spec().width(nStartTimeDigits).fill('0'),
+                   /*append=*/true);
+    path.append(resultFileExtension);
+    return path;
+}
+
+
 auto GetProgramId(fs::Path const & filename) -> Result<ProgramId>
 {
     static constexpr auto programFilenameLength =
         nProgramIdDigits + std::char_traits<char>::length(programFileExtension);
-    if(filename.size() == programFilenameLength)
+    if(filename.size() == programFilenameLength and filename.ends_with(programFileExtension))
     {
         std::uint16_t value = 0;
         auto result = std::from_chars(filename.data(), filename.data() + nProgramIdDigits, value);
@@ -345,7 +376,7 @@ auto GetProgramId(fs::Path const & filename) -> Result<ProgramId>
         }
     }
     DEBUG_PRINT("Failed to get EDU program ID from file %s\n", filename.c_str());
-    return ErrorCode::invalidParameter;
+    return ErrorCode::invalidEduProgramFilename;
 }
 
 
@@ -621,39 +652,6 @@ auto FlushUartReceiveBuffer() -> void
             break;
         }
     }
-}
-
-
-auto BuildProgramFilePath(ProgramId programId) -> fs::Path
-{
-    auto path = programsDirectory;
-    path.append("/");
-    etl::to_string(value_of(programId),
-                   path,
-                   etl::format_spec().width(nProgramIdDigits).fill('0'),
-                   /*append=*/true);
-    path.append(programFileExtension);
-    return path;
-}
-
-
-auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
-{
-    auto path = resultsDirectory;
-    path.append("/");
-    etl::to_string(value_of(programId),
-                   path,
-                   etl::format_spec().width(nProgramIdDigits).fill('0'),
-                   /*append=*/true);
-    path.append("_");
-    static constexpr auto nStartTimeDigits =
-        std::numeric_limits<strong::underlying_type_t<RealTime>>::digits10 + 1;
-    etl::to_string(value_of(startTime),
-                   path,
-                   etl::format_spec().width(nStartTimeDigits).fill('0'),
-                   /*append=*/true);
-    path.append(programFileExtension);
-    return path;
 }
 }
 }

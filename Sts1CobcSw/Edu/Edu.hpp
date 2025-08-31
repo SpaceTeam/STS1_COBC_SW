@@ -6,6 +6,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 
 namespace sts1cobcsw::edu
@@ -29,6 +30,8 @@ auto TurnOff() -> void;
 [[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> Result<void>;
 [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> Result<void>;
 
+[[nodiscard]] auto BuildProgramFilePath(ProgramId programId) -> fs::Path;
+[[nodiscard]] auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path;
 [[nodiscard]] auto GetProgramId(fs::Path const & filename) -> Result<ProgramId>;
 [[nodiscard]] auto ProgramsAreAvailableOnCobc() -> bool;
 }

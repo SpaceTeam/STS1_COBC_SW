@@ -70,6 +70,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "tooManyDataPackets";
         case ErrorCode::eduIsNotAlive:
             return "eduIsNotAlive";
+        case ErrorCode::invalidEduProgramFilename:
+            return "invalidEduProgramFilename";
         case ErrorCode::full:
             return "full";
         case ErrorCode::empty:
@@ -132,6 +134,12 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidDirectiveSubtypeCode";
         case ErrorCode::invalidNakPdu:
             return "invalidNakPdu";
+        case ErrorCode::entityIdsAreIdentical:
+            return "entityIdsAreIdentical";
+        case ErrorCode::invalidCubeSatFilePath:
+            return "invalidCubeSatFilePath";
+        case ErrorCode::invalidFirmwarePath:
+            return "invalidFirmwarePath";
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:
