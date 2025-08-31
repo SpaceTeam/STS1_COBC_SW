@@ -5,7 +5,8 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
-
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 namespace sts1cobcsw::edu
 {
@@ -28,5 +29,7 @@ auto TurnOff() -> void;
 [[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> Result<void>;
 [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> Result<void>;
 
+[[nodiscard]] auto BuildProgramFilePath(ProgramId programId) -> fs::Path;
+[[nodiscard]] auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path;
 [[nodiscard]] auto ProgramsAreAvailableOnCobc() -> bool;
 }

@@ -88,6 +88,10 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidAckPduDirectiveCode,
     invalidDirectiveSubtypeCode,
     invalidNakPdu,
+    entityIdsAreIdentical,
+    invalidCubeSatFilePath,
+    invalidEduProgramPath,
+    invalidFirmwarePath,
     // Firmware
     misaligned,
     eraseFailed,
