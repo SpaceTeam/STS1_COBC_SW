@@ -28,5 +28,7 @@ auto TurnOff() -> void;
 [[nodiscard]] auto ReturnResult(ReturnResultData const & data) -> Result<void>;
 [[nodiscard]] auto UpdateTime(UpdateTimeData const & data) -> Result<void>;
 
+[[nodiscard]] auto BuildProgramFilePath(ProgramId programId) -> fs::Path;
+[[nodiscard]] auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path;
 [[nodiscard]] auto ProgramsAreAvailableOnCobc() -> bool;
 }
