@@ -1,19 +1,25 @@
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -25,6 +31,7 @@
 #include <etl/utility.h>
 #include <etl/vector.h>
 
+#include <array>
 #include <charconv>
 #include <cstdint>
 #include <span>
@@ -47,6 +54,7 @@ using ValueString = etl::string<16>;
 
 
 constexpr auto stackSize = 60'000U;
+constexpr auto framTimeout = 1 * ms;
 auto uart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
@@ -72,6 +80,7 @@ auto ParseAsBool(etl::string_view string) -> Result<bool>;
 auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>;
 auto ParseAsMessageTypeIdFields(etl::string_view string) -> Result<MessageTypeIdFields>;
 auto ToString(fw::PartitionId id, etl::istring * string) -> void;
+auto ToString(edu::ProgramStatus status, etl::istring * string) -> void;
 
 
 class FramExplorer : public RODOS::StaticThread<stackSize>
@@ -134,7 +143,9 @@ auto PrintUsageInfo() -> void
     PRINTF("  reset var                                 to reset all variables to 0\n");
     PRINTF("  get edu queue                             to get the edu queue\n");
     PRINTF("  set edu queue <id> <startTime> <timeout>  to set the edu queue\n");
-    PRINTF("  reset edu queue                           to clear the edu queue\n");
+    PRINTF("  reset edu queue                           to clear the edu queue of all elements\n");
+    PRINTF("  get edu history                           to get the edu history\n");
+    PRINTF("  reset edu history                         to reset the edu history\n");
 }
 
 
@@ -225,6 +236,23 @@ auto HandleEduGetCommand(Input const & input) -> void
         }
         return;
     }
+    if(input[2] == "history")
+    {
+        PRINTF("EDU program history size = %i:\n",
+               static_cast<int>(edu::programStatusHistory.Size()));
+        for(auto index = 0U; index < edu::programStatusHistory.Size(); index++)
+        {
+            auto entry = edu::programStatusHistory.Get(index);
+            auto status = Message{};
+            ToString(entry.status, &status);
+            PRINTF("    [%i]: program ID = %i, start time = %u, status = %s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   status.c_str());
+        }
+        return;
+    }
 
     HandleInvalidInput();
 }
@@ -297,7 +325,7 @@ auto HandleEduSetCommand(Input const & input) -> void
             }
             if(edu::programQueue.IsFull())
             {
-                PRINTF("Edu ProgramQueue full, cant add more!\n\n");
+                PRINTF("Edu ProgramQueue full, can't add more!\n\n");
                 return;
             }
 
@@ -342,6 +370,15 @@ auto HandleEduResetCommand(Input const & input) -> void
     {
         edu::programQueue.Clear();
         PRINTF("Cleared EDU Queue\n");
+        return;
+    }
+    if(input[2] == "history")
+    {
+        auto historySection = framSections.Get<"eduProgramStatusHistory">();
+        auto resetData = std::array<Byte const, historySection.size.value_of()>{};
+        fram::WriteTo(historySection.begin, Span(resetData), framTimeout);
+
+        PRINTF("Cleared EDU History\n");
         return;
     }
 
@@ -814,6 +851,38 @@ auto ToString(fw::PartitionId id, etl::istring * string) -> void
             break;
         case fw::PartitionId::secondary2:
             *string = "secondary2";
+            break;
+    }
+}
+
+
+auto ToString(edu::ProgramStatus status, etl::istring * string) -> void
+{
+    switch(status)
+    {
+        case edu::ProgramStatus::programRunning:
+            *string = "programRunning";
+            break;
+        case edu::ProgramStatus::programCouldNotBeStarted:
+            *string = "programCouldNotBeStarted";
+            break;
+        case edu::ProgramStatus::programExecutionFailed:
+            *string = "programExecutionFailed";
+            break;
+        case edu::ProgramStatus::programExecutionSucceeded:
+            *string = "programExecutionSucceeded";
+            break;
+        case edu::ProgramStatus::resultStoredInFileSystem:
+            *string = "resultStoredInFileSystem";
+            break;
+        case edu::ProgramStatus::resultRequestedByGround:
+            *string = "resultRequestedByGround";
+            break;
+        case edu::ProgramStatus::resultAcknowledgedByGround:
+            *string = "resultAcknowledgedByGround";
+            break;
+        case edu::ProgramStatus::resultDeleted:
+            *string = "resultDeleted";
             break;
     }
 }
