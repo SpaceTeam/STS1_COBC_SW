@@ -74,10 +74,10 @@ constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 constexpr auto rxToTxSwitchDuration = 300 * ms;
 constexpr auto maxNFramesToSendContinously = rf::maxTxDataLength / fullyEncodedFrameLength;
 
-
-auto tmBuffer = std::array<Byte, blockLength>{};
 auto tcBuffer = std::array<Byte, blockLength>{};
-auto tmFrame = tm::TransferFrame(std::span(tmBuffer).first<tm::transferFrameLength>());
+auto tmBuffer = std::array<Byte, channelAccessDataUnitLength>{};
+auto tmBlock = std::span(tmBuffer).subspan<attachedSynchMarkerLength, blockLength>();
+auto tmFrame = tm::TransferFrame(tmBlock.first<tm::transferFrameLength>());
 auto lastRxTime = RodosTime(0);
 std::uint16_t nFramesToSend = 0U;
 std::uint16_t nSentFrames = 0U;
@@ -130,8 +130,9 @@ auto SetTxDataLength(std::uint16_t nFrames) -> void;
 auto SendAndWait(Payload const & report) -> void;
 auto SendAndContinue(Payload const & report) -> void;
 auto PackageAndEncode(Payload const & report) -> void;
-auto SendAndWait(std::span<Byte const, blockLength> const & encodedFrame) -> void;
-auto SendAndContinue(std::span<Byte const, blockLength> const & encodedFrame) -> void;
+auto SendAndWait(std::span<Byte const, channelAccessDataUnitLength> channelAccessDataUnit) -> void;
+auto SendAndContinue(std::span<Byte const, channelAccessDataUnitLength> channelAccessDataUnit)
+    -> void;
 auto SuspendUntilEarliestTxTime() -> void;
 // Must be called after SendAndContinue()
 auto FinalizeTransmission() -> void;
@@ -145,6 +146,15 @@ public:
 
 
 private:
+    auto init() -> void override
+    {
+        if constexpr(attachedSynchMarkerLength == attachedSynchMarker.size())
+        {
+            std::ranges::copy(attachedSynchMarker, tmBuffer.begin());
+        }
+    }
+
+
     auto run() -> void override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
@@ -162,7 +172,7 @@ private:
                 DEBUG_PRINT_STACK_USAGE();
                 continue;
             }
-            if(encodedCfdpFrameMailbox.IsFull())
+            if(cfdpChannelAccessDataUnitMailbox.IsFull())
             {
                 SendCfdpFrames();
                 SuspendUntilNewTelemetryRecordIsAvailable();
@@ -236,12 +246,12 @@ auto SendCfdpFrames() -> void
     {
         SetTxDataLength(nFrames);
     }
-    while(encodedCfdpFrameMailbox.IsFull()
+    while(cfdpChannelAccessDataUnitMailbox.IsFull()
           and CurrentRodosTime() + frameSendDuration < sendWindowEnd)
     {
         // This wakes up the file transfer thread if it is waiting to send a new CFDP frame
-        auto encodedFrame = encodedCfdpFrameMailbox.Get().value();
-        SendAndContinue(encodedFrame);
+        auto channelAccessDataUnit = cfdpChannelAccessDataUnitMailbox.Get().value();
+        SendAndContinue(channelAccessDataUnit);
         // In case radiation affects the while condition, we add this additional check to break once
         // a new telemetry record is available
         if(telemetryRecordMailbox.IsFull())
@@ -799,18 +809,19 @@ auto PackageAndEncode(Payload const & report) -> void
     // will never fail.
     (void)AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
     tmFrame.Finish();
-    tm::Encode(tmBuffer);
+    tm::Encode(tmBlock);
 }
 
 
-auto SendAndWait(std::span<Byte const, blockLength> const & encodedFrame) -> void
+auto SendAndWait(std::span<Byte const, channelAccessDataUnitLength> channelAccessDataUnit) -> void
 {
     SuspendUntilEarliestTxTime();
-    rf::SendAndWait(encodedFrame);
+    rf::SendAndWait(channelAccessDataUnit);
 }
 
 
-auto SendAndContinue(std::span<Byte const, blockLength> const & encodedFrame) -> void
+auto SendAndContinue(std::span<Byte const, channelAccessDataUnitLength> channelAccessDataUnit)
+    -> void
 {
     if(nSentFrames >= maxNFramesToSendContinously)
     {
@@ -818,7 +829,7 @@ auto SendAndContinue(std::span<Byte const, blockLength> const & encodedFrame) ->
         SetTxDataLength(nFramesToSend - nSentFrames);
     }
     SuspendUntilEarliestTxTime();
-    rf::SendAndContinue(encodedFrame);
+    rf::SendAndContinue(channelAccessDataUnit);
 }
 
 

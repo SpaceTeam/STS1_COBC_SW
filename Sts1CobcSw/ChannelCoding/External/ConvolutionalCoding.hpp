@@ -33,15 +33,15 @@ public:
     static constexpr auto polynomials = std::to_array<std::uint8_t>({0b111'1001, 0b101'1011});
     static constexpr auto nParityBits = polynomials.size();
 
-    static constexpr auto maxUnencodedSize = 255U;
+    static constexpr auto maxUnencodedSize = 255U + 4U;  // >= RS(255,223) + 4 byte sync marker
     // EncodedSize() cannot be used in a constant expression until the class is complete
 #if defined(DISABLE_CHANNEL_CODING) || defined(DISABLE_CONVOLUTIONAL_CODING)
     static constexpr auto maxEncodedSize = maxUnencodedSize;
 #else
     #ifdef USE_PUNCTURING
-    static constexpr auto maxEncodedSize = 384U;
+    static constexpr auto maxEncodedSize = 390U;
     #else
-    static constexpr auto maxEncodedSize = 512U;
+    static constexpr auto maxEncodedSize = 520U;
     #endif
 #endif
 

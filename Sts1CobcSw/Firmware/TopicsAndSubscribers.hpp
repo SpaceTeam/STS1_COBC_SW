@@ -49,5 +49,6 @@ inline auto telemetryRecordMailbox = Mailbox<TelemetryRecord>{};
 inline auto nextTelemetryRecordTimeMailbox = Mailbox<RodosTime>{};
 inline auto fileTransferInfoMailbox = Mailbox<FileTransferInfo>{};
 inline auto receivedPduMailbox = Mailbox<tc::ProtocolDataUnit>{};
-inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
+inline auto cfdpChannelAccessDataUnitMailbox =
+    Mailbox<std::array<Byte, channelAccessDataUnitLength>>{};
 }
