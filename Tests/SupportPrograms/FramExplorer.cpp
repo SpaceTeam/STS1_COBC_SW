@@ -80,7 +80,7 @@ auto ParseAsBool(etl::string_view string) -> Result<bool>;
 auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>;
 auto ParseAsMessageTypeIdFields(etl::string_view string) -> Result<MessageTypeIdFields>;
 auto ToString(fw::PartitionId id, etl::istring * string) -> void;
-auto ToString(edu::ProgramStatus status, etl::istring * string) -> void;
+auto ToCZString(edu::ProgramStatus status) -> char const *;
 
 
 class FramExplorer : public RODOS::StaticThread<stackSize>
@@ -187,18 +187,17 @@ auto HandleInvalidInput() -> void
 
 auto HandleGetCommand(Input const & input) -> void
 {
-    auto const & commandName = input[1];
-    if(commandName == "var")
+    auto const & secondaryCommandName = input[1];
+    if(secondaryCommandName == "var")
     {
         HandleVarGetCommand(input);
         return;
     }
-    if(commandName == "edu")
+    if(secondaryCommandName == "edu")
     {
         HandleEduGetCommand(input);
         return;
     }
-
     HandleInvalidInput();
 }
 
@@ -219,16 +218,17 @@ auto HandleVarGetCommand(Input const & input) -> void
 
 auto HandleEduGetCommand(Input const & input) -> void
 {
-    if(input[2] == "queue")
+    auto const & tertiaryCommandName = input[2];
+    if(tertiaryCommandName == "queue")
     {
         PRINTF("EDU program queue: current index = %i, size = %i\n",
                persistentVariables.Load<"eduProgramQueueIndex">(),
                static_cast<int>(edu::programQueue.Size()));
 
-        for(auto index = 0U; index < edu::programQueue.Size(); index++)
+        for(auto index = 0U; index < edu::programQueue.Size(); ++index)
         {
             auto entry = edu::programQueue.Get(index);
-            PRINTF("    [%i]: program ID = %i, start time = %u, timeout = %i s\n",
+            PRINTF("  %02i: program ID = %05i, start time = %u, timeout = %i s\n",
                    index,
                    value_of(entry.programId),
                    static_cast<unsigned>(value_of(entry.startTime)),
@@ -236,42 +236,38 @@ auto HandleEduGetCommand(Input const & input) -> void
         }
         return;
     }
-    if(input[2] == "history")
+    if(tertiaryCommandName == "history")
     {
         PRINTF("EDU program history size = %i:\n",
                static_cast<int>(edu::programStatusHistory.Size()));
-        for(auto index = 0U; index < edu::programStatusHistory.Size(); index++)
+        for(auto index = 0U; index < edu::programStatusHistory.Size(); ++index)
         {
             auto entry = edu::programStatusHistory.Get(index);
-            auto status = Message{};
-            ToString(entry.status, &status);
-            PRINTF("    [%i]: program ID = %i, start time = %u, status = %s\n",
+            PRINTF("  %02i: program ID = %05i, start time = %u, status = %s\n",
                    index,
                    value_of(entry.programId),
                    static_cast<unsigned>(value_of(entry.startTime)),
-                   status.c_str());
+                   ToCZString(entry.status));
         }
         return;
     }
-
     HandleInvalidInput();
 }
 
 
 auto HandleSetCommand(Input const & input) -> void
 {
-    auto const & commandName = input[1];
-    if(commandName == "var")
+    auto const & secondaryCommandName = input[1];
+    if(secondaryCommandName == "var")
     {
         HandleVarSetCommand(input);
         return;
     }
-    if(commandName == "edu")
+    if(secondaryCommandName == "edu")
     {
         HandleEduSetCommand(input);
         return;
     }
-
     HandleInvalidInput();
 }
 
@@ -296,92 +292,88 @@ auto HandleVarSetCommand(Input const & input) -> void
 
 auto HandleEduSetCommand(Input const & input) -> void
 {
-    if(input[2] == "queue")
+    auto const & tertiaryCommandName = input[2];
+    if(tertiaryCommandName != "queue")
     {
-        // The set command requires programId-startTime-timeout pairs -> dividable by 3
-        auto nArguments = input.size() - 3;
-        if(nArguments % 3 != 0)
+        HandleInvalidInput();
+        return;
+    }
+    // The set command requires programId-startTime-timeout triplets -> dividable by 3
+    auto nArguments = input.size() - 3;
+    if(nArguments % 3 != 0)
+    {
+        HandleInvalidInput();
+        return;
+    }
+    for(auto i = 3U; i < input.size(); i += 3)
+    {
+        auto programIdResult = ParseAsUInt32(input[i]);
+        auto startTimeResult = ParseAsUInt32(input[i + 1]);
+        auto timeoutResult = ParseAsUInt32(input[i + 2]);
+
+        if(programIdResult.has_error() or startTimeResult.has_error() or timeoutResult.has_error())
         {
-            HandleInvalidInput();
+            PRINTF(
+                "Invalid input for edu program entry: programId = %s startTime = %s timeout = "
+                "%s\n\n",
+                input[i].c_str(),
+                input[i + 1].c_str(),
+                input[i + 2].c_str());
+            return;
+        }
+        if(edu::programQueue.IsFull())
+        {
+            PRINTF("Edu ProgramQueue full, can't add more!\n\n");
             return;
         }
 
-        for(auto i = 3U; i < input.size(); i += 3)
-        {
-            auto programIdResult = ParseAsUInt32(input[i]);
-            auto startTimeResult = ParseAsUInt32(input[i + 1]);
-            auto timeoutResult = ParseAsUInt32(input[i + 2]);
-
-            if(programIdResult.has_error() or startTimeResult.has_error()
-               or timeoutResult.has_error())
-            {
-                PRINTF(
-                    "Invalid input for edu program entry: programId = %s startTime = %s timeout = "
-                    "%s\n\n",
-                    input[i].c_str(),
-                    input[i + 1].c_str(),
-                    input[i + 2].c_str());
-                return;
-            }
-            if(edu::programQueue.IsFull())
-            {
-                PRINTF("Edu ProgramQueue full, can't add more!\n\n");
-                return;
-            }
-
-            auto entry = edu::ProgramQueueEntry{ProgramId(programIdResult.value()),
-                                                RealTime(startTimeResult.value()),
-                                                static_cast<std::int16_t>(timeoutResult.value())};
-            PRINTF("Added program: program ID = %i, start time = %u, timeout = %i s\n",
-                   value_of(entry.programId),
-                   static_cast<unsigned>(value_of(entry.startTime)),
-                   entry.timeout);
-            edu::programQueue.PushBack(entry);
-        }
-
-        return;
+        auto entry = edu::ProgramQueueEntry{ProgramId(programIdResult.value()),
+                                            RealTime(startTimeResult.value()),
+                                            static_cast<std::int16_t>(timeoutResult.value())};
+        PRINTF("Added program: program ID = %i, start time = %u, timeout = %i s\n",
+               value_of(entry.programId),
+               static_cast<unsigned>(value_of(entry.startTime)),
+               entry.timeout);
+        edu::programQueue.PushBack(entry);
     }
-
-    HandleInvalidInput();
 }
 
 
 auto HandleResetCommand(Input const & input) -> void
 {
-    auto const & commandName = input[1];
-    if(commandName == "var")
+    auto const & secondaryCommandName = input[1];
+    if(secondaryCommandName == "var")
     {
         ResetAllVariables();
         return;
     }
-    if(commandName == "edu")
+    if(secondaryCommandName == "edu")
     {
         HandleEduResetCommand(input);
         return;
     }
-
     HandleInvalidInput();
 }
 
 
 auto HandleEduResetCommand(Input const & input) -> void
 {
-    if(input[2] == "queue")
+    auto const & tertiaryCommandName = input[2];
+    if(tertiaryCommandName == "queue")
     {
         edu::programQueue.Clear();
         PRINTF("Cleared EDU Queue\n");
         return;
     }
-    if(input[2] == "history")
+    if(tertiaryCommandName == "history")
     {
         auto historySection = framSections.Get<"eduProgramStatusHistory">();
-        auto resetData = std::array<Byte const, historySection.size.value_of()>{};
+        auto resetData = std::array<Byte const, value_of(historySection.size)>{};
         fram::WriteTo(historySection.begin, Span(resetData), framTimeout);
 
         PRINTF("Cleared EDU History\n");
         return;
     }
-
     HandleInvalidInput();
 }
 
@@ -493,7 +485,7 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     }
     else if(variable == "fileTransferWindowEnd")
     {
-        etl::to_string(persistentVariables.Load<"fileTransferWindowEnd">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"fileTransferWindowEnd">()), value);
     }
     else if(variable == "antennasShouldBeDeployed")
     {
@@ -501,15 +493,15 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     }
     else if(variable == "realTime")
     {
-        etl::to_string(persistentVariables.Load<"realTime">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"realTime">()), value);
     }
     else if(variable == "realTimeOffset")
     {
-        etl::to_string(persistentVariables.Load<"realTimeOffset">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"realTimeOffset">()), value);
     }
     else if(variable == "realTimeOffsetCorrection")
     {
-        etl::to_string(persistentVariables.Load<"realTimeOffsetCorrection">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"realTimeOffsetCorrection">()), value);
     }
     else if(variable == "nFirmwareChecksumErrors")
     {
@@ -546,7 +538,7 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     }
     else if(variable == "maxEduIdleDuration")
     {
-        etl::to_string(persistentVariables.Load<"maxEduIdleDuration">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"maxEduIdleDuration">()), value);
     }
     else if(variable == "newEduResultIsAvailable")
     {
@@ -856,35 +848,28 @@ auto ToString(fw::PartitionId id, etl::istring * string) -> void
 }
 
 
-auto ToString(edu::ProgramStatus status, etl::istring * string) -> void
+auto ToCZString(edu::ProgramStatus status) -> char const *
 {
     switch(status)
     {
         case edu::ProgramStatus::programRunning:
-            *string = "programRunning";
-            break;
+            return "programRunning";
         case edu::ProgramStatus::programCouldNotBeStarted:
-            *string = "programCouldNotBeStarted";
-            break;
+            return "programCouldNotBeStarted";
         case edu::ProgramStatus::programExecutionFailed:
-            *string = "programExecutionFailed";
-            break;
+            return "programExecutionFailed";
         case edu::ProgramStatus::programExecutionSucceeded:
-            *string = "programExecutionSucceeded";
-            break;
+            return "programExecutionSucceeded";
         case edu::ProgramStatus::resultStoredInFileSystem:
-            *string = "resultStoredInFileSystem";
-            break;
+            return "resultStoredInFileSystem";
         case edu::ProgramStatus::resultRequestedByGround:
-            *string = "resultRequestedByGround";
-            break;
+            return "resultRequestedByGround";
         case edu::ProgramStatus::resultAcknowledgedByGround:
-            *string = "resultAcknowledgedByGround";
-            break;
+            return "resultAcknowledgedByGround";
         case edu::ProgramStatus::resultDeleted:
-            *string = "resultDeleted";
-            break;
+            return "resultDeleted";
     }
+    return "unknown state";
 }
 }
 }
