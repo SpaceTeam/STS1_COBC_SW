@@ -19,21 +19,22 @@ namespace sts1cobcsw
 {
 struct TelemetryRecord
 {
-    // Booleans: byte 1: EDU and housekeeping
+    // Booleans: byte 1
     UInt<1> eduShouldBePowered = 0;
     UInt<1> eduIsAlive = 0;
     UInt<1> newEduResultIsAvailable = 0;
+    UInt<1> dosimeterIsPowered = 0;
     UInt<1> antennasShouldBeDeployed = 0;
     UInt<1> epsIsCharging = 0;
     UInt<1> epsDetectedFault = 0;
     UInt<1> framIsWorking = 0;
+    // Booleans: byte 2
     UInt<1> epsIsWorking = 0;
-    // Booleans: byte 2: communication
     UInt<1> flashIsWorking = 0;
     UInt<1> rfIsWorking = 0;
     UInt<1> lastMessageTypeIdWasInvalid = 0;
     UInt<1> lastApplicationDataWasInvalid = 0;
-    UInt<4> padding = 0;  // NOLINT(*magic-numbers)
+    UInt<3> padding = 0;  // NOLINT(*magic-numbers)
 
     // BootLoader
     std::uint32_t nTotalResets = 0U;
@@ -79,6 +80,7 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
     totalSerialSize<decltype(TelemetryRecord::eduShouldBePowered),
                     decltype(TelemetryRecord::eduIsAlive),
                     decltype(TelemetryRecord::newEduResultIsAvailable),
+                    decltype(TelemetryRecord::dosimeterIsPowered),
                     decltype(TelemetryRecord::antennasShouldBeDeployed),
                     decltype(TelemetryRecord::epsIsCharging),
                     decltype(TelemetryRecord::epsDetectedFault),

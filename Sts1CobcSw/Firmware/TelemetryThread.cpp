@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
@@ -96,6 +97,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">() ? 1 : 0,
         .eduIsAlive = eduIsAlive ? 1 : 0,
         .newEduResultIsAvailable = persistentVariables.Load<"newEduResultIsAvailable">() ? 1 : 0,
+        .dosimeterIsPowered = (edu::dosiEnableGpioPin.Read() == hal::PinState::set) ? 1 : 0,
         .antennasShouldBeDeployed = persistentVariables.Load<"antennasShouldBeDeployed">() ? 1 : 0,
         .epsIsCharging = (epsChargingGpioPin.Read() == hal::PinState::set) ? 1 : 0,
         .epsDetectedFault = (epsFaultGpioPin.Read() == hal::PinState::set) ? 1 : 0,

@@ -136,6 +136,7 @@ private:
                 .eduShouldBePowered = 1,
                 .eduIsAlive = 1,
                 .newEduResultIsAvailable = 1,
+                .dosimeterIsPowered = 1,
                 .antennasShouldBeDeployed = 1,
                 .epsIsCharging = 1,
                 .epsDetectedFault = 1,

@@ -239,6 +239,7 @@ TEST_CASE("Housekeeping parameter report")
         .eduShouldBePowered = 1,
         .eduIsAlive = 1,
         .newEduResultIsAvailable = 1,
+        .dosimeterIsPowered = 1,
         .antennasShouldBeDeployed = 1,
         .epsIsCharging = 1,
         .epsDetectedFault = 1,
@@ -303,7 +304,7 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[11] == 0_b);
     // Telemetry record
     CHECK(dataField[12] == 0b1111'1111_b);
-    CHECK(dataField[13] == 0b1111'0000_b);
+    CHECK(dataField[13] == 0b1111'1000_b);
     CHECK(dataField[14] == 0_b);
     CHECK(dataField[15] == 0_b);
     CHECK(dataField[16] == 0_b);

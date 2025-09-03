@@ -29,6 +29,7 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
             .eduShouldBePowered = 1,
             .eduIsAlive = 1,
             .newEduResultIsAvailable = 1,
+            .dosimeterIsPowered = 1,
             .antennasShouldBeDeployed = 1,
             .epsIsCharging = 1,
             .epsDetectedFault = 1,
@@ -78,7 +79,7 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
     SECTION("All booleans are serialized and deserialized correctly")
     {
         static constexpr auto nBooleans1 = 8U;
-        static constexpr auto nBooleans2 = 4U;
+        static constexpr auto nBooleans2 = 5U;
         static constexpr auto nBooleans = nBooleans1 + nBooleans2;
         // We loop over all records where a single boolean set to true
         for(auto i = 0U; i < nBooleans; ++i)
@@ -89,15 +90,16 @@ TEST_CASE("(De-)Serialization of TelemetryRecord")
                 TelemetryRecord{.eduShouldBePowered = (booleans1 & (1U << 0U)),
                                 .eduIsAlive = (booleans1 & (1U << 1U)),
                                 .newEduResultIsAvailable = (booleans1 & (1U << 2U)),
-                                .antennasShouldBeDeployed = (booleans1 & (1U << 3U)),
-                                .epsIsCharging = (booleans1 & (1U << 4U)),
-                                .epsDetectedFault = (booleans1 & (1U << 5U)),
-                                .framIsWorking = (booleans1 & (1U << 6U)),
-                                .epsIsWorking = (booleans1 & (1U << 7U)),
-                                .flashIsWorking = (booleans2 & (1U << 0U)),
-                                .rfIsWorking = (booleans2 & (1U << 1U)),
-                                .lastMessageTypeIdWasInvalid = (booleans2 & (1U << 2U)),
-                                .lastApplicationDataWasInvalid = (booleans2 & (1U << 3U))};
+                                .dosimeterIsPowered = (booleans1 & (1U << 3U)),
+                                .antennasShouldBeDeployed = (booleans1 & (1U << 4U)),
+                                .epsIsCharging = (booleans1 & (1U << 5U)),
+                                .epsDetectedFault = (booleans1 & (1U << 6U)),
+                                .framIsWorking = (booleans1 & (1U << 7U)),
+                                .epsIsWorking = (booleans2 & (1U << 0U)),
+                                .flashIsWorking = (booleans2 & (1U << 1U)),
+                                .rfIsWorking = (booleans2 & (1U << 2U)),
+                                .lastMessageTypeIdWasInvalid = (booleans2 & (1U << 3U)),
+                                .lastApplicationDataWasInvalid = (booleans2 & (1U << 4U))};
             auto serializedRecord = Serialize<std::endian::big>(originalRecord);
             auto deserializedRecord =
                 Deserialize<std::endian::big, TelemetryRecord>(serializedRecord);
