@@ -61,14 +61,14 @@ auto uart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRx
 auto PrintUsageInfo() -> void;
 auto ReadFromUart() -> Input;
 auto HandleInvalidInput() -> void;
-auto HandleGetCommand(Input const & input) -> void;
-auto HandleVarGetCommand(Input const & input) -> void;
-auto HandleEduGetCommand(Input const & input) -> void;
-auto HandleSetCommand(Input const & input) -> void;
-auto HandleVarSetCommand(Input const & input) -> void;
-auto HandleEduSetCommand(Input const & input) -> void;
-auto HandleResetCommand(Input const & input) -> void;
-auto HandleEduResetCommand(Input const & input) -> void;
+auto HandleGetCommand(std::span<Token const> input) -> void;
+auto HandleVarGetCommand(std::span<Token const> input) -> void;
+auto HandleEduGetCommand(std::span<Token const> input) -> void;
+auto HandleSetCommand(std::span<Token const> input) -> void;
+auto HandleVarSetCommand(std::span<Token const> input) -> void;
+auto HandleEduSetCommand(std::span<Token const> input) -> void;
+auto HandleResetCommand(std::span<Token const> input) -> void;
+auto HandleEduResetCommand(std::span<Token const> input) -> void;
 auto PrintAllVariables() -> void;
 auto ResetAllVariables() -> void;
 auto PrintVariable(etl::string_view variable) -> void;
@@ -113,17 +113,18 @@ private:
                 continue;
             }
             auto const & commandName = input.front();
+            auto nCommandsParsed = 1U;
             if(commandName == "get")
             {
-                HandleGetCommand(input);
+                HandleGetCommand(std::span(input).subspan(nCommandsParsed));
             }
             else if(commandName == "set")
             {
-                HandleSetCommand(input);
+                HandleSetCommand(std::span(input).subspan(nCommandsParsed));
             }
             else if(commandName == "reset")
             {
-                HandleResetCommand(input);
+                HandleResetCommand(std::span(input).subspan(nCommandsParsed));
             }
             else
             {
@@ -185,40 +186,41 @@ auto HandleInvalidInput() -> void
 }
 
 
-auto HandleGetCommand(Input const & input) -> void
+auto HandleGetCommand(std::span<Token const> input) -> void
 {
-    auto const & secondaryCommandName = input[1];
+    auto const & secondaryCommandName = input.front();
+    auto nCommandsParsed = 1U;
     if(secondaryCommandName == "var")
     {
-        HandleVarGetCommand(input);
+        HandleVarGetCommand(input.subspan(nCommandsParsed));
         return;
     }
     if(secondaryCommandName == "edu")
     {
-        HandleEduGetCommand(input);
+        HandleEduGetCommand(input.subspan(nCommandsParsed));
         return;
     }
     HandleInvalidInput();
 }
 
 
-auto HandleVarGetCommand(Input const & input) -> void
+auto HandleVarGetCommand(std::span<Token const> input) -> void
 {
-    if(input[2] == "--all")
+    if(input.front() == "--all")
     {
         PrintAllVariables();
         return;
     }
-    for(auto && variableName : std::span(input).subspan<2>())
+    for(auto && variableName : input)
     {
         PrintVariable(variableName);
     }
 }
 
 
-auto HandleEduGetCommand(Input const & input) -> void
+auto HandleEduGetCommand(std::span<Token const> input) -> void
 {
-    auto const & tertiaryCommandName = input[2];
+    auto const & tertiaryCommandName = input.front();
     if(tertiaryCommandName == "queue")
     {
         PRINTF("EDU program queue: current index = %i, size = %i\n",
@@ -255,33 +257,34 @@ auto HandleEduGetCommand(Input const & input) -> void
 }
 
 
-auto HandleSetCommand(Input const & input) -> void
+auto HandleSetCommand(std::span<Token const> input) -> void
 {
-    auto const & secondaryCommandName = input[1];
+    auto const & secondaryCommandName = input.front();
+    auto nCommandsParsed = 1U;
     if(secondaryCommandName == "var")
     {
-        HandleVarSetCommand(input);
+        HandleVarSetCommand(input.subspan(nCommandsParsed));
         return;
     }
     if(secondaryCommandName == "edu")
     {
-        HandleEduSetCommand(input);
+        HandleEduSetCommand(input.subspan(nCommandsParsed));
         return;
     }
     HandleInvalidInput();
 }
 
 
-auto HandleVarSetCommand(Input const & input) -> void
+auto HandleVarSetCommand(std::span<Token const> input) -> void
 {
     // The set command requires variable-value pairs -> even number of arguments
-    auto nArguments = input.size() - 2;
+    auto nArguments = input.size();
     if(nArguments % 2 != 0)
     {
         HandleInvalidInput();
         return;
     }
-    for(auto i = 2U; i < input.size(); i += 2)
+    for(auto i = 0U; i < input.size(); i += 2)
     {
         auto const & variable = input[i];
         auto const & value = input[i + 1];
@@ -290,22 +293,24 @@ auto HandleVarSetCommand(Input const & input) -> void
 }
 
 
-auto HandleEduSetCommand(Input const & input) -> void
+auto HandleEduSetCommand(std::span<Token const> input) -> void
 {
-    auto const & tertiaryCommandName = input[2];
+    auto const & tertiaryCommandName = input.front();
+    auto nCommandsParsed = 1U;
     if(tertiaryCommandName != "queue")
     {
         HandleInvalidInput();
         return;
     }
+    input = input.subspan(nCommandsParsed);
     // The set command requires programId-startTime-timeout triplets -> dividable by 3
-    auto nArguments = input.size() - 3;
+    auto nArguments = input.size();
     if(nArguments % 3 != 0)
     {
         HandleInvalidInput();
         return;
     }
-    for(auto i = 3U; i < input.size(); i += 3)
+    for(auto i = 0U; i < input.size(); i += 3)
     {
         auto programIdResult = ParseAsUInt32(input[i]);
         auto startTimeResult = ParseAsUInt32(input[i + 1]);
@@ -339,9 +344,10 @@ auto HandleEduSetCommand(Input const & input) -> void
 }
 
 
-auto HandleResetCommand(Input const & input) -> void
+auto HandleResetCommand(std::span<Token const> input) -> void
 {
-    auto const & secondaryCommandName = input[1];
+    auto const & secondaryCommandName = input.front();
+    auto nCommandsParsed = 1U;
     if(secondaryCommandName == "var")
     {
         ResetAllVariables();
@@ -349,16 +355,16 @@ auto HandleResetCommand(Input const & input) -> void
     }
     if(secondaryCommandName == "edu")
     {
-        HandleEduResetCommand(input);
+        HandleEduResetCommand(input.subspan(nCommandsParsed));
         return;
     }
     HandleInvalidInput();
 }
 
 
-auto HandleEduResetCommand(Input const & input) -> void
+auto HandleEduResetCommand(std::span<Token const> input) -> void
 {
-    auto const & tertiaryCommandName = input[2];
+    auto const & tertiaryCommandName = input.front();
     if(tertiaryCommandName == "queue")
     {
         edu::programQueue.Clear();
