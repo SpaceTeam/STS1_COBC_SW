@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
 #include <strong_type/affine_point.hpp>
@@ -351,8 +352,8 @@ auto ParseAsSetActiveFirmwareFunction(std::span<Byte const> buffer)
     }
     auto function = SetActiveFirmwareFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != fw::PartitionId::secondary1
-       and function.partitionId != fw::PartitionId::secondary2)
+    if(function.partitionId != PartitionId::secondary1
+       and function.partitionId != PartitionId::secondary2)
     {
         return ErrorCode::invalidPartitionId;
     }
@@ -369,8 +370,8 @@ auto ParseAsSetBackupFirmwareFunction(std::span<Byte const> buffer)
     }
     auto function = SetBackupFirmwareFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != fw::PartitionId::secondary1
-       && function.partitionId != fw::PartitionId::secondary2)
+    if(function.partitionId != PartitionId::secondary1
+       && function.partitionId != PartitionId::secondary2)
     {
         return ErrorCode::invalidPartitionId;
     }
@@ -387,9 +388,9 @@ auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
     }
     auto function = CheckFirmwareIntegrityFunction{};
     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
-    if(function.partitionId != fw::PartitionId::primary
-       && function.partitionId != fw::PartitionId::secondary1
-       && function.partitionId != fw::PartitionId::secondary2)
+    if(function.partitionId != PartitionId::primary
+       && function.partitionId != PartitionId::secondary1
+       && function.partitionId != PartitionId::secondary2)
     {
         return ErrorCode::invalidPartitionId;
     }

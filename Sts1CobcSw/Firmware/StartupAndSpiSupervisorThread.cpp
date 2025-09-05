@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 
 #include <Sts1CobcSw/Edu/Edu.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/FileSystem/LfsMemoryDevice.hpp>
@@ -17,7 +18,6 @@
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
-#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #ifndef __linux__
     #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>

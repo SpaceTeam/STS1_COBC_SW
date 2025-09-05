@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Sts1CobcSw/Bootloader/Fram.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 
 #include <cstdint>
 
@@ -12,14 +13,6 @@ struct PersistentVariable
 {
     using ValueType = T;
     std::uint32_t offset;
-};
-
-
-enum class PartitionId : std::uint8_t
-{
-    primary = 0b0000'1111,
-    secondary1 = 0b0000'0000,
-    secondary2 = 0b1111'1111
 };
 
 

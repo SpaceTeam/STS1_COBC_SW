@@ -1,6 +1,6 @@
+#include <Sts1CobcSw/Bootloader/DebugPrint.hpp>
 #include <Sts1CobcSw/Bootloader/Fram.hpp>
 #include <Sts1CobcSw/Bootloader/PersistentVariables.hpp>
-#include <Sts1CobcSw/Bootloader/Print.hpp>
 #include <Sts1CobcSw/Bootloader/RunFirmware.hpp>
 #ifdef ENABLE_DEBUG_PRINT
     #include <Sts1CobcSw/Bootloader/Leds.hpp>

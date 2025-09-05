@@ -14,6 +14,7 @@
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/type.hpp>
@@ -167,7 +168,7 @@ struct SetActiveFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = FunctionId::setActiveFirmware;
-    fw::PartitionId partitionId;
+    PartitionId partitionId;
 };
 
 
@@ -175,7 +176,7 @@ struct SetBackupFirmwareFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = FunctionId::setBackupFirmware;
-    fw::PartitionId partitionId;
+    PartitionId partitionId;
 };
 
 
@@ -183,7 +184,7 @@ struct CheckFirmwareIntegrityFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = FunctionId::checkFirmwareIntegrity;
-    fw::PartitionId partitionId;
+    PartitionId partitionId;
 };
 
 

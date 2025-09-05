@@ -1,8 +1,8 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <etl/vector.h>
@@ -38,4 +38,23 @@ TEST_CASE("CRC-32")
     data.insert(data.end(), serializedCrc.begin(), serializedCrc.end());
     result = ComputeCrc32(Span(data));
     CHECK(result == 0x00U);
+}
+
+
+TEST_CASE("Majority vote")
+{
+    using sts1cobcsw::ComputeBitwiseMajorityVote;
+
+    auto value = ComputeBitwiseMajorityVote(Span(0xAB_b), Span(0xAB_b), Span(0xAB_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0x02_b), Span(0xAB_b), Span(0xAB_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0xAB_b), Span(0x02_b), Span(0xAB_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0xAB_b), Span(0xAB_b), Span(0x02_b))[0];
+    CHECK(value == 0xAB_b);
+    value = ComputeBitwiseMajorityVote(Span(0x11_b), Span(0xAB_b), Span(0x02_b))[0];
+    CHECK(value == 0x03_b);
+    value = ComputeBitwiseMajorityVote(Span(0xA4_b), Span(0xAB_b), Span(0x5B_b))[0];
+    CHECK(value == 0xAB_b);
 }
