@@ -63,12 +63,12 @@ auto ReadFromUart() -> Input;
 auto HandleInvalidInput() -> void;
 auto HandleGetCommand(std::span<Token const> input) -> void;
 auto HandleVarGetCommand(std::span<Token const> input) -> void;
-auto HandleEduGetCommand(std::span<Token const> input) -> void;
+auto HandleQueueGetCommand() -> void;
+auto HandleHistoryGetCommand() -> void;
 auto HandleSetCommand(std::span<Token const> input) -> void;
 auto HandleVarSetCommand(std::span<Token const> input) -> void;
-auto HandleEduSetCommand(std::span<Token const> input) -> void;
+auto HandleQueueSetCommand(std::span<Token const> input) -> void;
 auto HandleResetCommand(std::span<Token const> input) -> void;
-auto HandleEduResetCommand(std::span<Token const> input) -> void;
 auto PrintAllVariables() -> void;
 auto ResetAllVariables() -> void;
 auto PrintVariable(etl::string_view variable) -> void;
@@ -138,15 +138,15 @@ private:
 auto PrintUsageInfo() -> void
 {
     PRINTF("Usage:\n");
-    PRINTF("  get var --all                             to get all variables\n");
-    PRINTF("  get var <variable>                        to get one variable\n");
-    PRINTF("  set var <variable> <value>                to set one variable\n");
-    PRINTF("  reset var                                 to reset all variables to 0\n");
-    PRINTF("  get edu queue                             to get the edu queue\n");
-    PRINTF("  set edu queue <id> <startTime> <timeout>  to set the edu queue\n");
-    PRINTF("  reset edu queue                           to clear the edu queue of all elements\n");
-    PRINTF("  get edu history                           to get the edu history\n");
-    PRINTF("  reset edu history                         to reset the edu history\n");
+    PRINTF("  get var --all                         to get all variables\n");
+    PRINTF("  get var <variable>                    to get one variable\n");
+    PRINTF("  set var <variable> <value>            to set one variable\n");
+    PRINTF("  reset var                             to reset all variables to 0\n");
+    PRINTF("  get queue                             to get the EDU queue\n");
+    PRINTF("  set queue <id> <startTime> <timeout>  to set the EDU queue\n");
+    PRINTF("  reset queue                           to clear the EDU queue of all elements\n");
+    PRINTF("  get history                           to get the EDU history\n");
+    PRINTF("  reset history                         to reset the EDU history\n");
 }
 
 
@@ -195,9 +195,14 @@ auto HandleGetCommand(std::span<Token const> input) -> void
         HandleVarGetCommand(input.subspan(nCommandsParsed));
         return;
     }
-    if(secondaryCommandName == "edu")
+    if(secondaryCommandName == "queue")
     {
-        HandleEduGetCommand(input.subspan(nCommandsParsed));
+        HandleQueueGetCommand();
+        return;
+    }
+    if(secondaryCommandName == "history")
+    {
+        HandleHistoryGetCommand();
         return;
     }
     HandleInvalidInput();
@@ -218,42 +223,36 @@ auto HandleVarGetCommand(std::span<Token const> input) -> void
 }
 
 
-auto HandleEduGetCommand(std::span<Token const> input) -> void
+auto HandleQueueGetCommand() -> void
 {
-    auto const & tertiaryCommandName = input.front();
-    if(tertiaryCommandName == "queue")
-    {
-        PRINTF("EDU program queue: current index = %i, size = %i\n",
-               persistentVariables.Load<"eduProgramQueueIndex">(),
-               static_cast<int>(edu::programQueue.Size()));
+    PRINTF("EDU program queue: current index = %i, size = %i\n",
+           persistentVariables.Load<"eduProgramQueueIndex">(),
+           static_cast<int>(edu::programQueue.Size()));
 
-        for(auto index = 0U; index < edu::programQueue.Size(); ++index)
-        {
-            auto entry = edu::programQueue.Get(index);
-            PRINTF("  %02i: program ID = %05i, start time = %u, timeout = %i s\n",
-                   index,
-                   value_of(entry.programId),
-                   static_cast<unsigned>(value_of(entry.startTime)),
-                   entry.timeout);
-        }
-        return;
-    }
-    if(tertiaryCommandName == "history")
+    for(auto index = 0U; index < edu::programQueue.Size(); ++index)
     {
-        PRINTF("EDU program history size = %i:\n",
-               static_cast<int>(edu::programStatusHistory.Size()));
-        for(auto index = 0U; index < edu::programStatusHistory.Size(); ++index)
-        {
-            auto entry = edu::programStatusHistory.Get(index);
-            PRINTF("  %02i: program ID = %05i, start time = %u, status = %s\n",
-                   index,
-                   value_of(entry.programId),
-                   static_cast<unsigned>(value_of(entry.startTime)),
-                   ToCZString(entry.status));
-        }
-        return;
+        auto entry = edu::programQueue.Get(index);
+        PRINTF("  %02i: program ID = %05i, start time = %u, timeout = %i s\n",
+               index,
+               value_of(entry.programId),
+               static_cast<unsigned>(value_of(entry.startTime)),
+               entry.timeout);
     }
-    HandleInvalidInput();
+}
+
+
+auto HandleHistoryGetCommand() -> void
+{
+    PRINTF("EDU program history size = %i:\n", static_cast<int>(edu::programStatusHistory.Size()));
+    for(auto index = 0U; index < edu::programStatusHistory.Size(); ++index)
+    {
+        auto entry = edu::programStatusHistory.Get(index);
+        PRINTF("  %02i: program ID = %05i, start time = %u, status = %s\n",
+               index,
+               value_of(entry.programId),
+               static_cast<unsigned>(value_of(entry.startTime)),
+               ToCZString(entry.status));
+    }
 }
 
 
@@ -266,9 +265,9 @@ auto HandleSetCommand(std::span<Token const> input) -> void
         HandleVarSetCommand(input.subspan(nCommandsParsed));
         return;
     }
-    if(secondaryCommandName == "edu")
+    if(secondaryCommandName == "queue")
     {
-        HandleEduSetCommand(input.subspan(nCommandsParsed));
+        HandleQueueSetCommand(input.subspan(nCommandsParsed));
         return;
     }
     HandleInvalidInput();
@@ -293,16 +292,8 @@ auto HandleVarSetCommand(std::span<Token const> input) -> void
 }
 
 
-auto HandleEduSetCommand(std::span<Token const> input) -> void
+auto HandleQueueSetCommand(std::span<Token const> input) -> void
 {
-    auto const & tertiaryCommandName = input.front();
-    auto nCommandsParsed = 1U;
-    if(tertiaryCommandName != "queue")
-    {
-        HandleInvalidInput();
-        return;
-    }
-    input = input.subspan(nCommandsParsed);
     // The set command requires programId-startTime-timeout triplets -> dividable by 3
     auto nArguments = input.size();
     if(nArguments % 3 != 0)
@@ -319,7 +310,7 @@ auto HandleEduSetCommand(std::span<Token const> input) -> void
         if(programIdResult.has_error() or startTimeResult.has_error() or timeoutResult.has_error())
         {
             PRINTF(
-                "Invalid input for edu program entry: programId = %s startTime = %s timeout = "
+                "Invalid input for EDU program entry: programId = %s startTime = %s timeout = "
                 "%s\n\n",
                 input[i].c_str(),
                 input[i + 1].c_str(),
@@ -328,7 +319,7 @@ auto HandleEduSetCommand(std::span<Token const> input) -> void
         }
         if(edu::programQueue.IsFull())
         {
-            PRINTF("Edu ProgramQueue full, can't add more!\n\n");
+            PRINTF("EDU ProgramQueue full, can't add more!\n\n");
             return;
         }
 
@@ -347,31 +338,18 @@ auto HandleEduSetCommand(std::span<Token const> input) -> void
 auto HandleResetCommand(std::span<Token const> input) -> void
 {
     auto const & secondaryCommandName = input.front();
-    auto nCommandsParsed = 1U;
     if(secondaryCommandName == "var")
     {
         ResetAllVariables();
         return;
     }
-    if(secondaryCommandName == "edu")
-    {
-        HandleEduResetCommand(input.subspan(nCommandsParsed));
-        return;
-    }
-    HandleInvalidInput();
-}
-
-
-auto HandleEduResetCommand(std::span<Token const> input) -> void
-{
-    auto const & tertiaryCommandName = input.front();
-    if(tertiaryCommandName == "queue")
+    if(secondaryCommandName == "queue")
     {
         edu::programQueue.Clear();
         PRINTF("Cleared EDU Queue\n");
         return;
     }
-    if(tertiaryCommandName == "history")
+    if(secondaryCommandName == "history")
     {
         auto historySection = framSections.Get<"eduProgramStatusHistory">();
         auto resetData = std::array<Byte const, value_of(historySection.size)>{};
