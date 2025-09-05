@@ -232,11 +232,23 @@ auto HandleQueueGetCommand() -> void
     for(auto index = 0U; index < edu::programQueue.Size(); ++index)
     {
         auto entry = edu::programQueue.Get(index);
-        PRINTF("  %02i: program ID = %05i, start time = %u, timeout = %04i s\n",
-               index,
-               value_of(entry.programId),
-               static_cast<unsigned>(value_of(entry.startTime)),
-               entry.timeout);
+        // Required because of a bug in rodos PRINTF, PRINTF("%010u", uint) leads to "0u"
+        if(static_cast<unsigned>(value_of(entry.startTime)) < 1'000'000'000U)
+        {
+            PRINTF("  %02i: program ID = %05i, start time = 0%09u, timeout = %04i s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+        }
+        else
+        {
+            PRINTF("  %02i: program ID = %05i, start time = %u, timeout = %04i s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+        }
     }
 }
 
@@ -247,11 +259,23 @@ auto HandleHistoryGetCommand() -> void
     for(auto index = 0U; index < edu::programStatusHistory.Size(); ++index)
     {
         auto entry = edu::programStatusHistory.Get(index);
-        PRINTF("  %02i: program ID = %05i, start time = %u, status = %s\n",
-               index,
-               value_of(entry.programId),
-               static_cast<unsigned>(value_of(entry.startTime)),
-               ToCZString(entry.status));
+        // Required because of a bug in rodos PRINTF, PRINTF("%010u", uint) leads to "0u"
+        if(static_cast<unsigned>(value_of(entry.startTime)) < 1'000'000'000U)
+        {
+            PRINTF("  %02i: program ID = %05i, start time = 0%09u, status = %s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   ToCZString(entry.status));
+        }
+        else
+        {
+            PRINTF("  %02i: program ID = %05i, start time = %u, status = %s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   ToCZString(entry.status));
+        }
     }
 }
 
