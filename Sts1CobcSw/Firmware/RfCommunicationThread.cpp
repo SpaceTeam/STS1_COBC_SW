@@ -258,8 +258,8 @@ auto SendCfdpFrames() -> void
           and CurrentRodosTime() + frameSendDuration < sendWindowEnd)
     {
         // This wakes up the file transfer thread if it is waiting to send a new CFDP frame
-        auto channelAccessDataUnit = cfdpChannelAccessDataUnitMailbox.Get().value();
-        SendAndContinue(channelAccessDataUnit);
+        tmBuffer = cfdpChannelAccessDataUnitMailbox.Get().value();
+        SendAndContinue(tmBuffer);
         // In case radiation affects the while condition, we add this additional check to break once
         // a new telemetry record is available
         if(telemetryRecordMailbox.IsFull())
