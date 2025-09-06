@@ -2,13 +2,151 @@
 
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
+#include <Sts1CobcSw/RfProtocols/Utility.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
+#include <Sts1CobcSw/Serial/UInt.hpp>
+
+#include <strong_type/equality.hpp>
+
+#include <etl/vector.h>
 
 #include <algorithm>
+#include <utility>
+
+#include "Sts1CobcSw/Outcome/Outcome.hpp"
+#include "Sts1CobcSw/RfProtocols/Configuration.hpp"
+#include "Sts1CobcSw/RfProtocols/Vocabulary.hpp"
+#include "Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp"
 
 
 namespace sts1cobcsw
 {
+auto FileDataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, offset);
+    std::ranges::copy(fileData, static_cast<Byte *>(cursor));
+}
+
+
+auto FileDataPdu::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(offset)> + fileData.size());
+}
+
+
+auto EndOfFilePdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor =
+        SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, value_of(conditionCode), spare);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, fileChecksum);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize);
+    if(conditionCode != noErrorConditionCode)
+    {
+        (void)SerializeTo<ccsdsEndianness>(cursor, faultLocation);
+    }
+}
+
+
+auto EndOfFilePdu::DoSize() const -> std::uint16_t
+{
+    return conditionCode == noErrorConditionCode
+             ? minParameterFieldLength
+             : minParameterFieldLength + totalSerialSize<FaultLocation>;
+}
+
+
+auto FinishedPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
+                                                 value_of(conditionCode),
+                                                 spare,
+                                                 value_of(deliveryCode),
+                                                 value_of(fileStatus));
+    if(conditionCode != noErrorConditionCode
+       and conditionCode != unsupportedChecksumTypeConditionCode)
+    {
+        (void)SerializeTo<ccsdsEndianness>(cursor, faultLocation);
+    }
+}
+
+
+auto FinishedPdu::DoSize() const -> std::uint16_t
+{
+    return (conditionCode == noErrorConditionCode
+            or conditionCode == unsupportedChecksumTypeConditionCode)
+             ? minParameterFieldLength
+             : minParameterFieldLength + totalSerialSize<FaultLocation>;
+}
+
+
+auto AckPdu::DoSize() const -> std::uint16_t
+{
+    return minParameterFieldLength;
+}
+
+
+auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    (void)SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
+                                       acknowledgedPduDirectiveCode,
+                                       directiveSubtypeCode,
+                                       value_of(conditionCode),
+                                       spare,
+                                       value_of(transactionStatus));
+}
+
+
+auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(
+        dataField->data() + oldSize, reserved, closureRequestd, checksumType, reserved2);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize);
+
+    // Source filename
+    cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameLength);
+    cursor = std::ranges::copy(sourceFileNameValue, static_cast<Byte *>(cursor)).out;
+
+    // Destination filename
+    cursor = SerializeTo<ccsdsEndianness>(cursor, destinationFileNameLength);
+    std::ranges::copy(destinationFileNameValue, static_cast<Byte *>(cursor));
+}
+
+
+auto MetadataPdu::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(
+        totalSerialSize<decltype(reserved),
+                        decltype(closureRequestd),
+                        decltype(checksumType),
+                        decltype(reserved2)>
+        + totalSerialSize<decltype(fileSize)> + totalSerialSize<decltype(sourceFileNameLength)>
+        + totalSerialSize<decltype(destinationFileNameLength)>
+        + sourceFileNameValue.size() + destinationFileNameValue.size());
+}
+
+
+auto NackPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    auto oldSize = IncreaseSize(dataField, DoSize());
+
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, startOfScope);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, endOfScope);
+    std::ranges::copy(segmentRequests, static_cast<std::uint64_t *>(cursor));
+}
+
+
+auto NackPdu::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(startOfScope), decltype(endOfScope)>
+                                      + segmentRequests.size() * sizeof(std::uint64_t));
+}
+
+
 auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::ProtocolDataUnit>
 {
     if(buffer.size() < tc::pduHeaderLength)
@@ -29,8 +167,7 @@ auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::Protoco
     {
         return ErrorCode::invalidProtocolDataUnit;
     }
-    auto realDataFieldLength = pdu.header.pduDataFieldLength + 1U;
-    if(realDataFieldLength > tc::maxPduDataLength)
+    if(pdu.header.pduDataFieldLength > tc::maxPduDataLength)
     {
         return ErrorCode::invalidPduDataLength;
     }
@@ -41,13 +178,244 @@ auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::Protoco
     {
         return ErrorCode::invalidEntityId;
     }
-    if(buffer.size() < tc::pduHeaderLength + realDataFieldLength)
+    if(buffer.size() < tc::pduHeaderLength + pdu.header.pduDataFieldLength)
     {
         return ErrorCode::bufferTooSmall;
     }
-    pdu.dataField.uninitialized_resize(realDataFieldLength);
-    std::ranges::copy(buffer.subspan(tc::pduHeaderLength, realDataFieldLength),
+    pdu.dataField.uninitialized_resize(pdu.header.pduDataFieldLength);
+    std::ranges::copy(buffer.subspan(tc::pduHeaderLength, pdu.header.pduDataFieldLength),
                       pdu.dataField.begin());
     return pdu;
 }
+
+
+auto ParseAsFileDataPdu(std::span<Byte const> buffer) -> Result<FileDataPdu>
+{
+    if(buffer.size() < totalSerialSize<decltype(FileDataPdu::offset)>)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto fileDataPdu = FileDataPdu{};
+    (void)DeserializeFrom<ccsdsEndianness>(buffer.data(), &fileDataPdu.offset);
+    fileDataPdu.fileData = buffer.subspan<totalSerialSize<decltype(FileDataPdu::offset)>>();
+    return fileDataPdu;
+}
+
+
+auto ParseAsFileDirectivePdu(std::span<Byte const> buffer) -> Result<FileDirectivePdu>
+{
+    if(buffer.size() < totalSerialSize<decltype(FileDirectivePdu::directiveCode)>)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto fileDirectivePdu = FileDirectivePdu{};
+    (void)DeserializeFrom<ccsdsEndianness>(buffer.data(), &fileDirectivePdu.directiveCode);
+    fileDirectivePdu.parameterField =
+        buffer.subspan<totalSerialSize<decltype(fileDirectivePdu.directiveCode)>>();
+    if(not IsValid(fileDirectivePdu.directiveCode))
+    {
+        return ErrorCode::invalidFileDirectiveCode;
+    }
+    return fileDirectivePdu;
+}
+
+
+auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
+{
+    if(buffer.size() < EndOfFilePdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto endOfFilePdu = EndOfFilePdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(
+        buffer.data(), &value_of(endOfFilePdu.conditionCode), &endOfFilePdu.spare);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &endOfFilePdu.fileChecksum);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &endOfFilePdu.fileSize);
+    if(endOfFilePdu.conditionCode != noErrorConditionCode)
+    {
+        if(buffer.size() != EndOfFilePdu::minParameterFieldLength + totalSerialSize<FaultLocation>)
+        {
+            return ErrorCode::invalidDataLength;
+        }
+        (void)DeserializeFrom<ccsdsEndianness>(cursor, &endOfFilePdu.faultLocation);
+        auto faultLocationIsValid = endOfFilePdu.faultLocation.type == TlvType::entityId
+                                and endOfFilePdu.faultLocation.length == totalSerialSize<EntityId>
+                                and IsValid(endOfFilePdu.faultLocation.value);
+        if(not faultLocationIsValid)
+        {
+            return ErrorCode::invalidFaultLocation;
+        }
+    }
+    return endOfFilePdu;
+}
+
+
+auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>
+{
+    if(buffer.size() < FinishedPdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto finishedPdu = FinishedPdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(),
+                                                           &value_of(finishedPdu.conditionCode),
+                                                           &finishedPdu.spare,
+                                                           &value_of(finishedPdu.deliveryCode),
+                                                           &value_of(finishedPdu.fileStatus));
+    if(finishedPdu.conditionCode == noErrorConditionCode
+       or finishedPdu.conditionCode == unsupportedChecksumTypeConditionCode)
+    {
+        return finishedPdu;
+    }
+    if(buffer.size() != FinishedPdu::minParameterFieldLength + totalSerialSize<FaultLocation>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    (void)DeserializeFrom<ccsdsEndianness>(cursor, &finishedPdu.faultLocation);
+    auto faultLocationIsValid = finishedPdu.faultLocation.type == TlvType::entityId
+                            and finishedPdu.faultLocation.length == totalSerialSize<EntityId>
+                            and IsValid(finishedPdu.faultLocation.value);
+    if(not faultLocationIsValid)
+    {
+        return ErrorCode::invalidFaultLocation;
+    }
+    return finishedPdu;
+}
+
+
+auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
+{
+    if(buffer.size() < AckPdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+    auto ackPdu = AckPdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(
+        buffer.data(), &ackPdu.acknowledgedPduDirectiveCode, &ackPdu.directiveSubtypeCode);
+    if(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying()
+           != static_cast<uint8_t>(DirectiveCode::finished)
+       and ackPdu.acknowledgedPduDirectiveCode.ToUnderlying()
+               != static_cast<uint8_t>(DirectiveCode::endOfFile))
+    {
+        return ErrorCode::invalidAckPduDirectiveCode;
+    }
+    if(ackPdu.directiveSubtypeCode != 0b0000 and ackPdu.directiveSubtypeCode != 0b0001)
+    {
+        return ErrorCode::invalidDirectiveSubtypeCode;
+    }
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor,
+                                              &value_of(ackPdu.conditionCode),
+                                              &ackPdu.spare,
+                                              &value_of(ackPdu.transactionStatus));
+    return ackPdu;
+}
+
+
+auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
+{
+    if(buffer.size() < MetadataPdu::minParameterFieldLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+
+    auto metadataPdu = MetadataPdu{};
+
+    auto const * cursor = static_cast<void const *>(buffer.data());
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor,
+                                              &metadataPdu.reserved,
+                                              &metadataPdu.closureRequestd,
+                                              &metadataPdu.reserved2,
+                                              &metadataPdu.checksumType);
+
+    // TODO: Error handling
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.fileSize);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.sourceFileNameLength);
+    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+
+    // TODO: Named constant
+    metadataPdu.sourceFileNameValue =
+        buffer.subspan(6U, static_cast<std::uint32_t>(metadataPdu.sourceFileNameLength));
+
+    cursor = DeserializeFrom<ccsdsEndianness>(
+        buffer.data() + 6U + static_cast<std::size_t>(metadataPdu.sourceFileNameLength),
+        &metadataPdu.destinationFileNameLength);
+
+    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength
+                           + metadataPdu.destinationFileNameLength + 1)
+    {
+        return ErrorCode::bufferTooSmall;
+    }
+
+
+    metadataPdu.destinationFileNameValue =
+        buffer.subspan(6U + 1U + static_cast<std::size_t>(metadataPdu.sourceFileNameLength),
+                       static_cast<std::uint32_t>(metadataPdu.sourceFileNameLength));
+
+
+    return metadataPdu;
+}
+
+auto ParseAsNackPdu(std::span<Byte const> buffer) -> Result<NackPdu>
+{
+    auto nackPdu = NackPdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nackPdu.startOfScope);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nackPdu.endOfScope);
+
+
+    auto const headerSize =
+        totalSerialSize<decltype(nackPdu.startOfScope), decltype(nackPdu.endOfScope)>;
+    auto const remainingSize = buffer.size() - headerSize;
+    auto const segmentRequestsCount = remainingSize / sizeof(std::uint64_t);
+
+    nackPdu.segmentRequests = std::span<std::uint64_t const>(
+        reinterpret_cast<std::uint64_t const *>(buffer.data() + headerSize), segmentRequestsCount);
+
+    return nackPdu;
+}
+
+
+auto IsValid(DirectiveCode directiveCode) -> bool
+{
+    switch(directiveCode)
+    {
+        case DirectiveCode::endOfFile:
+        case DirectiveCode::finished:
+        case DirectiveCode::ack:
+        case DirectiveCode::metadata:
+        case DirectiveCode::nack:
+            return true;
+    }
+    return false;
+}
+
+
+// --- De-/Serialization ---
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, FaultLocation const & faultLocation) -> void *
+{
+    destination = SerializeTo<endianness>(destination, faultLocation.type);
+    destination = SerializeTo<endianness>(destination, faultLocation.length);
+    destination = SerializeTo<endianness>(destination, faultLocation.value);
+    return destination;
+}
+
+
+template auto SerializeTo<std::endian::big>(void *, FaultLocation const &) -> void *;
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, FaultLocation * faultLocation) -> void const *
+{
+    source = DeserializeFrom<endianness>(source, &faultLocation->type);
+    source = DeserializeFrom<endianness>(source, &faultLocation->length);
+    source = DeserializeFrom<endianness>(source, &faultLocation->value);
+    return source;
+}
+
+
+template auto DeserializeFrom<std::endian::big>(void const *, FaultLocation *) -> void const *;
 }

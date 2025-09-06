@@ -69,7 +69,7 @@ private:
             auto reportName = "SuccessfulAcceptanceVerificationReport.bin"s;
             auto requestId = sts1cobcsw::RequestId{
                 .packetVersionNumber = sts1cobcsw::packetVersionNumber,
-                .packetType = sts1cobcsw::packettype::telecommand,
+                .packetType = sts1cobcsw::telecommandPacketType,
                 .secondaryHeaderFlag = 1,
                 .apid = sts1cobcsw::normalApid,
                 .sequenceFlags = 0b11,
@@ -84,7 +84,7 @@ private:
             auto reportName = "SuccessfulCompletionOfExecutionVerificationReport.bin"s;
             auto requestId = sts1cobcsw::RequestId{
                 .packetVersionNumber = sts1cobcsw::packetVersionNumber,
-                .packetType = sts1cobcsw::packettype::telecommand,
+                .packetType = sts1cobcsw::telecommandPacketType,
                 .secondaryHeaderFlag = 1,
                 .apid = sts1cobcsw::normalApid,
                 .sequenceFlags = 0b11,
@@ -99,7 +99,7 @@ private:
             auto reportName = "FailedAcceptanceVerificationReport.bin"s;
             auto requestId = sts1cobcsw::RequestId{
                 .packetVersionNumber = sts1cobcsw::packetVersionNumber,
-                .packetType = sts1cobcsw::packettype::telecommand,
+                .packetType = sts1cobcsw::telecommandPacketType,
                 .secondaryHeaderFlag = 1,
                 .apid = sts1cobcsw::normalApid,
                 .sequenceFlags = 0b11,
@@ -115,7 +115,7 @@ private:
             auto reportName = "FailedCompletionOfExecutionVerificationReport.bin"s;
             auto requestId = sts1cobcsw::RequestId{
                 .packetVersionNumber = sts1cobcsw::packetVersionNumber,
-                .packetType = sts1cobcsw::packettype::telecommand,
+                .packetType = sts1cobcsw::telecommandPacketType,
                 .secondaryHeaderFlag = 1,
                 .apid = sts1cobcsw::normalApid,
                 .sequenceFlags = 0b11,
@@ -196,8 +196,8 @@ private:
             auto reportName = "FileAttributeReport.bin"s;
             auto filePath = fs::Path("/results/12345_67890.zip");
             auto fileSize = 0xDEAD'BEEFU;
-            auto fileStatus = FileStatus::locked;
-            auto report = FileAttributeReport(filePath, fileSize, fileStatus);
+            auto lockState = LockState::locked;
+            auto report = FileAttributeReport(filePath, fileSize, lockState);
             WriteToFileAsFrame(report, outputDir + reportName);
         }
 
