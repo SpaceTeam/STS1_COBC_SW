@@ -77,6 +77,7 @@ private:
 
 // clang-format off
 // NOLINTBEGIN(*magic-numbers)
+// NOLINTBEGIN(*identifier-naming)
                                                         // Group, StartIndex, nProperties
 using ModemModType12                = Properties<PropertyGroup::modem, 0x00_b, 12>;
 using ModemFreqDev01                = Properties<PropertyGroup::modem, 0x0C_b, 1>;
@@ -98,10 +99,51 @@ using ModemDsaCtrl15                = Properties<PropertyGroup::modem, 0x5B_b, 5
 using ModemChfltRx1ChfltCoe137012   = Properties<PropertyGroup::modemChflt, 0x00_b, 12>;
 using ModemChfltRx1ChfltCoe17012    = Properties<PropertyGroup::modemChflt, 0x0C_b, 12>;
 using ModemChfltRx2ChfltCoe77012    = Properties<PropertyGroup::modemChflt, 0x18_b, 12>;
+
+// per datarate changing propertie names:
+using MODEM_DATA_RATE_t             = Properties<PropertyGroup::modem, 0x03_b, 4>;
+using MODEM_FREQ_DEV_t              = Properties<PropertyGroup::modem, 0x0b_b, 2>;
+using MODEM_DECIMATION_CFG1_t       = Properties<PropertyGroup::modem, 0x1e_b, 3>;
+using MODEM_BCR_OSR_t               = Properties<PropertyGroup::modem, 0x23_b, 6>;
+using MODEM_AFC_WAIT_t              = Properties<PropertyGroup::modem, 0x2d_b, 5>;
+using MODEM_AGC_RFPD_DECAY_t        = Properties<PropertyGroup::modem, 0x39_b, 2>;
+using MODEM_OOK_PDTC_t              = Properties<PropertyGroup::modem, 0x40_b, 1>;
+using MODEM_RAW_EYE_t               = Properties<PropertyGroup::modem, 0x46_b, 2>;
+using MODEM_SPIKE_DET_t             = Properties<PropertyGroup::modem, 0x54_b, 1>;
+using MODEM_DSA_QUAL_t              = Properties<PropertyGroup::modem, 0x5d_b, 1>;
+using MODEM_CHFLT_RX1_CHFLT_COE_t   = Properties<PropertyGroup::modemChflt, 0x00_b, 12>;
+using MODEM_CHFLT_RX1_CHFLT_COE_2_t = Properties<PropertyGroup::modemChflt, 0x0C_b, 12>;
+using MODEM_CHFLT_RX2_CHFLT_COE_t   = Properties<PropertyGroup::modemChflt, 0x18_b, 12>;
+// NOLINTEND(*identifier-naming)
 // NOLINTEND(*magic-numbers)
 // clang-format on
 
+// Old DataRate Structure containing properties constant and changing with different datarate
 struct DataRateConfig
+{
+    uint32_t dataRate = 0U;
+    ModemModType12 modType12;
+    ModemFreqDev01 freqDev01;
+    ModemTxRampDelay12 txRampDelay12;
+    ModemBcrNcoOffset212 bcrNcoOffset212;
+    ModemAfcLimiter13 afcLimiter13;
+    ModemAgcControl1 agcControl1;
+    ModemAgcWindowSize12 agcWindowSize12;
+    ModemRawControl10 rawControl10;
+    ModemRssiJumpThresh1 rssiJumpThresh1;
+    ModemRssiControl22 rssiControl22;
+    ModemRawSearch22 rawSearch22;
+    ModemSpikeDet2 spikeDet2;
+    ModemRssiMute1 rssiMute1;
+    ModemDsaCtrl15 dsaCtrl15;
+    ModemChfltRx1ChfltCoe137012 chfltRx1ChfltCoe137012;
+    ModemChfltRx1ChfltCoe17012 chfltRx1ChfltCoe17012;
+    ModemChfltRx2ChfltCoe77012 chfltRx2ChfltCoe77012;
+};
+
+// TODO: naming of DataRateConfig DataRateConfigNoneConst
+// New DataRate Structure containing properties changing with different datarate
+struct DataRateConfigNoneConst
 {
     uint32_t dataRate = 0U;
     ModemModType12 modType12;
