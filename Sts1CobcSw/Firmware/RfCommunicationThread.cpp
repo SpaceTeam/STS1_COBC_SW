@@ -180,7 +180,7 @@ private:
                 DEBUG_PRINT_STACK_USAGE();
                 continue;
             }
-            if(cfdpChannelAccessDataUnitMailbox.IsFull())
+            if(encodedCfdpFrameMailbox.IsFull())
             {
                 SendCfdpFrames();
                 SuspendUntilNewTelemetryRecordIsAvailable();
@@ -254,11 +254,11 @@ auto SendCfdpFrames() -> void
     {
         SetTxDataLength(nFrames);
     }
-    while(cfdpChannelAccessDataUnitMailbox.IsFull()
+    while(encodedCfdpFrameMailbox.IsFull()
           and CurrentRodosTime() + frameSendDuration < sendWindowEnd)
     {
         // This wakes up the file transfer thread if it is waiting to send a new CFDP frame
-        tmBuffer = cfdpChannelAccessDataUnitMailbox.Get().value();
+        std::ranges::copy(encodedCfdpFrameMailbox.Get().value(), tmBlock.begin());
         SendAndContinue(tmBuffer);
         // In case radiation affects the while condition, we add this additional check to break once
         // a new telemetry record is available
