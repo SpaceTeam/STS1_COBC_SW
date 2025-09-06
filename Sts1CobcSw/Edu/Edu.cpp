@@ -138,6 +138,7 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         DEBUG_PRINT("Program file %s is too large: %d B\n", path.c_str(), fileSize);
         return ErrorCode::fileTooLarge;
     }
+    // TODO: Isn't something like OUTCOME_TRY(SendDataPacket(Serialize(data))); missing here?
     while(true)
     {
         cepDataBuffer.uninitialized_resize(cepDataBuffer.MAX_SIZE);
