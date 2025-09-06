@@ -1302,19 +1302,19 @@ auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
 // clang-format off
 // NOLINTBEGIN(*cognitive-complexity)
 // NOLINTBEGIN(*magic-numbers)
-// Set Properties that don't change for different DataRates ONE time in the beginning.
+// Set Modem Properties that don't change for different DataRates ONE time in the beginning.
 auto SetConstantModemProperties() -> Result<void>
 {
     // Values acquired by comparing 9 WDS DataRate configurations.
     // Fore Some Properties only parts are here. The changing parts will be set per DataRate
 
-    //                  Group, Index,            Properties
+    //                  Group, Index,            Properties                                         // Name of first property in property block
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x00_b, std::array{0x03_b, 0x00_b, 0x07_b}));                         // MODEM_MOD_TYPE
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x07_b, std::array{0x8C_b, 0xBA_b, 0x80_b, 0x00_b}));                 // MODEM_TX_NCO_MODE
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x18_b, std::array{0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b})); //MODEM_TX_RAMP_DELAY
+        PropertyGroup::modem, 0x18_b, std::array{0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b})); // MODEM_TX_RAMP_DELAY
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x21_b, std::array{0xE8_b, 0x00_b}));                                 // MODEM_IFPKD_THRESHOLDS
     OUTCOME_TRY(SetProperties(
