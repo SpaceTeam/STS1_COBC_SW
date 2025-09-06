@@ -681,6 +681,7 @@ auto Handle(EnableFileTransferFunction const & function, RequestId const & reque
                                                        + function.durationInS * s);
     DEBUG_PRINT("Enabled file transfers for the next %" PRIu16 " s\n", function.durationInS);
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    ResumeFileTransferThread();
 }
 
 
