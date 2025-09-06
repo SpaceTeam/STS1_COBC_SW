@@ -1288,16 +1288,53 @@ auto Configure(TxType txType) -> Result<void>
 
 auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
 {
-    if(dataRate > ((dataRateConfig38400.dataRate + dataRateConfig9600.dataRate) / 2))
+    if(dataRate > ((dataRateConfig115200.dataRate + dataRateConfig76800.dataRate) / 2))
+    {
+        return dataRateConfig115200;
+    }
+    if(dataRate > ((dataRateConfig76800.dataRate + dataRateConfig57600.dataRate) / 2))
+    {
+        return dataRateConfig76800;
+    }
+    if(dataRate > ((dataRateConfig57600.dataRate + dataRateConfig38400.dataRate) / 2))
+    {
+        return dataRateConfig57600;
+    }
+    if(dataRate > ((dataRateConfig38400.dataRate + dataRateConfig19200.dataRate) / 2))
     {
         return dataRateConfig38400;
     }
-    if(dataRate > ((dataRateConfig9600.dataRate + dataRateConfig1200.dataRate) / 2))
+    if(dataRate > ((dataRateConfig19200.dataRate + dataRateConfig9600.dataRate) / 2))
+    {
+        return dataRateConfig19200;
+    }
+    if(dataRate > ((dataRateConfig9600.dataRate + dataRateConfig4800.dataRate) / 2))
     {
         return dataRateConfig9600;
     }
+    if(dataRate > ((dataRateConfig4800.dataRate + dataRateConfig2400.dataRate) / 2))
+    {
+        return dataRateConfig4800;
+    }
+    if(dataRate > ((dataRateConfig2400.dataRate + dataRateConfig1200.dataRate) / 2))
+    {
+        return dataRateConfig2400;
+    }
     return dataRateConfig1200;
 }
+
+// auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
+// {
+//     if(dataRate > ((dataRateConfig38400.dataRate + dataRateConfig9600.dataRate) / 2))
+//     {
+//         return dataRateConfig38400;
+//     }
+//     if(dataRate > ((dataRateConfig9600.dataRate + dataRateConfig1200.dataRate) / 2))
+//     {
+//         return dataRateConfig9600;
+//     }
+//     return dataRateConfig1200;
+// }
 
 // clang-format off
 // NOLINTBEGIN(*cognitive-complexity)
@@ -1356,24 +1393,41 @@ auto SetConstantModemProperties() -> Result<void>
 // NOLINTNEXTLINE(*cognitive-complexity)
 auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
 {
-    OUTCOME_TRY(SetProperties(dataRateConfig.modType12));
-    OUTCOME_TRY(SetProperties(dataRateConfig.freqDev01));
-    OUTCOME_TRY(SetProperties(dataRateConfig.txRampDelay12));
-    OUTCOME_TRY(SetProperties(dataRateConfig.bcrNcoOffset212));
-    OUTCOME_TRY(SetProperties(dataRateConfig.afcLimiter13));
-    OUTCOME_TRY(SetProperties(dataRateConfig.agcControl1));
-    OUTCOME_TRY(SetProperties(dataRateConfig.agcWindowSize12));
-    OUTCOME_TRY(SetProperties(dataRateConfig.rawControl10));
-    OUTCOME_TRY(SetProperties(dataRateConfig.rssiJumpThresh1));
-    OUTCOME_TRY(SetProperties(dataRateConfig.rssiControl22));
-    OUTCOME_TRY(SetProperties(dataRateConfig.rawSearch22));
-    OUTCOME_TRY(SetProperties(dataRateConfig.spikeDet2));
-    OUTCOME_TRY(SetProperties(dataRateConfig.rssiMute1));
-    OUTCOME_TRY(SetProperties(dataRateConfig.dsaCtrl15));
-    OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe137012));
-    OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe17012));
-    return SetProperties(dataRateConfig.chfltRx2ChfltCoe77012);
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_DATA_RATE));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_FREQ_DEV));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_DECIMATION_CFG1));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_BCR_OSR));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_AFC_WAIT));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_AGC_RFPD_DECAY));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_OOK_PDTC));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_RAW_EYE));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_SPIKE_DET));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_DSA_QUAL));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_CHFLT_RX1_CHFLT_COE));
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_CHFLT_RX1_CHFLT_COE_2));
+    return SetProperties(dataRateConfig.MODEM_CHFLT_RX2_CHFLT_COE);
 }
+
+// auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
+// {
+//     OUTCOME_TRY(SetProperties(dataRateConfig.modType12));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.freqDev01));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.txRampDelay12));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.bcrNcoOffset212));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.afcLimiter13));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.agcControl1));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.agcWindowSize12));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.rawControl10));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.rssiJumpThresh1));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.rssiControl22));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.rawSearch22));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.spikeDet2));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.rssiMute1));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.dsaCtrl15));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe137012));
+//     OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe17012));
+//     return SetProperties(dataRateConfig.chfltRx2ChfltCoe77012);
+// }
 
 
 auto EnableRfLatchupProtection() -> void
