@@ -5,6 +5,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 EduListenerThread.cpp
                 EduPowerManagementThread.cpp
                 EduProgramQueueThread.cpp
+                EduProgramTransferThread.cpp
                 FileTransferThread.cpp
                 FlashStartupTestThread.cpp
                 FramEpsStartupTestThread.cpp
