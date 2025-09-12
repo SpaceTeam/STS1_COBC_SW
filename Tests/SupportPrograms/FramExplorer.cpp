@@ -232,11 +232,23 @@ auto HandleQueueGetCommand() -> void
     for(auto index = 0U; index < edu::programQueue.Size(); ++index)
     {
         auto entry = edu::programQueue.Get(index);
-        PRINTF("  %02i: program ID = %05i, start time = %u, timeout = %i s\n",
-               index,
-               value_of(entry.programId),
-               static_cast<unsigned>(value_of(entry.startTime)),
-               entry.timeout);
+        // Workaround because RODOS::PRINTF does not support formatting with padding > 9
+        if(value_of(entry.startTime) < 1'000'000'000)
+        {
+            PRINTF("  %2i: program ID = %05i, start time =  %9u, timeout = %4i s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+        }
+        else
+        {
+            PRINTF("  %2i: program ID = %05i, start time = %u, timeout = %4i s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+        }
     }
 }
 
@@ -247,11 +259,23 @@ auto HandleHistoryGetCommand() -> void
     for(auto index = 0U; index < edu::programStatusHistory.Size(); ++index)
     {
         auto entry = edu::programStatusHistory.Get(index);
-        PRINTF("  %02i: program ID = %05i, start time = %u, status = %s\n",
-               index,
-               value_of(entry.programId),
-               static_cast<unsigned>(value_of(entry.startTime)),
-               ToCZString(entry.status));
+        // Workaround because RODOS::PRINTF does not support formatting with padding > 9
+        if(value_of(entry.startTime) < 1'000'000'000)
+        {
+            PRINTF("  %2i: program ID = %05i, start time =  %9u, status = %s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   ToCZString(entry.status));
+        }
+        else
+        {
+            PRINTF("  %2i: program ID = %05i, start time = %u, status = %s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   ToCZString(entry.status));
+        }
     }
 }
 
@@ -310,8 +334,8 @@ auto HandleQueueSetCommand(std::span<Token const> input) -> void
         if(programIdResult.has_error() or startTimeResult.has_error() or timeoutResult.has_error())
         {
             PRINTF(
-                "Invalid input for EDU program entry: programId = %s startTime = %s timeout = "
-                "%s\n\n",
+                "Invalid input for EDU program entry: programId = %s, startTime = %s, "
+                "timeout = %s\n\n",
                 input[i].c_str(),
                 input[i + 1].c_str(),
                 input[i + 2].c_str());
