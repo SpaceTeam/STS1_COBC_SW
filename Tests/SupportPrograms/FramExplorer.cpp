@@ -1,15 +1,25 @@
+#include <Sts1CobcSw/Edu/ProgramQueue.hpp>
+#include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
+#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
+#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
+#include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
+#include <Sts1CobcSw/FramSections/Section.hpp>
+#include <Sts1CobcSw/FramSections/Subsections.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Utility/StringLiteral.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
+#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -21,6 +31,7 @@
 #include <etl/utility.h>
 #include <etl/vector.h>
 
+#include <array>
 #include <charconv>
 #include <cstdint>
 #include <span>
@@ -43,14 +54,21 @@ using ValueString = etl::string<16>;
 
 
 constexpr auto stackSize = 60'000U;
+constexpr auto framTimeout = 1 * ms;
 auto uart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
 auto PrintUsageInfo() -> void;
 auto ReadFromUart() -> Input;
 auto HandleInvalidInput() -> void;
-auto HandleGetCommand(Input const & input) -> void;
-auto HandleSetCommand(Input const & input) -> void;
+auto HandleGetCommand(std::span<Token const> input) -> void;
+auto HandleVarGetCommand(std::span<Token const> input) -> void;
+auto HandleQueueGetCommand() -> void;
+auto HandleHistoryGetCommand() -> void;
+auto HandleSetCommand(std::span<Token const> input) -> void;
+auto HandleVarSetCommand(std::span<Token const> input) -> void;
+auto HandleQueueSetCommand(std::span<Token const> input) -> void;
+auto HandleResetCommand(std::span<Token const> input) -> void;
 auto PrintAllVariables() -> void;
 auto ResetAllVariables() -> void;
 auto PrintVariable(etl::string_view variable) -> void;
@@ -62,6 +80,7 @@ auto ParseAsBool(etl::string_view string) -> Result<bool>;
 auto ParseAsPartitionId(etl::string_view string) -> Result<fw::PartitionId>;
 auto ParseAsMessageTypeIdFields(etl::string_view string) -> Result<MessageTypeIdFields>;
 auto ToString(fw::PartitionId id, etl::istring * string) -> void;
+auto ToCZString(edu::ProgramStatus status) -> char const *;
 
 
 class FramExplorer : public RODOS::StaticThread<stackSize>
@@ -94,13 +113,18 @@ private:
                 continue;
             }
             auto const & commandName = input.front();
+            auto nCommandsParsed = 1U;
             if(commandName == "get")
             {
-                HandleGetCommand(input);
+                HandleGetCommand(std::span(input).subspan(nCommandsParsed));
             }
             else if(commandName == "set")
             {
-                HandleSetCommand(input);
+                HandleSetCommand(std::span(input).subspan(nCommandsParsed));
+            }
+            else if(commandName == "reset")
+            {
+                HandleResetCommand(std::span(input).subspan(nCommandsParsed));
             }
             else
             {
@@ -114,10 +138,15 @@ private:
 auto PrintUsageInfo() -> void
 {
     PRINTF("Usage:\n");
-    PRINTF("  get --all                to get all variables\n");
-    PRINTF("  get <variable>           to get one variable\n");
-    PRINTF("  set <variable> <value>   to set one variable\n");
-    PRINTF("  set --all                to reset all variables to 0\n");
+    PRINTF("  get var --all                         to get all variables\n");
+    PRINTF("  get var <variable>                    to get one variable\n");
+    PRINTF("  set var <variable> <value>            to set one variable\n");
+    PRINTF("  reset var                             to reset all variables to 0\n");
+    PRINTF("  get queue                             to get the EDU queue\n");
+    PRINTF("  set queue <id> <startTime> <timeout>  to set the EDU queue\n");
+    PRINTF("  reset queue                           to clear the EDU queue of all elements\n");
+    PRINTF("  get history                           to get the EDU history\n");
+    PRINTF("  reset history                         to reset the EDU history\n");
 }
 
 
@@ -157,40 +186,203 @@ auto HandleInvalidInput() -> void
 }
 
 
-auto HandleGetCommand(Input const & input) -> void
+auto HandleGetCommand(std::span<Token const> input) -> void
 {
-    if(input[1] == "--all")
+    auto const & secondaryCommandName = input.front();
+    auto nCommandsParsed = 1U;
+    if(secondaryCommandName == "var")
+    {
+        HandleVarGetCommand(input.subspan(nCommandsParsed));
+        return;
+    }
+    if(secondaryCommandName == "queue")
+    {
+        HandleQueueGetCommand();
+        return;
+    }
+    if(secondaryCommandName == "history")
+    {
+        HandleHistoryGetCommand();
+        return;
+    }
+    HandleInvalidInput();
+}
+
+
+auto HandleVarGetCommand(std::span<Token const> input) -> void
+{
+    if(input.front() == "--all")
     {
         PrintAllVariables();
         return;
     }
-    for(auto && variableName : std::span(input).subspan<1>())
+    for(auto && variableName : input)
     {
         PrintVariable(variableName);
     }
 }
 
 
-auto HandleSetCommand(Input const & input) -> void
+auto HandleQueueGetCommand() -> void
 {
-    if(input[1] == "--all")
+    PRINTF("EDU program queue: current index = %i, size = %i\n",
+           persistentVariables.Load<"eduProgramQueueIndex">(),
+           static_cast<int>(edu::programQueue.Size()));
+
+    for(auto index = 0U; index < edu::programQueue.Size(); ++index)
     {
-        ResetAllVariables();
+        auto entry = edu::programQueue.Get(index);
+        // Workaround because RODOS::PRINTF does not support formatting with padding > 9
+        if(value_of(entry.startTime) < 1'000'000'000)
+        {
+            PRINTF("  %2i: program ID = %05i, start time =  %9u, timeout = %4i s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+        }
+        else
+        {
+            PRINTF("  %2i: program ID = %05i, start time = %u, timeout = %4i s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   entry.timeout);
+        }
+    }
+}
+
+
+auto HandleHistoryGetCommand() -> void
+{
+    PRINTF("EDU program history size = %i:\n", static_cast<int>(edu::programStatusHistory.Size()));
+    for(auto index = 0U; index < edu::programStatusHistory.Size(); ++index)
+    {
+        auto entry = edu::programStatusHistory.Get(index);
+        // Workaround because RODOS::PRINTF does not support formatting with padding > 9
+        if(value_of(entry.startTime) < 1'000'000'000)
+        {
+            PRINTF("  %2i: program ID = %05i, start time =  %9u, status = %s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   ToCZString(entry.status));
+        }
+        else
+        {
+            PRINTF("  %2i: program ID = %05i, start time = %u, status = %s\n",
+                   index,
+                   value_of(entry.programId),
+                   static_cast<unsigned>(value_of(entry.startTime)),
+                   ToCZString(entry.status));
+        }
+    }
+}
+
+
+auto HandleSetCommand(std::span<Token const> input) -> void
+{
+    auto const & secondaryCommandName = input.front();
+    auto nCommandsParsed = 1U;
+    if(secondaryCommandName == "var")
+    {
+        HandleVarSetCommand(input.subspan(nCommandsParsed));
         return;
     }
+    if(secondaryCommandName == "queue")
+    {
+        HandleQueueSetCommand(input.subspan(nCommandsParsed));
+        return;
+    }
+    HandleInvalidInput();
+}
+
+
+auto HandleVarSetCommand(std::span<Token const> input) -> void
+{
     // The set command requires variable-value pairs -> even number of arguments
-    auto nArguments = input.size() - 1;
+    auto nArguments = input.size();
     if(nArguments % 2 != 0)
     {
         HandleInvalidInput();
         return;
     }
-    for(auto i = 1U; i < input.size(); i += 2)
+    for(auto i = 0U; i < input.size(); i += 2)
     {
         auto const & variable = input[i];
         auto const & value = input[i + 1];
         SetVariable(variable, value);
     }
+}
+
+
+auto HandleQueueSetCommand(std::span<Token const> input) -> void
+{
+    // The set command requires programId-startTime-timeout triplets -> dividable by 3
+    auto nArguments = input.size();
+    if(nArguments % 3 != 0)
+    {
+        HandleInvalidInput();
+        return;
+    }
+    for(auto i = 0U; i < input.size(); i += 3)
+    {
+        auto programIdResult = ParseAsUInt32(input[i]);
+        auto startTimeResult = ParseAsUInt32(input[i + 1]);
+        auto timeoutResult = ParseAsUInt32(input[i + 2]);
+
+        if(programIdResult.has_error() or startTimeResult.has_error() or timeoutResult.has_error())
+        {
+            PRINTF(
+                "Invalid input for EDU program entry: programId = %s, startTime = %s, "
+                "timeout = %s\n\n",
+                input[i].c_str(),
+                input[i + 1].c_str(),
+                input[i + 2].c_str());
+            return;
+        }
+        if(edu::programQueue.IsFull())
+        {
+            PRINTF("EDU ProgramQueue full, can't add more!\n\n");
+            return;
+        }
+
+        auto entry = edu::ProgramQueueEntry{ProgramId(programIdResult.value()),
+                                            RealTime(startTimeResult.value()),
+                                            static_cast<std::int16_t>(timeoutResult.value())};
+        PRINTF("Added program: program ID = %i, start time = %u, timeout = %i s\n",
+               value_of(entry.programId),
+               static_cast<unsigned>(value_of(entry.startTime)),
+               entry.timeout);
+        edu::programQueue.PushBack(entry);
+    }
+}
+
+
+auto HandleResetCommand(std::span<Token const> input) -> void
+{
+    auto const & secondaryCommandName = input.front();
+    if(secondaryCommandName == "var")
+    {
+        ResetAllVariables();
+        return;
+    }
+    if(secondaryCommandName == "queue")
+    {
+        edu::programQueue.Clear();
+        PRINTF("Cleared EDU Queue\n");
+        return;
+    }
+    if(secondaryCommandName == "history")
+    {
+        auto historySection = framSections.Get<"eduProgramStatusHistory">();
+        auto resetData = std::array<Byte const, value_of(historySection.size)>{};
+        fram::WriteTo(historySection.begin, Span(resetData), framTimeout);
+
+        PRINTF("Cleared EDU History\n");
+        return;
+    }
+    HandleInvalidInput();
 }
 
 
@@ -301,7 +493,7 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     }
     else if(variable == "fileTransferWindowEnd")
     {
-        etl::to_string(persistentVariables.Load<"fileTransferWindowEnd">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"fileTransferWindowEnd">()), value);
     }
     else if(variable == "antennasShouldBeDeployed")
     {
@@ -309,15 +501,15 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     }
     else if(variable == "realTime")
     {
-        etl::to_string(persistentVariables.Load<"realTime">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"realTime">()), value);
     }
     else if(variable == "realTimeOffset")
     {
-        etl::to_string(persistentVariables.Load<"realTimeOffset">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"realTimeOffset">()), value);
     }
     else if(variable == "realTimeOffsetCorrection")
     {
-        etl::to_string(persistentVariables.Load<"realTimeOffsetCorrection">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"realTimeOffsetCorrection">()), value);
     }
     else if(variable == "nFirmwareChecksumErrors")
     {
@@ -354,7 +546,7 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     }
     else if(variable == "maxEduIdleDuration")
     {
-        etl::to_string(persistentVariables.Load<"maxEduIdleDuration">().value_of(), value);
+        etl::to_string(value_of(persistentVariables.Load<"maxEduIdleDuration">()), value);
     }
     else if(variable == "newEduResultIsAvailable")
     {
@@ -661,6 +853,31 @@ auto ToString(fw::PartitionId id, etl::istring * string) -> void
             *string = "secondary2";
             break;
     }
+}
+
+
+auto ToCZString(edu::ProgramStatus status) -> char const *
+{
+    switch(status)
+    {
+        case edu::ProgramStatus::programRunning:
+            return "programRunning";
+        case edu::ProgramStatus::programCouldNotBeStarted:
+            return "programCouldNotBeStarted";
+        case edu::ProgramStatus::programExecutionFailed:
+            return "programExecutionFailed";
+        case edu::ProgramStatus::programExecutionSucceeded:
+            return "programExecutionSucceeded";
+        case edu::ProgramStatus::resultStoredInFileSystem:
+            return "resultStoredInFileSystem";
+        case edu::ProgramStatus::resultRequestedByGround:
+            return "resultRequestedByGround";
+        case edu::ProgramStatus::resultAcknowledgedByGround:
+            return "resultAcknowledgedByGround";
+        case edu::ProgramStatus::resultDeleted:
+            return "resultDeleted";
+    }
+    return "unknown state";
 }
 }
 }
