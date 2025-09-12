@@ -39,6 +39,11 @@ struct ProtocolDataUnit
 class FileDataPdu : public Payload
 {
 public:
+    static constexpr auto maxFileDataLength = 205U;
+
+    FileDataPdu() = default;
+    explicit FileDataPdu(std::uint32_t offset, std::span<Byte const> fileData);
+
     std::uint32_t offset = 0;
     std::span<Byte const> fileData;
 
@@ -138,6 +143,12 @@ class AckPdu : public Payload
 public:
     static constexpr auto directiveCode = DirectiveCode::ack;
 
+    AckPdu() = default;
+
+    explicit AckPdu(DirectiveCode acknowledgedDirectiveCode,
+                    ConditionCode conditionCode,
+                    TransactionStatus transactionStatus) noexcept;
+
     UInt<4> acknowledgedPduDirectiveCode =
         static_cast<std::uint8_t>(DirectiveCode::finished);  // EOF or Finished
     UInt<4> directiveSubtypeCode =
@@ -163,6 +174,12 @@ class MetadataPdu : public Payload
 {
 public:
     static constexpr auto directiveCode = DirectiveCode::metadata;
+
+    MetadataPdu() = default;
+
+    explicit MetadataPdu(std::uint32_t fileSize,
+                         std::span<Byte const> sourceFileName,
+                         std::span<Byte const> destinationFileName) noexcept;
 
     UInt<1> reserved = 0;
     UInt<1> closureRequestd = 0;  // 0 in ACK mode

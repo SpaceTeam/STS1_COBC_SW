@@ -140,6 +140,45 @@ TEST_CASE("Parsing ProtocolDataUnit")
 }
 
 
+TEST_CASE("FileDataPdu Constructor")
+{
+    static constexpr auto fileData = std::array{0xAB_b, 0xCD_b, 0xEF_b};
+    auto fileDataPdu = sts1cobcsw::FileDataPdu(0x1234'5678U, fileData);
+
+    CHECK(fileDataPdu.offset == 0x1234'5678U);
+    CHECK(fileDataPdu.fileData.size() == 3U);
+    CHECK(fileDataPdu.fileData[0] == 0xAB_b);
+    CHECK(fileDataPdu.fileData[1] == 0xCD_b);
+    CHECK(fileDataPdu.fileData[2] == 0xEF_b);
+
+    // Serialization
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto addResult = fileDataPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == fileDataPdu.Size());
+    CHECK(dataField[0] == 0x12_b);
+    CHECK(dataField[1] == 0x34_b);
+    CHECK(dataField[2] == 0x56_b);
+    CHECK(dataField[3] == 0x78_b);
+    CHECK(dataField[4] == 0xAB_b);  // file data
+    CHECK(dataField[5] == 0xCD_b);
+    CHECK(dataField[6] == 0xEF_b);
+
+    // Test with maximum allowed file data length (205 bytes)
+    auto maxFileData = etl::vector<Byte, sts1cobcsw::FileDataPdu::maxFileDataLength>{};
+    maxFileData.resize(sts1cobcsw::FileDataPdu::maxFileDataLength);
+    std::fill(maxFileData.begin(), maxFileData.end(), 0xFF_b);
+
+    auto maxFileDataPdu = sts1cobcsw::FileDataPdu(0, maxFileData);
+    CHECK(maxFileDataPdu.fileData.size() == sts1cobcsw::FileDataPdu::maxFileDataLength);
+
+    // Test empty file data (valid case)
+    auto emptyFileDataPdu = sts1cobcsw::FileDataPdu(42U, std::span<Byte const>{});
+    CHECK(emptyFileDataPdu.offset == 42U);
+    CHECK(emptyFileDataPdu.fileData.size() == 0U);
+}
+
+
 TEST_CASE("Adding FileDataPdu to data field")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -148,7 +187,7 @@ TEST_CASE("Adding FileDataPdu to data field")
     static constexpr auto fileData = std::array{0xAB_b, 0xCD_b};
     fileDataPdu.fileData = fileData;
 
-    CHECK(fileDataPdu.Size() == 6U);  // 4 B offset + 2 B data field
+    CHECK(fileDataPdu.Size() == 6U);  // 4B offset + 2B data field
 
     auto addResult = fileDataPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
@@ -243,7 +282,7 @@ TEST_CASE("Adding EndOfFilePdu to data field")
     CHECK(dataField[2] == 0x34_b);  // File checksum
     CHECK(dataField[3] == 0x56_b);  // File checksum
     CHECK(dataField[4] == 0x78_b);  // File checksum (low byte)
-    CHECK(dataField[5] == 0x9A_b);  // File size (high byte)
+    CHECK(dataField[5] == 0x9A_b);  // File size
     CHECK(dataField[6] == 0xBC_b);  // File size
     CHECK(dataField[7] == 0xDE_b);  // File size
     CHECK(dataField[8] == 0xF0_b);  // File size (low byte)
@@ -435,6 +474,38 @@ TEST_CASE("Parsing FinishedPdu")
 }
 
 
+TEST_CASE("AckPdu Constructor")
+{
+    // Test constructor with Finished directive
+    auto ackPdu = sts1cobcsw::AckPdu(sts1cobcsw::DirectiveCode::finished,
+                                     sts1cobcsw::noErrorConditionCode,
+                                     sts1cobcsw::terminatedTransactionStatus);
+
+    CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 5);  // Finished = 5
+    CHECK(ackPdu.directiveSubtypeCode == 0b0001);                    // Finished gets 0b0001
+    CHECK(value_of(ackPdu.conditionCode) == 0);                      // no error
+    CHECK(ackPdu.transactionStatus == sts1cobcsw::terminatedTransactionStatus);
+
+    // Test constructor with EndOfFile directive
+    auto ackPduEof = sts1cobcsw::AckPdu(sts1cobcsw::DirectiveCode::endOfFile,
+                                        sts1cobcsw::positiveAckLimitReachedConditionCode,
+                                        sts1cobcsw::activeTransactionStatus);
+
+    CHECK(ackPduEof.acknowledgedPduDirectiveCode.ToUnderlying() == 4);  // EndOfFile = 4
+    CHECK(ackPduEof.directiveSubtypeCode == 0b0000);                    // Non-Finished gets 0b0000
+    CHECK(value_of(ackPduEof.conditionCode) == 1);  // positive ACK limit reached
+    CHECK(ackPduEof.transactionStatus == sts1cobcsw::activeTransactionStatus);
+
+    // Test serialization
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto addResult = ackPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == ackPdu.Size());
+    CHECK(dataField[0] == 0x51_b);  // 5 << 4 | 1 = 0x51 (Finished with subtype 1)
+    CHECK(dataField[1] == 0x02_b);  //
+}
+
+
 TEST_CASE("Adding AckPdu")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -487,6 +558,46 @@ TEST_CASE("Parsing AckPdu")
     parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidDirectiveSubtypeCode);
+}
+
+
+TEST_CASE("MetadataPdu Constructor")
+{
+    static constexpr auto sourceFileName = std::array{0xAB_b, 0xCD_b, 0xEF_b};
+    static constexpr auto destinationFileName = std::array{0x01_b, 0x23_b};
+
+    auto metadataPdu = sts1cobcsw::MetadataPdu(42U,  // fileSize
+                                               sourceFileName,
+                                               destinationFileName);
+
+    CHECK(metadataPdu.fileSize == 42U);
+    CHECK(metadataPdu.sourceFileNameLength == 3U);
+    CHECK(metadataPdu.sourceFileNameValue.size() == 3U);
+    CHECK(metadataPdu.sourceFileNameValue[0] == 0xAB_b);
+    CHECK(metadataPdu.sourceFileNameValue[1] == 0xCD_b);
+    CHECK(metadataPdu.sourceFileNameValue[2] == 0xEF_b);
+
+    CHECK(metadataPdu.destinationFileNameLength == 2U);
+    CHECK(metadataPdu.destinationFileNameValue.size() == 2U);
+    CHECK(metadataPdu.destinationFileNameValue[0] == 0x01_b);
+    CHECK(metadataPdu.destinationFileNameValue[1] == 0x23_b);
+
+    // Test serialization
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto addResult = metadataPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+
+    CHECK(dataField.size() == metadataPdu.Size());
+    // Expected: 1B flags + 4B file size + 1B source length + 3B source + 1B dest length + 2B
+    // dest = 12B
+    CHECK(dataField.size() == 12U);
+    CHECK(dataField[0] == 0x3C_b);   // flags: reserved=0, closure=0, checksum=15, reserved2=0
+    CHECK(dataField[1] == 0x00_b);   // file size
+    CHECK(dataField[4] == 0x2A_b);   // file size
+    CHECK(dataField[5] == 0x03_b);   // source file name length
+    CHECK(dataField[6] == 0xAB_b);   // source file name
+    CHECK(dataField[9] == 0x02_b);   // destination file name length
+    CHECK(dataField[10] == 0x01_b);  // destination file name
 }
 
 
@@ -651,7 +762,7 @@ TEST_CASE("Parsing NackPdu")
 
     auto & nackPdu = parseResult.value();
 
-    CHECK(nackPdu.startOfScope == 0x0000);
+    CHECK(nackPdu.startOfScope == 0x0000U);
     CHECK(nackPdu.endOfScope == 0x1202'AAAA);
     CHECK(nackPdu.segmentRequests[0] == 0xAAAA'AAAA'AAAA'AA02U);
 }

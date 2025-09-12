@@ -21,6 +21,16 @@
 
 namespace sts1cobcsw
 {
+FileDataPdu::FileDataPdu(std::uint32_t offset, std::span<Byte const> fileData)
+    : offset(offset), fileData(fileData)
+{
+    if(fileData.size() > maxFileDataLength)
+    {
+        assert(fileData.size() <= maxFileDataLength);
+    }
+}
+
+
 auto FileDataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -82,6 +92,17 @@ auto FinishedPdu::DoSize() const -> std::uint16_t
 }
 
 
+AckPdu::AckPdu(DirectiveCode acknowledgedDirectiveCode,
+               ConditionCode conditionCode,
+               TransactionStatus transactionStatus) noexcept
+    : acknowledgedPduDirectiveCode(static_cast<std::uint8_t>(acknowledgedDirectiveCode)),
+      directiveSubtypeCode(acknowledgedDirectiveCode == DirectiveCode::finished ? 0b0001 : 0b0000),
+      conditionCode(conditionCode),
+      spare(0),
+      transactionStatus(transactionStatus)
+{}
+
+
 auto AckPdu::DoSize() const -> std::uint16_t
 {
     return minParameterFieldLength;
@@ -99,6 +120,16 @@ auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
                                        value_of(transactionStatus));
 }
 
+
+MetadataPdu::MetadataPdu(std::uint32_t fileSize,
+                         std::span<Byte const> sourceFileName,
+                         std::span<Byte const> destinationFileName) noexcept
+    : fileSize(fileSize),
+      sourceFileNameLength(static_cast<std::uint8_t>(sourceFileName.size())),
+      sourceFileNameValue(sourceFileName),
+      destinationFileNameLength(static_cast<std::uint8_t>(destinationFileName.size())),
+      destinationFileNameValue(destinationFileName)
+{}
 
 auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
