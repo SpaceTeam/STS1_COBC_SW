@@ -45,31 +45,48 @@ TEST_CASE("Convolutional coding")
 {
     // EncodedSize() and UnencodedSize()
     {
-        static_assert(cc::ViterbiCodec::EncodedSize(100, false) == 150);
-        static_assert(cc::ViterbiCodec::EncodedSize(100, true) == 152);
-        static_assert(cc::ViterbiCodec::EncodedSize(101, false) == 152);
-        static_assert(cc::ViterbiCodec::EncodedSize(101, true) == 153);
-        static_assert(cc::ViterbiCodec::EncodedSize(102, false) == 153);
-        static_assert(cc::ViterbiCodec::EncodedSize(102, true) == 155);
-        static_assert(cc::ViterbiCodec::EncodedSize(103, false) == 155);
-        static_assert(cc::ViterbiCodec::EncodedSize(103, true) == 156);
-        static_assert(cc::ViterbiCodec::EncodedSize(255, true) == 384);
+        static_assert(cc::ViterbiCodec::EncodedSize(10, false) == 15);
+        static_assert(cc::ViterbiCodec::EncodedSize(11, false) == 17);
+        static_assert(cc::ViterbiCodec::EncodedSize(12, false) == 18);
+        static_assert(cc::ViterbiCodec::EncodedSize(13, false) == 20);
+        static_assert(cc::ViterbiCodec::EncodedSize(14, false) == 21);
 
-        static_assert(cc::ViterbiCodec::UnencodedSize(152, false) == 100);
-        static_assert(cc::ViterbiCodec::UnencodedSize(152, true) == 100);
-        static_assert(cc::ViterbiCodec::UnencodedSize(153, false) == 102);
-        static_assert(cc::ViterbiCodec::UnencodedSize(155, false) == 102);
-        static_assert(cc::ViterbiCodec::UnencodedSize(156, false) == 104);
-        static_assert(cc::ViterbiCodec::UnencodedSize(275, false) == 182);
-        static_assert(cc::ViterbiCodec::UnencodedSize(275, true) == 182);
-        static_assert(cc::ViterbiCodec::UnencodedSize(276, true) == 182);
-        static_assert(cc::ViterbiCodec::UnencodedSize(383, false) == 254);
+        static_assert(cc::ViterbiCodec::UnencodedSize(15, false) == 10);
+        static_assert(cc::ViterbiCodec::UnencodedSize(16, false) == 10);
+        static_assert(cc::ViterbiCodec::UnencodedSize(17, false) == 11);
+        static_assert(cc::ViterbiCodec::UnencodedSize(18, false) == 12);
+        static_assert(cc::ViterbiCodec::UnencodedSize(19, false) == 12);
+        static_assert(cc::ViterbiCodec::UnencodedSize(20, false) == 13);
+        static_assert(cc::ViterbiCodec::UnencodedSize(21, false) == 14);
+
+        static_assert(cc::ViterbiCodec::EncodedSize(10, true) == 17);
+        static_assert(cc::ViterbiCodec::EncodedSize(11, true) == 18);
+        static_assert(cc::ViterbiCodec::EncodedSize(12, true) == 20);
+        static_assert(cc::ViterbiCodec::EncodedSize(13, true) == 21);
+        static_assert(cc::ViterbiCodec::EncodedSize(14, true) == 23);
+
+        static_assert(cc::ViterbiCodec::UnencodedSize(17, true) == 10);
+        static_assert(cc::ViterbiCodec::UnencodedSize(18, true) == 11);
+        static_assert(cc::ViterbiCodec::UnencodedSize(19, true) == 11);
+        static_assert(cc::ViterbiCodec::UnencodedSize(20, true) == 12);
+        static_assert(cc::ViterbiCodec::UnencodedSize(21, true) == 13);
+        static_assert(cc::ViterbiCodec::UnencodedSize(22, true) == 13);
+        static_assert(cc::ViterbiCodec::UnencodedSize(23, true) == 14);
+
+        static_assert(cc::ViterbiCodec::EncodedSize(255, true) == 384);
+        static_assert(cc::ViterbiCodec::UnencodedSize(384, true) == 255);
     }
 
     // Encode() returns the correct amount of data
     {
+        // Encode() processes data in chunks of 2 bytes so that we always get a whole number of
+        // output bytes. It has internal state to handle odd-sized inputs. Calling it multiple times
+        // with the same input can therefore give different results. Flushing resets the internal
+        // state.
         auto cc = cc::ViterbiCodec();
         REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/false).size() == 15U);
+        REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/false).size() == 15U);
+        REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/false).size() == 16U);
         REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/false).size() == 17U);
         REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/true).size() == 17U);
         REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/true).size() == 18U);

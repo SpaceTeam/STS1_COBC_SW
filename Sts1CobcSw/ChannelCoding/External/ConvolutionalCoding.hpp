@@ -110,7 +110,7 @@ constexpr auto ViterbiCodec::EncodedSize(std::size_t unencodedSize,
     #else
     auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 2;
     #endif
-    auto size = (bits + CHAR_BIT - 1) / CHAR_BIT;
+    auto size = (bits + CHAR_BIT - 1) / CHAR_BIT; // Round up
     return size;
 #endif
 }
@@ -125,11 +125,10 @@ constexpr auto ViterbiCodec::UnencodedSize(std::size_t encodedSize,
     auto flushingBits = withFlushBits ? nFlushBits : 0U;
     #ifdef USE_PUNCTURING
     auto size = (((encodedSize * CHAR_BIT) * 2 / 3) - flushingBits) / CHAR_BIT;
-    return size % 2 == 0 ? size : size - 1;
     #else
     auto size = (((encodedSize * CHAR_BIT) / 2) - flushingBits) / CHAR_BIT;
-    return size;
     #endif
+    return size;
 #endif
 }
 
