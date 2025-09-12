@@ -70,13 +70,13 @@ auto Open(Path const & path, unsigned int flags) -> Result<File>
 }
 
 
-auto File::SeekAbsolute(int offset) -> Result<int>
+auto File::SeekAbsolute(int offset) const -> Result<int>
 {
     return Seek(offset, LFS_SEEK_SET);
 }
 
 
-auto File::SeekRelative(int offset) -> Result<int>
+auto File::SeekRelative(int offset) const -> Result<int>
 {
     return Seek(offset, LFS_SEEK_CUR);
 }
@@ -249,7 +249,7 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
 }
 
 
-auto File::Seek(int offset, int whence) -> Result<int>
+auto File::Seek(int offset, int whence) const -> Result<int>
 {
     if(not persistentVariables.Load<"flashIsWorking">())
     {
