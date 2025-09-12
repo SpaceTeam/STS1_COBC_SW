@@ -32,7 +32,7 @@ public:
     [[nodiscard]] auto Write(std::span<Byte const, extent> data) -> Result<int>;
     [[nodiscard]] auto SeekAbsolute(int offset) const -> Result<int>;
     [[nodiscard]] auto SeekRelative(int offset) const -> Result<int>;
-    [[nodiscard]] auto Size() const -> Result<int>;
+    [[nodiscard]] auto Size() const -> Result<std::size_t>;
     [[nodiscard]] auto Close() const -> Result<void>;
     [[nodiscard]] auto Flush() -> Result<void>;
 
