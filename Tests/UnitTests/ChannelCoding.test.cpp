@@ -45,31 +45,48 @@ TEST_CASE("Convolutional coding")
 {
     // EncodedSize() and UnencodedSize()
     {
-        static_assert(cc::ViterbiCodec::EncodedSize(100, false) == 150);
-        static_assert(cc::ViterbiCodec::EncodedSize(100, true) == 152);
-        static_assert(cc::ViterbiCodec::EncodedSize(101, false) == 152);
-        static_assert(cc::ViterbiCodec::EncodedSize(101, true) == 153);
-        static_assert(cc::ViterbiCodec::EncodedSize(102, false) == 153);
-        static_assert(cc::ViterbiCodec::EncodedSize(102, true) == 155);
-        static_assert(cc::ViterbiCodec::EncodedSize(103, false) == 155);
-        static_assert(cc::ViterbiCodec::EncodedSize(103, true) == 156);
-        static_assert(cc::ViterbiCodec::EncodedSize(255, true) == 384);
+        static_assert(cc::ViterbiCodec::EncodedSize(10, false) == 15);
+        static_assert(cc::ViterbiCodec::EncodedSize(11, false) == 17);
+        static_assert(cc::ViterbiCodec::EncodedSize(12, false) == 18);
+        static_assert(cc::ViterbiCodec::EncodedSize(13, false) == 20);
+        static_assert(cc::ViterbiCodec::EncodedSize(14, false) == 21);
 
-        static_assert(cc::ViterbiCodec::UnencodedSize(152, false) == 100);
-        static_assert(cc::ViterbiCodec::UnencodedSize(152, true) == 100);
-        static_assert(cc::ViterbiCodec::UnencodedSize(153, false) == 102);
-        static_assert(cc::ViterbiCodec::UnencodedSize(155, false) == 102);
-        static_assert(cc::ViterbiCodec::UnencodedSize(156, false) == 104);
-        static_assert(cc::ViterbiCodec::UnencodedSize(275, false) == 182);
-        static_assert(cc::ViterbiCodec::UnencodedSize(275, true) == 182);
-        static_assert(cc::ViterbiCodec::UnencodedSize(276, true) == 182);
-        static_assert(cc::ViterbiCodec::UnencodedSize(383, false) == 254);
+        static_assert(cc::ViterbiCodec::UnencodedSize(15, false) == 10);
+        static_assert(cc::ViterbiCodec::UnencodedSize(16, false) == 10);
+        static_assert(cc::ViterbiCodec::UnencodedSize(17, false) == 11);
+        static_assert(cc::ViterbiCodec::UnencodedSize(18, false) == 12);
+        static_assert(cc::ViterbiCodec::UnencodedSize(19, false) == 12);
+        static_assert(cc::ViterbiCodec::UnencodedSize(20, false) == 13);
+        static_assert(cc::ViterbiCodec::UnencodedSize(21, false) == 14);
+
+        static_assert(cc::ViterbiCodec::EncodedSize(10, true) == 17);
+        static_assert(cc::ViterbiCodec::EncodedSize(11, true) == 18);
+        static_assert(cc::ViterbiCodec::EncodedSize(12, true) == 20);
+        static_assert(cc::ViterbiCodec::EncodedSize(13, true) == 21);
+        static_assert(cc::ViterbiCodec::EncodedSize(14, true) == 23);
+
+        static_assert(cc::ViterbiCodec::UnencodedSize(17, true) == 10);
+        static_assert(cc::ViterbiCodec::UnencodedSize(18, true) == 11);
+        static_assert(cc::ViterbiCodec::UnencodedSize(19, true) == 11);
+        static_assert(cc::ViterbiCodec::UnencodedSize(20, true) == 12);
+        static_assert(cc::ViterbiCodec::UnencodedSize(21, true) == 13);
+        static_assert(cc::ViterbiCodec::UnencodedSize(22, true) == 13);
+        static_assert(cc::ViterbiCodec::UnencodedSize(23, true) == 14);
+
+        static_assert(cc::ViterbiCodec::EncodedSize(255, true) == 384);
+        static_assert(cc::ViterbiCodec::UnencodedSize(384, true) == 255);
     }
 
     // Encode() returns the correct amount of data
     {
+        // Encode() processes data in chunks of 2 bytes so that we always get a whole number of
+        // output bytes. It has internal state to handle odd-sized inputs. Calling it multiple times
+        // with the same input can therefore give different results. Flushing resets the internal
+        // state.
         auto cc = cc::ViterbiCodec();
         REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/false).size() == 15U);
+        REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/false).size() == 15U);
+        REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/false).size() == 16U);
         REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/false).size() == 17U);
         REQUIRE(cc.Encode(std::array<Byte, 10>{}, /*flush=*/true).size() == 17U);
         REQUIRE(cc.Encode(std::array<Byte, 11>{}, /*flush=*/true).size() == 18U);
@@ -80,36 +97,41 @@ TEST_CASE("Convolutional coding")
     // We have to use std::to_array here because deducing the type of the array with 384
     // elements exceeds the fold expression limit of 256
     static constexpr auto correctlyEncodedMessage = std::to_array<Byte>(
-        {0_b,   0_b,   1_b,   185_b, 238_b, 119_b, 94_b,  92_b,  204_b, 117_b, 50_b,  186_b, 145_b,
-         243_b, 182_b, 130_b, 157_b, 192_b, 101_b, 47_b,  123_b, 78_b,  65_b,  13_b,  172_b, 102_b,
-         111_b, 223_b, 8_b,   25_b,  56_b,  186_b, 162_b, 19_b,  212_b, 212_b, 247_b, 21_b,  216_b,
-         228_b, 123_b, 174_b, 3_b,   201_b, 21_b,  40_b,  167_b, 99_b,  209_b, 29_b,  184_b, 98_b,
-         115_b, 206_b, 133_b, 193_b, 117_b, 174_b, 175_b, 3_b,   74_b,  110_b, 15_b,  89_b,  0_b,
-         121_b, 190_b, 178_b, 194_b, 149_b, 220_b, 180_b, 119_b, 251_b, 214_b, 4_b,   149_b, 160_b,
-         227_b, 39_b,  27_b,  200_b, 73_b,  109_b, 44_b,  136_b, 97_b,  63_b,  230_b, 23_b,  216_b,
-         84_b,  172_b, 243_b, 58_b,  218_b, 61_b,  179_b, 114_b, 142_b, 221_b, 4_b,   105_b, 111_b,
-         191_b, 66_b,  1_b,   201_b, 166_b, 192_b, 197_b, 181_b, 174_b, 179_b, 82_b,  28_b,  8_b,
-         121_b, 114_b, 126_b, 155_b, 85_b,  28_b,  232_b, 59_b,  106_b, 15_b,  137_b, 209_b, 36_b,
-         231_b, 167_b, 192_b, 38_b,  171_b, 211_b, 72_b,  221_b, 52_b,  250_b, 102_b, 31_b,  148_b,
-         16_b,  230_b, 46_b,  203_b, 85_b,  64_b,  189_b, 178_b, 242_b, 6_b,   153_b, 156_b, 112_b,
-         125_b, 93_b,  124_b, 110_b, 51_b,  10_b,  137_b, 129_b, 177_b, 162_b, 239_b, 199_b, 64_b,
-         200_b, 165_b, 51_b,  166_b, 211_b, 212_b, 20_b,  104_b, 255_b, 122_b, 30_b,  27_b,  187_b,
-         18_b,  8_b,   213_b, 100_b, 239_b, 103_b, 223_b, 196_b, 9_b,   169_b, 214_b, 109_b, 207_b,
-         101_b, 3_b,   185_b, 130_b, 177_b, 2_b,   169_b, 223_b, 116_b, 77_b,  30_b,  120_b, 94_b,
-         112_b, 14_b,  185_b, 194_b, 181_b, 146_b, 172_b, 195_b, 112_b, 139_b, 161_b, 3_b,   229_b,
-         215_b, 228_b, 87_b,  108_b, 207_b, 57_b,  26_b,  43_b,  248_b, 22_b,  56_b,  150_b, 96_b,
-         223_b, 36_b,  219_b, 244_b, 74_b,  173_b, 13_b,  240_b, 118_b, 190_b, 158_b, 0_b,   89_b,
-         44_b,  187_b, 114_b, 66_b,  205_b, 150_b, 131_b, 193_b, 133_b, 237_b, 183_b, 98_b,  95_b,
-         12_b,  73_b,  49_b,  122_b, 171_b, 22_b,  24_b,  216_b, 120_b, 110_b, 63_b,  202_b, 213_b,
-         20_b,  164_b, 163_b, 240_b, 101_b, 175_b, 227_b, 11_b,  217_b, 4_b,   185_b, 98_b,  47_b,
-         215_b, 20_b,  225_b, 94_b,  188_b, 82_b,  48_b,  202_b, 181_b, 130_b, 113_b, 158_b, 236_b,
-         7_b,   122_b, 45_b,  11_b,  105_b, 67_b,  125_b, 142_b, 241_b, 198_b, 165_b, 159_b, 176_b,
-         71_b,  184_b, 210_b, 52_b,  214_b, 164_b, 211_b, 100_b, 31_b,  248_b, 10_b,  105_b, 28_b,
-         203_b, 101_b, 15_b,  165_b, 19_b,  232_b, 23_b,  168_b, 195_b, 121_b, 222_b, 58_b,  195_b,
-         5_b,   137_b, 173_b, 115_b, 110_b, 31_b,  200_b, 69_b,  113_b, 190_b, 161_b, 176_b, 178_b,
-         178_b, 222_b, 196_b, 85_b,  108_b, 127_b, 126_b, 2_b,   9_b,   156_b, 37_b,  107_b, 239_b,
-         75_b,  29_b,  8_b,   249_b, 166_b, 35_b,  151_b, 208_b, 199_b, 86_b,  220_b, 212_b, 56_b,
-         170_b, 51_b,  138_b, 17_b,  24_b,  235_b, 48_b});
+        {0x6D_b, 0xB6_b, 0xDA_b, 0xD4_b, 0x58_b, 0xAC_b, 0x33_b, 0xEA_b, 0x17_b, 0x18_b, 0x84_b,
+         0x61_b, 0xFC_b, 0x45_b, 0x6D_b, 0xEF_b, 0x2B_b, 0x1B_b, 0x08_b, 0x99_b, 0xA0_b, 0x23_b,
+         0xF7_b, 0xD6_b, 0xC1_b, 0xD0_b, 0xB4_b, 0xB2_b, 0xBE_b, 0xC2_b, 0x55_b, 0x0C_b, 0x79_b,
+         0x7E_b, 0x62_b, 0x0F_b, 0x9A_b, 0xA3_b, 0x03_b, 0x89_b, 0xCD_b, 0x75_b, 0x6E_b, 0x7F_b,
+         0xCE_b, 0x45_b, 0x11_b, 0xB8_b, 0xBC_b, 0xAB_b, 0x63_b, 0x0F_b, 0xC5_b, 0x15_b, 0xE8_b,
+         0x77_b, 0xAE_b, 0xC3_b, 0x19_b, 0xD8_b, 0x27_b, 0xD8_b, 0xD4_b, 0x34_b, 0xB6_b, 0xA2_b,
+         0xD3_b, 0x04_b, 0x19_b, 0xF8_b, 0x6A_b, 0x6F_b, 0x1A_b, 0x4D_b, 0x0D_b, 0x69_b, 0x23_b,
+         0x7B_b, 0x8E_b, 0x91_b, 0xC0_b, 0xA5_b, 0xFF_b, 0xB6_b, 0x41_b, 0x3E_b, 0xBA_b, 0x52_b,
+         0x50_b, 0xCC_b, 0xB5_b, 0xE2_b, 0x77_b, 0x9E_b, 0x8C_b, 0x01_b, 0x50_b, 0x05_b, 0xA9_b,
+         0xE3_b, 0x6B_b, 0xDF_b, 0x04_b, 0xD9_b, 0x64_b, 0x2F_b, 0xB7_b, 0x12_b, 0xCB_b, 0x76_b,
+         0x1E_b, 0xD8_b, 0x18_b, 0x68_b, 0x3F_b, 0xAA_b, 0xD3_b, 0x14_b, 0xC4_b, 0xA5_b, 0xF6_b,
+         0xE3_b, 0xC7_b, 0x85_b, 0x8D_b, 0xB1_b, 0x62_b, 0x3F_b, 0x0A_b, 0x49_b, 0x51_b, 0x7C_b,
+         0xAD_b, 0x90_b, 0x70_b, 0xBE_b, 0xFE_b, 0x06_b, 0x59_b, 0x4C_b, 0xBD_b, 0x72_b, 0x22_b,
+         0xCB_b, 0x8B_b, 0x98_b, 0x10_b, 0x38_b, 0xF6_b, 0x66_b, 0xDF_b, 0x44_b, 0xDD_b, 0xF4_b,
+         0x2A_b, 0xAB_b, 0x10_b, 0xEB_b, 0xA7_b, 0x03_b, 0x85_b, 0xD1_b, 0xE4_b, 0x37_b, 0x6A_b,
+         0xCF_b, 0x59_b, 0x1C_b, 0x2D_b, 0x7E_b, 0x7E_b, 0x5E_b, 0x10_b, 0x08_b, 0xB9_b, 0xA2_b,
+         0xB3_b, 0x92_b, 0xCC_b, 0xC5_b, 0x76_b, 0x0D_b, 0xC9_b, 0x65_b, 0x63_b, 0xBF_b, 0x82_b,
+         0xD1_b, 0x04_b, 0xA9_b, 0xBF_b, 0x72_b, 0xBB_b, 0xDB_b, 0x14_b, 0x08_b, 0xB5_b, 0x62_b,
+         0xEF_b, 0x07_b, 0xD9_b, 0xC4_b, 0x69_b, 0xAF_b, 0x20_b, 0xA8_b, 0xA3_b, 0x33_b, 0xC6_b,
+         0xD5_b, 0xD4_b, 0x74_b, 0x6E_b, 0xFF_b, 0x1A_b, 0x18_b, 0x1D_b, 0x3D_b, 0x7A_b, 0x6E_b,
+         0x53_b, 0x0C_b, 0x89_b, 0xE1_b, 0xB7_b, 0xA2_b, 0x8F_b, 0xC1_b, 0x46_b, 0x4E_b, 0xCD_b,
+         0x55_b, 0x20_b, 0xBB_b, 0xB2_b, 0x92_b, 0x00_b, 0x99_b, 0xFC_b, 0x76_b, 0x60_b, 0x46_b,
+         0xAD_b, 0xD3_b, 0x28_b, 0xDB_b, 0x34_b, 0x9A_b, 0x60_b, 0x1F_b, 0xF4_b, 0x16_b, 0xFB_b,
+         0x35_b, 0x1A_b, 0xE8_b, 0x5B_b, 0x6C_b, 0x0F_b, 0xE9_b, 0xD7_b, 0x24_b, 0x87_b, 0xA1_b,
+         0xC6_b, 0xA0_b, 0xC3_b, 0xB5_b, 0xCE_b, 0xB5_b, 0x52_b, 0x7C_b, 0x0E_b, 0x79_b, 0x12_b,
+         0x78_b, 0x9D_b, 0xD3_b, 0x74_b, 0x8E_b, 0xBD_b, 0x02_b, 0x69_b, 0x0F_b, 0xB9_b, 0x42_b,
+         0x61_b, 0xCF_b, 0x8C_b, 0xE8_b, 0x67_b, 0x3F_b, 0x86_b, 0x11_b, 0xD8_b, 0x34_b, 0xAA_b,
+         0xF3_b, 0x5A_b, 0xDC_b, 0x17_b, 0x9B_b, 0xD0_b, 0x04_b, 0xF5_b, 0xA6_b, 0xE3_b, 0x47_b,
+         0x1D_b, 0xC8_b, 0x29_b, 0x6B_b, 0x2A_b, 0x0E_b, 0x09_b, 0x59_b, 0x60_b, 0x7F_b, 0xBE_b,
+         0xD2_b, 0xC4_b, 0x95_b, 0xBC_b, 0xB2_b, 0x71_b, 0x7D_b, 0xBE_b, 0x62_b, 0x13_b, 0xC8_b,
+         0x85_b, 0xA1_b, 0x73_b, 0xAE_b, 0xCF_b, 0x05_b, 0x57_b, 0x75_b, 0xDE_b, 0xE4_b, 0x1B_b,
+         0xA8_b, 0x03_b, 0xA9_b, 0x13_b, 0x28_b, 0xC7_b, 0x65_b, 0xCC_b, 0x06_b, 0x69_b, 0xDF_b,
+         0x68_b, 0x1F_b, 0x38_b, 0xDA_b, 0xA4_b, 0x13_b, 0xB4_b, 0xD2_b, 0xF1_b, 0x93_b, 0xB0_b,
+         0x82_b, 0xFD_b, 0xC6_b, 0x65_b, 0x4F_b, 0x7D_b, 0x4E_b, 0x21_b, 0x0B_b, 0xAA_b, 0xE0_b,
+         0x07_b, 0xB9_b, 0x8E_b, 0x71_b, 0x5E_b, 0x3C_b, 0xCA_b, 0x75_b, 0x5D_b, 0xE8_b});
     auto cc = cc::ViterbiCodec();
 
     // Endode() returns the correct data
@@ -189,46 +211,53 @@ TEST_CASE("Convolutional-Coding Without Puncturing")
     static constexpr auto inputSize = 255U;
     static constexpr auto message = GenerateSequentialBytes<inputSize>();
     static constexpr auto correctlyEncodedMessage = std::to_array<Byte>(
-        {0_b,   0_b,   0_b,   3_b,   188_b, 126_b, 241_b, 205_b, 77_b,  139_b, 199_b, 56_b,  123_b,
-         69_b,  54_b,  246_b, 138_b, 95_b,  28_b,  236_b, 160_b, 145_b, 237_b, 34_b,  81_b,  100_b,
-         219_b, 215_b, 103_b, 170_b, 42_b,  25_b,  149_b, 12_b,  115_b, 191_b, 207_b, 194_b, 130_b,
-         113_b, 62_b,  55_b,  180_b, 132_b, 8_b,   249_b, 69_b,  74_b,  249_b, 227_b, 111_b, 80_b,
-         211_b, 45_b,  158_b, 158_b, 34_b,  216_b, 168_b, 107_b, 20_b,  22_b,  89_b,  165_b, 232_b,
-         65_b,  206_b, 242_b, 114_b, 143_b, 63_b,  60_b,  131_b, 122_b, 9_b,   201_b, 181_b, 180_b,
-         248_b, 7_b,   68_b,  174_b, 210_b, 29_b,  110_b, 96_b,  35_b,  211_b, 159_b, 149_b, 21_b,
-         38_b,  169_b, 91_b,  228_b, 232_b, 91_b,  253_b, 189_b, 78_b,  1_b,   51_b,  76_b,  128_b,
-         240_b, 198_b, 122_b, 117_b, 198_b, 8_b,   139_b, 187_b, 55_b,  18_b,  161_b, 161_b, 29_b,
-         220_b, 80_b,  111_b, 236_b, 41_b,  102_b, 154_b, 218_b, 231_b, 151_b, 84_b,  29_b,  119_b,
-         59_b,  196_b, 135_b, 185_b, 202_b, 10_b,  118_b, 76_b,  252_b, 255_b, 64_b,  130_b, 13_b,
-         49_b,  177_b, 152_b, 39_b,  43_b,  155_b, 86_b,  214_b, 229_b, 106_b, 163_b, 224_b, 16_b,
-         92_b,  109_b, 17_b,  222_b, 174_b, 203_b, 72_b,  120_b, 244_b, 5_b,   185_b, 182_b, 5_b,
-         240_b, 143_b, 67_b,  51_b,  62_b,  126_b, 141_b, 194_b, 36_b,  84_b,  151_b, 232_b, 234_b,
-         165_b, 89_b,  25_b,  31_b,  147_b, 172_b, 47_b,  209_b, 98_b,  98_b,  211_b, 134_b, 245_b,
-         53_b,  73_b,  72_b,  4_b,   251_b, 184_b, 189_b, 50_b,  14_b,  142_b, 115_b, 195_b, 192_b,
-         127_b, 105_b, 233_b, 218_b, 85_b,  167_b, 24_b,  20_b,  164_b, 82_b,  46_b,  225_b, 146_b,
-         156_b, 223_b, 47_b,  96_b,  58_b,  134_b, 137_b, 58_b,  244_b, 119_b, 71_b,  203_b, 1_b,
-         65_b,  178_b, 253_b, 207_b, 176_b, 124_b, 12_b,  213_b, 154_b, 102_b, 38_b,  27_b,  107_b,
-         168_b, 215_b, 238_b, 93_b,  93_b,  225_b, 32_b,  172_b, 147_b, 201_b, 172_b, 239_b, 31_b,
-         83_b,  98_b,  30_b,  209_b, 162_b, 151_b, 40_b,  36_b,  148_b, 89_b,  217_b, 234_b, 101_b,
-         67_b,  243_b, 240_b, 79_b,  141_b, 2_b,   62_b,  190_b, 120_b, 52_b,  203_b, 136_b, 182_b,
-         197_b, 5_b,   122_b, 16_b,  156_b, 163_b, 32_b,  222_b, 109_b, 109_b, 209_b, 43_b,  91_b,
-         152_b, 231_b, 229_b, 170_b, 86_b,  22_b,  255_b, 128_b, 76_b,  60_b,  49_b,  113_b, 130_b,
-         205_b, 196_b, 71_b,  119_b, 251_b, 10_b,  182_b, 185_b, 7_b,   93_b,  33_b,  238_b, 157_b,
-         147_b, 208_b, 32_b,  108_b, 102_b, 230_b, 213_b, 90_b,  168_b, 23_b,  27_b,  171_b, 178_b,
-         61_b,  1_b,   129_b, 124_b, 204_b, 207_b, 112_b, 137_b, 250_b, 58_b,  70_b,  71_b,  11_b,
-         244_b, 180_b, 225_b, 82_b,  82_b,  238_b, 47_b,  163_b, 156_b, 31_b,  218_b, 149_b, 105_b,
-         41_b,  20_b,  100_b, 167_b, 216_b, 14_b,  78_b,  189_b, 242_b, 192_b, 191_b, 115_b, 3_b,
-         53_b,  137_b, 134_b, 53_b,  251_b, 120_b, 72_b,  242_b, 107_b, 212_b, 216_b, 104_b, 165_b,
-         37_b,  22_b,  153_b, 80_b,  19_b,  227_b, 175_b, 158_b, 226_b, 45_b,  94_b,  132_b, 200_b,
-         55_b,  116_b, 74_b,  57_b,  249_b, 133_b, 191_b, 15_b,  12_b,  179_b, 113_b, 254_b, 194_b,
-         65_b,  215_b, 167_b, 100_b, 27_b,  25_b,  86_b,  170_b, 234_b, 236_b, 96_b,  95_b,  220_b,
-         34_b,  145_b, 145_b, 45_b,  56_b,  187_b, 139_b, 7_b,   246_b, 74_b,  69_b,  246_b, 3_b,
-         124_b, 176_b, 192_b, 205_b, 141_b, 126_b, 60_b,  154_b, 26_b,  41_b,  166_b, 84_b,  235_b,
-         231_b, 87_b,  161_b, 221_b, 18_b,  97_b,  111_b, 44_b,  220_b, 144_b, 117_b, 6_b,   198_b,
-         186_b, 187_b, 247_b, 8_b,   75_b,  78_b,  193_b, 253_b, 125_b, 128_b, 48_b,  51_b,  143_b,
-         38_b,  105_b, 149_b, 213_b, 232_b, 152_b, 91_b,  36_b,  29_b,  174_b, 174_b, 18_b,  211_b,
-         95_b,  96_b,  227_b, 201_b, 117_b, 122_b, 201_b, 7_b,   132_b, 180_b, 56_b,  242_b, 178_b,
-         65_b,  14_b,  60_b,  154_b, 192_b});
+        {0x55_b, 0x55_b, 0x55_b, 0x56_b, 0xE9_b, 0x2B_b, 0xA4_b, 0x98_b, 0x18_b, 0xDE_b, 0x92_b,
+         0x6D_b, 0x2E_b, 0x10_b, 0x63_b, 0xA3_b, 0xDF_b, 0x0A_b, 0x49_b, 0xB9_b, 0xF5_b, 0xC4_b,
+         0xB8_b, 0x77_b, 0x04_b, 0x31_b, 0x8E_b, 0x82_b, 0x32_b, 0xFF_b, 0x7F_b, 0x4C_b, 0xC0_b,
+         0x59_b, 0x26_b, 0xEA_b, 0x9A_b, 0x97_b, 0xD7_b, 0x24_b, 0x6B_b, 0x62_b, 0xE1_b, 0xD1_b,
+         0x5D_b, 0xAC_b, 0x10_b, 0x1F_b, 0xAC_b, 0xB6_b, 0x3A_b, 0x05_b, 0x86_b, 0x78_b, 0xCB_b,
+         0xCB_b, 0x77_b, 0x8D_b, 0xFD_b, 0x3E_b, 0x41_b, 0x43_b, 0x0C_b, 0xF0_b, 0xBD_b, 0x14_b,
+         0x9B_b, 0xA7_b, 0x27_b, 0xDA_b, 0x6A_b, 0x69_b, 0xD6_b, 0x2F_b, 0x5C_b, 0x9C_b, 0xE0_b,
+         0xE1_b, 0xAD_b, 0x52_b, 0x11_b, 0xFB_b, 0x87_b, 0x48_b, 0x3B_b, 0x35_b, 0x76_b, 0x86_b,
+         0xCA_b, 0xC0_b, 0x40_b, 0x73_b, 0xFC_b, 0x0E_b, 0xB1_b, 0xBD_b, 0x0E_b, 0xA8_b, 0xE8_b,
+         0x1B_b, 0x54_b, 0x66_b, 0x19_b, 0xD5_b, 0xA5_b, 0x93_b, 0x2F_b, 0x20_b, 0x93_b, 0x5D_b,
+         0xDE_b, 0xEE_b, 0x62_b, 0x47_b, 0xF4_b, 0xF4_b, 0x48_b, 0x89_b, 0x05_b, 0x3A_b, 0xB9_b,
+         0x7C_b, 0x33_b, 0xCF_b, 0x8F_b, 0xB2_b, 0xC2_b, 0x01_b, 0x48_b, 0x22_b, 0x6E_b, 0x91_b,
+         0xD2_b, 0xEC_b, 0x9F_b, 0x5F_b, 0x23_b, 0x19_b, 0xA9_b, 0xAA_b, 0x15_b, 0xD7_b, 0x58_b,
+         0x64_b, 0xE4_b, 0xCD_b, 0x72_b, 0x7E_b, 0xCE_b, 0x03_b, 0x83_b, 0xB0_b, 0x3F_b, 0xF6_b,
+         0xB5_b, 0x45_b, 0x09_b, 0x38_b, 0x44_b, 0x8B_b, 0xFB_b, 0x9E_b, 0x1D_b, 0x2D_b, 0xA1_b,
+         0x50_b, 0xEC_b, 0xE3_b, 0x50_b, 0xA5_b, 0xDA_b, 0x16_b, 0x66_b, 0x6B_b, 0x2B_b, 0xD8_b,
+         0x97_b, 0x71_b, 0x01_b, 0xC2_b, 0xBD_b, 0xBF_b, 0xF0_b, 0x0C_b, 0x4C_b, 0x4A_b, 0xC6_b,
+         0xF9_b, 0x7A_b, 0x84_b, 0x37_b, 0x37_b, 0x86_b, 0xD3_b, 0xA0_b, 0x60_b, 0x1C_b, 0x1D_b,
+         0x51_b, 0xAE_b, 0xED_b, 0xE8_b, 0x67_b, 0x5B_b, 0xDB_b, 0x26_b, 0x96_b, 0x95_b, 0x2A_b,
+         0x3C_b, 0xBC_b, 0x8F_b, 0x00_b, 0xF2_b, 0x4D_b, 0x41_b, 0xF1_b, 0x07_b, 0x7B_b, 0xB4_b,
+         0xC7_b, 0xC9_b, 0x8A_b, 0x7A_b, 0x35_b, 0x6F_b, 0xD3_b, 0xDC_b, 0x6F_b, 0xA1_b, 0x22_b,
+         0x12_b, 0x9E_b, 0x54_b, 0x14_b, 0xE7_b, 0xA8_b, 0x9A_b, 0xE5_b, 0x29_b, 0x59_b, 0x80_b,
+         0xCF_b, 0x33_b, 0x73_b, 0x4E_b, 0x3E_b, 0xFD_b, 0x82_b, 0xBB_b, 0x08_b, 0x08_b, 0xB4_b,
+         0x75_b, 0xF9_b, 0xC6_b, 0x9C_b, 0xF9_b, 0xBA_b, 0x4A_b, 0x06_b, 0x37_b, 0x4B_b, 0x84_b,
+         0xF7_b, 0xC2_b, 0x7D_b, 0x71_b, 0xC1_b, 0x0C_b, 0x8C_b, 0xBF_b, 0x30_b, 0x16_b, 0xA6_b,
+         0xA5_b, 0x1A_b, 0xD8_b, 0x57_b, 0x6B_b, 0xEB_b, 0x2D_b, 0x61_b, 0x9E_b, 0xDD_b, 0xE3_b,
+         0x90_b, 0x50_b, 0x2F_b, 0x45_b, 0xC9_b, 0xF6_b, 0x75_b, 0x8B_b, 0x38_b, 0x38_b, 0x84_b,
+         0x7E_b, 0x0E_b, 0xCD_b, 0xB2_b, 0xB0_b, 0xFF_b, 0x03_b, 0x43_b, 0xAA_b, 0xD5_b, 0x19_b,
+         0x69_b, 0x64_b, 0x24_b, 0xD7_b, 0x98_b, 0x91_b, 0x12_b, 0x22_b, 0xAE_b, 0x5F_b, 0xE3_b,
+         0xEC_b, 0x52_b, 0x08_b, 0x74_b, 0xBB_b, 0xC8_b, 0xC6_b, 0x85_b, 0x75_b, 0x39_b, 0x33_b,
+         0xB3_b, 0x80_b, 0x0F_b, 0xFD_b, 0x42_b, 0x4E_b, 0xFE_b, 0xE7_b, 0x68_b, 0x54_b, 0xD4_b,
+         0x29_b, 0x99_b, 0x9A_b, 0x25_b, 0xDC_b, 0xAF_b, 0x6F_b, 0x13_b, 0x12_b, 0x5E_b, 0xA1_b,
+         0xE1_b, 0xB4_b, 0x07_b, 0x07_b, 0xBB_b, 0x7A_b, 0xF6_b, 0xC9_b, 0x4A_b, 0x8F_b, 0xC0_b,
+         0x3C_b, 0x7C_b, 0x41_b, 0x31_b, 0xF2_b, 0x8D_b, 0x5B_b, 0x1B_b, 0xE8_b, 0xA7_b, 0x95_b,
+         0xEA_b, 0x26_b, 0x56_b, 0x60_b, 0xDC_b, 0xD3_b, 0x60_b, 0xAE_b, 0x2D_b, 0x1D_b, 0xA7_b,
+         0x3E_b, 0x81_b, 0x8D_b, 0x3D_b, 0xF0_b, 0x70_b, 0x43_b, 0xCC_b, 0x05_b, 0x46_b, 0xB6_b,
+         0xFA_b, 0xCB_b, 0xB7_b, 0x78_b, 0x0B_b, 0xD1_b, 0x9D_b, 0x62_b, 0x21_b, 0x1F_b, 0x6C_b,
+         0xAC_b, 0xD0_b, 0xEA_b, 0x5A_b, 0x59_b, 0xE6_b, 0x24_b, 0xAB_b, 0x97_b, 0x14_b, 0x82_b,
+         0xF2_b, 0x31_b, 0x4E_b, 0x4C_b, 0x03_b, 0xFF_b, 0xBF_b, 0xB9_b, 0x35_b, 0x0A_b, 0x89_b,
+         0x77_b, 0xC4_b, 0xC4_b, 0x78_b, 0x6D_b, 0xEE_b, 0xDE_b, 0x52_b, 0xA3_b, 0x1F_b, 0x10_b,
+         0xA3_b, 0x56_b, 0x29_b, 0xE5_b, 0x95_b, 0x98_b, 0xD8_b, 0x2B_b, 0x69_b, 0xCF_b, 0x4F_b,
+         0x7C_b, 0xF3_b, 0x01_b, 0xBE_b, 0xB2_b, 0x02_b, 0xF4_b, 0x88_b, 0x47_b, 0x34_b, 0x3A_b,
+         0x79_b, 0x89_b, 0xC5_b, 0x20_b, 0x53_b, 0x93_b, 0xEF_b, 0xEE_b, 0xA2_b, 0x5D_b, 0x1E_b,
+         0x1B_b, 0x94_b, 0xA8_b, 0x28_b, 0xD5_b, 0x65_b, 0x66_b, 0xDA_b, 0x73_b, 0x3C_b, 0xC0_b,
+         0x80_b, 0xBD_b, 0xCD_b, 0x0E_b, 0x71_b, 0x48_b, 0xFB_b, 0xFB_b, 0x47_b, 0x86_b, 0x0A_b,
+         0x35_b, 0xB6_b, 0x9C_b, 0x20_b, 0x2F_b, 0x9C_b, 0x52_b, 0xD1_b, 0xE1_b, 0x6D_b, 0xA7_b,
+         0xE7_b, 0x14_b, 0x5B_b, 0x69_b, 0xCF_b, 0x90_b});
     auto cc = cc::ViterbiCodec();
 
     {

@@ -30,7 +30,10 @@ class ViterbiCodec
 public:
     static constexpr auto constraint = 7U;
     static constexpr auto nFlushBits = constraint - 1U;
-    static constexpr auto polynomials = std::to_array<std::uint8_t>({0b111'1001, 0b101'1011});
+    // [79, -109], 79 is in hex but I have no idea how the -109 is related to -0b101'1011
+    static constexpr auto polynomials = std::to_array<std::int8_t>({0b111'1001, -0b101'1011});
+    static constexpr auto asdf = polynomials[0];
+    static constexpr auto asdf2 = polynomials[1];
     static constexpr auto nParityBits = polynomials.size();
 
     static constexpr auto maxUnencodedSize = 255U + 4U;  // >= RS(255,223) + 4 byte sync marker
@@ -84,8 +87,11 @@ private:
     // 6).
     static inline auto outputs = std::array<std::uint8_t, 1U << constraint>();
 
-    unsigned int state_;
-    unsigned int bytes_;
+    unsigned int state_ = 0;
+    unsigned int bytes_ = 0;
+#ifdef USE_PUNCTURING
+    unsigned int nProcessedBytes_ = 0;
+#endif
 
     auto InitializeOutputs() -> void;
     [[nodiscard]] auto NextState(unsigned int currentState, unsigned int input) const
@@ -107,7 +113,7 @@ constexpr auto ViterbiCodec::EncodedSize(std::size_t unencodedSize,
     #else
     auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 2;
     #endif
-    auto size = (bits + CHAR_BIT - 1) / CHAR_BIT;
+    auto size = (bits + CHAR_BIT - 1) / CHAR_BIT; // Round up
     return size;
 #endif
 }
@@ -122,11 +128,10 @@ constexpr auto ViterbiCodec::UnencodedSize(std::size_t encodedSize,
     auto flushingBits = withFlushBits ? nFlushBits : 0U;
     #ifdef USE_PUNCTURING
     auto size = (((encodedSize * CHAR_BIT) * 2 / 3) - flushingBits) / CHAR_BIT;
-    return size % 2 == 0 ? size : size - 1;
     #else
     auto size = (((encodedSize * CHAR_BIT) / 2) - flushingBits) / CHAR_BIT;
-    return size;
     #endif
+    return size;
 #endif
 }
 
