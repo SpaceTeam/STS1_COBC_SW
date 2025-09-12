@@ -24,6 +24,10 @@ add_library(Sts1CobcSw_Serial INTERFACE)
 add_library(Sts1CobcSw_Utility INTERFACE)
 add_library(Sts1CobcSw_Vocabulary STATIC)
 
+if(CMAKE_SYSTEM_NAME STREQUAL Generic)
+    add_library(Sts1CobcSw_CmsisDevice INTERFACE)
+endif()
+
 if(BUILD_BOOTLOADER)
     add_program(Bootloader)
 else()

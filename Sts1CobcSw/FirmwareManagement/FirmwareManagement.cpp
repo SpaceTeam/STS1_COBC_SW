@@ -7,7 +7,7 @@
 #include <etl/vector.h>
 
 #ifndef __linux__
-    #include <Sts1CobcSw/Bootloader/stm32f411xe.h>
+    #include <Sts1CobcSw/CmsisDevice/stm32f411xe.h>
 #endif
 
 #include <algorithm>
