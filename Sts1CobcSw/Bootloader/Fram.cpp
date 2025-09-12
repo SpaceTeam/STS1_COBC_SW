@@ -1,7 +1,7 @@
 #include <Sts1CobcSw/Bootloader/Fram.hpp>
 
 #include <Sts1CobcSw/Bootloader/Spi.hpp>
-#include <Sts1CobcSw/Bootloader/stm32f411xe.h>
+#include <Sts1CobcSw/CmsisDevice/stm32f411xe.h>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
 #include <bit>
