@@ -87,8 +87,11 @@ private:
     // 6).
     static inline auto outputs = std::array<std::uint8_t, 1U << constraint>();
 
-    unsigned int state_;
-    unsigned int bytes_;
+    unsigned int state_ = 0;
+    unsigned int bytes_ = 0;
+#ifdef USE_PUNCTURING
+    unsigned int nProcessedBytes_ = 0;
+#endif
 
     auto InitializeOutputs() -> void;
     [[nodiscard]] auto NextState(unsigned int currentState, unsigned int input) const
