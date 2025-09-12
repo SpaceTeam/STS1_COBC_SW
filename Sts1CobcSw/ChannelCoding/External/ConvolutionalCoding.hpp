@@ -30,7 +30,10 @@ class ViterbiCodec
 public:
     static constexpr auto constraint = 7U;
     static constexpr auto nFlushBits = constraint - 1U;
-    static constexpr auto polynomials = std::to_array<std::uint8_t>({0b111'1001, 0b101'1011});
+    // [79, -109], 79 is in hex but I have no idea how the -109 is related to -0b101'1011
+    static constexpr auto polynomials = std::to_array<std::int8_t>({0b111'1001, -0b101'1011});
+    static constexpr auto asdf = polynomials[0];
+    static constexpr auto asdf2 = polynomials[1];
     static constexpr auto nParityBits = polynomials.size();
 
     static constexpr auto maxUnencodedSize = 255U + 4U;  // >= RS(255,223) + 4 byte sync marker

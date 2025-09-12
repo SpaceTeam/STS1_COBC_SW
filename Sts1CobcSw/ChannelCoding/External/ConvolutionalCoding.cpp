@@ -17,6 +17,7 @@
     #include <algorithm>
 #endif
 #include <cassert>
+#include <cstdlib>
 
 
 namespace sts1cobcsw::cc
@@ -29,8 +30,7 @@ ViterbiCodec::ViterbiCodec()
     assert(!polynomials.empty());
     for(auto i = 0U; i < polynomials.size(); i++)
     {
-        assert(polynomials[i] > 0);
-        assert(polynomials[i] < (1 << constraint));
+        assert(std::abs(polynomials[i]) < (1 << constraint));
     }
     InitializeOutputs();
     state_ = 0;
@@ -178,12 +178,13 @@ auto ViterbiCodec::InitializeOutputs() -> void
         outputs[i] = 0U;
         for(auto j = 0U; j < nParityBits; ++j)
         {
-            auto polynomial = polynomials[j];
+            auto polynomial = static_cast<std::uint8_t>(std::abs(polynomials[j]));
             auto input = static_cast<std::uint8_t>(i);
             std::uint8_t output = 0U;
             for(auto k = 0U; k < constraint; ++k)
             {
-                output ^= (input & 1U) & (polynomial & 1U);
+                output ^= static_cast<std::uint8_t>((polynomials[j] < 0)
+                                                    ^ ((input & 1U) & (polynomial & 1U)));
                 polynomial >>= 1U;
                 input >>= 1U;
             }
