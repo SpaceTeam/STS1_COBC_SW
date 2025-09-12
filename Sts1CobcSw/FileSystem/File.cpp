@@ -82,7 +82,7 @@ auto File::SeekRelative(int offset) const -> Result<int>
 }
 
 
-auto File::Size() const -> Result<int>
+auto File::Size() const -> Result<std::size_t>
 {
     if(not persistentVariables.Load<"flashIsWorking">())
     {
@@ -95,7 +95,7 @@ auto File::Size() const -> Result<int>
     auto size = lfs_file_size(&lfs, &lfsFile_);
     if(size >= 0)
     {
-        return size;
+        return static_cast<std::size_t>(size);
     }
     return static_cast<ErrorCode>(size);
 }

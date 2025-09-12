@@ -89,7 +89,7 @@ TEST_CASE("File system without data corruption")
 
     auto sizeResult = writeableFile.Size();
     CHECK(sizeResult.has_value());
-    CHECK(sizeResult.value() == 0);
+    CHECK(sizeResult.value() == 0U);
 
     auto writeData = std::array{0xAA_b, 0xBB_b, 0xCC_b, 0xDD_b};
     auto writeResult = writeableFile.Write(Span(writeData));
@@ -233,7 +233,7 @@ TEST_CASE("File system without data corruption")
 
     sizeResult = readableFile.Size();
     CHECK(sizeResult.has_value());
-    CHECK(sizeResult.value() == 4);
+    CHECK(sizeResult.value() == 4U);
 
     readResult = readableFile.Read(Span(&readData));
     CHECK(readResult.has_value());
@@ -276,7 +276,7 @@ TEST_CASE("File system without data corruption")
 
     sizeResult = deletedFile.Size();
     CHECK(sizeResult.has_value());
-    CHECK(sizeResult.value() == 0);
+    CHECK(sizeResult.value() == 0U);
 
     writeResult = deletedFile.Write(Span(writeData));
     CHECK(writeResult.has_error() == false);
@@ -509,7 +509,7 @@ TEST_CASE("File system with data corruption")
         // File is empty, but it can be read (i.e. Read() does not fail)
         auto sizeResult = corruptedFile.Size();
         CHECK(sizeResult.has_value());
-        CHECK(sizeResult.value() == 0);
+        CHECK(sizeResult.value() == 0U);
         auto readData = decltype(writeData){};
         auto readResult = corruptedFile.Read(Span(&readData));
         CHECK(readResult.has_value());

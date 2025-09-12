@@ -175,7 +175,8 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
     OUTCOME_TRY(auto fileSize, file.Size());
     if(fileSize > maxFileSize)
     {
-        DEBUG_PRINT("Program file %s is too large: %d B\n", path.c_str(), fileSize);
+        DEBUG_PRINT(
+            "Program file %s is too large: %i B\n", path.c_str(), static_cast<int>(fileSize));
         return ErrorCode::fileTooLarge;
     }
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
