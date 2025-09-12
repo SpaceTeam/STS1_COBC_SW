@@ -126,6 +126,8 @@ constexpr auto minShutdownDuration = 20 * us;
 constexpr auto porCircuitSettleDelay = 100 * ms;  // Time for PoR circuit to settle after power up
 constexpr auto porRunningDelay = 20 * ms;         // Time for power on reset to finish
 
+constexpr auto postTxDelay = 100 * ms;  // Time to wait after sending data to prevent RX issues
+
 constexpr auto errorHandlingRetryDelay = 1 * ms;
 constexpr auto errorHandlingCobcResetDelay = 1 * s;
 
@@ -543,6 +545,9 @@ auto DoSuspendUntilDataSent(Duration timeout) -> Result<void>
     // We won't stay in TX mode, no matter if the transmission was completed successfully or not
     isInTxMode = false;
     EnableRfLatchupProtection();
+    // If we don't wait here, receiving does not work. According to Jakob it might be related to the
+    // power amplifier somehow.
+    SuspendFor(postTxDelay);
     OUTCOME_TRY(SetPacketHandlerInterrupts(noInterrupts));
     return result;
 }
