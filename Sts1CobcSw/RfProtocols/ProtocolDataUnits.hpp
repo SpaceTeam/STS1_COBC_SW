@@ -207,10 +207,16 @@ class NakPdu : public Payload
 {
 public:
     static constexpr auto directiveCode = DirectiveCode::nak;
+    static constexpr auto maxSegmentRequests = 25U;
+
+    NakPdu() = default;
+    explicit NakPdu(std::uint32_t endOfScope,
+                    std::span<std::uint64_t const> segementRequests) noexcept;
 
     std::uint32_t startOfScope;
     std::uint32_t endOfScope;
     std::span<std::uint64_t const> segmentRequests;
+
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;

@@ -159,11 +159,16 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
                                       + destinationFileNameValue.size());
 }
 
+NakPdu::NakPdu(std::uint32_t endOfScope, std::span<std::uint64_t const> segementRequests) noexcept
+    : startOfScope(0), endOfScope(endOfScope), segmentRequests(segementRequests)
+{
+    assert(segmentRequests.size() <= NakPdu::maxSegmentRequests);
+}
+
 
 auto NakPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, startOfScope);
     cursor = SerializeTo<ccsdsEndianness>(cursor, endOfScope);
     std::ranges::copy(segmentRequests, static_cast<std::uint64_t *>(cursor));
@@ -383,21 +388,18 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
     return metadataPdu;
 }
 
+
 auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>
 {
     auto nakPdu = NakPdu{};
     auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nakPdu.startOfScope);
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.endOfScope);
-
-
     auto const headerSize =
         totalSerialSize<decltype(nakPdu.startOfScope), decltype(nakPdu.endOfScope)>;
     auto const remainingSize = buffer.size() - headerSize;
     auto const segmentRequestsCount = remainingSize / sizeof(std::uint64_t);
-
     nakPdu.segmentRequests = std::span<std::uint64_t const>(
         reinterpret_cast<std::uint64_t const *>(buffer.data() + headerSize), segmentRequestsCount);
-
     return nakPdu;
 }
 
