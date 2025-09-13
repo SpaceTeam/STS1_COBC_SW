@@ -138,31 +138,30 @@ private:
 
 using TransactionStatus = strong::type<UInt<2>, struct TransactionStatusTag, strong::regular>;
 
+
 class AckPdu : public Payload
 {
 public:
     static constexpr auto directiveCode = DirectiveCode::ack;
 
     AckPdu() = default;
-
     explicit AckPdu(DirectiveCode acknowledgedDirectiveCode,
                     ConditionCode conditionCode,
                     TransactionStatus transactionStatus) noexcept;
 
-    UInt<4> acknowledgedPduDirectiveCode =
-        static_cast<std::uint8_t>(DirectiveCode::finished);  // EOF or Finished
-    UInt<4> directiveSubtypeCode =
-        0;  // Depend on the directive code of the PDU that this ACK PDU acknowledges.
-            // For ACK of Finished PDU: 0b0001. For ACKs of all other file directives: 0b0000.
-    ConditionCode conditionCode = ConditionCode(0);
+    UInt<4> acknowledgedPduDirectiveCode;  // EOF or Finished PDU
+    UInt<4> directiveSubtypeCode;          // 1 if Finished PDU is acknowledged, 0 otherwise
+    ConditionCode conditionCode;
     UInt<2> spare = 0;
-    TransactionStatus transactionStatus = TransactionStatus(0);
+    TransactionStatus transactionStatus;
 
     static constexpr auto minParameterFieldLength =
-        totalSerialSize<decltype(acknowledgedPduDirectiveCode), decltype(directiveSubtypeCode)>
-        + totalSerialSize<strong::underlying_type_t<ConditionCode>,
-                          decltype(spare),
-                          strong::underlying_type_t<TransactionStatus>>;
+        totalSerialSize<decltype(acknowledgedPduDirectiveCode),
+                        decltype(directiveSubtypeCode),
+                        strong::underlying_type_t<ConditionCode>,
+                        decltype(spare),
+                        strong::underlying_type_t<TransactionStatus>>;
+
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
@@ -176,28 +175,27 @@ public:
     static constexpr auto directiveCode = DirectiveCode::metadata;
 
     MetadataPdu() = default;
-
     explicit MetadataPdu(std::uint32_t fileSize,
                          std::span<Byte const> sourceFileName,
                          std::span<Byte const> destinationFileName) noexcept;
 
-    UInt<1> reserved = 0;
+    UInt<1> reserved1 = 0;
     UInt<1> closureRequestd = 0;  // 0 in ACK mode
     UInt<4> checksumType = 15;    // NOLINT(*-magic-numbers)
     UInt<2> reserved2 = 0;
     std::uint32_t fileSize;
-
     std::uint8_t sourceFileNameLength;
     std::span<Byte const> sourceFileNameValue;
     std::uint8_t destinationFileNameLength;
     std::span<Byte const> destinationFileNameValue;
 
     static constexpr auto minParameterFieldLength =
-        totalSerialSize<decltype(reserved),
+        totalSerialSize<decltype(reserved1),
                         decltype(closureRequestd),
                         decltype(checksumType),
                         decltype(reserved2)>
         + totalSerialSize<decltype(fileSize), decltype(sourceFileNameLength)>;
+
 
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
@@ -245,7 +243,7 @@ inline constexpr auto fileRejectedFileStatus = FileStatus(0b01);
 inline constexpr auto fileRetainedFileStatus = FileStatus(0b10);
 inline constexpr auto unreportedFileStatus = FileStatus(0b11);
 
-inline constexpr auto undefinedTransactionstatus = TransactionStatus(0b00);
+inline constexpr auto undefinedTransactionStatus = TransactionStatus(0b00);
 inline constexpr auto activeTransactionStatus = TransactionStatus(0b01);
 inline constexpr auto terminatedTransactionStatus = TransactionStatus(0b10);
 inline constexpr auto unrecognizedTransactionStatus = TransactionStatus(0b11);
