@@ -160,7 +160,7 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
 }
 
 
-auto NackPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+auto NakPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
 
@@ -170,7 +170,7 @@ auto NackPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 }
 
 
-auto NackPdu::DoSize() const -> std::uint16_t
+auto NakPdu::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(totalSerialSize<decltype(startOfScope), decltype(endOfScope)>
                                       + segmentRequests.size() * sizeof(std::uint64_t));
@@ -383,22 +383,22 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
     return metadataPdu;
 }
 
-auto ParseAsNackPdu(std::span<Byte const> buffer) -> Result<NackPdu>
+auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>
 {
-    auto nackPdu = NackPdu{};
-    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nackPdu.startOfScope);
-    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nackPdu.endOfScope);
+    auto nakPdu = NakPdu{};
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nakPdu.startOfScope);
+    cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.endOfScope);
 
 
     auto const headerSize =
-        totalSerialSize<decltype(nackPdu.startOfScope), decltype(nackPdu.endOfScope)>;
+        totalSerialSize<decltype(nakPdu.startOfScope), decltype(nakPdu.endOfScope)>;
     auto const remainingSize = buffer.size() - headerSize;
     auto const segmentRequestsCount = remainingSize / sizeof(std::uint64_t);
 
-    nackPdu.segmentRequests = std::span<std::uint64_t const>(
+    nakPdu.segmentRequests = std::span<std::uint64_t const>(
         reinterpret_cast<std::uint64_t const *>(buffer.data() + headerSize), segmentRequestsCount);
 
-    return nackPdu;
+    return nakPdu;
 }
 
 
@@ -410,7 +410,7 @@ auto IsValid(DirectiveCode directiveCode) -> bool
         case DirectiveCode::finished:
         case DirectiveCode::ack:
         case DirectiveCode::metadata:
-        case DirectiveCode::nack:
+        case DirectiveCode::nak:
             return true;
     }
     return false;
