@@ -694,19 +694,19 @@ TEST_CASE("Parsing MetadataPdu")
 TEST_CASE("Adding NackPdu")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
-    auto nackPdu = sts1cobcsw::NackPdu{};
+    auto nakPdu = sts1cobcsw::NakPdu{};
 
-    nackPdu.startOfScope = 0;
-    nackPdu.endOfScope = 0;
+    nakPdu.startOfScope = 0;
+    nakPdu.endOfScope = 0;
     static constexpr auto segmentRequests = std::array<std::uint64_t, 2>{0xAB, 0xCD};
-    nackPdu.segmentRequests = segmentRequests;
+    nakPdu.segmentRequests = segmentRequests;
 
-    CHECK(nackPdu.Size() == 24U);  // NOLINT(*magic-numbers)
+    CHECK(nakPdu.Size() == 24U);  // NOLINT(*magic-numbers)
 
-    auto addResult = nackPdu.AddTo(&dataField);
+    auto addResult = nakPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
 
-    CHECK(dataField.size() == nackPdu.Size());
+    CHECK(dataField.size() == nakPdu.Size());
     CHECK(dataField[0] == 0x00_b);
     CHECK(dataField[1] == 0x00_b);
     CHECK(dataField[2] == 0x00_b);
@@ -757,7 +757,7 @@ TEST_CASE("Parsing NackPdu")
     buffer[14] = 0xAA_b;
     buffer[15] = 0xAA_b;
 
-    auto parseResult = sts1cobcsw::ParseAsNackPdu(buffer);
+    auto parseResult = sts1cobcsw::ParseAsNakPdu(buffer);
     REQUIRE(parseResult.has_value());
 
     auto & nackPdu = parseResult.value();

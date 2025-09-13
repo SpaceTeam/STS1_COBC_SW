@@ -60,7 +60,7 @@ enum class DirectiveCode : std::uint8_t
     finished = 5,
     ack = 6,
     metadata = 7,
-    nack = 8,
+    nak = 8,
 };
 
 
@@ -203,10 +203,10 @@ private:
 };
 
 
-class NackPdu : public Payload
+class NakPdu : public Payload
 {
 public:
-    static constexpr auto directiveCode = DirectiveCode::nack;
+    static constexpr auto directiveCode = DirectiveCode::nak;
 
     std::uint32_t startOfScope;
     std::uint32_t endOfScope;
@@ -258,7 +258,7 @@ inline constexpr auto unrecognizedTransactionStatus = TransactionStatus(0b11);
 [[nodiscard]] auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>;
 [[nodiscard]] auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>;
 [[nodiscard]] auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>;
-[[nodiscard]] auto ParseAsNackPdu(std::span<Byte const> buffer) -> Result<NackPdu>;
+[[nodiscard]] auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>;
 
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
