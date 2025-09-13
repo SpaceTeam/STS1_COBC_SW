@@ -272,20 +272,20 @@ TEST_CASE("Adding EndOfFilePdu to data field")
     endOfFilePdu.fileChecksum = 0x1234'5678U;
     endOfFilePdu.fileSize = 0x9ABC'DEF0U;
 
-    CHECK(endOfFilePdu.Size() == 9U);  // 1 B condition code + 4 B file checksum + 4 B file size
+    CHECK(endOfFilePdu.Size() == 9U);  // 1B condition code + 4B file checksum + 4B file size
 
     auto addResult = endOfFilePdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
     CHECK(dataField.size() == endOfFilePdu.Size());
     CHECK(dataField[0] == 0x00_b);  // Condition code (no error)
-    CHECK(dataField[1] == 0x12_b);  // File checksum (high byte)
+    CHECK(dataField[1] == 0x12_b);  // File checksum
     CHECK(dataField[2] == 0x34_b);  // File checksum
     CHECK(dataField[3] == 0x56_b);  // File checksum
-    CHECK(dataField[4] == 0x78_b);  // File checksum (low byte)
+    CHECK(dataField[4] == 0x78_b);  // File checksum
     CHECK(dataField[5] == 0x9A_b);  // File size
     CHECK(dataField[6] == 0xBC_b);  // File size
     CHECK(dataField[7] == 0xDE_b);  // File size
-    CHECK(dataField[8] == 0xF0_b);  // File size (low byte)
+    CHECK(dataField[8] == 0xF0_b);  // File size
 
     endOfFilePdu.conditionCode = sts1cobcsw::invalidTransmissionModeConditionCode;
     endOfFilePdu.faultLocation.type = sts1cobcsw::TlvType::entityId;
@@ -691,7 +691,44 @@ TEST_CASE("Parsing MetadataPdu")
 }
 
 
-TEST_CASE("Adding NackPdu")
+TEST_CASE("NakPdu Constructor")
+{
+    // Test valid constructor with segment requests within limit
+    static constexpr auto segmentRequests = std::array<std::uint64_t, 3>{
+        0x1234'5678'9ABC'DEF0, 0xFEDC'BA98'7654'3210, 0x1111'2222'3333'4444};
+    auto nakPdu = sts1cobcsw::NakPdu(0x2000U, segmentRequests);
+
+    CHECK(nakPdu.startOfScope == 0x0000U);
+    CHECK(nakPdu.endOfScope == 0x2000U);
+    CHECK(nakPdu.segmentRequests.size() == 3U);
+    CHECK(nakPdu.segmentRequests[0] == 0x1234'5678'9ABC'DEF0);
+    CHECK(nakPdu.segmentRequests[1] == 0xFEDC'BA98'7654'3210);
+    CHECK(nakPdu.segmentRequests[2] == 0x1111'2222'3333'4444);
+
+    // Test serialization
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto addResult = nakPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == nakPdu.Size());
+    CHECK(dataField[0] == 0x00_b);  // startOfScope high bytes
+    CHECK(dataField[1] == 0x00_b);
+    CHECK(dataField[2] == 0x10_b);
+    CHECK(dataField[3] == 0x00_b);  // startOfScope low byte
+    CHECK(dataField[4] == 0x00_b);  // endOfScope high bytes
+    CHECK(dataField[5] == 0x00_b);
+    CHECK(dataField[6] == 0x20_b);
+    CHECK(dataField[7] == 0x00_b);  // endOfScope low byte
+
+    // Test with maximum allowed segment requests (25)
+    auto maxSegmentRequests = etl::vector<std::uint64_t, sts1cobcsw::NakPdu::maxSegmentRequests>{};
+    maxSegmentRequests.resize(sts1cobcsw::NakPdu::maxSegmentRequests);
+    std::fill(maxSegmentRequests.begin(), maxSegmentRequests.end(), 0xAAAA'BBBB'CCCC'DDDD);
+    auto maxNakPdu = sts1cobcsw::NakPdu(0, maxSegmentRequests);
+    CHECK(maxNakPdu.segmentRequests.size() == sts1cobcsw::NakPdu::maxSegmentRequests);
+}
+
+
+TEST_CASE("Adding NakPdu")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto nakPdu = sts1cobcsw::NakPdu{};
@@ -735,7 +772,7 @@ TEST_CASE("Adding NackPdu")
     CHECK(dataField[23] == 0x00_b);
 }
 
-TEST_CASE("Parsing NackPdu")
+TEST_CASE("Parsing NakPdu")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
     buffer.resize(24U);
@@ -760,9 +797,9 @@ TEST_CASE("Parsing NackPdu")
     auto parseResult = sts1cobcsw::ParseAsNakPdu(buffer);
     REQUIRE(parseResult.has_value());
 
-    auto & nackPdu = parseResult.value();
+    auto & nakPdu = parseResult.value();
 
-    CHECK(nackPdu.startOfScope == 0x0000U);
-    CHECK(nackPdu.endOfScope == 0x1202'AAAA);
-    CHECK(nackPdu.segmentRequests[0] == 0xAAAA'AAAA'AAAA'AA02U);
+    CHECK(nakPdu.startOfScope == 0x0000U);
+    CHECK(nakPdu.endOfScope == 0x1202'AAAA);
+    CHECK(nakPdu.segmentRequests[0] == 0xAAAA'AAAA'AAAA'AA02U);
 }
