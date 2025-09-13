@@ -189,8 +189,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(ProtocolDataUnits)
     target_link_libraries(
         Sts1CobcSwTests_ProtocolDataUnits
-        PRIVATE etl::etl Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
-                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+        PRIVATE etl::etl
+                strong_type::strong_type
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_RfProtocols
+                Sts1CobcSw_Serial
+                Sts1CobcSwTests::CatchRodos
+                Sts1CobcSwTests::Utility
     )
     add_test(NAME ProtocolDataUnits COMMAND Sts1CobcSwTests_ProtocolDataUnits)
 
@@ -242,8 +247,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(SpacePacket)
     target_link_libraries(
         Sts1CobcSwTests_SpacePacket
-        PRIVATE etl::etl Sts1CobcSw_Outcome Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
-                Sts1CobcSwTests::CatchRodos Sts1CobcSwTests::Utility
+        PRIVATE etl::etl
+                strong_type::strong_type
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_RfProtocols
+                Sts1CobcSw_Serial
+                Sts1CobcSwTests::CatchRodos
+                Sts1CobcSwTests::Utility
     )
     add_test(NAME SpacePacket COMMAND Sts1CobcSwTests_SpacePacket)
 

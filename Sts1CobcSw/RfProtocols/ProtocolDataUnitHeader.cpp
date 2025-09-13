@@ -8,9 +8,9 @@ template<std::endian endianness>
 {
     destination = SerializeTo<endianness>(destination,
                                           header.version,
-                                          header.pduType,
-                                          header.direction,
-                                          header.transmissionMode,
+                                          value_of(header.pduType),
+                                          value_of(header.direction),
+                                          value_of(header.transmissionMode),
                                           header.crcFlag,
                                           header.largeFileFlag);
     destination = SerializeTo<endianness>(destination, header.pduDataFieldLength);
@@ -36,9 +36,9 @@ template<std::endian endianness>
 {
     source = DeserializeFrom<endianness>(source,
                                          &header->version,
-                                         &header->pduType,
-                                         &header->direction,
-                                         &header->transmissionMode,
+                                         &value_of(header->pduType),
+                                         &value_of(header->direction),
+                                         &value_of(header->transmissionMode),
                                          &header->crcFlag,
                                          &header->largeFileFlag);
     source = DeserializeFrom<endianness>(source, &header->pduDataFieldLength);

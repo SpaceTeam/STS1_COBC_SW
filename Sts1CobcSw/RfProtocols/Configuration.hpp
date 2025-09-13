@@ -138,7 +138,7 @@ inline constexpr auto applicationProcessUserId = Make<ApplicationProcessUserId, 
 
 inline constexpr auto maxNParameters = 5U;  // Chosen to be the number of different parameters
 
-enum class FileStatus : std::uint8_t
+enum class LockState : std::uint8_t
 {
     unlocked = 0,
     locked = 0xFF,
@@ -157,18 +157,20 @@ inline constexpr auto maxDumpedDataLength =
 namespace tm
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
-inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto pduHeaderLength = 8U;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 }
 
 namespace tc
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
-inline constexpr auto pduHeaderLength = 8;
+inline constexpr auto pduHeaderLength = 8U;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 }
 
 inline constexpr auto pduVersion = UInt<3>(1);
+inline constexpr auto maxFileSegmentLength =
+    std::min(tm::maxPduDataLength, tc::maxPduDataLength) - totalSerialSize<std::uint32_t>;
 
 using EntityId = Id<std::uint8_t, 0x0F, 0xF0>;  // NOLINT(*magic-numbers)
 inline constexpr auto groundStationEntityId = Make<EntityId, 0x0F>();
