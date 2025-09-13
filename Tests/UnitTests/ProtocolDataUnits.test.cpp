@@ -165,12 +165,12 @@ TEST_CASE("FileDataPdu Constructor")
     CHECK(dataField[6] == 0xEF_b);
 
     // Test with maximum allowed file data length (205 bytes)
-    auto maxFileData = etl::vector<Byte, sts1cobcsw::FileDataPdu::maxFileDataLength>{};
-    maxFileData.resize(sts1cobcsw::FileDataPdu::maxFileDataLength);
+    auto maxFileData = etl::vector<Byte, sts1cobcsw::maxFileSegmentLength>{};
+    maxFileData.resize(sts1cobcsw::maxFileSegmentLength);
     std::fill(maxFileData.begin(), maxFileData.end(), 0xFF_b);
 
     auto maxFileDataPdu = sts1cobcsw::FileDataPdu(0, maxFileData);
-    CHECK(maxFileDataPdu.fileData.size() == sts1cobcsw::FileDataPdu::maxFileDataLength);
+    CHECK(maxFileDataPdu.fileData.size() == sts1cobcsw::maxFileSegmentLength);
 
     // Test empty file data (valid case)
     auto emptyFileDataPdu = sts1cobcsw::FileDataPdu(42U, std::span<Byte const>{});

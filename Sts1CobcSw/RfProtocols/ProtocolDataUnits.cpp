@@ -26,10 +26,7 @@ namespace sts1cobcsw
 FileDataPdu::FileDataPdu(std::uint32_t offset, std::span<Byte const> fileData)
     : offset(offset), fileData(fileData)
 {
-    if(fileData.size() > maxFileDataLength)
-    {
-        assert(fileData.size() <= maxFileDataLength);
-    }
+    assert(fileData.size() <= maxFileSegmentLength);
 }
 
 

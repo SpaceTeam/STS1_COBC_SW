@@ -39,8 +39,6 @@ struct ProtocolDataUnit
 class FileDataPdu : public Payload
 {
 public:
-    static constexpr auto maxFileDataLength = 205U;
-
     FileDataPdu() = default;
     explicit FileDataPdu(std::uint32_t offset, std::span<Byte const> fileData);
 
