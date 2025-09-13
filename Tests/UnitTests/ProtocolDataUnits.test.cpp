@@ -514,7 +514,7 @@ TEST_CASE("Adding AckPdu")
         static_cast<std::uint32_t>(sts1cobcsw::DirectiveCode::finished);
     ackPdu.directiveSubtypeCode = 0;
     ackPdu.conditionCode = sts1cobcsw::noErrorConditionCode;
-    ackPdu.transactionStatus = sts1cobcsw::undefinedTransactionstatus;
+    ackPdu.transactionStatus = sts1cobcsw::undefinedTransactionStatus;
 
     CHECK(ackPdu.minParameterFieldLength == 2U);
     CHECK(ackPdu.Size() == 2U);
