@@ -93,11 +93,20 @@ class EndOfFilePdu : public Payload
 public:
     static constexpr auto directiveCode = DirectiveCode::endOfFile;
 
+    EndOfFilePdu() = default;
+    explicit EndOfFilePdu(ConditionCode conditionCode,
+                          std::uint32_t fileChecksum,
+                          std::uint32_t fileSize) noexcept;
+    explicit EndOfFilePdu(ConditionCode conditionCode,
+                          std::uint32_t fileChecksum,
+                          std::uint32_t fileSize,
+                          FaultLocation faultLocation) noexcept;
+
     ConditionCode conditionCode = ConditionCode(0);
     UInt<4> spare;
     std::uint32_t fileChecksum = 0;
     std::uint32_t fileSize = 0;
-    FaultLocation faultLocation;  // omitted if conditionCode == noError
+    FaultLocation faultLocation;  // Omitted if conditionCode == noError
 
     static constexpr auto minParameterFieldLength =
         totalSerialSize<strong::underlying_type_t<ConditionCode>, decltype(spare)>
@@ -119,11 +128,20 @@ class FinishedPdu : public Payload
 public:
     static constexpr auto directiveCode = DirectiveCode::finished;
 
+    FinishedPdu() = default;
+    explicit FinishedPdu(ConditionCode conditionCode,
+                         DeliveryCode deliveryCode,
+                         FileStatus fileStatus) noexcept;
+    explicit FinishedPdu(ConditionCode conditionCode,
+                         DeliveryCode deliveryCode,
+                         FileStatus fileStatus,
+                         FaultLocation faultLocation) noexcept;
+
     ConditionCode conditionCode = ConditionCode(0);
     UInt<1> spare = 0;
     DeliveryCode deliveryCode = DeliveryCode(0);
     FileStatus fileStatus = FileStatus(0);
-    FaultLocation faultLocation;  // omitted if conditionCode == noError or unsupportedChecksumType
+    FaultLocation faultLocation;  // Omitted if conditionCode == noError or unsupportedChecksumType
 
     static constexpr auto minParameterFieldLength =
         totalSerialSize<strong::underlying_type_t<ConditionCode>,
@@ -131,10 +149,12 @@ public:
                         strong::underlying_type_t<DeliveryCode>,
                         strong::underlying_type_t<FileStatus>>;
 
+
 private:
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
+
 
 using TransactionStatus = strong::type<UInt<2>, struct TransactionStatusTag, strong::regular>;
 

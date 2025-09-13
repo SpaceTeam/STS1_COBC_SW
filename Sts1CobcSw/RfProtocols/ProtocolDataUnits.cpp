@@ -255,6 +255,31 @@ auto ParseAsFileDirectivePdu(std::span<Byte const> buffer) -> Result<FileDirecti
 }
 
 
+EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode,
+                           std::uint32_t fileChecksum,
+                           std::uint32_t fileSize) noexcept
+    : conditionCode(conditionCode), spare(0), fileChecksum(fileChecksum), fileSize(fileSize)
+{
+    // Fault Location is omitted if the condition code is 'noError'
+    assert(conditionCode == noErrorConditionCode);
+}
+
+
+EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode,
+                           std::uint32_t fileChecksum,
+                           std::uint32_t fileSize,
+                           FaultLocation faultLocation) noexcept
+    : conditionCode(conditionCode),
+      spare(0),
+      fileChecksum(fileChecksum),
+      fileSize(fileSize),
+      faultLocation(faultLocation)
+{
+    // Fault Location must be present if the condition code is not 'noError'
+    assert(conditionCode != noErrorConditionCode);
+}
+
+
 auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
 {
     if(buffer.size() < EndOfFilePdu::minParameterFieldLength)
@@ -284,6 +309,33 @@ auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
     return endOfFilePdu;
 }
 
+
+FinishedPdu::FinishedPdu(ConditionCode conditionCode,
+                         DeliveryCode deliveryCode,
+                         FileStatus fileStatus) noexcept
+    : conditionCode(conditionCode), spare(0), deliveryCode(deliveryCode), fileStatus(fileStatus)
+{
+    // Fault Location is omitted if the condition code is 'noError' and 'unsupportedChecksumType'
+    assert(conditionCode == noErrorConditionCode
+           or conditionCode == unsupportedChecksumTypeConditionCode);
+}
+
+
+FinishedPdu::FinishedPdu(ConditionCode conditionCode,
+                         DeliveryCode deliveryCode,
+                         FileStatus fileStatus,
+                         FaultLocation faultLocation) noexcept
+    : conditionCode(conditionCode),
+      spare(0),
+      deliveryCode(deliveryCode),
+      fileStatus(fileStatus),
+      faultLocation(faultLocation)
+{
+    // Fault Location must be present if the condition code is not 'noError' or
+    // 'unsupportedChecksumType'
+    assert(conditionCode != noErrorConditionCode
+           and conditionCode != unsupportedChecksumTypeConditionCode);
+}
 
 auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>
 {

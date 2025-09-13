@@ -264,6 +264,66 @@ TEST_CASE("Parsing FileDirectivePdu")
 }
 
 
+TEST_CASE("EndOfFilePdu Constructor")
+{
+    // Test constructor for no-error condition (without fault location)
+    auto endOfFilePdu = sts1cobcsw::EndOfFilePdu(sts1cobcsw::noErrorConditionCode,
+                                                 0x1234'5678U,  // fileChecksum
+                                                 0x9ABC'DEF0U   // fileSize
+    );
+
+    CHECK(endOfFilePdu.conditionCode == sts1cobcsw::noErrorConditionCode);
+    CHECK(endOfFilePdu.fileChecksum == 0x1234'5678U);
+    CHECK(endOfFilePdu.fileSize == 0x9ABC'DEF0U);
+    CHECK(endOfFilePdu.Size() == 9U);  // No fault location
+
+    // Test serialization
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto addResult = endOfFilePdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == endOfFilePdu.Size());
+    CHECK(dataField[0] == 0x00_b);  // Condition code (no error)
+    CHECK(dataField[1] == 0x12_b);  // File checksum
+    CHECK(dataField[2] == 0x34_b);
+    CHECK(dataField[3] == 0x56_b);
+    CHECK(dataField[4] == 0x78_b);
+    CHECK(dataField[5] == 0x9A_b);  // File size
+    CHECK(dataField[6] == 0xBC_b);
+    CHECK(dataField[7] == 0xDE_b);
+    CHECK(dataField[8] == 0xF0_b);
+
+    // Test constructor for error condition (with fault location)
+    auto faultLocation = sts1cobcsw::FaultLocation{};
+    faultLocation.type = sts1cobcsw::TlvType::entityId;
+    faultLocation.length = 1;
+    faultLocation.value = sts1cobcsw::EntityId(0x0F);
+
+    auto errorEndOfFilePdu =
+        sts1cobcsw::EndOfFilePdu(sts1cobcsw::positiveAckLimitReachedConditionCode,
+                                 0xAABB'CCDD,  // fileChecksum
+                                 0x1122'3344,  // fileSize
+                                 faultLocation);
+
+    CHECK(errorEndOfFilePdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(errorEndOfFilePdu.fileChecksum == 0xAABB'CCDD);
+    CHECK(errorEndOfFilePdu.fileSize == 0x1122'3344);
+    CHECK(errorEndOfFilePdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
+    CHECK(errorEndOfFilePdu.faultLocation.length == 1);
+    CHECK(errorEndOfFilePdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+    CHECK(errorEndOfFilePdu.Size() == 12U);  // 9B + 3B fault location
+
+    // Test serialization with fault location
+    dataField.clear();
+    addResult = errorEndOfFilePdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == errorEndOfFilePdu.Size());
+    CHECK(dataField[0] == 0x10_b);   // Condition code (positive ACK limit reached)
+    CHECK(dataField[9] == 0x06_b);   // Fault location type (entity ID)
+    CHECK(dataField[10] == 0x01_b);  // Fault location length
+    CHECK(dataField[11] == 0x0F_b);  // Fault location value (entity ID)
+}
+
+
 TEST_CASE("Adding EndOfFilePdu to data field")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -359,6 +419,71 @@ TEST_CASE("Parsing EndOfFilePdu")
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidDataLength);
     buffer.resize(12);
+}
+
+
+TEST_CASE("FinishedPdu Constructor")
+{
+    // Test constructor for no-error condition (without fault location)
+    auto finishedPdu = sts1cobcsw::FinishedPdu(sts1cobcsw::noErrorConditionCode,
+                                               sts1cobcsw::dataCompleteDeliveryCode,
+                                               sts1cobcsw::fileRetainedFileStatus);
+
+    CHECK(finishedPdu.conditionCode == sts1cobcsw::noErrorConditionCode);
+    CHECK(finishedPdu.deliveryCode == sts1cobcsw::dataCompleteDeliveryCode);
+    CHECK(finishedPdu.fileStatus == sts1cobcsw::fileRetainedFileStatus);
+    CHECK(finishedPdu.Size() == 1U);  // No fault location
+
+    // Test serialization
+    auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
+    auto addResult = finishedPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == finishedPdu.Size());
+    CHECK(dataField[0] == 0x02_b);  // Condition=0, spare=0, delivery=0, fileStatus=2 (0b10)
+
+    // Test constructor for error condition (with fault location)
+    auto faultLocation = sts1cobcsw::FaultLocation{};
+    faultLocation.type = sts1cobcsw::TlvType::entityId;
+    faultLocation.length = 1;
+    faultLocation.value = sts1cobcsw::EntityId(0x0F);
+
+    auto errorFinishedPdu =
+        sts1cobcsw::FinishedPdu(sts1cobcsw::positiveAckLimitReachedConditionCode,
+                                sts1cobcsw::dataIncompleteDeliveryCode,
+                                sts1cobcsw::fileRejectedFileStatus,
+                                faultLocation);
+
+    CHECK(errorFinishedPdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(errorFinishedPdu.deliveryCode == sts1cobcsw::dataIncompleteDeliveryCode);
+    CHECK(errorFinishedPdu.fileStatus == sts1cobcsw::fileRejectedFileStatus);
+    CHECK(errorFinishedPdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
+    CHECK(errorFinishedPdu.faultLocation.length == 1);
+    CHECK(errorFinishedPdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+    CHECK(errorFinishedPdu.Size() == 4U);  // 1B + 3B fault location
+
+    // Serialization with fault location
+    dataField.clear();
+    addResult = errorFinishedPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == errorFinishedPdu.Size());
+    CHECK(dataField[0] == 0x15_b);  // Condition=1, spare=0, delivery=1, fileStatus=1 (0b0001'0101)
+    CHECK(dataField[1] == 0x06_b);  // Fault location type (entity ID)
+    CHECK(dataField[2] == 0x01_b);  // Fault location length
+    CHECK(dataField[3] == 0x0F_b);  // Fault location value (entity ID)
+
+    auto unsupportedFinishedPdu =
+        sts1cobcsw::FinishedPdu(sts1cobcsw::unsupportedChecksumTypeConditionCode,
+                                sts1cobcsw::dataIncompleteDeliveryCode,
+                                sts1cobcsw::fileRejectedFileStatus);
+
+    CHECK(unsupportedFinishedPdu.conditionCode == sts1cobcsw::unsupportedChecksumTypeConditionCode);
+    CHECK(unsupportedFinishedPdu.Size() == 1U);
+
+    dataField.clear();
+    addResult = unsupportedFinishedPdu.AddTo(&dataField);
+    REQUIRE(addResult.has_value());
+    CHECK(dataField.size() == 1U);
+    CHECK(dataField[0] == 0xB5_b);  // Condition=B (11), spare=0, delivery=1, fileStatus=1
 }
 
 
@@ -712,7 +837,7 @@ TEST_CASE("NakPdu Constructor")
     CHECK(dataField.size() == nakPdu.Size());
     CHECK(dataField[0] == 0x00_b);  // startOfScope high bytes
     CHECK(dataField[1] == 0x00_b);
-    CHECK(dataField[2] == 0x10_b);
+    CHECK(dataField[2] == 0x00_b);
     CHECK(dataField[3] == 0x00_b);  // startOfScope low byte
     CHECK(dataField[4] == 0x00_b);  // endOfScope high bytes
     CHECK(dataField[5] == 0x00_b);
