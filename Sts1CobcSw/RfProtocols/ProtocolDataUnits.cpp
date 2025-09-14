@@ -198,10 +198,10 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
 
 
 NakPdu::NakPdu(std::uint32_t endOfScope,
-               etl::vector<SegmentRequest, maxSegmentRequests> const & segmentRequests) noexcept
+               etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentRequests) noexcept
     : endOfScope_(endOfScope), segmentRequests_(segmentRequests)
 {
-    assert(segmentRequests_.size() <= NakPdu::maxSegmentRequests);
+    assert(segmentRequests_.size() <= NakPdu::maxNSegmentRequests);
 }
 
 
@@ -451,7 +451,17 @@ auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>
     auto nakPdu = NakPdu{};
     auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nakPdu.startOfScope_);
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.endOfScope_);
-    (void)DeserializeFrom<ccsdsEndianness>(cursor, nakPdu.segmentRequests_.data());
+
+    auto const remainingBufferSize = buffer.size() - totalSerialSize<decltype(nakPdu.startOfScope_)>
+                                   - totalSerialSize<decltype(nakPdu.endOfScope_)>;
+    auto const nSegmentRequests = remainingBufferSize / totalSerialSize<SegmentRequest>;
+    nakPdu.segmentRequests_ = etl::vector<SegmentRequest, NakPdu::maxNSegmentRequests>();
+    nakPdu.segmentRequests_.clear();
+    for(auto i = 0U; i < nSegmentRequests; ++i)
+    {
+        nakPdu.segmentRequests_.push_back(SegmentRequest{});
+        cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.segmentRequests_[i]);
+    }
     return nakPdu;
 }
 

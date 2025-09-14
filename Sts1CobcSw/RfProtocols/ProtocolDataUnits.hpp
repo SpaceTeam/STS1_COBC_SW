@@ -17,6 +17,7 @@
 #include <etl/utility.h>
 #include <etl/vector.h>
 
+#include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -237,21 +238,29 @@ struct SegmentRequest
 };
 
 
+template<>
+inline constexpr std::size_t serialSize<SegmentRequest> =
+    totalSerialSize<decltype(SegmentRequest::startOffset), decltype(SegmentRequest::endOffset)>;
+
+
 class NakPdu : public Payload
 {
 public:
     static constexpr auto directiveCode = DirectiveCode::nak;
-    static constexpr auto maxSegmentRequests = 25U;
+    static constexpr auto maxNSegmentRequests =
+        (std::min(tm::maxPduDataLength, tc::maxPduDataLength)
+         - totalSerialSize<DirectiveCode, std::uint32_t, std::uint32_t>)
+        / totalSerialSize<SegmentRequest>;
 
     NakPdu() = default;
     explicit NakPdu(
         std::uint32_t endOfScope,
-        etl::vector<SegmentRequest, maxSegmentRequests> const & segmentRequests) noexcept;
+        etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentRequests) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     std::uint32_t startOfScope_ = 0;
     std::uint32_t endOfScope_ = 0;
-    etl::vector<SegmentRequest, maxSegmentRequests> segmentRequests_;
+    etl::vector<SegmentRequest, maxNSegmentRequests> segmentRequests_;
     // NOLINTEND(readability-identifier-naming)
 
 
@@ -322,10 +331,6 @@ template<std::endian endianness>
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, FaultLocation * faultLocation)
     -> void const *;
-
-template<>
-inline constexpr std::size_t serialSize<SegmentRequest> =
-    totalSerialSize<decltype(SegmentRequest::startOffset), decltype(SegmentRequest::endOffset)>;
 
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, SegmentRequest const & segmentRequest) -> void *;
