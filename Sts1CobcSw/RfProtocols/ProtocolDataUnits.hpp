@@ -101,7 +101,7 @@ public:
                           FaultLocation faultLocation) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
-    ConditionCode conditionCode_ = ConditionCode(0);
+    ConditionCode conditionCode_;
     UInt<4> spare_;
     std::uint32_t fileChecksum_ = 0;
     std::uint32_t fileSize_ = 0;
@@ -138,10 +138,10 @@ public:
                          FaultLocation faultLocation) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
-    ConditionCode conditionCode_ = ConditionCode(0);
-    UInt<1> spare_ = 0;
-    DeliveryCode deliveryCode_ = DeliveryCode(0);
-    FileStatus fileStatus_ = FileStatus(0);
+    ConditionCode conditionCode_;
+    UInt<1> spare_;
+    DeliveryCode deliveryCode_;
+    FileStatus fileStatus_;
     FaultLocation faultLocation_;  // Omitted if conditionCode == noError or unsupportedChecksumType
     // NOLINTEND(readability-identifier-naming)
 
@@ -175,7 +175,7 @@ public:
     UInt<4> acknowledgedPduDirectiveCode_;  // EOF or Finished PDU
     UInt<4> directiveSubtypeCode_;          // 1 if Finished PDU is acknowledged, 0 otherwise
     ConditionCode conditionCode_;
-    UInt<2> spare_ = 0;
+    UInt<2> spare_;
     TransactionStatus transactionStatus_;
     // NOLINTEND(readability-identifier-naming)
 
@@ -204,14 +204,14 @@ public:
                          std::span<Byte const> destinationFileName) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
-    UInt<1> reserved1_ = 0;
+    UInt<1> reserved1_;
     UInt<1> closureRequested_ = 0;  // 0 in ACK mode
     UInt<4> checksumType_ = 15;    // NOLINT(*-magic-numbers)
-    UInt<2> reserved2_ = 0;
-    std::uint32_t fileSize_;
-    std::uint8_t sourceFileNameLength_;
+    UInt<2> reserved2_;
+    std::uint32_t fileSize_ = 0;
+    std::uint8_t sourceFileNameLength_ = 0;
     std::span<Byte const> sourceFileNameValue_;
-    std::uint8_t destinationFileNameLength_;
+    std::uint8_t destinationFileNameLength_ = 0;
     std::span<Byte const> destinationFileNameValue_;
     // NOLINTEND(readability-identifier-naming)
 
@@ -240,8 +240,8 @@ public:
                     std::span<std::uint64_t const> segementRequests) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
-    std::uint32_t startOfScope_;
-    std::uint32_t endOfScope_;
+    std::uint32_t startOfScope_ = 0;
+    std::uint32_t endOfScope_ = 0;
     std::span<std::uint64_t const> segmentRequests_;
     // NOLINTEND(readability-identifier-naming)
 
