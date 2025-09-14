@@ -228,6 +228,13 @@ private:
 };
 
 
+struct SegmentRequest
+{
+    std::uint32_t startOffset = 0;
+    std::uint32_t endOffset = 0;
+};
+
+
 class NakPdu : public Payload
 {
 public:
@@ -235,13 +242,14 @@ public:
     static constexpr auto maxSegmentRequests = 25U;
 
     NakPdu() = default;
-    explicit NakPdu(std::uint32_t endOfScope,
-                    std::span<std::uint64_t const> segementRequests) noexcept;
+    explicit NakPdu(
+        std::uint32_t endOfScope,
+        etl::vector<SegmentRequest, maxSegmentRequests> const & segmentRequests) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     std::uint32_t startOfScope_ = 0;
     std::uint32_t endOfScope_ = 0;
-    std::span<std::uint64_t const> segmentRequests_;
+    etl::vector<SegmentRequest, maxSegmentRequests> segmentRequests_;
     // NOLINTEND(readability-identifier-naming)
 
 
@@ -311,5 +319,16 @@ template<std::endian endianness>
 
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, FaultLocation * faultLocation)
+    -> void const *;
+
+template<>
+inline constexpr std::size_t serialSize<SegmentRequest> =
+    totalSerialSize<decltype(SegmentRequest::startOffset), decltype(SegmentRequest::endOffset)>;
+
+template<std::endian endianness>
+[[nodiscard]] auto SerializeTo(void * destination, SegmentRequest const & segmentRequest) -> void *;
+
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, SegmentRequest * segmentRequest)
     -> void const *;
 }

@@ -199,8 +199,9 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
 }
 
 
-NakPdu::NakPdu(std::uint32_t endOfScope, std::span<std::uint64_t const> segementRequests) noexcept
-    : endOfScope_(endOfScope), segmentRequests_(segementRequests)
+NakPdu::NakPdu(std::uint32_t endOfScope,
+               etl::vector<SegmentRequest, maxSegmentRequests> const & segmentRequests) noexcept
+    : endOfScope_(endOfScope), segmentRequests_(segmentRequests)
 {
     assert(segmentRequests_.size() <= NakPdu::maxSegmentRequests);
 }
@@ -211,7 +212,8 @@ auto NakPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, startOfScope_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, endOfScope_);
-    std::ranges::copy(segmentRequests_, static_cast<std::uint64_t *>(cursor));
+    cursor = SerializeTo<ccsdsEndianness>(cursor, segmentRequests_);
+    // std::ranges::copy(segmentRequests_, static_cast<std::uint64_t *>(cursor));
 }
 
 
@@ -439,10 +441,7 @@ auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.endOfScope_);
     auto const headerSize =
         totalSerialSize<decltype(nakPdu.startOfScope_), decltype(nakPdu.endOfScope_)>;
-    auto const remainingSize = buffer.size() - headerSize;
-    auto const segmentRequestsCount = remainingSize / sizeof(std::uint64_t);
-    nakPdu.segmentRequests_ = std::span<std::uint64_t const>(
-        reinterpret_cast<std::uint64_t const *>(buffer.data() + headerSize), segmentRequestsCount);
+    (void)DeserializeFrom<ccsdsEndianness>(cursor, nakPdu.segmentRequests_.data());
     return nakPdu;
 }
 
@@ -488,4 +487,28 @@ auto DeserializeFrom(void const * source, FaultLocation * faultLocation) -> void
 
 
 template auto DeserializeFrom<std::endian::big>(void const *, FaultLocation *) -> void const *;
+
+
+template<std::endian endianness>
+auto SerializeTo(void * destination, SegmentRequest const & segmentRequest) -> void *
+{
+    destination = SerializeTo<endianness>(destination, segmentRequest.startOffset);
+    destination = SerializeTo<endianness>(destination, segmentRequest.endOffset);
+    return destination;
+}
+
+
+template auto SerializeTo<std::endian::big>(void *, SegmentRequest const &) -> void *;
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, SegmentRequest * segmentRequest) -> void const *
+{
+    source = sts1cobcsw::DeserializeFrom<endianness>(source, &(segmentRequest->startOffset));
+    source = sts1cobcsw::DeserializeFrom<endianness>(source, &(segmentRequest->endOffset));
+    return source;
+}
+
+
+template auto DeserializeFrom<std::endian::big>(void const *, SegmentRequest *) -> void const *;
 }
