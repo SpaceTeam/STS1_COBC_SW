@@ -30,26 +30,22 @@ constexpr std::uint32_t imageWithoutCrcBytes = imageBytes - 4U;
 
 auto ProgramImage(fw::Partition const & partition) -> Result<void>
 {
-    auto image = etl::vector<Byte, imageBytes>{};
-
     auto const imageLengthSerialized = Serialize(imageWithoutCrcBytes);
-    image.insert(image.end(), imageLengthSerialized.begin(), imageLengthSerialized.end());
+    OUTCOME_TRY(fw::Program(partition.startAddress, Span(imageLengthSerialized)));
 
-    std::uint32_t const dataLength = imageWithoutCrcBytes - static_cast<std::uint32_t>(imageLengthSerialized.size());
-    image.resize(image.size() + dataLength);
-    std::uint8_t pattern = 0x00U;
-    for(std::uint32_t i = 0; i < dataLength; ++i)
+    auto crc = ComputeCrc32(Span(imageLengthSerialized));
+    auto buffer = etl::vector<Byte, 128>{};
+    for(std::size_t i = sizeof(imageWithoutCrcBytes); i < imageWithoutCrcBytes;)
     {
-        image[image.size() - dataLength + i] = static_cast<Byte>(pattern);
-        pattern = static_cast<std::uint8_t>(pattern + 1U);
+        std::size_t const nBytes = std::min<std::size_t>(buffer.capacity(), imageWithoutCrcBytes - i);
+        buffer.resize(nBytes);
+        fw::Read(partition.startAddress + i, Span(&buffer));
+        crc = ComputeCrc32(crc, Span(buffer));
+        i += nBytes;
     }
 
-    auto crc = ComputeCrc32(sts1cobcsw::Span(image));
-    auto const crcSerialized = Serialize(crc);
-    image.insert(image.end(), crcSerialized.begin(), crcSerialized.end());
+    OUTCOME_TRY(fw::Program(partition.startAddress + imageWithoutCrcBytes, Span(Serialize(crc))));
 
-    OUTCOME_TRY(fw::Erase(partition.flashSector));
-    OUTCOME_TRY(fw::Program(partition.startAddress, Span(image)));
     return outcome_v2::success();
 }
 }
@@ -57,7 +53,7 @@ auto ProgramImage(fw::Partition const & partition) -> Result<void>
 
 namespace
 {
-class CheckFirmwareIntegrityTimingTest : public RODOS::StaticThread<200*1024>
+class CheckFirmwareIntegrityTimingTest : public RODOS::StaticThread<>
 {
 public:
     CheckFirmwareIntegrityTimingTest() : StaticThread("CheckFirmwareIntegrityTimingTest")
@@ -117,5 +113,3 @@ private:
 } checkFirmwareIntegrityTimingTest;
 }
 }
-
-

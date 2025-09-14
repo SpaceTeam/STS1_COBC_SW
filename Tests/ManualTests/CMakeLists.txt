@@ -1,3 +1,19 @@
+# ---- Tests for Linux and COBC ----
+
+add_test_program(CheckFirmwareIntegrity)
+target_link_libraries(
+    Sts1CobcSwTests_CheckFirmwareIntegrity
+    PRIVATE etl::etl
+            rodos::rodos
+            strong_type::strong_type
+            Sts1CobcSw_FirmwareManagement
+            Sts1CobcSw_Outcome
+            Sts1CobcSw_RodosTime
+            Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
+            Sts1CobcSw_Vocabulary
+)
+
 # ---- Tests only for the COBC ----
 
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
@@ -163,20 +179,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_RodosTime
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Telemetry
-                Sts1CobcSw_Utility
-                Sts1CobcSw_Vocabulary
-    )
-
-    add_test_program(CheckFirmwareIntegrity)
-    target_link_libraries(
-        Sts1CobcSwTests_CheckFirmwareIntegrity
-        PRIVATE etl::etl
-                rodos::rodos
-                strong_type::strong_type
-                Sts1CobcSw_FirmwareManagement
-                Sts1CobcSw_Outcome
-                Sts1CobcSw_RodosTime
-                Sts1CobcSw_Serial
                 Sts1CobcSw_Utility
                 Sts1CobcSw_Vocabulary
     )
