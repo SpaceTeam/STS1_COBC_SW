@@ -1,6 +1,7 @@
 #include <Tests/CatchRodos/TestMacros.hpp>
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
@@ -11,13 +12,17 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
 #include <strong_type/equality.hpp>
+#include <strong_type/type.hpp>
 
+#include <etl/string.h>
+#include <etl/utility.h>
 #include <etl/vector.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <span>
-#include <utility>
 
 
 using sts1cobcsw::Byte;
@@ -669,8 +674,8 @@ TEST_CASE("Parsing AckPdu")
 
 TEST_CASE("MetadataPdu Constructor")
 {
-    static constexpr auto sourceFileName = std::array{0xAB_b, 0xCD_b, 0xEF_b};
-    static constexpr auto destinationFileName = std::array{0x01_b, 0x23_b};
+    static auto const sourceFileName = sts1cobcsw::fs::Path("foo");
+    static auto const destinationFileName = sts1cobcsw::fs::Path("bar");
 
     auto metadataPdu = sts1cobcsw::MetadataPdu(42U,  // fileSize
                                                sourceFileName,
@@ -679,14 +684,15 @@ TEST_CASE("MetadataPdu Constructor")
     CHECK(metadataPdu.fileSize_ == 42U);
     CHECK(metadataPdu.sourceFileNameLength_ == 3U);
     CHECK(metadataPdu.sourceFileNameValue_.size() == 3U);
-    CHECK(metadataPdu.sourceFileNameValue_[0] == 0xAB_b);
-    CHECK(metadataPdu.sourceFileNameValue_[1] == 0xCD_b);
-    CHECK(metadataPdu.sourceFileNameValue_[2] == 0xEF_b);
+    CHECK(metadataPdu.sourceFileNameValue_[0] == 0x66);
+    CHECK(metadataPdu.sourceFileNameValue_[1] == 0x6F);
+    CHECK(metadataPdu.sourceFileNameValue_[2] == 0x6F);
 
-    CHECK(metadataPdu.destinationFileNameLength_ == 2U);
-    CHECK(metadataPdu.destinationFileNameValue_.size() == 2U);
-    CHECK(metadataPdu.destinationFileNameValue_[0] == 0x01_b);
-    CHECK(metadataPdu.destinationFileNameValue_[1] == 0x23_b);
+    CHECK(metadataPdu.destinationFileNameLength_ == 3U);
+    CHECK(metadataPdu.destinationFileNameValue_.size() == 3U);
+    CHECK(metadataPdu.destinationFileNameValue_[0] == 0x62);
+    CHECK(metadataPdu.destinationFileNameValue_[1] == 0x61);
+    CHECK(metadataPdu.destinationFileNameValue_[2] == 0x72);
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -694,16 +700,20 @@ TEST_CASE("MetadataPdu Constructor")
     REQUIRE(addResult.has_value());
 
     CHECK(dataField.size() == metadataPdu.Size());
-    // Expected: 1B flags + 4B file size + 1B source length + 3B source + 1B dest length + 2B
-    // dest = 12B
-    CHECK(dataField.size() == 12U);
+    // Expected: 1B flags + 4B file size + 1B source length + 3B source + 1B dest length + 3B
+    // dest = 13B
+    CHECK(dataField.size() == 13U);
     CHECK(dataField[0] == 0x3C_b);   // flags: reserved=0, closure=0, checksum=15, reserved2=0
     CHECK(dataField[1] == 0x00_b);   // file size
     CHECK(dataField[4] == 0x2A_b);   // file size
     CHECK(dataField[5] == 0x03_b);   // source file name length
-    CHECK(dataField[6] == 0xAB_b);   // source file name
-    CHECK(dataField[9] == 0x02_b);   // destination file name length
-    CHECK(dataField[10] == 0x01_b);  // destination file name
+    CHECK(dataField[6] == 0x66_b);   // source file name
+    CHECK(dataField[7] == 0x6F_b);   // source file name
+    CHECK(dataField[8] == 0x6F_b);   // source file name
+    CHECK(dataField[9] == 0x03_b);   // destination file name length
+    CHECK(dataField[10] == 0x62_b);  // destination file name
+    CHECK(dataField[11] == 0x61_b);  // destination file name
+    CHECK(dataField[12] == 0x72_b);  // destination file name
 }
 
 
@@ -714,16 +724,16 @@ TEST_CASE("Adding MetadataPdu")
 
     metadataPdu.fileSize_ = 42;
 
-    static constexpr auto sourceFileName = std::array{0xAB_b, 0xCD_b};
-    static constexpr auto destinationFileName = std::array{0x01_b, 0x23_b};
+    static auto const sourceFileName = sts1cobcsw::fs::Path("abc");
+    static auto const destinationFileName = sts1cobcsw::fs::Path("def");
 
-    metadataPdu.sourceFileNameLength_ = sourceFileName.size();
+    metadataPdu.sourceFileNameLength_ = static_cast<std::uint8_t>(sourceFileName.size());
     metadataPdu.sourceFileNameValue_ = sourceFileName;
 
-    metadataPdu.destinationFileNameLength_ = destinationFileName.size();
+    metadataPdu.destinationFileNameLength_ = static_cast<std::uint8_t>(destinationFileName.size());
     metadataPdu.destinationFileNameValue_ = destinationFileName;
 
-    CHECK(metadataPdu.Size() == (1 + 4 + 1 + 2 + 1 + 2));
+    CHECK(metadataPdu.Size() == (1 + 4 + 1 + 3 + 1 + 3));
 
     auto addResult = metadataPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
@@ -734,12 +744,14 @@ TEST_CASE("Adding MetadataPdu")
     CHECK(dataField[2] == 0x00_b);
     CHECK(dataField[3] == 0x00_b);
     CHECK(dataField[4] == 0x2A_b);
-    CHECK(dataField[5] == 0x02_b);
-    CHECK(dataField[6] == 0xAB_b);
-    CHECK(dataField[7] == 0xCD_b);
-    CHECK(dataField[8] == 0x02_b);
-    CHECK(dataField[9] == 0x01_b);
-    CHECK(dataField[10] == 0x23_b);
+    CHECK(dataField[5] == 0x03_b);
+    CHECK(dataField[6] == 0x61_b);
+    CHECK(dataField[7] == 0x62_b);
+    CHECK(dataField[8] == 0x63_b);
+    CHECK(dataField[9] == 0x03_b);
+    CHECK(dataField[10] == 0x64_b);
+    CHECK(dataField[11] == 0x65_b);
+    CHECK(dataField[12] == 0x66_b);
 }
 
 
@@ -755,11 +767,11 @@ TEST_CASE("Parsing MetadataPdu")
     buffer[3] = 0x00_b;
     buffer[4] = 0x12_b;
     buffer[5] = 0x02_b;
-    buffer[6] = 0xAA_b;
-    buffer[7] = 0xAA_b;
+    buffer[6] = 0x67_b;
+    buffer[7] = 0x67_b;
     buffer[8] = 0x02_b;
-    buffer[9] = 0xAA_b;
-    buffer[10] = 0xAA_b;
+    buffer[9] = 0x67_b;
+    buffer[10] = 0x67_b;
 
     auto parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
     REQUIRE(parseResult.has_value());
@@ -768,11 +780,11 @@ TEST_CASE("Parsing MetadataPdu")
 
     CHECK(metadataPdu.fileSize_ == 18U);
     CHECK(metadataPdu.sourceFileNameLength_ == 2U);
-    CHECK(metadataPdu.sourceFileNameValue_[0] == 0xAA_b);
-    CHECK(metadataPdu.sourceFileNameValue_[1] == 0xAA_b);
+    CHECK(metadataPdu.sourceFileNameValue_[0] == static_cast<char>(0x67_b));
+    CHECK(metadataPdu.sourceFileNameValue_[1] == static_cast<char>(0x67_b));
     CHECK(metadataPdu.destinationFileNameLength_ == 2U);
-    CHECK(metadataPdu.destinationFileNameValue_[0] == 0xAA_b);
-    CHECK(metadataPdu.destinationFileNameValue_[1] == 0xAA_b);
+    CHECK(metadataPdu.destinationFileNameValue_[0] == static_cast<char>(0x67_b));
+    CHECK(metadataPdu.destinationFileNameValue_[1] == static_cast<char>(0x67_b));
 
     buffer.resize(1);
     parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);

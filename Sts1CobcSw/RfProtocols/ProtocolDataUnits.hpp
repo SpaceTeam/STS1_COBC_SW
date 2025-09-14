@@ -1,8 +1,10 @@
 #pragma once
 
 
+#include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
@@ -199,8 +201,8 @@ public:
 
     MetadataPdu() = default;
     explicit MetadataPdu(std::uint32_t fileSize,
-                         std::span<Byte const> sourceFileName,
-                         std::span<Byte const> destinationFileName) noexcept;
+                         fs::Path const & sourceFileName,
+                         fs::Path const & destinationFileName) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     UInt<1> reserved1_;
@@ -209,9 +211,9 @@ public:
     UInt<2> reserved2_;
     std::uint32_t fileSize_ = 0;
     std::uint8_t sourceFileNameLength_ = 0;
-    std::span<Byte const> sourceFileNameValue_;
+    fs::Path sourceFileNameValue_;
     std::uint8_t destinationFileNameLength_ = 0;
-    std::span<Byte const> destinationFileNameValue_;
+    fs::Path destinationFileNameValue_;
     // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =

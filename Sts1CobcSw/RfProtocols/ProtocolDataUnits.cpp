@@ -1,10 +1,14 @@
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnits.hpp>
 
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/Utility.hpp>
+#include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
 #include <strong_type/equality.hpp>
 
@@ -12,13 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <utility>
-
-#include "Sts1CobcSw/Outcome/Outcome.hpp"
-#include "Sts1CobcSw/RfProtocols/Configuration.hpp"
-#include "Sts1CobcSw/RfProtocols/Vocabulary.hpp"
-#include "Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp"
 
 
 namespace sts1cobcsw
@@ -159,8 +157,8 @@ auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 
 
 MetadataPdu::MetadataPdu(std::uint32_t fileSize,
-                         std::span<Byte const> sourceFileName,
-                         std::span<Byte const> destinationFileName) noexcept
+                         fs::Path const & sourceFileName,
+                         fs::Path const & destinationFileName) noexcept
     : fileSize_(fileSize),
       sourceFileNameLength_(static_cast<std::uint8_t>(sourceFileName.size())),
       sourceFileNameValue_(sourceFileName),
@@ -179,9 +177,9 @@ auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
                                                  reserved2_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameLength_);
-    cursor = std::ranges::copy(sourceFileNameValue_, static_cast<Byte *>(cursor)).out;
+    cursor = std::ranges::copy(sourceFileNameValue_, static_cast<char *>(cursor)).out;
     cursor = SerializeTo<ccsdsEndianness>(cursor, destinationFileNameLength_);
-    std::ranges::copy(destinationFileNameValue_, static_cast<Byte *>(cursor));
+    std::ranges::copy(destinationFileNameValue_, static_cast<char *>(cursor));
 }
 
 
@@ -212,8 +210,7 @@ auto NakPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     auto oldSize = IncreaseSize(dataField, DoSize());
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, startOfScope_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, endOfScope_);
-    cursor = SerializeTo<ccsdsEndianness>(cursor, segmentRequests_);
-    // std::ranges::copy(segmentRequests_, static_cast<std::uint64_t *>(cursor));
+    (void)SerializeTo<ccsdsEndianness>(cursor, segmentRequests_);
 }
 
 
@@ -381,10 +378,10 @@ auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>
     {
         return ErrorCode::invalidDirectiveSubtypeCode;
     }
-    cursor = DeserializeFrom<ccsdsEndianness>(cursor,
-                                              &value_of(ackPdu.conditionCode_),
-                                              &ackPdu.spare_,
-                                              &value_of(ackPdu.transactionStatus_));
+    (void)DeserializeFrom<ccsdsEndianness>(cursor,
+                                           &value_of(ackPdu.conditionCode_),
+                                           &ackPdu.spare_,
+                                           &value_of(ackPdu.transactionStatus_));
     return ackPdu;
 }
 
@@ -412,10 +409,17 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
     {
         return ErrorCode::bufferTooSmall;
     }
-    // TODO: Named constant instead of "6U"
-    metadataPdu.sourceFileNameValue_ =
+
+    auto sourceFileNameValueBuffer =
         buffer.subspan(MetadataPdu::minParameterFieldLength,
                        static_cast<std::uint32_t>(metadataPdu.sourceFileNameLength_));
+
+    metadataPdu.sourceFileNameValue_ = fs::Path();
+    for(auto const byte : sourceFileNameValueBuffer)
+    {
+        metadataPdu.sourceFileNameValue_.push_back(static_cast<char>(byte));
+    }
+
     cursor = DeserializeFrom<ccsdsEndianness>(
         buffer.data() + MetadataPdu::minParameterFieldLength
             + static_cast<std::size_t>(metadataPdu.sourceFileNameLength_),
@@ -426,10 +430,18 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
     {
         return ErrorCode::bufferTooSmall;
     }
-    metadataPdu.destinationFileNameValue_ =
+
+    auto destinationFileNameValueBuffer =
         buffer.subspan(MetadataPdu::minParameterFieldLength + 1U
                            + static_cast<std::size_t>(metadataPdu.sourceFileNameLength_),
-                       static_cast<std::uint32_t>(metadataPdu.sourceFileNameLength_));
+                       static_cast<std::uint32_t>(metadataPdu.destinationFileNameLength_));
+    metadataPdu.destinationFileNameValue_ = fs::Path();
+    for(auto const byte : destinationFileNameValueBuffer)
+    {
+        metadataPdu.destinationFileNameValue_.push_back(static_cast<char>(byte));
+    }
+
+
     return metadataPdu;
 }
 
@@ -439,8 +451,6 @@ auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>
     auto nakPdu = NakPdu{};
     auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nakPdu.startOfScope_);
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.endOfScope_);
-    auto const headerSize =
-        totalSerialSize<decltype(nakPdu.startOfScope_), decltype(nakPdu.endOfScope_)>;
     (void)DeserializeFrom<ccsdsEndianness>(cursor, nakPdu.segmentRequests_.data());
     return nakPdu;
 }
