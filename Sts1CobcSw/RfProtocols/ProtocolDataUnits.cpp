@@ -44,6 +44,23 @@ auto FileDataPdu::DoSize() const -> std::uint16_t
 }
 
 
+EndOfFilePdu::EndOfFilePdu(std::uint32_t fileSize) noexcept
+    : conditionCode_(noErrorConditionCode), fileSize_(fileSize)
+{
+    // No FaultLocation implies noErrorConditionCode
+}
+
+
+EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode,
+                           std::uint32_t fileSize,
+                           FaultLocation faultLocation) noexcept
+    : conditionCode_(conditionCode), fileSize_(fileSize), faultLocation_(faultLocation)
+{
+    // We cannot have a FaultLocation if there is no error
+    assert(conditionCode != noErrorConditionCode);
+}
+
+
 auto EndOfFilePdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -63,6 +80,28 @@ auto EndOfFilePdu::DoSize() const -> std::uint16_t
     return conditionCode_ == noErrorConditionCode
              ? minParameterFieldLength
              : minParameterFieldLength + totalSerialSize<FaultLocation>;
+}
+
+
+FinishedPdu::FinishedPdu(DeliveryCode deliveryCode, FileStatus fileStatus) noexcept
+    : conditionCode_(noErrorConditionCode), deliveryCode_(deliveryCode), fileStatus_(fileStatus)
+{
+    // No FaultLocation implies noErrorConditionCode since we ignore "unsupported checksum type"
+}
+
+
+FinishedPdu::FinishedPdu(ConditionCode conditionCode,
+                         DeliveryCode deliveryCode,
+                         FileStatus fileStatus,
+                         FaultLocation faultLocation) noexcept
+    : conditionCode_(conditionCode),
+      deliveryCode_(deliveryCode),
+      fileStatus_(fileStatus),
+      faultLocation_(faultLocation)
+{
+    // We cannot have a FaultLocation if there is no error or an unsupported checksum type
+    assert(conditionCode != noErrorConditionCode
+           and conditionCode != unsupportedChecksumTypeConditionCode);
 }
 
 
@@ -129,6 +168,7 @@ MetadataPdu::MetadataPdu(std::uint32_t fileSize,
       destinationFileNameValue_(destinationFileName)
 {}
 
+
 auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
@@ -158,8 +198,9 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
                                       + destinationFileNameValue_.size());
 }
 
+
 NakPdu::NakPdu(std::uint32_t endOfScope, std::span<std::uint64_t const> segementRequests) noexcept
-    : startOfScope_(0), endOfScope_(endOfScope), segmentRequests_(segementRequests)
+    : endOfScope_(endOfScope), segmentRequests_(segementRequests)
 {
     assert(segmentRequests_.size() <= NakPdu::maxSegmentRequests);
 }
@@ -255,23 +296,6 @@ auto ParseAsFileDirectivePdu(std::span<Byte const> buffer) -> Result<FileDirecti
 }
 
 
-EndOfFilePdu::EndOfFilePdu(std::uint32_t fileSize) noexcept
-    : conditionCode_(noErrorConditionCode), fileSize_(fileSize)
-{
-    // No FaultLocation implies noErrorConditionCode
-}
-
-
-EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode,
-                           std::uint32_t fileSize,
-                           FaultLocation faultLocation) noexcept
-    : conditionCode_(conditionCode), fileSize_(fileSize), faultLocation_(faultLocation)
-{
-    // We cannot have a FaultLocation if there is no error
-    assert(conditionCode != noErrorConditionCode);
-}
-
-
 auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
 {
     if(buffer.size() < EndOfFilePdu::minParameterFieldLength)
@@ -301,27 +325,6 @@ auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
     return endOfFilePdu;
 }
 
-
-FinishedPdu::FinishedPdu(DeliveryCode deliveryCode, FileStatus fileStatus) noexcept
-    : conditionCode_(noErrorConditionCode), deliveryCode_(deliveryCode), fileStatus_(fileStatus)
-{
-    // No FaultLocation implies noErrorConditionCode since we ignore "unsupported checksum type"
-}
-
-
-FinishedPdu::FinishedPdu(ConditionCode conditionCode,
-                         DeliveryCode deliveryCode,
-                         FileStatus fileStatus,
-                         FaultLocation faultLocation) noexcept
-    : conditionCode_(conditionCode),
-      deliveryCode_(deliveryCode),
-      fileStatus_(fileStatus),
-      faultLocation_(faultLocation)
-{
-    // We cannot have a FaultLocation if there is no error or an unsupported checksum type
-    assert(conditionCode != noErrorConditionCode
-           and conditionCode != unsupportedChecksumTypeConditionCode);
-}
 
 auto ParseAsFinishedPdu(std::span<Byte const> buffer) -> Result<FinishedPdu>
 {
