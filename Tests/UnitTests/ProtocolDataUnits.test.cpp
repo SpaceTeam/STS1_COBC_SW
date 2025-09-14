@@ -145,11 +145,11 @@ TEST_CASE("FileDataPdu Constructor")
     static constexpr auto fileData = std::array{0xAB_b, 0xCD_b, 0xEF_b};
     auto fileDataPdu = sts1cobcsw::FileDataPdu(0x1234'5678U, fileData);
 
-    CHECK(fileDataPdu.offset == 0x1234'5678U);
-    CHECK(fileDataPdu.fileData.size() == 3U);
-    CHECK(fileDataPdu.fileData[0] == 0xAB_b);
-    CHECK(fileDataPdu.fileData[1] == 0xCD_b);
-    CHECK(fileDataPdu.fileData[2] == 0xEF_b);
+    CHECK(fileDataPdu.offset_ == 0x1234'5678U);
+    CHECK(fileDataPdu.fileData_.size() == 3U);
+    CHECK(fileDataPdu.fileData_[0] == 0xAB_b);
+    CHECK(fileDataPdu.fileData_[1] == 0xCD_b);
+    CHECK(fileDataPdu.fileData_[2] == 0xEF_b);
 
     // Serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -170,12 +170,12 @@ TEST_CASE("FileDataPdu Constructor")
     std::fill(maxFileData.begin(), maxFileData.end(), 0xFF_b);
 
     auto maxFileDataPdu = sts1cobcsw::FileDataPdu(0, maxFileData);
-    CHECK(maxFileDataPdu.fileData.size() == sts1cobcsw::maxFileSegmentLength);
+    CHECK(maxFileDataPdu.fileData_.size() == sts1cobcsw::maxFileSegmentLength);
 
     // Test empty file data (valid case)
     auto emptyFileDataPdu = sts1cobcsw::FileDataPdu(42U, std::span<Byte const>{});
-    CHECK(emptyFileDataPdu.offset == 42U);
-    CHECK(emptyFileDataPdu.fileData.size() == 0U);
+    CHECK(emptyFileDataPdu.offset_ == 42U);
+    CHECK(emptyFileDataPdu.fileData_.size() == 0U);
 }
 
 
@@ -183,9 +183,9 @@ TEST_CASE("Adding FileDataPdu to data field")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto fileDataPdu = sts1cobcsw::FileDataPdu{};
-    fileDataPdu.offset = 0x0102'0304U;
+    fileDataPdu.offset_ = 0x0102'0304U;
     static constexpr auto fileData = std::array{0xAB_b, 0xCD_b};
-    fileDataPdu.fileData = fileData;
+    fileDataPdu.fileData_ = fileData;
 
     CHECK(fileDataPdu.Size() == 6U);  // 4B offset + 2B data field
 
@@ -221,10 +221,10 @@ TEST_CASE("Parsing FileDataPdu")
     auto parseResult = sts1cobcsw::ParseAsFileDataPdu(buffer);
     REQUIRE(parseResult.has_value());
     auto & fileDataPdu = parseResult.value();
-    CHECK(fileDataPdu.offset == 0x0102'0304U);
-    CHECK(fileDataPdu.fileData.size() == 2U);
-    CHECK(fileDataPdu.fileData[0] == 0xAB_b);
-    CHECK(fileDataPdu.fileData[1] == 0xCD_b);
+    CHECK(fileDataPdu.offset_ == 0x0102'0304U);
+    CHECK(fileDataPdu.fileData_.size() == 2U);
+    CHECK(fileDataPdu.fileData_[0] == 0xAB_b);
+    CHECK(fileDataPdu.fileData_[1] == 0xCD_b);
 
     // Buffer must be > serialSize(offset)
     buffer.resize(2);
@@ -272,9 +272,9 @@ TEST_CASE("EndOfFilePdu Constructor")
                                                  0x9ABC'DEF0U   // fileSize
     );
 
-    CHECK(endOfFilePdu.conditionCode == sts1cobcsw::noErrorConditionCode);
-    CHECK(endOfFilePdu.fileChecksum == 0x1234'5678U);
-    CHECK(endOfFilePdu.fileSize == 0x9ABC'DEF0U);
+    CHECK(endOfFilePdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
+    CHECK(endOfFilePdu.fileChecksum_ == 0x1234'5678U);
+    CHECK(endOfFilePdu.fileSize_ == 0x9ABC'DEF0U);
     CHECK(endOfFilePdu.Size() == 9U);  // No fault location
 
     // Test serialization
@@ -304,12 +304,12 @@ TEST_CASE("EndOfFilePdu Constructor")
                                  0x1122'3344,  // fileSize
                                  faultLocation);
 
-    CHECK(errorEndOfFilePdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
-    CHECK(errorEndOfFilePdu.fileChecksum == 0xAABB'CCDD);
-    CHECK(errorEndOfFilePdu.fileSize == 0x1122'3344);
-    CHECK(errorEndOfFilePdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
-    CHECK(errorEndOfFilePdu.faultLocation.length == 1);
-    CHECK(errorEndOfFilePdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+    CHECK(errorEndOfFilePdu.conditionCode_ == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(errorEndOfFilePdu.fileChecksum_ == 0xAABB'CCDD);
+    CHECK(errorEndOfFilePdu.fileSize_ == 0x1122'3344U);
+    CHECK(errorEndOfFilePdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
+    CHECK(errorEndOfFilePdu.faultLocation_.length == 1);
+    CHECK(errorEndOfFilePdu.faultLocation_.value == sts1cobcsw::EntityId(0x0F));
     CHECK(errorEndOfFilePdu.Size() == 12U);  // 9B + 3B fault location
 
     // Test serialization with fault location
@@ -328,9 +328,9 @@ TEST_CASE("Adding EndOfFilePdu to data field")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto endOfFilePdu = sts1cobcsw::EndOfFilePdu{};
-    endOfFilePdu.conditionCode = sts1cobcsw::noErrorConditionCode;
-    endOfFilePdu.fileChecksum = 0x1234'5678U;
-    endOfFilePdu.fileSize = 0x9ABC'DEF0U;
+    endOfFilePdu.conditionCode_ = sts1cobcsw::noErrorConditionCode;
+    endOfFilePdu.fileChecksum_ = 0x1234'5678U;
+    endOfFilePdu.fileSize_ = 0x9ABC'DEF0U;
 
     CHECK(endOfFilePdu.Size() == 9U);  // 1B condition code + 4B file checksum + 4B file size
 
@@ -347,10 +347,10 @@ TEST_CASE("Adding EndOfFilePdu to data field")
     CHECK(dataField[7] == 0xDE_b);  // File size
     CHECK(dataField[8] == 0xF0_b);  // File size
 
-    endOfFilePdu.conditionCode = sts1cobcsw::invalidTransmissionModeConditionCode;
-    endOfFilePdu.faultLocation.type = sts1cobcsw::TlvType::entityId;
-    endOfFilePdu.faultLocation.length = 1;
-    endOfFilePdu.faultLocation.value = sts1cobcsw::EntityId(0x0F);
+    endOfFilePdu.conditionCode_ = sts1cobcsw::invalidTransmissionModeConditionCode;
+    endOfFilePdu.faultLocation_.type = sts1cobcsw::TlvType::entityId;
+    endOfFilePdu.faultLocation_.length = 1;
+    endOfFilePdu.faultLocation_.value = sts1cobcsw::EntityId(0x0F);
 
     CHECK(endOfFilePdu.Size() == 12U);  // 9 B + 3 B fault location
 
@@ -382,9 +382,9 @@ TEST_CASE("Parsing EndOfFilePdu")
     auto parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
     REQUIRE(parseResult.has_value());
     auto & endOfFilePdu = parseResult.value();
-    CHECK(endOfFilePdu.conditionCode == sts1cobcsw::noErrorConditionCode);
-    CHECK(endOfFilePdu.fileChecksum == 0x1234'5678U);
-    CHECK(endOfFilePdu.fileSize == 0x9ABC'DEF0U);
+    CHECK(endOfFilePdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
+    CHECK(endOfFilePdu.fileChecksum_ == 0x1234'5678U);
+    CHECK(endOfFilePdu.fileSize_ == 0x9ABC'DEF0U);
 
     // Buffer must be >= serialSize(conditionCode, fileChecksum, fileSize)
     buffer.resize(8);
@@ -400,18 +400,18 @@ TEST_CASE("Parsing EndOfFilePdu")
     REQUIRE(parseResult.has_value());
     endOfFilePdu = parseResult.value();
     // Condition code is still no error, so we don't parse the fault location
-    CHECK(endOfFilePdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
-    CHECK(endOfFilePdu.faultLocation.length == 0);
-    CHECK(endOfFilePdu.faultLocation.value == sts1cobcsw::EntityId(0));
+    CHECK(endOfFilePdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
+    CHECK(endOfFilePdu.faultLocation_.length == 0);
+    CHECK(endOfFilePdu.faultLocation_.value == sts1cobcsw::EntityId(0));
 
     buffer[0] = 0x10_b;  // Condition code (positive ACK limit reached)
     parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
     REQUIRE(parseResult.has_value());
     endOfFilePdu = parseResult.value();
-    CHECK(endOfFilePdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
-    CHECK(endOfFilePdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
-    CHECK(endOfFilePdu.faultLocation.length == 1);
-    CHECK(endOfFilePdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+    CHECK(endOfFilePdu.conditionCode_ == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(endOfFilePdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
+    CHECK(endOfFilePdu.faultLocation_.length == 1);
+    CHECK(endOfFilePdu.faultLocation_.value == sts1cobcsw::EntityId(0x0F));
 
     // Buffer must be == serialSize(conditionCode, fileChecksum, fileSize, faultLocation)
     buffer.resize(13);
@@ -429,9 +429,9 @@ TEST_CASE("FinishedPdu Constructor")
                                                sts1cobcsw::dataCompleteDeliveryCode,
                                                sts1cobcsw::fileRetainedFileStatus);
 
-    CHECK(finishedPdu.conditionCode == sts1cobcsw::noErrorConditionCode);
-    CHECK(finishedPdu.deliveryCode == sts1cobcsw::dataCompleteDeliveryCode);
-    CHECK(finishedPdu.fileStatus == sts1cobcsw::fileRetainedFileStatus);
+    CHECK(finishedPdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
+    CHECK(finishedPdu.deliveryCode_ == sts1cobcsw::dataCompleteDeliveryCode);
+    CHECK(finishedPdu.fileStatus_ == sts1cobcsw::fileRetainedFileStatus);
     CHECK(finishedPdu.Size() == 1U);  // No fault location
 
     // Test serialization
@@ -453,12 +453,12 @@ TEST_CASE("FinishedPdu Constructor")
                                 sts1cobcsw::fileRejectedFileStatus,
                                 faultLocation);
 
-    CHECK(errorFinishedPdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
-    CHECK(errorFinishedPdu.deliveryCode == sts1cobcsw::dataIncompleteDeliveryCode);
-    CHECK(errorFinishedPdu.fileStatus == sts1cobcsw::fileRejectedFileStatus);
-    CHECK(errorFinishedPdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
-    CHECK(errorFinishedPdu.faultLocation.length == 1);
-    CHECK(errorFinishedPdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+    CHECK(errorFinishedPdu.conditionCode_ == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(errorFinishedPdu.deliveryCode_ == sts1cobcsw::dataIncompleteDeliveryCode);
+    CHECK(errorFinishedPdu.fileStatus_ == sts1cobcsw::fileRejectedFileStatus);
+    CHECK(errorFinishedPdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
+    CHECK(errorFinishedPdu.faultLocation_.length == 1);
+    CHECK(errorFinishedPdu.faultLocation_.value == sts1cobcsw::EntityId(0x0F));
     CHECK(errorFinishedPdu.Size() == 4U);  // 1B + 3B fault location
 
     // Serialization with fault location
@@ -476,7 +476,8 @@ TEST_CASE("FinishedPdu Constructor")
                                 sts1cobcsw::dataIncompleteDeliveryCode,
                                 sts1cobcsw::fileRejectedFileStatus);
 
-    CHECK(unsupportedFinishedPdu.conditionCode == sts1cobcsw::unsupportedChecksumTypeConditionCode);
+    CHECK(unsupportedFinishedPdu.conditionCode_
+          == sts1cobcsw::unsupportedChecksumTypeConditionCode);
     CHECK(unsupportedFinishedPdu.Size() == 1U);
 
     dataField.clear();
@@ -491,9 +492,9 @@ TEST_CASE("Adding FinishedPdu")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto finishedPdu = sts1cobcsw::FinishedPdu{};
-    finishedPdu.conditionCode = sts1cobcsw::noErrorConditionCode;
-    finishedPdu.deliveryCode = sts1cobcsw::DeliveryCode(0);
-    finishedPdu.fileStatus = sts1cobcsw::FileStatus(0);
+    finishedPdu.conditionCode_ = sts1cobcsw::noErrorConditionCode;
+    finishedPdu.deliveryCode_ = sts1cobcsw::DeliveryCode(0);
+    finishedPdu.fileStatus_ = sts1cobcsw::FileStatus(0);
 
     CHECK(finishedPdu.Size() == 1U);
 
@@ -503,11 +504,11 @@ TEST_CASE("Adding FinishedPdu")
     CHECK(dataField[0]
           == 0x00_b);  // Condition code (no error), Delivery code (0), and FileStatus(0)
 
-    finishedPdu.conditionCode = sts1cobcsw::invalidTransmissionModeConditionCode;
-    finishedPdu.deliveryCode = sts1cobcsw::DeliveryCode(0);
-    finishedPdu.fileStatus = sts1cobcsw::FileStatus(0);
-    finishedPdu.faultLocation.length = 1;
-    finishedPdu.faultLocation.value = sts1cobcsw::EntityId(0x0F);
+    finishedPdu.conditionCode_ = sts1cobcsw::invalidTransmissionModeConditionCode;
+    finishedPdu.deliveryCode_ = sts1cobcsw::DeliveryCode(0);
+    finishedPdu.fileStatus_ = sts1cobcsw::FileStatus(0);
+    finishedPdu.faultLocation_.length = 1;
+    finishedPdu.faultLocation_.value = sts1cobcsw::EntityId(0x0F);
 
     CHECK(finishedPdu.Size() == 4U);  // 1 B + 3 B fault location
 
@@ -520,9 +521,9 @@ TEST_CASE("Adding FinishedPdu")
     CHECK(dataField[2] == 0x01_b);  // Fault location length
     CHECK(dataField[3] == 0x0F_b);  // Fault location value (entity ID)
 
-    finishedPdu.conditionCode = sts1cobcsw::unsupportedChecksumTypeConditionCode;
-    finishedPdu.deliveryCode = sts1cobcsw::DeliveryCode(1);
-    finishedPdu.fileStatus = sts1cobcsw::FileStatus(1);
+    finishedPdu.conditionCode_ = sts1cobcsw::unsupportedChecksumTypeConditionCode;
+    finishedPdu.deliveryCode_ = sts1cobcsw::DeliveryCode(1);
+    finishedPdu.fileStatus_ = sts1cobcsw::FileStatus(1);
 
     CHECK(finishedPdu.Size() == 1U);  // Fault Location is omitted
 
@@ -548,9 +549,9 @@ TEST_CASE("Parsing FinishedPdu")
     auto parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
     REQUIRE(parseResult.has_value());
     auto & finishedPdu = parseResult.value();
-    CHECK(finishedPdu.conditionCode == sts1cobcsw::noErrorConditionCode);
-    CHECK(finishedPdu.deliveryCode == sts1cobcsw::dataIncompleteDeliveryCode);
-    CHECK(finishedPdu.fileStatus == sts1cobcsw::fileRejectedFileStatus);
+    CHECK(finishedPdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
+    CHECK(finishedPdu.deliveryCode_ == sts1cobcsw::dataIncompleteDeliveryCode);
+    CHECK(finishedPdu.fileStatus_ == sts1cobcsw::fileRejectedFileStatus);
 
     // Buffer size must >= serialSize(conditionCode, spare, deliveryCode, fileStatus)
     buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength - 1);
@@ -569,21 +570,21 @@ TEST_CASE("Parsing FinishedPdu")
     parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
     REQUIRE(parseResult.has_value());
     finishedPdu = parseResult.value();
-    CHECK(finishedPdu.conditionCode == sts1cobcsw::noErrorConditionCode);
-    CHECK(finishedPdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
-    CHECK(finishedPdu.faultLocation.length == 0);
-    CHECK(finishedPdu.faultLocation.value == sts1cobcsw::EntityId(0));
+    CHECK(finishedPdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
+    CHECK(finishedPdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
+    CHECK(finishedPdu.faultLocation_.length == 0);
+    CHECK(finishedPdu.faultLocation_.value == sts1cobcsw::EntityId(0));
 
     // Error condition: positive ACK limit reached (ConditionCode = 1)
     buffer[0] = 0x10_b;
     parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
     REQUIRE(parseResult.has_value());
     finishedPdu = parseResult.value();
-    CHECK(finishedPdu.conditionCode == sts1cobcsw::positiveAckLimitReachedConditionCode);
-    CHECK(finishedPdu.faultLocation.type == sts1cobcsw::TlvType::entityId);
-    CHECK(finishedPdu.faultLocation.length
+    CHECK(finishedPdu.conditionCode_ == sts1cobcsw::positiveAckLimitReachedConditionCode);
+    CHECK(finishedPdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
+    CHECK(finishedPdu.faultLocation_.length
           == static_cast<std::uint8_t>(sts1cobcsw::totalSerialSize<sts1cobcsw::EntityId>));
-    CHECK(finishedPdu.faultLocation.value == sts1cobcsw::EntityId(0x0F));
+    CHECK(finishedPdu.faultLocation_.value == sts1cobcsw::EntityId(0x0F));
 
     // Invalid data length for error condition
     buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength
@@ -606,20 +607,20 @@ TEST_CASE("AckPdu Constructor")
                                      sts1cobcsw::noErrorConditionCode,
                                      sts1cobcsw::terminatedTransactionStatus);
 
-    CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 5);  // Finished = 5
-    CHECK(ackPdu.directiveSubtypeCode == 0b0001);                    // Finished gets 0b0001
-    CHECK(value_of(ackPdu.conditionCode) == 0);                      // no error
-    CHECK(ackPdu.transactionStatus == sts1cobcsw::terminatedTransactionStatus);
+    CHECK(ackPdu.acknowledgedPduDirectiveCode_.ToUnderlying() == 5);  // Finished = 5
+    CHECK(ackPdu.directiveSubtypeCode_ == 0b0001);                    // Finished gets 0b0001
+    CHECK(value_of(ackPdu.conditionCode_) == 0);                      // no error
+    CHECK(ackPdu.transactionStatus_ == sts1cobcsw::terminatedTransactionStatus);
 
     // Test constructor with EndOfFile directive
     auto ackPduEof = sts1cobcsw::AckPdu(sts1cobcsw::DirectiveCode::endOfFile,
                                         sts1cobcsw::positiveAckLimitReachedConditionCode,
                                         sts1cobcsw::activeTransactionStatus);
 
-    CHECK(ackPduEof.acknowledgedPduDirectiveCode.ToUnderlying() == 4);  // EndOfFile = 4
-    CHECK(ackPduEof.directiveSubtypeCode == 0b0000);                    // Non-Finished gets 0b0000
-    CHECK(value_of(ackPduEof.conditionCode) == 1);  // positive ACK limit reached
-    CHECK(ackPduEof.transactionStatus == sts1cobcsw::activeTransactionStatus);
+    CHECK(ackPduEof.acknowledgedPduDirectiveCode_.ToUnderlying() == 4);  // EndOfFile = 4
+    CHECK(ackPduEof.directiveSubtypeCode_ == 0b0000);                    // Non-Finished gets 0b0000
+    CHECK(value_of(ackPduEof.conditionCode_) == 1);  // positive ACK limit reached
+    CHECK(ackPduEof.transactionStatus_ == sts1cobcsw::activeTransactionStatus);
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -635,11 +636,11 @@ TEST_CASE("Adding AckPdu")
 {
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto ackPdu = sts1cobcsw::AckPdu{};
-    ackPdu.acknowledgedPduDirectiveCode =
+    ackPdu.acknowledgedPduDirectiveCode_ =
         static_cast<std::uint32_t>(sts1cobcsw::DirectiveCode::finished);
-    ackPdu.directiveSubtypeCode = 0;
-    ackPdu.conditionCode = sts1cobcsw::noErrorConditionCode;
-    ackPdu.transactionStatus = sts1cobcsw::undefinedTransactionStatus;
+    ackPdu.directiveSubtypeCode_ = 0;
+    ackPdu.conditionCode_ = sts1cobcsw::noErrorConditionCode;
+    ackPdu.transactionStatus_ = sts1cobcsw::undefinedTransactionStatus;
 
     CHECK(ackPdu.minParameterFieldLength == 2U);
     CHECK(ackPdu.Size() == 2U);
@@ -664,10 +665,10 @@ TEST_CASE("Parsing AckPdu")
     auto parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
     REQUIRE(parseResult.has_value());
     auto & ackPdu = parseResult.value();
-    CHECK(ackPdu.acknowledgedPduDirectiveCode.ToUnderlying() == 5);
-    CHECK(ackPdu.directiveSubtypeCode == 0);
-    CHECK(value_of(ackPdu.conditionCode) == 1);
-    CHECK(ackPdu.transactionStatus == sts1cobcsw::terminatedTransactionStatus);
+    CHECK(ackPdu.acknowledgedPduDirectiveCode_.ToUnderlying() == 5);
+    CHECK(ackPdu.directiveSubtypeCode_ == 0);
+    CHECK(value_of(ackPdu.conditionCode_) == 1);
+    CHECK(ackPdu.transactionStatus_ == sts1cobcsw::terminatedTransactionStatus);
 
     buffer.resize(1);
     parseResult = sts1cobcsw::ParseAsAckPdu(buffer);
@@ -695,17 +696,17 @@ TEST_CASE("MetadataPdu Constructor")
                                                sourceFileName,
                                                destinationFileName);
 
-    CHECK(metadataPdu.fileSize == 42U);
-    CHECK(metadataPdu.sourceFileNameLength == 3U);
-    CHECK(metadataPdu.sourceFileNameValue.size() == 3U);
-    CHECK(metadataPdu.sourceFileNameValue[0] == 0xAB_b);
-    CHECK(metadataPdu.sourceFileNameValue[1] == 0xCD_b);
-    CHECK(metadataPdu.sourceFileNameValue[2] == 0xEF_b);
+    CHECK(metadataPdu.fileSize_ == 42U);
+    CHECK(metadataPdu.sourceFileNameLength_ == 3U);
+    CHECK(metadataPdu.sourceFileNameValue_.size() == 3U);
+    CHECK(metadataPdu.sourceFileNameValue_[0] == 0xAB_b);
+    CHECK(metadataPdu.sourceFileNameValue_[1] == 0xCD_b);
+    CHECK(metadataPdu.sourceFileNameValue_[2] == 0xEF_b);
 
-    CHECK(metadataPdu.destinationFileNameLength == 2U);
-    CHECK(metadataPdu.destinationFileNameValue.size() == 2U);
-    CHECK(metadataPdu.destinationFileNameValue[0] == 0x01_b);
-    CHECK(metadataPdu.destinationFileNameValue[1] == 0x23_b);
+    CHECK(metadataPdu.destinationFileNameLength_ == 2U);
+    CHECK(metadataPdu.destinationFileNameValue_.size() == 2U);
+    CHECK(metadataPdu.destinationFileNameValue_[0] == 0x01_b);
+    CHECK(metadataPdu.destinationFileNameValue_[1] == 0x23_b);
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -731,16 +732,16 @@ TEST_CASE("Adding MetadataPdu")
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto metadataPdu = sts1cobcsw::MetadataPdu{};
 
-    metadataPdu.fileSize = 42;
+    metadataPdu.fileSize_ = 42;
 
     static constexpr auto sourceFileName = std::array{0xAB_b, 0xCD_b};
     static constexpr auto destinationFileName = std::array{0x01_b, 0x23_b};
 
-    metadataPdu.sourceFileNameLength = sourceFileName.size();
-    metadataPdu.sourceFileNameValue = sourceFileName;
+    metadataPdu.sourceFileNameLength_ = sourceFileName.size();
+    metadataPdu.sourceFileNameValue_ = sourceFileName;
 
-    metadataPdu.destinationFileNameLength = destinationFileName.size();
-    metadataPdu.destinationFileNameValue = destinationFileName;
+    metadataPdu.destinationFileNameLength_ = destinationFileName.size();
+    metadataPdu.destinationFileNameValue_ = destinationFileName;
 
     CHECK(metadataPdu.Size() == (1 + 4 + 1 + 2 + 1 + 2));
 
@@ -785,13 +786,13 @@ TEST_CASE("Parsing MetadataPdu")
 
     auto & metadataPdu = parseResult.value();
 
-    CHECK(metadataPdu.fileSize == 18U);
-    CHECK(metadataPdu.sourceFileNameLength == 2U);
-    CHECK(metadataPdu.sourceFileNameValue[0] == 0xAA_b);
-    CHECK(metadataPdu.sourceFileNameValue[1] == 0xAA_b);
-    CHECK(metadataPdu.destinationFileNameLength == 2U);
-    CHECK(metadataPdu.destinationFileNameValue[0] == 0xAA_b);
-    CHECK(metadataPdu.destinationFileNameValue[1] == 0xAA_b);
+    CHECK(metadataPdu.fileSize_ == 18U);
+    CHECK(metadataPdu.sourceFileNameLength_ == 2U);
+    CHECK(metadataPdu.sourceFileNameValue_[0] == 0xAA_b);
+    CHECK(metadataPdu.sourceFileNameValue_[1] == 0xAA_b);
+    CHECK(metadataPdu.destinationFileNameLength_ == 2U);
+    CHECK(metadataPdu.destinationFileNameValue_[0] == 0xAA_b);
+    CHECK(metadataPdu.destinationFileNameValue_[1] == 0xAA_b);
 
     buffer.resize(1);
     parseResult = sts1cobcsw::ParseAsMetadataPdu(buffer);
@@ -823,12 +824,12 @@ TEST_CASE("NakPdu Constructor")
         0x1234'5678'9ABC'DEF0, 0xFEDC'BA98'7654'3210, 0x1111'2222'3333'4444};
     auto nakPdu = sts1cobcsw::NakPdu(0x2000U, segmentRequests);
 
-    CHECK(nakPdu.startOfScope == 0x0000U);
-    CHECK(nakPdu.endOfScope == 0x2000U);
-    CHECK(nakPdu.segmentRequests.size() == 3U);
-    CHECK(nakPdu.segmentRequests[0] == 0x1234'5678'9ABC'DEF0);
-    CHECK(nakPdu.segmentRequests[1] == 0xFEDC'BA98'7654'3210);
-    CHECK(nakPdu.segmentRequests[2] == 0x1111'2222'3333'4444);
+    CHECK(nakPdu.startOfScope_ == 0x0000U);
+    CHECK(nakPdu.endOfScope_ == 0x2000U);
+    CHECK(nakPdu.segmentRequests_.size() == 3U);
+    CHECK(nakPdu.segmentRequests_[0] == 0x1234'5678'9ABC'DEF0U);
+    CHECK(nakPdu.segmentRequests_[1] == 0xFEDC'BA98'7654'3210U);
+    CHECK(nakPdu.segmentRequests_[2] == 0x1111'2222'3333'4444U);
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
@@ -849,7 +850,7 @@ TEST_CASE("NakPdu Constructor")
     maxSegmentRequests.resize(sts1cobcsw::NakPdu::maxSegmentRequests);
     std::fill(maxSegmentRequests.begin(), maxSegmentRequests.end(), 0xAAAA'BBBB'CCCC'DDDD);
     auto maxNakPdu = sts1cobcsw::NakPdu(0, maxSegmentRequests);
-    CHECK(maxNakPdu.segmentRequests.size() == sts1cobcsw::NakPdu::maxSegmentRequests);
+    CHECK(maxNakPdu.segmentRequests_.size() == sts1cobcsw::NakPdu::maxSegmentRequests);
 }
 
 
@@ -858,10 +859,10 @@ TEST_CASE("Adding NakPdu")
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto nakPdu = sts1cobcsw::NakPdu{};
 
-    nakPdu.startOfScope = 0;
-    nakPdu.endOfScope = 0;
+    nakPdu.startOfScope_ = 0;
+    nakPdu.endOfScope_ = 0;
     static constexpr auto segmentRequests = std::array<std::uint64_t, 2>{0xAB, 0xCD};
-    nakPdu.segmentRequests = segmentRequests;
+    nakPdu.segmentRequests_ = segmentRequests;
 
     CHECK(nakPdu.Size() == 24U);  // NOLINT(*magic-numbers)
 
@@ -924,7 +925,7 @@ TEST_CASE("Parsing NakPdu")
 
     auto & nakPdu = parseResult.value();
 
-    CHECK(nakPdu.startOfScope == 0x0000U);
-    CHECK(nakPdu.endOfScope == 0x1202'AAAA);
-    CHECK(nakPdu.segmentRequests[0] == 0xAAAA'AAAA'AAAA'AA02U);
+    CHECK(nakPdu.startOfScope_ == 0x0000U);
+    CHECK(nakPdu.endOfScope_ == 0x1202'AAAAU);
+    CHECK(nakPdu.segmentRequests_[0] == 0xAAAA'AAAA'AAAA'AA02U);
 }

@@ -42,8 +42,8 @@ public:
     FileDataPdu() = default;
     explicit FileDataPdu(std::uint32_t offset, std::span<Byte const> fileData);
 
-    std::uint32_t offset = 0;
-    std::span<Byte const> fileData;
+    std::uint32_t offset_ = 0;        // NOLINT(readability-identifier-naming)
+    std::span<Byte const> fileData_;  // NOLINT(readability-identifier-naming)
 
 
 private:
@@ -100,15 +100,17 @@ public:
                           std::uint32_t fileSize,
                           FaultLocation faultLocation) noexcept;
 
-    ConditionCode conditionCode = ConditionCode(0);
-    UInt<4> spare;
-    std::uint32_t fileChecksum = 0;
-    std::uint32_t fileSize = 0;
-    FaultLocation faultLocation;  // Omitted if conditionCode == noError
+    // NOLINTBEGIN(readability-identifier-naming)
+    ConditionCode conditionCode_ = ConditionCode(0);
+    UInt<4> spare_;
+    std::uint32_t fileChecksum_ = 0;
+    std::uint32_t fileSize_ = 0;
+    FaultLocation faultLocation_;  // Omitted if conditionCode == noError
+    // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
-        totalSerialSize<strong::underlying_type_t<ConditionCode>, decltype(spare)>
-        + totalSerialSize<decltype(fileChecksum), decltype(fileSize)>;
+        totalSerialSize<strong::underlying_type_t<ConditionCode>, decltype(spare_)>
+        + totalSerialSize<decltype(fileChecksum_), decltype(fileSize_)>;
 
 
 private:
@@ -135,15 +137,17 @@ public:
                          FileStatus fileStatus,
                          FaultLocation faultLocation) noexcept;
 
-    ConditionCode conditionCode = ConditionCode(0);
-    UInt<1> spare = 0;
-    DeliveryCode deliveryCode = DeliveryCode(0);
-    FileStatus fileStatus = FileStatus(0);
-    FaultLocation faultLocation;  // Omitted if conditionCode == noError or unsupportedChecksumType
+    // NOLINTBEGIN(readability-identifier-naming)
+    ConditionCode conditionCode_ = ConditionCode(0);
+    UInt<1> spare_ = 0;
+    DeliveryCode deliveryCode_ = DeliveryCode(0);
+    FileStatus fileStatus_ = FileStatus(0);
+    FaultLocation faultLocation_;  // Omitted if conditionCode == noError or unsupportedChecksumType
+    // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
         totalSerialSize<strong::underlying_type_t<ConditionCode>,
-                        decltype(spare),
+                        decltype(spare_),
                         strong::underlying_type_t<DeliveryCode>,
                         strong::underlying_type_t<FileStatus>>;
 
@@ -167,17 +171,19 @@ public:
                     ConditionCode conditionCode,
                     TransactionStatus transactionStatus) noexcept;
 
-    UInt<4> acknowledgedPduDirectiveCode;  // EOF or Finished PDU
-    UInt<4> directiveSubtypeCode;          // 1 if Finished PDU is acknowledged, 0 otherwise
-    ConditionCode conditionCode;
-    UInt<2> spare = 0;
-    TransactionStatus transactionStatus;
+    // NOLINTBEGIN(readability-identifier-naming)
+    UInt<4> acknowledgedPduDirectiveCode_;  // EOF or Finished PDU
+    UInt<4> directiveSubtypeCode_;          // 1 if Finished PDU is acknowledged, 0 otherwise
+    ConditionCode conditionCode_;
+    UInt<2> spare_ = 0;
+    TransactionStatus transactionStatus_;
+    // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
-        totalSerialSize<decltype(acknowledgedPduDirectiveCode),
-                        decltype(directiveSubtypeCode),
+        totalSerialSize<decltype(acknowledgedPduDirectiveCode_),
+                        decltype(directiveSubtypeCode_),
                         strong::underlying_type_t<ConditionCode>,
-                        decltype(spare),
+                        decltype(spare_),
                         strong::underlying_type_t<TransactionStatus>>;
 
 
@@ -197,22 +203,24 @@ public:
                          std::span<Byte const> sourceFileName,
                          std::span<Byte const> destinationFileName) noexcept;
 
-    UInt<1> reserved1 = 0;
-    UInt<1> closureRequestd = 0;  // 0 in ACK mode
-    UInt<4> checksumType = 15;    // NOLINT(*-magic-numbers)
-    UInt<2> reserved2 = 0;
-    std::uint32_t fileSize;
-    std::uint8_t sourceFileNameLength;
-    std::span<Byte const> sourceFileNameValue;
-    std::uint8_t destinationFileNameLength;
-    std::span<Byte const> destinationFileNameValue;
+    // NOLINTBEGIN(readability-identifier-naming)
+    UInt<1> reserved1_ = 0;
+    UInt<1> closureRequested_ = 0;  // 0 in ACK mode
+    UInt<4> checksumType_ = 15;    // NOLINT(*-magic-numbers)
+    UInt<2> reserved2_ = 0;
+    std::uint32_t fileSize_;
+    std::uint8_t sourceFileNameLength_;
+    std::span<Byte const> sourceFileNameValue_;
+    std::uint8_t destinationFileNameLength_;
+    std::span<Byte const> destinationFileNameValue_;
+    // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
-        totalSerialSize<decltype(reserved1),
-                        decltype(closureRequestd),
-                        decltype(checksumType),
-                        decltype(reserved2)>
-        + totalSerialSize<decltype(fileSize), decltype(sourceFileNameLength)>;
+        totalSerialSize<decltype(reserved1_),
+                        decltype(closureRequested_),
+                        decltype(checksumType_),
+                        decltype(reserved2_)>
+        + totalSerialSize<decltype(fileSize_), decltype(sourceFileNameLength_)>;
 
 
 private:
@@ -231,9 +239,11 @@ public:
     explicit NakPdu(std::uint32_t endOfScope,
                     std::span<std::uint64_t const> segementRequests) noexcept;
 
-    std::uint32_t startOfScope;
-    std::uint32_t endOfScope;
-    std::span<std::uint64_t const> segmentRequests;
+    // NOLINTBEGIN(readability-identifier-naming)
+    std::uint32_t startOfScope_;
+    std::uint32_t endOfScope_;
+    std::span<std::uint64_t const> segmentRequests_;
+    // NOLINTEND(readability-identifier-naming)
 
 
 private:
