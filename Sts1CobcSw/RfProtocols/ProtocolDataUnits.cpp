@@ -97,7 +97,6 @@ AckPdu::AckPdu(DirectiveCode acknowledgedDirectiveCode,
     : acknowledgedPduDirectiveCode_(static_cast<std::uint8_t>(acknowledgedDirectiveCode)),
       directiveSubtypeCode_(acknowledgedDirectiveCode == DirectiveCode::finished ? 1 : 0),
       conditionCode_(conditionCode),
-      spare_(0),
       transactionStatus_(transactionStatus)
 {}
 
@@ -133,8 +132,11 @@ MetadataPdu::MetadataPdu(std::uint32_t fileSize,
 auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-    auto * cursor = SerializeTo<ccsdsEndianness>(
-        dataField->data() + oldSize, reserved1_, closureRequested_, checksumType_, reserved2_);
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
+                                                 reserved1_,
+                                                 closureRequested_,
+                                                 checksumType_.Value(),
+                                                 reserved2_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameLength_);
     cursor = std::ranges::copy(sourceFileNameValue_, static_cast<Byte *>(cursor)).out;
@@ -147,7 +149,7 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(totalSerialSize<decltype(reserved1_),
                                                       decltype(closureRequested_),
-                                                      decltype(checksumType_),
+                                                      ChecksumType::ValueType,
                                                       decltype(reserved2_)>
                                       + totalSerialSize<decltype(fileSize_),
                                                         decltype(sourceFileNameLength_),
@@ -253,27 +255,19 @@ auto ParseAsFileDirectivePdu(std::span<Byte const> buffer) -> Result<FileDirecti
 }
 
 
-EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode,
-                           std::uint32_t fileChecksum,
-                           std::uint32_t fileSize) noexcept
-    : conditionCode_(conditionCode), spare_(0), fileChecksum_(fileChecksum), fileSize_(fileSize)
+EndOfFilePdu::EndOfFilePdu(std::uint32_t fileSize) noexcept
+    : conditionCode_(noErrorConditionCode), fileSize_(fileSize)
 {
-    // Fault Location is omitted if the condition code is 'noError'
-    assert(conditionCode == noErrorConditionCode);
+    // No FaultLocation implies noErrorConditionCode
 }
 
 
 EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode,
-                           std::uint32_t fileChecksum,
                            std::uint32_t fileSize,
                            FaultLocation faultLocation) noexcept
-    : conditionCode_(conditionCode),
-      spare_(0),
-      fileChecksum_(fileChecksum),
-      fileSize_(fileSize),
-      faultLocation_(faultLocation)
+    : conditionCode_(conditionCode), fileSize_(fileSize), faultLocation_(faultLocation)
 {
-    // Fault Location must be present if the condition code is not 'noError'
+    // We cannot have a FaultLocation if there is no error
     assert(conditionCode != noErrorConditionCode);
 }
 
@@ -308,14 +302,10 @@ auto ParseAsEndOfFilePdu(std::span<Byte const> buffer) -> Result<EndOfFilePdu>
 }
 
 
-FinishedPdu::FinishedPdu(ConditionCode conditionCode,
-                         DeliveryCode deliveryCode,
-                         FileStatus fileStatus) noexcept
-    : conditionCode_(conditionCode), spare_(0), deliveryCode_(deliveryCode), fileStatus_(fileStatus)
+FinishedPdu::FinishedPdu(DeliveryCode deliveryCode, FileStatus fileStatus) noexcept
+    : conditionCode_(noErrorConditionCode), deliveryCode_(deliveryCode), fileStatus_(fileStatus)
 {
-    // Fault Location is omitted if the condition code is 'noError' and 'unsupportedChecksumType'
-    assert(conditionCode == noErrorConditionCode
-           or conditionCode == unsupportedChecksumTypeConditionCode);
+    // No FaultLocation implies noErrorConditionCode since we ignore "unsupported checksum type"
 }
 
 
@@ -324,13 +314,11 @@ FinishedPdu::FinishedPdu(ConditionCode conditionCode,
                          FileStatus fileStatus,
                          FaultLocation faultLocation) noexcept
     : conditionCode_(conditionCode),
-      spare_(0),
       deliveryCode_(deliveryCode),
       fileStatus_(fileStatus),
       faultLocation_(faultLocation)
 {
-    // Fault Location must be present if the condition code is not 'noError' or
-    // 'unsupportedChecksumType'
+    // We cannot have a FaultLocation if there is no error or an unsupported checksum type
     assert(conditionCode != noErrorConditionCode
            and conditionCode != unsupportedChecksumTypeConditionCode);
 }
@@ -404,11 +392,13 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
     }
     auto metadataPdu = MetadataPdu{};
     auto const * cursor = static_cast<void const *>(buffer.data());
+    auto checksumTypeValue = ChecksumType::ValueType{};
     cursor = DeserializeFrom<ccsdsEndianness>(cursor,
                                               &metadataPdu.reserved1_,
                                               &metadataPdu.closureRequested_,
                                               &metadataPdu.reserved2_,
-                                              &metadataPdu.checksumType_);
+                                              &checksumTypeValue);
+    metadataPdu.checksumType_ = ChecksumType(checksumTypeValue);
     // TODO: Error handling
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.fileSize_);
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.sourceFileNameLength_);

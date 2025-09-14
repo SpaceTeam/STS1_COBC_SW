@@ -92,11 +92,8 @@ public:
     static constexpr auto directiveCode = DirectiveCode::endOfFile;
 
     EndOfFilePdu() = default;
+    explicit EndOfFilePdu(std::uint32_t fileSize) noexcept;
     explicit EndOfFilePdu(ConditionCode conditionCode,
-                          std::uint32_t fileChecksum,
-                          std::uint32_t fileSize) noexcept;
-    explicit EndOfFilePdu(ConditionCode conditionCode,
-                          std::uint32_t fileChecksum,
                           std::uint32_t fileSize,
                           FaultLocation faultLocation) noexcept;
 
@@ -129,9 +126,7 @@ public:
     static constexpr auto directiveCode = DirectiveCode::finished;
 
     FinishedPdu() = default;
-    explicit FinishedPdu(ConditionCode conditionCode,
-                         DeliveryCode deliveryCode,
-                         FileStatus fileStatus) noexcept;
+    explicit FinishedPdu(DeliveryCode deliveryCode, FileStatus fileStatus) noexcept;
     explicit FinishedPdu(ConditionCode conditionCode,
                          DeliveryCode deliveryCode,
                          FileStatus fileStatus,
@@ -193,6 +188,10 @@ private:
 };
 
 
+using ChecksumType = Id<UInt<4>, 15>;  // NOLINT(*-magic-numbers)
+inline constexpr auto nullChecksumType = Make<ChecksumType, 15>();
+
+
 class MetadataPdu : public Payload
 {
 public:
@@ -206,7 +205,7 @@ public:
     // NOLINTBEGIN(readability-identifier-naming)
     UInt<1> reserved1_;
     UInt<1> closureRequested_ = 0;  // 0 in ACK mode
-    UInt<4> checksumType_ = 15;    // NOLINT(*-magic-numbers)
+    ChecksumType checksumType_ = nullChecksumType;
     UInt<2> reserved2_;
     std::uint32_t fileSize_ = 0;
     std::uint8_t sourceFileNameLength_ = 0;
@@ -218,7 +217,7 @@ public:
     static constexpr auto minParameterFieldLength =
         totalSerialSize<decltype(reserved1_),
                         decltype(closureRequested_),
-                        decltype(checksumType_),
+                        ChecksumType::ValueType,
                         decltype(reserved2_)>
         + totalSerialSize<decltype(fileSize_), decltype(sourceFileNameLength_)>;
 
