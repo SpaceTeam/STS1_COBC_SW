@@ -177,9 +177,9 @@ auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
                                                  checksumType_.Value());
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameLength_);
-    cursor = std::ranges::copy(sourceFileNameValue_, static_cast<char *>(cursor)).out;
+    cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameValue_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, destinationFileNameLength_);
-    std::ranges::copy(destinationFileNameValue_, static_cast<char *>(cursor));
+    (void)SerializeTo<ccsdsEndianness>(cursor, destinationFileNameValue_);
 }
 
 
@@ -394,55 +394,40 @@ auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>
         return ErrorCode::bufferTooSmall;
     }
     auto metadataPdu = MetadataPdu{};
-    auto const * cursor = static_cast<void const *>(buffer.data());
     auto checksumTypeValue = ChecksumType::ValueType{};
-    cursor = DeserializeFrom<ccsdsEndianness>(cursor,
-                                              &metadataPdu.reserved1_,
-                                              &metadataPdu.closureRequested_,
-                                              &metadataPdu.reserved2_,
-                                              &checksumTypeValue);
+    auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(),
+                                                           &metadataPdu.reserved1_,
+                                                           &metadataPdu.closureRequested_,
+                                                           &metadataPdu.reserved2_,
+                                                           &checksumTypeValue);
     metadataPdu.checksumType_ = ChecksumType(checksumTypeValue);
-    // TODO: Error handling
+    // We ignore if closure is requested or not since we always operate in ACK mode. We also ignore
+    // wrong/unsupported checksum types.
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.fileSize_);
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &metadataPdu.sourceFileNameLength_);
-
-    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength_)
+    auto nDeserializedBytes =
+        static_cast<unsigned>(static_cast<Byte const *>(cursor) - buffer.data());
+    if(buffer.size() < nDeserializedBytes + metadataPdu.sourceFileNameLength_)
     {
         return ErrorCode::bufferTooSmall;
     }
-
-    auto sourceFileNameValueBuffer =
-        buffer.subspan(MetadataPdu::minParameterFieldLength,
-                       static_cast<std::uint32_t>(metadataPdu.sourceFileNameLength_));
-
-    metadataPdu.sourceFileNameValue_ = fs::Path();
-    for(auto const byte : sourceFileNameValueBuffer)
-    {
-        metadataPdu.sourceFileNameValue_.push_back(static_cast<char>(byte));
-    }
-
-    cursor = DeserializeFrom<ccsdsEndianness>(
-        buffer.data() + MetadataPdu::minParameterFieldLength
-            + static_cast<std::size_t>(metadataPdu.sourceFileNameLength_),
-        &metadataPdu.destinationFileNameLength_);
-
-    if(buffer.size() < MetadataPdu::minParameterFieldLength + metadataPdu.sourceFileNameLength_
-                           + metadataPdu.destinationFileNameLength_ + 1)
+    metadataPdu.sourceFileNameValue_.uninitialized_resize(metadataPdu.sourceFileNameLength_);
+    std::copy_n(static_cast<char const *>(cursor),
+                metadataPdu.sourceFileNameLength_,
+                metadataPdu.sourceFileNameValue_.begin());
+    nDeserializedBytes += metadataPdu.sourceFileNameLength_;
+    cursor = DeserializeFrom<ccsdsEndianness>(buffer.data() + nDeserializedBytes,
+                                              &metadataPdu.destinationFileNameLength_);
+    nDeserializedBytes = static_cast<unsigned>(static_cast<Byte const *>(cursor) - buffer.data());
+    if(buffer.size() < nDeserializedBytes + metadataPdu.destinationFileNameLength_)
     {
         return ErrorCode::bufferTooSmall;
     }
-
-    auto destinationFileNameValueBuffer =
-        buffer.subspan(MetadataPdu::minParameterFieldLength + 1U
-                           + static_cast<std::size_t>(metadataPdu.sourceFileNameLength_),
-                       static_cast<std::uint32_t>(metadataPdu.destinationFileNameLength_));
-    metadataPdu.destinationFileNameValue_ = fs::Path();
-    for(auto const byte : destinationFileNameValueBuffer)
-    {
-        metadataPdu.destinationFileNameValue_.push_back(static_cast<char>(byte));
-    }
-
-
+    metadataPdu.destinationFileNameValue_.uninitialized_resize(
+        metadataPdu.destinationFileNameLength_);
+    std::copy_n(static_cast<char const *>(cursor),
+                metadataPdu.destinationFileNameLength_,
+                metadataPdu.destinationFileNameValue_.begin());
     return metadataPdu;
 }
 
