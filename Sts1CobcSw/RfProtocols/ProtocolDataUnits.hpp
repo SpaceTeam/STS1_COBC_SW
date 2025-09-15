@@ -208,8 +208,8 @@ public:
     // NOLINTBEGIN(readability-identifier-naming)
     UInt<1> reserved1_;
     UInt<1> closureRequested_ = 0;  // 0 in ACK mode
-    ChecksumType checksumType_ = nullChecksumType;
     UInt<2> reserved2_;
+    ChecksumType checksumType_ = nullChecksumType;
     std::uint32_t fileSize_ = 0;
     std::uint8_t sourceFileNameLength_ = 0;
     fs::Path sourceFileNameValue_;
@@ -220,8 +220,8 @@ public:
     static constexpr auto minParameterFieldLength =
         totalSerialSize<decltype(reserved1_),
                         decltype(closureRequested_),
-                        ChecksumType::ValueType,
-                        decltype(reserved2_)>
+                        decltype(reserved2_),
+                        ChecksumType::ValueType>
         + totalSerialSize<decltype(fileSize_), decltype(sourceFileNameLength_)>;
 
 

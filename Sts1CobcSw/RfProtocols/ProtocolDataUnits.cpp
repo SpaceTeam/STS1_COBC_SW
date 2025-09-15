@@ -173,8 +173,8 @@ auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
                                                  reserved1_,
                                                  closureRequested_,
-                                                 checksumType_.Value(),
-                                                 reserved2_);
+                                                 reserved2_,
+                                                 checksumType_.Value());
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameLength_);
     cursor = std::ranges::copy(sourceFileNameValue_, static_cast<char *>(cursor)).out;
@@ -187,8 +187,8 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(totalSerialSize<decltype(reserved1_),
                                                       decltype(closureRequested_),
-                                                      ChecksumType::ValueType,
-                                                      decltype(reserved2_)>
+                                                      decltype(reserved2_),
+                                                      ChecksumType::ValueType>
                                       + totalSerialSize<decltype(fileSize_),
                                                         decltype(sourceFileNameLength_),
                                                         decltype(destinationFileNameLength_)>

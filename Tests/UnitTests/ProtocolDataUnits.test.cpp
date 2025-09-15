@@ -703,7 +703,7 @@ TEST_CASE("MetadataPdu Constructor")
     // Expected: 1B flags + 4B file size + 1B source length + 3B source + 1B dest length + 3B
     // dest = 13B
     CHECK(dataField.size() == 13U);
-    CHECK(dataField[0] == 0x3C_b);   // flags: reserved=0, closure=0, checksum=15, reserved2=0
+    CHECK(dataField[0] == 0x0F_b);   // flags: reserved=0, closure=0, reserved2=0, checksum=15
     CHECK(dataField[1] == 0x00_b);   // file size
     CHECK(dataField[4] == 0x2A_b);   // file size
     CHECK(dataField[5] == 0x03_b);   // source file name length
@@ -739,7 +739,7 @@ TEST_CASE("Adding MetadataPdu")
     REQUIRE(addResult.has_value());
 
     CHECK(dataField.size() == metadataPdu.Size());
-    CHECK(dataField[0] == 0x3C_b);
+    CHECK(dataField[0] == 0x0F_b);
     CHECK(dataField[1] == 0x00_b);
     CHECK(dataField[2] == 0x00_b);
     CHECK(dataField[3] == 0x00_b);
