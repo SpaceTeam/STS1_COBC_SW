@@ -197,9 +197,10 @@ auto MetadataPdu::DoSize() const -> std::uint16_t
 }
 
 
-NakPdu::NakPdu(std::uint32_t endOfScope,
-               etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentRequests) noexcept
-    : endOfScope_(endOfScope), segmentRequests_(segmentRequests)
+NakPdu::NakPdu(etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentRequests) noexcept
+    : startOfScope_(segmentRequests.front().startOffset),
+      endOfScope_(segmentRequests.back().endOffset),
+      segmentRequests_(segmentRequests)
 {
     assert(segmentRequests_.size() <= NakPdu::maxNSegmentRequests);
 }
@@ -451,16 +452,20 @@ auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>
     auto nakPdu = NakPdu{};
     auto const * cursor = DeserializeFrom<ccsdsEndianness>(buffer.data(), &nakPdu.startOfScope_);
     cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.endOfScope_);
-
-    auto const remainingBufferSize = buffer.size() - totalSerialSize<decltype(nakPdu.startOfScope_)>
-                                   - totalSerialSize<decltype(nakPdu.endOfScope_)>;
-    auto const nSegmentRequests = remainingBufferSize / totalSerialSize<SegmentRequest>;
-    nakPdu.segmentRequests_ = etl::vector<SegmentRequest, NakPdu::maxNSegmentRequests>();
-    nakPdu.segmentRequests_.clear();
+    auto remainingBufferSize =
+        buffer.size()
+        - totalSerialSize<decltype(nakPdu.startOfScope_), decltype(nakPdu.endOfScope_)>;
+    auto nSegmentRequests = remainingBufferSize / totalSerialSize<SegmentRequest>;
+    nakPdu.segmentRequests_ =
+        etl::vector<SegmentRequest, NakPdu::maxNSegmentRequests>(nSegmentRequests);
     for(auto i = 0U; i < nSegmentRequests; ++i)
     {
-        nakPdu.segmentRequests_.push_back(SegmentRequest{});
         cursor = DeserializeFrom<ccsdsEndianness>(cursor, &nakPdu.segmentRequests_[i]);
+    }
+    if(nakPdu.segmentRequests_.front().startOffset != nakPdu.startOfScope_
+       or nakPdu.segmentRequests_.back().endOffset != nakPdu.endOfScope_)
+    {
+        return ErrorCode::invalidNakPdu;
     }
     return nakPdu;
 }

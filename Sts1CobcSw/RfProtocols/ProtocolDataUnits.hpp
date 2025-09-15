@@ -254,7 +254,6 @@ public:
 
     NakPdu() = default;
     explicit NakPdu(
-        std::uint32_t endOfScope,
         etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentRequests) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)

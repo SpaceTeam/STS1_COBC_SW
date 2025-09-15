@@ -124,6 +124,8 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidAckPduDirectiveCode";
         case ErrorCode::invalidDirectiveSubtypeCode:
             return "invalidDirectiveSubtypeCode";
+        case ErrorCode::invalidNakPdu:
+            return "invalidNakPdu";
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:

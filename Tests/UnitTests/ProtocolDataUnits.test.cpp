@@ -814,37 +814,37 @@ TEST_CASE("NakPdu Constructor")
     // Test valid constructor with segment requests within limit
     static auto const segmentRequests =
         etl::vector<sts1cobcsw::SegmentRequest, sts1cobcsw::NakPdu::maxNSegmentRequests>{
-            sts1cobcsw::SegmentRequest{.startOffset = 0x1234'5678, .endOffset = 0x9ABC'DEF0},
-            sts1cobcsw::SegmentRequest{.startOffset = 0xFEDC'BA98, .endOffset = 0x7654'3210},
-            sts1cobcsw::SegmentRequest{.startOffset = 0x1111'2222, .endOffset = 0x3333'4444}
+            sts1cobcsw::SegmentRequest{.startOffset = 0x1234'5678, .endOffset = 0x1234'9ABC},
+            sts1cobcsw::SegmentRequest{.startOffset = 0x1234'DEF0, .endOffset = 0x2222'3333},
+            sts1cobcsw::SegmentRequest{.startOffset = 0x4444'5555, .endOffset = 0x6789'ABCD}
     };
 
-    auto nakPdu = sts1cobcsw::NakPdu(0x2000U, segmentRequests);
+    auto nakPdu = sts1cobcsw::NakPdu(segmentRequests);
 
-    CHECK(nakPdu.startOfScope_ == 0x0000U);
-    CHECK(nakPdu.endOfScope_ == 0x2000U);
+    CHECK(nakPdu.startOfScope_ == 0x1234'5678U);
+    CHECK(nakPdu.endOfScope_ == 0x6789'ABCDU);
     CHECK(nakPdu.segmentRequests_.size() == 3U);
 
     CHECK(nakPdu.segmentRequests_[0].startOffset == 0x1234'5678U);
-    CHECK(nakPdu.segmentRequests_[0].endOffset == 0x9ABC'DEF0);
-    CHECK(nakPdu.segmentRequests_[1].startOffset == 0xFEDC'BA98);
-    CHECK(nakPdu.segmentRequests_[1].endOffset == 0x7654'3210U);
-    CHECK(nakPdu.segmentRequests_[2].startOffset == 0x1111'2222U);
-    CHECK(nakPdu.segmentRequests_[2].endOffset == 0x3333'4444U);
+    CHECK(nakPdu.segmentRequests_[0].endOffset == 0x1234'9ABCU);
+    CHECK(nakPdu.segmentRequests_[1].startOffset == 0x1234'DEF0U);
+    CHECK(nakPdu.segmentRequests_[1].endOffset == 0x2222'3333U);
+    CHECK(nakPdu.segmentRequests_[2].startOffset == 0x4444'5555U);
+    CHECK(nakPdu.segmentRequests_[2].endOffset == 0x6789'ABCDU);
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto addResult = nakPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
     CHECK(dataField.size() == nakPdu.Size());
-    CHECK(dataField[0] == 0x00_b);  // startOfScope high bytes
-    CHECK(dataField[1] == 0x00_b);
-    CHECK(dataField[2] == 0x00_b);
-    CHECK(dataField[3] == 0x00_b);  // startOfScope low byte
-    CHECK(dataField[4] == 0x00_b);  // endOfScope high bytes
-    CHECK(dataField[5] == 0x00_b);
-    CHECK(dataField[6] == 0x20_b);
-    CHECK(dataField[7] == 0x00_b);  // endOfScope low byte
+    CHECK(dataField[0] == 0x12_b);  // startOfScope high byte
+    CHECK(dataField[1] == 0x34_b);
+    CHECK(dataField[2] == 0x56_b);
+    CHECK(dataField[3] == 0x78_b);  // startOfScope low byte
+    CHECK(dataField[4] == 0x67_b);  // endOfScope high byte
+    CHECK(dataField[5] == 0x89_b);
+    CHECK(dataField[6] == 0xAB_b);
+    CHECK(dataField[7] == 0xCD_b);  // endOfScope low byte
 
     // Test with maximum allowed segment requests (25)
     // auto maxSegmentRequests = etl::vector<std::uint64_t,
@@ -910,33 +910,47 @@ TEST_CASE("Parsing NakPdu")
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
     buffer.resize(24U);
 
-    buffer[0] = 0x00_b;
-    buffer[1] = 0x00_b;
-    buffer[2] = 0x00_b;
-    buffer[3] = 0x00_b;
-    buffer[4] = 0x12_b;
-    buffer[5] = 0x02_b;
-    buffer[6] = 0xAA_b;
-    buffer[7] = 0xAA_b;
-    buffer[8] = 0x01_b;  // start of first segment request
-    buffer[9] = 0x23_b;
-    buffer[10] = 0x45_b;
-    buffer[11] = 0x67_b;
-    buffer[12] = 0x89_b;
-    buffer[13] = 0xAB_b;
-    buffer[14] = 0xCD_b;
-    buffer[15] = 0xEF_b;
+    buffer[0] = 0x11_b;
+    buffer[1] = 0x11_b;
+    buffer[2] = 0x22_b;
+    buffer[3] = 0x22_b;
+    buffer[4] = 0x77_b;
+    buffer[5] = 0x77_b;
+    buffer[6] = 0x88_b;
+    buffer[7] = 0x88_b;
+    buffer[8] = 0x11_b;  // start of first segment request
+    buffer[9] = 0x11_b;
+    buffer[10] = 0x22_b;
+    buffer[11] = 0x22_b;
+    buffer[12] = 0x33_b;
+    buffer[13] = 0x33_b;
+    buffer[14] = 0x44_b;
+    buffer[15] = 0x44_b;
+    buffer[16] = 0x55_b;  // start of second segment request
+    buffer[17] = 0x55_b;
+    buffer[18] = 0x66_b;
+    buffer[19] = 0x66_b;
+    buffer[20] = 0x77_b;
+    buffer[21] = 0x77_b;
+    buffer[22] = 0x88_b;
+    buffer[23] = 0x88_b;
 
     auto parseResult = sts1cobcsw::ParseAsNakPdu(buffer);
     REQUIRE(parseResult.has_value());
 
     auto & nakPdu = parseResult.value();
 
-    CHECK(nakPdu.startOfScope_ == 0x0000U);
-    CHECK(nakPdu.endOfScope_ == 0x1202'AAAAU);
+    CHECK(nakPdu.startOfScope_ == 0x1111'2222U);
+    CHECK(nakPdu.endOfScope_ == 0x7777'8888U);
     CHECK(nakPdu.segmentRequests_.size() == 2U);
-    CHECK(nakPdu.segmentRequests_[0].startOffset == 0x0123'4567U);
-    CHECK(nakPdu.segmentRequests_[0].endOffset == 0x89AB'CDEF);
-    CHECK(nakPdu.segmentRequests_[1].startOffset == 0x0000'0000U);
-    CHECK(nakPdu.segmentRequests_[1].endOffset == 0x0'0000'0000U);
+    CHECK(nakPdu.segmentRequests_[0].startOffset == 0x1111'2222U);
+    CHECK(nakPdu.segmentRequests_[0].endOffset == 0x3333'4444U);
+    CHECK(nakPdu.segmentRequests_[1].startOffset == 0x5555'6666U);
+    CHECK(nakPdu.segmentRequests_[1].endOffset == 0x7777'8888U);
+
+    // endOfScope must be the endOffset of the last segment request
+    buffer[23] = 0x00_b;
+    parseResult = sts1cobcsw::ParseAsNakPdu(buffer);
+    REQUIRE(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidNakPdu);
 }
