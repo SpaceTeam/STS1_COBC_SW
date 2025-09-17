@@ -48,7 +48,6 @@ inline constexpr auto towardsFileSenderDirection = Direction(1);
 
 inline constexpr auto acknowledgedTransmissionMode = TransmissionMode(1);
 
-
 template<>
 inline constexpr std::size_t serialSize<ProtocolDataUnitHeader> =
     totalSerialSize<decltype(ProtocolDataUnitHeader::version),
@@ -65,8 +64,7 @@ inline constexpr std::size_t serialSize<ProtocolDataUnitHeader> =
     + totalSerialSize<decltype(ProtocolDataUnitHeader::sourceEntityId),
                       decltype(ProtocolDataUnitHeader::transactionSequenceNumber),
                       decltype(ProtocolDataUnitHeader::destinationEntityId)>;
-static_assert(serialSize<ProtocolDataUnitHeader> == tm::pduHeaderLength);
-static_assert(serialSize<ProtocolDataUnitHeader> == tc::pduHeaderLength);
+static_assert(serialSize<ProtocolDataUnitHeader> == pduHeaderLength);
 
 
 template<std::endian endianness>

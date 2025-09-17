@@ -154,17 +154,17 @@ inline constexpr auto maxDumpedDataLength =
 
 // ---- CCSDS File Delivery Protocol ----
 
+inline constexpr auto pduHeaderLength = 8U;
+
 namespace tm
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
-inline constexpr auto pduHeaderLength = 8U;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 }
 
 namespace tc
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
-inline constexpr auto pduHeaderLength = 8U;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
 }
 

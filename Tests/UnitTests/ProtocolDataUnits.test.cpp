@@ -33,7 +33,7 @@ using sts1cobcsw::operator""_b;
 TEST_CASE("Parsing ProtocolDataUnit")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
-    buffer.resize(sts1cobcsw::tc::pduHeaderLength);
+    buffer.resize(sts1cobcsw::pduHeaderLength);
     buffer[0] = 0b0010'0100_b;  // Version, PDU type, direction, transmission mode, CRC flag, large
                                 // file flag
     buffer[1] = 0x00_b;         // PDU data field length (high byte)
@@ -138,7 +138,7 @@ TEST_CASE("Parsing ProtocolDataUnit")
     CHECK(parseResult.error() == ErrorCode::invalidEntityId);
     buffer[7] = 0xF0_b;
 
-    buffer.resize(sts1cobcsw::tc::pduHeaderLength - 1);  // Buffer too small
+    buffer.resize(sts1cobcsw::pduHeaderLength - 1);  // Buffer too small
     parseResult = sts1cobcsw::ParseAsProtocolDataUnit(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::bufferTooSmall);
@@ -953,4 +953,92 @@ TEST_CASE("Parsing NakPdu")
     parseResult = sts1cobcsw::ParseAsNakPdu(buffer);
     REQUIRE(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidNakPdu);
+}
+
+
+TEST_CASE("AddPduTo function")
+{
+    // Test successful case with file data PDU from ground station to cubesat
+    {
+        auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+        static constexpr auto fileData = std::array{0xAB_b, 0xCD_b, 0xEF_b};
+        auto fileDataPdu = sts1cobcsw::FileDataPdu(0x1234'5678U, fileData);
+
+        auto result = sts1cobcsw::AddPduTo(&dataField,
+                                           sts1cobcsw::fileDataPduType,
+                                           sts1cobcsw::groundStationEntityId,
+                                           0x9ABC,
+                                           fileDataPdu);
+
+        REQUIRE(result.has_value());
+        CHECK(dataField.size() == sts1cobcsw::pduHeaderLength + fileDataPdu.Size());
+
+        // Verify header fields by parsing the created PDU
+        auto parseResult = sts1cobcsw::ParseAsProtocolDataUnit(dataField);
+        REQUIRE(parseResult.has_value());
+        auto & pdu = parseResult.value();
+
+        CHECK(pdu.header.version == sts1cobcsw::pduVersion);
+        CHECK(pdu.header.pduType == sts1cobcsw::fileDataPduType);
+        CHECK(pdu.header.direction == sts1cobcsw::towardsFileSenderDirection);
+        CHECK(pdu.header.transmissionMode == sts1cobcsw::acknowledgedTransmissionMode);
+        CHECK(pdu.header.crcFlag == 0);
+        CHECK(pdu.header.largeFileFlag == 0);
+        CHECK(pdu.header.pduDataFieldLength == fileDataPdu.Size());
+        CHECK(pdu.header.segmentationControl == 0);
+        CHECK(pdu.header.lengthOfEntityIds
+              == sts1cobcsw::totalSerialSize<sts1cobcsw::EntityId> - 1);
+        CHECK(pdu.header.segmentMetadataFlag == 0);
+        CHECK(pdu.header.lengthOfTransactionSequenceNumber
+              == sts1cobcsw::totalSerialSize<std::uint16_t> - 1);
+        CHECK(pdu.header.sourceEntityId == sts1cobcsw::groundStationEntityId);
+        CHECK(pdu.header.transactionSequenceNumber == 0x9ABC);
+        CHECK(pdu.header.destinationEntityId == sts1cobcsw::cubeSatEntityId);
+        CHECK(pdu.dataField.size() == fileDataPdu.Size());
+    }
+
+    // Test successful case with file directive PDU from cubesat to ground station
+    {
+        auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+        auto endOfFilePdu = sts1cobcsw::EndOfFilePdu(0x1234'5678U);
+
+        auto result = sts1cobcsw::AddPduTo(&dataField,
+                                           sts1cobcsw::fileDirectivePduType,
+                                           sts1cobcsw::cubeSatEntityId,
+                                           0x1234,
+                                           endOfFilePdu);
+
+        REQUIRE(result.has_value());
+        CHECK(dataField.size() == sts1cobcsw::pduHeaderLength + endOfFilePdu.Size());
+
+        // Verify header fields
+        auto parseResult = sts1cobcsw::ParseAsProtocolDataUnit(dataField);
+        REQUIRE(parseResult.has_value());
+        auto & pdu = parseResult.value();
+
+        CHECK(pdu.header.pduType == sts1cobcsw::fileDirectivePduType);
+        CHECK(pdu.header.direction == sts1cobcsw::towardsFileReceiverDirection);
+        CHECK(pdu.header.sourceEntityId == sts1cobcsw::cubeSatEntityId);
+        CHECK(pdu.header.destinationEntityId == sts1cobcsw::groundStationEntityId);
+        CHECK(pdu.header.transactionSequenceNumber == 0x1234);
+    }
+
+    // Test error case: insufficient buffer space
+    {
+        auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
+        // Fill most of the buffer to leave insufficient space
+        dataField.resize(sts1cobcsw::tc::maxPduLength - 5);
+
+        static constexpr auto fileData = std::array{0xAB_b, 0xCD_b, 0xEF_b};
+        auto fileDataPdu = sts1cobcsw::FileDataPdu(0x1234'5678U, fileData);
+
+        auto result = sts1cobcsw::AddPduTo(&dataField,
+                                           sts1cobcsw::fileDataPduType,
+                                           sts1cobcsw::groundStationEntityId,
+                                           0x1234,
+                                           fileDataPdu);
+
+        CHECK(result.has_error());
+        CHECK(result.error() == ErrorCode::dataFieldTooShort);
+    }
 }

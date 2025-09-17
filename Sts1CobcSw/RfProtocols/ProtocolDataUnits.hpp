@@ -300,6 +300,12 @@ inline constexpr auto terminatedTransactionStatus = TransactionStatus(0b10);
 inline constexpr auto unrecognizedTransactionStatus = TransactionStatus(0b11);
 
 
+[[nodiscard]] auto AddPduTo(etl::ivector<Byte> * dataField,
+                            PduType pduType,
+                            EntityId sourceEntityId,
+                            std::uint16_t transactionSequenceNumber,
+                            Payload const & payload) -> Result<void>;
+
 [[nodiscard]] auto ParseAsProtocolDataUnit(std::span<Byte const> buffer)
     -> Result<tc::ProtocolDataUnit>;
 [[nodiscard]] auto ParseAsFileDataPdu(std::span<Byte const> buffer) -> Result<FileDataPdu>;
@@ -310,7 +316,6 @@ inline constexpr auto unrecognizedTransactionStatus = TransactionStatus(0b11);
 [[nodiscard]] auto ParseAsAckPdu(std::span<Byte const> buffer) -> Result<AckPdu>;
 [[nodiscard]] auto ParseAsMetadataPdu(std::span<Byte const> buffer) -> Result<MetadataPdu>;
 [[nodiscard]] auto ParseAsNakPdu(std::span<Byte const> buffer) -> Result<NakPdu>;
-
 
 [[nodiscard]] auto IsValid(DirectiveCode directiveCode) -> bool;
 

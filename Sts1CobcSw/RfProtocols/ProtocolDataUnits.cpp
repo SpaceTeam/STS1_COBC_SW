@@ -223,9 +223,47 @@ auto NakPdu::DoSize() const -> std::uint16_t
 }
 
 
+auto AddPduTo(etl::ivector<Byte> * dataField,
+              PduType pduType,
+              EntityId sourceEntityId,
+              std::uint16_t transactionSequenceNumber,
+              Payload const & payload) -> Result<void>
+{
+    if(payload.Size() == 0)
+    {
+        return ErrorCode::emptyPayload;
+    }
+    if(dataField->available() < pduHeaderLength + payload.Size())
+    {
+        return ErrorCode::dataFieldTooShort;
+    }
+    auto oldSize = IncreaseSize(dataField, pduHeaderLength);
+    auto header = ProtocolDataUnitHeader{
+        .version = pduVersion,
+        .pduType = pduType,
+        .direction = sourceEntityId == cubeSatEntityId ? towardsFileReceiverDirection
+                                                       : towardsFileSenderDirection,
+        .transmissionMode = acknowledgedTransmissionMode,
+        .crcFlag = UInt<1>(0),
+        .largeFileFlag = UInt<1>(0),
+        .pduDataFieldLength = payload.Size(),
+        .segmentationControl = UInt<1>(0),
+        .lengthOfEntityIds = UInt<3>(totalSerialSize<EntityId> - 1),
+        .segmentMetadataFlag = UInt<1>(0),
+        .lengthOfTransactionSequenceNumber =
+            UInt<3>(totalSerialSize<decltype(transactionSequenceNumber)> - 1),
+        .sourceEntityId = sourceEntityId,
+        .transactionSequenceNumber = transactionSequenceNumber,
+        .destinationEntityId =
+            sourceEntityId == cubeSatEntityId ? groundStationEntityId : cubeSatEntityId};
+    (void)SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, header);
+    return payload.AddTo(dataField);
+}
+
+
 auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::ProtocolDataUnit>
 {
-    if(buffer.size() < tc::pduHeaderLength)
+    if(buffer.size() < pduHeaderLength)
     {
         return ErrorCode::bufferTooSmall;
     }
@@ -254,12 +292,12 @@ auto ParseAsProtocolDataUnit(std::span<Byte const> buffer) -> Result<tc::Protoco
     {
         return ErrorCode::invalidEntityId;
     }
-    if(buffer.size() < tc::pduHeaderLength + pdu.header.pduDataFieldLength)
+    if(buffer.size() < pduHeaderLength + pdu.header.pduDataFieldLength)
     {
         return ErrorCode::bufferTooSmall;
     }
     pdu.dataField.uninitialized_resize(pdu.header.pduDataFieldLength);
-    std::ranges::copy(buffer.subspan(tc::pduHeaderLength, pdu.header.pduDataFieldLength),
+    std::ranges::copy(buffer.subspan(pduHeaderLength, pdu.header.pduDataFieldLength),
                       pdu.dataField.begin());
     return pdu;
 }
