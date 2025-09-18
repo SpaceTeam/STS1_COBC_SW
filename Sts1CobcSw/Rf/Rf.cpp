@@ -1285,7 +1285,6 @@ auto Configure(TxType txType) -> Result<void>
     return outcome_v2::success();
 }
 
-
 auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
 {
     if(dataRate > ((dataRateConfig115200.dataRate + dataRateConfig76800.dataRate) / 2))
@@ -1322,19 +1321,6 @@ auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
     }
     return dataRateConfig1200;
 }
-
-// auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
-// {
-//     if(dataRate > ((dataRateConfig38400.dataRate + dataRateConfig9600.dataRate) / 2))
-//     {
-//         return dataRateConfig38400;
-//     }
-//     if(dataRate > ((dataRateConfig9600.dataRate + dataRateConfig1200.dataRate) / 2))
-//     {
-//         return dataRateConfig9600;
-//     }
-//     return dataRateConfig1200;
-// }
 
 // clang-format off
 // NOLINTBEGIN(*cognitive-complexity)
@@ -1407,28 +1393,6 @@ auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
     OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_CHFLT_RX1_CHFLT_COE_2));
     return SetProperties(dataRateConfig.MODEM_CHFLT_RX2_CHFLT_COE);
 }
-
-// auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
-// {
-//     OUTCOME_TRY(SetProperties(dataRateConfig.modType12));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.freqDev01));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.txRampDelay12));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.bcrNcoOffset212));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.afcLimiter13));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.agcControl1));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.agcWindowSize12));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.rawControl10));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.rssiJumpThresh1));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.rssiControl22));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.rawSearch22));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.spikeDet2));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.rssiMute1));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.dsaCtrl15));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe137012));
-//     OUTCOME_TRY(SetProperties(dataRateConfig.chfltRx1ChfltCoe17012));
-//     return SetProperties(dataRateConfig.chfltRx2ChfltCoe77012);
-// }
-
 
 auto EnableRfLatchupProtection() -> void
 {
