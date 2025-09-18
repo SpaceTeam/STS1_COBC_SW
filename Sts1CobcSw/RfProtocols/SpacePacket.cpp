@@ -2,6 +2,8 @@
 
 #include <Sts1CobcSw/RfProtocols/IdCounters.hpp>
 
+#include <strong_type/equality.hpp>
+
 
 namespace sts1cobcsw
 {
@@ -27,7 +29,7 @@ auto AddSpacePacketTo(etl::ivector<Byte> * dataField, Apid apid, Payload const &
     dataField->resize(dataField->size() + packetPrimaryHeaderLength);
     auto primaryHeader = SpacePacketPrimaryHeader{
         .versionNumber = packetVersionNumber,
-        .packetType = packettype::telemetry,
+        .packetType = telemetryPacketType,
         .secondaryHeaderFlag = 1,
         .apid = apid,
         .sequenceFlags = 0b11,
@@ -47,7 +49,7 @@ auto ParseAsSpacePacket(std::span<Byte const> buffer) -> Result<SpacePacket>
     auto packet = SpacePacket{};
     (void)DeserializeFrom<ccsdsEndianness>(buffer.data(), &packet.primaryHeader);
     auto packetIsValid = packet.primaryHeader.versionNumber == packetVersionNumber
-                     and packet.primaryHeader.packetType == packettype::telecommand
+                     and packet.primaryHeader.packetType == telecommandPacketType
                      and packet.primaryHeader.secondaryHeaderFlag == 1
                      and packet.primaryHeader.sequenceFlags == 0b11;
     if(not packetIsValid)
@@ -78,7 +80,7 @@ auto SerializeTo(void * destination, SpacePacketPrimaryHeader const & header) ->
 {
     destination = SerializeTo<endianness>(destination,
                                           header.versionNumber,
-                                          header.packetType,
+                                          value_of(header.packetType),
                                           header.secondaryHeaderFlag,
                                           header.apid.Value(),
                                           header.sequenceFlags,
@@ -98,7 +100,7 @@ auto DeserializeFrom(void const * source, SpacePacketPrimaryHeader * header) -> 
     auto apidValue = Apid::ValueType{};
     source = DeserializeFrom<endianness>(source,
                                          &header->versionNumber,
-                                         &header->packetType,
+                                         &value_of(header->packetType),
                                          &header->secondaryHeaderFlag,
                                          &apidValue,
                                          &header->sequenceFlags,

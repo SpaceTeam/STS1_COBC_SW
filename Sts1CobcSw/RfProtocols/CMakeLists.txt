@@ -7,6 +7,7 @@ target_sources(
             SpacePacket.cpp
             TcTransferFrame.cpp
             TmTransferFrame.cpp
+            Utility.cpp
             Vocabulary.cpp
 )
 target_link_libraries(

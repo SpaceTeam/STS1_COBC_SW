@@ -10,6 +10,7 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
+#include <Sts1CobcSw/RfProtocols/SpacePacket.hpp>
 #include <Sts1CobcSw/RfProtocols/Vocabulary.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
@@ -65,7 +66,7 @@ TEST_CASE("Successful verification reports")
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
-        .packetType = 0,
+        .packetType = sts1cobcsw::PacketType(0),
         .secondaryHeaderFlag = 1,
         .apid = sts1cobcsw::Apid(0),
         .sequenceFlags = 0b11,
@@ -112,7 +113,7 @@ TEST_CASE("Successful verification reports")
     dataField.clear();
     requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0,
-        .packetType = 1,
+        .packetType = sts1cobcsw::PacketType(1),
         .secondaryHeaderFlag = 0,
         .apid = sts1cobcsw::Apid(0x7FF),
         .sequenceFlags = 0,
@@ -151,7 +152,7 @@ TEST_CASE("Failed verification reports")
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0b111,
-        .packetType = 0,
+        .packetType = sts1cobcsw::PacketType(0),
         .secondaryHeaderFlag = 1,
         .apid = sts1cobcsw::Apid(0),
         .sequenceFlags = 0b11,
@@ -196,7 +197,7 @@ TEST_CASE("Failed verification reports")
     dataField.clear();
     requestId = sts1cobcsw::RequestId{
         .packetVersionNumber = 0,
-        .packetType = 1,
+        .packetType = sts1cobcsw::PacketType(1),
         .secondaryHeaderFlag = 0,
         .apid = sts1cobcsw::Apid(0x7FF),
         .sequenceFlags = 0,
@@ -399,13 +400,13 @@ TEST_CASE("Parameter value report")
 TEST_CASE("File attribute report")
 {
     using sts1cobcsw::FileAttributeReport;
-    using sts1cobcsw::FileStatus;
+    using sts1cobcsw::LockState;
 
     auto dataField = etl::vector<Byte, sts1cobcsw::tm::maxPacketDataLength>{};
     auto filePath = fs::Path("/results/12345_67890.zip");
     auto fileSize = 0xDEAD'BEEFU;
-    auto fileStatus = FileStatus::locked;
-    auto report = FileAttributeReport(filePath, fileSize, fileStatus);
+    auto lockState = LockState::locked;
+    auto report = FileAttributeReport(filePath, fileSize, lockState);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
     auto addToResult = report.AddTo(&dataField);
     auto tAfterWrite = sts1cobcsw::CurrentRealTime();
@@ -413,7 +414,7 @@ TEST_CASE("File attribute report")
     CHECK(dataField.size() == report.Size());
     CHECK(report.Size()
           == (sts1cobcsw::tm::packetSecondaryHeaderLength
-              + totalSerialSize<decltype(filePath), decltype(fileSize), decltype(fileStatus)>));
+              + totalSerialSize<decltype(filePath), decltype(fileSize), decltype(lockState)>));
     // Packet secondary header
     CHECK(dataField[0] == 0x20_b);  // PUS version number, spacecraft time reference status
     CHECK(dataField[1] == 23_b);    // Service type ID
@@ -433,9 +434,8 @@ TEST_CASE("File attribute report")
     // File size
     CHECK(fileSize == (Deserialize<std::uint32_t, 11 + fs::Path::MAX_SIZE>(dataField)));
     // File status
-    static constexpr auto iFileStatus =
-        11 + totalSerialSize<decltype(filePath), decltype(fileSize)>;
-    CHECK(fileStatus == (Deserialize<FileStatus, iFileStatus>(dataField)));
+    static constexpr auto iLockState = 11 + totalSerialSize<decltype(filePath), decltype(fileSize)>;
+    CHECK(lockState == (Deserialize<LockState, iLockState>(dataField)));
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);

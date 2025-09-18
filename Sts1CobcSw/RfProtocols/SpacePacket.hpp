@@ -9,28 +9,30 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
+#include <strong_type/regular.hpp>
+#include <strong_type/type.hpp>
+
 #include <etl/vector.h>
 
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <utility>
 
 
 namespace sts1cobcsw
 {
-namespace packettype
-{
-constexpr auto telemetry = UInt<1>(0);
-constexpr auto telecommand = UInt<1>(1);
-};
+using PacketType = strong::type<UInt<1>, struct PacketTypeTag, strong::regular>;
+constexpr auto telemetryPacketType = PacketType(0);
+constexpr auto telecommandPacketType = PacketType(1);
 
 
 // TODO: Consider moving this into SpacePacket
 struct SpacePacketPrimaryHeader
 {
     UInt<3> versionNumber = sts1cobcsw::packetVersionNumber;
-    UInt<1> packetType;
+    PacketType packetType;
     UInt<1> secondaryHeaderFlag;
     Apid apid;
     UInt<2> sequenceFlags;
@@ -51,7 +53,7 @@ struct SpacePacket
 template<>
 inline constexpr std::size_t serialSize<SpacePacketPrimaryHeader> =
     totalSerialSize<decltype(SpacePacketPrimaryHeader::versionNumber),
-                    decltype(SpacePacketPrimaryHeader::packetType),
+                    strong::underlying_type_t<PacketType>,
                     decltype(SpacePacketPrimaryHeader::secondaryHeaderFlag),
                     decltype(SpacePacketPrimaryHeader::apid.Value()),
                     decltype(SpacePacketPrimaryHeader::sequenceFlags),

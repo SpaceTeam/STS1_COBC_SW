@@ -9,6 +9,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 
+#include <strong_type/equality.hpp>
+
 #include <etl/vector.h>
 
 #include <cstdint>
@@ -133,7 +135,7 @@ TEST_CASE("Parsing Space Packets")
     CHECK(parseResult.has_value());
     auto packet = parseResult.value();
     CHECK(packet.primaryHeader.versionNumber == sts1cobcsw::packetVersionNumber);
-    CHECK(packet.primaryHeader.packetType == sts1cobcsw::packettype::telecommand);
+    CHECK(packet.primaryHeader.packetType == sts1cobcsw::telecommandPacketType);
     CHECK(packet.primaryHeader.secondaryHeaderFlag == 1);
     CHECK(packet.primaryHeader.apid == sts1cobcsw::normalApid);
     CHECK(packet.primaryHeader.sequenceFlags == 0b11);
@@ -153,7 +155,7 @@ TEST_CASE("Parsing Space Packets")
     CHECK(parseResult.has_value());
     packet = parseResult.value();
     CHECK(packet.primaryHeader.versionNumber == sts1cobcsw::packetVersionNumber);
-    CHECK(packet.primaryHeader.packetType == sts1cobcsw::packettype::telecommand);
+    CHECK(packet.primaryHeader.packetType == sts1cobcsw::telecommandPacketType);
     CHECK(packet.primaryHeader.secondaryHeaderFlag == 1);
     CHECK(packet.primaryHeader.apid == sts1cobcsw::idlePacketApid);
     CHECK(packet.primaryHeader.sequenceFlags == 0b11);
