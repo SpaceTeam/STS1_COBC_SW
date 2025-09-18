@@ -90,6 +90,7 @@ auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>;
 
 // Level -3 private functions
 auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntityId) -> void;
+auto GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>;
 auto Send(fs::File const & file,
           std::uint32_t fileSize,
           std::span<SegmentRequest const> segments,
@@ -250,22 +251,12 @@ auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
         // TODO: Think about the correct reactivation time for all suspend functions
         (void)encodedCfdpFrameMailbox.SuspendUntilEmptyOr(endOfTime);
 
-        // GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>
-        if(receivedPduMailbox.IsEmpty())
+        auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
+        if(getFileDirectivePduResult.has_error())
         {
             continue;
         }
-        auto receivedPdu = receivedPduMailbox.Get().value();
-        if(receivedPdu.header.pduType != fileDirectivePduType)
-        {
-            continue;
-        }
-        auto parseAsFileDirectiveResult = ParseAsFileDirectivePdu(receivedPdu.dataField);
-        if(parseAsFileDirectiveResult.has_error())
-        {
-            continue;
-        }
-        auto & fileDirectivePdu = parseAsFileDirectiveResult.value();
+        auto & fileDirectivePdu = getFileDirectivePduResult.value();
 
         // Check(fileDirectivePdu, cancelCondition, interruptCondition) -> Result<void>
         if(cancelCondition == CancelCondition::receivedFinishedPdu
@@ -352,6 +343,17 @@ auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntit
 }
 
 
+auto GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>
+{
+    OUTCOME_TRY(auto receivedPdu, receivedPduMailbox.Get());
+    if(receivedPdu.header.pduType != fileDirectivePduType)
+    {
+        return ErrorCode::wrongPduType;
+    }
+    return ParseAsFileDirectivePdu(receivedPdu.dataField);
+}
+
+
 auto Send(fs::File const & file,
           std::uint32_t fileSize,
           std::span<SegmentRequest const> segments,
@@ -405,22 +407,12 @@ auto SendAndWaitForAck(Payload const & pdu,
         {
             (void)receivedPduMailbox.SuspendUntilFullOr(ackTimerExpirationTime);
 
-            // GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>
-            if(receivedPduMailbox.IsEmpty())
+            auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
+            if(getFileDirectivePduResult.has_error())
             {
                 continue;
             }
-            auto receivedPdu = receivedPduMailbox.Get().value();
-            if(receivedPdu.header.pduType != fileDirectivePduType)
-            {
-                continue;
-            }
-            auto parseAsFileDirectiveResult = ParseAsFileDirectivePdu(receivedPdu.dataField);
-            if(parseAsFileDirectiveResult.has_error())
-            {
-                continue;
-            }
-            auto & fileDirectivePdu = parseAsFileDirectiveResult.value();
+            auto & fileDirectivePdu = getFileDirectivePduResult.value();
 
             // Check if the right ACK PDU is received
             if(fileDirectivePdu.directiveCode == DirectiveCode::ack)
