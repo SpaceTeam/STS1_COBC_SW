@@ -84,10 +84,14 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidAckPduDirectiveCode,
     invalidDirectiveSubtypeCode,
     invalidNakPdu,
+    // File transfer
     entityIdsAreIdentical,
     invalidCubeSatFilePath,
     invalidEduProgramPath,
     invalidFirmwarePath,
+    fileTransferInterrupted,
+    fileTransferCancelled,
+    positiveAckLimitReached,
     // Firmware
     misaligned,
     eraseFailed,

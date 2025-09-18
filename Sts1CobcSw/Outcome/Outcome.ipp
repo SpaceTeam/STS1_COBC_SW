@@ -10,6 +10,7 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
 {
     switch(errorCode)
     {
+        // Littlefs (negative values)
         case ErrorCode::io:
             return "io";
         case ErrorCode::corrupt:
@@ -38,14 +39,17 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "noAttribute";
         case ErrorCode::nameTooLong:
             return "nameTooLong";
+        // General (from here on positive values)
         case ErrorCode::timeout:
             return "timeout";
+        // File system
         case ErrorCode::fileNotOpen:
             return "fileNotOpen";
         case ErrorCode::unsupportedOperation:
             return "unsupportedOperation";
         case ErrorCode::fileLocked:
             return "fileLocked";
+        // EDU
         case ErrorCode::invalidAnswer:
             return "invalidAnswer";
         case ErrorCode::nack:
@@ -64,10 +68,12 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "tooManyDataPackets";
         case ErrorCode::eduIsNotAlive:
             return "eduIsNotAlive";
+        // Mailbox
         case ErrorCode::full:
             return "full";
         case ErrorCode::empty:
             return "empty";
+        // RF protocols
         case ErrorCode::errorCorrectionFailed:
             return "errorCorrectionFailed";
         case ErrorCode::dataFieldTooShort:
@@ -126,6 +132,7 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidDirectiveSubtypeCode";
         case ErrorCode::invalidNakPdu:
             return "invalidNakPdu";
+        // File transfer
         case ErrorCode::entityIdsAreIdentical:
             return "entityIdsAreIdentical";
         case ErrorCode::invalidCubeSatFilePath:
@@ -134,6 +141,13 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidEduProgramPath";
         case ErrorCode::invalidFirmwarePath:
             return "invalidFirmwarePath";
+        case ErrorCode::fileTransferInterrupted:
+            return "fileTransferInterrupted";
+        case ErrorCode::fileTransferCancelled:
+            return "fileTransferCancelled";
+        case ErrorCode::positiveAckLimitReached:
+            return "positiveAckLimitReached";
+        // Firmware
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:

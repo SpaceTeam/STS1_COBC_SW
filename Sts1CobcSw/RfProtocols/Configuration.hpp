@@ -160,6 +160,7 @@ namespace tm
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
+inline constexpr auto maxFileSegmentLength = maxPduDataLength - totalSerialSize<std::uint32_t>;
 }
 
 namespace tc
@@ -175,4 +176,9 @@ inline constexpr auto maxFileSegmentLength =
 using EntityId = Id<std::uint8_t, 0x0F, 0xF0>;  // NOLINT(*magic-numbers)
 inline constexpr auto groundStationEntityId = Make<EntityId, 0x0F>();
 inline constexpr auto cubeSatEntityId = Make<EntityId, 0xF0>();
+
+// TODO: Choose proper values
+inline constexpr auto positiveAckTimerInterval = 35 * s;
+inline constexpr auto postiveAckTimerExpirationLimit = 3;
+inline constexpr auto nackTimerExpirationLimit = 3;
 }
