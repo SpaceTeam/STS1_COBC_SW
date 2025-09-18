@@ -91,6 +91,9 @@ auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>;
 // Level -3 private functions
 auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntityId) -> void;
 auto GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>;
+auto Check(FileDirectivePdu const & fileDirectivePdu,
+           CancelCondition cancelCondition,
+           InterruptCondition interruptCondition) -> Result<void>;
 auto Send(fs::File const & file,
           std::uint32_t fileSize,
           std::span<SegmentRequest const> segments,
@@ -258,38 +261,7 @@ auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
         }
         auto & fileDirectivePdu = getFileDirectivePduResult.value();
 
-        // Check(fileDirectivePdu, cancelCondition, interruptCondition) -> Result<void>
-        if(cancelCondition == CancelCondition::receivedFinishedPdu
-           and fileDirectivePdu.directiveCode == DirectiveCode::finished)
-        {
-            return ErrorCode::fileTransferCancelled;
-        }
-        if((cancelCondition == CancelCondition::receivedEofCancelPdu
-            or interruptCondition == InterruptCondition::receivedEofNoErrorPdu)
-           and fileDirectivePdu.directiveCode == DirectiveCode::endOfFile)
-        {
-            auto parseAsEndOfFileResult = ParseAsEndOfFilePdu(fileDirectivePdu.parameterField);
-            if(parseAsEndOfFileResult.has_error())
-            {
-                continue;
-            }
-            auto & endOfFilePdu = parseAsEndOfFileResult.value();
-            if(interruptCondition == InterruptCondition::receivedEofNoErrorPdu
-               and endOfFilePdu.conditionCode_ == noErrorConditionCode)
-            {
-                return ErrorCode::fileTransferInterrupted;
-            }
-            if(cancelCondition == CancelCondition::receivedEofCancelPdu
-               and endOfFilePdu.conditionCode_ != unsupportedChecksumTypeConditionCode)
-            {
-                return ErrorCode::fileTransferCancelled;
-            }
-        }
-        if(interruptCondition == InterruptCondition::receivedNakPdu
-           and fileDirectivePdu.directiveCode == DirectiveCode::nak)
-        {
-            return ErrorCode::fileTransferInterrupted;
-        }
+        OUTCOME_TRY(Check(fileDirectivePdu, cancelCondition, interruptCondition));
     }
     while(CurrentRodosTime()
           > persistentVariables.Load<"fileTransferWindowEnd">() + fileTransferWindowEndMargin)
@@ -351,6 +323,45 @@ auto GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>
         return ErrorCode::wrongPduType;
     }
     return ParseAsFileDirectivePdu(receivedPdu.dataField);
+}
+
+
+auto Check(FileDirectivePdu const & fileDirectivePdu,
+           CancelCondition cancelCondition,
+           InterruptCondition interruptCondition) -> Result<void>
+{
+    if(cancelCondition == CancelCondition::receivedFinishedPdu
+       and fileDirectivePdu.directiveCode == DirectiveCode::finished)
+    {
+        return ErrorCode::fileTransferCancelled;
+    }
+    if((cancelCondition == CancelCondition::receivedEofCancelPdu
+        or interruptCondition == InterruptCondition::receivedEofNoErrorPdu)
+       and fileDirectivePdu.directiveCode == DirectiveCode::endOfFile)
+    {
+        auto parseAsEndOfFileResult = ParseAsEndOfFilePdu(fileDirectivePdu.parameterField);
+        if(parseAsEndOfFileResult.has_error())
+        {
+            return outcome_v2::success();
+        }
+        auto & endOfFilePdu = parseAsEndOfFileResult.value();
+        if(interruptCondition == InterruptCondition::receivedEofNoErrorPdu
+           and endOfFilePdu.conditionCode_ == noErrorConditionCode)
+        {
+            return ErrorCode::fileTransferInterrupted;
+        }
+        if(cancelCondition == CancelCondition::receivedEofCancelPdu
+           and endOfFilePdu.conditionCode_ != unsupportedChecksumTypeConditionCode)
+        {
+            return ErrorCode::fileTransferCancelled;
+        }
+    }
+    if(interruptCondition == InterruptCondition::receivedNakPdu
+       and fileDirectivePdu.directiveCode == DirectiveCode::nak)
+    {
+        return ErrorCode::fileTransferInterrupted;
+    }
+    return outcome_v2::success();
 }
 
 
@@ -434,28 +445,7 @@ auto SendAndWaitForAck(Payload const & pdu,
                 }
             }
 
-            // Check(fileDirectivePdu, cancelCondition, interruptCondition) -> Result<void>
-            if(cancelCondition == CancelCondition::receivedFinishedPdu
-               and fileDirectivePdu.directiveCode == DirectiveCode::finished)
-            {
-                return ErrorCode::fileTransferCancelled;
-            }
-            if(cancelCondition == CancelCondition::receivedEofCancelPdu
-               and fileDirectivePdu.directiveCode == DirectiveCode::endOfFile)
-            {
-                auto parseAsEndOfFileResult = ParseAsEndOfFilePdu(fileDirectivePdu.parameterField);
-                if(parseAsEndOfFileResult.has_error())
-                {
-                    continue;
-                }
-                auto & endOfFilePdu = parseAsEndOfFileResult.value();
-                if(cancelCondition == CancelCondition::receivedEofCancelPdu
-                   and endOfFilePdu.conditionCode_ != noErrorConditionCode
-                   and endOfFilePdu.conditionCode_ != unsupportedChecksumTypeConditionCode)
-                {
-                    return ErrorCode::fileTransferCancelled;
-                }
-            }
+            OUTCOME_TRY(Check(fileDirectivePdu, cancelCondition, InterruptCondition::never));
         }
     }
     return ErrorCode::positiveAckLimitReached;
