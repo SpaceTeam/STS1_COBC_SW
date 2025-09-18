@@ -92,6 +92,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     fileTransferInterrupted,
     fileTransferCancelled,
     positiveAckLimitReached,
+    wrongPduType,
     // Firmware
     misaligned,
     eraseFailed,
