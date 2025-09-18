@@ -49,10 +49,8 @@ EndOfFilePdu::EndOfFilePdu(std::uint32_t fileSize) noexcept
 }
 
 
-EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode,
-                           std::uint32_t fileSize,
-                           FaultLocation faultLocation) noexcept
-    : conditionCode_(conditionCode), fileSize_(fileSize), faultLocation_(faultLocation)
+EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode, std::uint32_t fileSize) noexcept
+    : conditionCode_(conditionCode), fileSize_(fileSize)
 {
     // We cannot have a FaultLocation if there is no error
     assert(conditionCode != noErrorConditionCode);
@@ -90,12 +88,8 @@ FinishedPdu::FinishedPdu(DeliveryCode deliveryCode, FileStatus fileStatus) noexc
 
 FinishedPdu::FinishedPdu(ConditionCode conditionCode,
                          DeliveryCode deliveryCode,
-                         FileStatus fileStatus,
-                         FaultLocation faultLocation) noexcept
-    : conditionCode_(conditionCode),
-      deliveryCode_(deliveryCode),
-      fileStatus_(fileStatus),
-      faultLocation_(faultLocation)
+                         FileStatus fileStatus) noexcept
+    : conditionCode_(conditionCode), deliveryCode_(deliveryCode), fileStatus_(fileStatus)
 {
     // We cannot have a FaultLocation if there is no error or an unsupported checksum type
     assert(conditionCode != noErrorConditionCode

@@ -302,8 +302,7 @@ TEST_CASE("EndOfFilePdu Constructor")
 
     auto errorEndOfFilePdu =
         sts1cobcsw::EndOfFilePdu(sts1cobcsw::positiveAckLimitReachedConditionCode,
-                                 0x1122'3344,  // fileSize
-                                 faultLocation);
+                                 0x1122'3344);  // fileSize
 
     CHECK(errorEndOfFilePdu.conditionCode_ == sts1cobcsw::positiveAckLimitReachedConditionCode);
     CHECK(errorEndOfFilePdu.fileChecksum_ == 0x0000'0000U);
@@ -450,8 +449,7 @@ TEST_CASE("FinishedPdu Constructor")
     auto errorFinishedPdu =
         sts1cobcsw::FinishedPdu(sts1cobcsw::positiveAckLimitReachedConditionCode,
                                 sts1cobcsw::dataIncompleteDeliveryCode,
-                                sts1cobcsw::fileRejectedFileStatus,
-                                faultLocation);
+                                sts1cobcsw::fileRejectedFileStatus);
 
     CHECK(errorFinishedPdu.conditionCode_ == sts1cobcsw::positiveAckLimitReachedConditionCode);
     CHECK(errorFinishedPdu.deliveryCode_ == sts1cobcsw::dataIncompleteDeliveryCode);

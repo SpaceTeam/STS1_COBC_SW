@@ -12,10 +12,18 @@ constexpr auto IsEduError(ErrorCode error) -> bool
 }
 
 
+constexpr auto IsFileSystemError(ErrorCode errorCode) -> bool
+{
+    return errorCode == ErrorCode::fileNotOpen or errorCode == ErrorCode::unsupportedOperation
+        or errorCode == ErrorCode::fileLocked or errorCode < ErrorCode(0);
+}
+
+
 constexpr auto ToCZString(ErrorCode errorCode) -> char const *
 {
     switch(errorCode)
     {
+        // Littlefs (negative values)
         case ErrorCode::io:
             return "io";
         case ErrorCode::corrupt:
@@ -44,14 +52,17 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "noAttribute";
         case ErrorCode::nameTooLong:
             return "nameTooLong";
+        // General (from here on positive values)
         case ErrorCode::timeout:
             return "timeout";
+        // File system
         case ErrorCode::fileNotOpen:
             return "fileNotOpen";
         case ErrorCode::unsupportedOperation:
             return "unsupportedOperation";
         case ErrorCode::fileLocked:
             return "fileLocked";
+        // EDU
         case ErrorCode::invalidAnswer:
             return "invalidAnswer";
         case ErrorCode::nack:
@@ -72,10 +83,12 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "eduIsNotAlive";
         case ErrorCode::invalidEduProgramFilename:
             return "invalidEduProgramFilename";
+        // Mailbox
         case ErrorCode::full:
             return "full";
         case ErrorCode::empty:
             return "empty";
+        // RF protocols
         case ErrorCode::errorCorrectionFailed:
             return "errorCorrectionFailed";
         case ErrorCode::dataFieldTooShort:
@@ -134,12 +147,24 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "invalidDirectiveSubtypeCode";
         case ErrorCode::invalidNakPdu:
             return "invalidNakPdu";
+        // File transfer
         case ErrorCode::entityIdsAreIdentical:
             return "entityIdsAreIdentical";
         case ErrorCode::invalidCubeSatFilePath:
             return "invalidCubeSatFilePath";
         case ErrorCode::invalidFirmwarePath:
             return "invalidFirmwarePath";
+        case ErrorCode::fileTransferInterrupted:
+            return "fileTransferInterrupted";
+        case ErrorCode::fileTransferCanceled:
+            return "fileTransferCanceled";
+        case ErrorCode::positiveAckLimitReached:
+            return "positiveAckLimitReached";
+        case ErrorCode::inactivityDetected:
+            return "inactivityDetected";
+        case ErrorCode::wrongPduType:
+            return "wrongPduType";
+        // Firmware
         case ErrorCode::misaligned:
             return "misaligned";
         case ErrorCode::eraseFailed:
