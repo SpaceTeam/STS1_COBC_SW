@@ -13,13 +13,6 @@
 
 namespace sts1cobcsw::rf
 {
-enum class TxType : std::uint8_t
-{
-    morse,  // From GPIO pin
-    packet  // From FIFO
-};
-
-
 enum class PropertyGroup : std::uint8_t
 {
     global = 0x00,       //
@@ -43,12 +36,11 @@ inline constexpr auto correctPartNumber = 0x4463;
 inline constexpr auto maxTxDataLength = cc::ViterbiCodec::UnencodedSize((1U << 13U) - 1U, true);
 
 
-auto Initialize(TxType txType) -> Result<void>;
+auto Initialize() -> Result<void>;
 auto EnableTx() -> void;
 auto DisableTx() -> void;
 auto ReadPartNumber() -> std::uint16_t;
 auto EnterStandbyMode() -> void;
-auto SetTxType(TxType txType) -> void;
 auto SetTxDataLength(std::uint16_t length) -> void;
 auto SetTxDataRate(std::uint32_t dataRate) -> void;
 auto SetRxDataRate(std::uint32_t dataRate) -> void;

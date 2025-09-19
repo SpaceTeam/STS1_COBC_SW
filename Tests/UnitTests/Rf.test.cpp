@@ -11,7 +11,7 @@ TEST_CASE("RF module")
 {
     // We need to initialize the FRAM too because the RF code uses persistent variables
     sts1cobcsw::fram::Initialize();
-    auto initializeResult = rf::Initialize(rf::TxType::packet);
+    auto initializeResult = rf::Initialize();
     REQUIRE(initializeResult.has_value());
     auto partNumber = rf::ReadPartNumber();
     CHECK(partNumber == rf::correctPartNumber);

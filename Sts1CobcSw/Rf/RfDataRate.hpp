@@ -1,5 +1,5 @@
 //! @file
-//! @brief RX and TX configurations for different DataRates for Si4463 (created by WDS3 Tool)
+//! @brief Contains RX and TX configurations for different DataRates for Si4463 (created by WDS3 Tool)
 //!
 //! example: (RX 1.200)
 //! #define RF_MODEM_DSA_CTRL1_5 0x11, 0x20, 0x05, 0x5B,  0x40, 0x04, 0x06, 0x78, 0x20
