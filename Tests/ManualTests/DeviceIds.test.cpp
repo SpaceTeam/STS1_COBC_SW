@@ -56,7 +56,7 @@ private:
         fram::Initialize();
         PRINTF("FRAM initialized\n");
         DisableRfLatchupProtection();
-        auto rfInitializeResult = rf::Initialize(rf::TxType::morse);
+        auto rfInitializeResult = rf::Initialize();
         if(rfInitializeResult.has_error())
         {
             PRINTF("Failed to initialize RF module: %s\n", ToCZString(rfInitializeResult.error()));
