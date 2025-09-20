@@ -16,6 +16,7 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -279,7 +280,9 @@ TEST_CASE("Housekeeping parameter report")
         .nGoodTransferFrames = 57U,
         .nBadTransferFrames = 58U,
         .lastFrameSequenceNumber = 59U,
-        .lastMessageTypeId = {60U, 61}
+        .lastMessageTypeId = {60U, 61},
+        .fileTransferStatus = sts1cobcsw::FileTransferStatus::sending,
+        .transactionSequenceNumber = 62U
     };
     auto report = sts1cobcsw::HousekeepingParameterReport(record);
     auto tBeforeWrite = sts1cobcsw::CurrentRealTime();
@@ -311,6 +314,9 @@ TEST_CASE("Housekeeping parameter report")
     CHECK(dataField[17] == 1_b);         // nTotalResets
     CHECK(dataField[11 + 120] == 60_b);  // lastMessageTypeId
     CHECK(dataField[11 + 121] == 61_b);  // lastMessageTypeId
+    CHECK(dataField[11 + 122] == 1_b);   // fileTransferStatus
+    CHECK(dataField[11 + 123] == 0_b);   // transactionSequenceNumber (high byte)
+    CHECK(dataField[11 + 124] == 62_b);  // transactionSequenceNumber (low byte)
 
     dataField.clear();
     addToResult = report.AddTo(&dataField);
