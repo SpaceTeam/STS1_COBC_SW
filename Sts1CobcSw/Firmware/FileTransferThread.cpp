@@ -73,6 +73,10 @@ constexpr auto fileTransferWindowEndMargin = 5 * s;
 auto encodedFrame = std::array<Byte, blockLength>{};
 auto frame = tm::TransferFrame(std::span(encodedFrame).first<tm::transferFrameLength>());
 
+// TODO: Should we allow more segments than that?
+auto missingFileSegments =
+    etl::vector<SegmentRequest, maxNNaksPerSequence * NakPdu::maxNSegmentRequests>{};
+
 // Level -1 private functions
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void;
@@ -102,6 +106,7 @@ auto SendAndWaitForAck(Payload const & pdu,
                        DirectiveCode directiveCode,
                        ConditionCode conditionCode,
                        CancelCondition cancelCondition) -> Result<void>;
+auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 
 
 class FileTransferThread : public RODOS::StaticThread<stackSize>
@@ -169,6 +174,7 @@ auto ResumeFileTransferThread() -> void
 
 namespace
 {
+// TODO: Refactor
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
     // TODO: Think about proper error handling (e.g. file system errors)
@@ -191,24 +197,108 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
         OUTCOME_TRY(Send(file, fileSize));
         OUTCOME_TRY(SendAndWaitForAck(EndOfFilePdu(fileSize)));
 
-        // TODO: Continue here!
-        // WaitForFinishedOrNakPdusAndResendDataIfNecessary
-        ResumeRfCommunicationThread();
+        // ResendMissingDataAndFinishTransfer() or HandleNak(s|Sequences)AndFinishTransfer() or
+        // HandleNaksAndWaitForFinishedPdu() or WaitForFinishedPduAndHandleNak(s|Sequences)()
+        ResumeRfCommunicationThread();  // To go into RX mode again
+        missingFileSegments.clear();
+        auto timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+        for(auto nNaksInSequence = 0;;)
+        {
+            auto suspendResult = receivedPduMailbox.SuspendUntilFullOr(timeLimit);
+            if(suspendResult.has_error() and suspendResult.error() == ErrorCode::timeout)
+            {
+                if(nNaksInSequence == 0)
+                {
+                    return ErrorCode::inactivityDetected;
+                }
+                OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+                nNaksInSequence = 0;
+                timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+                continue;
+            }
+            auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
+            if(getFileDirectivePduResult.has_error())
+            {
+                continue;
+            }
+            auto & fileDirectivePdu = getFileDirectivePduResult.value();
 
-        return outcome_v2::success();
+            // Handle NAK PDU
+            if(fileDirectivePdu.directiveCode == DirectiveCode::nak)
+            {
+                auto parseAsNakPduResult = ParseAsNakPdu(fileDirectivePdu.parameterField);
+                if(parseAsNakPduResult.has_error())
+                {
+                    continue;
+                }
+                ++nNaksInSequence;
+                auto & nakPdu = parseAsNakPduResult.value();
+                missingFileSegments.insert(missingFileSegments.end(),
+                                           nakPdu.segmentRequests_.begin(),
+                                           nakPdu.segmentRequests_.end());
+                auto isFinalNakInSequence =
+                    nakPdu.endOfScope_ == fileSize or nNaksInSequence == maxNNaksPerSequence;
+                if(isFinalNakInSequence)
+                {
+                    OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+                    nNaksInSequence = 0;
+                    timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+                }
+                else
+                {
+                    timeLimit = CurrentRodosTime() + nakSequenceTimeout;
+                }
+                continue;
+            }
+
+            // Handle Finished PDU
+            if(fileDirectivePdu.directiveCode == DirectiveCode::finished)
+            {
+                auto parseAsFinishedPduResult = ParseAsFinishedPdu(fileDirectivePdu.parameterField);
+                if(parseAsFinishedPduResult.has_error())
+                {
+                    continue;
+                }
+                auto & finishedPdu = parseAsFinishedPduResult.value();
+                // HandleFinishedPdu() or Finish(FileTansfer|Transfer|Transaction)()
+                if(finishedPdu.conditionCode_ != noErrorConditionCode
+                   and finishedPdu.conditionCode_ != unsupportedChecksumTypeConditionCode)
+                {
+                    return ErrorCode::fileTransferCanceled;
+                }
+                DEBUG_PRINT("File transfer finished successfully\n");
+                fileTransferInfo.Store({.status = FileTransferStatus::completed,
+                                        .sequenceNumber = fileTransferInfo.Load().sequenceNumber});
+                // AcknowledgeFinishedPdu()
+                PackageAndEncode(AckPdu(finishedPdu.directiveCode,
+                                        finishedPdu.conditionCode_,
+                                        activeTransactionStatus),
+                                 cubeSatEntityId);
+                OUTCOME_TRY(SuspendUntilFrameCanBePublished(CancelCondition::receivedFinishedPdu,
+                                                            InterruptCondition::never));
+                DEBUG_PRINT("Publishing encoded frame with ACK(FIN) PDU\n");
+                encodedCfdpFrameMailbox.Overwrite(encodedFrame);
+                ResumeRfCommunicationThread();  // To send the PDU immediately
+                return outcome_v2::success();
+            }
+        }
     }();
     if(result.has_value())
     {
-        DEBUG_PRINT("File sent successfully\n");
+        return;
     }
-    else if(result.error() == ErrorCode::fileTransferCanceled)
+    // HandleFaults/HandleFaultConditions
+    if(result.error() == ErrorCode::fileTransferCanceled)
     {
-        DEBUG_PRINT("Acknowledging cancel request by ground station\n");
-        // TODO: Acknowledge cancel request (= send ACK(EOF/FIN) PDU)
+        DEBUG_PRINT("File transfer canceled by ground station\n");
     }
     else if(result.error() == ErrorCode::positiveAckLimitReached)
     {
-        DEBUG_PRINT("Error sending file: positive ACK limit reached -> abondoning transfer\n");
+        DEBUG_PRINT("Positive ACK limit reached -> abandoning transfer\n");
+    }
+    else if(result.error() == ErrorCode::inactivityDetected)
+    {
+        DEBUG_PRINT("Inactivity detected -> abandoning transfer\n");
     }
     else
     {
@@ -382,13 +472,14 @@ auto Send(fs::File const & file,
                 std::span(buffer).first(std::min<std::size_t>(buffer.size(), fileSize - i));
             OUTCOME_TRY(auto nBytesRead, file.Read(fileData));
             fileData = fileData.first(static_cast<unsigned>(nBytesRead));
-            i += fileData.size();
             PackageAndEncode(FileDataPdu(i, fileData), cubeSatEntityId);
             OUTCOME_TRY(SuspendUntilFrameCanBePublished(CancelCondition::receivedFinishedPdu,
                                                         interruptCondition));
             DEBUG_PRINT("Publishing encoded frame with File Data PDU (offset = %d)\n",
                         static_cast<int>(i));
             encodedCfdpFrameMailbox.Overwrite(encodedFrame);
+            ResumeRfCommunicationThread();
+            i += fileData.size();
         }
     }
     return outcome_v2::success();
@@ -450,6 +541,21 @@ auto SendAndWaitForAck(Payload const & pdu,
         }
     }
     return ErrorCode::positiveAckLimitReached;
+}
+
+
+auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>
+{
+    DEBUG_PRINT("Sending %d missing file segments\n", static_cast<int>(missingFileSegments.size()));
+    // TODO: Do we need to empty the mailbox in other places too?
+    (void)encodedCfdpFrameMailbox.Get();  // Empty mailbox to immediately send new data
+    auto sendResult = Send(file, fileSize, missingFileSegments, InterruptCondition::receivedNakPdu);
+    missingFileSegments.clear();
+    if(sendResult.has_error() and sendResult.error() != ErrorCode::fileTransferInterrupted)
+    {
+        return sendResult.error();
+    }
+    return outcome_v2::success();
 }
 }
 }

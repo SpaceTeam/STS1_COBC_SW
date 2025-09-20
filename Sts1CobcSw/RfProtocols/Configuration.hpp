@@ -180,4 +180,8 @@ inline constexpr auto cubeSatEntityId = Make<EntityId, 0xF0>();
 inline constexpr auto positiveAckTimerInterval = 35 * s;
 inline constexpr auto postiveAckTimerExpirationLimit = 3;
 inline constexpr auto nackTimerExpirationLimit = 3;
+inline constexpr auto transactionInactivityLimit = 35 * s;
+
+inline constexpr auto maxNNaksPerSequence = 4;
+inline constexpr auto nakSequenceTimeout = 5 * s;
 }
