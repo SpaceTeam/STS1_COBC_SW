@@ -8,6 +8,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Crc32.hpp>
@@ -28,10 +29,12 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <span>
+#include <system_error>
 #include <utility>
 
 
@@ -59,6 +62,9 @@ constexpr auto sendTimeout = 1500 * ms;
 constexpr auto receiveTimeout = 1500 * ms;
 // TODO: Can we choose a smaller value?
 constexpr auto flushReceiveBufferTimeout = 1 * ms;
+
+constexpr auto nProgramIdDigits =
+    std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
 
 // TODO: Choose proper values
 // Max. number of send retries after receiving NACK
@@ -283,6 +289,24 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     return WaitForAck();
+}
+
+
+auto GetProgramId(fs::Path fileName) -> Result<ProgramId>
+{
+    auto const fileAppendixLength = 4U;  // .zip
+    if(fileName.size() == (fileAppendixLength + nProgramIdDigits))
+    {
+        std::uint32_t value = 0;
+        auto result = std::from_chars(
+            fileName.data(), fileName.data() + (fileName.size() - fileAppendixLength), value);
+        if(result.ec == std::errc{})
+        {
+            return ProgramId(value);
+        }
+    }
+    DEBUG_PRINT("Failed to get EDU program ID from file: %s\n", fileName.c_str());
+    return ErrorCode::invalidParameter;
 }
 
 
@@ -548,8 +572,6 @@ auto BuildProgramFilePath(ProgramId programId) -> fs::Path
 {
     auto path = programsDirectory;
     path.append("/");
-    static constexpr auto nProgramIdDigits =
-        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
     etl::to_string(value_of(programId),
                    path,
                    etl::format_spec().width(nProgramIdDigits).fill('0'),
@@ -563,8 +585,6 @@ auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
 {
     auto path = resultsDirectory;
     path.append("/");
-    static constexpr auto nProgramIdDigits =
-        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
     etl::to_string(value_of(programId),
                    path,
                    etl::format_spec().width(nProgramIdDigits).fill('0'),
