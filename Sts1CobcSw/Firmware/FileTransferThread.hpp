@@ -2,8 +2,8 @@
 
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
-#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 
 
 namespace sts1cobcsw

@@ -2,12 +2,14 @@
 
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnits.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -52,4 +54,7 @@ inline auto nextTelemetryRecordTimeMailbox = Mailbox<RodosTime>{};
 inline auto fileTransferMetadataMailbox = Mailbox<FileTransferMetadata>{};
 inline auto receivedPduMailbox = Mailbox<tc::ProtocolDataUnit>{};
 inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
+
+inline auto fileTransferStatus = EdacVariable<FileTransferStatus>{};
+inline auto transactionSequenceNumber = EdacVariable<std::uint16_t>{};
 }

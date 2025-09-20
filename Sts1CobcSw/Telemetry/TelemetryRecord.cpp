@@ -46,6 +46,8 @@ auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const 
     source = DeserializeFrom<endianness>(source, &(data->nBadTransferFrames));
     source = DeserializeFrom<endianness>(source, &(data->lastFrameSequenceNumber));
     source = DeserializeFrom<endianness>(source, &(data->lastMessageTypeId));
+    source = DeserializeFrom<endianness>(source, &(data->fileTransferStatus));
+    source = DeserializeFrom<endianness>(source, &(data->transactionSequenceNumber));
     return source;
 }
 
@@ -93,6 +95,8 @@ auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *
     destination = SerializeTo<endianness>(destination, data.nBadTransferFrames);
     destination = SerializeTo<endianness>(destination, data.lastFrameSequenceNumber);
     destination = SerializeTo<endianness>(destination, data.lastMessageTypeId);
+    destination = SerializeTo<endianness>(destination, data.fileTransferStatus);
+    destination = SerializeTo<endianness>(destination, data.transactionSequenceNumber);
     return destination;
 }
 
