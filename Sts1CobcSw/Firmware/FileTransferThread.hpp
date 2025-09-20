@@ -8,7 +8,8 @@
 
 namespace sts1cobcsw
 {
-struct FileTransferInfo
+// NOLINTNEXTLINE(clang-analyzer-core.uninitialized.Assign)
+struct FileTransferMetadata
 {
     EntityId sourceEntityId;
     EntityId destinationEntityId;
