@@ -20,9 +20,9 @@ namespace
 constexpr auto stackSize = 2000U;
 
 
-auto SendFile(FileTransferInfo const & fileTransferInfo) -> void;
-auto ReceiveFile(FileTransferInfo const & fileTransferInfo) -> void;
-auto ReceiveFirmware(FileTransferInfo const & fileTransferInfo) -> void;
+auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void;
+auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void;
+auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void;
 
 
 class FileTransferThread : public RODOS::StaticThread<stackSize>
@@ -40,34 +40,34 @@ private:
         while(true)
         {
             // There cannot be a timeout error if we wait until the end of time
-            (void)fileTransferInfoMailbox.SuspendUntilFullOr(endOfTime);
-            if(fileTransferInfoMailbox.IsEmpty())
+            (void)fileTransferMetadataMailbox.SuspendUntilFullOr(endOfTime);
+            if(fileTransferMetadataMailbox.IsEmpty())
             {
                 continue;
             }
-            auto fileTransferInfo = fileTransferInfoMailbox.Get().value();
-            if(fileTransferInfo.sourceEntityId == cubeSatEntityId)
+            auto fileTransferMetadata = fileTransferMetadataMailbox.Get().value();
+            if(fileTransferMetadata.sourceEntityId == cubeSatEntityId)
             {
                 DEBUG_PRINT("Sending file to ground station: '%s' -> '%s'\n",
-                            fileTransferInfo.sourcePath.c_str(),
-                            fileTransferInfo.destinationPath.c_str());
-                SendFile(fileTransferInfo);
+                            fileTransferMetadata.sourcePath.c_str(),
+                            fileTransferMetadata.destinationPath.c_str());
+                SendFile(fileTransferMetadata);
             }
             else
             {
-                if(fileTransferInfo.fileIsFirmware)
+                if(fileTransferMetadata.fileIsFirmware)
                 {
                     DEBUG_PRINT("Receiving firmware from ground station: '%s' -> FW partition %s\n",
-                                fileTransferInfo.sourcePath.c_str(),
-                                ToCZString(fileTransferInfo.destinationPartitionId));
-                    ReceiveFirmware(fileTransferInfo);
+                                fileTransferMetadata.sourcePath.c_str(),
+                                ToCZString(fileTransferMetadata.destinationPartitionId));
+                    ReceiveFirmware(fileTransferMetadata);
                 }
                 else
                 {
                     DEBUG_PRINT("Receiving file from ground station: '%s' -> '%s'\n",
-                                fileTransferInfo.sourcePath.c_str(),
-                                fileTransferInfo.destinationPath.c_str());
-                    ReceiveFile(fileTransferInfo);
+                                fileTransferMetadata.sourcePath.c_str(),
+                                fileTransferMetadata.destinationPath.c_str());
+                    ReceiveFile(fileTransferMetadata);
                 }
             }
         }
@@ -84,21 +84,21 @@ auto ResumeFileTransferThread() -> void
 
 namespace
 {
-auto SendFile(FileTransferInfo const & fileTransferInfo) -> void
+auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
-    (void)fileTransferInfo;
+    (void)fileTransferMetadata;
 }
 
 
-auto ReceiveFile(FileTransferInfo const & fileTransferInfo) -> void
+auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
-    (void)fileTransferInfo;
+    (void)fileTransferMetadata;
 }
 
 
-auto ReceiveFirmware(FileTransferInfo const & fileTransferInfo) -> void
+auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void
 {
-    (void)fileTransferInfo;
+    (void)fileTransferMetadata;
 }
 }
 }

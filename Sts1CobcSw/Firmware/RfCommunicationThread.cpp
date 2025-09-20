@@ -129,8 +129,8 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
 [[nodiscard]] auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
 [[nodiscard]] auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
 auto Set(Parameter parameter) -> void;
-[[nodiscard]] auto ValidateAndBuildFileTransferInfo(CopyAFileRequest const & request)
-    -> Result<FileTransferInfo>;
+[[nodiscard]] auto ValidateAndBuildFileTransferMetadata(CopyAFileRequest const & request)
+    -> Result<FileTransferMetadata>;
 [[nodiscard]] auto GetPartitionId(fs::Path const & filePath) -> Result<PartitionId>;
 
 // Must be called before SendAndContinue()
@@ -612,19 +612,19 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
 
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
 {
-    auto fileTransferInfoResult = ValidateAndBuildFileTransferInfo(request);
-    if(fileTransferInfoResult.has_error())
+    auto fileTransferMetadataResult = ValidateAndBuildFileTransferMetadata(request);
+    if(fileTransferMetadataResult.has_error())
     {
         DEBUG_PRINT("Failed to initiate copying file '%s' to '%s': %s\n",
                     request.sourceFilePath.c_str(),
                     request.targetFilePath.c_str(),
-                    ToCZString(fileTransferInfoResult.error()));
-        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId,
-                                                                  fileTransferInfoResult.error()));
+                    ToCZString(fileTransferMetadataResult.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(
+            requestId, fileTransferMetadataResult.error()));
         return;
     }
-    // This wakes up the file transfer thread if it is waiting for a new file transfer info
-    fileTransferInfoMailbox.Overwrite(fileTransferInfoResult.value());
+    // This wakes up the file transfer thread if it is waiting for new file transfer metadata
+    fileTransferMetadataMailbox.Overwrite(fileTransferMetadataResult.value());
     DEBUG_PRINT("Successfully initiated copying file '%s' to '%s'\n",
                 request.sourceFilePath.c_str(),
                 request.targetFilePath.c_str());
@@ -802,7 +802,8 @@ auto Set(Parameter parameter) -> void
 }
 
 
-auto ValidateAndBuildFileTransferInfo(CopyAFileRequest const & request) -> Result<FileTransferInfo>
+auto ValidateAndBuildFileTransferMetadata(CopyAFileRequest const & request)
+    -> Result<FileTransferMetadata>
 {
     static constexpr auto groundStationPathPrefix = "/gs/";
     auto sourceIsCubeSat = not request.sourceFilePath.starts_with(groundStationPathPrefix);
@@ -813,7 +814,7 @@ auto ValidateAndBuildFileTransferInfo(CopyAFileRequest const & request) -> Resul
                     sourceIsCubeSat ? "STS1" : "the ground");
         return ErrorCode::entityIdsAreIdentical;
     }
-    auto fileTransferInfo = FileTransferInfo{
+    auto fileTransferMetadata = FileTransferMetadata{
         .sourceEntityId = sourceIsCubeSat ? cubeSatEntityId : groundStationEntityId,
         .destinationEntityId = targetIsCubeSat ? cubeSatEntityId : groundStationEntityId,
         .fileIsFirmware = false,
@@ -835,15 +836,15 @@ auto ValidateAndBuildFileTransferInfo(CopyAFileRequest const & request) -> Resul
         else if(request.targetFilePath.starts_with(firmwarePathPrefix))
         {
             OUTCOME_TRY(auto partitionId, GetPartitionId(request.targetFilePath));
-            fileTransferInfo.destinationPartitionId = partitionId;
-            fileTransferInfo.fileIsFirmware = true;
+            fileTransferMetadata.destinationPartitionId = partitionId;
+            fileTransferMetadata.fileIsFirmware = true;
         }
         else
         {
             return ErrorCode::invalidCubeSatFilePath;
         }
     }
-    return fileTransferInfo;
+    return fileTransferMetadata;
 }
 
 

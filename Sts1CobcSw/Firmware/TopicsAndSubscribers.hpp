@@ -49,7 +49,7 @@ inline auto txDataRateBuffer = RODOS::CommBuffer<std::uint32_t>{};
 // we don't need the whole publisher/subscriber mechanism here. A simple mailbox is enough.
 inline auto telemetryRecordMailbox = Mailbox<TelemetryRecord>{};
 inline auto nextTelemetryRecordTimeMailbox = Mailbox<RodosTime>{};
-inline auto fileTransferInfoMailbox = Mailbox<FileTransferInfo>{};
+inline auto fileTransferMetadataMailbox = Mailbox<FileTransferMetadata>{};
 inline auto receivedPduMailbox = Mailbox<tc::ProtocolDataUnit>{};
 inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
 }
