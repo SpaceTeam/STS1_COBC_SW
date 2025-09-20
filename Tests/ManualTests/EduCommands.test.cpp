@@ -28,6 +28,8 @@ using RODOS::PRINTF;
 
 namespace
 {
+inline constexpr auto stackSize = 5000U;
+
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 
 
@@ -35,7 +37,7 @@ template<std::size_t nCharacters>
 auto ReadCharacters() -> std::array<char, nCharacters>;
 
 
-class EduCommandsTest : public RODOS::StaticThread<>
+class EduCommandsTest : public RODOS::StaticThread<stackSize>
 {
 public:
     EduCommandsTest() : StaticThread("EduCommandsTest")
@@ -45,7 +47,6 @@ public:
 private:
     void init() override
     {
-        edu::Initialize();
         auto const baudRate = 115'200;
         hal::Initialize(&uciUart, baudRate);
     }
@@ -53,6 +54,7 @@ private:
 
     void run() override
     {
+        edu::Initialize();
         // Permanently turn on EDU for this test
         edu::TurnOn();
 
