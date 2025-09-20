@@ -693,13 +693,17 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
             requestId, fileTransferMetadataResult.error()));
         return;
     }
+    auto & fileTransferMetadata = fileTransferMetadataResult.value();
     // This wakes up the file transfer thread if it is waiting for new file transfer metadata
-    fileTransferMetadataMailbox.Overwrite(fileTransferMetadataResult.value());
+    fileTransferMetadataMailbox.Overwrite(fileTransferMetadata);
     DEBUG_PRINT("Successfully initiated copying file '%s' to '%s'\n",
                 request.sourceFilePath.c_str(),
                 request.targetFilePath.c_str());
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
-    SuspendUntilNewTelemetryRecordIsAvailable();
+    if(fileTransferMetadata.sourceEntityId == cubeSatEntityId)
+    {
+        SuspendUntilNewTelemetryRecordIsAvailable();
+    }
 }
 
 
