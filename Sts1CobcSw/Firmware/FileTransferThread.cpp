@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
+#include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
@@ -51,10 +52,16 @@ private:
                 DEBUG_PRINT("Sending file to ground station: '%s' -> '%s'\n",
                             fileTransferMetadata.sourcePath.c_str(),
                             fileTransferMetadata.destinationPath.c_str());
+                persistentVariables.Increment<"transactionSequenceNumber">();
+                fileTransferInfo.Store(
+                    {.status = FileTransferStatus::sending,
+                     .sequenceNumber = persistentVariables.Load<"transactionSequenceNumber">()});
                 SendFile(fileTransferMetadata);
             }
             else
             {
+                fileTransferInfo.Store({.status = FileTransferStatus::receiving,
+                                        .sequenceNumber = unknownTransactionSequenceNumber});
                 if(fileTransferMetadata.fileIsFirmware)
                 {
                     DEBUG_PRINT("Receiving firmware from ground station: '%s' -> FW partition %s\n",

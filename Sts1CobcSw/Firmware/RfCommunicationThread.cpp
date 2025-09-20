@@ -25,6 +25,7 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
+#include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnits.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
@@ -39,6 +40,8 @@
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -47,6 +50,7 @@
 #include <littlefs/lfs.h>
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/equality.hpp>
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
@@ -94,6 +98,8 @@ auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>;
 auto SendCfdpFrames() -> void;
 auto HandleReceivedData() -> void;
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void;
+auto PduHeaderMatchesTransferInfo(ProtocolDataUnitHeader const & pduHeader,
+                                  FileTransferInfo const & fileTransferInfo) -> bool;
 auto HandleRequestFrame(tc::TransferFrame const & frame) -> void;
 auto Handle(Request const & request, RequestId const & requestId) -> void;
 
@@ -311,6 +317,13 @@ auto HandleReceivedData() -> void
 
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
 {
+    auto transferInfo = fileTransferInfo.Load();
+    if(transferInfo.status != FileTransferStatus::sending
+       and transferInfo.status != FileTransferStatus::receiving)
+    {
+        DEBUG_PRINT("Discarding CFDP frame because no file transfer is ongoing\n");
+        return;
+    }
     auto parseAsProtocolDataUnitResult = ParseAsProtocolDataUnit(frame.dataField);
     if(parseAsProtocolDataUnitResult.has_error())
     {
@@ -319,9 +332,62 @@ auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
         return;
     }
     auto const & pdu = parseAsProtocolDataUnitResult.value();
+    if(transferInfo.status == FileTransferStatus::receiving
+       and transferInfo.sequenceNumber == unknownTransactionSequenceNumber)
+    {
+        transferInfo.sequenceNumber = pdu.header.transactionSequenceNumber;
+        fileTransferInfo.Store(transferInfo);
+    }
+    if(not PduHeaderMatchesTransferInfo(pdu.header, transferInfo))
+    {
+        return;
+    }
     // This wakes up the file transfer thread if it is waiting for a new PDU
     receivedPduMailbox.Overwrite(pdu);
     SuspendUntilNewTelemetryRecordIsAvailable();
+}
+
+
+auto PduHeaderMatchesTransferInfo(ProtocolDataUnitHeader const & pduHeader,
+                                  FileTransferInfo const & fileTransferInfo) -> bool
+{
+    if(pduHeader.transactionSequenceNumber != fileTransferInfo.sequenceNumber)
+    {
+        DEBUG_PRINT("Discarding CFDP frame because transaction sequence number is wrong\n");
+        DEBUG_PRINT("  received = %d, expected = %d\n",
+                    static_cast<int>(pduHeader.transactionSequenceNumber),
+                    static_cast<int>(fileTransferInfo.sequenceNumber));
+        return false;
+    }
+    auto directionAndIdsAreCorrect = (fileTransferInfo.status == FileTransferStatus::sending
+                                      and pduHeader.direction == towardsFileSenderDirection
+                                      and pduHeader.sourceEntityId == cubeSatEntityId
+                                      and pduHeader.destinationEntityId == groundStationEntityId)
+                                  or (fileTransferInfo.status == FileTransferStatus::receiving
+                                      and pduHeader.direction == towardsFileReceiverDirection
+                                      and pduHeader.sourceEntityId == groundStationEntityId
+                                      and pduHeader.destinationEntityId == cubeSatEntityId);
+    if(not directionAndIdsAreCorrect)
+    {
+        DEBUG_PRINT("Discarding CFDP frame because direction or entity IDs are wrong\n");
+        DEBUG_PRINT("  direction:      received = %d, expected = %d\n",
+                    value_of(pduHeader.direction).ToUnderlying(),
+                    fileTransferInfo.status == FileTransferStatus::sending
+                        ? value_of(towardsFileSenderDirection).ToUnderlying()
+                        : value_of(towardsFileReceiverDirection).ToUnderlying());
+        DEBUG_PRINT("  source ID:      received = 0x%02x, expected = 0x%02x\n",
+                    pduHeader.sourceEntityId.Value(),
+                    fileTransferInfo.status == FileTransferStatus::sending
+                        ? cubeSatEntityId.Value()
+                        : groundStationEntityId.Value());
+        DEBUG_PRINT("  destination ID: received = 0x%02x, expected = 0x%02x\n",
+                    pduHeader.destinationEntityId.Value(),
+                    fileTransferInfo.status == FileTransferStatus::sending
+                        ? groundStationEntityId.Value()
+                        : cubeSatEntityId.Value());
+        return false;
+    }
+    return true;
 }
 
 

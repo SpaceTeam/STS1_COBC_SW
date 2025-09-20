@@ -19,6 +19,7 @@
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -92,8 +93,9 @@ auto CollectTelemetryData() -> TelemetryRecord
     rxDataRateBuffer.get(rxDataRate);
     std::uint32_t txDataRate = 0;
     txDataRateBuffer.get(txDataRate);
+    auto transferInfo = fileTransferInfo.Load();
     return TelemetryRecord{
-        // Booleans: byte 1: EDU and housekeeping
+        // Booleans: byte 1
         .eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">() ? 1 : 0,
         .eduIsAlive = eduIsAlive ? 1 : 0,
         .newEduResultIsAvailable = persistentVariables.Load<"newEduResultIsAvailable">() ? 1 : 0,
@@ -102,10 +104,10 @@ auto CollectTelemetryData() -> TelemetryRecord
         .epsIsCharging = (epsChargingGpioPin.Read() == hal::PinState::set) ? 1 : 0,
         .epsDetectedFault = (epsFaultGpioPin.Read() == hal::PinState::set) ? 1 : 0,
         .framIsWorking = fram::framIsWorking.Load() ? 1 : 0,
+        // Booleans: byte 2
         .epsIsWorking = persistentVariables.Load<"epsIsWorking">() ? 1 : 0,
         .flashIsWorking = persistentVariables.Load<"flashIsWorking">() ? 1 : 0,
         .rfIsWorking = persistentVariables.Load<"rfIsWorking">() ? 1 : 0,
-        // Booleans: byte 2:  and communication
         .lastMessageTypeIdWasInvalid =
             persistentVariables.Load<"lastMessageTypeIdWasInvalid">() ? 1 : 0,
         .lastApplicationDataWasInvalid =
@@ -139,7 +141,9 @@ auto CollectTelemetryData() -> TelemetryRecord
         .nGoodTransferFrames = persistentVariables.Load<"nGoodTransferFrames">(),
         .nBadTransferFrames = persistentVariables.Load<"nBadTransferFrames">(),
         .lastFrameSequenceNumber = persistentVariables.Load<"lastFrameSequenceNumber">(),
-        .lastMessageTypeId = persistentVariables.Load<"lastMessageTypeId">()};
+        .lastMessageTypeId = persistentVariables.Load<"lastMessageTypeId">(),
+        .fileTransferStatus = transferInfo.status,
+        .transactionSequenceNumber = transferInfo.sequenceNumber};
 }
 }
 }

@@ -177,6 +177,8 @@ private:
                 .nBadTransferFrames = 58U,
                 .lastFrameSequenceNumber = 59U,
                 .lastMessageTypeId = {60U, 61U},
+                .fileTransferStatus = sts1cobcsw::FileTransferStatus::sending,
+                .transactionSequenceNumber = 62U
             };
             auto report = sts1cobcsw::HousekeepingParameterReport(record);
             WriteToFileAsFrame(report, outputDir + reportName);

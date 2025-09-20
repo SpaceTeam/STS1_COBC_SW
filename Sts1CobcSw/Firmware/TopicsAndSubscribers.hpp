@@ -8,6 +8,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
+#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -51,4 +53,6 @@ inline auto nextTelemetryRecordTimeMailbox = Mailbox<RodosTime>{};
 inline auto fileTransferMetadataMailbox = Mailbox<FileTransferMetadata>{};
 inline auto receivedPduMailbox = Mailbox<tc::ProtocolDataUnit>{};
 inline auto encodedCfdpFrameMailbox = Mailbox<std::array<Byte, blockLength>>{};
+
+inline auto fileTransferInfo = EdacVariable<FileTransferInfo>{};
 }

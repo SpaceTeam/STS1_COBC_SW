@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
@@ -70,6 +71,8 @@ struct TelemetryRecord
     std::uint16_t nBadTransferFrames = 0U;
     std::uint8_t lastFrameSequenceNumber = 0U;
     MessageTypeIdFields lastMessageTypeId;
+    FileTransferStatus fileTransferStatus = FileTransferStatus::inactive;
+    std::uint16_t transactionSequenceNumber = unknownTransactionSequenceNumber;
 
     friend auto operator==(TelemetryRecord const &, TelemetryRecord const &) -> bool = default;
 };
@@ -121,7 +124,9 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
         decltype(TelemetryRecord::nGoodTransferFrames),
         decltype(TelemetryRecord::nBadTransferFrames),
         decltype(TelemetryRecord::lastFrameSequenceNumber),
-        decltype(TelemetryRecord::lastMessageTypeId)>;
+        decltype(TelemetryRecord::lastMessageTypeId),
+        decltype(TelemetryRecord::fileTransferStatus),
+        decltype(TelemetryRecord::transactionSequenceNumber)>;
 
 
 template<std::endian endianness>
