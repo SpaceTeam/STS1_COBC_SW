@@ -266,6 +266,12 @@ auto SendCfdpFrames() -> void
     {
         // This wakes up the file transfer thread if it is waiting to send a new CFDP frame
         std::ranges::copy(encodedCfdpFrameMailbox.Get().value(), tmBlock.begin());
+        // Write the attached sync marker to the beginning of the buffer every time because the
+        // constant is stored in flash and therefore not corrupted as fast as the buffer in RAM.
+        if constexpr(attachedSynchMarkerLength == attachedSynchMarker.size())
+        {
+            std::ranges::copy(attachedSynchMarker, tmBuffer.begin());
+        }
         SendAndContinue(tmBuffer);
         // In case radiation affects the while condition, we add this additional check to break once
         // a new telemetry record is available
@@ -969,6 +975,12 @@ auto PackageAndEncode(Payload const & report) -> void
     }
     tmFrame.Finish();
     tm::Encode(tmBlock);
+    // Write the attached sync marker to the beginning of the buffer every time because the constant
+    // is stored in flash and therefore not corrupted as fast as the buffer in RAM.
+    if constexpr(attachedSynchMarkerLength == attachedSynchMarker.size())
+    {
+        std::ranges::copy(attachedSynchMarker, tmBuffer.begin());
+    }
 }
 
 
