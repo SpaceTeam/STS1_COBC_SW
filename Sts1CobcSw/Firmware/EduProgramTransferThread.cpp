@@ -30,11 +30,10 @@ namespace sts1cobcsw
 namespace
 {
 constexpr auto stackSize = 1500U;
-constexpr auto eduProgramTransferThreadStartDelay = 15 * s;
-constexpr auto checkForProgramsInterval = 5 * s;
+constexpr auto eduProgramTransferThreadInterval = 5 * s;
 
 
-[[nodiscard]] auto ReadProgramId(fs::DirectoryInfo const & info) -> Result<ProgramId>;
+[[nodiscard]] auto GetProgramId(fs::DirectoryInfo const & info) -> Result<ProgramId>;
 auto HandleError(ErrorCode error) -> void;
 auto RemoveProgram(fs::Path const & file) -> void;
 auto SendProgramsToEdu(fs::DirectoryIterator & fileIterator) -> void;
@@ -52,19 +51,19 @@ private:
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
-        SuspendFor(eduProgramTransferThreadStartDelay);
+        SuspendFor(eduPowerManagementThreadStartDelay);
         DEBUG_PRINT("Starting EDU program transfer thread\n");
-        TIME_LOOP(0, value_of(checkForProgramsInterval))
+        TIME_LOOP(0, value_of(eduProgramTransferThreadInterval))
         {
             auto eduIsAlive = false;
             eduIsAliveBufferForProgramTransfer.get(eduIsAlive);
-            if(edu::ProgramsAreAvailableOnCobc() && eduIsAlive)
+            if(edu::ProgramsAreAvailableOnCobc() and eduIsAlive)
             {
                 DEBUG_PRINT("Programs available for transfer to EDU\n");
                 auto makeIteratorResult = fs::MakeIterator(edu::programsDirectory);
                 if(makeIteratorResult.has_error())
                 {
-                    DEBUG_PRINT("Failed to read program directory with error: %s\n",
+                    DEBUG_PRINT("Failed to read EDU program directory: %s\n",
                                 ToCZString(makeIteratorResult.error()));
                 }
                 else
@@ -78,7 +77,7 @@ private:
 } eduProgramQueueThread;
 
 
-auto ReadProgramId(fs::DirectoryInfo const & info) -> Result<ProgramId>
+auto GetProgramId(fs::DirectoryInfo const & info) -> Result<ProgramId>
 {
     auto const fileAppendixLength = 4;  // .zip
     if(info.type != fs::EntryType::file)
@@ -95,7 +94,7 @@ auto ReadProgramId(fs::DirectoryInfo const & info) -> Result<ProgramId>
             return sts1cobcsw::ProgramId(value);
         }
     }
-    DEBUG_PRINT("Failed to get program ID from file: %s\n", info.name.c_str());
+    DEBUG_PRINT("Failed to get EDU program ID from file: %s\n", info.name.c_str());
     return ErrorCode::invalidParameter;
 }
 
@@ -116,7 +115,7 @@ auto RemoveProgram(fs::Path const & file) -> void
     auto removeResult = fs::Remove(path);
     if(removeResult.has_error())
     {
-        DEBUG_PRINT("Failed to remove transferred program %s: %s\n",
+        DEBUG_PRINT("Failed to remove transferred EDU program %s: %s\n",
                     path.c_str(),
                     ToCZString(removeResult.error()));
     }
@@ -129,30 +128,32 @@ auto SendProgramsToEdu(fs::DirectoryIterator & fileIterator) -> void
     {
         if(fileInfoResult.has_error())
         {
-            DEBUG_PRINT("Failed to read a program file: %s\n", ToCZString(fileInfoResult.error()));
+            DEBUG_PRINT("Failed to read a EDU program file: %s\n",
+                        ToCZString(fileInfoResult.error()));
             continue;
         }
         auto const & fileInfo = fileInfoResult.value();
-        auto readProgramIdResult = ReadProgramId(fileInfo);
-        if(not readProgramIdResult.has_error())
+        auto readProgramIdResult = GetProgramId(fileInfo);
+        if(readProgramIdResult.has_error())
         {
-            DEBUG_PRINT("Sending program %s to EDU\n", fileInfo.name.c_str());
-            auto program = edu::StoreProgramData{.programId = readProgramIdResult.value()};
-            auto storeResult = edu::StoreProgram(program);
-            if(storeResult.has_error())
-            {
-                if(storeResult.error() == ErrorCode::fileLocked)
-                {
-                    DEBUG_PRINT("Failed to send program %s to EDU, file is locked\n",
-                                fileInfo.name.c_str());
-                    continue;
-                }
-                HandleError(storeResult.error());
-                return;
-            }
-            RemoveProgram(fileInfo.name);
-            DEBUG_PRINT("Removed program %s\n", fileInfo.name.c_str());
+            continue;
         }
+        DEBUG_PRINT("Sending program %s to EDU\n", fileInfo.name.c_str());
+        auto program = edu::StoreProgramData{.programId = readProgramIdResult.value()};
+        auto storeResult = edu::StoreProgram(program);
+        if(storeResult.has_error())
+        {
+            if(storeResult.error() == ErrorCode::fileLocked)
+            {
+                DEBUG_PRINT("Failed to send program %s to EDU, file is locked\n",
+                            fileInfo.name.c_str());
+                continue;
+            }
+            HandleError(storeResult.error());
+            return;
+        }
+        RemoveProgram(fileInfo.name);
+        DEBUG_PRINT("Removed EDU program %s\n", fileInfo.name.c_str());
     }
 }
 }

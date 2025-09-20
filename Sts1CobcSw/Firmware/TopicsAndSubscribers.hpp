@@ -27,8 +27,8 @@ inline auto eduIsAliveTopic = RODOS::Topic<bool>(-1, "eduIsAliveTopic");
 inline auto eduIsAliveBufferForCommunicationError = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForListener = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForPowerManagement = RODOS::CommBuffer<bool>{};
-inline auto eduIsAliveBufferForProgramTransfer = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForProgramQueue = RODOS::CommBuffer<bool>{};
+inline auto eduIsAliveBufferForProgramTransfer = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForTelemetry = RODOS::CommBuffer<bool>{};
 
 inline auto nextEduProgramStartTimeTopic =
