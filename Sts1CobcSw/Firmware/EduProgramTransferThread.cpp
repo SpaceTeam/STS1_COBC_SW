@@ -11,7 +11,6 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -19,9 +18,6 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <charconv>
-#include <cstdint>
-#include <system_error>
 #include <utility>
 
 
@@ -33,7 +29,6 @@ constexpr auto stackSize = 5000U;
 constexpr auto eduProgramTransferThreadInterval = 5 * s;
 
 
-[[nodiscard]] auto GetProgramId(fs::DirectoryInfo const & info) -> Result<ProgramId>;
 auto HandleError(ErrorCode error) -> void;
 auto RemoveProgram(fs::Path const & file) -> void;
 auto SendProgramsToEdu(fs::DirectoryIterator & fileIterator) -> void;
@@ -77,28 +72,6 @@ private:
 } eduProgramQueueThread;
 
 
-auto GetProgramId(fs::DirectoryInfo const & info) -> Result<ProgramId>
-{
-    auto const fileAppendixLength = 4;  // .zip
-    if(info.type != fs::EntryType::file)
-    {
-        return ErrorCode::invalidParameter;
-    }
-    if(info.name.size() > fileAppendixLength)
-    {
-        std::uint32_t value = 0;
-        auto result = std::from_chars(
-            info.name.data(), info.name.data() + (info.name.size() - fileAppendixLength), value);
-        if(result.ec == std::errc{})
-        {
-            return sts1cobcsw::ProgramId(value);
-        }
-    }
-    DEBUG_PRINT("Failed to get EDU program ID from file: %s\n", info.name.c_str());
-    return ErrorCode::invalidParameter;
-}
-
-
 auto HandleError([[maybe_unused]] ErrorCode error) -> void
 {
     DEBUG_PRINT("Failed to transfer program to EDU: %s\n", ToCZString(error));
@@ -133,7 +106,11 @@ auto SendProgramsToEdu(fs::DirectoryIterator & fileIterator) -> void
             continue;
         }
         auto const & fileInfo = fileInfoResult.value();
-        auto readProgramIdResult = GetProgramId(fileInfo);
+        if(fileInfo.type != fs::EntryType::file)
+        {
+            continue;
+        }
+        auto readProgramIdResult = edu::GetProgramId(fileInfo.name);
         if(readProgramIdResult.has_error())
         {
             continue;
