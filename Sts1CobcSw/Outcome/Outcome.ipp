@@ -6,6 +6,12 @@
 
 namespace sts1cobcsw
 {
+constexpr auto IsEduError(ErrorCode error) -> bool
+{
+    return ErrorCode::invalidAnswer <= error and error <= ErrorCode::eduIsNotAlive;
+}
+
+
 constexpr auto ToCZString(ErrorCode errorCode) -> char const *
 {
     switch(errorCode)
