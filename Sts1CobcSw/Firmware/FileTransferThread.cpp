@@ -66,7 +66,7 @@ enum class InterruptCondition : std::uint8_t
 };
 
 
-constexpr auto stackSize = 2000U;
+constexpr auto stackSize = 6000U;
 // This should be more than enough time to actually send the CFDP frame
 constexpr auto fileTransferWindowEndMargin = 5 * s;
 
@@ -129,6 +129,7 @@ private:
         {
             // There cannot be a timeout error if we wait until the end of time
             (void)fileTransferMetadataMailbox.SuspendUntilFullOr(endOfTime);
+            DEBUG_PRINT_STACK_USAGE();
             if(fileTransferMetadataMailbox.IsEmpty())
             {
                 continue;
