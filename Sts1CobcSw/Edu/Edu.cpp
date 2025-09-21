@@ -136,6 +136,26 @@ auto TurnOff() -> void
 }
 
 
+//! @brief Issues a command to store a student program on the EDU and transfers it.
+//!
+//! Store Program (COBC <-> EDU):
+//! -> [DATA]
+//! -> [Command Header]
+//! -> [Program ID]
+//! <- [N/ACK]
+//! -> [DATA]
+//! -> [PROGRAM]
+//! -> [EOF]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//!
+//! The first N/ACK confirms a valid Program ID received,
+//! the second N/ACK confirms that the program was received.
+//! the third N/ACK confirms that the program was stored on the EDU successful.
+//!
+//! @param programId The student program ID
+//!
+//! @returns A relevant error code
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
     auto path = BuildProgramFilePath(data.programId);
@@ -147,6 +167,7 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         DEBUG_PRINT("Program file %s is too large: %d B\n", path.c_str(), fileSize);
         return ErrorCode::fileTooLarge;
     }
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
     while(true)
     {
         cepDataBuffer.uninitialized_resize(cepDataBuffer.MAX_SIZE);
@@ -158,6 +179,8 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         }
         OUTCOME_TRY(SendDataPacket(Span(cepDataBuffer)));
     }
+    OUTCOME_TRY(SendCommand(cepEof));
+    OUTCOME_TRY(WaitForAck());
     return WaitForAck();
 }
 
