@@ -29,9 +29,9 @@ constexpr auto stackSize = 5000U;
 constexpr auto eduProgramTransferThreadInterval = 5 * s;
 
 
-auto HandleError(ErrorCode error) -> void;
 auto RemoveProgram(fs::Path const & file) -> void;
-auto SendProgramsToEdu(fs::DirectoryIterator & fileIterator) -> void;
+auto SendProgramsToEdu(fs::DirectoryIterator const & fileIterator) -> void;
+[[nodiscard]] auto IsEduCommunicationError(ErrorCode error) -> bool;
 
 
 class EduProgramTransferThread : public RODOS::StaticThread<stackSize>
@@ -72,14 +72,6 @@ private:
 } eduProgramQueueThread;
 
 
-auto HandleError([[maybe_unused]] ErrorCode error) -> void
-{
-    DEBUG_PRINT("Failed to transfer program to EDU: %s\n", ToCZString(error));
-    persistentVariables.Increment<"nEduCommunicationErrors">();
-    ResetEdu();
-}
-
-
 auto RemoveProgram(fs::Path const & file) -> void
 {
     auto path = edu::programsDirectory;
@@ -95,9 +87,9 @@ auto RemoveProgram(fs::Path const & file) -> void
 }
 
 
-auto SendProgramsToEdu(fs::DirectoryIterator & fileIterator) -> void
+auto SendProgramsToEdu(fs::DirectoryIterator const & fileIterator) -> void
 {
-    for(auto fileInfoResult : fileIterator)
+    for(auto && fileInfoResult : fileIterator)
     {
         if(fileInfoResult.has_error())
         {
@@ -120,18 +112,26 @@ auto SendProgramsToEdu(fs::DirectoryIterator & fileIterator) -> void
         auto storeResult = edu::StoreProgram(program);
         if(storeResult.has_error())
         {
-            if(storeResult.error() == ErrorCode::fileLocked)
+            auto error = storeResult.error();
+            DEBUG_PRINT(
+                "Failed to send program %s to EDU: %s\n", fileInfo.name.c_str(), ToCZString(error));
+            if(not IsEduCommunicationError(error))  // error from filesystem (locked, to large, ...)
             {
-                DEBUG_PRINT("Failed to send program %s to EDU, file is locked\n",
-                            fileInfo.name.c_str());
                 continue;
             }
-            HandleError(storeResult.error());
+            persistentVariables.Increment<"nEduCommunicationErrors">();
+            ResetEdu();
             return;
         }
         RemoveProgram(fileInfo.name);
         DEBUG_PRINT("Removed EDU program %s\n", fileInfo.name.c_str());
     }
+}
+
+
+auto IsEduCommunicationError(ErrorCode error) -> bool
+{
+    return IsEduError(error) or error == ErrorCode::timeout;
 }
 }
 }

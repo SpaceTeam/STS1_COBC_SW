@@ -165,6 +165,7 @@ using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolic
 #endif
 
 
+constexpr auto IsEduError(ErrorCode error) -> bool;
 constexpr auto ToCZString(ErrorCode errorCode) -> char const *;
 }
 
