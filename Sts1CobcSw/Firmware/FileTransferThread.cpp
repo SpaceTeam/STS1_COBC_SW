@@ -91,6 +91,8 @@ auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
 auto Send(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto SendAndWaitForAck(EndOfFilePdu const & endOfFilePdu) -> Result<void>;
 auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>;
+auto CancelTransfer(auto const & pdu) -> void;
+auto AbandonTransfer() -> void;
 
 // Level -3 private functions
 auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntityId) -> void;
@@ -177,16 +179,17 @@ namespace
 // TODO: Refactor
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
+    std::uint32_t theFileSize = 0;
     // TODO: Think about proper error handling (e.g. file system errors)
-    auto result = [&]() -> Result<void>
+    auto result = [&](std::uint32_t * fileSize) -> Result<void>
     {
         OUTCOME_TRY(auto file, fs::Open(fileTransferMetadata.sourcePath, LFS_O_RDONLY));
-        OUTCOME_TRY(auto fileSize, file.Size());
+        OUTCOME_TRY(*fileSize, file.Size());
 
         // Publish Metadata PDU
         PackageAndEncode(
             MetadataPdu(
-                fileSize, fileTransferMetadata.sourcePath, fileTransferMetadata.destinationPath),
+                *fileSize, fileTransferMetadata.sourcePath, fileTransferMetadata.destinationPath),
             cubeSatEntityId);
         OUTCOME_TRY(SuspendUntilFrameCanBePublished(CancelCondition::receivedFinishedPdu,
                                                     InterruptCondition::never));
@@ -194,8 +197,8 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
         encodedCfdpFrameMailbox.Overwrite(encodedFrame);
         ResumeRfCommunicationThread();
 
-        OUTCOME_TRY(Send(file, fileSize));
-        OUTCOME_TRY(SendAndWaitForAck(EndOfFilePdu(fileSize)));
+        OUTCOME_TRY(Send(file, *fileSize));
+        OUTCOME_TRY(SendAndWaitForAck(EndOfFilePdu(*fileSize)));
 
         // ResendMissingDataAndFinishTransfer() or HandleNak(s|Sequences)AndFinishTransfer() or
         // HandleNaksAndWaitForFinishedPdu() or WaitForFinishedPduAndHandleNak(s|Sequences)()
@@ -211,7 +214,7 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
                 {
                     return ErrorCode::inactivityDetected;
                 }
-                OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+                OUTCOME_TRY(SendMissingFileSegments(file, *fileSize));
                 nNaksInSequence = 0;
                 timeLimit = CurrentRodosTime() + transactionInactivityLimit;
                 continue;
@@ -237,10 +240,10 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
                                            nakPdu.segmentRequests_.begin(),
                                            nakPdu.segmentRequests_.end());
                 auto isFinalNakInSequence =
-                    nakPdu.endOfScope_ == fileSize or nNaksInSequence == maxNNaksPerSequence;
+                    nakPdu.endOfScope_ == *fileSize or nNaksInSequence == maxNNaksPerSequence;
                 if(isFinalNakInSequence)
                 {
-                    OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+                    OUTCOME_TRY(SendMissingFileSegments(file, *fileSize));
                     nNaksInSequence = 0;
                     timeLimit = CurrentRodosTime() + transactionInactivityLimit;
                 }
@@ -282,27 +285,31 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
                 return outcome_v2::success();
             }
         }
-    }();
+    }(&theFileSize);
     if(result.has_value())
     {
+        DEBUG_PRINT("File transfer finished successfully\n");
+        fileTransferStatus.Store(FileTransferStatus::completed);
         return;
     }
-    // HandleFaults/HandleFaultConditions
     if(result.error() == ErrorCode::fileTransferCanceled)
     {
         DEBUG_PRINT("File transfer canceled by ground station\n");
+        fileTransferStatus.Store(FileTransferStatus::canceled);
+        return;
     }
-    else if(result.error() == ErrorCode::positiveAckLimitReached)
+    DEBUG_PRINT("Error while sending file: %s\n", ToCZString(result.error()));
+    if(IsFileSystemError(result.error()))
     {
-        DEBUG_PRINT("Positive ACK limit reached -> abandoning transfer\n");
+        CancelTransfer(EndOfFilePdu(filestoreRejectionConditionCode, theFileSize));
     }
     else if(result.error() == ErrorCode::inactivityDetected)
     {
-        DEBUG_PRINT("Inactivity detected -> abandoning transfer\n");
+        CancelTransfer(EndOfFilePdu(inactivityDetectedConditionCode, theFileSize));
     }
     else
     {
-        DEBUG_PRINT("Error sending file: %s\n", ToCZString(result.error()));
+        AbandonTransfer();
     }
 }
 
@@ -388,6 +395,26 @@ auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>
                              finishedPdu.directiveCode,
                              finishedPdu.conditionCode_,
                              CancelCondition::receivedEofCancelPdu);
+}
+
+
+auto CancelTransfer(auto const & pdu) -> void
+{
+    DEBUG_PRINT("  -> canceling transfer\n");
+    fileTransferStatus.Store(FileTransferStatus::canceled);
+    auto sendAndWaitResult = SendAndWaitForAck(pdu);
+    if(sendAndWaitResult.has_error())
+    {
+        DEBUG_PRINT("Error while canceling transfer: %s\n", ToCZString(sendAndWaitResult.error()));
+        AbandonTransfer();
+    }
+}
+
+
+auto AbandonTransfer() -> void
+{
+    DEBUG_PRINT("  -> abandoning transfer\n");
+    fileTransferStatus.Store(FileTransferStatus::abandoned);
 }
 
 

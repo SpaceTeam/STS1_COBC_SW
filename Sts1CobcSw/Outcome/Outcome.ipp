@@ -6,6 +6,13 @@
 
 namespace sts1cobcsw
 {
+constexpr auto IsFileSystemError(ErrorCode errorCode) -> bool
+{
+    return errorCode == ErrorCode::fileNotOpen or errorCode == ErrorCode::unsupportedOperation
+        or errorCode == ErrorCode::fileLocked or errorCode < ErrorCode(0);
+}
+
+
 constexpr auto ToCZString(ErrorCode errorCode) -> char const *
 {
     switch(errorCode)

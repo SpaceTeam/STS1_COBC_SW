@@ -96,16 +96,15 @@ public:
 
     EndOfFilePdu() = default;
     explicit EndOfFilePdu(std::uint32_t fileSize) noexcept;
-    explicit EndOfFilePdu(ConditionCode conditionCode,
-                          std::uint32_t fileSize,
-                          FaultLocation faultLocation) noexcept;
+    explicit EndOfFilePdu(ConditionCode conditionCode, std::uint32_t fileSize) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     ConditionCode conditionCode_;
     UInt<4> spare_;
     std::uint32_t fileChecksum_ = 0;
     std::uint32_t fileSize_ = 0;
-    FaultLocation faultLocation_;  // Omitted if conditionCode == noError
+    // Omitted if conditionCode == noError
+    FaultLocation faultLocation_ = FaultLocation{.value = cubeSatEntityId};
     // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
@@ -132,15 +131,15 @@ public:
     explicit FinishedPdu(DeliveryCode deliveryCode, FileStatus fileStatus) noexcept;
     explicit FinishedPdu(ConditionCode conditionCode,
                          DeliveryCode deliveryCode,
-                         FileStatus fileStatus,
-                         FaultLocation faultLocation) noexcept;
+                         FileStatus fileStatus) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     ConditionCode conditionCode_;
     UInt<1> spare_;
     DeliveryCode deliveryCode_;
     FileStatus fileStatus_;
-    FaultLocation faultLocation_;  // Omitted if conditionCode == noError or unsupportedChecksumType
+    // Omitted if conditionCode == noError or unsupportedChecksumType
+    FaultLocation faultLocation_ = FaultLocation{.value = cubeSatEntityId};
     // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
