@@ -90,6 +90,7 @@ using MODEM_DSA_QUAL_t              = Properties<PropertyGroup::modem, 0x5d_b, 1
 using MODEM_CHFLT_RX1_CHFLT_COE_t   = Properties<PropertyGroup::modemChflt, 0x00_b, 12>;
 using MODEM_CHFLT_RX1_CHFLT_COE_2_t = Properties<PropertyGroup::modemChflt, 0x0C_b, 12>;
 using MODEM_CHFLT_RX2_CHFLT_COE_t   = Properties<PropertyGroup::modemChflt, 0x18_b, 12>;
+using PREAMBLE_TX_LENGTH_t          = Properties<PropertyGroup::preamble, 0x00_b, 1>;
 // NOLINTEND(*identifier-naming)
 // NOLINTEND(*magic-numbers)
 // clang-format on
@@ -112,6 +113,7 @@ struct DataRateConfig
     MODEM_CHFLT_RX1_CHFLT_COE_t MODEM_CHFLT_RX1_CHFLT_COE;
     MODEM_CHFLT_RX1_CHFLT_COE_2_t MODEM_CHFLT_RX1_CHFLT_COE_2;
     MODEM_CHFLT_RX2_CHFLT_COE_t MODEM_CHFLT_RX2_CHFLT_COE;
+    PREAMBLE_TX_LENGTH_t PREAMBLE_TX_LENGTH; // 500µs startup time required by TX amp -> (0.0005 * baudrate / 8) rounded up.
 };
 // NOLINTEND(*identifier-naming)
 
@@ -133,6 +135,7 @@ constexpr auto dataRateConfig1200 = DataRateConfig{
                                             0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b,
                                             0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x01_b}),
 };
 
 constexpr auto dataRateConfig2400 = DataRateConfig{
@@ -153,6 +156,7 @@ constexpr auto dataRateConfig2400 = DataRateConfig{
                                             0xFF_b, 0xBA_b, 0x0F_b, 0x51_b, 0xCF_b, 0xA9_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xC9_b, 0xFC_b, 0x1B_b, 0x1E_b, 0x0F_b, 0x01_b,
                                             0xFC_b, 0xFD_b, 0x15_b, 0xFF_b, 0x00_b, 0x0F_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x01_b}),
 };
 
 constexpr auto dataRateConfig4800 = DataRateConfig{
@@ -173,6 +177,7 @@ constexpr auto dataRateConfig4800 = DataRateConfig{
                                             0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b,
                                             0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x01_b}),
 };
 
 constexpr auto dataRateConfig9600 = DataRateConfig{
@@ -193,6 +198,7 @@ constexpr auto dataRateConfig9600 = DataRateConfig{
                                             0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b,
                                             0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x01_b}),
 };
 
 constexpr auto dataRateConfig19200 = DataRateConfig{
@@ -213,6 +219,7 @@ constexpr auto dataRateConfig19200 = DataRateConfig{
                                             0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b,
                                             0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x02_b}),
 };
 
 constexpr auto dataRateConfig38400 = DataRateConfig{
@@ -233,6 +240,7 @@ constexpr auto dataRateConfig38400 = DataRateConfig{
                                             0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b,
                                             0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x03_b}),
 };
 
 constexpr auto dataRateConfig57600 = DataRateConfig{
@@ -253,6 +261,7 @@ constexpr auto dataRateConfig57600 = DataRateConfig{
                                             0xFF_b, 0xC4_b, 0x30_b, 0x7F_b, 0xF5_b, 0xB5_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB8_b, 0xDE_b, 0x05_b, 0x17_b, 0x16_b, 0x0C_b,
                                             0x03_b, 0x00_b, 0x15_b, 0xFF_b, 0x00_b, 0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x04_b}),
 };
 
 constexpr auto dataRateConfig76800 = DataRateConfig{
@@ -273,6 +282,7 @@ constexpr auto dataRateConfig76800 = DataRateConfig{
                                             0xCC_b,  0xA1_b,  0x30_b,  0xA0_b,  0x21_b,  0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,  0xC9_b,  0xEA_b,  0x05_b,  0x12_b,  0x11_b,
                                             0x0A_b,  0x04_b,  0x15_b,  0xFC_b,  0x03_b,  0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x05_b}),
 };
 
 constexpr auto dataRateConfig115200 = DataRateConfig{
@@ -293,6 +303,7 @@ constexpr auto dataRateConfig115200 = DataRateConfig{
                                             0xFF_b, 0xC4_b, 0x30_b, 0x7F_b, 0xF5_b, 0xB5_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB8_b, 0xDE_b, 0x05_b, 0x17_b, 0x16_b, 0x0C_b,
                                             0x03_b, 0x00_b, 0x15_b, 0xFF_b, 0x00_b, 0x00_b}),
+    PREAMBLE_TX_LENGTH_t(std::array{0x08_b}),
 };
 // clang-format on
 }

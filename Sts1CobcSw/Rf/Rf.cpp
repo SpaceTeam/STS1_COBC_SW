@@ -1293,15 +1293,15 @@ auto SetConstantModemProperties() -> Result<void>
 
     //                  Group, Index,            Properties                                         // Name of first property in property block
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x00_b, std::array{0x03_b, 0x00_b, 0x07_b}));                         // MODEM_MOD_TYPE
+        PropertyGroup::modem, 0x00_b, std::array{0x03_b, 0x00_b, 0x07_b}));                         // MODEM_MOD_TYPE, MODEM_MAP_CONTROL, MODEM_DSM_CTRL
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x07_b, std::array{0x8C_b, 0xBA_b, 0x80_b, 0x00_b}));                 // MODEM_TX_NCO_MODE
+        PropertyGroup::modem, 0x07_b, std::array{0x8C_b, 0xBA_b, 0x80_b, 0x00_b}));                 // MODEM_TX_NCO_MODE, MODEM_FREQ_DEV (only LSB - other two bytes are non-constant)
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x18_b, std::array{0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b})); // MODEM_TX_RAMP_DELAY
+        PropertyGroup::modem, 0x18_b, std::array{0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b})); // MODEM_TX_RAMP_DELAY, MODEM_MDM_CTRL, MODEM_IF_CONTROL, MODEM_IF_FREQ
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x21_b, std::array{0xE8_b, 0x00_b}));                                 // MODEM_IFPKD_THRESHOLDS
+        PropertyGroup::modem, 0x21_b, std::array{0xE8_b, 0x00_b}));                                 // MODEM_IFPKD_THRESHOLDS, MODEM_BCR_OSR (only LSB - other byte is non-constant)
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x29_b, std::array{0x02_b, 0x00_b, 0x00_b, 0x00_b}));                 // MODEM_BCR_GEAR
+        PropertyGroup::modem, 0x29_b, std::array{0x02_b, 0x00_b, 0x00_b, 0x00_b}));                 // MODEM_BCR_GEAR, MODEM_BCR_MISC1, MODEM_BCR_MISC0, MODEM_AFC_GEAR
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x32_b, std::array{0xA0_b}));                                         // MODEM_AFC_MISC
     OUTCOME_TRY(SetProperties(
@@ -1309,13 +1309,13 @@ auto SetConstantModemProperties() -> Result<void>
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x38_b, std::array{0x11_b}));                                         // MODEM_AGC_WINDOW_SIZE
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x3b_b, std::array{0x80_b, 0x1A_b, 0x40_b, 0x00_b, 0x00_b}));         // MODEM_FSK4_GAIN1
+        PropertyGroup::modem, 0x3b_b, std::array{0x80_b, 0x1A_b, 0x40_b, 0x00_b, 0x00_b}));         // MODEM_FSK4_GAIN1, MODEM_FSK4_GAIN0, MODEM_FSK4_TH, MODEM_FSK4_MAP
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x41_b, std::array{0x0C_b, 0xA4_b, 0x23_b}));                         // MODEM_OOK_BLOPK
+        PropertyGroup::modem, 0x41_b, std::array{0x0C_b, 0xA4_b, 0x23_b}));                         // MODEM_OOK_BLOPK, MODEM_OOK_CNT1, MODEM_OOK_MISC
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x45_b, std::array{0x03_b}));                                         // MODEM_RAW_CONTROL
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x48_b, std::array{0x01_b, 0x00_b, 0xFF_b, 0x06_b, 0x00_b, 0x18_b, 0x40_b}));    //MODEM_ANT_DIV_MODE
+        PropertyGroup::modem, 0x48_b, std::array{0x01_b, 0x00_b, 0xFF_b, 0x06_b, 0x00_b, 0x18_b, 0x40_b}));    //MODEM_ANT_DIV_MODE, MODEM_ANT_DIV_CONTROL, MODEM_RSSI_THRESH, MODEM_RSSI_JUMP_THRESH, MODEM_RSSI_CONTROL, MODEM_RSSI_CONTROL2, MODEM_RSSI_COMP
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x50_b, std::array{0x84_b, 0x0A_b}));                                 // MODEM_RAW_SEARCH2
     OUTCOME_TRY(SetProperties(
@@ -1323,9 +1323,9 @@ auto SetConstantModemProperties() -> Result<void>
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modem, 0x57_b, std::array{0x00_b}));                                         // MODEM_RSSI_MUTE
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x5b_b, std::array{0x40_b, 0x04_b}));                                 // MODEM_DSA_CTRL1
+        PropertyGroup::modem, 0x5b_b, std::array{0x40_b, 0x04_b}));                                 // MODEM_DSA_CTRL1, MODEM_DSA_CTRL2
     OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x5e_b, std::array{0x78_b, 0x20_b}));                                 // MODEM_DSA_RSSI
+        PropertyGroup::modem, 0x5e_b, std::array{0x78_b, 0x20_b}));                                 // MODEM_DSA_RSSI, MODEM_DSA_MISC
     OUTCOME_TRY(SetProperties(
         PropertyGroup::modemChflt, 0x0e_b, std::array{0x15_b}));                                    // MODEM_CHFLT_RX1_CHFLT_COE
     return(SetProperties(
@@ -1352,7 +1352,8 @@ auto SetDataRate(DataRateConfig const & dataRateConfig) -> Result<void>
     OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_DSA_QUAL));
     OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_CHFLT_RX1_CHFLT_COE));
     OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_CHFLT_RX1_CHFLT_COE_2));
-    return SetProperties(dataRateConfig.MODEM_CHFLT_RX2_CHFLT_COE);
+    OUTCOME_TRY(SetProperties(dataRateConfig.MODEM_CHFLT_RX2_CHFLT_COE));
+    return SetProperties(dataRateConfig.PREAMBLE_TX_LENGTH);
 }
 
 auto EnableRfLatchupProtection() -> void
