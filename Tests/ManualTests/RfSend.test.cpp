@@ -71,20 +71,10 @@ private:
         led1GpioPin.Reset();
     }
 
-
-    void run() override
+    void send(uint32_t baudrate)
     {
-        PRINTF("\nRF test\n\n");
-        // We need to initialize the FRAM too because the RF code uses persistent variables
-        fram::Initialize();
-        auto initializeResult = rf::Initialize();
-        if(initializeResult.has_error())
-        {
-            PRINTF("Failed to initialize RF module: %s\n", ToCZString(initializeResult.error()));
-            return;
-        }
-        rf::EnableTx();
-        PRINTF("RF module initialized, TX enabled\n");
+        PRINTF("Sending with Baud rate of %lu.\n", baudrate);
+        rf::SetTxDataRate(baudrate);
 
         auto n = 10U;
         auto message = dataWithoutCc;
@@ -122,6 +112,25 @@ private:
         }();
         led1GpioPin.Reset();
         rf::EnterStandbyMode();
+        SuspendFor(100 * ms);
+    }
+
+    void run() override
+    {
+        PRINTF("\nRF test\n\n");
+        // We need to initialize the FRAM too because the RF code uses persistent variables
+        fram::Initialize();
+        auto initializeResult = rf::Initialize();
+        if(initializeResult.has_error())
+        {
+            PRINTF("Failed to initialize RF module: %s\n", ToCZString(initializeResult.error()));
+            return;
+        }
+        rf::EnableTx();
+        PRINTF("RF module initialized, TX enabled\n");
+
+        send(9600);
+
         PRINTF("-> done\n");
     }
 } rfSendTest;
