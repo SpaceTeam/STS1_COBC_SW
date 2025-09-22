@@ -82,6 +82,7 @@ private:
                 auto startTime = endOfRealTime;
                 nextEduProgramStartTimeTopic.publish(startTime);
                 programIdOfCurrentEduProgramQueueEntryTopic.publish(ProgramId(-1));
+                DEBUG_PRINT_STACK_USAGE();
                 SuspendUntil(endOfTime);
                 continue;
             }
@@ -95,11 +96,11 @@ private:
                         entry.timeout);
             SuspendUntil(startTime - eduCommunicationMargin);
             auto result = ProcessQueueEntry();
+            DEBUG_PRINT_STACK_USAGE();
             if(result.has_error())
             {
                 HandleError(result.error());
             }
-            DEBUG_PRINT_STACK_USAGE();
         }
     }
 } eduProgramQueueThread;

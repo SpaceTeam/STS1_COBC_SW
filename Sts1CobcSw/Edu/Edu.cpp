@@ -74,6 +74,8 @@ auto cepDataBuffer = etl::vector<Byte, maxDataSize>{};
 auto eduEnableGpioPin = hal::GpioPin(hal::eduEnablePin);
 auto uart = RODOS::HAL_UART(hal::eduUartIndex, hal::eduUartTxPin, hal::eduUartRxPin);
 
+auto semaphore = RODOS::Semaphore{};
+
 
 // --- Private function declarations ---
 
@@ -108,16 +110,20 @@ auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path;
 
 auto Initialize() -> void
 {
-    eduEnableGpioPin.SetDirection(hal::PinDirection::out);
+    {
+        auto protector = RODOS::ScopeProtector(&semaphore);
+        // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
+        auto const baudRate = 115'200;
+        hal::Initialize(&uart, baudRate);
+        eduEnableGpioPin.SetDirection(hal::PinDirection::out);
+    }
     TurnOff();
-    // TODO: Test how high we can set the baudrate without problems (bit errors, etc.)
-    auto const baudRate = 115'200;
-    hal::Initialize(&uart, baudRate);
 }
 
 
 auto TurnOn() -> void
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     persistentVariables.Store<"eduShouldBePowered">(true);
     eduEnableGpioPin.Set();
 }
@@ -125,6 +131,7 @@ auto TurnOn() -> void
 
 auto TurnOff() -> void
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     persistentVariables.Store<"eduShouldBePowered">(false);
     eduEnableGpioPin.Reset();
 }
@@ -132,6 +139,7 @@ auto TurnOff() -> void
 
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     auto path = BuildProgramFilePath(data.programId);
     // NOLINTNEXTLINE(*signed-bitwise)
     OUTCOME_TRY(auto file, fs::Open(path, LFS_O_RDONLY));
@@ -177,6 +185,7 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
 //! @returns A relevant error code
 auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     return WaitForAck();
 }
@@ -193,6 +202,7 @@ auto ExecuteProgram(ExecuteProgramData const & data) -> Result<void>
 //! @returns A relevant error code
 auto StopProgram() -> Result<void>
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     OUTCOME_TRY(SendDataPacket(Serialize(StopProgramData())));
     return WaitForAck();
 }
@@ -218,6 +228,7 @@ auto StopProgram() -> Result<void>
 //!          returned.
 auto GetStatus() -> Result<Status>
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     OUTCOME_TRY(SendDataPacket(Serialize(GetStatusData())));
     OUTCOME_TRY(auto status, Retry(ReceiveAndParseStatusData, maxNNackRetries));
     OUTCOME_TRY(SendCommand(cepAck));
@@ -232,6 +243,7 @@ auto GetStatus() -> Result<Status>
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto ReturnResult(ReturnResultData const & data) -> Result<void>
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     auto path = BuildResultFilePath(data.programId, data.startTime);
     // NOLINTNEXTLINE(*signed-bitwise)
     OUTCOME_TRY(auto file, fs::Open(path, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));
@@ -281,6 +293,7 @@ auto ReturnResult(ReturnResultData const & data) -> Result<void>
 //! @returns A relevant error code
 auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     return WaitForAck();
 }
@@ -288,6 +301,7 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
 
 auto ProgramsAreAvailableOnCobc() -> bool
 {
+    auto protector = RODOS::ScopeProtector(&semaphore);
     auto makeIteratorResult = fs::MakeIterator(edu::programsDirectory);
     if(makeIteratorResult.has_error())
     {
