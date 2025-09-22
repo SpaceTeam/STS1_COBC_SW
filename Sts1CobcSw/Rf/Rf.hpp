@@ -13,25 +13,6 @@
 
 namespace sts1cobcsw::rf
 {
-enum class PropertyGroup : std::uint8_t
-{
-    global = 0x00,       //
-    intCtl = 0x01,       // Interrupt control
-    frrCtl = 0x02,       // Fast response register control
-    preamble = 0x10,     //
-    sync = 0x11,         // Sync word
-    pkt = 0x12,          // Packet
-    modem = 0x20,        // Selects type of modulation. TX: also selects source of modulation.
-    modemChflt = 0x21,   // Filter coefficients
-    pa = 0x22,           // Power amplifier
-    synth = 0x23,        //
-    match = 0x30,        //
-    freqControl = 0x40,  //
-    rxHop = 0x50,        //
-    pti = 0xF0           // Packet trace interface
-};
-
-
 inline constexpr auto correctPartNumber = 0x4463;
 inline constexpr auto maxTxDataLength = cc::ViterbiCodec::UnencodedSize((1U << 13U) - 1U, true);
 
