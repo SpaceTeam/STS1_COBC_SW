@@ -1,3 +1,5 @@
+#include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/ChannelCoding/ReedSolomon.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -13,6 +15,7 @@
 #include <rodos_no_using_namespace.h>
 
 #include <array>
+#include <cstdint>
 #include <span>
 #include <utility>
 
@@ -27,6 +30,7 @@ namespace
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
 
+auto Receive(std::uint32_t baudRate) -> void;
 auto Print(std::span<Byte const> data) -> void;
 
 
@@ -38,19 +42,19 @@ public:
 
 
 private:
-    void init() override
+    auto init() -> void override
     {
         led1GpioPin.SetDirection(hal::PinDirection::out);
         led1GpioPin.Reset();
     }
 
 
-    void run() override
+    auto run() -> void override
     {
         PRINTF("\nRF receive test\n\n");
         // We need to initialize the FRAM too because the RF code uses persistent variables
         fram::Initialize();
-        auto initializeResult = rf::Initialize(rf::TxType::packet);
+        auto initializeResult = rf::Initialize();
         if(initializeResult.has_error())
         {
             PRINTF("Failed to initialize RF module: %s\n", ToCZString(initializeResult.error()));
@@ -58,20 +62,36 @@ private:
         }
         rf::DisableTx();
         PRINTF("RF module initialized, TX disabled\n");
-
-        // A fully encoded transfer frame is 255 * 1.5 = 382.5 -> 383 bytes long
-        auto receivedData = std::array<Byte, 383>{};
-        static constexpr auto rxTimeout = 5 * s;
-        PRINTF("\n");
-        PRINTF("Waiting %i s to receive %i bytes\n",
-               static_cast<int>(rxTimeout / s),
-               static_cast<int>(receivedData.size()));
-        auto nReceivedBytes = rf::Receive(Span(&receivedData), rxTimeout);
-        PRINTF("Received %i bytes:\n", static_cast<int>(nReceivedBytes));
-        Print(Span(receivedData).first(nReceivedBytes));
+        Receive(9600);
         PRINTF("-> done\n");
     }
 } rfReceiveTest;
+
+
+auto Receive(std::uint32_t baudRate) -> void
+{
+    PRINTF("\n");
+    PRINTF("Receiving with %i baud\n", static_cast<int>(baudRate));
+    rf::SetRxDataRate(baudRate);
+
+    auto receivedData = std::array<Byte, rs::blockLength>{};
+    static constexpr auto rxTimeout = 5 * s;
+    PRINTF("Waiting %i s to receive %i bytes\n",
+           static_cast<int>(rxTimeout / s),
+           static_cast<int>(receivedData.size()));
+    auto nReceivedBytes = rf::Receive(Span(&receivedData), rxTimeout);
+    PRINTF("Received %i bytes:\n", static_cast<int>(nReceivedBytes));
+    auto decodeResult = tc::Decode(receivedData);
+    if(decodeResult.has_error())
+    {
+        PRINTF("Undecodeable!\n");
+    }
+    else
+    {
+        PRINTF("Correctable Errors: %u\n", decodeResult.value());
+        Print(Span(receivedData).first(nReceivedBytes));
+    }
+}
 
 
 auto Print(std::span<Byte const> data) -> void

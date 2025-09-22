@@ -39,7 +39,7 @@ private:
         DEBUG_PRINT("RF start-up test ...\n");
         auto testSucceeded = [&]() -> bool
         {
-            auto initializeResult = rf::Initialize(rf::TxType::packet);
+            auto initializeResult = rf::Initialize();
             if(initializeResult.has_error())
             {
                 DEBUG_PRINT("  failed to initialize RF module\n");

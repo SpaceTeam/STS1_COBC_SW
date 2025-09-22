@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Sts1CobcSw/Hal/Spi.hpp>
 
 

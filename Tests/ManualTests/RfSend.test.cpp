@@ -14,10 +14,8 @@
 #include <rodos_no_using_namespace.h>
 
 #include <array>
-#include <cstddef>
 #include <cstdint>
 #include <span>
-#include <type_traits>
 #include <utility>
 
 
@@ -57,6 +55,9 @@ namespace
 auto led1GpioPin = hal::GpioPin(hal::led1Pin);
 
 
+auto Send(std::uint32_t baudRate) -> void;
+
+
 class RfSendTest : public RODOS::StaticThread<5000>
 {
 public:
@@ -72,12 +73,12 @@ private:
     }
 
 
-    void run() override
+    auto run() -> void override
     {
         PRINTF("\nRF test\n\n");
         // We need to initialize the FRAM too because the RF code uses persistent variables
         fram::Initialize();
-        auto initializeResult = rf::Initialize(rf::TxType::packet);
+        auto initializeResult = rf::Initialize();
         if(initializeResult.has_error())
         {
             PRINTF("Failed to initialize RF module: %s\n", ToCZString(initializeResult.error()));
@@ -85,45 +86,50 @@ private:
         }
         rf::EnableTx();
         PRINTF("RF module initialized, TX enabled\n");
-
-        auto n = 10U;
-        auto message = dataWithoutCc;
-        PRINTF("\n");
-        PRINTF("Sending a %i bytes long test message %u time(s)\n",
-               static_cast<int>(message.size()),
-               n);
-        for(auto i = 0U; i < n; ++i)
-        {
-            led1GpioPin.Set();
-            rf::SendAndWait(Span(message));
-            SuspendFor(100 * ms);
-            led1GpioPin.Reset();
-            SuspendFor(400 * ms);
-        }
-        PRINTF("-> done\n");
-
-        auto totalLength = message.size() * n;
-        if(totalLength > rf::maxTxDataLength)
-        {
-            n = rf::maxTxDataLength / message.size();
-        }
-        PRINTF("\nSending %i %i bytes long message(s) in a single transmission\n\n",
-               n,
-               static_cast<int>(message.size()));
-        rf::SetTxDataLength(static_cast<std::uint16_t>(message.size() * n));
-        [&]()
-        {
-            for(auto i = 0U; i < n; ++i)
-            {
-                led1GpioPin.Set();
-                rf::SendAndContinue(Span(message));
-            }
-            rf::SuspendUntilDataSent(1 * s);
-        }();
-        led1GpioPin.Reset();
-        rf::EnterStandbyMode();
+        Send(9600);
         PRINTF("-> done\n");
     }
 } rfSendTest;
+
+
+auto Send(uint32_t baudRate) -> void
+{
+    PRINTF("Sending with %i baud\n", static_cast<int>(baudRate));
+    rf::SetTxDataRate(baudRate);
+
+    auto n = 10U;
+    auto message = dataWithoutCc;
+    PRINTF("\n");
+    PRINTF(
+        "Sending a %i bytes long test message %u time(s)\n", static_cast<int>(message.size()), n);
+    for(auto i = 0U; i < n; ++i)
+    {
+        led1GpioPin.Set();
+        rf::SendAndWait(Span(message));
+        SuspendFor(100 * ms);
+        led1GpioPin.Reset();
+        SuspendFor(400 * ms);
+    }
+    PRINTF("-> done\n");
+
+    auto totalLength = message.size() * n;
+    if(totalLength > rf::maxTxDataLength)
+    {
+        n = rf::maxTxDataLength / message.size();
+    }
+    PRINTF("\nSending %i %i bytes long message(s) in a single transmission\n\n",
+           n,
+           static_cast<int>(message.size()));
+    rf::SetTxDataLength(static_cast<std::uint16_t>(message.size() * n));
+    for(auto i = 0U; i < n; ++i)
+    {
+        led1GpioPin.Set();
+        rf::SendAndContinue(Span(message));
+    }
+    rf::SuspendUntilDataSent(1 * s);
+    led1GpioPin.Reset();
+    rf::EnterStandbyMode();
+    SuspendFor(100 * ms);
+}
 }
 }
