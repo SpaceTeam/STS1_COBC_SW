@@ -3,14 +3,18 @@
 
 #include <littlefs/lfs.h>
 
-#include <rodos_no_using_namespace.h>
+#ifndef BUILD_BOOTLOADER
+    #include <rodos_no_using_namespace.h>
 
-#if defined(SYSTEM_ERROR2_NOT_POSIX)
-    // NOLINTNEXTLINE(*macro-usage)
-    #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
+    #if defined(SYSTEM_ERROR2_NOT_POSIX)
+        // NOLINTNEXTLINE(*macro-usage)
+        #define SYSTEM_ERROR2_FATAL(msg) RODOS::hwResetAndReboot()
+    #endif
+
+    #include <outcome-experimental.hpp>  // IWYU pragma: export
 #endif
 
-#include <outcome-experimental.hpp>  // IWYU pragma: export
+#include <cstdint>
 
 
 namespace sts1cobcsw
@@ -91,6 +95,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
 };
 
 
+#ifndef BUILD_BOOTLOADER
 // TODO: Think about printing more information. For example, we could print the error code in case
 // the value check fails.
 struct RebootPolicy : outcome_v2::experimental::policy::base
@@ -105,13 +110,13 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         {
             RODOS::PRINTF(
                 "Error: The value is not present. Performing hardware reset and reboot.\n");
-#ifdef __linux__
+    #ifdef __linux__
             RODOS::isShuttingDown = true;
             // NOLINTNEXTLINE(concurrency-mt-unsafe)
             std::exit(-1);
-#else
+    #else
             RODOS::hwResetAndReboot();
-#endif
+    #endif
         }
     }
 
@@ -125,13 +130,13 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         {
             RODOS::PRINTF(
                 "Error: The error is not present. Performing hardware reset and reboot.\n");
-#ifdef __linux__
+    #ifdef __linux__
             RODOS::isShuttingDown = true;
             // NOLINTNEXTLINE(concurrency-mt-unsafe)
             std::exit(-1);
-#else
+    #else
             RODOS::hwResetAndReboot();
-#endif
+    #endif
         }
     }
 
@@ -143,13 +148,13 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
         {
             RODOS::PRINTF(
                 "Error: The exception is not present. Performing hardware reset and reboot.\n");
-#ifdef __linux__
+    #ifdef __linux__
             RODOS::isShuttingDown = true;
             // NOLINTNEXTLINE(concurrency-mt-unsafe)
             std::exit(-1);
-#else
+    #else
             RODOS::hwResetAndReboot();
-#endif
+    #endif
         }
     }
 };
@@ -157,6 +162,7 @@ struct RebootPolicy : outcome_v2::experimental::policy::base
 
 template<typename T>
 using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolicy>;
+#endif
 
 
 constexpr auto ToCZString(ErrorCode errorCode) -> char const *;
