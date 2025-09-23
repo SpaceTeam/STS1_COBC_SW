@@ -30,9 +30,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-#ifdef ENABLE_DEBUG_PRINT
-    #include <etl/string.h>
-#endif
+#include <etl/string.h>  // IWYU pragma: keep
 
 #include <compare>
 #include <initializer_list>
@@ -245,7 +243,9 @@ auto RemoveAllLockFiles() -> void
             auto const & entry = entryResult.value();
             if(fs::IsLockFile(entry.name))
             {
-                auto removeResult = fs::ForceRemove(entry.name);
+                auto fullPath = directory;
+                fullPath.append("/").append(entry.name);
+                auto removeResult = fs::ForceRemove(fullPath);
                 if(removeResult.has_error())
                 {
                     DEBUG_PRINT("Failed to remove lock file '%s': %s\n",
