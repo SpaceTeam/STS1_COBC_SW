@@ -1,49 +1,47 @@
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 
+#ifndef __linux__
+    #include <Sts1CobcSw/CmsisDevice/stm32f411xe.h>
+#endif
 #include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <etl/vector.h>
 
-#ifndef __linux__
-    #include <Sts1CobcSw/CmsisDevice/stm32f411xe.h>
-#endif
-
 #include <algorithm>
 #ifdef __linux__
     #include <array>
 #endif
+#include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <span>
 
 
 namespace sts1cobcsw::fw
 {
-constexpr auto maxFirmwareLength = 0x2'0000U;
-
 namespace
 {
-auto const flashSector5 = (static_cast<uint16_t>(0x0028));
-auto const flashSector6 = (static_cast<uint16_t>(0x0030));
-auto const flashSector7 = (static_cast<uint16_t>(0x0038));
-auto const key1 = (static_cast<uint32_t>(0x4567'0123));
-auto const key2 = (static_cast<uint32_t>(0xCDEF'89AB));
-
-
+#ifndef __linux__
 auto UnlockFlash() -> void;
 auto LockFlash() -> void;
-auto ProgramFlashByte(std::uintptr_t address, std::uint8_t data) -> bool;
-auto EraseFlashSector(std::uint16_t sector) -> bool;
+auto Program(std::uintptr_t address, Byte data) -> bool;
+auto DoErase(std::uint16_t sector) -> bool;
+#endif
+
+
 }
+
 
 #ifdef __linux__
 namespace
 {
-auto primaryPartitionMemory = std::array<std::uint8_t, maxFirmwareLength>{};
-auto secondaryPartition1Memory = std::array<std::uint8_t, maxFirmwareLength>{};
-auto secondaryPartition2Memory = std::array<std::uint8_t, maxFirmwareLength>{};
+auto primaryPartitionMemory = std::array<std::uint8_t, partitionSize>{};
+auto secondaryPartition1Memory = std::array<std::uint8_t, partitionSize>{};
+auto secondaryPartition2Memory = std::array<std::uint8_t, partitionSize>{};
 }
+
 // NOLINTBEGIN(*reinterpret-cast)
 Partition const primaryPartition{
     .startAddress = reinterpret_cast<std::uintptr_t>(primaryPartitionMemory.data()),
@@ -56,14 +54,16 @@ Partition const secondaryPartition2{
     .flashSector = 2};
 // NOLINTEND(*reinterpret-cast)
 #else
-Partition const primaryPartition{.startAddress = 0x0802'0000U, .flashSector = flashSector5};
-Partition const secondaryPartition1{.startAddress = 0x0804'0000U, .flashSector = flashSector6};
-Partition const secondaryPartition2{.startAddress = 0x0806'0000U, .flashSector = flashSector7};
+Partition const primaryPartition{.startAddress = 0x0802'0000U, .flashSector = 5};
+Partition const secondaryPartition1{.startAddress = 0x0804'0000U, .flashSector = 6};
+Partition const secondaryPartition2{.startAddress = 0x0806'0000U, .flashSector = 7};
 #endif
 
 
-auto GetPartition(PartitionId partitionId) -> Result<Partition>
+auto GetPartition(PartitionId partitionId) -> Partition
 {
+    assert(partitionId == PartitionId::primary or partitionId == PartitionId::secondary1
+           or partitionId == PartitionId::secondary2);
     switch(partitionId)
     {
         case PartitionId::primary:
@@ -73,71 +73,75 @@ auto GetPartition(PartitionId partitionId) -> Result<Partition>
         case PartitionId::secondary2:
             return secondaryPartition2;
     }
-    return ErrorCode::invalidPartitionId;
+    return secondaryPartition1;
 }
+
+
+#ifndef BUILD_BOOTLOADER
+auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
+{
+    // We don't have (want) ErrorCode::noError, so we use eduIsNotAlive which is obviously not an
+    // error code that ComputeAndReadFirmwareChecksums() would return
+    auto errorCode = ErrorCode::eduIsNotAlive;
+    auto checksums = ComputeAndReadFirmwareChecksums(startAddress, &errorCode);
+    if(errorCode != ErrorCode::eduIsNotAlive)
+    {
+        return errorCode;
+    }
+    if(checksums.computed != checksums.stored)
+    {
+        return ErrorCode::corrupt;
+    }
+    return outcome_v2::success();
+}
+#endif
 
 
 // Partition structure:
 // - Length: without CRC at the end, 4 bytes, in little endian
 // - Data
 // - Checksum: CRC-32 over length + data, in little endian
-auto GetCrcs(std::uintptr_t startAddress) -> Crcs
+auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * errorCode)
+    -> FirmwareChecksums
 {
-    Crcs crcs;
     if((startAddress % sizeof(std::uint32_t)) != 0)
     {
-        crcs.aligned = false;
-        return crcs;
+        *errorCode = ErrorCode::misaligned;
+        return {.computed = 0U, .stored = ~0U};
     }
-    // NOLINTNEXTLINE(*reinterpret-cast, performance-no-int-to-ptr)
-    auto length = *reinterpret_cast<std::uint32_t volatile *>(startAddress);
-    // The length includes the 4 bytes for itself so it must be >= 4. Since the CRC-32 value at the
-    // end of the FW image must be aligned to 4 bytes, the length must also be a multiple of 4.
-    auto lengthIsValid = sizeof(std::uint32_t) <= length and length <= maxFirmwareLength
+    auto uint32Buffer = SerialBuffer<std::uint32_t>{};
+    Read(startAddress, Span(&uint32Buffer));
+    auto length = Deserialize<std::endian::little, std::uint32_t>(uint32Buffer);
+    // The length includes the 4 bytes for itself but not the the CRC-32 checksum at the end. The
+    // CRC-32 value must be 4-byte aligned.
+    auto lengthIsValid = sizeof(std::uint32_t) <= length
+                     and length <= (partitionSize - sizeof(std::uint32_t))
                      and (length % sizeof(std::uint32_t)) == 0;
     if(not lengthIsValid)
     {
-        crcs.validLength = false;
-        return crcs;
+        *errorCode = ErrorCode::invalidLength;
+        return {.computed = 0U, .stored = ~0U};
     }
+
     auto buffer = etl::vector<Byte, 128>{};  // NOLINT(*magic-numbers)
     buffer.resize(sizeof(length));
     Read(startAddress, Span(&buffer));
-    auto newCrc = ComputeCrc32(Span(buffer));
-    buffer.resize(4);
-    Read(startAddress + length, Span(&buffer));
-// NOLINTBEGIN(*magic-numbers, readability-magic-numbers)
-#pragma GCC diagnostic push
-    auto oldCrc = static_cast<std::uint32_t>(buffer[0])
-                | (static_cast<std::uint32_t>(buffer[1]) << 8U)
-                | (static_cast<std::uint32_t>(buffer[2]) << 16U)
-                | (static_cast<std::uint32_t>(buffer[3]) << 24U);
-#pragma GCC diagnostic pop
-    // NOLINTEND(*magic-numbers, readability-magic-numbers)
-    return Crcs{.validLength = true, .aligned = true, .newCheckSum = newCrc, .oldCheckSum = oldCrc};
+    auto computedCrc = ComputeCrc32(Span(buffer));
+    for(auto offset = sizeof(length); offset < length;)
+    {
+        auto chunkSize = std::min<std::size_t>(buffer.max_size(), length - offset);
+        buffer.resize(chunkSize);
+        Read(startAddress + offset, Span(&buffer));
+        computedCrc = ComputeCrc32(computedCrc, Span(buffer));
+        offset += chunkSize;
+    }
+    Read(startAddress + length, Span(&uint32Buffer));
+    auto storedCrc = Deserialize<std::endian::little, std::uint32_t>(uint32Buffer);
+    return FirmwareChecksums{.computed = computedCrc, .stored = storedCrc};
 }
 
 
-auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
-{
-    auto crcs = GetCrcs(startAddress);
-    if(not crcs.aligned)
-    {
-        return ErrorCode::misaligned;
-    }
-    if(not crcs.validLength)
-    {
-        return ErrorCode::invalidLength;
-    }
-    if(crcs.newCheckSum != crcs.oldCheckSum)
-    {
-        return ErrorCode::corrupt;
-    }
-    return outcome_v2::success();
-}
-
-
-auto Erase(std::uint16_t flashSector) -> Result<void>
+auto Erase(std::uint16_t flashSector) -> EraseResult
 {
 #ifdef __linux__
     static constexpr auto erasedByte = 0xFF;
@@ -160,18 +164,22 @@ auto Erase(std::uint16_t flashSector) -> Result<void>
     return outcome_v2::success();
 #else
     UnlockFlash();
-    auto flashStatus = EraseFlashSector(flashSector);
+    auto eraseWasSuccessful = DoErase(flashSector);
     LockFlash();
-    if(!flashStatus)
+    #ifdef BUILD_BOOTLOADER
+    return eraseWasSuccessful;
+    #else
+    if(not eraseWasSuccessful)
     {
         return ErrorCode::eraseFailed;
     }
     return outcome_v2::success();
+    #endif
 #endif
 }
 
 
-auto Program(std::uintptr_t address, std::span<Byte const> data) -> Result<std::uintptr_t>
+auto Program(std::uintptr_t address, std::span<Byte const> data) -> ProgramResult
 {
 #ifdef __linux__
     // NOLINTNEXTLINE(*reinterpret-cast, performance-no-int-to-ptr)
@@ -179,14 +187,18 @@ auto Program(std::uintptr_t address, std::span<Byte const> data) -> Result<std::
     return address + data.size();
 #else
     UnlockFlash();
-    auto result = [&]() -> Result<std::uintptr_t>
+    auto result = [&]() -> ProgramResult
     {
         for(auto i = 0U; i < data.size(); ++i)
         {
-            auto flashStatus = ProgramFlashByte(address + i, static_cast<std::uint8_t>(data[i]));
+            auto flashStatus = Program(address + i, data[i]);
             if(!flashStatus)
             {
+    #ifdef BUILD_BOOTLOADER
+                return std::numeric_limits<std::uintptr_t>::max();
+    #else
                 return ErrorCode::programFailed;
+    #endif
             }
         }
         return address + data.size();
@@ -211,8 +223,11 @@ namespace
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
+#ifndef __linux__
 auto UnlockFlash() -> void
 {
+    static constexpr std::uint32_t key1 = 0x4567'0123;
+    static constexpr std::uint32_t key2 = 0xCDEF'89AB;
     if((FLASH->CR & FLASH_CR_LOCK) != 0)
     {
         // Authorize the FLASH Registers access
@@ -221,13 +236,14 @@ auto UnlockFlash() -> void
     }
 }
 
+
 auto LockFlash() -> void
 {
     FLASH->CR |= FLASH_CR_LOCK;
 }
 
 
-auto ProgramFlashByte(std::uintptr_t address, std::uint8_t data) -> bool
+auto Program(std::uintptr_t address, Byte data) -> bool
 {
     // Wait for last operation to be completed
     while(FLASH->SR & FLASH_SR_BSY) {}
@@ -238,7 +254,7 @@ auto ProgramFlashByte(std::uintptr_t address, std::uint8_t data) -> bool
     FLASH->CR |= FLASH_CR_PG;
 
     // NOLINTNEXTLINE(*reinterpret-cast, performance-no-int-to-ptr)
-    *(reinterpret_cast<uint8_t volatile *>(address)) = data;
+    *(reinterpret_cast<Byte volatile *>(address)) = data;
 
     // Wait for last operation to be completed
     while(FLASH->SR & FLASH_SR_BSY) {}
@@ -257,19 +273,16 @@ auto ProgramFlashByte(std::uintptr_t address, std::uint8_t data) -> bool
     return true;
 }
 
-auto EraseFlashSector(std::uint16_t sector) -> bool
-{
-    int const numberOfSectors = 12;
-    if(sector > numberOfSectors - 1)
-    {
-        return false;
-    }
 
+auto DoErase(std::uint16_t sector) -> bool
+{
+    [[maybe_unused]] static constexpr auto nSectors = 12;
+    assert(sector < nSectors);
     // Wait for last operation to be completed
     while(FLASH->SR & FLASH_SR_BSY) {}
 
     FLASH->CR &= ~FLASH_CR_PSIZE;
-    FLASH->CR |= FLASH_CR_PSIZE_1;  // voltageRange
+    FLASH->CR |= FLASH_CR_PSIZE_1;  // Voltage range
     FLASH->CR &= ~FLASH_CR_SNB;
     FLASH->CR |= FLASH_CR_SER | (static_cast<std::uint32_t>(sector) << FLASH_CR_SNB_Pos);
     FLASH->CR |= FLASH_CR_STRT;
@@ -294,6 +307,7 @@ auto EraseFlashSector(std::uint16_t sector) -> bool
     // Return the Erase Status
     return true;
 }
+#endif
 
 #pragma GCC diagnostic pop
 // NOLINTEND(*no-int-to-ptr, *cstyle-cast)

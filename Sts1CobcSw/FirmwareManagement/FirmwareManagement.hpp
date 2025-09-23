@@ -17,24 +17,39 @@ struct Partition
     std::uint16_t flashSector = 0;
 };
 
-struct Crcs
+
+struct FirmwareChecksums
 {
-    bool validLength = true;
-    bool aligned = true;
-    std::uint32_t newCheckSum = 0;
-    std::uint32_t oldCheckSum = 0;
+    std::uint32_t computed = 0;
+    std::uint32_t stored = 0;
 };
+
+
+#ifdef BUILD_BOOTLOADER
+using EraseResult = bool;
+using ProgramResult = std::uintptr_t;
+#else
+using EraseResult = Result<void>;
+using ProgramResult = Result<std::uintptr_t>;
+#endif
+
+
+inline constexpr auto partitionSize = 128 * 1024U;
 
 extern Partition const primaryPartition;
 extern Partition const secondaryPartition1;
 extern Partition const secondaryPartition2;
 
 
-[[nodiscard]] auto GetPartition(PartitionId partitionId) -> Result<Partition>;
-auto GetCrcs(std::uintptr_t startAddress) -> Crcs;
+[[nodiscard]] auto GetPartition(PartitionId partitionId) -> Partition;
+
+#ifndef BUILD_BOOTLOADER
 [[nodiscard]] auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>;
-[[nodiscard]] auto Erase(std::uint16_t flashSector) -> Result<void>;
-[[nodiscard]] auto Program(std::uintptr_t address, std::span<Byte const> data)
-    -> Result<std::uintptr_t>;
+#endif
+auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * errorCode)
+    -> FirmwareChecksums;
+
+[[nodiscard]] auto Erase(std::uint16_t flashSector) -> EraseResult;
+[[nodiscard]] auto Program(std::uintptr_t address, std::span<Byte const> data) -> ProgramResult;
 auto Read(std::uintptr_t address, std::span<Byte> data) -> void;
 }

@@ -708,7 +708,7 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
 {
     auto result = [&]() -> Result<void>
     {
-        OUTCOME_TRY(auto partition, fw::GetPartition(function.partitionId));
+        auto partition = fw::GetPartition(function.partitionId);
         OUTCOME_TRY(fw::CheckFirmwareIntegrity(partition.startAddress));
         DEBUG_PRINT("Firmware in partition %s is intact\n", ToCZString(function.partitionId));
         DEBUG_PRINT("Successfully passed firmware integrity check for partition %s\n",
