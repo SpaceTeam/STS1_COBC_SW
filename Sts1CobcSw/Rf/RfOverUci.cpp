@@ -38,7 +38,7 @@ auto txDataRate = uartBaudRate;
 }
 
 
-auto Initialize([[maybe_unused]] TxType txType) -> Result<void>
+auto Initialize() -> Result<void>
 {
     hal::Initialize(&uciUart, uartBaudRate);
     // The real RF module takes > 100 ms to initialize so we simulate this with a busy wait. Without
@@ -69,10 +69,6 @@ auto ReadPartNumber() -> std::uint16_t
 
 
 auto EnterStandbyMode() -> void
-{}  // Not required for UART
-
-
-auto SetTxType([[maybe_unused]] TxType txType) -> void
 {}  // Not required for UART
 
 
