@@ -2,7 +2,6 @@
 #include <Tests/Utility/Stringification.hpp>  // IWYU pragma: keep
 
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>

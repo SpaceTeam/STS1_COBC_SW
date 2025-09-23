@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Edu/Types.hpp>
-#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>

@@ -1,5 +1,7 @@
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>
 
+#include <bit>
+
 
 namespace sts1cobcsw
 {

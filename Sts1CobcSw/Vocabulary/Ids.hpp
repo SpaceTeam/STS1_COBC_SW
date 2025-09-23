@@ -4,7 +4,9 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 
-#include <strong_type/strong_type.hpp>
+#include <strong_type/equality.hpp>
+#include <strong_type/invocable.hpp>
+#include <strong_type/type.hpp>
 
 #include <cstdint>
 

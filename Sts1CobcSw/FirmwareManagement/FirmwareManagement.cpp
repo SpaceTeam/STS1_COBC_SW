@@ -5,6 +5,7 @@
 #endif
 #include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
 #include <etl/vector.h>
@@ -13,7 +14,8 @@
 #ifdef __linux__
     #include <array>
 #endif
-#include <cassert>
+#include <bit>
+#include <cassert>  // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
 #include <span>
