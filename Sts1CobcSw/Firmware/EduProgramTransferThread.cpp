@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
@@ -29,8 +28,8 @@ constexpr auto stackSize = 5000U;
 constexpr auto eduProgramTransferThreadInterval = 5 * s;
 
 
+auto SendProgramsToEdu() -> void;
 auto RemoveProgram(fs::Path const & file) -> void;
-auto SendProgramsToEdu(fs::DirectoryIterator const & fileIterator) -> void;
 [[nodiscard]] auto IsEduCommunicationError(ErrorCode error) -> bool;
 
 
@@ -54,17 +53,8 @@ private:
             eduIsAliveBufferForProgramTransfer.get(eduIsAlive);
             if(edu::ProgramsAreAvailableOnCobc() and eduIsAlive)
             {
-                DEBUG_PRINT("Programs available for transfer to EDU\n");
-                auto makeIteratorResult = fs::MakeIterator(edu::programsDirectory);
-                if(makeIteratorResult.has_error())
-                {
-                    DEBUG_PRINT("Failed to read EDU program directory: %s\n",
-                                ToCZString(makeIteratorResult.error()));
-                }
-                else
-                {
-                    SendProgramsToEdu(makeIteratorResult.value());
-                }
+                DEBUG_PRINT("Sending programs to EDU\n");
+                SendProgramsToEdu();
             }
             DEBUG_PRINT_STACK_USAGE();
         }
@@ -72,32 +62,24 @@ private:
 } eduProgramQueueThread;
 
 
-auto RemoveProgram(fs::Path const & file) -> void
+auto SendProgramsToEdu() -> void
 {
-    auto path = edu::programsDirectory;
-    path.append("/");
-    path.append(file);
-    auto removeResult = fs::Remove(path);
-    if(removeResult.has_error())
+    auto makeIteratorResult = fs::MakeIterator(edu::programsDirectory);
+    if(makeIteratorResult.has_error())
     {
-        DEBUG_PRINT("Failed to remove transferred EDU program %s: %s\n",
-                    path.c_str(),
-                    ToCZString(removeResult.error()));
+        DEBUG_PRINT("Failed to read EDU programs directory: %s\n",
+                    ToCZString(makeIteratorResult.error()));
+        return;
     }
-}
-
-
-auto SendProgramsToEdu(fs::DirectoryIterator const & fileIterator) -> void
-{
-    for(auto && fileInfoResult : fileIterator)
+    for(auto && directoryIteratorResult : makeIteratorResult.value())
     {
-        if(fileInfoResult.has_error())
+        if(directoryIteratorResult.has_error())
         {
-            DEBUG_PRINT("Failed to read a EDU program file: %s\n",
-                        ToCZString(fileInfoResult.error()));
+            DEBUG_PRINT("Failed to read EDU program file: %s\n",
+                        ToCZString(directoryIteratorResult.error()));
             continue;
         }
-        auto const & fileInfo = fileInfoResult.value();
+        auto const & fileInfo = directoryIteratorResult.value();
         if(fileInfo.type != fs::EntryType::file)
         {
             continue;
@@ -108,14 +90,13 @@ auto SendProgramsToEdu(fs::DirectoryIterator const & fileIterator) -> void
             continue;
         }
         DEBUG_PRINT("Sending program %s to EDU\n", fileInfo.name.c_str());
-        auto program = edu::StoreProgramData{.programId = readProgramIdResult.value()};
-        auto storeResult = edu::StoreProgram(program);
-        if(storeResult.has_error())
+        auto storeProgramResult = edu::StoreProgram({.programId = readProgramIdResult.value()});
+        if(storeProgramResult.has_error())
         {
-            auto error = storeResult.error();
+            auto error = storeProgramResult.error();
             DEBUG_PRINT(
                 "Failed to send program %s to EDU: %s\n", fileInfo.name.c_str(), ToCZString(error));
-            if(not IsEduCommunicationError(error))  // error from filesystem (locked, to large, ...)
+            if(not IsEduCommunicationError(error))
             {
                 continue;
             }
@@ -125,6 +106,19 @@ auto SendProgramsToEdu(fs::DirectoryIterator const & fileIterator) -> void
         }
         RemoveProgram(fileInfo.name);
         DEBUG_PRINT("Removed EDU program %s\n", fileInfo.name.c_str());
+    }
+}
+
+
+auto RemoveProgram(fs::Path const & file) -> void
+{
+    auto path = edu::programsDirectory;
+    path.append("/");
+    path.append(file);
+    auto removeResult = fs::Remove(path);
+    if(removeResult.has_error())
+    {
+        DEBUG_PRINT("Failed to remove %s: %s\n", path.c_str(), ToCZString(removeResult.error()));
     }
 }
 
