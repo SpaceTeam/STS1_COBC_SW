@@ -65,10 +65,6 @@ constexpr auto endianness = std::endian::big;
 [[maybe_unused]] constexpr auto cmdReadRxFifo = 0x77_b;
 
 // Command answer lengths
-//
-// TODO: We should do it similarly to SimpleInstruction and SendInstruction() in Flash.cpp. Unless
-// this remains the only command with an answer. Then we should probably get rid of SendCommand<>()
-// instead.
 [[maybe_unused]] constexpr auto partInfoAnswerLength = 8U;
 [[maybe_unused]] constexpr auto fifoInfoAnswerLength = 2U;
 [[maybe_unused]] constexpr auto interruptStatusAnswerLength = 8U;
@@ -96,8 +92,10 @@ constexpr auto endianness = std::endian::big;
 [[maybe_unused]] constexpr auto rssiJumpInterrupt = Byte{1U << 4U};
 [[maybe_unused]] constexpr auto invalidSyncInterrupt = Byte{1U << 5U};
 
+// TODO: Use combined RX and TX FIFO to get 128 bytes
 [[maybe_unused]] constexpr auto txFifoSize = 64U;
 [[maybe_unused]] constexpr auto rxFifoSize = 64U;
+// TODO: Choose the right thresholds
 constexpr auto txFifoThreshold = 48U;  // Free space that triggers TX FIFO almost empty interrupt
 constexpr auto rxFifoThreshold = 32U;  // Stored bytes trigger RX FIFO almost full interrupt
 
@@ -118,6 +116,8 @@ constexpr auto postTxDelay = 100 * ms;  // Time to wait after sending data to pr
 constexpr auto errorHandlingRetryDelay = 1 * ms;
 constexpr auto errorHandlingCobcResetDelay = 1 * s;
 
+constexpr auto defaultDataRateConfig = dataRateConfig9600;
+
 auto csGpioPin = hal::GpioPin(hal::rfCsPin);
 auto nirqGpioPin = hal::GpioPin(hal::rfNirqPin);
 auto sdnGpioPin = hal::GpioPin(hal::rfSdnPin);
@@ -133,10 +133,9 @@ auto rfLatchupDisableGpioPin2 = hal::GpioPin(hal::rfLatchupDisablePin2);
 #endif
 
 auto isInTxMode = false;
-// TODO: Use 9600 by default
-auto rxDataRateConfig = dataRateConfig1200;
-auto txDataRateConfig = dataRateConfig1200;
-auto currentDataRate = dataRateConfig1200.dataRate;
+auto rxDataRateConfig = defaultDataRateConfig;
+auto txDataRateConfig = defaultDataRateConfig;
+auto currentDataRate = defaultDataRateConfig.dataRate;
 
 
 using ModemStatus = std::array<Byte, modemStatusAnswerLength>;
@@ -707,7 +706,6 @@ auto PowerUp() -> Result<void>
 }
 
 
-// TODO: values starting with modem* will now be set in SetConstantModemProperties & SetDataRate
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto Configure() -> Result<void>
 {
