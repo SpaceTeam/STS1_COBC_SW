@@ -60,8 +60,8 @@ EndOfFilePdu::EndOfFilePdu(ConditionCode conditionCode, std::uint32_t fileSize) 
 auto EndOfFilePdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-    auto * cursor =
-        SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, value_of(conditionCode_), spare_);
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, directiveCode);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, value_of(conditionCode_), spare_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileChecksum_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     if(conditionCode_ != noErrorConditionCode)
@@ -73,9 +73,10 @@ auto EndOfFilePdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 
 auto EndOfFilePdu::DoSize() const -> std::uint16_t
 {
-    return conditionCode_ == noErrorConditionCode
-             ? minParameterFieldLength
-             : minParameterFieldLength + totalSerialSize<FaultLocation>;
+    return totalSerialSize<decltype(directiveCode)>
+         + (conditionCode_ == noErrorConditionCode
+                ? minParameterFieldLength
+                : minParameterFieldLength + totalSerialSize<FaultLocation>);
 }
 
 
@@ -100,11 +101,9 @@ FinishedPdu::FinishedPdu(ConditionCode conditionCode,
 auto FinishedPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
-                                                 value_of(conditionCode_),
-                                                 spare_,
-                                                 value_of(deliveryCode_),
-                                                 value_of(fileStatus_));
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, directiveCode);
+    cursor = SerializeTo<ccsdsEndianness>(
+        cursor, value_of(conditionCode_), spare_, value_of(deliveryCode_), value_of(fileStatus_));
     if(conditionCode_ != noErrorConditionCode
        and conditionCode_ != unsupportedChecksumTypeConditionCode)
     {
@@ -115,10 +114,11 @@ auto FinishedPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 
 auto FinishedPdu::DoSize() const -> std::uint16_t
 {
-    return (conditionCode_ == noErrorConditionCode
-            or conditionCode_ == unsupportedChecksumTypeConditionCode)
-             ? minParameterFieldLength
-             : minParameterFieldLength + totalSerialSize<FaultLocation>;
+    return totalSerialSize<decltype(directiveCode)>
+         + ((conditionCode_ == noErrorConditionCode
+             or conditionCode_ == unsupportedChecksumTypeConditionCode)
+                ? minParameterFieldLength
+                : minParameterFieldLength + totalSerialSize<FaultLocation>);
 }
 
 
@@ -134,14 +134,15 @@ AckPdu::AckPdu(DirectiveCode acknowledgedDirectiveCode,
 
 auto AckPdu::DoSize() const -> std::uint16_t
 {
-    return minParameterFieldLength;
+    return totalSerialSize<decltype(directiveCode)> + minParameterFieldLength;
 }
 
 
 auto AckPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-    (void)SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, directiveCode);
+    (void)SerializeTo<ccsdsEndianness>(cursor,
                                        acknowledgedPduDirectiveCode_,
                                        directiveSubtypeCode_,
                                        value_of(conditionCode_),
@@ -164,11 +165,9 @@ MetadataPdu::MetadataPdu(std::uint32_t fileSize,
 auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize,
-                                                 reserved1_,
-                                                 closureRequested_,
-                                                 reserved2_,
-                                                 checksumType_.Value());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, directiveCode);
+    cursor = SerializeTo<ccsdsEndianness>(
+        cursor, reserved1_, closureRequested_, reserved2_, checksumType_.Value());
     cursor = SerializeTo<ccsdsEndianness>(cursor, fileSize_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameLength_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, sourceFileNameValue_);
@@ -179,10 +178,11 @@ auto MetadataPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 
 auto MetadataPdu::DoSize() const -> std::uint16_t
 {
-    return static_cast<std::uint16_t>(totalSerialSize<decltype(reserved1_),
-                                                      decltype(closureRequested_),
-                                                      decltype(reserved2_),
-                                                      ChecksumType::ValueType>
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(directiveCode)>
+                                      + totalSerialSize<decltype(reserved1_),
+                                                        decltype(closureRequested_),
+                                                        decltype(reserved2_),
+                                                        ChecksumType::ValueType>
                                       + totalSerialSize<decltype(fileSize_),
                                                         decltype(sourceFileNameLength_),
                                                         decltype(destinationFileNameLength_)>
@@ -203,7 +203,8 @@ NakPdu::NakPdu(etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentR
 auto NakPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 {
     auto oldSize = IncreaseSize(dataField, DoSize());
-    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, startOfScope_);
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, directiveCode);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, startOfScope_);
     cursor = SerializeTo<ccsdsEndianness>(cursor, endOfScope_);
     (void)SerializeTo<ccsdsEndianness>(cursor, segmentRequests_);
 }
@@ -212,7 +213,8 @@ auto NakPdu::DoAddTo(etl::ivector<Byte> * dataField) const -> void
 auto NakPdu::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
-        totalSerialSize<decltype(startOfScope_), decltype(endOfScope_)>
+        totalSerialSize<decltype(directiveCode)>
+        + totalSerialSize<decltype(startOfScope_), decltype(endOfScope_)>
         + segmentRequests_.size() * sizeof(std::uint64_t));
 }
 
