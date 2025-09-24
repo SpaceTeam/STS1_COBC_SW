@@ -46,7 +46,7 @@ inline constexpr auto fileDataPduType = PduType(1);
 inline constexpr auto towardsFileReceiverDirection = Direction(0);
 inline constexpr auto towardsFileSenderDirection = Direction(1);
 
-inline constexpr auto acknowledgedTransmissionMode = TransmissionMode(1);
+inline constexpr auto acknowledgedTransmissionMode = TransmissionMode(0);
 
 template<>
 inline constexpr std::size_t serialSize<ProtocolDataUnitHeader> =
