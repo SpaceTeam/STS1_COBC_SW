@@ -18,8 +18,8 @@ struct PersistentVariable
 
 constexpr auto nTotalResets = PersistentVariable<std::uint32_t>{0};
 constexpr auto nResetsSinceRf = PersistentVariable<std::uint8_t>{4};
-constexpr auto activeSecondaryFwPartition = PersistentVariable<PartitionId>{5};
-constexpr auto backupSecondaryFwPartition = PersistentVariable<PartitionId>{6};
+constexpr auto activeSecondaryFwPartitionId = PersistentVariable<PartitionId>{5};
+constexpr auto backupSecondaryFwPartitionId = PersistentVariable<PartitionId>{6};
 
 
 template<typename T>
