@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
-#include <Sts1CobcSw/ChannelCoding/ReedSolomon.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
@@ -74,7 +73,7 @@ auto Receive(std::uint32_t baudRate) -> void
     PRINTF("Receiving with %i baud\n", static_cast<int>(baudRate));
     rf::SetRxDataRate(baudRate);
 
-    auto receivedData = std::array<Byte, rs::blockLength>{};
+    auto receivedData = std::array<Byte, blockLength>{};
     static constexpr auto rxTimeout = 5 * s;
     PRINTF("Waiting %i s to receive %i bytes\n",
            static_cast<int>(rxTimeout / s),
