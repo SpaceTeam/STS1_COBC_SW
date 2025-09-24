@@ -205,9 +205,9 @@ public:
                          fs::Path const & destinationFileName) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
-    UInt<1> reserved1_;
+    UInt<1> reserved1_ = 0;
     UInt<1> closureRequested_ = 0;  // 0 in ACK mode
-    UInt<2> reserved2_;
+    UInt<2> reserved2_ = 0;
     ChecksumType checksumType_ = nullChecksumType;
     std::uint32_t fileSize_ = 0;
     std::uint8_t sourceFileNameLength_ = 0;

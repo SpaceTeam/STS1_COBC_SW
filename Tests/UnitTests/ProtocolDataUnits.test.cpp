@@ -160,7 +160,7 @@ TEST_CASE("FileDataPdu Constructor")
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto addResult = fileDataPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == fileDataPdu.Size());
+    REQUIRE(dataField.size() == fileDataPdu.Size());
     CHECK(dataField[0] == 0x12_b);
     CHECK(dataField[1] == 0x34_b);
     CHECK(dataField[2] == 0x56_b);
@@ -196,7 +196,7 @@ TEST_CASE("Adding FileDataPdu to data field")
 
     auto addResult = fileDataPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == fileDataPdu.Size());
+    REQUIRE(dataField.size() == fileDataPdu.Size());
     CHECK(dataField[0] == 0x01_b);
     CHECK(dataField[1] == 0x02_b);
     CHECK(dataField[2] == 0x03_b);
@@ -277,29 +277,25 @@ TEST_CASE("EndOfFilePdu Constructor")
     CHECK(endOfFilePdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
     CHECK(endOfFilePdu.fileChecksum_ == 0x0000'0000U);
     CHECK(endOfFilePdu.fileSize_ == 0x9ABC'DEF0U);
-    CHECK(endOfFilePdu.Size() == 9U);  // No fault location
+    REQUIRE(endOfFilePdu.Size() == 10U);  // No fault location
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto addResult = endOfFilePdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == endOfFilePdu.Size());
-    CHECK(dataField[0] == 0x00_b);  // Condition code (no error)
-    CHECK(dataField[1] == 0x00_b);  // File checksum
-    CHECK(dataField[2] == 0x00_b);
+    REQUIRE(dataField.size() == endOfFilePdu.Size());
+    CHECK(dataField[0] == 0x04_b);  // Directive code
+    CHECK(dataField[1] == 0x00_b);  // Condition code (no error)
+    CHECK(dataField[2] == 0x00_b);  // File checksum
     CHECK(dataField[3] == 0x00_b);
     CHECK(dataField[4] == 0x00_b);
-    CHECK(dataField[5] == 0x9A_b);  // File size
-    CHECK(dataField[6] == 0xBC_b);
-    CHECK(dataField[7] == 0xDE_b);
-    CHECK(dataField[8] == 0xF0_b);
+    CHECK(dataField[5] == 0x00_b);
+    CHECK(dataField[6] == 0x9A_b);  // File size
+    CHECK(dataField[7] == 0xBC_b);
+    CHECK(dataField[8] == 0xDE_b);
+    CHECK(dataField[9] == 0xF0_b);
 
-    // Test constructor for error condition (with fault location)
-    auto faultLocation = sts1cobcsw::FaultLocation{};
-    faultLocation.type = sts1cobcsw::TlvType::entityId;
-    faultLocation.length = 1;
-    faultLocation.value = sts1cobcsw::EntityId(0x0F);
-
+    // Test constructor for error condition
     auto errorEndOfFilePdu =
         sts1cobcsw::EndOfFilePdu(sts1cobcsw::positiveAckLimitReachedConditionCode,
                                  0x1122'3344);  // fileSize
@@ -308,19 +304,19 @@ TEST_CASE("EndOfFilePdu Constructor")
     CHECK(errorEndOfFilePdu.fileChecksum_ == 0x0000'0000U);
     CHECK(errorEndOfFilePdu.fileSize_ == 0x1122'3344U);
     CHECK(errorEndOfFilePdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
-    CHECK(errorEndOfFilePdu.faultLocation_.length == 1);
-    CHECK(errorEndOfFilePdu.faultLocation_.value == sts1cobcsw::EntityId(0x0F));
-    CHECK(errorEndOfFilePdu.Size() == 12U);  // 9B + 3B fault location
+    CHECK(errorEndOfFilePdu.faultLocation_.length == 0);
+    CHECK(errorEndOfFilePdu.faultLocation_.value == sts1cobcsw::cubeSatEntityId);
+    REQUIRE(errorEndOfFilePdu.Size() == 13U);  // 9B + 3B fault location
 
     // Test serialization with fault location
     dataField.clear();
     addResult = errorEndOfFilePdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == errorEndOfFilePdu.Size());
-    CHECK(dataField[0] == 0x10_b);   // Condition code (positive ACK limit reached)
-    CHECK(dataField[9] == 0x06_b);   // Fault location type (entity ID)
-    CHECK(dataField[10] == 0x01_b);  // Fault location length
-    CHECK(dataField[11] == 0x0F_b);  // Fault location value (entity ID)
+    REQUIRE(dataField.size() == errorEndOfFilePdu.Size());
+    CHECK(dataField[1] == 0x10_b);   // Condition code (positive ACK limit reached)
+    CHECK(dataField[10] == 0x06_b);  // Fault location type (entity ID)
+    CHECK(dataField[11] == 0x00_b);  // Fault location length
+    CHECK(dataField[12] == 0xF0_b);  // Fault location value (entity ID)
 }
 
 
@@ -332,36 +328,38 @@ TEST_CASE("Adding EndOfFilePdu to data field")
     endOfFilePdu.fileChecksum_ = 0x1234'5678U;
     endOfFilePdu.fileSize_ = 0x9ABC'DEF0U;
 
-    CHECK(endOfFilePdu.Size() == 9U);  // 1B condition code + 4B file checksum + 4B file size
+    // 1 B directive code + 1 B condition code + 4 B file checksum + 4 B file size
+    REQUIRE(endOfFilePdu.Size() == 10U);
 
     auto addResult = endOfFilePdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == endOfFilePdu.Size());
-    CHECK(dataField[0] == 0x00_b);  // Condition code (no error)
-    CHECK(dataField[1] == 0x12_b);  // File checksum
-    CHECK(dataField[2] == 0x34_b);  // File checksum
-    CHECK(dataField[3] == 0x56_b);  // File checksum
-    CHECK(dataField[4] == 0x78_b);  // File checksum
-    CHECK(dataField[5] == 0x9A_b);  // File size
-    CHECK(dataField[6] == 0xBC_b);  // File size
-    CHECK(dataField[7] == 0xDE_b);  // File size
-    CHECK(dataField[8] == 0xF0_b);  // File size
+    REQUIRE(dataField.size() == endOfFilePdu.Size());
+    CHECK(dataField[0] == 0x04_b);  // Directive code
+    CHECK(dataField[1] == 0x00_b);  // Condition code (no error)
+    CHECK(dataField[2] == 0x12_b);  // File checksum
+    CHECK(dataField[3] == 0x34_b);  // File checksum
+    CHECK(dataField[4] == 0x56_b);  // File checksum
+    CHECK(dataField[5] == 0x78_b);  // File checksum
+    CHECK(dataField[6] == 0x9A_b);  // File size
+    CHECK(dataField[7] == 0xBC_b);  // File size
+    CHECK(dataField[8] == 0xDE_b);  // File size
+    CHECK(dataField[9] == 0xF0_b);  // File size
 
     endOfFilePdu.conditionCode_ = sts1cobcsw::invalidTransmissionModeConditionCode;
     endOfFilePdu.faultLocation_.type = sts1cobcsw::TlvType::entityId;
     endOfFilePdu.faultLocation_.length = 1;
     endOfFilePdu.faultLocation_.value = sts1cobcsw::EntityId(0x0F);
 
-    CHECK(endOfFilePdu.Size() == 12U);  // 9 B + 3 B fault location
+    REQUIRE(endOfFilePdu.Size() == 13U);  // 10 B + 3 B fault location
 
     dataField.clear();
     addResult = endOfFilePdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == endOfFilePdu.Size());
-    CHECK(dataField[0] == 0x30_b);   // Condition code (invalid transmission mode)
-    CHECK(dataField[9] == 0x06_b);   // Fault location type (entity ID)
-    CHECK(dataField[10] == 0x01_b);  // Fault location length
-    CHECK(dataField[11] == 0x0F_b);  // Fault location value (entity ID)
+    REQUIRE(dataField.size() == endOfFilePdu.Size());
+    CHECK(dataField[1] == 0x30_b);   // Condition code (invalid transmission mode)
+    CHECK(dataField[10] == 0x06_b);  // Fault location type (entity ID)
+    CHECK(dataField[11] == 0x01_b);  // Fault location length
+    CHECK(dataField[12] == 0x0F_b);  // Fault location value (entity ID)
 }
 
 
@@ -402,7 +400,7 @@ TEST_CASE("Parsing EndOfFilePdu")
     // Condition code is still no error, so we don't parse the fault location
     CHECK(endOfFilePdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
     CHECK(endOfFilePdu.faultLocation_.length == 0);
-    CHECK(endOfFilePdu.faultLocation_.value == sts1cobcsw::EntityId(0));
+    CHECK(endOfFilePdu.faultLocation_.value == sts1cobcsw::cubeSatEntityId);
 
     buffer[0] = 0x10_b;  // Condition code (positive ACK limit reached)
     parseResult = sts1cobcsw::ParseAsEndOfFilePdu(buffer);
@@ -431,21 +429,17 @@ TEST_CASE("FinishedPdu Constructor")
     CHECK(finishedPdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
     CHECK(finishedPdu.deliveryCode_ == sts1cobcsw::dataCompleteDeliveryCode);
     CHECK(finishedPdu.fileStatus_ == sts1cobcsw::fileRetainedFileStatus);
-    CHECK(finishedPdu.Size() == 1U);  // No fault location
+    REQUIRE(finishedPdu.Size() == 2U);  // No fault location
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto addResult = finishedPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == finishedPdu.Size());
-    CHECK(dataField[0] == 0x02_b);  // Condition=0, spare=0, delivery=0, fileStatus=2 (0b10)
+    REQUIRE(dataField.size() == finishedPdu.Size());
+    CHECK(dataField[0] == 0x05_b);  // Directive code
+    CHECK(dataField[1] == 0x02_b);  // Condition=0, spare=0, delivery=0, fileStatus=2 (0b10)
 
-    // Test constructor for error condition (with fault location)
-    auto faultLocation = sts1cobcsw::FaultLocation{};
-    faultLocation.type = sts1cobcsw::TlvType::entityId;
-    faultLocation.length = 1;
-    faultLocation.value = sts1cobcsw::EntityId(0x0F);
-
+    // Test constructor for error condition
     auto errorFinishedPdu =
         sts1cobcsw::FinishedPdu(sts1cobcsw::positiveAckLimitReachedConditionCode,
                                 sts1cobcsw::dataIncompleteDeliveryCode,
@@ -455,19 +449,20 @@ TEST_CASE("FinishedPdu Constructor")
     CHECK(errorFinishedPdu.deliveryCode_ == sts1cobcsw::dataIncompleteDeliveryCode);
     CHECK(errorFinishedPdu.fileStatus_ == sts1cobcsw::fileRejectedFileStatus);
     CHECK(errorFinishedPdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
-    CHECK(errorFinishedPdu.faultLocation_.length == 1);
-    CHECK(errorFinishedPdu.faultLocation_.value == sts1cobcsw::EntityId(0x0F));
-    CHECK(errorFinishedPdu.Size() == 4U);  // 1B + 3B fault location
+    CHECK(errorFinishedPdu.faultLocation_.length == 0);
+    CHECK(errorFinishedPdu.faultLocation_.value == sts1cobcsw::cubeSatEntityId);
+    REQUIRE(errorFinishedPdu.Size() == 5U);  // 2 B + 3 B fault location
 
     // Serialization with fault location
     dataField.clear();
     addResult = errorFinishedPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == errorFinishedPdu.Size());
-    CHECK(dataField[0] == 0x15_b);  // Condition=1, spare=0, delivery=1, fileStatus=1 (0b0001'0101)
-    CHECK(dataField[1] == 0x06_b);  // Fault location type (entity ID)
-    CHECK(dataField[2] == 0x01_b);  // Fault location length
-    CHECK(dataField[3] == 0x0F_b);  // Fault location value (entity ID)
+    REQUIRE(dataField.size() == errorFinishedPdu.Size());
+    CHECK(dataField[0] == 0x05_b);  // Directive code
+    CHECK(dataField[1] == 0x15_b);  // Condition=1, spare=0, delivery=1, fileStatus=1 (0b0001'0101)
+    CHECK(dataField[2] == 0x06_b);  // Fault location type (entity ID)
+    CHECK(dataField[3] == 0x00_b);  // Fault location length
+    CHECK(dataField[4] == 0xF0_b);  // Fault location value (entity ID)
 }
 
 
@@ -479,13 +474,14 @@ TEST_CASE("Adding FinishedPdu")
     finishedPdu.deliveryCode_ = sts1cobcsw::DeliveryCode(0);
     finishedPdu.fileStatus_ = sts1cobcsw::FileStatus(0);
 
-    CHECK(finishedPdu.Size() == 1U);
+    REQUIRE(finishedPdu.Size() == 2U);
 
     auto addResult = finishedPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == finishedPdu.Size());
-    CHECK(dataField[0]
-          == 0x00_b);  // Condition code (no error), Delivery code (0), and FileStatus(0)
+    REQUIRE(dataField.size() == finishedPdu.Size());
+    CHECK(dataField[0] == 0x05_b);  // Directive code
+    // Condition code (no error), Delivery code (0), and FileStatus(0)
+    CHECK(dataField[1] == 0x00_b);
 
     finishedPdu.conditionCode_ = sts1cobcsw::invalidTransmissionModeConditionCode;
     finishedPdu.deliveryCode_ = sts1cobcsw::DeliveryCode(0);
@@ -493,29 +489,30 @@ TEST_CASE("Adding FinishedPdu")
     finishedPdu.faultLocation_.length = 1;
     finishedPdu.faultLocation_.value = sts1cobcsw::EntityId(0x0F);
 
-    CHECK(finishedPdu.Size() == 4U);  // 1 B + 3 B fault location
+    REQUIRE(finishedPdu.Size() == 5U);  // 2 B + 3 B fault location
 
     dataField.clear();
     addResult = finishedPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == finishedPdu.Size());
-    CHECK(dataField[0] == 0x30_b);  // Condition code (invalid transmission mode)
-    CHECK(dataField[1] == 0x06_b);  // Fault location type (entity ID)
-    CHECK(dataField[2] == 0x01_b);  // Fault location length
-    CHECK(dataField[3] == 0x0F_b);  // Fault location value (entity ID)
+    REQUIRE(dataField.size() == finishedPdu.Size());
+    CHECK(dataField[0] == 0x05_b);  // Directive code
+    CHECK(dataField[1] == 0x30_b);  // Condition code (invalid transmission mode)
+    CHECK(dataField[2] == 0x06_b);  // Fault location type (entity ID)
+    CHECK(dataField[3] == 0x01_b);  // Fault location length
+    CHECK(dataField[4] == 0x0F_b);  // Fault location value (entity ID)
 
     finishedPdu.conditionCode_ = sts1cobcsw::unsupportedChecksumTypeConditionCode;
     finishedPdu.deliveryCode_ = sts1cobcsw::DeliveryCode(1);
     finishedPdu.fileStatus_ = sts1cobcsw::FileStatus(1);
 
-    CHECK(finishedPdu.Size() == 1U);  // Fault Location is omitted
+    REQUIRE(finishedPdu.Size() == 2U);  // Fault location is omitted
 
     dataField.clear();
     addResult = finishedPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == finishedPdu.Size());
-    CHECK(dataField[0]
-          == 0xB5_b);  // Unsupported Checksum Type (0xB), Delivery Code and File Status (0b0101)
+    REQUIRE(dataField.size() == finishedPdu.Size());
+    // Unsupported Checksum Type (0xB), Delivery Code and File Status (0b0101)
+    CHECK(dataField[1] == 0xB5_b);
 }
 
 
@@ -526,8 +523,8 @@ TEST_CASE("Parsing FinishedPdu")
     CHECK(sts1cobcsw::FinishedPdu::minParameterFieldLength == 1U);
     buffer.resize(sts1cobcsw::FinishedPdu::minParameterFieldLength);
 
-    buffer[0] = 0x05_b;  // Condition Code : 0b0000
-                         // Spare, Delivery Code, FileStatus : 0b0101
+    // Condition Code : 0b0000 Spare, Delivery Code, FileStatus : 0b0101
+    buffer[0] = 0x05_b;
 
     auto parseResult = sts1cobcsw::ParseAsFinishedPdu(buffer);
     REQUIRE(parseResult.has_value());
@@ -556,7 +553,7 @@ TEST_CASE("Parsing FinishedPdu")
     CHECK(finishedPdu.conditionCode_ == sts1cobcsw::noErrorConditionCode);
     CHECK(finishedPdu.faultLocation_.type == sts1cobcsw::TlvType::entityId);
     CHECK(finishedPdu.faultLocation_.length == 0);
-    CHECK(finishedPdu.faultLocation_.value == sts1cobcsw::EntityId(0));
+    CHECK(finishedPdu.faultLocation_.value == sts1cobcsw::cubeSatEntityId);
 
     // Error condition: positive ACK limit reached (ConditionCode = 1)
     buffer[0] = 0x10_b;
@@ -594,6 +591,7 @@ TEST_CASE("AckPdu Constructor")
     CHECK(ackPdu.directiveSubtypeCode_ == 0b0001);                    // Finished gets 0b0001
     CHECK(value_of(ackPdu.conditionCode_) == 0);                      // no error
     CHECK(ackPdu.transactionStatus_ == sts1cobcsw::terminatedTransactionStatus);
+    REQUIRE(ackPdu.Size() == 3U);
 
     // Test constructor with EndOfFile directive
     auto ackPduEof = sts1cobcsw::AckPdu(sts1cobcsw::DirectiveCode::endOfFile,
@@ -609,9 +607,10 @@ TEST_CASE("AckPdu Constructor")
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto addResult = ackPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == ackPdu.Size());
-    CHECK(dataField[0] == 0x51_b);  // 5 << 4 | 1 = 0x51 (Finished with subtype 1)
-    CHECK(dataField[1] == 0x02_b);  //
+    REQUIRE(dataField.size() == ackPdu.Size());
+    CHECK(dataField[0] == 0x06_b);  // Directive code
+    CHECK(dataField[1] == 0x51_b);  // 5 << 4 | 1 = 0x51 (Finished with subtype 1)
+    CHECK(dataField[2] == 0x02_b);  //
 }
 
 
@@ -626,13 +625,14 @@ TEST_CASE("Adding AckPdu")
     ackPdu.transactionStatus_ = sts1cobcsw::undefinedTransactionStatus;
 
     CHECK(ackPdu.minParameterFieldLength == 2U);
-    CHECK(ackPdu.Size() == 2U);
+    REQUIRE(ackPdu.Size() == 3U);
 
     auto addResult = ackPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == ackPdu.Size());
-    CHECK(dataField[0] == 0x50_b);
-    CHECK(dataField[1] == 0x00_b);
+    REQUIRE(dataField.size() == ackPdu.Size());
+    CHECK(dataField[0] == 0x06_b);  // Directive code
+    CHECK(dataField[1] == 0x50_b);
+    CHECK(dataField[2] == 0x00_b);
 }
 
 
@@ -681,37 +681,37 @@ TEST_CASE("MetadataPdu Constructor")
 
     CHECK(metadataPdu.fileSize_ == 42U);
     CHECK(metadataPdu.sourceFileNameLength_ == 3U);
-    CHECK(metadataPdu.sourceFileNameValue_.size() == 3U);
+    REQUIRE(metadataPdu.sourceFileNameValue_.size() == 3U);
     CHECK(metadataPdu.sourceFileNameValue_[0] == 0x66);
     CHECK(metadataPdu.sourceFileNameValue_[1] == 0x6F);
     CHECK(metadataPdu.sourceFileNameValue_[2] == 0x6F);
 
     CHECK(metadataPdu.destinationFileNameLength_ == 3U);
-    CHECK(metadataPdu.destinationFileNameValue_.size() == 3U);
+    REQUIRE(metadataPdu.destinationFileNameValue_.size() == 3U);
     CHECK(metadataPdu.destinationFileNameValue_[0] == 0x62);
     CHECK(metadataPdu.destinationFileNameValue_[1] == 0x61);
     CHECK(metadataPdu.destinationFileNameValue_[2] == 0x72);
+
+    REQUIRE(metadataPdu.Size() == 8 + 3 + 3);
 
     // Test serialization
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto addResult = metadataPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
 
-    CHECK(dataField.size() == metadataPdu.Size());
-    // Expected: 1B flags + 4B file size + 1B source length + 3B source + 1B dest length + 3B
-    // dest = 13B
-    CHECK(dataField.size() == 13U);
-    CHECK(dataField[0] == 0x0F_b);   // flags: reserved=0, closure=0, reserved2=0, checksum=15
-    CHECK(dataField[1] == 0x00_b);   // file size
-    CHECK(dataField[4] == 0x2A_b);   // file size
-    CHECK(dataField[5] == 0x03_b);   // source file name length
-    CHECK(dataField[6] == 0x66_b);   // source file name
-    CHECK(dataField[7] == 0x6F_b);   // source file name
+    REQUIRE(dataField.size() == metadataPdu.Size());
+    CHECK(dataField[0] == 0x07_b);   // Directive code
+    CHECK(dataField[1] == 0x0F_b);   // flags: reserved=0, closure=0, reserved2=0, checksum=15
+    CHECK(dataField[2] == 0x00_b);   // file size
+    CHECK(dataField[5] == 0x2A_b);   // file size
+    CHECK(dataField[6] == 0x03_b);   // source file name length
+    CHECK(dataField[7] == 0x66_b);   // source file name
     CHECK(dataField[8] == 0x6F_b);   // source file name
-    CHECK(dataField[9] == 0x03_b);   // destination file name length
-    CHECK(dataField[10] == 0x62_b);  // destination file name
-    CHECK(dataField[11] == 0x61_b);  // destination file name
-    CHECK(dataField[12] == 0x72_b);  // destination file name
+    CHECK(dataField[9] == 0x6F_b);   // source file name
+    CHECK(dataField[10] == 0x03_b);  // destination file name length
+    CHECK(dataField[11] == 0x62_b);  // destination file name
+    CHECK(dataField[12] == 0x61_b);  // destination file name
+    CHECK(dataField[13] == 0x72_b);  // destination file name
 }
 
 
@@ -731,25 +731,26 @@ TEST_CASE("Adding MetadataPdu")
     metadataPdu.destinationFileNameLength_ = static_cast<std::uint8_t>(destinationFileName.size());
     metadataPdu.destinationFileNameValue_ = destinationFileName;
 
-    CHECK(metadataPdu.Size() == (1 + 4 + 1 + 3 + 1 + 3));
+    REQUIRE(metadataPdu.Size() == 8 + 3 + 3);
 
     auto addResult = metadataPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
 
-    CHECK(dataField.size() == metadataPdu.Size());
-    CHECK(dataField[0] == 0x0F_b);
-    CHECK(dataField[1] == 0x00_b);
+    REQUIRE(dataField.size() == metadataPdu.Size());
+    CHECK(dataField[0] == 0x07_b);  // Directive code
+    CHECK(dataField[1] == 0x0F_b);
     CHECK(dataField[2] == 0x00_b);
     CHECK(dataField[3] == 0x00_b);
-    CHECK(dataField[4] == 0x2A_b);
-    CHECK(dataField[5] == 0x03_b);
-    CHECK(dataField[6] == 0x61_b);
-    CHECK(dataField[7] == 0x62_b);
-    CHECK(dataField[8] == 0x63_b);
-    CHECK(dataField[9] == 0x03_b);
-    CHECK(dataField[10] == 0x64_b);
-    CHECK(dataField[11] == 0x65_b);
-    CHECK(dataField[12] == 0x66_b);
+    CHECK(dataField[4] == 0x00_b);
+    CHECK(dataField[5] == 0x2A_b);
+    CHECK(dataField[6] == 0x03_b);
+    CHECK(dataField[7] == 0x61_b);
+    CHECK(dataField[8] == 0x62_b);
+    CHECK(dataField[9] == 0x63_b);
+    CHECK(dataField[10] == 0x03_b);
+    CHECK(dataField[11] == 0x64_b);
+    CHECK(dataField[12] == 0x65_b);
+    CHECK(dataField[13] == 0x66_b);
 }
 
 
@@ -821,7 +822,8 @@ TEST_CASE("NakPdu Constructor")
 
     CHECK(nakPdu.startOfScope_ == 0x1234'5678U);
     CHECK(nakPdu.endOfScope_ == 0x6789'ABCDU);
-    CHECK(nakPdu.segmentRequests_.size() == 3U);
+    REQUIRE(nakPdu.segmentRequests_.size() == 3U);
+    REQUIRE(nakPdu.Size() == 9U + nakPdu.segmentRequests_.size() * 8U);
 
     CHECK(nakPdu.segmentRequests_[0].startOffset == 0x1234'5678U);
     CHECK(nakPdu.segmentRequests_[0].endOffset == 0x1234'9ABCU);
@@ -834,15 +836,16 @@ TEST_CASE("NakPdu Constructor")
     auto dataField = etl::vector<Byte, sts1cobcsw::tc::maxPduDataLength>{};
     auto addResult = nakPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
-    CHECK(dataField.size() == nakPdu.Size());
-    CHECK(dataField[0] == 0x12_b);  // startOfScope high byte
-    CHECK(dataField[1] == 0x34_b);
-    CHECK(dataField[2] == 0x56_b);
-    CHECK(dataField[3] == 0x78_b);  // startOfScope low byte
-    CHECK(dataField[4] == 0x67_b);  // endOfScope high byte
-    CHECK(dataField[5] == 0x89_b);
-    CHECK(dataField[6] == 0xAB_b);
-    CHECK(dataField[7] == 0xCD_b);  // endOfScope low byte
+    REQUIRE(dataField.size() == nakPdu.Size());
+    CHECK(dataField[0] == 0x08_b);  // Directive code
+    CHECK(dataField[1] == 0x12_b);  // startOfScope high byte
+    CHECK(dataField[2] == 0x34_b);
+    CHECK(dataField[3] == 0x56_b);
+    CHECK(dataField[4] == 0x78_b);  // startOfScope low byte
+    CHECK(dataField[5] == 0x67_b);  // endOfScope high byte
+    CHECK(dataField[6] == 0x89_b);
+    CHECK(dataField[7] == 0xAB_b);
+    CHECK(dataField[8] == 0xCD_b);  // endOfScope low byte
 
     // Test with maximum allowed segment requests (25)
     // auto maxSegmentRequests = etl::vector<std::uint64_t,
@@ -869,13 +872,13 @@ TEST_CASE("Adding NakPdu")
         etl::vector<sts1cobcsw::SegmentRequest, sts1cobcsw::NakPdu::maxNSegmentRequests>{
             segmentRequest1, segmentRequest2};
 
-    CHECK(nakPdu.Size() == 24U);  // NOLINT(*magic-numbers)
+    REQUIRE(nakPdu.Size() == 9U + nakPdu.segmentRequests_.size() * 8U);
 
     auto addResult = nakPdu.AddTo(&dataField);
     REQUIRE(addResult.has_value());
 
-    CHECK(dataField.size() == nakPdu.Size());
-    CHECK(dataField[0] == 0x00_b);
+    REQUIRE(dataField.size() == nakPdu.Size());
+    CHECK(dataField[0] == 0x08_b);  // Directive code
     CHECK(dataField[1] == 0x00_b);
     CHECK(dataField[2] == 0x00_b);
     CHECK(dataField[3] == 0x00_b);
@@ -883,24 +886,25 @@ TEST_CASE("Adding NakPdu")
     CHECK(dataField[5] == 0x00_b);
     CHECK(dataField[6] == 0x00_b);
     CHECK(dataField[7] == 0x00_b);
-
     CHECK(dataField[8] == 0x00_b);
+
     CHECK(dataField[9] == 0x00_b);
     CHECK(dataField[10] == 0x00_b);
-    CHECK(dataField[11] == 0x0AB_b);
-    CHECK(dataField[12] == 0x00_b);
+    CHECK(dataField[11] == 0x00_b);
+    CHECK(dataField[12] == 0x0AB_b);
     CHECK(dataField[13] == 0x00_b);
     CHECK(dataField[14] == 0x00_b);
     CHECK(dataField[15] == 0x00_b);
-
     CHECK(dataField[16] == 0x00_b);
+
     CHECK(dataField[17] == 0x00_b);
     CHECK(dataField[18] == 0x00_b);
-    CHECK(dataField[19] == 0xCD_b);
-    CHECK(dataField[20] == 0x00_b);
+    CHECK(dataField[19] == 0x00_b);
+    CHECK(dataField[20] == 0xCD_b);
     CHECK(dataField[21] == 0x00_b);
     CHECK(dataField[22] == 0x00_b);
     CHECK(dataField[23] == 0x00_b);
+    CHECK(dataField[24] == 0x00_b);
 }
 
 TEST_CASE("Parsing NakPdu")
@@ -940,7 +944,7 @@ TEST_CASE("Parsing NakPdu")
 
     CHECK(nakPdu.startOfScope_ == 0x1111'2222U);
     CHECK(nakPdu.endOfScope_ == 0x7777'8888U);
-    CHECK(nakPdu.segmentRequests_.size() == 2U);
+    REQUIRE(nakPdu.segmentRequests_.size() == 2U);
     CHECK(nakPdu.segmentRequests_[0].startOffset == 0x1111'2222U);
     CHECK(nakPdu.segmentRequests_[0].endOffset == 0x3333'4444U);
     CHECK(nakPdu.segmentRequests_[1].startOffset == 0x5555'6666U);
@@ -969,7 +973,7 @@ TEST_CASE("AddPduTo function")
                                            fileDataPdu);
 
         REQUIRE(result.has_value());
-        CHECK(dataField.size() == sts1cobcsw::pduHeaderLength + fileDataPdu.Size());
+        REQUIRE(dataField.size() == sts1cobcsw::pduHeaderLength + fileDataPdu.Size());
 
         // Verify header fields by parsing the created PDU
         auto parseResult = sts1cobcsw::ParseAsProtocolDataUnit(dataField);
@@ -992,7 +996,7 @@ TEST_CASE("AddPduTo function")
         CHECK(pdu.header.sourceEntityId == sts1cobcsw::groundStationEntityId);
         CHECK(pdu.header.transactionSequenceNumber == 0x9ABC);
         CHECK(pdu.header.destinationEntityId == sts1cobcsw::cubeSatEntityId);
-        CHECK(pdu.dataField.size() == fileDataPdu.Size());
+        REQUIRE(pdu.dataField.size() == fileDataPdu.Size());
     }
 
     // Test successful case with file directive PDU from cubesat to ground station
@@ -1007,7 +1011,7 @@ TEST_CASE("AddPduTo function")
                                            endOfFilePdu);
 
         REQUIRE(result.has_value());
-        CHECK(dataField.size() == sts1cobcsw::pduHeaderLength + endOfFilePdu.Size());
+        REQUIRE(dataField.size() == sts1cobcsw::pduHeaderLength + endOfFilePdu.Size());
 
         // Verify header fields
         auto parseResult = sts1cobcsw::ParseAsProtocolDataUnit(dataField);
