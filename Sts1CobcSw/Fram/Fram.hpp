@@ -12,6 +12,8 @@
 #include <strong_type/ordered_with.hpp>
 #include <strong_type/type.hpp>
 
+#include <rodos_no_using_namespace.h>
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -39,6 +41,7 @@ inline constexpr auto correctDeviceId =
     DeviceId{0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0xC2_b, 0x26_b, 0x08_b};
 
 extern EdacVariable<bool> framIsWorking;
+extern RODOS::Semaphore framEpsSemaphore;
 
 
 auto Initialize() -> void;
