@@ -1,5 +1,6 @@
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 
+#include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
@@ -13,6 +14,8 @@
 
 #include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
+
+#include <rodos_no_using_namespace.h>
 
 #include <algorithm>
 #include <bit>
@@ -129,6 +132,7 @@ auto InitializeAdcs() -> void
     {
         return;
     }
+    auto protector = RODOS::ScopeProtector(&fram::framEpsSemaphore);
     adc4CsGpioPin.SetDirection(hal::PinDirection::out);
     DeselectChip(&adc4CsGpioPin);
     adc5CsGpioPin.SetDirection(hal::PinDirection::out);
@@ -157,6 +161,7 @@ auto ReadAdcs() -> AdcData
     {
         return {};
     }
+    auto protector = RODOS::ScopeProtector(&fram::framEpsSemaphore);
     auto adcData = AdcData{};
     adcData.adc4 = ReadAdc(&adc4CsGpioPin);
     auto adc5Data = ReadAdc(&adc5CsGpioPin);
@@ -175,6 +180,7 @@ auto ResetAdcRegisters() -> void
     {
         return;
     }
+    auto protector = RODOS::ScopeProtector(&fram::framEpsSemaphore);
     ResetAdc(&adc4CsGpioPin, ResetType::registers);
     ResetAdc(&adc5CsGpioPin, ResetType::registers);
     ResetAdc(&adc6CsGpioPin, ResetType::registers);
@@ -187,6 +193,7 @@ auto ClearAdcFifos() -> void
     {
         return;
     }
+    auto protector = RODOS::ScopeProtector(&fram::framEpsSemaphore);
     ResetAdc(&adc4CsGpioPin, ResetType::fifo);
     ResetAdc(&adc5CsGpioPin, ResetType::fifo);
     ResetAdc(&adc6CsGpioPin, ResetType::fifo);

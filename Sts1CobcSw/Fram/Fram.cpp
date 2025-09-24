@@ -19,6 +19,7 @@ namespace sts1cobcsw::fram
 // --- Public globals ---
 
 EdacVariable<bool> framIsWorking(true);
+RODOS::Semaphore framEpsSemaphore{};
 
 
 namespace
@@ -54,6 +55,7 @@ auto SetWriteEnableLatch() -> void;
 
 auto Initialize() -> void
 {
+    auto protector = RODOS::ScopeProtector(&framEpsSemaphore);
     csGpioPin.SetDirection(hal::PinDirection::out);
     csGpioPin.Set();
     auto const baudRate = 6'000'000;
@@ -63,6 +65,7 @@ auto Initialize() -> void
 
 auto ReadDeviceId() -> DeviceId
 {
+    auto protector = RODOS::ScopeProtector(&framEpsSemaphore);
     SelectChip();
     hal::WriteTo(&framEpsSpi, Span(opcode::readDeviceId), spiTimeout);
     auto deviceId = DeviceId{};
@@ -74,6 +77,7 @@ auto ReadDeviceId() -> DeviceId
 
 auto ActualBaudRate() -> std::int32_t
 {
+    auto protector = RODOS::ScopeProtector(&framEpsSemaphore);
     return framEpsSpi.BaudRate();
 }
 
@@ -82,6 +86,7 @@ namespace internal
 {
 auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration timeout) -> void
 {
+    auto protector = RODOS::ScopeProtector(&framEpsSemaphore);
     SetWriteEnableLatch();
     SelectChip();
     hal::WriteTo(&framEpsSpi, Span(opcode::writeData), spiTimeout);
@@ -95,6 +100,7 @@ auto WriteTo(Address address, void const * data, std::size_t nBytes, Duration ti
 
 auto ReadFrom(Address address, void * data, std::size_t nBytes, Duration timeout) -> void
 {
+    auto protector = RODOS::ScopeProtector(&framEpsSemaphore);
     SelectChip();
     hal::WriteTo(&framEpsSpi, Span(opcode::readData), spiTimeout);
     // FRAM expects 3-byte address in big endian

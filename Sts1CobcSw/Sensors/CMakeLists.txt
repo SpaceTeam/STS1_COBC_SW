@@ -1,4 +1,4 @@
-target_link_libraries(Sts1CobcSw_Sensors PUBLIC Sts1CobcSw_Serial)
+target_link_libraries(Sts1CobcSw_Sensors PUBLIC Sts1CobcSw_Fram Sts1CobcSw_Serial)
 if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_sources(Sts1CobcSw_Sensors PRIVATE Eps.cpp TemperatureSensor.cpp)
     target_link_libraries(
