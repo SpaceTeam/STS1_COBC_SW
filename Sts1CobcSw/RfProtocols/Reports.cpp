@@ -197,7 +197,7 @@ auto RepositoryContentSummaryReport::DoSize() const -> std::uint16_t
 {
     return static_cast<std::uint16_t>(
         totalSerialSize<decltype(secondaryHeader_), decltype(repositoryPath_), decltype(nObjects_)>
-        + nObjects_ * totalSerialSize<FileSystemObject>);
+        + objects_.size() * totalSerialSize<FileSystemObject>);
 }
 
 

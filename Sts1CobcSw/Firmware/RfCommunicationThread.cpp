@@ -546,6 +546,7 @@ auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const &
 }
 
 
+// NOLINTNEXTLINE(*cognitive-complexity)
 auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
             RequestId const & requestId) -> void
 {
@@ -805,9 +806,11 @@ auto SendAndContinue(Payload const & report) -> void
 auto PackageAndEncode(Payload const & report) -> void
 {
     tmFrame.StartNew(pusVcid);
-    // We know that we only get reports here and that they have a valid size so AddSpacePacketTo()
-    // will never fail.
-    (void)AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
+    auto result = AddSpacePacketTo(&tmFrame.GetDataField(), normalApid, report);
+    if(result.has_error())
+    {
+        DEBUG_PRINT("Failed to package report: %s\n", ToCZString(result.error()));
+    }
     tmFrame.Finish();
     tm::Encode(tmBlock);
 }

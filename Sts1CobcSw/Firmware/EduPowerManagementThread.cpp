@@ -52,6 +52,7 @@ private:
     }
 
 
+    // NOLINTNEXTLINE(*cognitive-complexity)
     void run() override
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete

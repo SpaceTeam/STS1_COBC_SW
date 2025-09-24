@@ -14,6 +14,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                     Sts1CobcSw_FramSections
                     Sts1CobcSw_Hal
                     Sts1CobcSw_Outcome
+                    Sts1CobcSw_RodosTime
                     Sts1CobcSw_Utility
         )
     else()
