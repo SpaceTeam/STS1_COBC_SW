@@ -34,7 +34,7 @@ TEST_CASE("Parsing ProtocolDataUnit")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPduLength>{};
     buffer.resize(sts1cobcsw::pduHeaderLength);
-    buffer[0] = 0b0010'0100_b;  // Version, PDU type, direction, transmission mode, CRC flag, large
+    buffer[0] = 0b0010'0000_b;  // Version, PDU type, direction, transmission mode, CRC flag, large
                                 // file flag
     buffer[1] = 0x00_b;         // PDU data field length (high byte)
     buffer[2] = 0x01_b;         // PDU data field length (low byte)
