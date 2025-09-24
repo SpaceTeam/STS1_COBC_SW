@@ -51,6 +51,7 @@ namespace sts1cobcsw
 {
 namespace
 {
+// TODO: Maybe rework this into FinishCondition, FinishEarlyCondition, EarlyExitCondition, ...
 enum class CancelCondition : std::uint8_t
 {
     receivedFinishedPdu,
@@ -77,12 +78,21 @@ auto frame = tm::TransferFrame(std::span(encodedFrame).first<tm::transferFrameLe
 auto missingFileSegments =
     etl::vector<SegmentRequest, maxNNaksPerSequence * NakPdu::maxNSegmentRequests>{};
 
+
 // Level -1 private functions
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void;
 
 // Level -2 private functions
+//
+// TODO: Think about renaming all the Send*() functions to Publish*()
+template<typename Pdu>
+    requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
+auto Send(Pdu const & pdu,
+          EntityId sourceEntityId,
+          CancelCondition cancelCondition,
+          InterruptCondition interruptCondition = InterruptCondition::never) -> Result<void>;
 template<typename Pdu>
     requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
 auto PackageAndEncode(Pdu const & pdu, EntityId sourceEntityId) -> void;
@@ -96,6 +106,11 @@ auto CancelTransfer(auto const & pdu) -> void;
 auto AbandonTransfer() -> void;
 
 // Level -3 private functions
+auto Send(Payload const & pdu,
+          PduType pduType,
+          EntityId sourceEntityId,
+          CancelCondition cancelCondition,
+          InterruptCondition interruptCondition = InterruptCondition::never) -> Result<void>;
 auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntityId) -> void;
 auto GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>;
 auto Check(FileDirectivePdu const & fileDirectivePdu,
@@ -109,7 +124,8 @@ auto Send(fs::File const & file,
 auto SendAndWaitForAck(Payload const & pdu,
                        DirectiveCode directiveCode,
                        ConditionCode conditionCode,
-                       CancelCondition cancelCondition) -> Result<void>;
+                       CancelCondition cancelCondition,
+                       EntityId sourceEntityId) -> Result<void>;
 auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> void;
 
@@ -180,7 +196,8 @@ auto ResumeFileTransferThread() -> void
 
 namespace
 {
-// TODO: Refactor
+// The high cognitive complexity is misleading because of the OUTCOME_TRY and DEBUG_PRINT macros
+// NOLINTNEXTLINE(*cognitive-complexity)
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
     std::uint32_t theFileSize = 0;
@@ -188,24 +205,14 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
     {
         OUTCOME_TRY(auto file, fs::Open(fileTransferMetadata.sourcePath, LFS_O_RDONLY));
         OUTCOME_TRY(*fileSize, file.Size());
-
-        // TODO: Think about extracting this into a Publish(pdu, cancelCondition,
-        // interruptCondition) function
-        //
-        // Publish Metadata PDU
-        PackageAndEncode(
+        DEBUG_PRINT("Sending Metadata PDU\n");
+        OUTCOME_TRY(Send(
             MetadataPdu(
                 *fileSize, fileTransferMetadata.sourcePath, fileTransferMetadata.destinationPath),
-            cubeSatEntityId);
-        OUTCOME_TRY(SuspendUntilFrameCanBePublished(CancelCondition::receivedFinishedPdu,
-                                                    InterruptCondition::never));
-        DEBUG_PRINT("Publishing encoded frame with Metadata PDU\n");
-        encodedCfdpFrameMailbox.Overwrite(encodedFrame);
-        ResumeRfCommunicationThread();
-
+            cubeSatEntityId,
+            CancelCondition::receivedFinishedPdu));
         OUTCOME_TRY(Send(file, *fileSize));
         OUTCOME_TRY(SendAndWaitForAck(EndOfFilePdu(*fileSize)));
-
         return SendMissingDataUntilFinished(file, *fileSize);
     }(&theFileSize);
     if(result.has_value())
@@ -245,6 +252,24 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
 auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void
 {
     (void)fileTransferMetadata;
+}
+
+
+template<typename Pdu>
+    requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
+auto Send(Pdu const & pdu,
+          EntityId sourceEntityId,
+          CancelCondition cancelCondition,
+          InterruptCondition interruptCondition) -> Result<void>
+{
+    if constexpr(std::is_same_v<Pdu, FileDataPdu>)
+    {
+        return Send(pdu, fileDataPduType, sourceEntityId, cancelCondition, interruptCondition);
+    }
+    else
+    {
+        return Send(pdu, fileDirectivePduType, sourceEntityId, cancelCondition, interruptCondition);
+    }
 }
 
 
@@ -295,21 +320,23 @@ auto Send(fs::File const & file, std::uint32_t fileSize) -> Result<void>
 
 auto SendAndWaitForAck(EndOfFilePdu const & endOfFilePdu) -> Result<void>
 {
-    DEBUG_PRINT("Starting pos. acknowledgment procedure for End-of-File PDU\n");
+    DEBUG_PRINT("Starting pos. ACK procedure for EOF PDU\n");
     return SendAndWaitForAck(endOfFilePdu,
                              endOfFilePdu.directiveCode,
                              endOfFilePdu.conditionCode_,
-                             CancelCondition::receivedFinishedPdu);
+                             CancelCondition::receivedFinishedPdu,
+                             cubeSatEntityId);
 }
 
 
 auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>
 {
-    DEBUG_PRINT("Starting pos. acknowledgment procedure for Finished PDU\n");
+    DEBUG_PRINT("Starting pos. ACK procedure for Finished PDU\n");
     return SendAndWaitForAck(finishedPdu,
                              finishedPdu.directiveCode,
                              finishedPdu.conditionCode_,
-                             CancelCondition::receivedEofCancelPdu);
+                             CancelCondition::receivedEofCancelPdu,
+                             groundStationEntityId);
 }
 
 
@@ -411,6 +438,20 @@ auto AbandonTransfer() -> void
 }
 
 
+auto Send(Payload const & pdu,
+          PduType pduType,
+          EntityId sourceEntityId,
+          CancelCondition cancelCondition,
+          InterruptCondition interruptCondition) -> Result<void>
+{
+    PackageAndEncode(pdu, pduType, sourceEntityId);
+    OUTCOME_TRY(SuspendUntilFrameCanBePublished(cancelCondition, interruptCondition));
+    encodedCfdpFrameMailbox.Overwrite(encodedFrame);
+    ResumeRfCommunicationThread();
+    return outcome_v2::success();
+}
+
+
 auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntityId) -> void
 {
     frame.StartNew(cfdpVcid);
@@ -508,17 +549,15 @@ auto Send(fs::File const & file,
         OUTCOME_TRY(file.SeekAbsolute(static_cast<int>(startOffset)));
         for(auto i = startOffset; i < endOffset;)
         {
-            auto fileData =
-                std::span(buffer).first(std::min<std::size_t>(buffer.size(), fileSize - i));
+            auto chunkSize = std::min<std::size_t>(buffer.size(), fileSize - i);
+            auto fileData = std::span(buffer).first(chunkSize);
             OUTCOME_TRY(auto nBytesRead, file.Read(fileData));
             fileData = fileData.first(static_cast<unsigned>(nBytesRead));
-            PackageAndEncode(FileDataPdu(i, fileData), cubeSatEntityId);
-            OUTCOME_TRY(SuspendUntilFrameCanBePublished(CancelCondition::receivedFinishedPdu,
-                                                        interruptCondition));
-            DEBUG_PRINT("Publishing encoded frame with File Data PDU (offset = %d)\n",
-                        static_cast<int>(i));
-            encodedCfdpFrameMailbox.Overwrite(encodedFrame);
-            ResumeRfCommunicationThread();
+            DEBUG_PRINT("Sending File Data PDU (offset = %d)\n", static_cast<int>(i));
+            OUTCOME_TRY(Send(FileDataPdu(i, fileData),
+                             cubeSatEntityId,
+                             CancelCondition::receivedFinishedPdu,
+                             interruptCondition));
             i += fileData.size();
         }
     }
@@ -531,18 +570,14 @@ auto Send(fs::File const & file,
 auto SendAndWaitForAck(Payload const & pdu,
                        DirectiveCode directiveCode,
                        ConditionCode conditionCode,
-                       CancelCondition cancelCondition) -> Result<void>
+                       CancelCondition cancelCondition,
+                       EntityId sourceEntityId) -> Result<void>
 {
     // TODO: Get the fileTransferWindowEnd in there somehow
     for(auto i = 0; i < postiveAckTimerExpirationLimit; ++i)
     {
-        // Publish PDU
-        PackageAndEncode(pdu, fileDirectivePduType, cubeSatEntityId);
-        OUTCOME_TRY(SuspendUntilFrameCanBePublished(cancelCondition, InterruptCondition::never));
-        DEBUG_PRINT("Publishing encoded frame with End-Of-File or Finished PDU\n");
-        encodedCfdpFrameMailbox.Overwrite(encodedFrame);
-        ResumeRfCommunicationThread();
-        // Wait for ACK PDU
+        DEBUG_PRINT("Sending EOF or Finished PDU\n");
+        OUTCOME_TRY(Send(pdu, fileDirectivePduType, sourceEntityId, cancelCondition));
         auto ackTimerExpirationTime = CurrentRodosTime() + positiveAckTimerInterval;
         while(CurrentRodosTime() < ackTimerExpirationTime)
         {
