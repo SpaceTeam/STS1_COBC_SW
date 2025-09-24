@@ -7,3 +7,6 @@ target_compile_definitions(
 if(ENABLE_DEBUG_PRINT_STACK_USAGE)
     target_compile_definitions(Sts1CobcSw_Utility PUBLIC ENABLE_DEBUG_PRINT_STACK_USAGE)
 endif()
+if(REDIRECT_RF_OVER_UCI)
+    target_compile_definitions(Sts1CobcSw_Utility PUBLIC REDIRECT_RF_OVER_UCI)
+endif()

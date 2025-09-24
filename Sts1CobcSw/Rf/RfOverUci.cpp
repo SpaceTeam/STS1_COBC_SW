@@ -5,6 +5,7 @@
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>  // IWYU pragma: associated
+#include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
@@ -12,6 +13,8 @@
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
+
+#include <etl/vector.h>
 
 #include <array>
 #include <utility>
@@ -31,6 +34,7 @@ constexpr auto uartBaudRate = 115'200U;
 constexpr auto startOfFrame = 0x02_b;
 constexpr auto endOfFrame = std::array{0x0D_b, 0x0A_b};  // = \r\n
 constexpr auto frameDelimiterTimeout = 10 * ms;  // Timeout for writing the start or end of frame
+constexpr auto postFrameSentDelay = 50 * ms;
 
 auto uciUart = RODOS::HAL_UART(hal::uciUartIndex, hal::uciUartTxPin, hal::uciUartRxPin);
 auto rxDataRate = uartBaudRate;
@@ -109,6 +113,7 @@ auto SendAndWait(std::span<Byte const> data) -> void
     }
     auto result = [&]() -> Result<void>
     {
+        auto uciUartProtector = RODOS::ScopeProtector(&uciUartSemaphore);
         auto convolutionalCoder = sts1cobcsw::cc::ViterbiCodec{};
         auto encodedData = convolutionalCoder.Encode(data, /*flush=*/true);
         auto const txByteRate = txDataRate / 10;
@@ -118,7 +123,9 @@ auto SendAndWait(std::span<Byte const> data) -> void
             static_cast<int>(encodedData.size()) * s / txByteRate * safetyFactor + safetyMargin;
         OUTCOME_TRY(hal::WriteTo(&uciUart, Span(startOfFrame), frameDelimiterTimeout));
         OUTCOME_TRY(hal::WriteTo(&uciUart, Span(encodedData), timeout));
-        return hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout);
+        OUTCOME_TRY(hal::WriteTo(&uciUart, Span(endOfFrame), frameDelimiterTimeout));
+        SuspendFor(postFrameSentDelay);
+        return outcome_v2::success();
     }();
     if(result.has_error())
     {

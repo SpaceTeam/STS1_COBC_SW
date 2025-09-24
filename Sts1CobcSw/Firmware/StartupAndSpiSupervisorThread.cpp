@@ -131,6 +131,7 @@ auto ResumeStartupAndSpiSupervisorThread() -> void
 
 namespace
 {
+// NOLINTNEXTLINE(*cognitive-complexity)
 auto ExecuteStartupTests() -> void
 {
     // The messages are only used in DEBUG_PRINT() calls, so they are unused in release builds

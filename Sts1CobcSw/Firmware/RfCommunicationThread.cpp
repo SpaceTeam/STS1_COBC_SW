@@ -546,6 +546,7 @@ auto Handle(ReportTheAttributesOfAFileRequest const & request, RequestId const &
 }
 
 
+// NOLINTNEXTLINE(*cognitive-complexity)
 auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
             RequestId const & requestId) -> void
 {
