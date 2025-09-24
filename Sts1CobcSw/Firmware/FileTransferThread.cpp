@@ -91,6 +91,7 @@ auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
 auto Send(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto SendAndWaitForAck(EndOfFilePdu const & endOfFilePdu) -> Result<void>;
 auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>;
+auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto CancelTransfer(auto const & pdu) -> void;
 auto AbandonTransfer() -> void;
 
@@ -183,12 +184,14 @@ namespace
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
     std::uint32_t theFileSize = 0;
-    // TODO: Think about proper error handling (e.g. file system errors)
     auto result = [&](std::uint32_t * fileSize) -> Result<void>
     {
         OUTCOME_TRY(auto file, fs::Open(fileTransferMetadata.sourcePath, LFS_O_RDONLY));
         OUTCOME_TRY(*fileSize, file.Size());
 
+        // TODO: Think about extracting this into a Publish(pdu, cancelCondition,
+        // interruptCondition) function
+        //
         // Publish Metadata PDU
         PackageAndEncode(
             MetadataPdu(
@@ -203,78 +206,7 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
         OUTCOME_TRY(Send(file, *fileSize));
         OUTCOME_TRY(SendAndWaitForAck(EndOfFilePdu(*fileSize)));
 
-        // ResendMissingDataAndFinishTransfer() or HandleNak(s|Sequences)AndFinishTransfer() or
-        // HandleNaksAndWaitForFinishedPdu() or WaitForFinishedPduAndHandleNak(s|Sequences)()
-        ResumeRfCommunicationThread();  // To go into RX mode again
-        missingFileSegments.clear();
-        auto timeLimit = CurrentRodosTime() + transactionInactivityLimit;
-        for(auto nNaksInSequence = 0;;)
-        {
-            auto suspendResult = receivedPduMailbox.SuspendUntilFullOr(timeLimit);
-            if(suspendResult.has_error() and suspendResult.error() == ErrorCode::timeout)
-            {
-                if(nNaksInSequence == 0)
-                {
-                    return ErrorCode::inactivityDetected;
-                }
-                OUTCOME_TRY(SendMissingFileSegments(file, *fileSize));
-                nNaksInSequence = 0;
-                timeLimit = CurrentRodosTime() + transactionInactivityLimit;
-                continue;
-            }
-            auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
-            if(getFileDirectivePduResult.has_error())
-            {
-                continue;
-            }
-            auto & fileDirectivePdu = getFileDirectivePduResult.value();
-
-            // Handle NAK PDU
-            if(fileDirectivePdu.directiveCode == DirectiveCode::nak)
-            {
-                auto parseAsNakPduResult = ParseAsNakPdu(fileDirectivePdu.parameterField);
-                if(parseAsNakPduResult.has_error())
-                {
-                    continue;
-                }
-                ++nNaksInSequence;
-                auto & nakPdu = parseAsNakPduResult.value();
-                missingFileSegments.insert(missingFileSegments.end(),
-                                           nakPdu.segmentRequests_.begin(),
-                                           nakPdu.segmentRequests_.end());
-                auto isFinalNakInSequence =
-                    nakPdu.endOfScope_ == *fileSize or nNaksInSequence == maxNNaksPerSequence;
-                if(isFinalNakInSequence)
-                {
-                    OUTCOME_TRY(SendMissingFileSegments(file, *fileSize));
-                    nNaksInSequence = 0;
-                    timeLimit = CurrentRodosTime() + transactionInactivityLimit;
-                }
-                else
-                {
-                    timeLimit = CurrentRodosTime() + nakSequenceTimeout;
-                }
-                continue;
-            }
-
-            // Handle Finished PDU
-            if(fileDirectivePdu.directiveCode == DirectiveCode::finished)
-            {
-                auto parseAsFinishedPduResult = ParseAsFinishedPdu(fileDirectivePdu.parameterField);
-                if(parseAsFinishedPduResult.has_error())
-                {
-                    continue;
-                }
-                auto & finishedPdu = parseAsFinishedPduResult.value();
-                Acknowledge(finishedPdu.directiveCode, finishedPdu.conditionCode_);
-                if(finishedPdu.conditionCode_ != noErrorConditionCode
-                   and finishedPdu.conditionCode_ != unsupportedChecksumTypeConditionCode)
-                {
-                    return ErrorCode::fileTransferCanceled;
-                }
-                return outcome_v2::success();
-            }
-        }
+        return SendMissingDataUntilFinished(file, *fileSize);
     }(&theFileSize);
     if(result.has_value())
     {
@@ -378,6 +310,84 @@ auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>
                              finishedPdu.directiveCode,
                              finishedPdu.conditionCode_,
                              CancelCondition::receivedEofCancelPdu);
+}
+
+
+// TODO: Refactor
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>
+{
+    ResumeRfCommunicationThread();  // To go into RX mode again
+    missingFileSegments.clear();
+    // TODO: Get the fileTransferWindowEnd in there somehow
+    auto timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+    for(auto nNaksInSequence = 0;;)
+    {
+        auto suspendResult = receivedPduMailbox.SuspendUntilFullOr(timeLimit);
+        if(suspendResult.has_error() and suspendResult.error() == ErrorCode::timeout)
+        {
+            if(nNaksInSequence == 0)
+            {
+                return ErrorCode::inactivityDetected;
+            }
+            OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+            nNaksInSequence = 0;
+            timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+            continue;
+        }
+        auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
+        if(getFileDirectivePduResult.has_error())
+        {
+            continue;
+        }
+        auto & fileDirectivePdu = getFileDirectivePduResult.value();
+
+        // Handle NAK PDU
+        if(fileDirectivePdu.directiveCode == DirectiveCode::nak)
+        {
+            auto parseAsNakPduResult = ParseAsNakPdu(fileDirectivePdu.parameterField);
+            if(parseAsNakPduResult.has_error())
+            {
+                continue;
+            }
+            ++nNaksInSequence;
+            auto & nakPdu = parseAsNakPduResult.value();
+            missingFileSegments.insert(missingFileSegments.end(),
+                                       nakPdu.segmentRequests_.begin(),
+                                       nakPdu.segmentRequests_.end());
+            auto isFinalNakInSequence =
+                nakPdu.endOfScope_ == fileSize or nNaksInSequence == maxNNaksPerSequence;
+            if(isFinalNakInSequence)
+            {
+                OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+                nNaksInSequence = 0;
+                timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+            }
+            else
+            {
+                timeLimit = CurrentRodosTime() + nakSequenceTimeout;
+            }
+            continue;
+        }
+
+        // Handle Finished PDU
+        if(fileDirectivePdu.directiveCode == DirectiveCode::finished)
+        {
+            auto parseAsFinishedPduResult = ParseAsFinishedPdu(fileDirectivePdu.parameterField);
+            if(parseAsFinishedPduResult.has_error())
+            {
+                continue;
+            }
+            auto & finishedPdu = parseAsFinishedPduResult.value();
+            Acknowledge(finishedPdu.directiveCode, finishedPdu.conditionCode_);
+            if(finishedPdu.conditionCode_ != noErrorConditionCode
+               and finishedPdu.conditionCode_ != unsupportedChecksumTypeConditionCode)
+            {
+                return ErrorCode::fileTransferCanceled;
+            }
+            return outcome_v2::success();
+        }
+    }
 }
 
 
@@ -532,20 +542,17 @@ auto SendAndWaitForAck(Payload const & pdu,
         DEBUG_PRINT("Publishing encoded frame with End-Of-File or Finished PDU\n");
         encodedCfdpFrameMailbox.Overwrite(encodedFrame);
         ResumeRfCommunicationThread();
-
         // Wait for ACK PDU
         auto ackTimerExpirationTime = CurrentRodosTime() + positiveAckTimerInterval;
         while(CurrentRodosTime() < ackTimerExpirationTime)
         {
             (void)receivedPduMailbox.SuspendUntilFullOr(ackTimerExpirationTime);
-
             auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
             if(getFileDirectivePduResult.has_error())
             {
                 continue;
             }
             auto & fileDirectivePdu = getFileDirectivePduResult.value();
-
             // Check if the right ACK PDU is received
             if(fileDirectivePdu.directiveCode == DirectiveCode::ack)
             {
@@ -566,7 +573,6 @@ auto SendAndWaitForAck(Payload const & pdu,
                     return outcome_v2::success();
                 }
             }
-
             OUTCOME_TRY(Check(fileDirectivePdu, cancelCondition, InterruptCondition::never));
         }
     }
