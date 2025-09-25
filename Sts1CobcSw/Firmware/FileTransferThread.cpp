@@ -11,6 +11,7 @@
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/RfProtocols/CcsdsFileDeliveryProtocol.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
@@ -68,13 +69,13 @@ enum class InterruptCondition : std::uint8_t
 
 
 constexpr auto stackSize = 6000U;
+// TODO: Since our default data rate changed to 9600 Bd we can decrease this siginificantly to 1–2 s
 // This should be more than enough time to actually send the CFDP frame
 constexpr auto fileTransferWindowEndMargin = 5 * s;
 
 auto encodedFrame = std::array<Byte, blockLength>{};
 auto frame = tm::TransferFrame(std::span(encodedFrame).first<tm::transferFrameLength>());
 
-// TODO: Should we allow more segments than that?
 auto missingFileData =
     etl::vector<SegmentRequest, maxNNaksPerSequence * NakPdu::maxNSegmentRequests>{};
 
@@ -83,7 +84,6 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void;
 
-// TODO: Think about renaming all the Send*() functions to Publish*()
 template<typename Pdu>
     requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
 auto Send(Pdu const & pdu,
@@ -111,6 +111,12 @@ auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> vo
 
 auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto SendMissingFileData(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
+
+auto ReceiveInitialFileData(fs::File * file) -> Result<std::uint32_t>;
+auto ReceiveMissingFileData(fs::File * file) -> Result<void>;
+
+auto RequestAndReceiveMissingDataUntilFinished(fs::File * file) -> Result<void>;
+auto RequestMissingFileData() -> Result<void>;
 
 auto CancelTransfer(auto const & pdu) -> void;
 auto AbandonTransfer() -> void;
@@ -241,9 +247,55 @@ auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void
 }
 
 
+// NOLINTNEXTLINE(*cognitive-complexity)
 auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
-    (void)fileTransferMetadata;
+    auto result = [&]() -> Result<void>
+    {
+        OUTCOME_TRY(auto file,
+                    fs::Open(fileTransferMetadata.destinationPath,
+                             LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));  // NOLINT(*signed-bitwise)
+        OUTCOME_TRY(ReceiveInitialFileData(&file));
+        OUTCOME_TRY(RequestAndReceiveMissingDataUntilFinished(&file));
+        return SendAndWaitForAck(FinishedPdu(dataCompleteDeliveryCode, fileRetainedFileStatus));
+    }();
+    if(result.has_value())
+    {
+        DEBUG_PRINT("File transfer finished successfully\n");
+        fileTransferStatus.Store(FileTransferStatus::completed);
+        return;
+    }
+    if(result.error() == ErrorCode::fileTransferCanceled)
+    {
+        DEBUG_PRINT("File transfer canceled by ground station\n");
+        fileTransferStatus.Store(FileTransferStatus::canceled);
+        return;
+    }
+    DEBUG_PRINT("Error while receiving file: %s\n", ToCZString(result.error()));
+    if(IsFileSystemError(result.error()))
+    {
+        CancelTransfer(FinishedPdu(
+            filestoreRejectionConditionCode, dataIncompleteDeliveryCode, fileRejectedFileStatus));
+    }
+    if(result.error() == ErrorCode::fileSizeError)
+    {
+        CancelTransfer(FinishedPdu(
+            fileSizeErrorConditionCode, dataIncompleteDeliveryCode, fileDiscardedFileStatus));
+    }
+    else if(result.error() == ErrorCode::inactivityDetected)
+    {
+        CancelTransfer(FinishedPdu(
+            inactivityDetectedConditionCode, dataIncompleteDeliveryCode, fileDiscardedFileStatus));
+    }
+    else if(result.error() == ErrorCode::nakLimitReached)
+    {
+        CancelTransfer(FinishedPdu(
+            nakLimitReachedConditionCode, dataIncompleteDeliveryCode, fileDiscardedFileStatus));
+    }
+    else
+    {
+        AbandonTransfer();
+    }
 }
 
 
@@ -345,8 +397,6 @@ auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>
 }
 
 
-// TODO: Refactor
-// NOLINTNEXTLINE(*cognitive-complexity)
 auto SendAndWaitForAck(Payload const & pdu,
                        DirectiveCode directiveCode,
                        ConditionCode conditionCode,
@@ -474,6 +524,7 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
                 continue;
             }
             auto & finishedPdu = parseAsFinishedPduResult.value();
+            DEBUG_PRINT("Received Finished PDU\n");
             Acknowledge(finishedPdu.directiveCode, finishedPdu.conditionCode_);
             if(finishedPdu.conditionCode_ != noErrorConditionCode
                and finishedPdu.conditionCode_ != unsupportedChecksumTypeConditionCode)
@@ -495,6 +546,246 @@ auto SendMissingFileData(fs::File const & file, std::uint32_t fileSize) -> Resul
     if(sendResult.has_error() and sendResult.error() != ErrorCode::fileTransferInterrupted)
     {
         return sendResult.error();
+    }
+    return outcome_v2::success();
+}
+
+
+// TODO: Refactor
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto ReceiveInitialFileData(fs::File * file) -> Result<std::uint32_t>
+{
+    // TODO: Get the fileTransferWindowEnd in there somehow
+    auto expirationTime = CurrentRodosTime() + transactionInactivityLimit;
+    missingFileData = {
+        SegmentRequest{.startOffset = 0, .endOffset = maxFileSegmentLength}
+    };
+    while(CurrentRodosTime() < expirationTime)
+    {
+        (void)receivedPduMailbox.SuspendUntilFullOr(expirationTime);
+        if(receivedPduMailbox.IsEmpty())
+        {
+            continue;
+        }
+        // Let's be generous and reset the inactivity timer on every received PDU, not only the ones
+        // that parse correctly and are expected
+        expirationTime = CurrentRodosTime() + transactionInactivityLimit;
+        auto receivedPdu = receivedPduMailbox.Get().value();
+        // Handle File Data PDU
+        if(receivedPdu.header.pduType == fileDataPduType)
+        {
+            auto parseAsFileDataPduResult = ParseAsFileDataPdu(receivedPdu.dataField);
+            if(parseAsFileDataPduResult.has_error())
+            {
+                ResumeRfCommunicationThread();  // To go into RX mode again
+                continue;
+            }
+            auto & fileDataPdu = parseAsFileDataPduResult.value();
+            OUTCOME_TRY(auto fileSize, file->Size());
+            if(fileDataPdu.offset_ > fileSize)
+            {
+                OUTCOME_TRY(file->Resize(fileDataPdu.offset_));
+            }
+            OUTCOME_TRY(file->SeekAbsolute(static_cast<int>(fileDataPdu.offset_)));
+            OUTCOME_TRY(file->Write(fileDataPdu.fileData_));
+            DEBUG_PRINT("Wrote %d bytes at offset %d\n",
+                        static_cast<int>(fileDataPdu.fileData_.size()),
+                        static_cast<int>(fileDataPdu.offset_));
+            UpdateMissingFileData(&missingFileData, fileDataPdu);
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        // Handle File Directive PDUs
+        auto parseAsFileDirectivePduResult = ParseAsFileDirectivePdu(receivedPdu.dataField);
+        if(parseAsFileDirectivePduResult.has_error())
+        {
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        auto & fileDirectivePdu = parseAsFileDirectivePduResult.value();
+        if(fileDirectivePdu.directiveCode == DirectiveCode::metadata)
+        {
+            auto parseAsMetadataPduResult = ParseAsMetadataPdu(fileDirectivePdu.parameterField);
+            if(parseAsMetadataPduResult.has_error())
+            {
+                ResumeRfCommunicationThread();  // To go into RX mode again
+                continue;
+            }
+            DEBUG_PRINT("Received Metadata PDU\n");
+            auto fileSize = parseAsMetadataPduResult.value().fileSize_;
+            OUTCOME_TRY(file->Resize(fileSize));
+            missingFileData = {
+                SegmentRequest{.startOffset = 0, .endOffset = fileSize}
+            };
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        if(fileDirectivePdu.directiveCode == DirectiveCode::endOfFile)
+        {
+            auto parseAsEndOfFilePduResult = ParseAsEndOfFilePdu(fileDirectivePdu.parameterField);
+            if(parseAsEndOfFilePduResult.has_error())
+            {
+                ResumeRfCommunicationThread();  // To go into RX mode again
+                continue;
+            }
+            auto & endOfFilePdu = parseAsEndOfFilePduResult.value();
+            if(endOfFilePdu.conditionCode_ == unsupportedChecksumTypeConditionCode)
+            {
+                ResumeRfCommunicationThread();  // To go into RX mode again
+                continue;
+            }
+            if(endOfFilePdu.conditionCode_ == noErrorConditionCode)
+            {
+                DEBUG_PRINT("Received EOF(noError) PDU\n");
+                if(not missingFileData.empty())
+                {
+                    missingFileData.back().endOffset = endOfFilePdu.fileSize_;
+                }
+                Acknowledge(DirectiveCode::endOfFile, noErrorConditionCode);
+                return outcome_v2::success();
+            }
+            DEBUG_PRINT("Received EOF(cancel) PDU\n");
+            Acknowledge(DirectiveCode::endOfFile, endOfFilePdu.conditionCode_);
+            return ErrorCode::fileTransferCanceled;
+        }
+    }
+    return ErrorCode::inactivityDetected;
+}
+
+
+// TODO: Refactor
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto ReceiveMissingFileData(fs::File * file) -> Result<void>
+{
+    auto fileDataWasReceived = false;
+    // TODO: Get the fileTransferWindowEnd in there somehow
+    auto expirationTime = CurrentRodosTime() + nakTimerInterval;
+    while(CurrentRodosTime() < expirationTime and not missingFileData.empty())
+    {
+        (void)receivedPduMailbox.SuspendUntilFullOr(expirationTime);
+        if(receivedPduMailbox.IsEmpty())
+        {
+            continue;
+        }
+        auto receivedPdu = receivedPduMailbox.Get().value();
+        // Handle File Data PDU
+        if(receivedPdu.header.pduType == fileDataPduType)
+        {
+            auto parseAsFileDataPduResult = ParseAsFileDataPdu(receivedPdu.dataField);
+            if(parseAsFileDataPduResult.has_error())
+            {
+                ResumeRfCommunicationThread();  // To go into RX mode again
+                continue;
+            }
+            fileDataWasReceived = true;
+            auto & fileDataPdu = parseAsFileDataPduResult.value();
+            OUTCOME_TRY(auto fileSize, file->Size());
+            if(fileDataPdu.offset_ + fileDataPdu.fileData_.size() > fileSize)
+            {
+                return ErrorCode::fileSizeError;
+            }
+            OUTCOME_TRY(file->SeekAbsolute(static_cast<int>(fileDataPdu.offset_)));
+            OUTCOME_TRY(file->Write(fileDataPdu.fileData_));
+            DEBUG_PRINT("Wrote %d bytes at offset %d\n",
+                        static_cast<int>(fileDataPdu.fileData_.size()),
+                        static_cast<int>(fileDataPdu.offset_));
+            UpdateMissingFileData(&missingFileData, fileDataPdu);
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        // Handle File Directive PDUs
+        auto parseAsFileDirectivePduResult = ParseAsFileDirectivePdu(receivedPdu.dataField);
+        if(parseAsFileDirectivePduResult.has_error())
+        {
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        auto & fileDirectivePdu = parseAsFileDirectivePduResult.value();
+        if(fileDirectivePdu.directiveCode != DirectiveCode::endOfFile)
+        {
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        auto parseAsEndOfFilePduResult = ParseAsEndOfFilePdu(fileDirectivePdu.parameterField);
+        if(parseAsEndOfFilePduResult.has_error())
+        {
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        auto & endOfFilePdu = parseAsEndOfFilePduResult.value();
+        if(endOfFilePdu.conditionCode_ == unsupportedChecksumTypeConditionCode)
+        {
+            ResumeRfCommunicationThread();  // To go into RX mode again
+            continue;
+        }
+        if(endOfFilePdu.conditionCode_ == noErrorConditionCode)
+        {
+            DEBUG_PRINT("Received EOF(noError) PDU\n");
+            Acknowledge(DirectiveCode::endOfFile, noErrorConditionCode);
+            return outcome_v2::success();
+        }
+        DEBUG_PRINT("Received EOF(cancel) PDU\n");
+        Acknowledge(DirectiveCode::endOfFile, endOfFilePdu.conditionCode_);
+        return ErrorCode::fileTransferCanceled;
+    }
+    if(fileDataWasReceived)
+    {
+        return outcome_v2::success();
+    }
+    return ErrorCode::receivedNoFileData;
+}
+
+
+auto RequestAndReceiveMissingDataUntilFinished(fs::File * file) -> Result<void>
+{
+    for(auto nUnansweredMissingDataRequests = 0; nUnansweredMissingDataRequests < nakLimit;)
+    {
+        if(missingFileData.empty())
+        {
+            DEBUG_PRINT("Received all file data\n");
+            return outcome_v2::success();
+        }
+        auto requestResult = RequestMissingFileData();
+        if(requestResult.has_error())
+        {
+            if(requestResult.error() == ErrorCode::fileTransferInterrupted)
+            {
+                continue;
+            }
+            return requestResult.error();
+        }
+        DEBUG_PRINT("Waiting to receive missing file data\n");
+        auto receiveResult = ReceiveMissingFileData(file);
+        if(receiveResult.has_value())
+        {
+            continue;
+        }
+        if(receiveResult.error() == ErrorCode::receivedNoFileData)
+        {
+            DEBUG_PRINT("Received no file data\n");
+            ++nUnansweredMissingDataRequests;
+            continue;
+        }
+        return receiveResult.error();
+    }
+    return ErrorCode::nakLimitReached;
+}
+
+
+auto RequestMissingFileData() -> Result<void>
+{
+    for(auto i = 0U; i < missingFileData.size(); i += NakPdu::maxNSegmentRequests)
+    {
+        auto chunkSize =
+            std::min<std::size_t>(NakPdu::maxNSegmentRequests, missingFileData.size() - i);
+        auto chunk = std::span(missingFileData).subspan(i, chunkSize);
+        DEBUG_PRINT("Sending NAK PDU with segment requests [%d, %d)\n",
+                    static_cast<unsigned>(i),
+                    static_cast<unsigned>(i + chunkSize));
+        OUTCOME_TRY(Send(NakPdu(NakPdu::SegmentRequests(chunk.begin(), chunk.end())),
+                         groundStationEntityId,
+                         CancelCondition::receivedEofCancelPdu,
+                         InterruptCondition::receivedEofNoErrorPdu));
     }
     return outcome_v2::success();
 }
@@ -539,11 +830,8 @@ auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntit
 {
     frame.StartNew(cfdpVcid);
     // We know that we only get PDUs here and that they have a valid size so AddPduTo() never fails
-    (void)AddPduTo(&frame.GetDataField(),
-                   pduType,
-                   sourceEntityId,
-                   persistentVariables.Load<"transactionSequenceNumber">(),
-                   pdu);
+    (void)AddPduTo(
+        &frame.GetDataField(), pduType, sourceEntityId, transactionSequenceNumber.Load(), pdu);
     frame.Finish();
     tm::Encode(encodedFrame);
 }
@@ -622,6 +910,7 @@ auto Check(FileDirectivePdu const & fileDirectivePdu,
         if(interruptCondition == InterruptCondition::receivedEofNoErrorPdu
            and endOfFilePdu.conditionCode_ == noErrorConditionCode)
         {
+            Acknowledge(endOfFilePdu.directiveCode, endOfFilePdu.conditionCode_);
             return ErrorCode::fileTransferInterrupted;
         }
         if(cancelCondition == CancelCondition::receivedEofCancelPdu

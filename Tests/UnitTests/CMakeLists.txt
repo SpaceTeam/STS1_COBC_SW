@@ -96,6 +96,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     catch_discover_tests(Sts1CobcSwTests_Blake2s)
 
+    add_test_program(CcsdsFileDeliveryProtocol)
+    target_link_libraries(
+        Sts1CobcSwTests_CcsdsFileDeliveryProtocol PRIVATE Catch2::Catch2WithMain etl::etl
+                                                          Sts1CobcSw_RfProtocols Sts1CobcSw_Serial
+    )
+    catch_discover_tests(Sts1CobcSwTests_CcsdsFileDeliveryProtocol)
+
     add_test_program(ChannelCoding)
     target_link_libraries(
         Sts1CobcSwTests_ChannelCoding PRIVATE etl::etl Sts1CobcSw_ChannelCoding Sts1CobcSw_Outcome

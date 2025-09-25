@@ -251,14 +251,15 @@ public:
          - totalSerialSize<DirectiveCode, std::uint32_t, std::uint32_t>)
         / totalSerialSize<SegmentRequest>;
 
+    using SegmentRequests = etl::vector<SegmentRequest, NakPdu::maxNSegmentRequests>;
+
     NakPdu() = default;
-    explicit NakPdu(
-        etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentRequests) noexcept;
+    explicit NakPdu(SegmentRequests const & segmentRequests) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     std::uint32_t startOfScope_ = 0;
     std::uint32_t endOfScope_ = 0;
-    etl::vector<SegmentRequest, maxNSegmentRequests> segmentRequests_;
+    SegmentRequests segmentRequests_;
     // NOLINTEND(readability-identifier-naming)
 
 
@@ -275,7 +276,7 @@ inline constexpr auto invalidTransmissionModeConditionCode = ConditionCode(3);
 inline constexpr auto filestoreRejectionConditionCode = ConditionCode(4);
 inline constexpr auto fileChecksumFailureConditionCode = ConditionCode(5);
 inline constexpr auto fileSizeErrorConditionCode = ConditionCode(6);
-inline constexpr auto nackLimitReachedConditionCode = ConditionCode(7);
+inline constexpr auto nakLimitReachedConditionCode = ConditionCode(7);
 inline constexpr auto inactivityDetectedConditionCode = ConditionCode(8);
 inline constexpr auto invalidFileStructureConditionCode = ConditionCode(9);
 inline constexpr auto checkLimitReachedConditionCode = ConditionCode(10);

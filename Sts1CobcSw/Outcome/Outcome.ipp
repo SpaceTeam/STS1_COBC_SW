@@ -160,10 +160,16 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "fileTransferCanceled";
         case ErrorCode::positiveAckLimitReached:
             return "positiveAckLimitReached";
+        case ErrorCode::fileSizeError:
+            return "fileSizeError";
+        case ErrorCode::nakLimitReached:
+            return "nakLimitReached";
         case ErrorCode::inactivityDetected:
             return "inactivityDetected";
         case ErrorCode::wrongPduType:
             return "wrongPduType";
+        case ErrorCode::receivedNoFileData:
+            return "receivedNoFileData";
         // Firmware
         case ErrorCode::misaligned:
             return "misaligned";
