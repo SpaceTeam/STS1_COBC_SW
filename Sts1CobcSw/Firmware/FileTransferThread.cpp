@@ -75,7 +75,7 @@ auto encodedFrame = std::array<Byte, blockLength>{};
 auto frame = tm::TransferFrame(std::span(encodedFrame).first<tm::transferFrameLength>());
 
 // TODO: Should we allow more segments than that?
-auto missingFileSegments =
+auto missingFileData =
     etl::vector<SegmentRequest, maxNNaksPerSequence * NakPdu::maxNSegmentRequests>{};
 
 
@@ -110,7 +110,7 @@ auto SendAndWaitForAck(Payload const & pdu,
 auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> void;
 
 auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
-auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
+auto SendMissingFileData(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 
 auto CancelTransfer(auto const & pdu) -> void;
 auto AbandonTransfer() -> void;
@@ -413,7 +413,7 @@ auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> vo
 auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>
 {
     ResumeRfCommunicationThread();  // To go into RX mode again
-    missingFileSegments.clear();
+    missingFileData.clear();
     // TODO: Get the fileTransferWindowEnd in there somehow
     auto timeLimit = CurrentRodosTime() + transactionInactivityLimit;
     for(auto nNaksInSequence = 0;;)
@@ -425,7 +425,7 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
             {
                 return ErrorCode::inactivityDetected;
             }
-            OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+            OUTCOME_TRY(SendMissingFileData(file, fileSize));
             nNaksInSequence = 0;
             timeLimit = CurrentRodosTime() + transactionInactivityLimit;
             continue;
@@ -447,14 +447,14 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
             }
             ++nNaksInSequence;
             auto & nakPdu = parseAsNakPduResult.value();
-            missingFileSegments.insert(missingFileSegments.end(),
-                                       nakPdu.segmentRequests_.begin(),
-                                       nakPdu.segmentRequests_.end());
+            missingFileData.insert(missingFileData.end(),
+                                   nakPdu.segmentRequests_.begin(),
+                                   nakPdu.segmentRequests_.end());
             auto isFinalNakInSequence =
                 nakPdu.endOfScope_ == fileSize or nNaksInSequence == maxNNaksPerSequence;
             if(isFinalNakInSequence)
             {
-                OUTCOME_TRY(SendMissingFileSegments(file, fileSize));
+                OUTCOME_TRY(SendMissingFileData(file, fileSize));
                 nNaksInSequence = 0;
                 timeLimit = CurrentRodosTime() + transactionInactivityLimit;
             }
@@ -486,12 +486,12 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
 }
 
 
-auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>
+auto SendMissingFileData(fs::File const & file, std::uint32_t fileSize) -> Result<void>
 {
-    DEBUG_PRINT("Sending %d missing file segments\n", static_cast<int>(missingFileSegments.size()));
+    DEBUG_PRINT("Sending %d missing file data\n", static_cast<int>(missingFileData.size()));
     (void)encodedCfdpFrameMailbox.Get();  // Empty the mailbox to immediately send the new data
-    auto sendResult = Send(file, fileSize, missingFileSegments, InterruptCondition::receivedNakPdu);
-    missingFileSegments.clear();
+    auto sendResult = Send(file, fileSize, missingFileData, InterruptCondition::receivedNakPdu);
+    missingFileData.clear();
     if(sendResult.has_error() and sendResult.error() != ErrorCode::fileTransferInterrupted)
     {
         return sendResult.error();
