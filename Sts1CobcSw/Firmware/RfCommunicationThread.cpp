@@ -326,7 +326,8 @@ auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
 {
     auto transferStatus = fileTransferStatus.Load();
     if(transferStatus != FileTransferStatus::sending
-       and transferStatus != FileTransferStatus::receiving)
+       and transferStatus != FileTransferStatus::receiving
+       and transferStatus != FileTransferStatus::canceled)
     {
         DEBUG_PRINT("Discarding CFDP frame because no file transfer is ongoing\n");
         return;
@@ -369,14 +370,14 @@ auto PduHeaderMatchesTransferInfo(ProtocolDataUnitHeader const & pduHeader,
                     static_cast<int>(transactionSequenceNumber));
         return false;
     }
-    auto directionAndIdsAreCorrect = (fileTransferStatus == FileTransferStatus::sending
-                                      and pduHeader.direction == towardsFileSenderDirection
-                                      and pduHeader.sourceEntityId == cubeSatEntityId
-                                      and pduHeader.destinationEntityId == groundStationEntityId)
-                                  or (fileTransferStatus == FileTransferStatus::receiving
-                                      and pduHeader.direction == towardsFileReceiverDirection
-                                      and pduHeader.sourceEntityId == groundStationEntityId
-                                      and pduHeader.destinationEntityId == cubeSatEntityId);
+    auto directionAndIdsAreCorrect = pduHeader.sourceEntityId != pduHeader.destinationEntityId
+                                 and (fileTransferStatus == FileTransferStatus::canceled
+                                      or (fileTransferStatus == FileTransferStatus::sending
+                                          and pduHeader.direction == towardsFileSenderDirection
+                                          and pduHeader.sourceEntityId == cubeSatEntityId)
+                                      or (fileTransferStatus == FileTransferStatus::receiving
+                                          and pduHeader.direction == towardsFileReceiverDirection
+                                          and pduHeader.sourceEntityId == groundStationEntityId));
     if(not directionAndIdsAreCorrect)
     {
         DEBUG_PRINT("Discarding CFDP frame because direction or entity IDs are wrong\n");
