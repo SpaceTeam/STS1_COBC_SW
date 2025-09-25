@@ -160,7 +160,6 @@ namespace tm
 {
 inline constexpr auto maxPduLength = transferFrameDataLength;
 inline constexpr auto maxPduDataLength = maxPduLength - pduHeaderLength;
-inline constexpr auto maxFileSegmentLength = maxPduDataLength - totalSerialSize<std::uint32_t>;
 }
 
 namespace tc

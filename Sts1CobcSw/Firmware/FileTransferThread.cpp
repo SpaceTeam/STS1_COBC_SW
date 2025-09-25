@@ -357,7 +357,7 @@ auto Send(fs::File const & file,
           std::span<SegmentRequest const> segments,
           InterruptCondition interruptCondition) -> Result<void>
 {
-    auto buffer = std::array<Byte, tm::maxFileSegmentLength>{};
+    auto buffer = std::array<Byte, maxFileSegmentLength>{};
     for(auto && segment : segments)
     {
         auto endOffset = std::min(segment.endOffset, fileSize);
