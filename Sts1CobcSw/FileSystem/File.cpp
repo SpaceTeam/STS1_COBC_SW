@@ -70,6 +70,29 @@ auto Open(Path const & path, unsigned int flags) -> Result<File>
 }
 
 
+auto File::Resize(std::size_t newSize) -> Result<void>
+{
+    if(not persistentVariables.Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_WRONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto error = lfs_file_truncate(&lfs, &lfsFile_, newSize);
+    if(error < 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    return outcome_v2::success();
+}
+
+
 auto File::SeekAbsolute(int offset) const -> Result<int>
 {
     return Seek(offset, LFS_SEEK_SET);

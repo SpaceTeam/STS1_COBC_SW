@@ -102,26 +102,58 @@ TEST_CASE("File system without data corruption")
     CHECK(readResult.has_error());
     CHECK(readResult.error() == ErrorCode::unsupportedOperation);
 
+    sizeResult = writeableFile.Size();
+    REQUIRE(sizeResult.has_value());
+    CHECK(sizeResult.value() == 4U);
+
+    auto resizeResult = writeableFile.Resize(100);
+    REQUIRE(resizeResult.has_value());
+
+    sizeResult = writeableFile.Size();
+    REQUIRE(sizeResult.has_value());
+    CHECK(sizeResult.value() == 100U);
+
     CheckIfDataIsNotInMemory(writeData);
     auto flushResult = writeableFile.Flush();
     CHECK(flushResult.has_error() == false);
     CheckIfDataIsInMemory(writeData);
 
     auto seekResult = writeableFile.SeekAbsolute(-2);
-    CHECK(seekResult.has_error());
+    REQUIRE(seekResult.has_error());
     CHECK(seekResult.error() == ErrorCode::invalidParameter);
+
+    // Seek doesn't check if the offset is beyond the file size. I don't know what happens when
+    // reading from or writing to such a position.
+    seekResult = writeableFile.SeekAbsolute(999);
+    REQUIRE(seekResult.has_value());
+    CHECK(seekResult.value() == 999);
 
     seekResult = writeableFile.SeekRelative(-3);
     CHECK(seekResult.has_error() == false);
-    CHECK(seekResult.value() == 1);
+    CHECK(seekResult.value() == 996);
+
+    seekResult = writeableFile.SeekAbsolute(100);
+    REQUIRE(seekResult.has_value());
+    CHECK(seekResult.value() == 100);
+
+    writeResult = writeableFile.Write(Span(0x12_b));
+    CHECK(writeResult.has_value());
+    CHECK(writeResult.value() == 1);
+
+    sizeResult = writeableFile.Size();
+    REQUIRE(sizeResult.has_value());
+    CHECK(sizeResult.value() == 101U);
 
     seekResult = writeableFile.SeekAbsolute(3);
-    CHECK(seekResult.has_error() == false);
+    REQUIRE(seekResult.has_value());
     CHECK(seekResult.value() == 3);
 
     writeResult = writeableFile.Write(Span(0x12_b));
     CHECK(writeResult.has_value());
     CHECK(writeResult.value() == 1);
+
+    flushResult = writeableFile.Flush();
+    CHECK(flushResult.has_error() == false);
 
     auto removeResult = fs::Remove(filePath);
     CHECK(removeResult.has_error());
@@ -167,13 +199,13 @@ TEST_CASE("File system without data corruption")
     CHECK(entry.size == 0U);
     ++dirIterator;
 
-    // Entry 3: 4 B, "MyFile"
+    // Entry 3: 101 B, "MyFile"
     entryResult = *dirIterator;
     CHECK(entryResult.has_error() == false);
     entry = entryResult.value();
     CHECK(entry.type == fs::EntryType::file);
     CHECK(entry.name == "MyFile");
-    CHECK(entry.size == 4U);
+    CHECK(entry.size == 101U);
 
     auto dirIteratorCopy = dirIterator;
     ++dirIterator;
@@ -184,14 +216,14 @@ TEST_CASE("File system without data corruption")
     CHECK(entryResult.error() == ErrorCode::unsupportedOperation);
     CHECK(dirIterator == dirIterator.end());
 
-    // The copied iterator should still be at entry 3: 4 B, "MyFile"
+    // The copied iterator should still be at entry 3: 101 B, "MyFile"
     CHECK(dirIteratorCopy != dirIterator.end());
     entryResult = *dirIteratorCopy;
     CHECK(entryResult.has_error() == false);
     entry = entryResult.value();
     CHECK(entry.type == fs::EntryType::file);
     CHECK(entry.name == "MyFile");
-    CHECK(entry.size == 4U);
+    CHECK(entry.size == 101U);
 
     auto dirIteratorCopy2 = dirIteratorCopy;
     CHECK(dirIteratorCopy2 == dirIteratorCopy);
@@ -233,7 +265,7 @@ TEST_CASE("File system without data corruption")
 
     sizeResult = readableFile.Size();
     CHECK(sizeResult.has_value());
-    CHECK(sizeResult.value() == 4U);
+    CHECK(sizeResult.value() == 101U);
 
     readResult = readableFile.Read(Span(&readData));
     CHECK(readResult.has_value());
@@ -244,15 +276,15 @@ TEST_CASE("File system without data corruption")
     CHECK(seekResult.has_error() == false);
     CHECK(seekResult.value() == 3);
 
-    seekResult = readableFile.SeekAbsolute(2);
+    seekResult = readableFile.SeekAbsolute(100);
     CHECK(seekResult.has_error() == false);
-    CHECK(seekResult.value() == 2);
+    CHECK(seekResult.value() == 100);
 
     readData = {};
     readResult = readableFile.Read(Span(&readData));
     CHECK(readResult.has_value());
-    CHECK(readResult.value() == 2);
-    CHECK(readData == (std::array{0xCC_b, 0x12_b, 0x00_b, 0x00_b}));
+    CHECK(readResult.value() == 1);
+    CHECK(readData == (std::array{0x12_b, 0x00_b, 0x00_b, 0x00_b}));
 
     // Write() should fail since the file is only opened for reading
     writeResult = readableFile.Write(Span(writeData));
