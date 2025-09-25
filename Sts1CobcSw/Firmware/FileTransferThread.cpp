@@ -79,13 +79,10 @@ auto missingFileSegments =
     etl::vector<SegmentRequest, maxNNaksPerSequence * NakPdu::maxNSegmentRequests>{};
 
 
-// Level -1 private functions
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void;
 
-// Level -2 private functions
-//
 // TODO: Think about renaming all the Send*() functions to Publish*()
 template<typename Pdu>
     requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
@@ -93,41 +90,42 @@ auto Send(Pdu const & pdu,
           EntityId sourceEntityId,
           CancelCondition cancelCondition,
           InterruptCondition interruptCondition = InterruptCondition::never) -> Result<void>;
-template<typename Pdu>
-    requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
-auto PackageAndEncode(Pdu const & pdu, EntityId sourceEntityId) -> void;
-auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
-                                     InterruptCondition interruptCondition) -> Result<void>;
-auto Send(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
-auto SendAndWaitForAck(EndOfFilePdu const & endOfFilePdu) -> Result<void>;
-auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>;
-auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
-auto CancelTransfer(auto const & pdu) -> void;
-auto AbandonTransfer() -> void;
-
-// Level -3 private functions
 auto Send(Payload const & pdu,
           PduType pduType,
           EntityId sourceEntityId,
           CancelCondition cancelCondition,
           InterruptCondition interruptCondition = InterruptCondition::never) -> Result<void>;
-auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntityId) -> void;
-auto GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>;
-auto Check(FileDirectivePdu const & fileDirectivePdu,
-           CancelCondition cancelCondition,
-           InterruptCondition interruptCondition) -> Result<void>;
-auto SuspendUntilFileTransferWindowIsOpen() -> void;
+auto Send(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto Send(fs::File const & file,
           std::uint32_t fileSize,
           std::span<SegmentRequest const> segments,
           InterruptCondition interruptCondition) -> Result<void>;
+auto SendAndWaitForAck(EndOfFilePdu const & endOfFilePdu) -> Result<void>;
+auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>;
 auto SendAndWaitForAck(Payload const & pdu,
                        DirectiveCode directiveCode,
                        ConditionCode conditionCode,
                        CancelCondition cancelCondition,
                        EntityId sourceEntityId) -> Result<void>;
-auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> void;
+
+auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
+auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
+
+auto CancelTransfer(auto const & pdu) -> void;
+auto AbandonTransfer() -> void;
+
+template<typename Pdu>
+    requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
+auto PackageAndEncode(Pdu const & pdu, EntityId sourceEntityId) -> void;
+auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntityId) -> void;
+auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
+                                     InterruptCondition interruptCondition) -> Result<void>;
+auto SuspendUntilFileTransferWindowIsOpen() -> void;
+auto GetReceivedFileDirectivePdu() -> Result<FileDirectivePdu>;
+auto Check(FileDirectivePdu const & fileDirectivePdu,
+           CancelCondition cancelCondition,
+           InterruptCondition interruptCondition) -> Result<void>;
 
 
 class FileTransferThread : public RODOS::StaticThread<stackSize>
@@ -273,38 +271,16 @@ auto Send(Pdu const & pdu,
 }
 
 
-template<typename Pdu>
-    requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
-auto PackageAndEncode(Pdu const & pdu, EntityId sourceEntityId) -> void
+auto Send(Payload const & pdu,
+          PduType pduType,
+          EntityId sourceEntityId,
+          CancelCondition cancelCondition,
+          InterruptCondition interruptCondition) -> Result<void>
 {
-    if constexpr(std::is_same_v<Pdu, FileDataPdu>)
-    {
-        PackageAndEncode(pdu, fileDataPduType, sourceEntityId);
-    }
-    else
-    {
-        PackageAndEncode(pdu, fileDirectivePduType, sourceEntityId);
-    }
-}
-
-
-auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
-                                     InterruptCondition interruptCondition) -> Result<void>
-{
-    // TODO: We do not check the received PDUs if the encodedCfdpFrameMailbox is not full
-    while(encodedCfdpFrameMailbox.IsFull())
-    {
-        // TODO: Think about the correct reactivation time for all suspend functions
-        (void)encodedCfdpFrameMailbox.SuspendUntilEmptyOr(endOfTime);
-        auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
-        if(getFileDirectivePduResult.has_error())
-        {
-            continue;
-        }
-        auto & fileDirectivePdu = getFileDirectivePduResult.value();
-        OUTCOME_TRY(Check(fileDirectivePdu, cancelCondition, interruptCondition));
-    }
-    SuspendUntilFileTransferWindowIsOpen();
+    PackageAndEncode(pdu, pduType, sourceEntityId);
+    OUTCOME_TRY(SuspendUntilFrameCanBePublished(cancelCondition, interruptCondition));
+    encodedCfdpFrameMailbox.Overwrite(encodedFrame);
+    ResumeRfCommunicationThread();
     return outcome_v2::success();
 }
 
@@ -315,6 +291,35 @@ auto Send(fs::File const & file, std::uint32_t fileSize) -> Result<void>
                 fileSize,
                 Span(SegmentRequest{.startOffset = 0, .endOffset = fileSize}),
                 InterruptCondition::never);
+}
+
+
+auto Send(fs::File const & file,
+          std::uint32_t fileSize,
+          std::span<SegmentRequest const> segments,
+          InterruptCondition interruptCondition) -> Result<void>
+{
+    auto buffer = std::array<Byte, maxFileSegmentLength>{};
+    for(auto && segment : segments)
+    {
+        auto endOffset = std::min(segment.endOffset, fileSize);
+        auto startOffset = std::min(segment.startOffset, endOffset);
+        OUTCOME_TRY(file.SeekAbsolute(static_cast<int>(startOffset)));
+        for(auto i = startOffset; i < endOffset;)
+        {
+            auto chunkSize = std::min<std::size_t>(buffer.size(), fileSize - i);
+            auto fileData = std::span(buffer).first(chunkSize);
+            OUTCOME_TRY(auto nBytesRead, file.Read(fileData));
+            fileData = fileData.first(static_cast<unsigned>(nBytesRead));
+            DEBUG_PRINT("Sending File Data PDU (offset = %d)\n", static_cast<int>(i));
+            OUTCOME_TRY(Send(FileDataPdu(i, fileData),
+                             cubeSatEntityId,
+                             CancelCondition::receivedFinishedPdu,
+                             interruptCondition));
+            i += fileData.size();
+        }
+    }
+    return outcome_v2::success();
 }
 
 
@@ -337,6 +342,69 @@ auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>
                              finishedPdu.conditionCode_,
                              CancelCondition::receivedEofCancelPdu,
                              groundStationEntityId);
+}
+
+
+// TODO: Refactor
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto SendAndWaitForAck(Payload const & pdu,
+                       DirectiveCode directiveCode,
+                       ConditionCode conditionCode,
+                       CancelCondition cancelCondition,
+                       EntityId sourceEntityId) -> Result<void>
+{
+    // TODO: Get the fileTransferWindowEnd in there somehow
+    for(auto i = 0; i < postiveAckTimerExpirationLimit; ++i)
+    {
+        DEBUG_PRINT("Sending EOF or Finished PDU\n");
+        OUTCOME_TRY(Send(pdu, fileDirectivePduType, sourceEntityId, cancelCondition));
+        auto ackTimerExpirationTime = CurrentRodosTime() + positiveAckTimerInterval;
+        while(CurrentRodosTime() < ackTimerExpirationTime)
+        {
+            (void)receivedPduMailbox.SuspendUntilFullOr(ackTimerExpirationTime);
+            auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
+            if(getFileDirectivePduResult.has_error())
+            {
+                continue;
+            }
+            auto & fileDirectivePdu = getFileDirectivePduResult.value();
+            // Check if the right ACK PDU is received
+            if(fileDirectivePdu.directiveCode == DirectiveCode::ack)
+            {
+                auto parseAsAckPduResult = ParseAsAckPdu(fileDirectivePdu.parameterField);
+                if(parseAsAckPduResult.has_error())
+                {
+                    continue;
+                }
+                auto & ackPdu = parseAsAckPduResult.value();
+                auto acknowledgedPduDirectiveCode =
+                    DirectiveCode(ackPdu.acknowledgedPduDirectiveCode_.ToUnderlying());
+                auto pduIsAcknowledged = acknowledgedPduDirectiveCode == directiveCode
+                                     and ackPdu.conditionCode_ == conditionCode
+                                     and ackPdu.transactionStatus_ == activeTransactionStatus;
+                if(pduIsAcknowledged)
+                {
+                    DEBUG_PRINT("Received correct ACK PDU\n");
+                    return outcome_v2::success();
+                }
+            }
+            OUTCOME_TRY(Check(fileDirectivePdu, cancelCondition, InterruptCondition::never));
+        }
+    }
+    return ErrorCode::positiveAckLimitReached;
+}
+
+
+auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> void
+{
+    auto sourceEndityId =
+        directiveCode == DirectiveCode::finished ? cubeSatEntityId : groundStationEntityId;
+    PackageAndEncode(AckPdu(directiveCode, conditionCode, activeTransactionStatus), sourceEndityId);
+    (void)encodedCfdpFrameMailbox.Get();  // Empty the mailbox
+    SuspendUntilFileTransferWindowIsOpen();
+    DEBUG_PRINT("Sending ACK PDU\n");
+    encodedCfdpFrameMailbox.Overwrite(encodedFrame);
+    ResumeRfCommunicationThread();  // Immediately send the PDU
 }
 
 
@@ -418,6 +486,20 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
 }
 
 
+auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>
+{
+    DEBUG_PRINT("Sending %d missing file segments\n", static_cast<int>(missingFileSegments.size()));
+    (void)encodedCfdpFrameMailbox.Get();  // Empty the mailbox to immediately send the new data
+    auto sendResult = Send(file, fileSize, missingFileSegments, InterruptCondition::receivedNakPdu);
+    missingFileSegments.clear();
+    if(sendResult.has_error() and sendResult.error() != ErrorCode::fileTransferInterrupted)
+    {
+        return sendResult.error();
+    }
+    return outcome_v2::success();
+}
+
+
 auto CancelTransfer(auto const & pdu) -> void
 {
     DEBUG_PRINT("  -> canceling transfer\n");
@@ -438,17 +520,18 @@ auto AbandonTransfer() -> void
 }
 
 
-auto Send(Payload const & pdu,
-          PduType pduType,
-          EntityId sourceEntityId,
-          CancelCondition cancelCondition,
-          InterruptCondition interruptCondition) -> Result<void>
+template<typename Pdu>
+    requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
+auto PackageAndEncode(Pdu const & pdu, EntityId sourceEntityId) -> void
 {
-    PackageAndEncode(pdu, pduType, sourceEntityId);
-    OUTCOME_TRY(SuspendUntilFrameCanBePublished(cancelCondition, interruptCondition));
-    encodedCfdpFrameMailbox.Overwrite(encodedFrame);
-    ResumeRfCommunicationThread();
-    return outcome_v2::success();
+    if constexpr(std::is_same_v<Pdu, FileDataPdu>)
+    {
+        PackageAndEncode(pdu, fileDataPduType, sourceEntityId);
+    }
+    else
+    {
+        PackageAndEncode(pdu, fileDirectivePduType, sourceEntityId);
+    }
 }
 
 
@@ -463,6 +546,37 @@ auto PackageAndEncode(Payload const & pdu, PduType pduType, EntityId sourceEntit
                    pdu);
     frame.Finish();
     tm::Encode(encodedFrame);
+}
+
+
+auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
+                                     InterruptCondition interruptCondition) -> Result<void>
+{
+    // TODO: We do not check the received PDUs if the encodedCfdpFrameMailbox is not full
+    while(encodedCfdpFrameMailbox.IsFull())
+    {
+        // TODO: Think about the correct reactivation time for all suspend functions
+        (void)encodedCfdpFrameMailbox.SuspendUntilEmptyOr(endOfTime);
+        auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
+        if(getFileDirectivePduResult.has_error())
+        {
+            continue;
+        }
+        auto & fileDirectivePdu = getFileDirectivePduResult.value();
+        OUTCOME_TRY(Check(fileDirectivePdu, cancelCondition, interruptCondition));
+    }
+    SuspendUntilFileTransferWindowIsOpen();
+    return outcome_v2::success();
+}
+
+
+auto SuspendUntilFileTransferWindowIsOpen() -> void
+{
+    while(CurrentRodosTime()
+          > persistentVariables.Load<"fileTransferWindowEnd">() + fileTransferWindowEndMargin)
+    {
+        SuspendUntil(endOfTime);
+    }
 }
 
 
@@ -523,122 +637,6 @@ auto Check(FileDirectivePdu const & fileDirectivePdu,
         return ErrorCode::fileTransferInterrupted;
     }
     return outcome_v2::success();
-}
-
-
-auto SuspendUntilFileTransferWindowIsOpen() -> void
-{
-    while(CurrentRodosTime()
-          > persistentVariables.Load<"fileTransferWindowEnd">() + fileTransferWindowEndMargin)
-    {
-        SuspendUntil(endOfTime);
-    }
-}
-
-
-auto Send(fs::File const & file,
-          std::uint32_t fileSize,
-          std::span<SegmentRequest const> segments,
-          InterruptCondition interruptCondition) -> Result<void>
-{
-    auto buffer = std::array<Byte, maxFileSegmentLength>{};
-    for(auto && segment : segments)
-    {
-        auto endOffset = std::min(segment.endOffset, fileSize);
-        auto startOffset = std::min(segment.startOffset, endOffset);
-        OUTCOME_TRY(file.SeekAbsolute(static_cast<int>(startOffset)));
-        for(auto i = startOffset; i < endOffset;)
-        {
-            auto chunkSize = std::min<std::size_t>(buffer.size(), fileSize - i);
-            auto fileData = std::span(buffer).first(chunkSize);
-            OUTCOME_TRY(auto nBytesRead, file.Read(fileData));
-            fileData = fileData.first(static_cast<unsigned>(nBytesRead));
-            DEBUG_PRINT("Sending File Data PDU (offset = %d)\n", static_cast<int>(i));
-            OUTCOME_TRY(Send(FileDataPdu(i, fileData),
-                             cubeSatEntityId,
-                             CancelCondition::receivedFinishedPdu,
-                             interruptCondition));
-            i += fileData.size();
-        }
-    }
-    return outcome_v2::success();
-}
-
-
-// TODO: Refactor
-// NOLINTNEXTLINE(*cognitive-complexity)
-auto SendAndWaitForAck(Payload const & pdu,
-                       DirectiveCode directiveCode,
-                       ConditionCode conditionCode,
-                       CancelCondition cancelCondition,
-                       EntityId sourceEntityId) -> Result<void>
-{
-    // TODO: Get the fileTransferWindowEnd in there somehow
-    for(auto i = 0; i < postiveAckTimerExpirationLimit; ++i)
-    {
-        DEBUG_PRINT("Sending EOF or Finished PDU\n");
-        OUTCOME_TRY(Send(pdu, fileDirectivePduType, sourceEntityId, cancelCondition));
-        auto ackTimerExpirationTime = CurrentRodosTime() + positiveAckTimerInterval;
-        while(CurrentRodosTime() < ackTimerExpirationTime)
-        {
-            (void)receivedPduMailbox.SuspendUntilFullOr(ackTimerExpirationTime);
-            auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
-            if(getFileDirectivePduResult.has_error())
-            {
-                continue;
-            }
-            auto & fileDirectivePdu = getFileDirectivePduResult.value();
-            // Check if the right ACK PDU is received
-            if(fileDirectivePdu.directiveCode == DirectiveCode::ack)
-            {
-                auto parseAsAckPduResult = ParseAsAckPdu(fileDirectivePdu.parameterField);
-                if(parseAsAckPduResult.has_error())
-                {
-                    continue;
-                }
-                auto & ackPdu = parseAsAckPduResult.value();
-                auto acknowledgedPduDirectiveCode =
-                    DirectiveCode(ackPdu.acknowledgedPduDirectiveCode_.ToUnderlying());
-                auto pduIsAcknowledged = acknowledgedPduDirectiveCode == directiveCode
-                                     and ackPdu.conditionCode_ == conditionCode
-                                     and ackPdu.transactionStatus_ == activeTransactionStatus;
-                if(pduIsAcknowledged)
-                {
-                    DEBUG_PRINT("Received correct ACK PDU\n");
-                    return outcome_v2::success();
-                }
-            }
-            OUTCOME_TRY(Check(fileDirectivePdu, cancelCondition, InterruptCondition::never));
-        }
-    }
-    return ErrorCode::positiveAckLimitReached;
-}
-
-
-auto SendMissingFileSegments(fs::File const & file, std::uint32_t fileSize) -> Result<void>
-{
-    DEBUG_PRINT("Sending %d missing file segments\n", static_cast<int>(missingFileSegments.size()));
-    (void)encodedCfdpFrameMailbox.Get();  // Empty the mailbox to immediately send the new data
-    auto sendResult = Send(file, fileSize, missingFileSegments, InterruptCondition::receivedNakPdu);
-    missingFileSegments.clear();
-    if(sendResult.has_error() and sendResult.error() != ErrorCode::fileTransferInterrupted)
-    {
-        return sendResult.error();
-    }
-    return outcome_v2::success();
-}
-
-
-auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> void
-{
-    auto sourceEndityId =
-        directiveCode == DirectiveCode::finished ? cubeSatEntityId : groundStationEntityId;
-    PackageAndEncode(AckPdu(directiveCode, conditionCode, activeTransactionStatus), sourceEndityId);
-    (void)encodedCfdpFrameMailbox.Get();  // Empty the mailbox
-    SuspendUntilFileTransferWindowIsOpen();
-    DEBUG_PRINT("Publishing encoded frame with ACK PDU\n");
-    encodedCfdpFrameMailbox.Overwrite(encodedFrame);
-    ResumeRfCommunicationThread();  // Immediately send the PDU
 }
 }
 }
