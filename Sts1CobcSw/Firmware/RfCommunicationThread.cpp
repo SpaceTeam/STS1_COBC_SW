@@ -681,7 +681,8 @@ auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId
     {
         edu::programQueue.PushBack(entry);
     }
-    DEBUG_PRINT("Updated EDU queue with %u entries\n", function.queueEntries.size());
+    DEBUG_PRINT("Updated EDU queue with %d entries\n",
+                static_cast<int>(function.queueEntries.size()));
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
     ResumeEduProgramQueueThread();
 }
@@ -707,7 +708,7 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
 {
     auto result = [&]() -> Result<void>
     {
-        OUTCOME_TRY(auto partition, fw::GetPartition(function.partitionId));
+        auto partition = fw::GetPartition(function.partitionId);
         OUTCOME_TRY(fw::CheckFirmwareIntegrity(partition.startAddress));
         DEBUG_PRINT("Firmware in partition %s is intact\n", ToCZString(function.partitionId));
         DEBUG_PRINT("Successfully passed firmware integrity check for partition %s\n",

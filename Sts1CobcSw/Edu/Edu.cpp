@@ -1,6 +1,7 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
 
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
 #include <Sts1CobcSw/FileSystem/File.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
@@ -10,10 +11,9 @@
 #include <Sts1CobcSw/Hal/Uart.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
-#include <Sts1CobcSw/Utility/Crc32.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <littlefs/lfs.h>

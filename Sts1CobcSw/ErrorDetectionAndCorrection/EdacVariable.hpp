@@ -1,9 +1,7 @@
 #pragma once
 
-
-#include <rodos/api/rodos-semaphore.h>
-
-#include <optional>
+#ifndef BUILD_BOOTLOADER
+    #include <rodos/api/rodos-semaphore.h>
 
 
 namespace sts1cobcsw
@@ -29,13 +27,8 @@ private:
     mutable T value1_ = T{};
     mutable T value2_ = T{};
 };
-
-
-template<typename T>
-[[nodiscard]] constexpr auto ComputeMajorityVote(T const & value0,
-                                                 T const & value1,
-                                                 T const & value2) -> std::optional<T>;
 }
 
 
-#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.ipp>  // IWYU pragma: keep
+    #include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.ipp>  // IWYU pragma: keep
+#endif

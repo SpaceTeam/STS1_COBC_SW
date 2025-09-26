@@ -1,6 +1,6 @@
 #include <Sts1CobcSw/Bootloader/Leds.hpp>
 
-#include <Sts1CobcSw/Bootloader/stm32f411xe.h>
+#include <Sts1CobcSw/CmsisDevice/stm32f411xe.h>
 
 
 namespace sts1cobcsw::leds

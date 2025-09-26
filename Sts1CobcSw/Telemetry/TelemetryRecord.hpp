@@ -1,12 +1,11 @@
 #pragma once
 
 
-#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <bit>
@@ -39,8 +38,8 @@ struct TelemetryRecord
     // BootLoader
     std::uint32_t nTotalResets = 0U;
     std::uint8_t nResetsSinceRf = 0U;
-    fw::PartitionId activeSecondaryFwPartition = fw::PartitionId::secondary1;
-    fw::PartitionId backupSecondaryFwPartition = fw::PartitionId::secondary1;
+    PartitionId activeSecondaryFwPartition = PartitionId::secondary1;
+    PartitionId backupSecondaryFwPartition = PartitionId::secondary1;
 
     // EDU
     std::uint8_t eduProgramQueueIndex = 0;

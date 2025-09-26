@@ -1,10 +1,11 @@
 # ---- Tests for Linux and the COBC ----
 
-add_test_program(Crc32)
+add_test_program(ErrorDetectionAndCorrection)
 target_link_libraries(
-    Sts1CobcSwTests_Crc32 PRIVATE Sts1CobcSw_Utility Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
+    Sts1CobcSwTests_ErrorDetectionAndCorrection
+    PRIVATE Sts1CobcSw_ErrorDetectionAndCorrection Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
 )
-add_test(NAME Crc32 COMMAND Sts1CobcSwTests_Crc32)
+add_test(NAME ErrorDetectionAndCorrection COMMAND Sts1CobcSwTests_ErrorDetectionAndCorrection)
 
 add_test_program(Fram)
 target_link_libraries(
@@ -47,6 +48,7 @@ target_link_libraries(
     Sts1CobcSwTests_FirmwareManagement
     PRIVATE etl::etl
             rodos::rodos
+            Sts1CobcSw_ErrorDetectionAndCorrection
             Sts1CobcSw_FirmwareManagement
             Sts1CobcSw_Outcome
             Sts1CobcSw_Serial
@@ -103,7 +105,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 
     add_test_program(EdacVariable)
     target_link_libraries(
-        Sts1CobcSwTests_EdacVariable PRIVATE Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+        Sts1CobcSwTests_EdacVariable PRIVATE Sts1CobcSw_ErrorDetectionAndCorrection
+                                             Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME EdacVariable COMMAND Sts1CobcSwTests_EdacVariable)
 
@@ -116,8 +119,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(FramRingArray)
     target_link_libraries(
         Sts1CobcSwTests_FramRingArray
-        PRIVATE strong_type::strong_type Sts1CobcSw_Fram Sts1CobcSw_FramSections Sts1CobcSw_Serial
-                Sts1CobcSw_Utility Sts1CobcSwTests::CatchRodos
+        PRIVATE strong_type::strong_type Sts1CobcSw_ErrorDetectionAndCorrection Sts1CobcSw_Fram
+                Sts1CobcSw_FramSections Sts1CobcSw_Serial Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME FramRingArray COMMAND Sts1CobcSwTests_FramRingArray)
 
@@ -126,10 +129,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         Sts1CobcSwTests_FramVector
         PRIVATE etl::etl
                 strong_type::strong_type
+                Sts1CobcSw_ErrorDetectionAndCorrection
                 Sts1CobcSw_Fram
                 Sts1CobcSw_FramSections
                 Sts1CobcSw_Serial
-                Sts1CobcSw_Utility
                 Sts1CobcSwTests::CatchRodos
     )
     add_test(NAME FramVector COMMAND Sts1CobcSwTests_FramVector)
@@ -160,12 +163,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME Mailbox COMMAND Sts1CobcSwTests_Mailbox)
 
-    add_test_program(MajorityVote)
-    target_link_libraries(
-        Sts1CobcSwTests_MajorityVote PRIVATE Catch2::Catch2WithMain Sts1CobcSw_Utility
-    )
-    catch_discover_tests(Sts1CobcSwTests_MajorityVote)
-
     add_test_program(Outcome)
     target_link_libraries(Sts1CobcSwTests_Outcome PRIVATE Catch2::Catch2WithMain)
     catch_discover_tests(Sts1CobcSwTests_Outcome)
@@ -173,7 +170,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     add_test_program(PersistentVariableInfo)
     target_link_libraries(
         Sts1CobcSwTests_PersistentVariableInfo
-        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_FramSections Sts1CobcSw_Serial Sts1CobcSw_Utility
+        PRIVATE Catch2::Catch2WithMain Sts1CobcSw_ErrorDetectionAndCorrection
+                Sts1CobcSw_FramSections Sts1CobcSw_Serial Sts1CobcSw_Utility
     )
     catch_discover_tests(Sts1CobcSwTests_PersistentVariableInfo)
 
@@ -225,6 +223,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
                 Sts1CobcSw_Outcome
                 Sts1CobcSw_RfProtocols
                 Sts1CobcSw_Serial
+                Sts1CobcSw_Vocabulary
                 Sts1CobcSwTests::CatchRodos
                 Sts1CobcSwTests::Utility
     )

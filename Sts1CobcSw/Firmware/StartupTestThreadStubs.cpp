@@ -1,3 +1,4 @@
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
@@ -5,7 +6,6 @@
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
-#include <Sts1CobcSw/Utility/ErrorDetectionAndCorrection.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <rodos_no_using_namespace.h>

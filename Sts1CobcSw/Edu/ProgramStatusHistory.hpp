@@ -5,7 +5,7 @@
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/Subsections.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 

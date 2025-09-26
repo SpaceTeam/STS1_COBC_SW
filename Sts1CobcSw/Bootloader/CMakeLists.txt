@@ -5,7 +5,6 @@ target_sources(
             Leds.cpp
             Main.cpp
             MemoryInitialization.cpp
-            Print.cpp
             RunFirmware.cpp
             Spi.cpp
             Startup.s
@@ -14,4 +13,13 @@ target_sources(
 target_compile_definitions(
     Sts1CobcSw_Bootloader PRIVATE $<$<CONFIG:Debug,RelWithDebInfo>:ENABLE_DEBUG_PRINT>
 )
-target_link_libraries(Sts1CobcSw_Bootloader PRIVATE Sts1CobcSw_Serial)
+target_link_libraries(
+    Sts1CobcSw_Bootloader
+    PRIVATE Sts1CobcSw_CmsisDevice
+            Sts1CobcSw_ErrorDetectionAndCorrection
+            Sts1CobcSw_FirmwareManagement
+            Sts1CobcSw_Outcome
+            Sts1CobcSw_Serial
+            Sts1CobcSw_Utility
+            Sts1CobcSw_Vocabulary
+)

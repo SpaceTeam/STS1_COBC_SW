@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
-#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
@@ -13,7 +12,7 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
-#include <Sts1CobcSw/Vocabulary/ProgramId.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/difference.hpp>
@@ -148,8 +147,8 @@ private:
                 .lastApplicationDataWasInvalid = 1,
                 .nTotalResets = 1U,
                 .nResetsSinceRf = 2U,
-                .activeSecondaryFwPartition = fw::PartitionId::secondary1,
-                .backupSecondaryFwPartition = fw::PartitionId::secondary2,
+                .activeSecondaryFwPartition = PartitionId::secondary1,
+                .backupSecondaryFwPartition = PartitionId::secondary2,
                 .eduProgramQueueIndex = 5U,
                 .programIdOfCurrentEduProgramQueueEntry = sts1cobcsw::ProgramId(6),
                 .nEduCommunicationErrors = 7U,

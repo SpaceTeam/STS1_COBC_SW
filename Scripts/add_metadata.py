@@ -33,4 +33,4 @@ if __name__ == "__main__":
     with full_image_bin_file.open('wb') as f:
         f.write(full_image)
     full_image_size = len(full_image)
-    print(f"  image size = {full_image_size:6d} B,  CRC-32 = {crc32:#010X}")
+    print(f"  image size = {full_image_size:6d} B,  CRC-32 = 0x{crc32:08X}")
