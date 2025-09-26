@@ -113,8 +113,8 @@ auto CollectTelemetryData() -> TelemetryRecord
         // BootLoader
         .nTotalResets = persistentVariables.Load<"nTotalResets">(),
         .nResetsSinceRf = persistentVariables.Load<"nResetsSinceRf">(),
-        .activeSecondaryFwPartition = persistentVariables.Load<"activeSecondaryFwPartition">(),
-        .backupSecondaryFwPartition = persistentVariables.Load<"backupSecondaryFwPartition">(),
+        .activeSecondaryFwPartitionId = persistentVariables.Load<"activeSecondaryFwPartitionId">(),
+        .backupSecondaryFwPartitionId = persistentVariables.Load<"backupSecondaryFwPartitionId">(),
         // EDU
         .eduProgramQueueIndex = persistentVariables.Load<"eduProgramQueueIndex">(),
         .programIdOfCurrentEduProgramQueueEntry = programIdOfCurrentEduProgramQueueEntry,
