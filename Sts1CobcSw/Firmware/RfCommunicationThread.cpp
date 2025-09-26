@@ -37,6 +37,7 @@
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>

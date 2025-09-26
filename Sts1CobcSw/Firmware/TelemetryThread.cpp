@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
@@ -11,6 +12,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
@@ -43,6 +45,7 @@ auto epsFaultGpioPin = hal::GpioPin(hal::epsFaultPin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 
 
+[[nodiscard]] auto CheckFirmwareIntegrities() -> bool;
 [[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
 
 
@@ -69,17 +72,76 @@ private:
         DEBUG_PRINT("Starting telemetry thread\n");
         TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
+#ifdef ENABLE_DEBUG_PRINT
+            auto checkFirmwareIntegrityStartTime = CurrentRodosTime();
+#endif
+            bool firmwareIsIntact = CheckFirmwareIntegrities();
+#ifdef ENABLE_DEBUG_PRINT
+            auto checkFirmwareIntegrityEndTime = CurrentRodosTime();
+            auto checkDurationMs = static_cast<int>(
+                (checkFirmwareIntegrityEndTime - checkFirmwareIntegrityStartTime) / ms);
+            DEBUG_PRINT("Checking firmware integrity took %3d ms\n", checkDurationMs);
+#endif
+
             persistentVariables.Store<"realTime">(CurrentRealTime());
+#ifdef ENABLE_DEBUG_PRINT
+            auto collectTelemetryDataStartTime = CurrentRodosTime();
+#endif
             auto telemetryRecord = CollectTelemetryData();
+#ifdef ENABLE_DEBUG_PRINT
+            auto collectTelemetryDataEndTime = CurrentRodosTime();
+            auto collectTelemetryDataDurationMs = static_cast<int>(
+                (collectTelemetryDataEndTime - collectTelemetryDataStartTime) / ms);
+            DEBUG_PRINT("Collecting telemetry data took %3d ms\n", collectTelemetryDataDurationMs);
+#endif
             telemetryMemory.PushBack(telemetryRecord);
             DEBUG_PRINT("Publishing telemetry record\n");
             telemetryRecordMailbox.Overwrite(telemetryRecord);
             nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
+            if(not firmwareIsIntact)
+            {
+                // Wait with the reset long enough to ensure that the beacon can be sent
+                static constexpr auto resetDelay = 5 * s;
+                DEBUG_PRINT("Firmware integrity check failed -> resetting in %d seconds\n",
+                            static_cast<int>(resetDelay / s));
+                SuspendFor(resetDelay);
+                RODOS::hwResetAndReboot();
+            }
             ResumeRfCommunicationThread();
             DEBUG_PRINT_STACK_USAGE();
         }
     }
 } telemetryThread;
+
+
+auto CheckFirmwareIntegrities() -> bool
+{
+#ifdef BUILD_FOR_USE_WITH_BOOTLOADER
+    auto primaryResult = fw::CheckFirmwareIntegrity(fw::primaryPartition.startAddress);
+    if(primaryResult.has_error())
+    {
+        DEBUG_PRINT("Failed firmware integrity check for partition %s: %s\n",
+                    ToCZString(PartitionId::primary),
+                    ToCZString(primaryResult.error()));
+        persistentVariables.Increment<"nFirmwareChecksumErrors">();
+        return false;
+    }
+    auto const secondaryPartitionId = persistentVariables.Load<"activeSecondaryFwPartitionId">();
+    auto const secondaryResult =
+        fw::CheckFirmwareIntegrity(fw::GetPartition(secondaryPartitionId).startAddress);
+    if(secondaryResult.has_error())
+    {
+        DEBUG_PRINT("Failed firmware integrity check for partition %s: %s\n",
+                    ToCZString(secondaryPartitionId),
+                    ToCZString(secondaryResult.error()));
+        persistentVariables.Increment<"nFirmwareChecksumErrors">();
+        return false;
+    }
+    return true;
+#else
+    return true;
+#endif
+}
 
 
 auto CollectTelemetryData() -> TelemetryRecord
