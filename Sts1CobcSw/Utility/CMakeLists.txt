@@ -1,7 +1,11 @@
 target_link_libraries(Sts1CobcSw_Utility INTERFACE etl::etl)
-target_compile_definitions(
-    Sts1CobcSw_Utility INTERFACE $<$<CONFIG:Debug,RelWithDebInfo>:ENABLE_DEBUG_PRINT>
-)
+if(FORCE_ENABLE_DEBUG_PRINT)
+    target_compile_definitions(Sts1CobcSw_Utility INTERFACE ENABLE_DEBUG_PRINT)
+else()
+    target_compile_definitions(
+        Sts1CobcSw_Utility INTERFACE $<$<CONFIG:Debug,RelWithDebInfo>:ENABLE_DEBUG_PRINT>
+    )
+endif()
 if(BUILD_BOOTLOADER)
     target_compile_definitions(Sts1CobcSw_Utility INTERFACE BUILD_BOOTLOADER)
 else()

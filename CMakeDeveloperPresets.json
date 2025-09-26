@@ -71,7 +71,8 @@
       "cacheVariables": {
         "HSE_VALUE": "12000000",
         "HW_VERSION": "30",
-        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON"
+        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON",
+        "FORCE_ENABLE_DEBUG_PRINT": "OFF"
       }
     },
     {
