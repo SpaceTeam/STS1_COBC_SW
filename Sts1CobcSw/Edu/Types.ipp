@@ -157,4 +157,28 @@ auto DeserializeFrom(void const * source, ResultsReadyData * data) -> void const
     source = DeserializeFrom<endianness>(source, &(data->startTime));
     return source;
 }
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, [[maybe_unused]] EnableDosimeterData * data)
+    -> void const *
+{
+    using sts1cobcsw::DeserializeFrom;
+
+    auto dummy = EnableDosimeterData::id;
+    source = DeserializeFrom<endianness>(source, &dummy);
+    return source;
+}
+
+
+template<std::endian endianness>
+auto DeserializeFrom(void const * source, [[maybe_unused]] DisableDosimeterData * data)
+    -> void const *
+{
+    using sts1cobcsw::DeserializeFrom;
+
+    auto dummy = DisableDosimeterData::id;
+    source = DeserializeFrom<endianness>(source, &dummy);
+    return source;
+}
 }

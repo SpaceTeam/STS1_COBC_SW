@@ -369,6 +369,22 @@ auto ParseStatusData() -> Result<Status>
                       .programId = resultsReadyData.programId,
                       .startTime = resultsReadyData.startTime};
     }
+    if(statusId == EnableDosimeterData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<EnableDosimeterData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        return Status{.statusType = StatusType::enableDosimeter};
+    }
+    if(statusId == DisableDosimeterData::id)
+    {
+        if(cepDataBuffer.size() != totalSerialSize<DisableDosimeterData>)
+        {
+            return ErrorCode::invalidLength;
+        }
+        return Status{.statusType = StatusType::disableDosimeter};
+    }
     return ErrorCode::invalidStatusType;
 }
 
