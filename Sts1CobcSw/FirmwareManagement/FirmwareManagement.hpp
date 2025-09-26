@@ -5,6 +5,8 @@
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>
 
+#include <strong_type/type.hpp>
+
 #include <cstdint>
 #include <span>
 
@@ -16,6 +18,10 @@ struct Partition
     std::uintptr_t startAddress = 0;
     std::uint16_t flashSector = 0;
 };
+
+
+using DestinationPartition = strong::type<Partition, struct DestinationPartitionTag>;
+using SourcePartition = strong::type<Partition, struct SourcePartitionTag>;
 
 
 struct FirmwareChecksums
@@ -51,5 +57,8 @@ auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * er
 
 [[nodiscard]] auto Erase(std::uint16_t flashSector) -> EraseResult;
 [[nodiscard]] auto Program(std::uintptr_t address, std::span<Byte const> data) -> ProgramResult;
+#ifdef BUILD_BOOTLOADER
+[[nodiscard]] auto Overwrite(DestinationPartition destination, SourcePartition source) -> bool;
+#endif
 auto Read(std::uintptr_t address, std::span<Byte> data) -> void;
 }

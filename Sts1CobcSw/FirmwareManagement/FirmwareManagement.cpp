@@ -194,7 +194,7 @@ auto Program(std::uintptr_t address, std::span<Byte const> data) -> ProgramResul
         for(auto i = 0U; i < data.size(); ++i)
         {
             auto flashStatus = Program(address + i, data[i]);
-            if(!flashStatus)
+            if(not flashStatus)
             {
     #ifdef BUILD_BOOTLOADER
                 return std::numeric_limits<std::uintptr_t>::max();
@@ -209,6 +209,29 @@ auto Program(std::uintptr_t address, std::span<Byte const> data) -> ProgramResul
     return result;
 #endif
 }
+
+
+#ifdef BUILD_BOOTLOADER
+auto Overwrite(DestinationPartition destination, SourcePartition source) -> bool
+{
+    auto eraseSucceeded = fw::Erase(value_of(destination).flashSector);
+    if(not eraseSucceeded)
+    {
+        return false;
+    }
+    auto buffer = std::array<sts1cobcsw::Byte, 4>{};
+    for(auto i = 0U; i < fw::partitionSize; i += buffer.size())
+    {
+        fw::Read(value_of(source).startAddress + i, buffer);
+        auto nextAddress = fw::Program(value_of(destination).startAddress + i, buffer);
+        if(nextAddress == std::numeric_limits<std::uintptr_t>::max())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+#endif
 
 
 auto Read(std::uintptr_t address, std::span<Byte> data) -> void
