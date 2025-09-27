@@ -72,43 +72,24 @@ private:
         DEBUG_PRINT("Starting telemetry thread\n");
         TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
-#ifdef ENABLE_DEBUG_PRINT
-            auto checkFirmwareIntegrityStartTime = CurrentRodosTime();
-#endif
-            bool firmwareIsIntact = CheckFirmwareIntegrities();
-#ifdef ENABLE_DEBUG_PRINT
-            auto checkFirmwareIntegrityEndTime = CurrentRodosTime();
-            auto checkDurationMs = static_cast<int>(
-                (checkFirmwareIntegrityEndTime - checkFirmwareIntegrityStartTime) / ms);
-            DEBUG_PRINT("Checking firmware integrity took %3d ms\n", checkDurationMs);
-#endif
-
+            auto firmwareIsIntact = CheckFirmwareIntegrities();
             persistentVariables.Store<"realTime">(CurrentRealTime());
-#ifdef ENABLE_DEBUG_PRINT
-            auto collectTelemetryDataStartTime = CurrentRodosTime();
-#endif
             auto telemetryRecord = CollectTelemetryData();
-#ifdef ENABLE_DEBUG_PRINT
-            auto collectTelemetryDataEndTime = CurrentRodosTime();
-            auto collectTelemetryDataDurationMs = static_cast<int>(
-                (collectTelemetryDataEndTime - collectTelemetryDataStartTime) / ms);
-            DEBUG_PRINT("Collecting telemetry data took %3d ms\n", collectTelemetryDataDurationMs);
-#endif
             telemetryMemory.PushBack(telemetryRecord);
             DEBUG_PRINT("Publishing telemetry record\n");
             telemetryRecordMailbox.Overwrite(telemetryRecord);
             nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
+            ResumeRfCommunicationThread();
+            DEBUG_PRINT_STACK_USAGE();
             if(not firmwareIsIntact)
             {
-                // Wait with the reset long enough to ensure that the beacon can be sent
+                // Wait with the reset long enough to ensure that the telemetry record can be sent
                 static constexpr auto resetDelay = 5 * s;
                 DEBUG_PRINT("Firmware integrity check failed -> resetting in %d seconds\n",
                             static_cast<int>(resetDelay / s));
                 SuspendFor(resetDelay);
                 RODOS::hwResetAndReboot();
             }
-            ResumeRfCommunicationThread();
-            DEBUG_PRINT_STACK_USAGE();
         }
     }
 } telemetryThread;
