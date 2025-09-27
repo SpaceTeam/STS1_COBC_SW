@@ -1,9 +1,12 @@
 #include <Sts1CobcSw/Firmware/RfCommunicationThread.hpp>
 
 #include <Sts1CobcSw/ChannelCoding/ChannelCoding.hpp>
+#include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
+#include <Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>
 #include <Sts1CobcSw/FileSystem/DirectoryIterator.hpp>
+#include <Sts1CobcSw/FileSystem/File.hpp>
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
 #include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
 #include <Sts1CobcSw/Firmware/FileTransferThread.hpp>
@@ -23,6 +26,7 @@
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
+#include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnits.hpp>
 #include <Sts1CobcSw/RfProtocols/Reports.hpp>
 #include <Sts1CobcSw/RfProtocols/Requests.hpp>
@@ -37,18 +41,22 @@
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
 
+#include <littlefs/lfs.h>
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/equality.hpp>
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/string.h>
 #include <etl/vector.h>
 
 #include <algorithm>
@@ -90,6 +98,9 @@ auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>;
 auto SendCfdpFrames() -> void;
 auto HandleReceivedData() -> void;
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void;
+auto PduHeaderMatchesTransferInfo(ProtocolDataUnitHeader const & pduHeader,
+                                  std::uint16_t transactionSequenceNumber,
+                                  FileTransferStatus fileTransferStatus) -> bool;
 auto HandleRequestFrame(tc::TransferFrame const & frame) -> void;
 auto Handle(Request const & request, RequestId const & requestId) -> void;
 
@@ -122,9 +133,12 @@ auto Handle(SetActiveFirmwareFunction const & function, RequestId const & reques
 auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void;
 auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & requestId) -> void;
 
-auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
-auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
+[[nodiscard]] auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
+[[nodiscard]] auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
 auto Set(Parameter parameter) -> void;
+[[nodiscard]] auto ValidateAndBuildFileTransferMetadata(CopyAFileRequest const & request)
+    -> Result<FileTransferMetadata>;
+[[nodiscard]] auto GetPartitionId(fs::Path const & filePath) -> Result<PartitionId>;
 
 // Must be called before SendAndContinue()
 auto SetTxDataLength(std::uint16_t nFrames) -> void;
@@ -173,7 +187,7 @@ private:
                 DEBUG_PRINT_STACK_USAGE();
                 continue;
             }
-            if(cfdpChannelAccessDataUnitMailbox.IsFull())
+            if(encodedCfdpFrameMailbox.IsFull())
             {
                 SendCfdpFrames();
                 SuspendUntilNewTelemetryRecordIsAvailable();
@@ -247,12 +261,18 @@ auto SendCfdpFrames() -> void
     {
         SetTxDataLength(nFrames);
     }
-    while(cfdpChannelAccessDataUnitMailbox.IsFull()
+    while(encodedCfdpFrameMailbox.IsFull()
           and CurrentRodosTime() + frameSendDuration < sendWindowEnd)
     {
         // This wakes up the file transfer thread if it is waiting to send a new CFDP frame
-        auto channelAccessDataUnit = cfdpChannelAccessDataUnitMailbox.Get().value();
-        SendAndContinue(channelAccessDataUnit);
+        std::ranges::copy(encodedCfdpFrameMailbox.Get().value(), tmBlock.begin());
+        // Write the attached sync marker to the beginning of the buffer every time because the
+        // constant is stored in flash and therefore not corrupted as fast as the buffer in RAM.
+        if constexpr(attachedSynchMarkerLength == attachedSynchMarker.size())
+        {
+            std::ranges::copy(attachedSynchMarker, tmBuffer.begin());
+        }
+        SendAndContinue(tmBuffer);
         // In case radiation affects the while condition, we add this additional check to break once
         // a new telemetry record is available
         if(telemetryRecordMailbox.IsFull())
@@ -260,6 +280,8 @@ auto SendCfdpFrames() -> void
             return;
         }
     }
+    // TODO: It looks like we are missing a FinalizeTransmission() are something here. Having just a
+    // SendAndContinue() seems wrong.
     ResumeFileTransferThread();
 }
 
@@ -302,6 +324,14 @@ auto HandleReceivedData() -> void
 
 auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
 {
+    auto transferStatus = fileTransferStatus.Load();
+    if(transferStatus != FileTransferStatus::sending
+       and transferStatus != FileTransferStatus::receiving
+       and transferStatus != FileTransferStatus::canceled)
+    {
+        DEBUG_PRINT("Discarding CFDP frame because no file transfer is ongoing\n");
+        return;
+    }
     auto parseAsProtocolDataUnitResult = ParseAsProtocolDataUnit(frame.dataField);
     if(parseAsProtocolDataUnitResult.has_error())
     {
@@ -310,9 +340,65 @@ auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
         return;
     }
     auto const & pdu = parseAsProtocolDataUnitResult.value();
+    auto sequenceNumber = transactionSequenceNumber.Load();
+    if(transferStatus == FileTransferStatus::receiving
+       and sequenceNumber == unknownTransactionSequenceNumber)
+    {
+        sequenceNumber = pdu.header.transactionSequenceNumber;
+        transactionSequenceNumber.Store(sequenceNumber);
+    }
+    if(not PduHeaderMatchesTransferInfo(pdu.header, sequenceNumber, transferStatus))
+    {
+        return;
+    }
     // This wakes up the file transfer thread if it is waiting for a new PDU
     receivedPduMailbox.Overwrite(pdu);
     SuspendUntilNewTelemetryRecordIsAvailable();
+}
+
+
+// NOLINTNEXTLINE(*cognitive-complexity)
+auto PduHeaderMatchesTransferInfo(ProtocolDataUnitHeader const & pduHeader,
+                                  std::uint16_t transactionSequenceNumber,
+                                  FileTransferStatus fileTransferStatus) -> bool
+{
+    if(pduHeader.transactionSequenceNumber != transactionSequenceNumber)
+    {
+        DEBUG_PRINT("Discarding CFDP frame because transaction sequence number is wrong\n");
+        DEBUG_PRINT("  received = %d, expected = %d\n",
+                    static_cast<int>(pduHeader.transactionSequenceNumber),
+                    static_cast<int>(transactionSequenceNumber));
+        return false;
+    }
+    auto directionAndIdsAreCorrect = pduHeader.sourceEntityId != pduHeader.destinationEntityId
+                                 and (fileTransferStatus == FileTransferStatus::canceled
+                                      or (fileTransferStatus == FileTransferStatus::sending
+                                          and pduHeader.direction == towardsFileSenderDirection
+                                          and pduHeader.sourceEntityId == cubeSatEntityId)
+                                      or (fileTransferStatus == FileTransferStatus::receiving
+                                          and pduHeader.direction == towardsFileReceiverDirection
+                                          and pduHeader.sourceEntityId == groundStationEntityId));
+    if(not directionAndIdsAreCorrect)
+    {
+        DEBUG_PRINT("Discarding CFDP frame because direction or entity IDs are wrong\n");
+        DEBUG_PRINT("  direction:      received = %d, expected = %d\n",
+                    value_of(pduHeader.direction).ToUnderlying(),
+                    fileTransferStatus == FileTransferStatus::sending
+                        ? value_of(towardsFileSenderDirection).ToUnderlying()
+                        : value_of(towardsFileReceiverDirection).ToUnderlying());
+        DEBUG_PRINT("  source ID:      received = 0x%02x, expected = 0x%02x\n",
+                    pduHeader.sourceEntityId.Value(),
+                    fileTransferStatus == FileTransferStatus::sending
+                        ? cubeSatEntityId.Value()
+                        : groundStationEntityId.Value());
+        DEBUG_PRINT("  destination ID: received = 0x%02x, expected = 0x%02x\n",
+                    pduHeader.destinationEntityId.Value(),
+                    fileTransferStatus == FileTransferStatus::sending
+                        ? groundStationEntityId.Value()
+                        : cubeSatEntityId.Value());
+        return false;
+    }
+    return true;
 }
 
 
@@ -603,14 +689,28 @@ auto Handle(SummaryReportTheContentOfARepositoryRequest const & request,
 
 auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> void
 {
-    // This wakes up the file transfer thread if it is waiting for a new file transfer info
-    fileTransferInfoMailbox.Overwrite(FileTransferInfo{.sourcePath = request.sourceFilePath,
-                                                       .destinationPath = request.targetFilePath});
-    DEBUG_PRINT("Successfully initiated copying file %s to %s\n",
+    auto fileTransferMetadataResult = ValidateAndBuildFileTransferMetadata(request);
+    if(fileTransferMetadataResult.has_error())
+    {
+        DEBUG_PRINT("Failed to initiate copying file '%s' to '%s': %s\n",
+                    request.sourceFilePath.c_str(),
+                    request.targetFilePath.c_str(),
+                    ToCZString(fileTransferMetadataResult.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(
+            requestId, fileTransferMetadataResult.error()));
+        return;
+    }
+    auto & fileTransferMetadata = fileTransferMetadataResult.value();
+    // This wakes up the file transfer thread if it is waiting for new file transfer metadata
+    fileTransferMetadataMailbox.Overwrite(fileTransferMetadata);
+    DEBUG_PRINT("Successfully initiated copying file '%s' to '%s'\n",
                 request.sourceFilePath.c_str(),
                 request.targetFilePath.c_str());
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
-    SuspendUntilNewTelemetryRecordIsAvailable();
+    if(fileTransferMetadata.sourceEntityId == cubeSatEntityId)
+    {
+        SuspendUntilNewTelemetryRecordIsAvailable();
+    }
 }
 
 
@@ -662,6 +762,7 @@ auto Handle(EnableFileTransferFunction const & function, RequestId const & reque
                                                        + function.durationInS * s);
     DEBUG_PRINT("Enabled file transfers for the next %" PRIu16 " s\n", function.durationInS);
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+    ResumeFileTransferThread();
 }
 
 
@@ -782,6 +883,69 @@ auto Set(Parameter parameter) -> void
 }
 
 
+auto ValidateAndBuildFileTransferMetadata(CopyAFileRequest const & request)
+    -> Result<FileTransferMetadata>
+{
+    static constexpr auto groundStationPathPrefix = "/gs/";
+    auto sourceIsCubeSat = not request.sourceFilePath.starts_with(groundStationPathPrefix);
+    auto targetIsCubeSat = not request.targetFilePath.starts_with(groundStationPathPrefix);
+    if(sourceIsCubeSat == targetIsCubeSat)
+    {
+        DEBUG_PRINT("Both source and target paths are on %s\n",
+                    sourceIsCubeSat ? "STS1" : "the ground");
+        return ErrorCode::entityIdsAreIdentical;
+    }
+    auto fileTransferMetadata = FileTransferMetadata{
+        .sourceEntityId = sourceIsCubeSat ? cubeSatEntityId : groundStationEntityId,
+        .destinationEntityId = targetIsCubeSat ? cubeSatEntityId : groundStationEntityId,
+        .fileIsFirmware = false,
+        .sourcePath = request.sourceFilePath,
+        .destinationPath = request.targetFilePath};
+    if(sourceIsCubeSat)
+    {
+        OUTCOME_TRY(fs::Open(request.sourceFilePath, LFS_O_RDONLY));
+    }
+    else
+    {
+        static constexpr auto firmwarePathPrefix = "/firmware/";
+        static auto const eduProgramFilePathLength = edu::BuildProgramFilePath(ProgramId{}).size();
+        if(request.targetFilePath.starts_with(edu::programsDirectory))
+        {
+            if(not request.targetFilePath.ends_with(".zip")
+               or request.targetFilePath.size() != eduProgramFilePathLength)
+            {
+                return ErrorCode::invalidEduProgramPath;
+            }
+        }
+        else if(request.targetFilePath.starts_with(firmwarePathPrefix))
+        {
+            OUTCOME_TRY(auto partitionId, GetPartitionId(request.targetFilePath));
+            fileTransferMetadata.destinationPartitionId = partitionId;
+            fileTransferMetadata.fileIsFirmware = true;
+        }
+        else
+        {
+            return ErrorCode::invalidCubeSatFilePath;
+        }
+    }
+    return fileTransferMetadata;
+}
+
+
+auto GetPartitionId(fs::Path const & filePath) -> Result<PartitionId>
+{
+    if(filePath == "/firmware/1")
+    {
+        return PartitionId::secondary1;
+    }
+    if(filePath == "/firmware/2")
+    {
+        return PartitionId::secondary2;
+    }
+    return ErrorCode::invalidFirmwarePath;
+}
+
+
 auto SetTxDataLength(std::uint16_t nFrames) -> void
 {
     nFramesToSend = nFrames;
@@ -815,6 +979,12 @@ auto PackageAndEncode(Payload const & report) -> void
     }
     tmFrame.Finish();
     tm::Encode(tmBlock);
+    // Write the attached sync marker to the beginning of the buffer every time because the constant
+    // is stored in flash and therefore not corrupted as fast as the buffer in RAM.
+    if constexpr(attachedSynchMarkerLength == attachedSynchMarker.size())
+    {
+        std::ranges::copy(attachedSynchMarker, tmBuffer.begin());
+    }
 }
 
 

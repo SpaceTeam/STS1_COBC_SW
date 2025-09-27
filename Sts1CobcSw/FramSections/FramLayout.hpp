@@ -65,5 +65,8 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"lastFrameSequenceNumber", std::uint8_t>,
                         PersistentVariableInfo<"lastMessageTypeId", MessageTypeIdFields>,
                         PersistentVariableInfo<"lastMessageTypeIdWasInvalid", bool>,
-                        PersistentVariableInfo<"lastApplicationDataWasInvalid", bool>>{};
+                        PersistentVariableInfo<"lastApplicationDataWasInvalid", bool>,
+                        // TODO: Find a better name to not confuse it with transactionSequenceNumber
+                        // in TopicsAndSubscribers.hpp
+                        PersistentVariableInfo<"transactionSequenceNumber", std::uint16_t>>{};
 }

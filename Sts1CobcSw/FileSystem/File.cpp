@@ -70,19 +70,42 @@ auto Open(Path const & path, unsigned int flags) -> Result<File>
 }
 
 
-auto File::SeekAbsolute(int offset) -> Result<int>
+auto File::Resize(std::size_t newSize) -> Result<void>
+{
+    if(not persistentVariables.Load<"flashIsWorking">())
+    {
+        return ErrorCode::io;
+    }
+    if(not isOpen_)
+    {
+        return ErrorCode::fileNotOpen;
+    }
+    if((openFlags_ & LFS_O_WRONLY) == 0U)
+    {
+        return ErrorCode::unsupportedOperation;
+    }
+    auto error = lfs_file_truncate(&lfs, &lfsFile_, newSize);
+    if(error < 0)
+    {
+        return static_cast<ErrorCode>(error);
+    }
+    return outcome_v2::success();
+}
+
+
+auto File::SeekAbsolute(int offset) const -> Result<int>
 {
     return Seek(offset, LFS_SEEK_SET);
 }
 
 
-auto File::SeekRelative(int offset) -> Result<int>
+auto File::SeekRelative(int offset) const -> Result<int>
 {
     return Seek(offset, LFS_SEEK_CUR);
 }
 
 
-auto File::Size() const -> Result<int>
+auto File::Size() const -> Result<std::size_t>
 {
     if(not persistentVariables.Load<"flashIsWorking">())
     {
@@ -95,7 +118,7 @@ auto File::Size() const -> Result<int>
     auto size = lfs_file_size(&lfs, &lfsFile_);
     if(size >= 0)
     {
-        return size;
+        return static_cast<std::size_t>(size);
     }
     return static_cast<ErrorCode>(size);
 }
@@ -249,7 +272,7 @@ auto File::Write(void const * buffer, std::size_t size) -> Result<int>
 }
 
 
-auto File::Seek(int offset, int whence) -> Result<int>
+auto File::Seek(int offset, int whence) const -> Result<int>
 {
     if(not persistentVariables.Load<"flashIsWorking">())
     {

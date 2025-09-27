@@ -100,9 +100,6 @@ template<>
 template<typename T>
 [[nodiscard]] auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
 auto FlushUartReceiveBuffer() -> void;
-
-auto BuildProgramFilePath(ProgramId programId) -> fs::Path;
-auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path;
 }
 
 
@@ -146,9 +143,11 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
     OUTCOME_TRY(auto fileSize, file.Size());
     if(fileSize > maxFileSize)
     {
-        DEBUG_PRINT("Program file %s is too large: %d B\n", path.c_str(), fileSize);
+        DEBUG_PRINT(
+            "Program file %s is too large: %i B\n", path.c_str(), static_cast<int>(fileSize));
         return ErrorCode::fileTooLarge;
     }
+    // TODO: Isn't something like OUTCOME_TRY(SendDataPacket(Serialize(data))); missing here?
     while(true)
     {
         cepDataBuffer.uninitialized_resize(cepDataBuffer.MAX_SIZE);
@@ -296,6 +295,43 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
     auto protector = RODOS::ScopeProtector(&semaphore);
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     return WaitForAck();
+}
+
+
+auto BuildProgramFilePath(ProgramId programId) -> fs::Path
+{
+    auto path = programsDirectory;
+    path.append("/");
+    static constexpr auto nProgramIdDigits =
+        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
+    etl::to_string(value_of(programId),
+                   path,
+                   etl::format_spec().width(nProgramIdDigits).fill('0'),
+                   /*append=*/true);
+    path.append(".zip");
+    return path;
+}
+
+
+auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
+{
+    auto path = resultsDirectory;
+    path.append("/");
+    static constexpr auto nProgramIdDigits =
+        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
+    etl::to_string(value_of(programId),
+                   path,
+                   etl::format_spec().width(nProgramIdDigits).fill('0'),
+                   /*append=*/true);
+    path.append("_");
+    static constexpr auto nStartTimeDigits =
+        std::numeric_limits<strong::underlying_type_t<RealTime>>::digits10 + 1;
+    etl::to_string(value_of(startTime),
+                   path,
+                   etl::format_spec().width(nStartTimeDigits).fill('0'),
+                   /*append=*/true);
+    path.append(".zip");
+    return path;
 }
 
 
@@ -571,43 +607,6 @@ auto FlushUartReceiveBuffer() -> void
             break;
         }
     }
-}
-
-
-auto BuildProgramFilePath(ProgramId programId) -> fs::Path
-{
-    auto path = programsDirectory;
-    path.append("/");
-    static constexpr auto nProgramIdDigits =
-        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
-    etl::to_string(value_of(programId),
-                   path,
-                   etl::format_spec().width(nProgramIdDigits).fill('0'),
-                   /*append=*/true);
-    path.append(".zip");
-    return path;
-}
-
-
-auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
-{
-    auto path = resultsDirectory;
-    path.append("/");
-    static constexpr auto nProgramIdDigits =
-        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
-    etl::to_string(value_of(programId),
-                   path,
-                   etl::format_spec().width(nProgramIdDigits).fill('0'),
-                   /*append=*/true);
-    path.append("_");
-    static constexpr auto nStartTimeDigits =
-        std::numeric_limits<strong::underlying_type_t<RealTime>>::digits10 + 1;
-    etl::to_string(value_of(startTime),
-                   path,
-                   etl::format_spec().width(nStartTimeDigits).fill('0'),
-                   /*append=*/true);
-    path.append(".zip");
-    return path;
 }
 }
 }

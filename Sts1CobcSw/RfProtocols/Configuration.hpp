@@ -175,4 +175,14 @@ inline constexpr auto maxFileSegmentLength =
 using EntityId = Id<std::uint8_t, 0x0F, 0xF0>;  // NOLINT(*magic-numbers)
 inline constexpr auto groundStationEntityId = Make<EntityId, 0x0F>();
 inline constexpr auto cubeSatEntityId = Make<EntityId, 0xF0>();
+
+// TODO: Choose proper values
+inline constexpr auto positiveAckTimerInterval = 35 * s;
+inline constexpr auto postiveAckTimerExpirationLimit = 3;
+inline constexpr auto nakTimerInterval = 35 * s;
+inline constexpr auto nakLimit = 3;
+inline constexpr auto transactionInactivityLimit = 35 * s;
+
+inline constexpr auto maxNNaksPerSequence = 4;
+inline constexpr auto nakSequenceTimeout = 5 * s;
 }
