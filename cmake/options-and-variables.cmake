@@ -29,6 +29,7 @@ option(USE_PUNCTURING "Use puncturing for convolutinal codes" OFF)
 option(DISABLE_CHANNEL_CODING "Do not encode and decode transfer frames" OFF)
 option(DISABLE_CONVOLUTIONAL_CODING "Do not use convolutionally encode transfer frames" OFF)
 option(ENABLE_DEBUG_PRINT_STACK_USAGE "Enable printing of stack usage in debug builds" OFF)
+option(FORCE_ENABLE_DEBUG_PRINT "Enable printing of debug messages even in release builds" OFF)
 
 set(HW_VERSION 30 CACHE STRING "Hardware version")
 

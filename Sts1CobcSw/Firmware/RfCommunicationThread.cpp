@@ -37,6 +37,7 @@
 #include <Sts1CobcSw/Telemetry/TelemetryMemory.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #include <Sts1CobcSw/WatchdogTimers/WatchdogTimers.hpp>
@@ -690,7 +691,7 @@ auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId
 
 auto Handle(SetActiveFirmwareFunction const & function, RequestId const & requestId) -> void
 {
-    persistentVariables.Store<"activeSecondaryFwPartition">(function.partitionId);
+    persistentVariables.Store<"activeSecondaryFwPartitionId">(function.partitionId);
     DEBUG_PRINT("Set active firmware partition to %s\n", ToCZString(function.partitionId));
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
@@ -698,7 +699,7 @@ auto Handle(SetActiveFirmwareFunction const & function, RequestId const & reques
 
 auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void
 {
-    persistentVariables.Store<"backupSecondaryFwPartition">(function.partitionId);
+    persistentVariables.Store<"backupSecondaryFwPartitionId">(function.partitionId);
     DEBUG_PRINT("Set backup firmware partition to %s\n", ToCZString(function.partitionId));
     SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }

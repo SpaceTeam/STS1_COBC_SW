@@ -8,12 +8,8 @@
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 
-#include <etl/vector.h>
-
 #include <algorithm>
-#ifdef __linux__
-    #include <array>
-#endif
+#include <array>
 #include <bit>
 #include <cassert>  // IWYU pragma: keep
 #include <cstddef>
@@ -125,16 +121,16 @@ auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * er
         return {.computed = 0U, .stored = ~0U};
     }
 
-    auto buffer = etl::vector<Byte, 128>{};  // NOLINT(*magic-numbers)
-    buffer.resize(sizeof(length));
-    Read(startAddress, Span(&buffer));
-    auto computedCrc = ComputeCrc32(Span(buffer));
+    auto buffer = std::array<Byte, 128>{};  // NOLINT(*magic-numbers)
+    auto data = std::span(buffer).first(sizeof(length));
+    Read(startAddress, data);
+    auto computedCrc = ComputeCrc32(data);
     for(auto offset = sizeof(length); offset < length;)
     {
         auto chunkSize = std::min<std::size_t>(buffer.max_size(), length - offset);
-        buffer.resize(chunkSize);
-        Read(startAddress + offset, Span(&buffer));
-        computedCrc = ComputeCrc32(computedCrc, Span(buffer));
+        data = std::span(buffer).first(chunkSize);
+        Read(startAddress + offset, data);
+        computedCrc = ComputeCrc32(computedCrc, data);
         offset += chunkSize;
     }
     Read(startAddress + length, Span(&uint32Buffer));

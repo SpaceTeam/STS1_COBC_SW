@@ -40,4 +40,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Vocabulary
                 Sts1CobcSw_WatchdogTimers
     )
+    if(BUILD_FOR_USE_WITH_BOOTLOADER)
+        target_compile_definitions(Sts1CobcSw_Firmware PRIVATE BUILD_FOR_USE_WITH_BOOTLOADER)
+    endif()
 endif()

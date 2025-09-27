@@ -390,8 +390,8 @@ auto PrintAllVariables() -> void
     // Bootloader
     PrintVariable("nTotalResets");
     PrintVariable("nResetsSinceRf");
-    PrintVariable("activeSecondaryFwPartition");
-    PrintVariable("backupSecondaryFwPartition");
+    PrintVariable("activeSecondaryFwPartitionId");
+    PrintVariable("backupSecondaryFwPartitionId");
     // Housekeeping
     PrintVariable("txIsOn");
     PrintVariable("fileTransferWindowEnd");
@@ -429,8 +429,8 @@ auto ResetAllVariables() -> void
     // Bootloader
     persistentVariables.Store<"nTotalResets">(0);
     persistentVariables.Store<"nResetsSinceRf">(0);
-    persistentVariables.Store<"activeSecondaryFwPartition">(sts1cobcsw::PartitionId::primary);
-    persistentVariables.Store<"backupSecondaryFwPartition">(sts1cobcsw::PartitionId::primary);
+    persistentVariables.Store<"activeSecondaryFwPartitionId">(sts1cobcsw::PartitionId::primary);
+    persistentVariables.Store<"backupSecondaryFwPartitionId">(sts1cobcsw::PartitionId::primary);
     // Housekeeping
     persistentVariables.Store<"txIsOn">(false);
     persistentVariables.Store<"fileTransferWindowEnd">(RodosTime(0));
@@ -477,13 +477,13 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     {
         etl::to_string(persistentVariables.Load<"nResetsSinceRf">(), value);
     }
-    else if(variable == "activeSecondaryFwPartition")
+    else if(variable == "activeSecondaryFwPartitionId")
     {
-        ToString(persistentVariables.Load<"activeSecondaryFwPartition">(), &value);
+        ToString(persistentVariables.Load<"activeSecondaryFwPartitionId">(), &value);
     }
-    else if(variable == "backupSecondaryFwPartition")
+    else if(variable == "backupSecondaryFwPartitionId")
     {
-        ToString(persistentVariables.Load<"backupSecondaryFwPartition">(), &value);
+        ToString(persistentVariables.Load<"backupSecondaryFwPartitionId">(), &value);
     }
     // Housekeeping
     else if(variable == "txIsOn")
@@ -615,14 +615,14 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     {
         WriteAndConvertFunction<"nResetsSinceRf", std::uint8_t, ParseAsUInt32>(variable, value);
     }
-    else if(variable == "activeSecondaryFwPartition")
+    else if(variable == "activeSecondaryFwPartitionId")
     {
-        WriteAndConvertFunction<"activeSecondaryFwPartition", PartitionId, ParseAsPartitionId>(
+        WriteAndConvertFunction<"activeSecondaryFwPartitionId", PartitionId, ParseAsPartitionId>(
             variable, value);
     }
-    else if(variable == "backupSecondaryFwPartition")
+    else if(variable == "backupSecondaryFwPartitionId")
     {
-        WriteAndConvertFunction<"backupSecondaryFwPartition", PartitionId, ParseAsPartitionId>(
+        WriteAndConvertFunction<"backupSecondaryFwPartitionId", PartitionId, ParseAsPartitionId>(
             variable, value);
     }
     // Housekeeping

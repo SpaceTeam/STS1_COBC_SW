@@ -23,8 +23,8 @@ auto DeserializeFrom(void const * source, TelemetryRecord * data) -> void const 
                                          &(data->padding));
     source = DeserializeFrom<endianness>(source, &(data->nTotalResets));
     source = DeserializeFrom<endianness>(source, &(data->nResetsSinceRf));
-    source = DeserializeFrom<endianness>(source, &(data->activeSecondaryFwPartition));
-    source = DeserializeFrom<endianness>(source, &(data->backupSecondaryFwPartition));
+    source = DeserializeFrom<endianness>(source, &(data->activeSecondaryFwPartitionId));
+    source = DeserializeFrom<endianness>(source, &(data->backupSecondaryFwPartitionId));
     source = DeserializeFrom<endianness>(source, &(data->eduProgramQueueIndex));
     source = DeserializeFrom<endianness>(source, &(data->programIdOfCurrentEduProgramQueueEntry));
     source = DeserializeFrom<endianness>(source, &(data->nEduCommunicationErrors));
@@ -70,8 +70,8 @@ auto SerializeTo(void * destination, TelemetryRecord const & data) -> void *
                                           data.padding);
     destination = SerializeTo<endianness>(destination, data.nTotalResets);
     destination = SerializeTo<endianness>(destination, data.nResetsSinceRf);
-    destination = SerializeTo<endianness>(destination, data.activeSecondaryFwPartition);
-    destination = SerializeTo<endianness>(destination, data.backupSecondaryFwPartition);
+    destination = SerializeTo<endianness>(destination, data.activeSecondaryFwPartitionId);
+    destination = SerializeTo<endianness>(destination, data.backupSecondaryFwPartitionId);
     destination = SerializeTo<endianness>(destination, data.eduProgramQueueIndex);
     destination = SerializeTo<endianness>(destination, data.programIdOfCurrentEduProgramQueueEntry);
     destination = SerializeTo<endianness>(destination, data.nEduCommunicationErrors);

@@ -22,7 +22,8 @@
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "BUILD_MCSS_DOCS": "OFF",
-        "USE_CCACHE": "ON"
+        "USE_CCACHE": "ON",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL": "ON"
       }
     },
     {
@@ -67,11 +68,9 @@
     {
       "name": "dev-cobc-for-bootloader-fast",
       "inherits": "dev-cobc-fast",
-      "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
-        "HSE_VALUE": "12000000",
-        "HW_VERSION": "30",
-        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON"
+        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON",
+        "FORCE_ENABLE_DEBUG_PRINT": "OFF"
       }
     },
     {

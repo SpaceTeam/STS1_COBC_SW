@@ -38,8 +38,8 @@ struct TelemetryRecord
     // BootLoader
     std::uint32_t nTotalResets = 0U;
     std::uint8_t nResetsSinceRf = 0U;
-    PartitionId activeSecondaryFwPartition = PartitionId::secondary1;
-    PartitionId backupSecondaryFwPartition = PartitionId::secondary1;
+    PartitionId activeSecondaryFwPartitionId = PartitionId::secondary1;
+    PartitionId backupSecondaryFwPartitionId = PartitionId::secondary1;
 
     // EDU
     std::uint8_t eduProgramQueueIndex = 0;
@@ -93,8 +93,8 @@ inline constexpr std::size_t serialSize<TelemetryRecord> =
     + totalSerialSize<
         // Bootloader
         decltype(TelemetryRecord::nResetsSinceRf),
-        decltype(TelemetryRecord::activeSecondaryFwPartition),
-        decltype(TelemetryRecord::backupSecondaryFwPartition),
+        decltype(TelemetryRecord::activeSecondaryFwPartitionId),
+        decltype(TelemetryRecord::backupSecondaryFwPartitionId),
         // EDU
         decltype(TelemetryRecord::eduProgramQueueIndex),
         decltype(TelemetryRecord::programIdOfCurrentEduProgramQueueEntry),

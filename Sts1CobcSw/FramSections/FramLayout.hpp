@@ -35,8 +35,8 @@ inline constexpr auto persistentVariables =
                         // Bootloader
                         PersistentVariableInfo<"nTotalResets", std::uint32_t>,
                         PersistentVariableInfo<"nResetsSinceRf", std::uint8_t>,
-                        PersistentVariableInfo<"activeSecondaryFwPartition", PartitionId>,
-                        PersistentVariableInfo<"backupSecondaryFwPartition", PartitionId>,
+                        PersistentVariableInfo<"activeSecondaryFwPartitionId", PartitionId>,
+                        PersistentVariableInfo<"backupSecondaryFwPartitionId", PartitionId>,
                         // Housekeeping
                         PersistentVariableInfo<"txIsOn", bool>,
                         PersistentVariableInfo<"fileTransferWindowEnd", RodosTime>,

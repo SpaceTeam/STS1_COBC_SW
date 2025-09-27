@@ -4,6 +4,7 @@
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/FramRingArray.hpp>
@@ -11,6 +12,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 #include <Sts1CobcSw/Sensors/Eps.hpp>
@@ -43,6 +45,7 @@ auto epsFaultGpioPin = hal::GpioPin(hal::epsFaultPin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 
 
+[[nodiscard]] auto CheckFirmwareIntegrities() -> bool;
 [[nodiscard]] auto CollectTelemetryData() -> TelemetryRecord;
 
 
@@ -69,6 +72,7 @@ private:
         DEBUG_PRINT("Starting telemetry thread\n");
         TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
+            auto firmwareIsIntact = CheckFirmwareIntegrities();
             persistentVariables.Store<"realTime">(CurrentRealTime());
             auto telemetryRecord = CollectTelemetryData();
             telemetryMemory.PushBack(telemetryRecord);
@@ -77,9 +81,48 @@ private:
             nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
             ResumeRfCommunicationThread();
             DEBUG_PRINT_STACK_USAGE();
+            if(not firmwareIsIntact)
+            {
+                // Wait with the reset long enough to ensure that the telemetry record can be sent
+                static constexpr auto resetDelay = 5 * s;
+                DEBUG_PRINT("Firmware integrity check failed -> resetting in %d seconds\n",
+                            static_cast<int>(resetDelay / s));
+                SuspendFor(resetDelay);
+                RODOS::hwResetAndReboot();
+            }
         }
     }
 } telemetryThread;
+
+
+auto CheckFirmwareIntegrities() -> bool
+{
+#ifdef BUILD_FOR_USE_WITH_BOOTLOADER
+    auto primaryResult = fw::CheckFirmwareIntegrity(fw::primaryPartition.startAddress);
+    if(primaryResult.has_error())
+    {
+        DEBUG_PRINT("Failed firmware integrity check for partition %s: %s\n",
+                    ToCZString(PartitionId::primary),
+                    ToCZString(primaryResult.error()));
+        persistentVariables.Increment<"nFirmwareChecksumErrors">();
+        return false;
+    }
+    auto const secondaryPartitionId = persistentVariables.Load<"activeSecondaryFwPartitionId">();
+    auto const secondaryResult =
+        fw::CheckFirmwareIntegrity(fw::GetPartition(secondaryPartitionId).startAddress);
+    if(secondaryResult.has_error())
+    {
+        DEBUG_PRINT("Failed firmware integrity check for partition %s: %s\n",
+                    ToCZString(secondaryPartitionId),
+                    ToCZString(secondaryResult.error()));
+        persistentVariables.Increment<"nFirmwareChecksumErrors">();
+        return false;
+    }
+    return true;
+#else
+    return true;
+#endif
+}
 
 
 auto CollectTelemetryData() -> TelemetryRecord
@@ -113,8 +156,8 @@ auto CollectTelemetryData() -> TelemetryRecord
         // BootLoader
         .nTotalResets = persistentVariables.Load<"nTotalResets">(),
         .nResetsSinceRf = persistentVariables.Load<"nResetsSinceRf">(),
-        .activeSecondaryFwPartition = persistentVariables.Load<"activeSecondaryFwPartition">(),
-        .backupSecondaryFwPartition = persistentVariables.Load<"backupSecondaryFwPartition">(),
+        .activeSecondaryFwPartitionId = persistentVariables.Load<"activeSecondaryFwPartitionId">(),
+        .backupSecondaryFwPartitionId = persistentVariables.Load<"backupSecondaryFwPartitionId">(),
         // EDU
         .eduProgramQueueIndex = persistentVariables.Load<"eduProgramQueueIndex">(),
         .programIdOfCurrentEduProgramQueueEntry = programIdOfCurrentEduProgramQueueEntry,
