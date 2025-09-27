@@ -133,6 +133,18 @@ struct ResultsReadyData
 };
 
 
+struct EnableDosimeterData
+{
+    static constexpr auto id = 0x03_b;
+};
+
+
+struct DisableDosimeterData
+{
+    static constexpr auto id = 0x04_b;
+};
+
+
 struct ResultInfo
 {
     bool eofIsReached = false;
@@ -200,6 +212,14 @@ inline constexpr std::size_t serialSize<edu::ResultsReadyData> =
                     decltype(edu::ResultsReadyData::programId),
                     decltype(edu::ResultsReadyData::startTime)>;
 
+template<>
+inline constexpr std::size_t serialSize<edu::EnableDosimeterData> =
+    totalSerialSize<decltype(edu::EnableDosimeterData::id)>;
+
+template<>
+inline constexpr std::size_t serialSize<edu::DisableDosimeterData> =
+    totalSerialSize<decltype(edu::DisableDosimeterData::id)>;
+
 
 namespace edu
 {
@@ -232,6 +252,11 @@ template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, ProgramFinishedData * data) -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, ResultsReadyData * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, EnableDosimeterData * data) -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, DisableDosimeterData * data)
+    -> void const *;
 }
 }
 
