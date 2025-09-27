@@ -161,7 +161,8 @@
       ],
       "toolchainFile": "/stm32f411.cmake",
       "cacheVariables": {
-        "HSE_VALUE": "12000000"
+        "HSE_VALUE": "12000000",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL": "ON"
       }
     },
     {
@@ -183,7 +184,8 @@
       ],
       "toolchainFile": "${sourceDir}/Sts1CobcSw/Bootloader/Toolchain.cmake",
       "cacheVariables": {
-        "BUILD_BOOTLOADER": "ON"
+        "BUILD_BOOTLOADER": "ON",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL": "ON"
       }
     }
   ]
