@@ -48,6 +48,8 @@ private:
     {
         auto const baudRate = 115'200;
         hal::Initialize(&uciUart, baudRate);
+        edu::dosiEnableGpioPin.SetDirection(hal::PinDirection::out);
+        edu::dosiEnableGpioPin.Reset();
     }
 
 
@@ -68,6 +70,10 @@ private:
             PRINTF("  e: ExecuteProgram\n");
             PRINTF("  g: GetStatus\n");
             PRINTF("  r: ReturnResult\n");
+            PRINTF("\n");
+            PRINTF("You can also turn the dosimeter on or off:\n");
+            PRINTF("  d: Turn the dosimeter on\n");
+            PRINTF("  f: Turn the dosimeter off\n");
 
             auto command = ReadCharacters<1>()[0];
             PRINTF("\n");
@@ -168,6 +174,18 @@ private:
                     {
                         PRINTF("  Success!\n");
                     }
+                    break;
+                }
+                case 'd':
+                {
+                    PRINTF("Turning the dosimeter on\n");
+                    edu::dosiEnableGpioPin.Set();
+                    break;
+                }
+                case 'f':
+                {
+                    PRINTF("Turning the dosimeter off\n");
+                    edu::dosiEnableGpioPin.Reset();
                     break;
                 }
                 default:

@@ -46,6 +46,7 @@ private:
         edu::updateGpioPin.SetDirection(hal::PinDirection::in);
         edu::updateGpioPin.SetInterruptSensitivity(hal::InterruptSensitivity::risingEdge);
         edu::dosiEnableGpioPin.SetDirection(hal::PinDirection::out);
+        edu::dosiEnableGpioPin.Reset();
     }
 
 
