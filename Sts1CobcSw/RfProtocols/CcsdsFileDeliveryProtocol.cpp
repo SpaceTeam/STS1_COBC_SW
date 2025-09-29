@@ -1,5 +1,10 @@
 #include <Sts1CobcSw/RfProtocols/CcsdsFileDeliveryProtocol.hpp>
 
+#include <etl/utility.h>
+
+#include <cstdint>
+#include <span>
+
 
 namespace sts1cobcsw
 {
@@ -7,7 +12,8 @@ namespace sts1cobcsw
 auto UpdateMissingFileData(etl::ivector<SegmentRequest> * missingFileData,
                            FileDataPdu const & newFileDataPdu) -> void
 {
-    auto newFileDataEndOffset = newFileDataPdu.offset_ + newFileDataPdu.fileData_.size();
+    auto newFileDataEndOffset =
+        static_cast<std::uint32_t>(newFileDataPdu.offset_ + newFileDataPdu.fileData_.size());
     for(auto && segment : *missingFileData)
     {
         if(segment.startOffset < newFileDataPdu.offset_ and newFileDataEndOffset < segment.endOffset

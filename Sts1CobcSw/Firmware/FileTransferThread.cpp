@@ -36,6 +36,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/utility.h>
 #include <etl/vector.h>
 
 #include <algorithm>
@@ -69,9 +70,7 @@ enum class InterruptCondition : std::uint8_t
 
 
 constexpr auto stackSize = 6000U;
-// TODO: Since our default data rate changed to 9600 Bd we can decrease this siginificantly to 1–2 s
-// This should be more than enough time to actually send the CFDP frame
-constexpr auto fileTransferWindowEndMargin = 5 * s;
+constexpr auto fileTransferWindowEndMargin = 1 * s;
 
 auto encodedFrame = std::array<Byte, blockLength>{};
 auto frame = tm::TransferFrame(std::span(encodedFrame).first<tm::transferFrameLength>());
@@ -397,6 +396,8 @@ auto SendAndWaitForAck(FinishedPdu const & finishedPdu) -> Result<void>
 }
 
 
+// TODO: Refactor
+// NOLINTNEXTLINE(*cognitive-complexity)
 auto SendAndWaitForAck(Payload const & pdu,
                        DirectiveCode directiveCode,
                        ConditionCode conditionCode,
