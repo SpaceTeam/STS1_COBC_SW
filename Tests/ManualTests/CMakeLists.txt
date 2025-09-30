@@ -47,6 +47,20 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Vocabulary Sts1CobcSwTests::HardwareSetup
     )
 
+    add_test_program(LittlefsBenchmark)
+    target_link_libraries(
+        Sts1CobcSwTests_LittlefsBenchmark
+        PRIVATE etl::etl
+                littlefs::littlefs
+                rodos::rodos
+                strong_type::strong_type
+                Sts1CobcSw_FileSystem
+                Sts1CobcSw_RodosTime
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::HardwareSetup
+    )
+
     add_test_program(MaxPower)
     target_link_libraries(
         Sts1CobcSwTests_MaxPower
