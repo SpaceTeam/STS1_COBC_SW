@@ -76,8 +76,10 @@ namespace sts1cobcsw
 namespace
 {
 constexpr auto stackSize = 6000;
-constexpr auto rxTimeoutForAdditionalData = 3 * s;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
+constexpr auto rxTimeoutForAdditionalData = 3 * s;
+constexpr auto minRxTimeout = 1 * s;
+constexpr auto estimatedMaxDataProcessingDuration = 100 * ms;
 // The ground station needs some time to switch from TX to RX so we need to wait for that when
 // switching from RX to TX
 constexpr auto rxToTxSwitchDuration = 300 * ms;
@@ -93,7 +95,7 @@ std::uint16_t nSentFrames = 0U;
 
 
 auto SuspendUntilNewTelemetryRecordIsAvailable() -> void;
-auto ThereIsEnoughTimeForRxAndDataHandling(Duration rxTimeout) -> bool;
+auto EstimateDataHandlingDuration() -> Duration;
 auto ReceiveAndHandleData(Duration rxTimeout) -> Result<void>;
 auto SendCfdpFrames() -> void;
 auto HandleReceivedData() -> void;
@@ -193,13 +195,18 @@ private:
                 SuspendUntilNewTelemetryRecordIsAvailable();
                 continue;
             }
-            if(moreDataShouldBeReceived
-               and ThereIsEnoughTimeForRxAndDataHandling(rxTimeoutForAdditionalData))
+            if(moreDataShouldBeReceived)
             {
-                DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutForAdditionalData / s);
-                auto receiveResult = ReceiveAndHandleData(rxTimeoutForAdditionalData);
-                moreDataShouldBeReceived = receiveResult.has_value();
-                continue;
+                auto remainingRxDuration = nextTelemetryRecordTimeMailbox.Peek().value()
+                                         - CurrentRodosTime() - EstimateDataHandlingDuration();
+                if(remainingRxDuration > minRxTimeout)
+                {
+                    auto rxTimeout = std::min(remainingRxDuration, rxTimeoutForAdditionalData);
+                    DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeout / s);
+                    auto receiveResult = ReceiveAndHandleData(rxTimeout);
+                    moreDataShouldBeReceived = receiveResult.has_value();
+                    continue;
+                }
             }
             SuspendUntilNewTelemetryRecordIsAvailable();
         }
@@ -222,14 +229,11 @@ auto SuspendUntilNewTelemetryRecordIsAvailable() -> void
 }
 
 
-auto ThereIsEnoughTimeForRxAndDataHandling(Duration rxTimeout) -> bool
+auto EstimateDataHandlingDuration() -> Duration
 {
+    // Worst case is that we receive a request and need to send two reports in response
     auto frameSendDuration = fullyEncodedFrameLength * CHAR_BIT * s / rf::GetTxDataRate();
-    auto const dataHandlingDuration = 2 * frameSendDuration + 100 * ms;
-    // We know that the nextTelemetryRecordTimeMailbox is never empty here, because the telemetry
-    // thread has a higher priority and will always write to it before we read it.
-    auto nextTelemetryRecordTime = nextTelemetryRecordTimeMailbox.Peek().value();
-    return CurrentRodosTime() + rxTimeout + dataHandlingDuration < nextTelemetryRecordTime;
+    return 2 * frameSendDuration + estimatedMaxDataProcessingDuration;
 }
 
 
@@ -908,6 +912,7 @@ auto ValidateAndBuildFileTransferMetadata(CopyAFileRequest const & request)
     else
     {
         static constexpr auto firmwarePathPrefix = "/firmware/";
+        // TODO: Should we really be this strict?
         if(request.targetFilePath.starts_with(edu::programsDirectory))
         {
             // The + 1 is to account for the '/' after edu::programsDirectory
