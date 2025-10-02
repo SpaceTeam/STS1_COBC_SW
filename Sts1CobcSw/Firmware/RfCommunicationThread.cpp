@@ -350,6 +350,7 @@ auto HandleCfdpFrame(tc::TransferFrame const & frame) -> void
     {
         sequenceNumber = pdu.header.transactionSequenceNumber;
         transactionSequenceNumber.Store(sequenceNumber);
+        DEBUG_PRINT("Set trans. seq. no. to %u\n", sequenceNumber);
     }
     if(not PduHeaderMatchesTransferInfo(pdu.header, sequenceNumber, transferStatus))
     {
@@ -705,6 +706,21 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
         return;
     }
     auto & fileTransferMetadata = fileTransferMetadataResult.value();
+    // Erase the destination partition if we are copying a firmware file before starting the
+    // transfer because erasing can take rather long
+    auto partition = fw::GetPartition(fileTransferMetadata.destinationPartitionId);
+    if(fileTransferMetadata.fileIsFirmware)
+    {
+        auto eraseResult = fw::Erase(partition.flashSector);
+        if(eraseResult.has_error())
+        {
+            DEBUG_PRINT("Failed to erase partition '%s'\n",
+                        ToCZString(fileTransferMetadata.destinationPartitionId));
+            SendAndWait(
+                FailedCompletionOfExecutionVerificationReport(requestId, eraseResult.error()));
+            return;
+        }
+    }
     // This wakes up the file transfer thread if it is waiting for new file transfer metadata
     fileTransferMetadataMailbox.Overwrite(fileTransferMetadata);
     DEBUG_PRINT("Successfully initiated copying file '%s' to '%s'\n",

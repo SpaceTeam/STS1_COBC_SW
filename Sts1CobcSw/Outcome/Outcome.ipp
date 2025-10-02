@@ -19,6 +19,12 @@ constexpr auto IsFileSystemError(ErrorCode errorCode) -> bool
 }
 
 
+constexpr auto IsFirmwareError(ErrorCode errorCode) -> bool
+{
+    return ErrorCode::misaligned <= errorCode and errorCode <= ErrorCode::programFailed;
+}
+
+
 constexpr auto ToCZString(ErrorCode errorCode) -> char const *
 {
     switch(errorCode)

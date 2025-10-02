@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Mailbox/Mailbox.hpp>
@@ -24,7 +25,7 @@
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
 #include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
-#include <Sts1CobcSw/Vocabulary/Ids.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>  // IWYU pragma: keep
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <littlefs/lfs.h>
@@ -81,7 +82,6 @@ auto missingFileData =
 
 auto SendFile(FileTransferMetadata const & fileTransferMetadata) -> void;
 auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void;
-auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void;
 
 template<typename Pdu>
     requires std::is_same_v<Pdu, FileDataPdu> or requires { Pdu::directiveCode; }
@@ -111,10 +111,12 @@ auto Acknowledge(DirectiveCode directiveCode, ConditionCode conditionCode) -> vo
 auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 auto SendMissingFileData(fs::File const & file, std::uint32_t fileSize) -> Result<void>;
 
-auto ReceiveInitialFileData(fs::File * file) -> Result<std::uint32_t>;
-auto ReceiveMissingFileData(fs::File * file) -> Result<void>;
+auto ReceiveInitialFileData(fs::File * file, fw::Partition const & partition)
+    -> Result<std::uint32_t>;
+auto ReceiveMissingFileData(fs::File * file, fw::Partition const & partition) -> Result<void>;
 
-auto RequestAndReceiveMissingDataUntilFinished(fs::File * file) -> Result<void>;
+auto RequestAndReceiveMissingDataUntilFinished(fs::File * file, fw::Partition const & partition)
+    -> Result<void>;
 auto RequestMissingFileData() -> Result<void>;
 
 auto CancelTransfer(auto const & pdu) -> void;
@@ -170,20 +172,21 @@ private:
             {
                 fileTransferStatus.Store(FileTransferStatus::receiving);
                 transactionSequenceNumber.Store(unknownTransactionSequenceNumber);
+#ifdef ENABLE_DEBUG_PRINT
                 if(fileTransferMetadata.fileIsFirmware)
                 {
                     DEBUG_PRINT("Receiving firmware from ground station: '%s' -> FW partition %s\n",
                                 fileTransferMetadata.sourcePath.c_str(),
                                 ToCZString(fileTransferMetadata.destinationPartitionId));
-                    ReceiveFirmware(fileTransferMetadata);
                 }
                 else
                 {
                     DEBUG_PRINT("Receiving file from ground station: '%s' -> '%s'\n",
                                 fileTransferMetadata.sourcePath.c_str(),
                                 fileTransferMetadata.destinationPath.c_str());
-                    ReceiveFile(fileTransferMetadata);
                 }
+#endif
+                ReceiveFile(fileTransferMetadata);
             }
         }
     }
@@ -251,11 +254,20 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
 {
     auto result = [&]() -> Result<void>
     {
-        OUTCOME_TRY(auto file,
-                    fs::Open(fileTransferMetadata.destinationPath,
-                             LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));  // NOLINT(*signed-bitwise)
-        OUTCOME_TRY(ReceiveInitialFileData(&file));
-        OUTCOME_TRY(RequestAndReceiveMissingDataUntilFinished(&file));
+        auto partition = fw::GetPartition(fileTransferMetadata.destinationPartitionId);
+        if(fileTransferMetadata.fileIsFirmware)
+        {
+            OUTCOME_TRY(ReceiveInitialFileData(nullptr, partition));
+            OUTCOME_TRY(RequestAndReceiveMissingDataUntilFinished(nullptr, partition));
+        }
+        else
+        {
+            OUTCOME_TRY(auto file,
+                        fs::Open(fileTransferMetadata.destinationPath,
+                                 LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));  // NOLINT
+            OUTCOME_TRY(ReceiveInitialFileData(&file, partition));
+            OUTCOME_TRY(RequestAndReceiveMissingDataUntilFinished(&file, partition));
+        }
         return SendAndWaitForAck(FinishedPdu(dataCompleteDeliveryCode, fileRetainedFileStatus));
     }();
     if(result.has_value())
@@ -271,7 +283,7 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
         return;
     }
     DEBUG_PRINT("Error while receiving file: %s\n", ToCZString(result.error()));
-    if(IsFileSystemError(result.error()))
+    if(IsFileSystemError(result.error()) or IsFirmwareError(result.error()))
     {
         CancelTransfer(FinishedPdu(
             filestoreRejectionConditionCode, dataIncompleteDeliveryCode, fileRejectedFileStatus));
@@ -295,12 +307,6 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
     {
         AbandonTransfer();
     }
-}
-
-
-auto ReceiveFirmware(FileTransferMetadata const & fileTransferMetadata) -> void
-{
-    (void)fileTransferMetadata;
 }
 
 
@@ -554,7 +560,8 @@ auto SendMissingFileData(fs::File const & file, std::uint32_t fileSize) -> Resul
 
 // TODO: Refactor
 // NOLINTNEXTLINE(*cognitive-complexity)
-auto ReceiveInitialFileData(fs::File * file) -> Result<std::uint32_t>
+auto ReceiveInitialFileData(fs::File * file, fw::Partition const & partition)
+    -> Result<std::uint32_t>
 {
     // TODO: Get the fileTransferWindowEnd in there somehow
     auto expirationTime = CurrentRodosTime() + transactionInactivityLimit;
@@ -582,13 +589,21 @@ auto ReceiveInitialFileData(fs::File * file) -> Result<std::uint32_t>
                 continue;
             }
             auto & fileDataPdu = parseAsFileDataPduResult.value();
-            OUTCOME_TRY(auto fileSize, file->Size());
-            if(fileDataPdu.offset_ > fileSize)
+            if(file == nullptr)
             {
-                OUTCOME_TRY(file->Resize(fileDataPdu.offset_));
+                OUTCOME_TRY(fw::Program(partition.startAddress + fileDataPdu.offset_,
+                                        fileDataPdu.fileData_));
             }
-            OUTCOME_TRY(file->SeekAbsolute(static_cast<int>(fileDataPdu.offset_)));
-            OUTCOME_TRY(file->Write(fileDataPdu.fileData_));
+            else
+            {
+                OUTCOME_TRY(auto fileSize, file->Size());
+                if(fileDataPdu.offset_ > fileSize)
+                {
+                    OUTCOME_TRY(file->Resize(fileDataPdu.offset_));
+                }
+                OUTCOME_TRY(file->SeekAbsolute(static_cast<int>(fileDataPdu.offset_)));
+                OUTCOME_TRY(file->Write(fileDataPdu.fileData_));
+            }
             DEBUG_PRINT("Wrote %d bytes at offset %d\n",
                         static_cast<int>(fileDataPdu.fileData_.size()),
                         static_cast<int>(fileDataPdu.offset_));
@@ -614,7 +629,10 @@ auto ReceiveInitialFileData(fs::File * file) -> Result<std::uint32_t>
             }
             DEBUG_PRINT("Received Metadata PDU\n");
             auto fileSize = parseAsMetadataPduResult.value().fileSize_;
-            OUTCOME_TRY(file->Resize(fileSize));
+            if(file != nullptr)
+            {
+                OUTCOME_TRY(file->Resize(fileSize));
+            }
             missingFileData = {
                 SegmentRequest{.startOffset = 0, .endOffset = fileSize}
             };
@@ -656,7 +674,7 @@ auto ReceiveInitialFileData(fs::File * file) -> Result<std::uint32_t>
 
 // TODO: Refactor
 // NOLINTNEXTLINE(*cognitive-complexity)
-auto ReceiveMissingFileData(fs::File * file) -> Result<void>
+auto ReceiveMissingFileData(fs::File * file, fw::Partition const & partition) -> Result<void>
 {
     auto fileDataWasReceived = false;
     // TODO: Get the fileTransferWindowEnd in there somehow
@@ -680,13 +698,21 @@ auto ReceiveMissingFileData(fs::File * file) -> Result<void>
             }
             fileDataWasReceived = true;
             auto & fileDataPdu = parseAsFileDataPduResult.value();
-            OUTCOME_TRY(auto fileSize, file->Size());
-            if(fileDataPdu.offset_ + fileDataPdu.fileData_.size() > fileSize)
+            if(file == nullptr)
             {
-                return ErrorCode::fileSizeError;
+                OUTCOME_TRY(fw::Program(partition.startAddress + fileDataPdu.offset_,
+                                        fileDataPdu.fileData_));
             }
-            OUTCOME_TRY(file->SeekAbsolute(static_cast<int>(fileDataPdu.offset_)));
-            OUTCOME_TRY(file->Write(fileDataPdu.fileData_));
+            else
+            {
+                OUTCOME_TRY(auto fileSize, file->Size());
+                if(fileDataPdu.offset_ + fileDataPdu.fileData_.size() > fileSize)
+                {
+                    return ErrorCode::fileSizeError;
+                }
+                OUTCOME_TRY(file->SeekAbsolute(static_cast<int>(fileDataPdu.offset_)));
+                OUTCOME_TRY(file->Write(fileDataPdu.fileData_));
+            }
             DEBUG_PRINT("Wrote %d bytes at offset %d\n",
                         static_cast<int>(fileDataPdu.fileData_.size()),
                         static_cast<int>(fileDataPdu.offset_));
@@ -737,7 +763,8 @@ auto ReceiveMissingFileData(fs::File * file) -> Result<void>
 }
 
 
-auto RequestAndReceiveMissingDataUntilFinished(fs::File * file) -> Result<void>
+auto RequestAndReceiveMissingDataUntilFinished(fs::File * file, fw::Partition const & partition)
+    -> Result<void>
 {
     for(auto nUnansweredMissingDataRequests = 0; nUnansweredMissingDataRequests < nakLimit;)
     {
@@ -756,7 +783,7 @@ auto RequestAndReceiveMissingDataUntilFinished(fs::File * file) -> Result<void>
             return requestResult.error();
         }
         DEBUG_PRINT("Waiting to receive missing file data\n");
-        auto receiveResult = ReceiveMissingFileData(file);
+        auto receiveResult = ReceiveMissingFileData(file, partition);
         if(receiveResult.has_value())
         {
             continue;
