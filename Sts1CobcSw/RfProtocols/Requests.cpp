@@ -253,7 +253,8 @@ auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRe
     static constexpr auto applicationDataLength =
         totalSerialSize<decltype(CopyAFileRequest::operationId),
                         decltype(CopyAFileRequest::sourceFilePath),
-                        decltype(CopyAFileRequest::targetFilePath)>;
+                        decltype(CopyAFileRequest::targetFilePath),
+                        decltype(CopyAFileRequest::fileSize)>;
     if(buffer.size() != applicationDataLength)
     {
         return ErrorCode::invalidDataLength;
@@ -422,6 +423,7 @@ auto DeserializeFrom(void const * source, CopyAFileRequest * header) -> void con
     source = DeserializeFrom<endianness>(source, &header->operationId);
     source = DeserializeFrom<endianness>(source, &header->sourceFilePath);
     source = DeserializeFrom<endianness>(source, &header->targetFilePath);
+    source = DeserializeFrom<endianness>(source, &header->fileSize);
     return source;
 }
 

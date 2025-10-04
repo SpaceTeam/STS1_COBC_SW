@@ -262,9 +262,10 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
         }
         else
         {
-            OUTCOME_TRY(auto file,
-                        fs::Open(fileTransferMetadata.destinationPath,
-                                 LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));  // NOLINT
+            OUTCOME_TRY(auto file, fs::Open(fileTransferMetadata.destinationPath, LFS_O_WRONLY));
+            missingFileData = {
+                SegmentRequest{.startOffset = 0, .endOffset = fileTransferMetadata.fileSize}
+            };
             OUTCOME_TRY(ReceiveInitialFileData(&file, partition));
             OUTCOME_TRY(RequestAndReceiveMissingDataUntilFinished(&file, partition));
         }
@@ -565,9 +566,6 @@ auto ReceiveInitialFileData(fs::File * file, fw::Partition const & partition)
 {
     // TODO: Get the fileTransferWindowEnd in there somehow
     auto expirationTime = CurrentRodosTime() + transactionInactivityLimit;
-    missingFileData = {
-        SegmentRequest{.startOffset = 0, .endOffset = maxFileSegmentLength}
-    };
     while(CurrentRodosTime() < expirationTime)
     {
         (void)receivedPduMailbox.SuspendUntilFullOr(expirationTime);
@@ -622,20 +620,10 @@ auto ReceiveInitialFileData(fs::File * file, fw::Partition const & partition)
         if(fileDirectivePdu.directiveCode == DirectiveCode::metadata)
         {
             auto parseAsMetadataPduResult = ParseAsMetadataPdu(fileDirectivePdu.parameterField);
-            if(parseAsMetadataPduResult.has_error())
+            if(parseAsMetadataPduResult.has_value())
             {
-                ResumeRfCommunicationThread();  // To go into RX mode again
-                continue;
+                DEBUG_PRINT("Received Metadata PDU\n");
             }
-            DEBUG_PRINT("Received Metadata PDU\n");
-            auto fileSize = parseAsMetadataPduResult.value().fileSize_;
-            if(file != nullptr)
-            {
-                OUTCOME_TRY(file->Resize(fileSize));
-            }
-            missingFileData = {
-                SegmentRequest{.startOffset = 0, .endOffset = fileSize}
-            };
             ResumeRfCommunicationThread();  // To go into RX mode again
             continue;
         }

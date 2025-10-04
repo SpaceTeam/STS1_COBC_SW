@@ -121,6 +121,7 @@ struct CopyAFileRequest
     CopyOperationId operationId;
     fs::Path sourceFilePath;
     fs::Path targetFilePath;
+    std::uint32_t fileSize = 0;
 };
 
 

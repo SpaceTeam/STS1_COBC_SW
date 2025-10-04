@@ -706,11 +706,9 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
         return;
     }
     auto & fileTransferMetadata = fileTransferMetadataResult.value();
-    // Erase the destination partition if we are copying a firmware file before starting the
-    // transfer because erasing can take rather long
-    auto partition = fw::GetPartition(fileTransferMetadata.destinationPartitionId);
     if(fileTransferMetadata.fileIsFirmware)
     {
+        auto partition = fw::GetPartition(fileTransferMetadata.destinationPartitionId);
         auto eraseResult = fw::Erase(partition.flashSector);
         if(eraseResult.has_error())
         {
@@ -718,6 +716,24 @@ auto Handle(CopyAFileRequest const & request, RequestId const & requestId) -> vo
                         ToCZString(fileTransferMetadata.destinationPartitionId));
             SendAndWait(
                 FailedCompletionOfExecutionVerificationReport(requestId, eraseResult.error()));
+            return;
+        }
+    }
+    else if(fileTransferMetadata.destinationEntityId == cubeSatEntityId)
+    {
+        auto result = [&]() -> Result<void>
+        {
+            OUTCOME_TRY(auto file,
+                        // NOLINTNEXTLINE(*signed-bitwise)
+                        fs::Open(request.targetFilePath, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC));
+            return file.Resize(request.fileSize);
+        }();
+        if(result.has_error())
+        {
+            DEBUG_PRINT("Failed to create and resize file '%s': %s\n",
+                        request.targetFilePath.c_str(),
+                        ToCZString(result.error()));
+            SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
             return;
         }
     }
@@ -903,6 +919,8 @@ auto Set(Parameter parameter) -> void
 }
 
 
+// TODO: Refactor
+// NOLINTNEXTLINE(*cognitive-complexity)
 auto ValidateAndBuildFileTransferMetadata(CopyAFileRequest const & request)
     -> Result<FileTransferMetadata>
 {
@@ -920,10 +938,13 @@ auto ValidateAndBuildFileTransferMetadata(CopyAFileRequest const & request)
         .destinationEntityId = targetIsCubeSat ? cubeSatEntityId : groundStationEntityId,
         .fileIsFirmware = false,
         .sourcePath = request.sourceFilePath,
-        .destinationPath = request.targetFilePath};
+        .destinationPath = request.targetFilePath,
+        .fileSize = request.fileSize};
     if(sourceIsCubeSat)
     {
-        OUTCOME_TRY(fs::Open(request.sourceFilePath, LFS_O_RDONLY));
+        OUTCOME_TRY(auto file, fs::Open(request.sourceFilePath, LFS_O_RDONLY));
+        OUTCOME_TRY(auto fileSize, file.Size());
+        fileTransferMetadata.fileSize = fileSize;
     }
     else
     {
