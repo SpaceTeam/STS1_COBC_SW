@@ -27,10 +27,12 @@
 
 #include <strong_type/affine_point.hpp>
 #include <strong_type/difference.hpp>
+#include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
 
+#include <compare>
 #include <cstdint>
 #include <utility>
 
@@ -41,6 +43,10 @@ namespace
 {
 constexpr auto stackSize = 1200U;
 constexpr auto telemetryThreadInterval = 30 * s;
+// The time after which we enable resets in case of firmware corruption. This prevents immediate
+// resets after booting into a corrupt firmware.
+constexpr auto firmwareCorruptionResetEnableTime = RodosTime(0) + 10 * min;
+
 auto epsFaultGpioPin = hal::GpioPin(hal::epsFaultPin);
 auto epsChargingGpioPin = hal::GpioPin(hal::epsChargingPin);
 
@@ -81,7 +87,7 @@ private:
             nextTelemetryRecordTimeMailbox.Overwrite(CurrentRodosTime() + telemetryThreadInterval);
             ResumeRfCommunicationThread();
             DEBUG_PRINT_STACK_USAGE();
-            if(not firmwareIsIntact)
+            if(not firmwareIsIntact and CurrentRodosTime() > firmwareCorruptionResetEnableTime)
             {
                 // Wait with the reset long enough to ensure that the telemetry record can be sent
                 static constexpr auto resetDelay = 5 * s;

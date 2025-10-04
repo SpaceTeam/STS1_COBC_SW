@@ -88,8 +88,8 @@ auto main() -> int
                                                     fw::SourcePartition(secondaryPartition));
             if(not overwriteSucceeded)
             {
+                // If this happens, there is nothing we can really do about it
                 DEBUG_PRINT("  -> failed\n");
-                // TODO: What do we do here?
             }
             DEBUG_PRINT("\n");
         }
@@ -103,8 +103,8 @@ auto main() -> int
                                                     fw::SourcePartition(fw::primaryPartition));
             if(not overwriteSucceeded)
             {
+                // If this happens, there is nothing we can really do about it
                 DEBUG_PRINT("  -> failed\n");
-                // TODO: What do we do here?
             }
             DEBUG_PRINT("\n");
         }
@@ -123,9 +123,11 @@ auto GetPrimaryFirmwareChecksums() -> fw::FirmwareChecksums
         fw::ComputeAndReadFirmwareChecksums(fw::primaryPartition.startAddress, &errorCode);
     if(errorCode != ErrorCode::eduIsNotAlive)
     {
+        // If an error occurred, the computed and stored checksums are 0 and 0xFFFF'FFFF
+        // respectively. As long as we never upload a firmware with these checksums, we can
+        // therefore detect the corruption without having to do anything more here.
         DEBUG_PRINT("Failed to compute and read primary partition checksums: %s\n",
                     sts1cobcsw::ToCZString(errorCode));
-        // TODO: What do we do here?
     }
     return primaryFirmwareChecksums;
 }
@@ -139,9 +141,11 @@ auto GetSecondaryFirmwareChecksums(fw::Partition const & secondaryPartition)
         fw::ComputeAndReadFirmwareChecksums(secondaryPartition.startAddress, &errorCode);
     if(errorCode != ErrorCode::eduIsNotAlive)
     {
+        // If an error occurred, the computed and stored checksums are 0 and 0xFFFF'FFFF
+        // respectively. As long as we never upload a firmware with these checksums, we can
+        // therefore detect the corruption without having to do anything more here.
         DEBUG_PRINT("Failed to compute and read secondary partition checksums: %s\n",
                     sts1cobcsw::ToCZString(errorCode));
-        // TODO: What do we do here?
     }
     return secondaryFirmwareChecksums;
 }
