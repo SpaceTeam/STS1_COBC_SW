@@ -49,6 +49,7 @@ private:
     void init() override
     {
         epsBatteryGoodGpioPin.SetDirection(hal::PinDirection::in);
+        epsBatteryGoodGpioPin.ActivatePullUp();
     }
 
 
