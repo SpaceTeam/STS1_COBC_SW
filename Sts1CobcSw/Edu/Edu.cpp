@@ -9,6 +9,7 @@
 #include <Sts1CobcSw/Hal/GpioPin.hpp>
 #include <Sts1CobcSw/Hal/IoNames.hpp>
 #include <Sts1CobcSw/Hal/Uart.hpp>
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
@@ -28,10 +29,13 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <span>
+#include <string>
+#include <system_error>
 #include <utility>
 
 
@@ -68,6 +72,11 @@ constexpr auto maxNPackets = 100;
 // Max. length of a single data packet
 constexpr auto maxDataSize = 11 * 1024;
 constexpr auto maxFileSize = maxNPackets * maxDataSize;
+
+constexpr auto nProgramIdDigits =
+    std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
+constexpr auto * programFileExtension = ".zip";
+
 // Data buffer for potentially large data packets (ReturnResult and StoreProgram)
 auto cepDataBuffer = etl::vector<Byte, maxDataSize>{};
 
@@ -137,6 +146,26 @@ auto TurnOff() -> void
 }
 
 
+//! @brief Issues a command to store a student program on the EDU and transfers it.
+//!
+//! Store Program (COBC <-> EDU):
+//! -> [DATA]
+//! -> [Command Header]
+//! -> [Program ID]
+//! <- [N/ACK]
+//! -> [DATA]
+//! -> [PROGRAM]
+//! -> [EOF]
+//! <- [N/ACK]
+//! <- [N/ACK]
+//!
+//! The first N/ACK confirms a valid Program ID received,
+//! the second N/ACK confirms that the program was received.
+//! the third N/ACK confirms that the program was stored on the EDU successful.
+//!
+//! @param programId The student program ID
+//!
+//! @returns A relevant error code
 auto StoreProgram(StoreProgramData const & data) -> Result<void>
 {
     auto protector = RODOS::ScopeProtector(&semaphore);
@@ -149,6 +178,7 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         DEBUG_PRINT("Program file %s is too large: %d B\n", path.c_str(), fileSize);
         return ErrorCode::fileTooLarge;
     }
+    OUTCOME_TRY(SendDataPacket(Serialize(data)));
     while(true)
     {
         cepDataBuffer.uninitialized_resize(cepDataBuffer.MAX_SIZE);
@@ -160,6 +190,8 @@ auto StoreProgram(StoreProgramData const & data) -> Result<void>
         }
         OUTCOME_TRY(SendDataPacket(Span(cepDataBuffer)));
     }
+    OUTCOME_TRY(SendCommand(cepEof));
+    OUTCOME_TRY(WaitForAck());
     return WaitForAck();
 }
 
@@ -296,6 +328,24 @@ auto UpdateTime(UpdateTimeData const & data) -> Result<void>
     auto protector = RODOS::ScopeProtector(&semaphore);
     OUTCOME_TRY(SendDataPacket(Serialize(data)));
     return WaitForAck();
+}
+
+
+auto GetProgramId(fs::Path const & filename) -> Result<ProgramId>
+{
+    static constexpr auto programFilenameLength =
+        nProgramIdDigits + std::char_traits<char>::length(programFileExtension);
+    if(filename.size() == programFilenameLength)
+    {
+        std::uint16_t value = 0;
+        auto result = std::from_chars(filename.data(), filename.data() + nProgramIdDigits, value);
+        if(result.ec == std::errc{})
+        {
+            return ProgramId(value);
+        }
+    }
+    DEBUG_PRINT("Failed to get EDU program ID from file %s\n", filename.c_str());
+    return ErrorCode::invalidParameter;
 }
 
 
@@ -578,13 +628,11 @@ auto BuildProgramFilePath(ProgramId programId) -> fs::Path
 {
     auto path = programsDirectory;
     path.append("/");
-    static constexpr auto nProgramIdDigits =
-        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
     etl::to_string(value_of(programId),
                    path,
                    etl::format_spec().width(nProgramIdDigits).fill('0'),
                    /*append=*/true);
-    path.append(".zip");
+    path.append(programFileExtension);
     return path;
 }
 
@@ -593,8 +641,6 @@ auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
 {
     auto path = resultsDirectory;
     path.append("/");
-    static constexpr auto nProgramIdDigits =
-        std::numeric_limits<strong::underlying_type_t<ProgramId>>::digits10 + 1;
     etl::to_string(value_of(programId),
                    path,
                    etl::format_spec().width(nProgramIdDigits).fill('0'),
@@ -606,7 +652,7 @@ auto BuildResultFilePath(ProgramId programId, RealTime startTime) -> fs::Path
                    path,
                    etl::format_spec().width(nStartTimeDigits).fill('0'),
                    /*append=*/true);
-    path.append(".zip");
+    path.append(programFileExtension);
     return path;
 }
 }

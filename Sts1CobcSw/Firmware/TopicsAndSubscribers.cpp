@@ -19,6 +19,9 @@ RODOS::Subscriber eduIsAliveSubscriberForPowerManagement(eduIsAliveTopic,
 RODOS::Subscriber eduIsAliveSubscriberForProgramQueue(eduIsAliveTopic,
                                                       eduIsAliveBufferForProgramQueue,
                                                       "eduIsAliveSubscriber");
+RODOS::Subscriber eduIsAliveSubscriberForProgramTransfer(eduIsAliveTopic,
+                                                         eduIsAliveBufferForProgramTransfer,
+                                                         "eduIsAliveSubscriber");
 RODOS::Subscriber eduIsAliveSubscriberForTelemetry(eduIsAliveTopic,
                                                    eduIsAliveBufferForListener,
                                                    "eduIsAliveSubscriber");

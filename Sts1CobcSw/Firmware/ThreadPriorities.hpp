@@ -11,6 +11,7 @@ inline constexpr auto flashStartupTestThreadPriority = 98;
 inline constexpr auto rfStartupTestThreadPriority = 99;
 inline constexpr auto watchdogAndAntennaDeploymentThreadPriority = 100;
 inline constexpr auto eduListenerThreadPriority = 210;
+inline constexpr auto eduProgramTransferThreadPriority = 220;
 inline constexpr auto eduProgramQueueThreadPriority = 230;
 inline constexpr auto eduCommunicationErrorThreadPriority = 240;
 inline constexpr auto eduPowerManagementThreadPriority = 250;
