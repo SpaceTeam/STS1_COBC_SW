@@ -54,6 +54,7 @@ private:
     void init() override
     {
         antennaDeploymentPin.SetDirection(hal::PinDirection::out);
+        antennaDeploymentPin.ActivatePullUp();
     }
 
 
