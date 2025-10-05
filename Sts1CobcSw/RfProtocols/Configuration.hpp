@@ -92,6 +92,7 @@ using MessageTypeId = Id<MessageTypeIdFields,
                          {1, 8},
                          {3, 25},
                          {6, 6},
+                         {6, 7},  // ToDo: what number for FirmwareMetadata?
                          {20, 2},
                          {23, 4},
                          {23, 13}>;
@@ -122,6 +123,7 @@ enum class FunctionId : std::uint8_t
 {
     stopAntennaDeployment = 1,
     requestHousekeepingParameterReports = 2,
+    requestFirmwareMetadata = 3,  // ToDo: what number for FirmwareMetadata?
     disableCubeSatTx = 4,
     enableCubeSatTx = 7,
     resetNow = 8,
