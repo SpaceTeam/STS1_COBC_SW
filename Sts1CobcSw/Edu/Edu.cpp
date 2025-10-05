@@ -394,8 +394,9 @@ auto ProgramsAreAvailableOnCobc() -> bool
                        directoryIterator.end(),
                        [](auto const & entryResult)
                        {
-                           return not entryResult.has_error()
-                              and entryResult.value().type == fs::EntryType::file;
+                           return entryResult.has_value()
+                              and entryResult.value().type == fs::EntryType::file
+                              and GetProgramId(entryResult.value().name).has_value();
                        });
 }
 
