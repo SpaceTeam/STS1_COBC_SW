@@ -17,6 +17,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                     Sts1CobcSw_RodosTime
                     Sts1CobcSw_Utility
         )
+        set_target_properties(Sts1CobcSw_Rf PROPERTIES INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL OFF)
     else()
         target_sources(Sts1CobcSw_Rf PRIVATE Rf.cpp)
         target_link_libraries(
