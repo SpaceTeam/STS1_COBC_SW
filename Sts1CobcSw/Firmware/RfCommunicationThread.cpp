@@ -909,11 +909,11 @@ auto Set(Parameter parameter) -> void
         case Parameter::Id::realTimeOffsetCorrection:
             persistentVariables.Store<"realTimeOffsetCorrection">(parameter.value * s);
             break;
-        case Parameter::Id::maxEduIdleDuration:
-            persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
-            break;
         case Parameter::Id::newEduResultIsAvailable:
             persistentVariables.Store<"newEduResultIsAvailable">(parameter.value != 0U);
+            break;
+        case Parameter::Id::maxEduIdleDuration:
+            persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
             break;
     }
 }
