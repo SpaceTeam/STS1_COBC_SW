@@ -903,11 +903,11 @@ auto Set(Parameter parameter) -> void
             rf::SetTxDataRate(parameter.value);
             txDataRateTopic.publish(parameter.value);
             break;
-        case Parameter::Id::maxEduIdleDuration:
-            persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
-            break;
         case Parameter::Id::newEduResultIsAvailable:
             persistentVariables.Store<"newEduResultIsAvailable">(parameter.value != 0U);
+            break;
+        case Parameter::Id::maxEduIdleDuration:
+            persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
             break;
     }
 }

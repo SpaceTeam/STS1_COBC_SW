@@ -17,8 +17,8 @@ struct Parameter
     {
         rxDataRate = 1,
         txDataRate,
-        maxEduIdleDuration,
         newEduResultIsAvailable,
+        maxEduIdleDuration,
     };
     using Value = std::uint32_t;
 
