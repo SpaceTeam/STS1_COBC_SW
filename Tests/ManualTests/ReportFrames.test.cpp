@@ -12,6 +12,7 @@
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
 #include <Sts1CobcSw/Utility/Span.hpp>
+#include <Sts1CobcSw/Vocabulary/FileTransfer.hpp>
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -176,6 +177,8 @@ private:
                 .nBadTransferFrames = 58U,
                 .lastFrameSequenceNumber = 59U,
                 .lastMessageTypeId = {60U, 61U},
+                .fileTransferStatus = sts1cobcsw::FileTransferStatus::sending,
+                .transactionSequenceNumber = 62U
             };
             auto report = sts1cobcsw::HousekeepingParameterReport(record);
             WriteToFileAsFrame(report, outputDir + reportName);

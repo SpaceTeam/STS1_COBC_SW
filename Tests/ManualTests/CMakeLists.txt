@@ -40,11 +40,42 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Serial Sts1CobcSwTests::HardwareSetup
     )
 
+    add_test_program(FileSystemBenchmark)
+    target_link_libraries(
+        Sts1CobcSwTests_FileSystemBenchmark
+        PRIVATE etl::etl
+                rodos::rodos
+                strong_type::strong_type
+                Sts1CobcSw_FileSystem
+                Sts1CobcSw_Fram
+                Sts1CobcSw_FramSections
+                Sts1CobcSw_Outcome
+                Sts1CobcSw_RodosTime
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Utility
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::HardwareSetup
+    )
+
     add_test_program(Gpio)
     target_link_libraries(
         Sts1CobcSwTests_Gpio
         PRIVATE rodos::rodos strong_type::strong_type Sts1CobcSw_Hal Sts1CobcSw_RodosTime
                 Sts1CobcSw_Vocabulary Sts1CobcSwTests::HardwareSetup
+    )
+
+    add_test_program(LittlefsBenchmark)
+    target_link_libraries(
+        Sts1CobcSwTests_LittlefsBenchmark
+        PRIVATE etl::etl
+                littlefs::littlefs
+                rodos::rodos
+                strong_type::strong_type
+                Sts1CobcSw_FileSystem
+                Sts1CobcSw_RodosTime
+                Sts1CobcSw_Serial
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::HardwareSetup
     )
 
     add_test_program(MaxPower)

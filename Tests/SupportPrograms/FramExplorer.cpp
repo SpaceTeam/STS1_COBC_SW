@@ -74,6 +74,7 @@ auto PrintVariable(etl::string_view variable) -> void;
 auto SetVariable(etl::string_view variable, etl::string_view value) -> void;
 template<StringLiteral name, typename T, auto parseFunction>  // NOLINTNEXTLINE(*value-param)
 auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) -> void;
+auto ParseAsInt64(etl::string_view string) -> Result<std::int64_t>;
 auto ParseAsUInt32(etl::string_view string) -> Result<std::uint32_t>;
 auto ParseAsBool(etl::string_view string) -> Result<bool>;
 auto ParseAsPartitionId(etl::string_view string) -> Result<PartitionId>;
@@ -421,6 +422,7 @@ auto PrintAllVariables() -> void
     PrintVariable("lastMessageTypeId");
     PrintVariable("lastMessageTypeIdWasInvalid");
     PrintVariable("lastApplicationDataWasInvalid");
+    PrintVariable("transactionSequenceNumber");
 }
 
 
@@ -460,6 +462,7 @@ auto ResetAllVariables() -> void
     persistentVariables.Store<"lastMessageTypeId">(MessageTypeIdFields{});
     persistentVariables.Store<"lastMessageTypeIdWasInvalid">(false);
     persistentVariables.Store<"lastApplicationDataWasInvalid">(false);
+    persistentVariables.Store<"transactionSequenceNumber">(0);
 
     PrintAllVariables();
 }
@@ -595,6 +598,10 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     {
         etl::to_string(persistentVariables.Load<"lastApplicationDataWasInvalid">(), value);
     }
+    else if(variable == "transactionSequenceNumber")
+    {
+        etl::to_string(persistentVariables.Load<"transactionSequenceNumber">(), value);
+    }
     else
     {
         PRINTF("Variable %s not found!\n", Message(variable).c_str());
@@ -632,7 +639,7 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     }
     else if(variable == "fileTransferWindowEnd")
     {
-        WriteAndConvertFunction<"fileTransferWindowEnd", RodosTime, ParseAsUInt32>(variable, value);
+        WriteAndConvertFunction<"fileTransferWindowEnd", RodosTime, ParseAsInt64>(variable, value);
     }
     else if(variable == "antennasShouldBeDeployed")
     {
@@ -644,12 +651,12 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     }
     else if(variable == "realTimeOffset")
     {
-        WriteAndConvertFunction<"realTimeOffset", Duration, ParseAsUInt32>(variable, value);
+        WriteAndConvertFunction<"realTimeOffset", Duration, ParseAsInt64>(variable, value);
     }
     else if(variable == "realTimeOffsetCorrection")
     {
-        WriteAndConvertFunction<"realTimeOffsetCorrection", Duration, ParseAsUInt32>(variable,
-                                                                                     value);
+        WriteAndConvertFunction<"realTimeOffsetCorrection", Duration, ParseAsInt64>(variable,
+                                                                                    value);
     }
     else if(variable == "nFirmwareChecksumErrors")
     {
@@ -687,7 +694,7 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     }
     else if(variable == "maxEduIdleDuration")
     {
-        WriteAndConvertFunction<"maxEduIdleDuration", Duration, ParseAsUInt32>(variable, value);
+        WriteAndConvertFunction<"maxEduIdleDuration", Duration, ParseAsInt64>(variable, value);
     }
     else if(variable == "newEduResultIsAvailable")
     {
@@ -744,6 +751,11 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
         WriteAndConvertFunction<"lastApplicationDataWasInvalid", bool, ParseAsBool>(variable,
                                                                                     value);
     }
+    else if(variable == "transactionSequenceNumber")
+    {
+        WriteAndConvertFunction<"transactionSequenceNumber", std::uint16_t, ParseAsUInt32>(variable,
+                                                                                           value);
+    }
     else
     {
         PRINTF("Variable %s not found!\n", Message(variable).c_str());
@@ -770,6 +782,19 @@ auto WriteAndConvertFunction(etl::string_view variable, etl::string_view value) 
         persistentVariables.Store<name>(static_cast<T>(convertedValueResult.value()));
         PRINTF("%s <- %s\n", Message(variable).c_str(), Message(value).c_str());
     }
+}
+
+
+// NOLINTNEXTLINE(*unnecessary-value-param)
+auto ParseAsInt64(etl::string_view string) -> Result<std::int64_t>
+{
+    std::int64_t value = 0;
+    auto result = std::from_chars(string.data(), string.data() + string.size(), value);
+    if(result.ec != std::errc{})
+    {
+        return ErrorCode::invalidParameter;
+    }
+    return value;
 }
 
 

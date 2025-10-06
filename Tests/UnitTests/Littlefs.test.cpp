@@ -44,6 +44,12 @@ TEST_CASE("Littlefs without data corruption")
     static constexpr auto writtenNumber = 123;
     errorCode = lfs_file_write(&lfs, &file, &writtenNumber, sizeof(writtenNumber));
     CHECK(errorCode == static_cast<int>(sizeof(writtenNumber)));
+    errorCode = lfs_file_size(&lfs, &file);
+    CHECK(errorCode == static_cast<int>(sizeof(writtenNumber)));
+    errorCode = lfs_file_truncate(&lfs, &file, 100);
+    CHECK(errorCode == 0);
+    errorCode = lfs_file_size(&lfs, &file);
+    CHECK(errorCode == 100);
     errorCode = lfs_file_close(&lfs, &file);
     CHECK(errorCode == 0);
 

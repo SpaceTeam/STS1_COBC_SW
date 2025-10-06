@@ -16,7 +16,7 @@
 #include <etl/vector.h>
 
 #include <array>
-#include <climits>
+#include <climits>  // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -88,7 +88,7 @@ private:
     static inline auto outputs = std::array<std::uint8_t, 1U << constraint>();
 
     unsigned int state_ = 0;
-    unsigned int bytes_ = 0;
+    [[maybe_unused]] unsigned int bytes_ = 0;
 #ifdef USE_PUNCTURING
     unsigned int nProcessedBytes_ = 0;
 #endif
@@ -113,7 +113,7 @@ constexpr auto ViterbiCodec::EncodedSize(std::size_t unencodedSize,
     #else
     auto bits = (unencodedSize * CHAR_BIT + flushingBits) * 2;
     #endif
-    auto size = (bits + CHAR_BIT - 1) / CHAR_BIT; // Round up
+    auto size = (bits + CHAR_BIT - 1) / CHAR_BIT;  // Round up
     return size;
 #endif
 }

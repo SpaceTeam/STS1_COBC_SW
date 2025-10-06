@@ -96,16 +96,15 @@ public:
 
     EndOfFilePdu() = default;
     explicit EndOfFilePdu(std::uint32_t fileSize) noexcept;
-    explicit EndOfFilePdu(ConditionCode conditionCode,
-                          std::uint32_t fileSize,
-                          FaultLocation faultLocation) noexcept;
+    explicit EndOfFilePdu(ConditionCode conditionCode, std::uint32_t fileSize) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     ConditionCode conditionCode_;
     UInt<4> spare_;
     std::uint32_t fileChecksum_ = 0;
     std::uint32_t fileSize_ = 0;
-    FaultLocation faultLocation_;  // Omitted if conditionCode == noError
+    // Omitted if conditionCode == noError
+    FaultLocation faultLocation_ = FaultLocation{.value = cubeSatEntityId};
     // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
@@ -132,15 +131,15 @@ public:
     explicit FinishedPdu(DeliveryCode deliveryCode, FileStatus fileStatus) noexcept;
     explicit FinishedPdu(ConditionCode conditionCode,
                          DeliveryCode deliveryCode,
-                         FileStatus fileStatus,
-                         FaultLocation faultLocation) noexcept;
+                         FileStatus fileStatus) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     ConditionCode conditionCode_;
     UInt<1> spare_;
     DeliveryCode deliveryCode_;
     FileStatus fileStatus_;
-    FaultLocation faultLocation_;  // Omitted if conditionCode == noError or unsupportedChecksumType
+    // Omitted if conditionCode == noError or unsupportedChecksumType
+    FaultLocation faultLocation_ = FaultLocation{.value = cubeSatEntityId};
     // NOLINTEND(readability-identifier-naming)
 
     static constexpr auto minParameterFieldLength =
@@ -206,9 +205,9 @@ public:
                          fs::Path const & destinationFileName) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
-    UInt<1> reserved1_;
+    UInt<1> reserved1_ = 0;
     UInt<1> closureRequested_ = 0;  // 0 in ACK mode
-    UInt<2> reserved2_;
+    UInt<2> reserved2_ = 0;
     ChecksumType checksumType_ = nullChecksumType;
     std::uint32_t fileSize_ = 0;
     std::uint8_t sourceFileNameLength_ = 0;
@@ -252,14 +251,15 @@ public:
          - totalSerialSize<DirectiveCode, std::uint32_t, std::uint32_t>)
         / totalSerialSize<SegmentRequest>;
 
+    using SegmentRequests = etl::vector<SegmentRequest, NakPdu::maxNSegmentRequests>;
+
     NakPdu() = default;
-    explicit NakPdu(
-        etl::vector<SegmentRequest, maxNSegmentRequests> const & segmentRequests) noexcept;
+    explicit NakPdu(SegmentRequests const & segmentRequests) noexcept;
 
     // NOLINTBEGIN(readability-identifier-naming)
     std::uint32_t startOfScope_ = 0;
     std::uint32_t endOfScope_ = 0;
-    etl::vector<SegmentRequest, maxNSegmentRequests> segmentRequests_;
+    SegmentRequests segmentRequests_;
     // NOLINTEND(readability-identifier-naming)
 
 
@@ -276,7 +276,7 @@ inline constexpr auto invalidTransmissionModeConditionCode = ConditionCode(3);
 inline constexpr auto filestoreRejectionConditionCode = ConditionCode(4);
 inline constexpr auto fileChecksumFailureConditionCode = ConditionCode(5);
 inline constexpr auto fileSizeErrorConditionCode = ConditionCode(6);
-inline constexpr auto nackLimitReachedConditionCode = ConditionCode(7);
+inline constexpr auto nakLimitReachedConditionCode = ConditionCode(7);
 inline constexpr auto inactivityDetectedConditionCode = ConditionCode(8);
 inline constexpr auto invalidFileStructureConditionCode = ConditionCode(9);
 inline constexpr auto checkLimitReachedConditionCode = ConditionCode(10);

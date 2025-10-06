@@ -16,6 +16,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_RodosTime
                 Sts1CobcSw_Vocabulary
     )
+    set_target_properties(Sts1CobcSw_Edu PROPERTIES INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL OFF)
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     target_sources(Sts1CobcSw_Edu PRIVATE EduMock.cpp)

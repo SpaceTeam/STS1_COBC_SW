@@ -430,7 +430,7 @@ TEST_CASE("SummaryReportTheContentOfARepositoryRequest")
 TEST_CASE("CopyAFileRequest")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
-    buffer.resize(71);
+    buffer.resize(75);
     buffer[0] = 0x0F_b;  // OperationId
     buffer[1] = 0x2f_b;  // Source File Path
     buffer[2] = 0x70_b;
@@ -452,13 +452,18 @@ TEST_CASE("CopyAFileRequest")
     buffer[43] = 0x6d_b;
     buffer[44] = 0x32_b;
     buffer[45] = 0x00_b;  // Null
+    buffer[71] = 0x12_b;  // file size (high byte)
+    buffer[72] = 0x34_b;
+    buffer[73] = 0x56_b;
+    buffer[74] = 0x78_b;  // file size (low byte)
 
     auto parseResult = sts1cobcsw::ParseAsCopyAFileRequest(buffer);
-    CHECK(parseResult.has_value());
+    REQUIRE(parseResult.has_value());
     auto request = parseResult.value();
     CHECK(request.operationId == sts1cobcsw::copyOperationId);
     CHECK(request.sourceFilePath == "/program1");
     CHECK(request.targetFilePath == "/program2");
+    CHECK(request.fileSize == 0x1234'5678U);
 
     // OperationId needs to be 0x0F
     buffer[0] = 0xF0_b;

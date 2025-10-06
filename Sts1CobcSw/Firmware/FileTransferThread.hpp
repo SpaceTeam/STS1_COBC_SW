@@ -2,14 +2,24 @@
 
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/Vocabulary/Ids.hpp>
+
+#include <cstdint>
 
 
 namespace sts1cobcsw
 {
-struct FileTransferInfo
+// NOLINTNEXTLINE(clang-analyzer-core.uninitialized.Assign)
+struct FileTransferMetadata
 {
+    EntityId sourceEntityId;
+    EntityId destinationEntityId;
+    bool fileIsFirmware = false;
+    PartitionId destinationPartitionId = PartitionId{};
     fs::Path sourcePath;
     fs::Path destinationPath;
+    std::uint32_t fileSize = 0;
 };
 
 

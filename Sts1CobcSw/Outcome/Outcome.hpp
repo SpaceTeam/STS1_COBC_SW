@@ -52,6 +52,7 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidLength,
     tooManyDataPackets,
     eduIsNotAlive,
+    invalidEduProgramFilename,
     // Mailbox
     full,
     empty,
@@ -88,6 +89,18 @@ enum class ErrorCode : std::int8_t  // NOLINT
     invalidAckPduDirectiveCode,
     invalidDirectiveSubtypeCode,
     invalidNakPdu,
+    // File transfer
+    entityIdsAreIdentical,
+    invalidCubeSatFilePath,
+    invalidFirmwarePath,
+    fileTransferInterrupted,
+    fileTransferCanceled,
+    positiveAckLimitReached,
+    fileSizeError,
+    nakLimitReached,
+    inactivityDetected,
+    wrongPduType,
+    receivedNoFileData,
     // Firmware
     misaligned,
     eraseFailed,
@@ -166,6 +179,8 @@ using Result = outcome_v2::experimental::status_result<T, ErrorCode, RebootPolic
 
 
 constexpr auto IsEduError(ErrorCode error) -> bool;
+constexpr auto IsFileSystemError(ErrorCode errorCode) -> bool;
+constexpr auto IsFirmwareError(ErrorCode errorCode) -> bool;
 constexpr auto ToCZString(ErrorCode errorCode) -> char const *;
 }
 

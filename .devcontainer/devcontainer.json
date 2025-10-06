@@ -1,6 +1,6 @@
 {
     "name": "STS1 COBC",
-    "image": "tuwienspaceteam/sts1-cobc:1.17.0",
+    "image": "tuwienspaceteam/sts1-cobc:1.20.1",
     "customizations": {
         "vscode": {
             "extensions": [

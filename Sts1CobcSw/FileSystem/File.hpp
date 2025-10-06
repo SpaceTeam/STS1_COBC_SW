@@ -30,9 +30,10 @@ public:
     [[nodiscard]] auto Read(std::span<Byte, extent> data) const -> Result<int>;
     template<std::size_t extent>
     [[nodiscard]] auto Write(std::span<Byte const, extent> data) -> Result<int>;
-    [[nodiscard]] auto SeekAbsolute(int offset) -> Result<int>;
-    [[nodiscard]] auto SeekRelative(int offset) -> Result<int>;
-    [[nodiscard]] auto Size() const -> Result<int>;
+    [[nodiscard]] auto Resize(std::size_t newSize) -> Result<void>;
+    [[nodiscard]] auto SeekAbsolute(int offset) const -> Result<int>;
+    [[nodiscard]] auto SeekRelative(int offset) const -> Result<int>;
+    [[nodiscard]] auto Size() const -> Result<std::size_t>;
     [[nodiscard]] auto Close() const -> Result<void>;
     [[nodiscard]] auto Flush() -> Result<void>;
 
@@ -44,7 +45,7 @@ private:
     [[nodiscard]] auto CreateLockFile() const noexcept -> Result<void>;
     [[nodiscard]] auto Read(void * buffer, std::size_t size) const -> Result<int>;
     [[nodiscard]] auto Write(void const * buffer, std::size_t size) -> Result<int>;
-    [[nodiscard]] auto Seek(int offset, int whence) -> Result<int>;
+    [[nodiscard]] auto Seek(int offset, int whence) const -> Result<int>;
     [[nodiscard]] auto CloseAndKeepLockFile() const -> Result<void>;
 
     Path path_ = "";
