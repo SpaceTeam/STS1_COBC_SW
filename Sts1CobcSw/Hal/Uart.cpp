@@ -13,4 +13,14 @@ auto Initialize(RODOS::HAL_UART * uart, std::uint32_t baudRate) -> void
     // report. Also, the UART buffer size is capped at RODOS::UART_BUF_SIZE.
     uart->config(RODOS::UART_PARAMETER_ENABLE_DMA, RODOS::UART_BUF_SIZE);
 }
+
+
+auto FlushReceiveBuffer(RODOS::HAL_UART * uart) -> void
+{
+    while(uart->isDataReady())
+    {
+        std::uint8_t dummy;  // NOLINT(*init-variables)
+        uart->read(&dummy, 1);
+    }
+}
 }

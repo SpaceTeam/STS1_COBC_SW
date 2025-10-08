@@ -111,7 +111,6 @@ template<>
 
 template<typename T>
 [[nodiscard]] auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>;
-auto FlushUartReceiveBuffer() -> void;
 }
 
 
@@ -493,6 +492,7 @@ auto SendDataPacket(std::span<Byte const> data) -> Result<void>
         OUTCOME_TRY(Send(data));
         OUTCOME_TRY(Send(Span(checksum)));
 
+        hal::FlushReceiveBuffer(&uart);
         OUTCOME_TRY(auto answer, Receive<Byte>());
         switch(answer)
         {
@@ -628,30 +628,13 @@ auto Retry(auto (*communicationFunction)()->Result<T>, int nTries) -> Result<T>
             // No ACK is sent here. The caller is responsible for that.
             return result;
         }
-        FlushUartReceiveBuffer();
+        hal::FlushReceiveBuffer(&uart);
         OUTCOME_TRY(SendCommand(cepNack));
         iTries++;
         if(iTries >= nTries)
         {
             // TODO: Maybe return tooManyNacks here instead?
             return result.error();
-        }
-    }
-}
-
-
-//! @brief Flush the EDU UART read buffer.
-//!
-//! This can be used to clear all buffer data after an error to request a resend.
-auto FlushUartReceiveBuffer() -> void
-{
-    auto garbageBuffer = std::array<Byte, 32>{};  // NOLINT(*magic-numbers)
-    while(true)
-    {
-        auto readFromResult = hal::ReadFrom(&uart, Span(&garbageBuffer), flushReceiveBufferTimeout);
-        if(readFromResult.has_error())
-        {
-            break;
         }
     }
 }

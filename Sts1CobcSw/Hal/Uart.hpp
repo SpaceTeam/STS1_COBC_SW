@@ -30,6 +30,8 @@ auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data) -> void;
 template<typename T, std::size_t extent>
 [[nodiscard]] auto ReadFrom(RODOS::HAL_UART * uart, std::span<T, extent> data, Duration timeout)
     -> Result<void>;
+
+auto FlushReceiveBuffer(RODOS::HAL_UART * uart) -> void;
 }
 
 
