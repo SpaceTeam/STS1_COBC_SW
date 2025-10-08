@@ -50,14 +50,6 @@ struct ProgramQueueEntry
 };
 
 
-struct ProgramStatusHistoryEntry
-{
-    ProgramId programId = ProgramId(0);
-    RealTime startTime = RealTime(0);
-    ProgramStatus status = ProgramStatus::programRunning;
-};
-
-
 struct StoreProgramData
 {
     static constexpr auto id = 0x01_b;
@@ -160,12 +152,6 @@ inline constexpr std::size_t serialSize<edu::ProgramQueueEntry> =
                     decltype(edu::ProgramQueueEntry::timeout)>;
 
 template<>
-inline constexpr std::size_t serialSize<edu::ProgramStatusHistoryEntry> =
-    totalSerialSize<decltype(edu::ProgramStatusHistoryEntry::programId),
-                    decltype(edu::ProgramStatusHistoryEntry::startTime),
-                    decltype(edu::ProgramStatusHistoryEntry::status)>;
-
-template<>
 inline constexpr std::size_t serialSize<edu::StoreProgramData> =
     totalSerialSize<decltype(edu::StoreProgramData::id),
                     decltype(edu::StoreProgramData::programId)>;
@@ -226,9 +212,6 @@ namespace edu
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ProgramQueueEntry const & data) -> void *;
 template<std::endian endianness>
-[[nodiscard]] auto SerializeTo(void * destination, ProgramStatusHistoryEntry const & data)
-    -> void *;
-template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, StoreProgramData const & data) -> void *;
 template<std::endian endianness>
 [[nodiscard]] auto SerializeTo(void * destination, ExecuteProgramData const & data) -> void *;
@@ -243,9 +226,6 @@ template<std::endian endianness>
 
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, ProgramQueueEntry * data) -> void const *;
-template<std::endian endianness>
-[[nodiscard]] auto DeserializeFrom(void const * source, ProgramStatusHistoryEntry * data)
-    -> void const *;
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, NoEventData * data) -> void const *;
 template<std::endian endianness>

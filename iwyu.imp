@@ -83,7 +83,6 @@
   { include: ["\"Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp\"",                           "public", "<Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Edu/Edu.hpp\"",                                                 "public", "<Sts1CobcSw/Edu/Edu.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Edu/ProgramQueue.hpp\"",                                        "public", "<Sts1CobcSw/Edu/ProgramQueue.hpp>", "public"] },
-  { include: ["\"Sts1CobcSw/Edu/ProgramStatusHistory.hpp\"",                                "public", "<Sts1CobcSw/Edu/ProgramStatusHistory.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/Edu/Types.hpp\"",                                               "public", "<Sts1CobcSw/Edu/Types.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp\"",                "public", "<Sts1CobcSw/ErrorDetectionAndCorrection/EdacVariable.hpp>", "public"] },
   { include: ["\"Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp\"", "public", "<Sts1CobcSw/ErrorDetectionAndCorrection/ErrorDetectionAndCorrection.hpp>", "public"] },

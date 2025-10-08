@@ -19,18 +19,6 @@ auto SerializeTo(void * destination, ProgramQueueEntry const & data) -> void *
 
 
 template<std::endian endianness>
-auto SerializeTo(void * destination, ProgramStatusHistoryEntry const & data) -> void *
-{
-    using sts1cobcsw::SerializeTo;
-
-    destination = SerializeTo<endianness>(destination, data.programId);
-    destination = SerializeTo<endianness>(destination, data.startTime);
-    destination = SerializeTo<endianness>(destination, data.status);
-    return destination;
-}
-
-
-template<std::endian endianness>
 auto SerializeTo(void * destination, StoreProgramData const & data) -> void *
 {
     using sts1cobcsw::SerializeTo;
@@ -105,18 +93,6 @@ auto DeserializeFrom(void const * source, ProgramQueueEntry * data) -> void cons
     source = DeserializeFrom<endianness>(source, &(data->programId));
     source = DeserializeFrom<endianness>(source, &(data->startTime));
     source = DeserializeFrom<endianness>(source, &(data->timeout));
-    return source;
-}
-
-
-template<std::endian endianness>
-auto DeserializeFrom(void const * source, ProgramStatusHistoryEntry * data) -> void const *
-{
-    using sts1cobcsw::DeserializeFrom;
-
-    source = DeserializeFrom<endianness>(source, &(data->programId));
-    source = DeserializeFrom<endianness>(source, &(data->startTime));
-    source = DeserializeFrom<endianness>(source, &(data->status));
     return source;
 }
 
