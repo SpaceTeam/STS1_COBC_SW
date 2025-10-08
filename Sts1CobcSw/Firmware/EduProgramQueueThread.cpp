@@ -2,14 +2,12 @@
 
 #include <Sts1CobcSw/Edu/Edu.hpp>
 #include <Sts1CobcSw/Edu/ProgramQueue.hpp>
-#include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/Firmware/TopicsAndSubscribers.hpp>
 #include <Sts1CobcSw/FramSections/FramLayout.hpp>
-#include <Sts1CobcSw/FramSections/FramRingArray.hpp>
 #include <Sts1CobcSw/FramSections/FramVector.hpp>
 #include <Sts1CobcSw/FramSections/PersistentVariables.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
@@ -163,8 +161,6 @@ auto ProcessQueueEntry() -> Result<void>
     }
     OUTCOME_TRY(
         edu::ExecuteProgram({queueEntry.programId, queueEntry.startTime, queueEntry.timeout}));
-    edu::programStatusHistory.PushBack(
-        {queueEntry.programId, queueEntry.startTime, edu::ProgramStatus::programRunning});
     SuspendFor(queueEntry.timeout * s + eduCommunicationMargin);
     if(persistentVariables.Load<"eduProgramQueueIndex">() == eduProgramQueueIndexResetValue)
     {

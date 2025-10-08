@@ -1,5 +1,4 @@
 #include <Sts1CobcSw/Edu/Edu.hpp>
-#include <Sts1CobcSw/Edu/ProgramStatusHistory.hpp>
 #include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
 #include <Sts1CobcSw/Firmware/EduProgramQueueThread.hpp>
@@ -97,13 +96,9 @@ auto ProcessEduUpdate() -> Result<void>
     {
         case edu::StatusType::programFinished:
         {
-            auto programStatus = status.exitCode == 0
-                                   ? edu::ProgramStatus::programExecutionSucceeded
-                                   : edu::ProgramStatus::programExecutionFailed;
             DEBUG_PRINT("EDU program %i finished with exit code %i\n",
                         value_of(status.programId),
                         status.exitCode);
-            edu::UpdateProgramStatusHistory(status.programId, status.startTime, programStatus);
             ResumeEduProgramQueueThread();
             break;
         }
@@ -123,8 +118,6 @@ auto ProcessEduUpdate() -> Result<void>
                         value_of(status.programId),
                         static_cast<unsigned>(value_of(status.startTime)));
             persistentVariables.Store<"newEduResultIsAvailable">(true);
-            edu::UpdateProgramStatusHistory(
-                status.programId, status.startTime, edu::ProgramStatus::resultStoredInFileSystem);
             break;
         }
         case edu::StatusType::enableDosimeter:

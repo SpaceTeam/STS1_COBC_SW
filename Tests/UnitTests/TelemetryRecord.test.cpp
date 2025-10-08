@@ -1,4 +1,3 @@
-#include <Sts1CobcSw/Edu/Types.hpp>
 #include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Serial/UInt.hpp>
 #include <Sts1CobcSw/Telemetry/TelemetryRecord.hpp>
@@ -18,7 +17,6 @@ using sts1cobcsw::ProgramId;
 using sts1cobcsw::RealTime;
 using sts1cobcsw::Serialize;
 using sts1cobcsw::TelemetryRecord;
-using sts1cobcsw::edu::ProgramStatus;
 
 
 TEST_CASE("(De-)Serialization of TelemetryRecord")
