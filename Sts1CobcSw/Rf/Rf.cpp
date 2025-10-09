@@ -178,6 +178,7 @@ auto DisableRfLatchupProtection() -> void;
 auto ReadAndClearInterruptStatus() -> Result<std::array<Byte, interruptStatusAnswerLength>>;
 [[nodiscard]] auto SuspendUntilInterrupt(RodosTime reactivationTime) -> Result<void>;
 [[nodiscard]] auto SuspendUntilInterrupt(Duration timeout) -> Result<void>;
+auto DebugPrintInterruptStatus() -> void;
 
 [[nodiscard]] auto StartTx() -> Result<void>;
 [[nodiscard]] auto StartRx() -> Result<void>;
@@ -516,11 +517,13 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
         auto reactivationTime = CurrentRodosTime() + timeout;
         OUTCOME_TRY(StartRx());
         DebugPrintModemStatus();
+        DebugPrintInterruptStatus();
         auto dataIndex = 0U;
         while(dataIndex + rxFifoThreshold < static_cast<unsigned int>(data.size()))
         {
             auto suspendUntilInterruptResult = SuspendUntilInterrupt(reactivationTime);
             DebugPrintModemStatus();
+            DebugPrintInterruptStatus();
             if(suspendUntilInterruptResult.has_error())
             {
                 return dataIndex;
@@ -1207,6 +1210,28 @@ auto SuspendUntilInterrupt(Duration timeout) -> Result<void>
 {
     auto reactivationTime = CurrentRodosTime() + timeout;
     return SuspendUntilInterrupt(reactivationTime);
+}
+
+
+auto DebugPrintInterruptStatus() -> void
+{
+#ifdef ENABLE_DEBUG_PRINT
+    auto intStatusResult = ReadAndClearInterruptStatus();
+    if(intStatusResult.has_error())
+    {
+        DEBUG_PRINT("Reading interrupt status failed: %s\n", ToCZString(intStatusResult.error()));
+    }
+    else
+    {
+        auto & intStatus = intStatusResult.value();
+        DEBUG_PRINT("PH interrupt status:    0x%02x 0x%02x\n",
+                    static_cast<std::uint8_t>(intStatus[2]),
+                    static_cast<std::uint8_t>(intStatus[3]));
+        DEBUG_PRINT("Modem interrupt status: 0x%02x 0x%02x\n",
+                    static_cast<std::uint8_t>(intStatus[4]),
+                    static_cast<std::uint8_t>(intStatus[5]));
+    }
+#endif
 }
 
 
