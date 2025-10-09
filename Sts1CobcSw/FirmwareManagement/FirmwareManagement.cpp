@@ -1,5 +1,7 @@
 #include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 
+#include <Sts1CobcSw/Outcome/Outcome.hpp>
+
 #ifndef __linux__
     #include <Sts1CobcSw/CmsisDevice/stm32f411xe.h>
 #endif
@@ -136,6 +138,44 @@ auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * er
     Read(startAddress + length, Span(&uint32Buffer));
     auto storedCrc = Deserialize<std::endian::little, std::uint32_t>(uint32Buffer);
     return FirmwareChecksums{.computed = computedCrc, .stored = storedCrc};
+}
+
+
+auto ReadFirmwareLength(std::uintptr_t startAddress) -> Result<std::uint32_t>
+{
+    if((startAddress % sizeof(std::uint32_t)) != 0)
+    {
+        return ErrorCode::misaligned;
+    }
+    auto uint32Buffer = SerialBuffer<std::uint32_t>{};
+    Read(startAddress, Span(&uint32Buffer));
+    auto length = Deserialize<std::endian::little, std::uint32_t>(uint32Buffer);
+    // The length includes the 4 bytes for itself but not the the CRC-32 checksum at the end. The
+    // CRC-32 value must be 4-byte aligned.
+    auto lengthIsValid = sizeof(std::uint32_t) <= length
+                     and length <= (partitionSize - sizeof(std::uint32_t))
+                     and (length % sizeof(std::uint32_t)) == 0;
+    if(not lengthIsValid)
+    {
+        return ErrorCode::invalidLength;
+    }
+    return length;
+}
+
+
+auto ReadFirmwareCommitHash(std::uintptr_t startAddress, std::span<Byte> data) -> Result<void>
+{
+    if((startAddress % sizeof(std::uint32_t)) != 0)
+    {
+        return ErrorCode::misaligned;
+    }
+    if(data.size() != commitHashLength)
+    {
+        return ErrorCode::invalidLength;
+    }
+    // First 4 bytes are firmware length
+    Read(startAddress + sizeof(std::uint32_t), data);
+    return outcome_v2::success();
 }
 
 

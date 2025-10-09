@@ -41,6 +41,7 @@ using ProgramResult = Result<std::uintptr_t>;
 
 
 inline constexpr auto partitionSize = 128 * 1024U;
+constexpr auto commitHashLength = 40U;
 
 extern Partition const primaryPartition;
 extern Partition const secondaryPartition1;
@@ -54,6 +55,9 @@ extern Partition const secondaryPartition2;
 #endif
 auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * errorCode)
     -> FirmwareChecksums;
+[[nodiscard]] auto ReadFirmwareLength(std::uintptr_t startAddress) -> Result<std::uint32_t>;
+[[nodiscard]] auto ReadFirmwareCommitHash(std::uintptr_t startAddress, std::span<Byte> data)
+    -> Result<void>;
 
 [[nodiscard]] auto Erase(std::uint16_t flashSector) -> EraseResult;
 [[nodiscard]] auto Program(std::uintptr_t address, std::span<Byte const> data) -> ProgramResult;
