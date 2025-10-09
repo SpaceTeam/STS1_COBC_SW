@@ -33,7 +33,9 @@ auto EraseAndProgram(fw::Partition const & partition, std::span<Byte const> data
 }
 
 
-TEST_CASE("Firmware management: Erase(), Program(), and Read()")
+TEST_CASE(
+    "Firmware management: Erase(), Program(), Read(), ReadFirmwareLength(), and "
+    "ReadFirmwareCommitHash()")
 {
     auto eraseResult = fw::Erase(fw::primaryPartition.flashSector);
     REQUIRE(eraseResult.has_error() == false);
@@ -62,6 +64,44 @@ TEST_CASE("Firmware management: Erase(), Program(), and Read()")
     CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0x00_b; }));
     fw::Read(fw::secondaryPartition2.startAddress, std::span(data));
     CHECK(std::ranges::all_of(data, [](Byte byte) { return byte == 0x00_b; }));
+
+    auto length = 0x10U;
+    auto lengthAddress = reinterpret_cast<std::uintptr_t>(&length);  // NOLINT(*reinterpret-cast)
+    auto lengthResult = fw::ReadFirmwareLength(lengthAddress);
+    REQUIRE(lengthResult.has_error() == false);
+    CHECK(lengthResult.value() == length);
+
+    length = sizeof(std::uint32_t) + 1;
+    lengthResult = fw::ReadFirmwareLength(lengthAddress);
+    REQUIRE(lengthResult.has_error() == true);
+    CHECK(lengthResult.error() == ErrorCode::invalidLength);
+
+    lengthResult = fw::ReadFirmwareLength(0x01);
+    REQUIRE(lengthResult.has_error() == true);
+    CHECK(lengthResult.error() == ErrorCode::misaligned);
+
+    for(auto i = 0U; i < fw::commitHashLength; i++)
+    {
+        data[i] = static_cast<Byte>(i);
+    }
+    auto commitHash = etl::vector<Byte, fw::commitHashLength>{};
+    commitHash.resize(fw::commitHashLength);
+    auto hashAddress = reinterpret_cast<std::uintptr_t>(data.data());  // NOLINT(*reinterpret-cast)
+    auto commitHashResult = fw::ReadFirmwareCommitHash(hashAddress, sts1cobcsw::Span(&commitHash));
+    CHECK(commitHashResult.has_error() == false);
+    for(auto i = 0U; i < fw::commitHashLength; i++)
+    {
+        data[i] = commitHash[i];
+    }
+
+    auto smallVector = etl::vector<Byte, 1>();
+    commitHashResult = fw::ReadFirmwareCommitHash(hashAddress, sts1cobcsw::Span(&smallVector));
+    REQUIRE(commitHashResult.has_error() == true);
+    CHECK(commitHashResult.error() == ErrorCode::invalidLength);
+
+    commitHashResult = fw::ReadFirmwareCommitHash(1, sts1cobcsw::Span(&commitHash));
+    REQUIRE(commitHashResult.has_error() == true);
+    CHECK(commitHashResult.error() == ErrorCode::misaligned);
 }
 
 
