@@ -306,6 +306,7 @@ auto HandleReceivedData() -> void
             static_cast<std::uint16_t>(decodeResult.value()));
         OUTCOME_TRY(auto tcFrame,
                     tc::ParseAsTransferFrame(std::span(tcBuffer).first<tc::transferFrameLength>()));
+        persistentVariables.Increment<"nGoodTransferFrames">();
         persistentVariables.Store<"lastFrameSequenceNumber">(
             tcFrame.primaryHeader.frameSequenceNumber);
         if(tcFrame.primaryHeader.vcid == cfdpVcid)
