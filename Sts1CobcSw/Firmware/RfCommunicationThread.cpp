@@ -185,6 +185,7 @@ private:
                 SendAndWait(HousekeepingParameterReport(telemetryRecordMailbox.Get().value()));
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 auto receiveResult = ReceiveAndHandleData(rxTimeoutAfterTelemetryRecord);
+                DEBUG_PRINT("\n");
                 moreDataShouldBeReceived = receiveResult.has_value();
                 DEBUG_PRINT_STACK_USAGE();
                 continue;
@@ -204,6 +205,7 @@ private:
                     auto rxTimeout = std::min(remainingRxDuration, rxTimeoutForAdditionalData);
                     DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeout / s);
                     auto receiveResult = ReceiveAndHandleData(rxTimeout);
+                    DEBUG_PRINT("\n");
                     moreDataShouldBeReceived = receiveResult.has_value();
                     continue;
                 }
