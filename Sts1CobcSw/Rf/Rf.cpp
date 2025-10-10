@@ -429,6 +429,7 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
     if(not isInTxMode)
     {
         OUTCOME_TRY(ResetFifos());
+        OUTCOME_TRY(ReadAndClearInterruptStatus());
         DisableRfLatchupProtection();
     }
     auto dataIndex = 0U;
@@ -455,10 +456,20 @@ auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
         }
         return outcome_v2::success();
     }();
-    OUTCOME_TRY(SetPacketHandlerInterrupts(noInterrupts));
+    // TODO: Refactor
+    auto setInterruptsResult = SetPacketHandlerInterrupts(noInterrupts);
+    auto clearInterruptsResult = ReadAndClearInterruptStatus();
     if(result.has_error())
     {
         return result;
+    }
+    if(setInterruptsResult.has_error())
+    {
+        return setInterruptsResult.error();
+    }
+    if(clearInterruptsResult.has_error())
+    {
+        return clearInterruptsResult.error();
     }
     auto encodedData = convolutionalCoder.Encode(data.subspan(dataIndex), /*flush=*/true);
     OUTCOME_TRY(WriteToFifo(encodedData));
@@ -510,6 +521,7 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
             currentDataRate = rxDataRateConfig.dataRate;
         }
         OUTCOME_TRY(ResetFifos());
+        OUTCOME_TRY(ReadAndClearInterruptStatus());
         OUTCOME_TRY(SetPacketHandlerInterrupts(rxFifoAlmostFullInterrupt));
         OUTCOME_TRY(ReadAndClearInterruptStatus());
         DisableRfLatchupProtection();
@@ -545,14 +557,27 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
         dataIndex += remainingData.size();
         return dataIndex;
     }();
+    // TODO: Refactor
     auto setInterruptsResult = SetPacketHandlerInterrupts(noInterrupts);
-    OUTCOME_TRY(DoEnterStandbyMode());
+    auto clearInterruptsResult = ReadAndClearInterruptStatus();
+    auto enterStandbyResult = DoEnterStandbyMode();
+    if(result.has_error())
+    {
+        return result.error();
+    }
     if(setInterruptsResult.has_error())
     {
         return setInterruptsResult.error();
     }
-    OUTCOME_TRY(ReadAndClearInterruptStatus());
-    return result;
+    if(clearInterruptsResult.has_error())
+    {
+        return clearInterruptsResult.error();
+    }
+    if(enterStandbyResult.has_error())
+    {
+        return enterStandbyResult.error();
+    }
+    return result.value();
 }
 
 
