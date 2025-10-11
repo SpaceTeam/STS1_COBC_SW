@@ -86,13 +86,16 @@ private:
             nextEduProgramStartTimeBuffer.get(nextEduProgramStartTime);
             auto timeTillNextEduProgram = ToRodosTime(nextEduProgramStartTime) - CurrentRodosTime();
             auto eduHasUpdate = edu::updateGpioPin.Read() == hal::PinState::set;
-            auto noWorkMustBeDoneInTheNearFuture =
-                not eduHasUpdate and not edu::ProgramsAreAvailableOnCobc()
-                and timeTillNextEduProgram > persistentVariables.Load<"maxEduIdleDuration">();
-            if(eduIsAlive and noWorkMustBeDoneInTheNearFuture)
+            if(eduIsAlive)
             {
-                DEBUG_PRINT("Turning EDU off\n");
-                edu::TurnOff();
+                auto noWorkMustBeDoneInTheNearFuture =
+                    not eduHasUpdate and not edu::ProgramsAreAvailableOnCobc()
+                    and timeTillNextEduProgram > persistentVariables.Load<"maxEduIdleDuration">();
+                if(noWorkMustBeDoneInTheNearFuture)
+                {
+                    DEBUG_PRINT("Turning EDU off\n");
+                    edu::TurnOff();
+                }
             }
             else if(not eduIsAlive and timeTillNextEduProgram < (eduBootTime + eduBootTimeMargin))
             {
