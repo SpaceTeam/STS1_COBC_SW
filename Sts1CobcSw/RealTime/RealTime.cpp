@@ -5,7 +5,6 @@
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 
 #include <strong_type/affine_point.hpp>
-#include <strong_type/difference.hpp>
 #include <strong_type/type.hpp>
 
 #include <rodos_no_using_namespace.h>
@@ -15,13 +14,10 @@
 
 namespace sts1cobcsw
 {
-auto UpdateRealTimeOffset(RealTime realTime, bool useOffsetCorrection) -> void
+auto UpdateRealTimeOffset(RealTime realTime) -> void
 {
     auto currentRodosTime = CurrentRodosTime();
-    auto offsetCorrection =
-        useOffsetCorrection ? persistentVariables.Load<"realTimeOffsetCorrection">() : Duration(0);
-    auto newRealTimeOffset =
-        RodosTime(value_of(realTime) * RODOS::SECONDS) - currentRodosTime + offsetCorrection;
+    auto newRealTimeOffset = RodosTime(value_of(realTime) * RODOS::SECONDS) - currentRodosTime;
     persistentVariables.Store<"realTimeOffset">(newRealTimeOffset);
 }
 }

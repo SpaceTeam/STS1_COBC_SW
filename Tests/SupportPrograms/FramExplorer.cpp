@@ -345,7 +345,6 @@ auto PrintAllVariables() -> void
     PrintVariable("antennasShouldBeDeployed");
     PrintVariable("realTime");
     PrintVariable("realTimeOffset");
-    PrintVariable("realTimeOffsetCorrection");
     PrintVariable("nFirmwareChecksumErrors");
     PrintVariable("epsIsWorking");
     PrintVariable("flashIsWorking");
@@ -385,7 +384,6 @@ auto ResetAllVariables() -> void
     persistentVariables.Store<"antennasShouldBeDeployed">(false);
     persistentVariables.Store<"realTime">(RealTime(0));
     persistentVariables.Store<"realTimeOffset">(Duration(0));
-    persistentVariables.Store<"realTimeOffsetCorrection">(Duration(0));
     persistentVariables.Store<"nFirmwareChecksumErrors">(0);
     persistentVariables.Store<"epsIsWorking">(false);
     persistentVariables.Store<"flashIsWorking">(false);
@@ -454,10 +452,6 @@ auto PrintVariable(etl::string_view variable) -> void  // NOLINT(*value-param)
     else if(variable == "realTimeOffset")
     {
         etl::to_string(value_of(persistentVariables.Load<"realTimeOffset">()), value);
-    }
-    else if(variable == "realTimeOffsetCorrection")
-    {
-        etl::to_string(value_of(persistentVariables.Load<"realTimeOffsetCorrection">()), value);
     }
     else if(variable == "nFirmwareChecksumErrors")
     {
@@ -598,11 +592,6 @@ auto SetVariable(etl::string_view variable, etl::string_view value) -> void  // 
     else if(variable == "realTimeOffset")
     {
         WriteAndConvertFunction<"realTimeOffset", Duration, ParseAsInt64>(variable, value);
-    }
-    else if(variable == "realTimeOffsetCorrection")
-    {
-        WriteAndConvertFunction<"realTimeOffsetCorrection", Duration, ParseAsInt64>(variable,
-                                                                                    value);
     }
     else if(variable == "nFirmwareChecksumErrors")
     {

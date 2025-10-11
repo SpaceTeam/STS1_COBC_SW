@@ -882,9 +882,6 @@ auto GetValue(Parameter::Id parameterId) -> Parameter::Value
             return rf::GetRxDataRate();
         case Parameter::Id::txDataRate:
             return rf::GetTxDataRate();
-        case Parameter::Id::realTimeOffsetCorrection:
-            return static_cast<std::uint32_t>(persistentVariables.Load<"realTimeOffsetCorrection">()
-                                              / s);
         case Parameter::Id::maxEduIdleDuration:
             return static_cast<std::uint32_t>(persistentVariables.Load<"maxEduIdleDuration">() / s);
         case Parameter::Id::newEduResultIsAvailable:
@@ -905,9 +902,6 @@ auto Set(Parameter parameter) -> void
         case Parameter::Id::txDataRate:
             rf::SetTxDataRate(parameter.value);
             txDataRateTopic.publish(parameter.value);
-            break;
-        case Parameter::Id::realTimeOffsetCorrection:
-            persistentVariables.Store<"realTimeOffsetCorrection">(parameter.value * s);
             break;
         case Parameter::Id::maxEduIdleDuration:
             persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
