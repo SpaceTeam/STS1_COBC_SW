@@ -54,7 +54,8 @@
         "USE_PUNCTURING": "OFF",
         "DISABLE_CHANNEL_CODING": "OFF",
         "DISABLE_CONVOLUTIONAL_CODING": "OFF",
-        "ENABLE_DEBUG_PRINT_STACK_USAGE": "OFF"
+        "ENABLE_DEBUG_PRINT_STACK_USAGE": "OFF",
+        "FORCE_ENABLE_DEBUG_PRINT": "OFF"
       }
     },
     {
@@ -69,8 +70,7 @@
       "name": "dev-cobc-for-bootloader-fast",
       "inherits": "dev-cobc-fast",
       "cacheVariables": {
-        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON",
-        "FORCE_ENABLE_DEBUG_PRINT": "OFF"
+        "BUILD_FOR_USE_WITH_BOOTLOADER": "ON"
       }
     },
     {
