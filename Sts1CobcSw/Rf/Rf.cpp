@@ -28,6 +28,7 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <compare>
@@ -345,7 +346,8 @@ auto ExecuteWithRecovery(Args... args)
             return result.value();
         }
     }
-    // Reset COBC
+    // If all attempts failed, reset the whole COBC
+    DEBUG_PRINT("RF error recovery failed, resetting in %lld s\n", errorHandlingCobcResetDelay / s);
     SuspendFor(errorHandlingCobcResetDelay);
     RODOS::hwResetAndReboot();
     __builtin_unreachable();  // Tell the compiler that hwResetAndReboot() never returns
@@ -540,6 +542,17 @@ auto DoReceive(std::span<Byte> data, Duration timeout) -> Result<std::size_t>
             OUTCOME_TRY(ReadAndClearInterruptStatus());
             ReadFromFifo(data.subspan(dataIndex, rxFifoThreshold));
             dataIndex += rxFifoThreshold;
+            if(dataIndex == rxFifoThreshold)
+            {
+                if(std::ranges::all_of(data.subspan(0, dataIndex),
+                                       [](Byte byte) { return byte == 0xFF_b; }))  // NOLINT
+                {
+                    DEBUG_PRINT("Received bytes are all 0xFF\n");
+                    Reset();
+                    (void)DoInitialize();
+                    return ErrorCode::receivedInvalidData;
+                }
+            }
         }
         auto remainingData = data.subspan(dataIndex);
         OUTCOME_TRY(SetRxFifoThreshold(static_cast<Byte>(remainingData.size())));

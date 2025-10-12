@@ -183,6 +183,9 @@ constexpr auto ToCZString(ErrorCode errorCode) -> char const *
             return "eraseFailed";
         case ErrorCode::programFailed:
             return "programFailed";
+        // RF
+        case ErrorCode::receivedInvalidData:
+            return "receivedInvalidData";
     }
     return "unknown error code";
 }
