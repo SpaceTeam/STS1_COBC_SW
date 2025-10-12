@@ -51,7 +51,7 @@ private:
         {
             auto eduIsAlive = false;
             eduIsAliveBufferForProgramTransfer.get(eduIsAlive);
-            if(edu::ProgramsAreAvailableOnCobc() and eduIsAlive)
+            if(eduIsAlive and edu::ProgramsAreAvailableOnCobc())
             {
                 DEBUG_PRINT("Sending programs to EDU\n");
                 SendProgramsToEdu();
