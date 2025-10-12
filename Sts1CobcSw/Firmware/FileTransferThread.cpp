@@ -255,6 +255,9 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
     auto result = [&]() -> Result<void>
     {
         auto partition = fw::GetPartition(fileTransferMetadata.destinationPartitionId);
+        missingFileData = {
+            SegmentRequest{.startOffset = 0, .endOffset = fileTransferMetadata.fileSize}
+        };
         if(fileTransferMetadata.fileIsFirmware)
         {
             OUTCOME_TRY(ReceiveInitialFileData(nullptr, partition));
@@ -263,9 +266,6 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
         else
         {
             OUTCOME_TRY(auto file, fs::Open(fileTransferMetadata.destinationPath, LFS_O_WRONLY));
-            missingFileData = {
-                SegmentRequest{.startOffset = 0, .endOffset = fileTransferMetadata.fileSize}
-            };
             OUTCOME_TRY(ReceiveInitialFileData(&file, partition));
             OUTCOME_TRY(RequestAndReceiveMissingDataUntilFinished(&file, partition));
         }
