@@ -28,7 +28,6 @@
 #include <etl/vector.h>
 
 #include <algorithm>
-#include <array>
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
@@ -61,8 +60,6 @@ constexpr auto cepData = 0x8b_b;  //! Data packet format is used (not a command 
 // 1.5 s just to be sure.
 constexpr auto sendTimeout = 1500 * ms;
 constexpr auto receiveTimeout = 1500 * ms;
-// TODO: Can we choose a smaller value?
-constexpr auto flushReceiveBufferTimeout = 1 * ms;
 
 // TODO: Choose proper values
 // Max. number of send retries after receiving NACK
