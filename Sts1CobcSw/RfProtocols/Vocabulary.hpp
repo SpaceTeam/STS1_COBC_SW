@@ -17,7 +17,6 @@ struct Parameter
     {
         rxDataRate = 1,
         txDataRate,
-        realTimeOffsetCorrection,
         maxEduIdleDuration,
         newEduResultIsAvailable,
     };

@@ -40,7 +40,6 @@ inline constexpr auto persistentVariables =
                         PersistentVariableInfo<"antennasShouldBeDeployed", bool>,
                         PersistentVariableInfo<"realTime", RealTime>,
                         PersistentVariableInfo<"realTimeOffset", Duration>,
-                        PersistentVariableInfo<"realTimeOffsetCorrection", Duration>,
                         PersistentVariableInfo<"nFirmwareChecksumErrors", std::uint8_t>,
                         PersistentVariableInfo<"epsIsWorking", bool>,
                         PersistentVariableInfo<"flashIsWorking", bool>,

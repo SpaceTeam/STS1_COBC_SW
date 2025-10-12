@@ -14,7 +14,7 @@ namespace sts1cobcsw
 [[nodiscard]] auto CurrentRealTime() -> RealTime;
 [[nodiscard]] auto ToRodosTime(RealTime realTime) -> RodosTime;
 [[nodiscard]] auto ToRealTime(RodosTime rodosTime) -> RealTime;
-auto UpdateRealTimeOffset(RealTime realTime, bool useOffsetCorrection = true) -> void;
+auto UpdateRealTimeOffset(RealTime realTime) -> void;
 }
 
 

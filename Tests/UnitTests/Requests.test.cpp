@@ -210,36 +210,34 @@ TEST_CASE("PerformAFunctionRequest")
 TEST_CASE("ReportParameterValuesRequest")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
-    buffer.resize(6);
-    buffer[0] = 0x05_b;  // Number of ParameterIDs
+    buffer.resize(5);
+    buffer[0] = 0x04_b;  // Number of ParameterIDs
     buffer[1] = 0x01_b;  // ParameterID 1
     buffer[2] = 0x02_b;  // ParameterID 2
     buffer[3] = 0x03_b;  // ParameterID 3
     buffer[4] = 0x04_b;  // ParameterID 4
-    buffer[5] = 0x05_b;  // ParameterID 5
 
     auto parseResult = sts1cobcsw::ParseAsReportParameterValuesRequest(buffer);
     REQUIRE(parseResult.has_value());
     auto const & request = parseResult.value();
 
-    CHECK(request.nParameters == 0x05);
+    CHECK(request.nParameters == 0x04);
     CHECK(request.parameterIds[0] == sts1cobcsw::Parameter::Id::rxDataRate);
     CHECK(request.parameterIds[1] == sts1cobcsw::Parameter::Id::txDataRate);
-    CHECK(request.parameterIds[2] == sts1cobcsw::Parameter::Id::realTimeOffsetCorrection);
-    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::maxEduIdleDuration);
-    CHECK(request.parameterIds[4] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
+    CHECK(request.parameterIds[2] == sts1cobcsw::Parameter::Id::maxEduIdleDuration);
+    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
 
     // No more than 5 Parameters are allowed
     buffer[0] = 0x06_b;
     parseResult = sts1cobcsw::ParseAsReportParameterValuesRequest(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
-    buffer[0] = 0x05_b;
+    buffer[0] = 0x04_b;
 
-    // For 5 Parameter, a buffer of 6 is required
+    // For 4 Parameter, a buffer of 5 is required
     auto smallerBuffer = etl::vector<Byte, 5>{};
-    smallerBuffer.resize(5);
-    smallerBuffer[0] = 0x05_b;  // Number of ParameterIDs
+    smallerBuffer.resize(4);
+    smallerBuffer[0] = 0x04_b;  // Number of ParameterIDs
     smallerBuffer[1] = 0x01_b;  // ParameterID 1
     smallerBuffer[2] = 0x02_b;  // ParameterID 2
     smallerBuffer[3] = 0x03_b;  // ParameterID 3
@@ -260,8 +258,8 @@ TEST_CASE("ReportParameterValuesRequest")
 TEST_CASE("SetParameterValuesRequest")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
-    buffer.resize(26);
-    buffer[0] = 0x05_b;   // Number of ParameterIDs
+    buffer.resize(21);
+    buffer[0] = 0x04_b;   // Number of ParameterIDs
     buffer[1] = 0x01_b;   // ParameterId 1
     buffer[2] = 0xAA_b;   // ParameterValue 1 (high byte)
     buffer[3] = 0xBB_b;   // ParameterValue 1
@@ -274,13 +272,12 @@ TEST_CASE("SetParameterValuesRequest")
     buffer[10] = 0xEE_b;  // ParameterValue 2 (low byte)
     buffer[11] = 0x03_b;  // ParameterId 3
     buffer[16] = 0x04_b;  // ParameterId 4
-    buffer[21] = 0x05_b;  // ParameterId 5
 
     auto parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(buffer);
     CHECK(parseResult.has_value());
     auto request = parseResult.value();
 
-    CHECK(request.nParameters == 0x05);
+    CHECK(request.nParameters == 0x04);
     CHECK(request.parameters[0].id == sts1cobcsw::Parameter::Id::rxDataRate);
     CHECK(request.parameters[0].value == 0xAABB'CCDD);
     CHECK(request.parameters[1].id == sts1cobcsw::Parameter::Id::txDataRate);
@@ -298,12 +295,12 @@ TEST_CASE("SetParameterValuesRequest")
     parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(buffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidApplicationData);
-    buffer[0] = 0x05_b;
+    buffer[0] = 0x04_b;
 
-    // For 5 Parameter, a buffer of 26 is required
-    auto smallerBuffer = etl::vector<Byte, 25>{};
-    smallerBuffer.resize(25);
-    smallerBuffer[0] = 0x05_b;  // Number of ParameterIDs
+    // For 4 Parameter, a buffer of 25 is required
+    auto smallerBuffer = etl::vector<Byte, 24>{};
+    smallerBuffer.resize(24);
+    smallerBuffer[0] = 0x04_b;  // Number of ParameterIDs
     parseResult = sts1cobcsw::ParseAsSetParameterValuesRequest(smallerBuffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidDataLength);

@@ -80,7 +80,7 @@ private:
             RODOS::hwResetAndReboot();
         }
         InitializeAndFeedResetDog();
-        UpdateRealTimeOffset(persistentVariables.Load<"realTime">(), /*useOffsetCorrection=*/false);
+        UpdateRealTimeOffset(persistentVariables.Load<"realTime">());
         DEBUG_PRINT_REAL_TIME();
         SetUpFileSystem();
         edu::Initialize();
