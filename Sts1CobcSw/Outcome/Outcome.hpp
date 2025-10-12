@@ -105,6 +105,8 @@ enum class ErrorCode : std::int8_t  // NOLINT
     misaligned,
     eraseFailed,
     programFailed,
+    // RF
+    receivedInvalidData,
 };
 
 
