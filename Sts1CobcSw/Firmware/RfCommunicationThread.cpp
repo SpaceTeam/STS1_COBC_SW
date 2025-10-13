@@ -75,6 +75,7 @@ namespace sts1cobcsw
 {
 namespace
 {
+// FIXME: const value correct in whole file?
 constexpr auto stackSize = 6000;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 constexpr auto rxTimeoutForAdditionalData = 3 * s;

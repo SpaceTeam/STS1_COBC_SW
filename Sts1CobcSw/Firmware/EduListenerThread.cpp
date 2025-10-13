@@ -27,6 +27,7 @@ namespace
 {
 constexpr auto stackSize = 5000U;
 constexpr auto eduIsAliveCheckInterval = 1 * s;
+// FIXME: const value correct?
 
 
 auto SuspendUntilEduIsAliveAndHasUpdate() -> void;
