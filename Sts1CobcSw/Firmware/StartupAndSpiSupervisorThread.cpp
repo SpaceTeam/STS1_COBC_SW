@@ -47,6 +47,7 @@ constexpr auto stackSize = 3500 + EXTRA_SANITIZER_STACK_SIZE;
 
 inline constexpr auto initialSleepTime = 10 * ms;
 // TODO: Think about how often the supervision should run
+// FIXME: Think about how often the supervision should run
 constexpr auto supervisionPeriod = 1 * s;
 
 

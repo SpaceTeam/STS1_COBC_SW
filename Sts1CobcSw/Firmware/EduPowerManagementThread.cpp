@@ -28,6 +28,7 @@ namespace
 {
 constexpr auto stackSize = 6000U;
 // TODO: Come up with the "right" numbers
+// FIXME: edu boot time ok?
 constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
 constexpr auto eduBootTimeMargin = 5 * s;
 constexpr auto eduPowerManagementThreadInterval = 2 * s;

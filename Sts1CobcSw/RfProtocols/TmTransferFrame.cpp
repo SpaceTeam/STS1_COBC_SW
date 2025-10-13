@@ -33,6 +33,7 @@ auto TransferFrame::Finish() -> void
         virtualChannelFrameCounters.PostIncrement(primaryHeader_.vcid);
     (void)SerializeTo<ccsdsEndianness>(buffer_.data(), primaryHeader_);
     // TODO: Fill the remaining space with a proper idle packet
+    // FIXME: Is idleData correct?
     dataField_.resize(dataField_.max_size(), idleData);
 }
 

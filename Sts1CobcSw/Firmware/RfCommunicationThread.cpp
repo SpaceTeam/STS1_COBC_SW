@@ -288,6 +288,7 @@ auto SendCfdpFrames() -> void
     }
     // TODO: It looks like we are missing a FinalizeTransmission() are something here. Having just a
     // SendAndContinue() seems wrong.
+    // FIXME: see text above
     ResumeFileTransferThread();
 }
 

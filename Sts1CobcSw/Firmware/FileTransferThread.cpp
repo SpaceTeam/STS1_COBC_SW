@@ -869,9 +869,11 @@ auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
                                      InterruptCondition interruptCondition) -> Result<void>
 {
     // TODO: We do not check the received PDUs if the encodedCfdpFrameMailbox is not full
+    // FIXME: We do not check the received PDUs if the encodedCfdpFrameMailbox is not full
     while(encodedCfdpFrameMailbox.IsFull())
     {
         // TODO: Think about the correct reactivation time for all suspend functions
+        // FIXME: Think about the correct reactivation time for all suspend functions
         (void)encodedCfdpFrameMailbox.SuspendUntilEmptyOr(endOfTime);
         auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
         if(getFileDirectivePduResult.has_error())
