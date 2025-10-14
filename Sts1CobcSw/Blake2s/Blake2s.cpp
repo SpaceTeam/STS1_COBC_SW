@@ -16,9 +16,9 @@ auto ComputeHash(std::span<Byte const> data) -> Hash
 {
     static constexpr auto keySize = 4;
     // TODO: Use a proper key
+    // FIXME: Use a proper key
     static constexpr std::uint32_t key = 0x0000'0000;
-    // TODO: Check if little or big endian is the right choice here
-    static auto const serializedKey = Serialize<std::endian::little>(key);
+    static auto const serializedKey = Serialize<std::endian::big>(key);
     static_assert(serializedKey.size() == keySize);
 
     auto blake2s = BLAKE2s();
