@@ -26,8 +26,7 @@ constexpr auto heartbeatFrequency = 10;
 constexpr auto heartbeatPeriod = 1 * s / heartbeatFrequency;
 // We use a high safety factor to ensure that we don't falsely detect the EDU as dead just because
 // higher-priority threads have a lot of work to do.
-// FIXME: const value safetyFactor
-constexpr auto safetyFactor = 2;
+constexpr auto safetyFactor = 4;
 constexpr auto interruptTimeout = heartbeatPeriod / 2 * safetyFactor;
 constexpr auto edgeCounterThreshold = 3;
 
