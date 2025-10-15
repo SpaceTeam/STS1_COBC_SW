@@ -26,7 +26,6 @@ namespace
 {
 constexpr auto stackSize = 5000U;
 constexpr auto eduProgramTransferThreadInterval = 5 * s;
-// FIXME: const value correct?
 
 
 auto SendProgramsToEdu() -> void;

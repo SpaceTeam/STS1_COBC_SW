@@ -11,7 +11,6 @@
 
 namespace sts1cobcsw
 {
-// FIXME: const value correct?
 inline constexpr auto eduPowerManagementThreadStartDelay = 15 * s;
 
 

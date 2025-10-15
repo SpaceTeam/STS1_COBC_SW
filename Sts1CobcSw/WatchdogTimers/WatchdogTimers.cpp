@@ -32,7 +32,6 @@ auto Initialize() -> void
 
 auto Feed() -> void
 {
-    // FIXME: const value correct?
     static constexpr auto watchdogFeedPulseDuration = 2 * ms;
     watchdogClearGpioPin.Set();
     SuspendFor(watchdogFeedPulseDuration);
@@ -54,7 +53,6 @@ auto Initialize() -> void
 
 auto Feed() -> void
 {
-    // FIXME: const value correct?
     static constexpr auto resetdogFeedPulseDuration = 2 * ms;
     resetdogClearGpioPin1.Set();
     resetdogClearGpioPin2.Set();

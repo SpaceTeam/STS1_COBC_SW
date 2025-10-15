@@ -35,8 +35,6 @@ using Address = strong::type<std::uint32_t,
                              strong::ordered>;
 
 
-// TODO: Set correct values
-// FIXME: already correct?
 inline constexpr auto memorySize = Size(1024 * 1024);
 inline constexpr auto correctDeviceId =
     DeviceId{0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0x7F_b, 0xC2_b, 0x26_b, 0x08_b};

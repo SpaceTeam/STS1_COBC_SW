@@ -17,7 +17,6 @@ using sts1cobcsw::ErrorCode;
 
 namespace
 {
-// FIXME: const value correct?
 constexpr int nResetsSinceRfLimit = 50;
 
 

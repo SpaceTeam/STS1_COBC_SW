@@ -36,7 +36,6 @@ namespace
 constexpr auto stackSize = 1500U;
 // This thread must start before the EDU power management thread to ensure the correct start time
 // is published
-// FIXME: const value correct?
 constexpr auto eduProgramQueueThreadStartDelay = eduPowerManagementThreadStartDelay - 1 * s;
 static_assert(eduProgramQueueThreadStartDelay > 0 * s);
 constexpr auto eduCommunicationMargin = 2 * s;

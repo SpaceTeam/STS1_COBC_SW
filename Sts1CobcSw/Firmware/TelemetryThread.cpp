@@ -41,7 +41,6 @@ namespace sts1cobcsw
 {
 namespace
 {
-// FIXME: const value correct?
 constexpr auto stackSize = 1200U;
 constexpr auto telemetryThreadInterval = 30 * s;
 // The delay until the first telemetry record is published and thereby the first beacon is sent.
