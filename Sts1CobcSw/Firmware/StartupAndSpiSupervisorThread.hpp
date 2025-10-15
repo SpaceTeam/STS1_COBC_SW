@@ -11,8 +11,7 @@
 
 namespace sts1cobcsw
 {
-// TODO: Measure how long the startup tests really take to determine the correct timeouts
-// FIXME: Measure how long the startup tests really take to determine the correct timeouts
+// Values are correct, measured with minSize built without bootloader
 inline constexpr auto flashStartupTestTimeout = 50 * ms;
 inline constexpr auto framEpsStartupTestTimeout = 50 * ms;
 inline constexpr auto rfStartupTestTimeout = 250 * ms;
