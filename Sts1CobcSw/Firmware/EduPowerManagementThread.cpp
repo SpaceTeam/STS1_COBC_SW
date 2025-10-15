@@ -27,10 +27,9 @@ namespace sts1cobcsw
 namespace
 {
 constexpr auto stackSize = 6000U;
-// TODO: Come up with the "right" numbers
-// FIXME: edu boot time ok?
+// Higher margin as the edu timedout, when a program is uploaded and started at the same time
 constexpr auto eduBootTime = 20 * s;  // Measured ~19 s
-constexpr auto eduBootTimeMargin = 5 * s;
+constexpr auto eduBootTimeMargin = 40 * s;
 constexpr auto eduPowerManagementThreadInterval = 2 * s;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
