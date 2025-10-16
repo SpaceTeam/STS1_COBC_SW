@@ -43,6 +43,9 @@ namespace
 {
 constexpr auto stackSize = 1200U;
 constexpr auto telemetryThreadInterval = 30 * s;
+// The delay until the first telemetry record is published and thereby the first beacon is sent.
+// This prevents immediate resets if we boot with too little power for the RF module.
+constexpr auto initialTelemetryDelay = 1 * min;
 // The time after which we enable resets in case of firmware corruption. This prevents immediate
 // resets after booting into a corrupt firmware.
 constexpr auto firmwareCorruptionResetEnableTime = RodosTime(0) + 10 * min;
@@ -76,6 +79,7 @@ private:
     {
         SuspendFor(totalStartupTestTimeout);  // Wait for the startup tests to complete
         DEBUG_PRINT("Starting telemetry thread\n");
+        SuspendFor(initialTelemetryDelay);
         TIME_LOOP(0, value_of(telemetryThreadInterval))
         {
             auto firmwareIsIntact = CheckFirmwareIntegrities();
@@ -169,6 +173,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .programIdOfCurrentEduProgramQueueEntry = programIdOfCurrentEduProgramQueueEntry,
         .nEduCommunicationErrors = persistentVariables.Load<"nEduCommunicationErrors">(),
         // Housekeeping
+        // FIXME: Fill lastResetReason
         .lastResetReason = 0U,  // TODO: Get with RCC_GetFlagStatus() (needs to be called in main)
         .rodosTimeInSeconds = static_cast<std::int32_t>((CurrentRodosTime() - RodosTime{}) / s),
         .realTime = CurrentRealTime(),
@@ -177,6 +182,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .nRfErrors = persistentVariables.Load<"nRfErrors">(),
         .nFileSystemErrors = persistentVariables.Load<"nFileSystemErrors">(),
         // Sensor data
+        // FIXME: Fill cobcTemperature
         .cobcTemperature = 0U,  // TODO: Get from internal ADC
         .rfTemperature = rftemperaturesensor::Read(),
         .epsAdcData = eps::ReadAdcs(),

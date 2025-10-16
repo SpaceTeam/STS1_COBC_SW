@@ -75,6 +75,7 @@ namespace sts1cobcsw
 {
 namespace
 {
+// FIXME: const value correct in whole file?
 constexpr auto stackSize = 6000;
 constexpr auto rxTimeoutAfterTelemetryRecord = 5 * s;
 constexpr auto rxTimeoutForAdditionalData = 3 * s;
@@ -185,6 +186,7 @@ private:
                 SendAndWait(HousekeepingParameterReport(telemetryRecordMailbox.Get().value()));
                 DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeoutAfterTelemetryRecord / s);
                 auto receiveResult = ReceiveAndHandleData(rxTimeoutAfterTelemetryRecord);
+                DEBUG_PRINT("\n");
                 moreDataShouldBeReceived = receiveResult.has_value();
                 DEBUG_PRINT_STACK_USAGE();
                 continue;
@@ -204,6 +206,7 @@ private:
                     auto rxTimeout = std::min(remainingRxDuration, rxTimeoutForAdditionalData);
                     DEBUG_PRINT("Receiving for %" PRIi64 " s\n", rxTimeout / s);
                     auto receiveResult = ReceiveAndHandleData(rxTimeout);
+                    DEBUG_PRINT("\n");
                     moreDataShouldBeReceived = receiveResult.has_value();
                     continue;
                 }
@@ -286,6 +289,7 @@ auto SendCfdpFrames() -> void
     }
     // TODO: It looks like we are missing a FinalizeTransmission() are something here. Having just a
     // SendAndContinue() seems wrong.
+    // FIXME: see text above
     ResumeFileTransferThread();
 }
 
@@ -306,6 +310,7 @@ auto HandleReceivedData() -> void
             static_cast<std::uint16_t>(decodeResult.value()));
         OUTCOME_TRY(auto tcFrame,
                     tc::ParseAsTransferFrame(std::span(tcBuffer).first<tc::transferFrameLength>()));
+        persistentVariables.Increment<"nGoodTransferFrames">();
         persistentVariables.Store<"lastFrameSequenceNumber">(
             tcFrame.primaryHeader.frameSequenceNumber);
         if(tcFrame.primaryHeader.vcid == cfdpVcid)
@@ -604,7 +609,7 @@ auto Handle(SetParameterValuesRequest const & request, [[maybe_unused]] RequestI
 
 auto Handle(DeleteAFileRequest const & request, RequestId const & requestId) -> void
 {
-    auto result = fs::Remove(request.filePath);
+    auto result = fs::ForceRemove(request.filePath);
     if(result.has_error())
     {
         DEBUG_PRINT(
@@ -903,11 +908,11 @@ auto Set(Parameter parameter) -> void
             rf::SetTxDataRate(parameter.value);
             txDataRateTopic.publish(parameter.value);
             break;
-        case Parameter::Id::maxEduIdleDuration:
-            persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
-            break;
         case Parameter::Id::newEduResultIsAvailable:
             persistentVariables.Store<"newEduResultIsAvailable">(parameter.value != 0U);
+            break;
+        case Parameter::Id::maxEduIdleDuration:
+            persistentVariables.Store<"maxEduIdleDuration">(parameter.value * s);
             break;
     }
 }

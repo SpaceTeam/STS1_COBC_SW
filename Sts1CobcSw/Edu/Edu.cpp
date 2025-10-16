@@ -61,7 +61,6 @@ constexpr auto cepData = 0x8b_b;  //! Data packet format is used (not a command 
 constexpr auto sendTimeout = 1500 * ms;
 constexpr auto receiveTimeout = 1500 * ms;
 
-// TODO: Choose proper values
 // Max. number of send retries after receiving NACK
 constexpr auto maxNNackRetries = 4;
 // Max. number of data packets for a single command

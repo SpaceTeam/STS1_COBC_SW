@@ -17,6 +17,7 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RealTime/RealTime.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Sensors/TemperatureSensor.hpp>
 #include <Sts1CobcSw/Utility/DebugPrint.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 #ifndef __linux__
@@ -50,7 +51,7 @@ constexpr auto supervisionPeriod = 1 * s;
 
 
 auto ExecuteStartupTests() -> void;
-auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool;
+auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)(), Duration timeout) -> bool;
 auto InitializeAndFeedResetDog() -> void;
 auto SetUpFileSystem() -> void;
 auto RemoveAllLockFiles() -> void;
@@ -84,6 +85,7 @@ private:
         DEBUG_PRINT_REAL_TIME();
         SetUpFileSystem();
         edu::Initialize();
+        rftemperaturesensor::Initialize();
         auto i = 0U;
         TIME_LOOP(0, value_of(supervisionPeriod))
         {
@@ -136,7 +138,8 @@ auto ExecuteStartupTests() -> void
     [[maybe_unused]] static constexpr auto errorMessage = " failed to complete in time\n";
     [[maybe_unused]] static constexpr auto successMessage = " completed in time\n";
 
-    auto testWasSuccessful = ExecuteStartupTest(ResumeFramEpsStartupTestThread);
+    auto testWasSuccessful =
+        ExecuteStartupTest(ResumeFramEpsStartupTestThread, framEpsStartupTestTimeout);
     DEBUG_PRINT(fram::framIsWorking.Load() ? " " : " and");
     if(not testWasSuccessful)
     {
@@ -149,7 +152,7 @@ auto ExecuteStartupTests() -> void
         DEBUG_PRINT("%s", successMessage);
     }
 
-    testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread);
+    testWasSuccessful = ExecuteStartupTest(ResumeFlashStartupTestThread, flashStartupTestTimeout);
     DEBUG_PRINT(persistentVariables.Load<"flashIsWorking">() ? " " : " and");
     if(not testWasSuccessful)
     {
@@ -162,7 +165,7 @@ auto ExecuteStartupTests() -> void
         DEBUG_PRINT("%s", successMessage);
     }
 
-    testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread);
+    testWasSuccessful = ExecuteStartupTest(ResumeRfStartupTestThread, rfStartupTestTimeout);
     DEBUG_PRINT(persistentVariables.Load<"rfIsWorking">() ? " " : " and");
     if(not testWasSuccessful)
     {
@@ -177,9 +180,9 @@ auto ExecuteStartupTests() -> void
 }
 
 
-auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)()) -> bool
+auto ExecuteStartupTest(void (*startupTestThreadResumeFuntion)(), Duration timeout) -> bool
 {
-    auto testEnd = CurrentRodosTime() + startupTestTimeout;
+    auto testEnd = CurrentRodosTime() + timeout;
     startupTestThreadResumeFuntion();
     SuspendUntil(testEnd);
     return CurrentRodosTime() <= testEnd;

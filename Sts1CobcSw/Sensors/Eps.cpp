@@ -303,6 +303,7 @@ auto ResetAdc(hal::GpioPin * adcCsPin, ResetType resetType) -> void
 
 auto SelectChip(hal::GpioPin * adcCsPin) -> void
 {
+    // FIXME: const value correct?
     // I was too lazy to look at the datasheet so I just used an educated guess for the delay
     static constexpr auto postChipSelectionDelay = 100 * ns;
     // The CS pins are "double inverted" on COBC 3.0
@@ -313,6 +314,7 @@ auto SelectChip(hal::GpioPin * adcCsPin) -> void
 
 auto DeselectChip(hal::GpioPin * adcCsPin) -> void
 {
+    // FIXME: const value correct?
     // I was too lazy to look at the datasheet so I just used an educated guess for the delay
     static constexpr auto preChipDeselectionDelay = 100 * ns;
     BusyWaitFor(preChipDeselectionDelay);

@@ -1,6 +1,7 @@
 target_sources(
     Sts1CobcSw_RfProtocols
     PRIVATE CcsdsFileDeliveryProtocol.cpp
+            FileTransferTimer.cpp
             ProtocolDataUnitHeader.cpp
             ProtocolDataUnits.cpp
             Reports.cpp

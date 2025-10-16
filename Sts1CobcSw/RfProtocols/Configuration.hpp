@@ -177,6 +177,8 @@ inline constexpr auto groundStationEntityId = Make<EntityId, 0x0F>();
 inline constexpr auto cubeSatEntityId = Make<EntityId, 0xF0>();
 
 // TODO: Choose proper values
+// FIXME: Verify values
+// FIXME: const value correct?
 inline constexpr auto positiveAckTimerInterval = 35 * s;
 inline constexpr auto postiveAckTimerExpirationLimit = 3;
 inline constexpr auto nakTimerInterval = 35 * s;

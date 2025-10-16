@@ -14,6 +14,7 @@
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/CcsdsFileDeliveryProtocol.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
+#include <Sts1CobcSw/RfProtocols/FileTransferTimer.hpp>
 #include <Sts1CobcSw/RfProtocols/Id.hpp>
 #include <Sts1CobcSw/RfProtocols/Payload.hpp>
 #include <Sts1CobcSw/RfProtocols/ProtocolDataUnitHeader.hpp>
@@ -71,7 +72,6 @@ enum class InterruptCondition : std::uint8_t
 
 
 constexpr auto stackSize = 6000U;
-constexpr auto fileTransferWindowEndMargin = 1 * s;
 
 auto encodedFrame = std::array<Byte, blockLength>{};
 auto frame = tm::TransferFrame(std::span(encodedFrame).first<tm::transferFrameLength>());
@@ -255,6 +255,9 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
     auto result = [&]() -> Result<void>
     {
         auto partition = fw::GetPartition(fileTransferMetadata.destinationPartitionId);
+        missingFileData = {
+            SegmentRequest{.startOffset = 0, .endOffset = fileTransferMetadata.fileSize}
+        };
         if(fileTransferMetadata.fileIsFirmware)
         {
             OUTCOME_TRY(ReceiveInitialFileData(nullptr, partition));
@@ -263,9 +266,6 @@ auto ReceiveFile(FileTransferMetadata const & fileTransferMetadata) -> void
         else
         {
             OUTCOME_TRY(auto file, fs::Open(fileTransferMetadata.destinationPath, LFS_O_WRONLY));
-            missingFileData = {
-                SegmentRequest{.startOffset = 0, .endOffset = fileTransferMetadata.fileSize}
-            };
             OUTCOME_TRY(ReceiveInitialFileData(&file, partition));
             OUTCOME_TRY(RequestAndReceiveMissingDataUntilFinished(&file, partition));
         }
@@ -411,18 +411,20 @@ auto SendAndWaitForAck(Payload const & pdu,
                        CancelCondition cancelCondition,
                        EntityId sourceEntityId) -> Result<void>
 {
-    // TODO: Get the fileTransferWindowEnd in there somehow
     for(auto i = 0; i < postiveAckTimerExpirationLimit; ++i)
     {
         DEBUG_PRINT("Sending EOF or Finished PDU\n");
         OUTCOME_TRY(Send(pdu, fileDirectivePduType, sourceEntityId, cancelCondition));
-        auto ackTimerExpirationTime = CurrentRodosTime() + positiveAckTimerInterval;
-        while(CurrentRodosTime() < ackTimerExpirationTime)
+        auto ackTimer = FileTransferTimer(positiveAckTimerInterval,
+                                          persistentVariables.Load<"fileTransferWindowEnd">());
+        while(not ackTimer.HasExpired())
         {
-            (void)receivedPduMailbox.SuspendUntilFullOr(ackTimerExpirationTime);
+            (void)receivedPduMailbox.SuspendUntilFullOr(ackTimer.ExpirationTime());
             auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
             if(getFileDirectivePduResult.has_error())
             {
+                ackTimer.UpdateFileTransferWindowEnd(
+                    persistentVariables.Load<"fileTransferWindowEnd">());
                 continue;
             }
             auto & fileDirectivePdu = getFileDirectivePduResult.value();
@@ -472,11 +474,11 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
 {
     ResumeRfCommunicationThread();  // To go into RX mode again
     missingFileData.clear();
-    // TODO: Get the fileTransferWindowEnd in there somehow
-    auto timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+    auto timer = FileTransferTimer(transactionInactivityLimit,
+                                   persistentVariables.Load<"fileTransferWindowEnd">());
     for(auto nNaksInSequence = 0;;)
     {
-        auto suspendResult = receivedPduMailbox.SuspendUntilFullOr(timeLimit);
+        auto suspendResult = receivedPduMailbox.SuspendUntilFullOr(timer.ExpirationTime());
         if(suspendResult.has_error() and suspendResult.error() == ErrorCode::timeout)
         {
             if(nNaksInSequence == 0)
@@ -485,12 +487,14 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
             }
             OUTCOME_TRY(SendMissingFileData(file, fileSize));
             nNaksInSequence = 0;
-            timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+            timer = FileTransferTimer(transactionInactivityLimit,
+                                      persistentVariables.Load<"fileTransferWindowEnd">());
             continue;
         }
         auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
         if(getFileDirectivePduResult.has_error())
         {
+            timer.UpdateFileTransferWindowEnd(persistentVariables.Load<"fileTransferWindowEnd">());
             continue;
         }
         auto & fileDirectivePdu = getFileDirectivePduResult.value();
@@ -514,11 +518,13 @@ auto SendMissingDataUntilFinished(fs::File const & file, std::uint32_t fileSize)
             {
                 OUTCOME_TRY(SendMissingFileData(file, fileSize));
                 nNaksInSequence = 0;
-                timeLimit = CurrentRodosTime() + transactionInactivityLimit;
+                timer = FileTransferTimer(transactionInactivityLimit,
+                                          persistentVariables.Load<"fileTransferWindowEnd">());
             }
             else
             {
-                timeLimit = CurrentRodosTime() + nakSequenceTimeout;
+                timer = FileTransferTimer(nakSequenceTimeout,
+                                          persistentVariables.Load<"fileTransferWindowEnd">());
             }
             continue;
         }
@@ -564,18 +570,21 @@ auto SendMissingFileData(fs::File const & file, std::uint32_t fileSize) -> Resul
 auto ReceiveInitialFileData(fs::File * file, fw::Partition const & partition)
     -> Result<std::uint32_t>
 {
-    // TODO: Get the fileTransferWindowEnd in there somehow
-    auto expirationTime = CurrentRodosTime() + transactionInactivityLimit;
-    while(CurrentRodosTime() < expirationTime)
+    auto inactivityTimer = FileTransferTimer(transactionInactivityLimit,
+                                             persistentVariables.Load<"fileTransferWindowEnd">());
+    while(not inactivityTimer.HasExpired())
     {
-        (void)receivedPduMailbox.SuspendUntilFullOr(expirationTime);
+        (void)receivedPduMailbox.SuspendUntilFullOr(inactivityTimer.ExpirationTime());
         if(receivedPduMailbox.IsEmpty())
         {
+            inactivityTimer.UpdateFileTransferWindowEnd(
+                persistentVariables.Load<"fileTransferWindowEnd">());
             continue;
         }
         // Let's be generous and reset the inactivity timer on every received PDU, not only the ones
         // that parse correctly and are expected
-        expirationTime = CurrentRodosTime() + transactionInactivityLimit;
+        inactivityTimer = FileTransferTimer(transactionInactivityLimit,
+                                            persistentVariables.Load<"fileTransferWindowEnd">());
         auto receivedPdu = receivedPduMailbox.Get().value();
         // Handle File Data PDU
         if(receivedPdu.header.pduType == fileDataPduType)
@@ -666,12 +675,15 @@ auto ReceiveMissingFileData(fs::File * file, fw::Partition const & partition) ->
 {
     auto fileDataWasReceived = false;
     // TODO: Get the fileTransferWindowEnd in there somehow
-    auto expirationTime = CurrentRodosTime() + nakTimerInterval;
-    while(CurrentRodosTime() < expirationTime and not missingFileData.empty())
+    auto nakTimer =
+        FileTransferTimer(nakTimerInterval, persistentVariables.Load<"fileTransferWindowEnd">());
+    while(not nakTimer.HasExpired() and not missingFileData.empty())
     {
-        (void)receivedPduMailbox.SuspendUntilFullOr(expirationTime);
+        (void)receivedPduMailbox.SuspendUntilFullOr(nakTimer.ExpirationTime());
         if(receivedPduMailbox.IsEmpty())
         {
+            nakTimer.UpdateFileTransferWindowEnd(
+                persistentVariables.Load<"fileTransferWindowEnd">());
             continue;
         }
         auto receivedPdu = receivedPduMailbox.Get().value();
@@ -857,9 +869,11 @@ auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
                                      InterruptCondition interruptCondition) -> Result<void>
 {
     // TODO: We do not check the received PDUs if the encodedCfdpFrameMailbox is not full
+    // FIXME: We do not check the received PDUs if the encodedCfdpFrameMailbox is not full
     while(encodedCfdpFrameMailbox.IsFull())
     {
         // TODO: Think about the correct reactivation time for all suspend functions
+        // FIXME: Think about the correct reactivation time for all suspend functions
         (void)encodedCfdpFrameMailbox.SuspendUntilEmptyOr(endOfTime);
         auto getFileDirectivePduResult = GetReceivedFileDirectivePdu();
         if(getFileDirectivePduResult.has_error())
@@ -876,8 +890,7 @@ auto SuspendUntilFrameCanBePublished(CancelCondition cancelCondition,
 
 auto SuspendUntilFileTransferWindowIsOpen() -> void
 {
-    while(CurrentRodosTime()
-          > persistentVariables.Load<"fileTransferWindowEnd">() + fileTransferWindowEndMargin)
+    while(CurrentRodosTime() > persistentVariables.Load<"fileTransferWindowEnd">())
     {
         SuspendUntil(endOfTime);
     }

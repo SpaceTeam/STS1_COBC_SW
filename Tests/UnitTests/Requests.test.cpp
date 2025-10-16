@@ -224,8 +224,8 @@ TEST_CASE("ReportParameterValuesRequest")
     CHECK(request.nParameters == 0x04);
     CHECK(request.parameterIds[0] == sts1cobcsw::Parameter::Id::rxDataRate);
     CHECK(request.parameterIds[1] == sts1cobcsw::Parameter::Id::txDataRate);
-    CHECK(request.parameterIds[2] == sts1cobcsw::Parameter::Id::maxEduIdleDuration);
-    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
+    CHECK(request.parameterIds[2] == sts1cobcsw::Parameter::Id::newEduResultIsAvailable);
+    CHECK(request.parameterIds[3] == sts1cobcsw::Parameter::Id::maxEduIdleDuration);
 
     // No more than 5 Parameters are allowed
     buffer[0] = 0x06_b;
