@@ -653,10 +653,11 @@ auto ReceiveInitialFileData(fs::File * file, fw::Partition const & partition)
             if(endOfFilePdu.conditionCode_ == noErrorConditionCode)
             {
                 DEBUG_PRINT("Received EOF(noError) PDU\n");
-                if(not missingFileData.empty())
-                {
-                    missingFileData.back().endOffset = endOfFilePdu.fileSize_;
-                }
+                // if(not missingFileData.empty())
+                //{
+                //     missingFileData.back().endOffset = endOfFilePdu.fileSize_; // TODO: remove as
+                //     not needed or maybe even wrong
+                // }
                 Acknowledge(DirectiveCode::endOfFile, noErrorConditionCode);
                 return outcome_v2::success();
             }
