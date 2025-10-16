@@ -180,10 +180,10 @@ inline constexpr auto cubeSatEntityId = Make<EntityId, 0xF0>();
 // FIXME: Verify values
 // FIXME: const value correct?
 inline constexpr auto positiveAckTimerInterval = 35 * s;
-inline constexpr auto postiveAckTimerExpirationLimit = 3;
+inline constexpr auto postiveAckTimerExpirationLimit = 15;
 inline constexpr auto nakTimerInterval = 35 * s;
-inline constexpr auto nakLimit = 3;
-inline constexpr auto transactionInactivityLimit = 35 * s;
+inline constexpr auto nakLimit = 15;
+inline constexpr auto transactionInactivityLimit = 35 * 10 * s;
 
 inline constexpr auto maxNNaksPerSequence = 4;
 inline constexpr auto nakSequenceTimeout = 5 * s;
