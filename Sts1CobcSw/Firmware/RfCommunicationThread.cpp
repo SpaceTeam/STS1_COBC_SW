@@ -64,7 +64,9 @@
 #include <cinttypes>  // IWYU pragma: keep
 #include <climits>
 #include <compare>
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <iterator>
 #include <span>
 #include <type_traits>
@@ -127,8 +129,10 @@ template<auto parseFunction>
 auto VerifyAndHandle(PerformAFunctionRequest const & request, RequestId const & requestId) -> void;
 
 // As above, not all functions need the requestId, but it's easier if we pass it to all handlers
+auto Handle(StopAntennaDeploymentFunction const & function, RequestId const & requestId) -> void;
 auto Handle(ReportHousekeepingParameterReportFunction const & function, RequestId const & requestId)
     -> void;
+auto Handle(EnableCubeSatTxFunction const & function, RequestId const & requestId) -> void;
 auto Handle(EnableFileTransferFunction const & function, RequestId const & requestId) -> void;
 auto Handle(SynchronizeTimeFunction const & function, RequestId const & requestId) -> void;
 auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId) -> void;
@@ -539,9 +543,7 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
     switch(request.functionId)
     {
         case FunctionId::stopAntennaDeployment:
-            persistentVariables.Store<"antennasShouldBeDeployed">(false);
-            DEBUG_PRINT("Stopped antenna deployment\n");
-            SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+            VerifyAndHandle<ParseAsStopAntennaDeploymentFunction>(request, requestId);
             return;
         case FunctionId::requestHousekeepingParameterReports:
             VerifyAndHandle<ParseAsReportHousekeepingParameterReportFunction>(request, requestId);
@@ -551,9 +553,7 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
             DEBUG_PRINT("Disabled CubeSat TX\n");
             return;
         case FunctionId::enableCubeSatTx:
-            rf::EnableTx();
-            DEBUG_PRINT("Enabled CubeSat TX\n");
-            SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+            VerifyAndHandle<ParseAsEnableCubeSatTxFunction>(request, requestId);
             return;
         case FunctionId::resetNow:
             RODOS::hwResetAndReboot();
@@ -771,6 +771,15 @@ auto VerifyAndHandle(PerformAFunctionRequest const & request, RequestId const & 
 }
 
 
+auto Handle([[maybe_unused]] StopAntennaDeploymentFunction const & function,
+            RequestId const & requestId) -> void
+{
+    persistentVariables.Store<"antennasShouldBeDeployed">(false);
+    DEBUG_PRINT("Stopped antenna deployment\n");
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+}
+
+
 auto Handle(ReportHousekeepingParameterReportFunction const & function,
             [[maybe_unused]] RequestId const & requestId) -> void
 {
@@ -794,6 +803,15 @@ auto Handle(ReportHousekeepingParameterReportFunction const & function,
         }
     }
     FinalizeTransmission();
+}
+
+
+auto Handle([[maybe_unused]] EnableCubeSatTxFunction const & function, RequestId const & requestId)
+    -> void
+{
+    rf::EnableTx();
+    DEBUG_PRINT("Enabled CubeSat TX\n");
+    SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
 }
 
 

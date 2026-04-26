@@ -15,6 +15,8 @@
 #include <strong_type/affine_point.hpp>
 #include <strong_type/ordered.hpp>
 
+#include <iterator>
+
 
 namespace sts1cobcsw
 {
@@ -272,6 +274,18 @@ auto ParseAsCopyAFileRequest(std::span<Byte const> buffer) -> Result<CopyAFileRe
 }
 
 
+auto ParseAsStopAntennaDeploymentFunction(std::span<Byte const> buffer)
+    -> Result<StopAntennaDeploymentFunction>
+{
+    if(!buffer.empty())
+    {
+        return ErrorCode::invalidDataLength;
+    }
+
+    return StopAntennaDeploymentFunction{};
+}
+
+
 auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
     -> Result<ReportHousekeepingParameterReportFunction>
 {
@@ -288,6 +302,16 @@ auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buff
         return ErrorCode::invalidApplicationData;
     }
     return function;
+}
+
+
+auto ParseAsEnableCubeSatTxFunction(std::span<Byte const> buffer) -> Result<EnableCubeSatTxFunction>
+{
+    if(!buffer.empty())
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    return EnableCubeSatTxFunction{};
 }
 
 
