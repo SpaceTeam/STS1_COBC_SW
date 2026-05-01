@@ -33,6 +33,9 @@ inline auto eduIsAliveBufferForProgramQueue = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForProgramTransfer = RODOS::CommBuffer<bool>{};
 inline auto eduIsAliveBufferForTelemetry = RODOS::CommBuffer<bool>{};
 
+inline auto memoryIntactTopic = RODOS::Topic<std::uint8_t>(-1, "memoryIntactTopic");
+inline auto memoryIntactBufferForTelemetry = RODOS::CommBuffer<std::uint8_t>{};
+
 inline auto nextEduProgramStartTimeTopic =
     RODOS::Topic<RealTime>(-1, "nextEduProgramStartTimeTopic");
 inline auto nextEduProgramStartTimeBuffer = RODOS::CommBuffer<RealTime>{};

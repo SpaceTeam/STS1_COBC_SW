@@ -50,12 +50,13 @@
       "cacheVariables": {
         "HSE_VALUE": "12000000",
         "HW_VERSION": "30",
-        "REDIRECT_RF_OVER_UCI": "OFF",
+        "REDIRECT_RF_OVER_UCI": "ON",
         "USE_PUNCTURING": "OFF",
-        "DISABLE_CHANNEL_CODING": "OFF",
+        "DISABLE_CHANNEL_CODING": "ON",
         "DISABLE_CONVOLUTIONAL_CODING": "OFF",
         "ENABLE_DEBUG_PRINT_STACK_USAGE": "OFF",
-        "FORCE_ENABLE_DEBUG_PRINT": "OFF"
+        "FORCE_ENABLE_DEBUG_PRINT": "OFF",
+        "RADIATION_TEST_THREAD": "ON"
       }
     },
     {

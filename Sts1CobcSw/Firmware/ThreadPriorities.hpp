@@ -6,6 +6,7 @@
 
 namespace sts1cobcsw
 {
+inline constexpr auto radiationThreadPriority = 96;
 inline constexpr auto framEpsStartupTestThreadPriority = 97;
 inline constexpr auto flashStartupTestThreadPriority = 98;
 inline constexpr auto rfStartupTestThreadPriority = 99;

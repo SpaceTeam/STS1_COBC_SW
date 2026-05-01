@@ -145,6 +145,8 @@ auto CollectTelemetryData() -> TelemetryRecord
     rxDataRateBuffer.get(rxDataRate);
     std::uint32_t txDataRate = 0;
     txDataRateBuffer.get(txDataRate);
+    std::uint8_t memoryIntact = 0U;
+    memoryIntactBufferForTelemetry.getOnlyIfNewData(memoryIntact);
     return TelemetryRecord{
         // Booleans: byte 1
         .eduShouldBePowered = persistentVariables.Load<"eduShouldBePowered">() ? 1 : 0,
@@ -174,7 +176,7 @@ auto CollectTelemetryData() -> TelemetryRecord
         .nEduCommunicationErrors = persistentVariables.Load<"nEduCommunicationErrors">(),
         // Housekeeping
         // FIXME: Fill lastResetReason
-        .lastResetReason = 0U,  // TODO: Get with RCC_GetFlagStatus() (needs to be called in main)
+        .lastResetReason = memoryIntact,  // quick solution for radiation test only
         .rodosTimeInSeconds = static_cast<std::int32_t>((CurrentRodosTime() - RodosTime{}) / s),
         .realTime = CurrentRealTime(),
         .nFirmwareChecksumErrors = persistentVariables.Load<"nFirmwareChecksumErrors">(),
