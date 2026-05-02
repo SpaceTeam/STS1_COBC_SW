@@ -9,7 +9,7 @@
 
 namespace sts1cobcsw
 {
-inline constexpr auto nCachedTelemetryRecords = 10;
+inline constexpr auto nCachedTelemetryRecords = 4;
 inline constexpr auto telemetryMemory =
     FramRingArray<TelemetryRecord, framSections.Get<"telemetry">(), nCachedTelemetryRecords>{};
 }

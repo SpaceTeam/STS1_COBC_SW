@@ -16,9 +16,10 @@ namespace sts1cobcsw
 {
 inline constexpr auto persistentVariablesSize = fram::Size(300);
 inline constexpr auto eduProgramQueueSize = fram::Size(24 * 8 + 12);
-inline constexpr auto testMemorySize = fram::Size(1000);
+inline constexpr auto testMemorySize = fram::Size(0x5'0000);
 inline constexpr auto telemetrySize =
     fram::memorySize - persistentVariablesSize - eduProgramQueueSize - testMemorySize;
+// fram is 0x100'00: 0x504 for edu&perVar, 0x50'000 for test, rest for telemetry
 
 inline constexpr auto framMemory = Section<fram::Address(0), fram::memorySize>{};
 inline constexpr auto framSections =
