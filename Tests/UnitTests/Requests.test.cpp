@@ -16,6 +16,7 @@
 #include <etl/string.h>
 #include <etl/vector.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <span>
 #include <utility>
@@ -492,6 +493,20 @@ TEST_CASE("CopyAFileRequest")
 }
 
 
+TEST_CASE("StopAntennaDeploymentFunction")
+{
+    auto emptyBuffer = etl::vector<Byte, 1>{};
+    auto parseResult = sts1cobcsw::ParseAsStopAntennaDeploymentFunction(emptyBuffer);
+    CHECK(parseResult.has_value());
+
+    auto nonEmptyBuffer = etl::vector<Byte, 1>{};
+    nonEmptyBuffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsStopAntennaDeploymentFunction(nonEmptyBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
 TEST_CASE("ReportHousekeepingParameterReportFunction")
 {
     auto buffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
@@ -519,6 +534,20 @@ TEST_CASE("ReportHousekeepingParameterReportFunction")
     auto smallBuffer = etl::vector<Byte, 4>{};
     smallBuffer.resize(3);
     parseResult = sts1cobcsw::ParseAsReportHousekeepingParameterReportFunction(smallBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}
+
+
+TEST_CASE("EnableCubeSatTxFunction")
+{
+    auto emptyBuffer = etl::vector<Byte, 1>{};
+    auto parseResult = sts1cobcsw::ParseAsEnableCubeSatTxFunction(emptyBuffer);
+    CHECK(parseResult.has_value());
+
+    auto nonEmptyBuffer = etl::vector<Byte, 1>{};
+    nonEmptyBuffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsEnableCubeSatTxFunction(nonEmptyBuffer);
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidDataLength);
 }
