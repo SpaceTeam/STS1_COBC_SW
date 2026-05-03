@@ -125,12 +125,26 @@ struct CopyAFileRequest
 };
 
 
+struct StopAntennaDeploymentFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
+    static constexpr auto functionId = FunctionId::stopAntennaDeployment;
+};
+
+
 struct ReportHousekeepingParameterReportFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = FunctionId::requestHousekeepingParameterReports;
     std::uint16_t firstReportIndex;
     std::uint16_t lastReportIndex;
+};
+
+
+struct EnableCubeSatTxFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
+    static constexpr auto functionId = FunctionId::enableCubeSatTx;
 };
 
 
@@ -210,8 +224,12 @@ struct CheckFirmwareIntegrityFunction
     -> Result<CopyAFileRequest>;
 
 
+[[nodiscard]] auto ParseAsStopAntennaDeploymentFunction(std::span<Byte const> buffer)
+    -> Result<StopAntennaDeploymentFunction>;
 [[nodiscard]] auto ParseAsReportHousekeepingParameterReportFunction(std::span<Byte const> buffer)
     -> Result<ReportHousekeepingParameterReportFunction>;
+[[nodiscard]] auto ParseAsEnableCubeSatTxFunction(std::span<Byte const> buffer)
+    -> Result<EnableCubeSatTxFunction>;
 [[nodiscard]] auto ParseAsEnableFileTransferFunction(std::span<Byte const> buffer)
     -> Result<EnableFileTransferFunction>;
 [[nodiscard]] auto ParseAsSynchronizeTimeFunction(std::span<Byte const> buffer)
