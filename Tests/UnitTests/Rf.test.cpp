@@ -2,6 +2,7 @@
 
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
+#include <Sts1CobcSw/Rf/RfDataRateConfigs.hpp>
 
 
 namespace rf = sts1cobcsw::rf;
@@ -15,8 +16,10 @@ TEST_CASE("RF module")
     REQUIRE(initializeResult.has_value());
     auto partNumber = rf::ReadPartNumber();
     CHECK(partNumber == rf::correctPartNumber);
-    CHECK(rf::GetTxDataRate() == 1200U);
-    CHECK(rf::GetRxDataRate() == 1200U);
+
+    auto defaultDataRate = sts1cobcsw::rf::dataRateConfig9600;
+    CHECK(rf::GetTxDataRate() == defaultDataRate.dataRate);
+    CHECK(rf::GetRxDataRate() == defaultDataRate.dataRate);
 
     auto dataRate = 9600U;
     rf::SetTxDataRate(dataRate);
