@@ -3,6 +3,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
         Sts1CobcSw_Firmware
         PRIVATE EduHeartbeatThread.cpp
                 EduListenerThread.cpp
+                EduManagementThread.cpp
                 EduPowerManagementThread.cpp
                 EduProgramQueueThread.cpp
                 EduProgramTransferThread.cpp
@@ -11,6 +12,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 FramEpsStartupTestThread.cpp
                 RfCommunicationThread.cpp
                 RfStartupTestThread.cpp
+                Scheduler.cpp
                 StartupAndSpiSupervisorThread.cpp
                 TelemetryThread.cpp
                 TopicsAndSubscribers.cpp
