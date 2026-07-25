@@ -25,44 +25,52 @@ constexpr auto eduListenerTaskInterval = 1 * s;
 constexpr auto eduProgramTransferTaskInterval = 5 * s;
 constexpr auto eduPowerManagementTaskInterval = 2 * s;
 
-class EduListenerTask : public Task
+
+class EduListenerTask
 {
-private:
-    auto DoInitialize() -> void override
+public:
+    auto Initialize() -> void
     {
         // TODO: move init() code of EduListenerThread here (update and dosi enable GPIO setup)
     }
 
 
-    [[nodiscard]] auto DoExecute() -> RodosTime override
+    [[nodiscard]] auto Execute() -> RodosTime
     {
-        // TODO: move loop body of EduListenerThread::run() here. 
-        // polling loop in SuspendUntilEduIsAliveAndHasUpdate() dissolves into: 
+        // TODO: move loop body of EduListenerThread::run() here.
+        // polling loop in SuspendUntilEduIsAliveAndHasUpdate() dissolves into:
         // if EDU not alive or no update, just return and try again one interval later
         return CurrentRodosTime() + eduListenerTaskInterval;
     }
 };
 
-class EduProgramTransferTask : public Task
+
+class EduProgramTransferTask
 {
-private:
-    [[nodiscard]] auto DoExecute() -> RodosTime override
+public:
+    auto Initialize() -> void
+    {
+        // TODO: move init() code of EduListenerThread here (update and dosi enable GPIO setup)
+    }
+
+    [[nodiscard]] auto Execute() -> RodosTime
     {
         // TODO: move TIME_LOOP body of EduProgramTransferThread::run() here
         return CurrentRodosTime() + eduProgramTransferTaskInterval;
     }
 };
-    
-class EduPowerManagementTask : public Task
+
+
+class EduPowerManagementTask
 {
-private:
-    auto DoInitialize() -> void override
+public:
+    auto Initialize() -> void
     {
         // TODO: move init() code of EduPowerManagementThread here
     }
 
 
-    [[nodiscard]] auto DoExecute() -> RodosTime override
+    [[nodiscard]] auto Execute() -> RodosTime
     {
         // TODO: move TIME_LOOP body of EduPowerManagementThread::run() here
         // including ResetEdu() flag handling; every 'continue' becomes a 'return'
@@ -71,24 +79,26 @@ private:
 };
 
 
-auto eduListenerTask = EduListenerTask{};
-auto eduProgramTransferTask = EduProgramTransferTask{};
-auto eduPowerManagementTask = EduPowerManagementTask{};
+static_assert(ExecutableTask<EduListenerTask> && ExecutableTask<EduProgramTransferTask>
+              && ExecutableTask<EduPowerManagementTask>);
+using TaskVariant = std::variant<EduListenerTask, EduProgramTransferTask, EduPowerManagementTask>;
 
-// array order determines the execution order of tasks that are due at the same time 
-// power management task runs first so that a requested EDU reset happens before further communication attempts
+// array order determines the execution order of tasks that are due at the same time
+// power management task runs first so that a requested EDU reset happens before further
+// communication attempts
 auto scheduledTasks = std::array{
-    ScheduledTask{.task = &eduPowerManagementTask,
-                  .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout
-                                     + eduPowerManagementThreadStartDelay},
-    ScheduledTask{.task = &eduListenerTask,
-                  .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout},
-    ScheduledTask{.task = &eduProgramTransferTask,
-                  .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout
-                                     + eduPowerManagementThreadStartDelay},
+    ScheduledTask<TaskVariant>{.task = EduListenerTask{},
+                               .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout
+                                                  + eduPowerManagementThreadStartDelay    },
+    ScheduledTask<TaskVariant>{.task = EduProgramTransferTask{},
+                               .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout},
+    ScheduledTask<TaskVariant>{.task = EduPowerManagementTask{},
+                               .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout
+                                                  + eduPowerManagementThreadStartDelay    },
 };
 
-auto scheduler = Scheduler(std::span(scheduledTasks));
+
+auto scheduler = Scheduler<TaskVariant>(std::span(scheduledTasks));
 
 
 class EduManagementThread : public RODOS::StaticThread<stackSize>

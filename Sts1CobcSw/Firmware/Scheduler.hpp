@@ -4,47 +4,54 @@
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <span>
+#include <type_traits>
+#include <variant>
 
 
 namespace sts1cobcsw
 {
-
-class Task
-{
-public:
-    Task() = default;
-    Task(Task const &) = delete;
-    Task(Task &&) = delete;
-    auto operator=(Task const &) -> Task & = delete;
-    auto operator=(Task &&) -> Task & = delete;
-    virtual ~Task() = default;
-
-    auto Initialize() -> void;
-    [[nodiscard]] auto Execute() -> RodosTime;
-
-
-private:
-    virtual auto DoInitialize() -> void;
-    [[nodiscard]] virtual auto DoExecute() -> RodosTime = 0;
+template<typename T>
+concept ExecutableTask = requires(T t) {
+    { t.Initialize() } -> std::same_as<void>;
+    { t.Execute() } -> std::same_as<RodosTime>;
 };
 
+template<typename T>
+struct IsVariantOfTask : std::false_type
+{};
 
+
+template<typename... T>
+    requires(ExecutableTask<T> && ...)
+struct IsVariantOfTask<std::variant<T...>> : std::true_type
+{};
+
+
+template<typename T>
+concept TaskVariantConcept = IsVariantOfTask<T>::value;
+
+
+template<TaskVariantConcept T>
 struct ScheduledTask
 {
-    Task * task = nullptr;
+    T task;
     RodosTime nextExecutionTime = endOfTime;
 };
 
+
+template<TaskVariantConcept T>
 class Scheduler
 {
 public:
-    explicit Scheduler(std::span<ScheduledTask> tasks);
+    explicit Scheduler(std::span<ScheduledTask<T>> tasks);
 
     auto Initialize() -> void;
     [[noreturn]] auto Run() -> void;
 
 
 private:
-    std::span<ScheduledTask> tasks_;
+    std::span<ScheduledTask<T>> tasks_;
 };
 }
+
+#include <Sts1CobcSw/Firmware/Scheduler.ipp>  // IWYU pragma: keep

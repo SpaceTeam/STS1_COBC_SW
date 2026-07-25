@@ -12,7 +12,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 FramEpsStartupTestThread.cpp
                 RfCommunicationThread.cpp
                 RfStartupTestThread.cpp
-                Scheduler.cpp
                 StartupAndSpiSupervisorThread.cpp
                 TelemetryThread.cpp
                 TopicsAndSubscribers.cpp

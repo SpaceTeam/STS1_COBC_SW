@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Sts1CobcSw/Firmware/Scheduler.hpp>
 
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
@@ -11,36 +13,23 @@
 
 namespace sts1cobcsw
 {
-auto Task::Initialize() -> void
-{
-    DoInitialize();
-}
-
-
-auto Task::Execute() -> RodosTime
-{
-    return DoExecute();
-}
-
-
-auto Task::DoInitialize() -> void
+template<TaskVariantConcept T>
+Scheduler<T>::Scheduler(std::span<ScheduledTask<T>> tasks) : tasks_(tasks)
 {}
 
 
-Scheduler::Scheduler(std::span<ScheduledTask> tasks) : tasks_(tasks)
-{}
-
-
-auto Scheduler::Initialize() -> void
+template<TaskVariantConcept T>
+auto Scheduler<T>::Initialize() -> void
 {
     for(auto & scheduledTask : tasks_)
     {
-        scheduledTask.task->Initialize();
+        std::visit([](auto & t) { t.Initialize(); }, scheduledTask.task);
     }
 }
 
 
-auto Scheduler::Run() -> void
+template<TaskVariantConcept T>
+auto Scheduler<T>::Run() -> void
 {
     while(true)
     {
@@ -48,10 +37,13 @@ auto Scheduler::Run() -> void
         for(auto & scheduledTask : tasks_)
         {
             // CurrentRodosTime() is re-read for every task meaning
-            // a task which became due while a previous one was executing, runs in this sweep or immediately in the next one
+            // a task which became due while a previous one was executing, runs in this sweep or
+            // immediately in the next one
             if(scheduledTask.nextExecutionTime <= CurrentRodosTime())
             {
-                scheduledTask.nextExecutionTime = scheduledTask.task->Execute();
+                std::visit([&scheduledTask](auto & t)
+                           { scheduledTask.nextExecutionTime = t.Execute(); },
+                           scheduledTask.task);
             }
             nextExecutionTime = std::min(nextExecutionTime, scheduledTask.nextExecutionTime);
         }
