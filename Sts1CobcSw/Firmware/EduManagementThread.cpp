@@ -50,7 +50,7 @@ class EduProgramTransferTask
 public:
     auto Initialize() -> void
     {
-        // TODO: move init() code of EduListenerThread here (update and dosi enable GPIO setup)
+        // nothing to initialize
     }
 
     [[nodiscard]] auto Execute() -> RodosTime
@@ -87,12 +87,12 @@ using TaskVariant = std::variant<EduListenerTask, EduProgramTransferTask, EduPow
 // power management task runs first so that a requested EDU reset happens before further
 // communication attempts
 auto scheduledTasks = std::array{
-    ScheduledTask<TaskVariant>{.task = EduListenerTask{},
+    ScheduledTask<TaskVariant>{.task = EduPowerManagementTask{},
                                .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout
                                                   + eduPowerManagementThreadStartDelay    },
-    ScheduledTask<TaskVariant>{.task = EduProgramTransferTask{},
+    ScheduledTask<TaskVariant>{.task = EduListenerTask{},
                                .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout},
-    ScheduledTask<TaskVariant>{.task = EduPowerManagementTask{},
+    ScheduledTask<TaskVariant>{.task = EduProgramTransferTask{},
                                .nextExecutionTime = RodosTime(0) + totalStartupTestTimeout
                                                   + eduPowerManagementThreadStartDelay    },
 };

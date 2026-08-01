@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
+#include <concepts>
 #include <span>
 #include <type_traits>
 #include <variant>
