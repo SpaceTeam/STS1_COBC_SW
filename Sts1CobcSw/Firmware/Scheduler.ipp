@@ -4,51 +4,80 @@
 
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 
+#include <strong_type/affine_point.hpp>
+#include <strong_type/difference.hpp>
 #include <strong_type/ordered.hpp>
 #include <strong_type/type.hpp>
 
 #include <algorithm>
 #include <compare>
+#include <cstddef>
+#include <tuple>
+#include <utility>
 
 
 namespace sts1cobcsw
 {
-template<TaskVariantConcept T>
-Scheduler<T>::Scheduler(std::span<ScheduledTask<T>> tasks) : tasks_(tasks)
-{}
-
-
-template<TaskVariantConcept T>
-auto Scheduler<T>::Initialize() -> void
+template<ATask... Tasks>
+    requires(sizeof...(Tasks) > 0)
+auto Scheduler<Tasks...>::Initialize() -> void
 {
-    for(auto & scheduledTask : tasks_)
+    std::apply(
+        [](auto &... task)
+        {
+            auto InitializeIfNecessary = [](auto & t)
+            {
+                if constexpr(internal::HasInitialize<decltype(t)>)
+                {
+                    t.Initialize();
+                }
+            };
+            (InitializeIfNecessary(task), ...);
+        },
+        tasks_);
+}
+
+
+template<ATask... Tasks>
+    requires(sizeof...(Tasks) > 0)
+auto Scheduler<Tasks...>::Run() -> void
+{
+    while(true)
     {
-        std::visit([](auto & t) { t.Initialize(); }, scheduledTask.task);
+        SuspendUntil(ExecuteDueTasks());
     }
 }
 
 
-template<TaskVariantConcept T>
-auto Scheduler<T>::Run() -> void
+template<ATask... Tasks>
+    requires(sizeof...(Tasks) > 0)
+auto Scheduler<Tasks...>::ExecuteDueTasks() -> RodosTime
 {
-    while(true)
+    auto nextExecutionTime = endOfTime;
+    [&]<std::size_t... i>(std::index_sequence<i...>)
     {
-        auto nextExecutionTime = endOfTime;
-        for(auto & scheduledTask : tasks_)
-        {
-            // CurrentRodosTime() is re-read for every task meaning
-            // a task which became due while a previous one was executing, runs in this sweep or
-            // immediately in the next one
-            if(scheduledTask.nextExecutionTime <= CurrentRodosTime())
+        (
+            [&]
             {
-                std::visit([&scheduledTask](auto & t)
-                           { scheduledTask.nextExecutionTime = t.Execute(); },
-                           scheduledTask.task);
-            }
-            nextExecutionTime = std::min(nextExecutionTime, scheduledTask.nextExecutionTime);
-        }
-        // if a task became due in the meantime, this returns immediately
-        SuspendUntil(nextExecutionTime);
-    }
+                auto now = CurrentRodosTime();
+                if(nextExecutionTimes_[i] <= now)
+                {
+                    nextExecutionTimes_[i] =
+                        std::max(std::get<i>(tasks_).Execute(), now + minimumTaskInterval);
+                }
+                nextExecutionTime = std::min(nextExecutionTime, nextExecutionTimes_[i]);
+            }(),
+            ...);
+    }(std::index_sequence_for<Tasks...>{});
+    return nextExecutionTime;
+}
+
+
+template<ATask... Tasks>
+    requires(sizeof...(Tasks) > 0)
+template<typename Task>
+auto Scheduler<Tasks...>::Get() -> Task &
+{
+    return std::get<Task>(tasks_);
 }
 }
