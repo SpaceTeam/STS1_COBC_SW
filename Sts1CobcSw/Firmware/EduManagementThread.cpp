@@ -1,8 +1,8 @@
 #include <Sts1CobcSw/Firmware/EduPowerManagementThread.hpp>
-#include <Sts1CobcSw/Firmware/Scheduler.hpp>
 #include <Sts1CobcSw/Firmware/StartupAndSpiSupervisorThread.hpp>
 #include <Sts1CobcSw/Firmware/ThreadPriorities.hpp>
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
+#include <Sts1CobcSw/Scheduler/Scheduler.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
 #include <strong_type/affine_point.hpp>
@@ -26,9 +26,8 @@ constexpr auto eduPowerManagementTaskInterval = 2 * s;
 class EduListenerTask
 {
 public:
-    static constexpr auto startTime =
-        startTime = RodosTime(0) + totalStartupTestTimeout;
-        
+    static constexpr auto startTime = RodosTime(0) + totalStartupTestTimeout;
+
     auto Initialize() -> void
     {
         // TODO: move init() code of EduListenerThread here (update and dosi enable GPIO setup)
@@ -64,7 +63,7 @@ class EduPowerManagementTask
 public:
     static constexpr auto startTime =
         RodosTime(0) + totalStartupTestTimeout + eduPowerManagementThreadStartDelay;
-        
+
     auto Initialize() -> void
     {
         // TODO: move init() code of EduPowerManagementThread here
@@ -85,9 +84,6 @@ static_assert(ATask<EduListenerTask>);
 static_assert(ATask<EduProgramTransferTask>);
 
 auto scheduler = Scheduler<EduPowerManagementTask, EduListenerTask, EduProgramTransferTask>{};
-
-
-auto scheduler = Scheduler<TaskVariant>(std::span(scheduledTasks));
 
 
 class EduManagementThread : public RODOS::StaticThread<stackSize>

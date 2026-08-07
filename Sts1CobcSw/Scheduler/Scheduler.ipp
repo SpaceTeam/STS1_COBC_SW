@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Sts1CobcSw/Firmware/Scheduler.hpp>
+#include <Sts1CobcSw/Scheduler/Scheduler.hpp>
 
 #include <Sts1CobcSw/RodosTime/RodosTime.hpp>
 

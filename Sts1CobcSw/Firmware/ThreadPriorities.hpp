@@ -15,7 +15,9 @@ inline constexpr auto eduProgramTransferThreadPriority = 220;
 inline constexpr auto eduProgramQueueThreadPriority = 230;
 inline constexpr auto eduCommunicationErrorThreadPriority = 240;
 inline constexpr auto eduPowerManagementThreadPriority = 250;
-// TODO: eduManagementThreadPriority replaces eduListenerThreadPriority, eduProgramTransferThreadPriority and eduPowerManagementThreadPriority once the old threads are removed
+// TODO: eduManagementThreadPriority replaces eduListenerThreadPriority,
+// eduProgramTransferThreadPriority and eduPowerManagementThreadPriority once the old threads are
+// removed
 inline constexpr auto eduManagementThreadPriority = 250;
 inline constexpr auto eduHeartbeatThreadPriority = 260;
 inline constexpr auto fileTransferThreadPriority = 800;

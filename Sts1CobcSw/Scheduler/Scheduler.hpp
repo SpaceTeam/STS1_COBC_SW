@@ -12,6 +12,7 @@ namespace sts1cobcsw
 {
 namespace internal
 {
+// tasks that don't have hardware to setup don't define Initialize()
 template<typename T>
 concept HasInitialize = requires(T & task) {
     { task.Initialize() } -> std::same_as<void>;
@@ -25,7 +26,8 @@ concept ATask = std::default_initializable<T> and requires(T & task) {
     { task.Execute() } -> std::same_as<RodosTime>;
 };
 
-
+// a task returning a time in the past would turn Run() into a loop,
+// which would starve the lower priority watchdog thread and therefore reset the COBC
 constexpr auto minimumTaskInterval = 1 * ms;
 
 
@@ -36,6 +38,7 @@ class Scheduler
 public:
     auto Initialize() -> void;
     [[noreturn]] auto Run() -> void;
+    // public so a single sweep can be unit tested without the endless loop in Run()
     [[nodiscard]] auto ExecuteDueTasks() -> RodosTime;
     template<typename Task>
     [[nodiscard]] auto Get() -> Task &;
@@ -47,4 +50,4 @@ private:
 };
 }
 
-#include <Sts1CobcSw/Firmware/Scheduler.ipp>  // IWYU pragma: keep
+#include <Sts1CobcSw/Scheduler/Scheduler.ipp>  // IWYU pragma: keep

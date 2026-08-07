@@ -35,6 +35,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
                 Sts1CobcSw_Rf
                 Sts1CobcSw_RfProtocols
                 Sts1CobcSw_RodosTime
+                Sts1CobcSw_Scheduler
                 Sts1CobcSw_Sensors
                 Sts1CobcSw_Serial
                 Sts1CobcSw_Telemetry
