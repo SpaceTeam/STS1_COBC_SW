@@ -202,19 +202,23 @@ auto DeselectChip() -> void;
 template<std::size_t answerLength>
 [[nodiscard]] auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>;
 
+
 template<std::size_t extent>
     requires(extent <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte startIndex,
                                  std::span<Byte const, extent> propertyValues) -> Result<void>;
+
 template<std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte propertyStartIndex,
                                  std::array<Byte, nProperties> const & properties) -> Result<void>;
+
 template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
 [[nodiscard]] auto SetProperties(
     Properties<propertyGroup, propertyStartIndex, nProperties> property) -> Result<void>;
+
 template<std::size_t size>
     requires(size <= maxNProperties)
 [[nodiscard]] auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
@@ -858,6 +862,11 @@ auto Configure() -> Result<void>
     OUTCOME_TRY(
         SetProperties(PropertyGroup::pkt, iPktWhiteConfig, Span({pktWhiteConfig, pktConfig1})));
 
+
+    //TODO: check potential error:
+    //iPktLen = 0x08_b is passed at SetProperties as starting index but comment is "Packet length"
+    //pktLen = 0x60_b is passed at SetProperties as paket length? but max length is 12
+
     // Packet length
     static constexpr auto iPktLen = 0x08_b;
     // Infinite receive, big endian (MSB first)
@@ -1480,5 +1489,6 @@ inline auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
     return SendCommand<size>(Span(
         {cmdGetProperty, static_cast<Byte>(propertyGroup), static_cast<Byte>(size), startIndex}));
 }
+
 }
 }
