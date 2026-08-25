@@ -223,6 +223,7 @@ template<std::size_t size>
     requires(size <= maxNProperties)
 [[nodiscard]] auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
     -> Result<std::array<Byte, size>>;
+
 }
 
 
@@ -314,6 +315,33 @@ auto SuspendUntilDataSent(Duration timeout) -> void
 auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 {
     return ExecuteWithRecovery<DoReceive>(data, timeout);
+}
+
+
+// Quick test to see if I can read Properties from chip Si4463
+auto ReadPropertys() -> void
+{
+    // a Property consists of 1-20 byte
+    // max 16 byte can be read at the same time. (those bytes could containe >1 properties)
+
+    constexpr auto propertyGroup = PropertyGroup::modem;
+    constexpr auto startIndex = 0x00_b;
+    constexpr std::size_t nBytes = 12;  // number of bytes to read
+
+    RODOS::PRINTF("--start printf of read bytes--\n");
+
+    auto result = GetProperties<nBytes>(propertyGroup, startIndex);
+    if(!result.has_error())
+    {
+        std::array<Byte, nBytes> propertyValues = result.value();
+
+        for(std::size_t i = 0; i < nBytes; ++i)
+        {
+            RODOS::PRINTF("0x%02x, ", static_cast<std::uint8_t>(propertyValues[i]));
+        }
+
+        RODOS::PRINTF("\n");
+    }
 }
 
 
@@ -1491,4 +1519,5 @@ inline auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
 }
 
 }
+
 }

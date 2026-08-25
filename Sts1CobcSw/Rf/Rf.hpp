@@ -32,4 +32,7 @@ auto SendAndContinue(std::span<Byte const> data) -> void;
 auto SuspendUntilDataSent(Duration timeout) -> void;
 // Return the number of received bytes
 auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t;
+
+auto ReadPropertys() -> void;  // Quick test to see if I can read Properties from chip Si4463
+
 }
