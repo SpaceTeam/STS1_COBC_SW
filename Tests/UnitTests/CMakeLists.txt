@@ -83,6 +83,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     target_link_libraries(
         Sts1CobcSwTests_Rf PRIVATE Sts1CobcSw_Fram Sts1CobcSw_Rf Sts1CobcSwTests::CatchRodos
     )
+
+    add_test_program(RfDataRateConfigCompare)
+    target_link_libraries(
+        Sts1CobcSwTests_RfDataRateConfigCompare
+        PRIVATE Sts1CobcSw_Fram Sts1CobcSw_Rf Sts1CobcSwTests::CatchRodos
+    )
 endif()
 
 # ---- Tests only for Linux ----
