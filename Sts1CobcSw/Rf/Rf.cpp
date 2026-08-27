@@ -28,6 +28,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/vector.h>     // needed for ReadPropertys function
+
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -318,31 +320,60 @@ auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 }
 
 
-// Quick test to see if I can read Properties from chip Si4463
-auto ReadPropertys() -> void
+// For Debug: reads up to maxNProperties bytes. Should not be used in production code.
+// intentionally does not go through SendCommand()/BusyWaitForAnswer()/GetProperties().
+// because they are fixed length at compile time.
+auto ReadPropertys(PropertyGroup propertyGroup, Byte startIndex, std::size_t nBytes)
+    -> Result<etl::vector<Byte, maxNProperties>>
 {
-    // a Property consists of 1-20 byte
-    // max 16 byte can be read at the same time. (those bytes could containe >1 properties)
-
-    constexpr auto propertyGroup = PropertyGroup::modem;
-    constexpr auto startIndex = 0x00_b;
-    constexpr std::size_t nBytes = 12;  // number of bytes to read
-
-    RODOS::PRINTF("--start printf of read bytes--\n");
-
-    auto result = GetProperties<nBytes>(propertyGroup, startIndex);
-    if(!result.has_error())
+    if(nBytes == 0 or nBytes > maxNProperties)
     {
-        std::array<Byte, nBytes> propertyValues = result.value();
-
-        for(std::size_t i = 0; i < nBytes; ++i)
-        {
-            RODOS::PRINTF("0x%02x, ", static_cast<std::uint8_t>(propertyValues[i]));
-        }
-
-        RODOS::PRINTF("\n");
+        return ErrorCode::invalidLength;
     }
+
+    // --- Copy of SendCommand()'s write phase (the part before BusyWaitForAnswer()) ---
+    auto command = std::array{
+        cmdGetProperty, static_cast<Byte>(propertyGroup), static_cast<Byte>(nBytes), startIndex};
+    SelectChip();
+    hal::WriteTo(&rfSpi, Span(command), spiTimeout);
+    DeselectChip();
+
+
+    // --- Copy of BusyWaitForAnswer<answerLength>()'s CTS-polling loop, verbatim ---
+    static constexpr auto dataIsReadyValue = 0xFF_b;
+    auto nextPollingTime = CurrentRodosTime();
+    auto deadline = nextPollingTime + ctsTimeout;
+    while(true)
+    {
+        SelectChip();
+        hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
+        auto cts = 0x00_b;
+        hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
+        if(cts == dataIsReadyValue)
+        {
+            break;
+        }
+        DeselectChip();
+        nextPollingTime += pollingInterval;
+        BusyWaitUntil(nextPollingTime);
+        if(CurrentRodosTime() > deadline)
+        {
+            return ErrorCode::timeout;
+        }
+    }
+
+
+    // --- Adapted from BusyWaitForAnswer()'s answer-reading tail: array -> runtime-sized etl::vector ---
+    auto values = etl::vector<Byte, maxNProperties>();
+    values.uninitialized_resize(nBytes);
+    hal::ReadFrom(&rfSpi, std::span<Byte>(values), spiTimeout);
+    DeselectChip();
+
+
+    return values;
 }
+
+
 
 
 // --- Private function definitions ---

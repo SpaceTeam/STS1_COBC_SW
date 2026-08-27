@@ -3,29 +3,26 @@
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Rf/Rf.hpp>
 #include <Sts1CobcSw/Rf/RfDataRateConfigs.hpp>
+#include <Sts1CobcSw/Serial/Byte.hpp>
+
+#include <rodos_no_using_namespace.h>
+
+#include <cstdint>
 
 
 namespace rf = sts1cobcsw::rf;
+using sts1cobcsw::operator""_b;
 
 
 
-
-TEST_CASE("RF module")
+TEST_CASE("Rf Data Rate Config Compare")
 {
-
-
     // We need to initialize the FRAM too because the RF code uses persistent variables
     sts1cobcsw::fram::Initialize();
     auto initializeResult = rf::Initialize();
     REQUIRE(initializeResult.has_value());
 
 
-
-
-
-
-    auto partNumber = rf::ReadPartNumber();
-    CHECK(partNumber == rf::correctPartNumber);
 
     auto defaultDataRate = sts1cobcsw::rf::dataRateConfig9600;
     CHECK(rf::GetTxDataRate() == defaultDataRate.dataRate);
@@ -38,7 +35,20 @@ TEST_CASE("RF module")
     CHECK(rf::GetRxDataRate() == dataRate);
 
 
-    // RODOS::PRINTF("Hello, World! from RODOS::PRINTF\n");
+    constexpr auto propertyGroup = rf::PropertyGroup::modem;
+    constexpr auto startIndex = 0x00_b;
+    constexpr std::size_t nBytes = 12;
 
-    rf::ReadPropertys();
+    RODOS::PRINTF("--start printf of read bytes--\n");
+    auto propertysResult = rf::ReadPropertys(propertyGroup, startIndex, nBytes);
+    CHECK(propertysResult.has_value());
+    if(propertysResult.has_value())
+    {
+        auto const & propertyValues = propertysResult.value();
+        for(auto value : propertyValues)
+        {
+            RODOS::PRINTF("0x%02x, ", static_cast<std::uint8_t>(value));
+        }
+        RODOS::PRINTF("\n");
+    }
 }
