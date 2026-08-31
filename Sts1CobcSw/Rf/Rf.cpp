@@ -205,17 +205,17 @@ template<std::size_t answerLength>
 [[nodiscard]] auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>;
 
 
-template<std::size_t extent>
-    requires(extent <= maxNProperties)
+template<std::size_t nProperties>
+    requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte startIndex,
-                                 std::span<Byte const, extent> propertyValues) -> Result<void>;
+                                 std::span<Byte const, nProperties> propertyValues) -> Result<void>;
 
 template<std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte propertyStartIndex,
-                                 std::array<Byte, nProperties> const & properties) -> Result<void>;
+                                 std::array<Byte, nProperties> const & propertyValues) -> Result<void>;
 
 template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
 [[nodiscard]] auto SetProperties(
@@ -320,8 +320,8 @@ auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 }
 
 
-// For Debug: reads up to maxNProperties bytes. Should not be used in production code.
-// intentionally does not go through SendCommand()/BusyWaitForAnswer()/GetProperties().
+// For Debug: reads up to maxNProperties bytes. Should probably not be used in production code.
+// intentionally does not go through SendCommand()/BusyWaitForAnswer()/GetProperties() templates.
 // because they are fixed length at compile time.
 auto ReadPropertys(PropertyGroup propertyGroup, Byte startIndex, std::size_t nBytes)
     -> Result<etl::vector<Byte, maxNProperties>>
@@ -716,6 +716,9 @@ auto ApplyPatch() -> Result<void>
     // Template argument deduction for std::array doesn't work because the array is too large. Lol.
     // Every line of the patch array starts with a one-byte length and then as many data bytes. We
     // got the patch data from some configuration tool that Andriy found.
+    //
+    // the data was generated in the WDS3 tool from silabs
+    // it is found in the generated file si446x_patch.h under the name SI446X_PATCH_CMDS
     //
     // clang-format off
     static constexpr auto patch = std::to_array<Byte>({
@@ -1508,15 +1511,15 @@ auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength
 }
 
 
-template<std::size_t extent>
-    requires(extent <= maxNProperties)
+template<std::size_t nProperties>
+    requires(nProperties <= maxNProperties)
 inline auto SetProperties(PropertyGroup propertyGroup,
                           Byte startIndex,
-                          std::span<Byte const, extent> propertyValues) -> Result<void>
+                          std::span<Byte const, nProperties> propertyValues) -> Result<void>
 {
     return SendCommand(FlatArray(cmdSetProperty,
                                  static_cast<Byte>(propertyGroup),
-                                 static_cast<Byte>(extent),
+                                 static_cast<Byte>(nProperties),
                                  startIndex,
                                  propertyValues));
 }
@@ -1526,9 +1529,9 @@ template<std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte propertyStartIndex,
-                                 std::array<Byte, nProperties> const & properties) -> Result<void>
+                                 std::array<Byte, nProperties> const & propertyValues) -> Result<void>
 {
-    return SetProperties(propertyGroup, propertyStartIndex, Span(properties));
+    return SetProperties(propertyGroup, propertyStartIndex, Span(propertyValues));
 }
 
 
