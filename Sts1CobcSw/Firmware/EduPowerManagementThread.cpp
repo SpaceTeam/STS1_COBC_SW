@@ -66,7 +66,7 @@ private:
                 if(eduShouldBeReset)
                 {
                     DEBUG_PRINT("Resetting EDU (ignored)\n");
-                    edu::TurnOff();
+                    // edu::TurnOff();
                     eduShouldBeReset = false;
                     continue;
                 }
