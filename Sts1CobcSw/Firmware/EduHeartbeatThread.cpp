@@ -63,8 +63,8 @@ private:
             if(result.has_error())
             {
                 edgeCounter = 0;
-                DEBUG_PRINT("%s", eduIsAlive ? "EDU is not alive\n" : "");
-                eduIsAlive = false;
+                DEBUG_PRINT("%s", eduIsAlive ? "EDU is not alive (ignored)\n" : "");
+                eduIsAlive = true;
                 eduIsAliveTopic.publish(eduIsAlive);
             }
             else
