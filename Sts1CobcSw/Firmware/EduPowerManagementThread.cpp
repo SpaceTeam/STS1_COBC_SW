@@ -65,39 +65,15 @@ private:
                 auto protector = RODOS::ScopeProtector(&semaphore);
                 if(eduShouldBeReset)
                 {
-                    DEBUG_PRINT("Resetting EDU\n");
+                    DEBUG_PRINT("Resetting EDU (ignored)\n");
                     edu::TurnOff();
                     eduShouldBeReset = false;
                     continue;
                 }
             }
-            if(epsBatteryGoodGpioPin.Read() == hal::PinState::reset
-               or not persistentVariables.Load<"flashIsWorking">())
-            {
-                DEBUG_PRINT(
-                    "%s",
-                    persistentVariables.Load<"eduShouldBePowered">() ? "Turning EDU off\n" : "");
-                edu::TurnOff();
-                continue;
-            }
             auto eduIsAlive = false;
             eduIsAliveBufferForPowerManagement.get(eduIsAlive);
-            auto nextEduProgramStartTime = RealTime(0);
-            nextEduProgramStartTimeBuffer.get(nextEduProgramStartTime);
-            auto timeTillNextEduProgram = ToRodosTime(nextEduProgramStartTime) - CurrentRodosTime();
-            auto eduHasUpdate = edu::updateGpioPin.Read() == hal::PinState::set;
-            if(eduIsAlive)
-            {
-                auto noWorkMustBeDoneInTheNearFuture =
-                    not eduHasUpdate and not edu::ProgramsAreAvailableOnCobc()
-                    and timeTillNextEduProgram > persistentVariables.Load<"maxEduIdleDuration">();
-                if(noWorkMustBeDoneInTheNearFuture)
-                {
-                    DEBUG_PRINT("Turning EDU off\n");
-                    edu::TurnOff();
-                }
-            }
-            else if(not eduIsAlive and timeTillNextEduProgram < (eduBootTime + eduBootTimeMargin))
+            if(not eduIsAlive)
             {
                 DEBUG_PRINT("Turning EDU on\n");
                 edu::TurnOn();
