@@ -34,6 +34,7 @@ constexpr auto eduPowerManagementThreadInterval = 2 * s;
 
 auto epsBatteryGoodGpioPin = hal::GpioPin(hal::epsBatteryGoodPin);
 RODOS::Semaphore semaphore{};
+auto eduTurnedOn = false;
 auto eduShouldBeReset = false;
 
 
@@ -71,12 +72,11 @@ private:
                     continue;
                 }
             }
-            auto eduIsAlive = false;
-            eduIsAliveBufferForPowerManagement.get(eduIsAlive);
-            if(not eduIsAlive)
+            if(not eduTurnedOn)
             {
                 DEBUG_PRINT("Turning EDU on\n");
                 edu::TurnOn();
+                eduTurnedOn = true;
             }
             DEBUG_PRINT_STACK_USAGE();
         }
