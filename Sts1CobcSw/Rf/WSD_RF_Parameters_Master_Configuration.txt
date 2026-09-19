@@ -1,0 +1,112 @@
+// Master Settings file for Si4463
+// This File contains Silabs WDS Tool Settings
+// This settings are used to generate configuration files for the Si4463 with the WDS Tool
+// The data from those files will be used in our own configuration
+
+
+
+1. Select project:
+	"Direct TX" & "Direct RX"   or   
+	"Standard packet TX" & "Standard packet RX"
+
+
+---- TAB: Frequency and power ----
+
+// Following configs are available for Direct TX & Direct RX
+-- Frequency --
+Base frequency [MHz]: 437.395 
+Channel spacing [kHz]: 0.00
+Channel number: 0
+Center frequency (calculated/read-only) [MHz]: 437.395
+
+-- Crystal --
+Crystal Frequency [MHz]: 26.0
+Crystal Cap. bank: 0x?
+Crystal tolerance RX [ppm]: 2.0
+Crystal tolerance TX [ppm]: 2.0
+Use external TCXO/Ref Source [y/n]: yes
+
+-- Clock --
+Enable divided system clock output [y/n]: ?
+Clock output (grayed out): ?
+32 kHz clock: ?
+
+// Following configs are available ONLY for Direct TX
+-- Power amplifier (PA) --
+PA mode: ?
+PA Ramp TC: ?
+PA bias (grayed out): 0x?
+PA power level: 0x?
+Enable ramp control of External PA [y/n]: ?
+Ramping time (grayed out): 0x?
+Ramping time [µs] (calculated, grayed out): ? 
+
+
+
+---- TAB: RF parameters ----
+
+// Following configs are available for Direct TX & Direct RX
+-- Modulation --
+Modulation type: 2GFSK
+Data rate [kbps(=ksps)]: dataRateWeWant
+Deviation [kHz]: dataRateWeWant * 0.5
+
+// Following configs are available ONLY for Direct RX
+RX bandwidth [kHz]: ? 
+RX bandwidth checkbox [y/n]: ?
+RX data rate error: ?
+
+-- Optimize RX performance --
+Optimize RX performance:
+  [ ] Low current consumption
+  [ ] High sensitivity
+  [ ] Improved blocking
+  [ ] Improved selectivity
+
+Enable BER mode [y/n]: ?
+Enable antenna diversity [y/n]: ?
+Enable IQ calibration [y/n]: ?
+
+-- RSSI --
+RSSI average: ?
+RSSI latch: ?
+Check threshold at latch [y/n]: ?
+RSSI threshold: 0x?
+
+
+
+---- TAB: GPIO and FRR ----
+
+// Following configs are available for Direct TX & Direct RX
+-- GPIO --
+GPIO 0:
+  Enable pullup [y/n]: ?
+  Pin configuration: ?
+
+GPIO 1:
+  Enable pullup [y/n]: ?
+  Pin configuration: ?
+
+GPIO 2:
+  Enable pullup [y/n]: ?
+  Pin configuration: ?
+
+GPIO 3:
+  Enable pullup [y/n]: ?
+  Pin configuration: ?
+
+NIRQ:
+  Enable pullup [y/n]: ?
+  Pin configuration: ?
+
+SDO:
+  Enable pullup [y/n]: ?
+  Pin configuration: ?
+
+Drive strength: ?
+
+-- Fast Response Registers --
+Fast Response Register A: ?
+Fast Response Register B: ?
+Fast Response Register C: ?
+Fast Response Register D: ?
