@@ -6,15 +6,25 @@
 
 
 1. Select project:
-	"Direct TX" & "Direct RX"   or   
+  // not this according to Jakob R.
+	"Direct TX" & "Direct RX"   or
+
+  // it is probably this:
 	"Standard packet TX" & "Standard packet RX"
+
+  // but Rf.cpp line 934:
+  // // Infinite receive, big endian (MSB first)
+  // static constexpr auto pktLen = 0x60_b;
+  // about the length of packet suggests, that we are currently using indefinitely receive
+  // witch probably would correspond to "Direct RX"
+
 
 
 ---- TAB: Frequency and power ----
 
 // Following configs are available for Direct TX & Direct RX
 -- Frequency --
-Base frequency [MHz]: 437.395 
+Base frequency [MHz]: 437.395
 Channel spacing [kHz]: 0.00
 Channel number: 0
 Center frequency (calculated/read-only) [MHz]: 437.395
@@ -39,7 +49,7 @@ PA bias (grayed out): 0x?
 PA power level: 0x?
 Enable ramp control of External PA [y/n]: ?
 Ramping time (grayed out): 0x?
-Ramping time [µs] (calculated, grayed out): ? 
+Ramping time [µs] (calculated, grayed out): ?
 
 
 
@@ -52,7 +62,7 @@ Data rate [kbps(=ksps)]: dataRateWeWant
 Deviation [kHz]: dataRateWeWant * 0.5
 
 // Following configs are available ONLY for Direct RX
-RX bandwidth [kHz]: ? 
+RX bandwidth [kHz]: ?
 RX bandwidth checkbox [y/n]: ?
 RX data rate error: ?
 
