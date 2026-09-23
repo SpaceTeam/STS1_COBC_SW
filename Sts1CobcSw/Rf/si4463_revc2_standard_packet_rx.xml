@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<RCA_ProjectData ProjectName="Standard packet RX" ChipType="Si4463" ChipRevision="C2" Version="3.2.11.0">
+  <DataItems>
+    <tbpFrequencyAndPower Type="System.Windows.Forms.TabPage">
+      <grbFequencyControl Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudChannelNumber">
+          <Value>0</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCenterFrequency">
+          <Value>437.395</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudChannelSpacing">
+          <Value>0.00</Value>
+        </DataItem>
+      </grbFequencyControl>
+      <grbCrystalControl Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbUseExternalTCXO">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalToleranceTX">
+          <Value>2.0</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalToleranceRX">
+          <Value>2.0</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalFrequency">
+          <Value>26.000</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalCapBank">
+          <Value>0</Value>
+        </DataItem>
+      </grbCrystalControl>
+      <DataItem Type="System.Windows.Forms.CheckBox" Name="chbDividedSystemClock">
+        <Checked>False</Checked>
+      </DataItem>
+      <grbClockOutput Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbb32kHzClock">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+      </grbClockOutput>
+    </tbpFrequencyAndPower>
+    <tbpRfParameters Type="System.Windows.Forms.TabPage">
+      <grbRfParameters Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbModulationType">
+          <SelectedIndex>1</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudDataRate">
+          <Value>9.600</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudDeviation">
+          <Value>2.400</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbManualRxBandwidth">
+          <Checked>False</Checked>
+        </DataItem>
+        <DataItem Type="NewWDS.Applications.App_Common.CustomContols.NumericUpDownExtended" Name="nudBandwidth">
+          <Value>150</Value>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbIfMode">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbDataRateError">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+        <pnlRssiControl Type="System.Windows.Forms.Panel">
+          <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbRssiLatch">
+            <SelectedIndex>0</SelectedIndex>
+          </DataItem>
+          <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbRssiAverage">
+            <SelectedIndex>0</SelectedIndex>
+          </DataItem>
+          <DataItem Type="System.Windows.Forms.CheckBox" Name="chbCheckThresholdAtLatch">
+            <Checked>False</Checked>
+          </DataItem>
+          <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudRssiThreshold">
+            <Value>255</Value>
+          </DataItem>
+        </pnlRssiControl>
+        <grbHighPerformance Type="System.Windows.Forms.GroupBox">
+          <DataItem Type="System.Windows.Forms.RadioButton" Name="rdbImprovedSelectivity">
+            <Checked>False</Checked>
+          </DataItem>
+          <DataItem Type="System.Windows.Forms.RadioButton" Name="rdbImprovedBlocking">
+            <Checked>False</Checked>
+          </DataItem>
+          <DataItem Type="System.Windows.Forms.RadioButton" Name="rdbLowPower">
+            <Checked>False</Checked>
+          </DataItem>
+          <DataItem Type="System.Windows.Forms.RadioButton" Name="rdbHighPerformance">
+            <Checked>True</Checked>
+          </DataItem>
+        </grbHighPerformance>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnableHighPerformanceChannelFilter">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnableAntennaDiversity">
+          <Checked>False</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnableIqCalibration">
+          <Checked>False</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnablePllAFC">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnableAdaptiveChannelFilterBandwidth">
+          <Checked>True</Checked>
+        </DataItem>
+      </grbRfParameters>
+    </tbpRfParameters>
+    <tbpInterrupts Type="System.Windows.Forms.TabPage">
+      <grbChipInterrupt Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnableChipInterrupt">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="NewWDS.Applications.App_Common.ByteStatusControl.ByteStatus" Name="bstChipInterruptStatus">
+          <Enabled>True</Enabled>
+          <Value>0</Value>
+        </DataItem>
+      </grbChipInterrupt>
+      <grbModemInterrupt Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnableModemInterrupt">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="NewWDS.Applications.App_Common.ByteStatusControl.ByteStatus" Name="bstModemInterruptStatus">
+          <Enabled>True</Enabled>
+          <Value>0</Value>
+        </DataItem>
+      </grbModemInterrupt>
+      <grbPacketHandlerInterrupt Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbEnablePacketHandlerInterrupt">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="NewWDS.Applications.App_Common.ByteStatusControl.ByteStatus" Name="bstPacketHandlerInterruptStatus">
+          <Enabled>True</Enabled>
+          <Value>0</Value>
+        </DataItem>
+      </grbPacketHandlerInterrupt>
+      <grbColorDescrition Type="System.Windows.Forms.GroupBox" />
+    </tbpInterrupts>
+    <tbpGPIO Type="System.Windows.Forms.TabPage">
+      <grbFastResponseRegisters Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbFrrA">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbFrrC">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbFrrD">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbFrrB">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+      </grbFastResponseRegisters>
+      <grbGPIO Type="System.Windows.Forms.GroupBox">
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbGpio0Pullup">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbGpio0">
+          <SelectedIndex>TRISTATE</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbGpio1Pullup">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbGpio1">
+          <SelectedIndex>TRISTATE</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbGpio2Pullup">
+          <Checked>False</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbGpio2">
+          <SelectedIndex>RX_STATE</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbGpio3Pullup">
+          <Checked>False</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbGpio3">
+          <SelectedIndex>TX_STATE</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbNirqPullup">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbNirq">
+          <SelectedIndex>Active low interrupt signal</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.CheckBox" Name="chbSdoPullup">
+          <Checked>True</Checked>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbSdo">
+          <SelectedIndex>SDO</SelectedIndex>
+        </DataItem>
+        <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbDriveStrength">
+          <SelectedIndex>0</SelectedIndex>
+        </DataItem>
+      </grbGPIO>
+    </tbpGPIO>
+  </DataItems>
+</RCA_ProjectData>

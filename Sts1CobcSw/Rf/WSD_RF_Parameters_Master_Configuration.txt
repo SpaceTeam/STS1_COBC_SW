@@ -6,17 +6,14 @@
 
 
 1. Select project:
-  // not this according to Jakob R.
-	"Direct TX" & "Direct RX"   or
 
-  // it is probably this:
-	"Standard packet TX" & "Standard packet RX"
+  // this was used
+"Standard packet TX" & "Standard packet RX"
 
-  // but Rf.cpp line 934:
-  // // Infinite receive, big endian (MSB first)
-  // static constexpr auto pktLen = 0x60_b;
-  // about the length of packet suggests, that we are currently using indefinitely receive
-  // witch probably would correspond to "Direct RX"
+  // Jakob R.: we are actually using Long packet, but the packet handler is proven to work in our code.
+  // in The WDS Tool, the extra configuration of the packet field for long Packet is very long with many fields
+  // so we can just use standard packet in the WDS Tool and should ignore the Packet config values the WDS Tool spits out.
+"Long packet TX" & "Long packet RX"
 
 
 
@@ -31,25 +28,25 @@ Center frequency (calculated/read-only) [MHz]: 437.395
 
 -- Crystal --
 Crystal Frequency [MHz]: 26.0
-Crystal Cap. bank: 0x?
+Crystal Cap. bank: 0x0
 Crystal tolerance RX [ppm]: 2.0
 Crystal tolerance TX [ppm]: 2.0
-Use external TCXO/Ref Source [y/n]: yes
+Use external TCXO/Ref Source [y/n]: YES
 
 -- Clock --
-Enable divided system clock output [y/n]: ?
-Clock output (grayed out): ?
-32 kHz clock: ?
+Enable divided system clock output [y/n]: NO (Jakob R. NO with high certainty)
+Clock output (grayed out): system clock div
+32 kHz clock: disabled
 
 // Following configs are available ONLY for Direct TX
 -- Power amplifier (PA) --
-PA mode: ?
-PA Ramp TC: ?
-PA bias (grayed out): 0x?
-PA power level: 0x?
-Enable ramp control of External PA [y/n]: ?
-Ramping time (grayed out): 0x?
-Ramping time [µs] (calculated, grayed out): ?
+PA mode: ClassE/Square W
+PA Ramp TC: 31
+PA bias (grayed out): 0x0
+PA power level: 0x2F
+Enable ramp control of External PA [y/n]: NO
+Ramping time (grayed out): 0xF
+Ramping time [µs] (calculated, grayed out): 1.18us
 
 
 
@@ -59,29 +56,32 @@ Ramping time [µs] (calculated, grayed out): ?
 -- Modulation --
 Modulation type: 2GFSK
 Data rate [kbps(=ksps)]: dataRateWeWant
-Deviation [kHz]: dataRateWeWant * 0.5
+Deviation [kHz]: dataRateWeWant * 0.25
 
 // Following configs are available ONLY for Direct RX
-RX bandwidth [kHz]: ?
-RX bandwidth checkbox [y/n]: ?
-RX data rate error: ?
+RX bandwidth [kHz]: auto calc
+RX bandwidth checkbox [y/n]: NO
+RX data rate error: 0% - 1%
 
 -- Optimize RX performance --
 Optimize RX performance:
   [ ] Low current consumption
-  [ ] High sensitivity
+  [X] High sensitivity
   [ ] Improved blocking
   [ ] Improved selectivity
 
-Enable BER mode [y/n]: ?
-Enable antenna diversity [y/n]: ?
-Enable IQ calibration [y/n]: ?
+Enable PPL AFC [y/n]: YES (TODO: Try if it is better or worse on flatsat)
+Enable adaptive Ch. Fil. BW. [y/n]: YES (TODO: Try if it is better or worse on flatsat)
+
+
+Enable antenna diversity [y/n]: NO
+Enable IQ calibration [y/n]: NO (TODO: should be done for every cubesat and the values you get from that should be hardcoded for the speciffic sat)
 
 -- RSSI --
-RSSI average: ?
-RSSI latch: ?
-Check threshold at latch [y/n]: ?
-RSSI threshold: 0x?
+RSSI average: RSSI averaged over 4 (Jakob R. says it absolutely doesn't matter)
+RSSI latch: Disabled
+Check threshold at latch [y/n]: NO
+RSSI threshold: 0xFF
 
 
 
@@ -90,33 +90,33 @@ RSSI threshold: 0x?
 // Following configs are available for Direct TX & Direct RX
 -- GPIO --
 GPIO 0:
-  Enable pullup [y/n]: ?
-  Pin configuration: ?
+  Enable pullup [y/n]: yes
+  Pin configuration: TRISTATE - Input and output drivers disabled
 
 GPIO 1:
-  Enable pullup [y/n]: ?
-  Pin configuration: ?
+  Enable pullup [y/n]: yes
+  Pin configuration: TRISTATE - Input and output drivers disabled
 
 GPIO 2:
-  Enable pullup [y/n]: ?
-  Pin configuration: ?
+  Enable pullup [y/n]: no
+  Pin configuration: RX_STATE - This output is set hight while in RX state and low otherwise
 
 GPIO 3:
-  Enable pullup [y/n]: ?
-  Pin configuration: ?
+  Enable pullup [y/n]: no
+  Pin configuration: TX_STATE - This output is set hight while in TX state and low otherwise
 
 NIRQ:
-  Enable pullup [y/n]: ?
-  Pin configuration: ?
+  Enable pullup [y/n]: yes
+  Pin configuration: Active low interrupt signal
 
 SDO:
-  Enable pullup [y/n]: ?
-  Pin configuration: ?
+  Enable pullup [y/n]: yes
+  Pin configuration: SDO - Output SPI Serial data out
 
-Drive strength: ?
+Drive strength: highest strength
 
 -- Fast Response Registers --
-Fast Response Register A: ?
-Fast Response Register B: ?
-Fast Response Register C: ?
-Fast Response Register D: ?
+Fast Response Register A: Disabled
+Fast Response Register B: Disabled
+Fast Response Register C: Disabled
+Fast Response Register D: Disabled
