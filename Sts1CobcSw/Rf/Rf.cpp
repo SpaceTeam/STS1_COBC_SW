@@ -982,75 +982,6 @@ auto Configure() -> Result<void>
                                              pktField1Config,
                                              pktField1CrcConfig))));
 
-    OUTCOME_TRY(SetConstantModemProperties());
-
-    // RX filter coefficients
-    // Block 1
-    static constexpr auto iRxFilterCoefficientsBlock1 = 0x00_b;
-    static constexpr auto rxFilterCoefficientsBlock1 = std::array{
-        0xFF_b,  // RX1_CHFLT_COE13[7:0]
-        0xC4_b,  // RX1_CHFLT_COE12[7:0]
-        0x30_b,  // RX1_CHFLT_COE11[7:0]
-        0x7F_b,  // RX1_CHFLT_COE10[7:0]
-        0xF5_b,  // RX1_CHFLT_COE9[7:0]
-        0xB5_b,  // RX1_CHFLT_COE8[7:0]
-        0xB8_b,  // RX1_CHFLT_COE7[7:0]
-        0xDE_b,  // RX1_CHFLT_COE6[7:0]
-        0x05_b,  // RX1_CHFLT_COE5[7:0]
-        0x17_b,  // RX1_CHFLT_COE4[7:0]
-        0x16_b,  // RX1_CHFLT_COE3[7:0]
-        0x0C_b   // RX1_CHFLT_COE2[7:0]
-    };
-    OUTCOME_TRY(SetProperties(PropertyGroup::modemChflt,
-                              iRxFilterCoefficientsBlock1,
-                              Span(rxFilterCoefficientsBlock1)));
-
-    // Block 2
-    static constexpr auto iRxFilterCoefficientsBlock2 = 0x0C_b;
-    static constexpr auto rxFilterCoefficientsBlock2 = std::array{
-        0x03_b,  // RX1_CHFLT_COE1[7:0]
-        0x00_b,  // RX1_CHFLT_COE0[7:0]
-        0x15_b,  // RX1_CHFLT_COE10[9:8]  | RX1_CHFLT_COE11[9:8]  | RX1_CHFLT_COE12[9:8]  |
-                 // RX1_CHFLT_COE13[9:8]
-        0xFF_b,  // RX1_CHFLT_COE6[9:8]   | RX1_CHFLT_COE7[9:8]   | RX1_CHFLT_COE8[9:8]   |
-                 // RX1_CHFLT_COE9[9:8]
-        0x00_b,  // RX1_CHFLT_COE2[9:8]   | RX1_CHFLT_COE3[9:8]   | RX1_CHFLT_COE4[9:8]   |
-                 // RX1_CHFLT_COE5[9:8]
-        0x00_b,  // 0 | 0 | 0 | 0         | RX1_CHFLT_COE0[9:8]   | RX1_CHFLT_COE1[9:8]
-        0xFF_b,  // RX2_CHFLT_COE13[7:0]
-        0xC4_b,  // RX2_CHFLT_COE12[7:0]
-        0x30_b,  // RX2_CHFLT_COE11[7:0]
-        0x7F_b,  // RX2_CHFLT_COE10[7:0]
-        0xF5_b,  // RX2_CHFLT_COE9[7:0]
-        0xB5_b   // RX2_CHFLT_COE8[7:0]
-    };
-    OUTCOME_TRY(SetProperties(PropertyGroup::modemChflt,
-                              iRxFilterCoefficientsBlock2,
-                              Span(rxFilterCoefficientsBlock2)));
-
-    // Block 3
-    static constexpr auto iRxFilterCoefficientsBlock3 = 0x18_b;
-    static constexpr auto rxFilterCoefficientsBlock3 = std::array{
-        0xB8_b,  // RX2_CHFLT_COE7[7:0]
-        0xDE_b,  // RX2_CHFLT_COE6[7:0]
-        0x05_b,  // RX2_CHFLT_COE5[7:0]
-        0x17_b,  // RX2_CHFLT_COE4[7:0]
-        0x16_b,  // RX2_CHFLT_COE3[7:0]
-        0x0C_b,  // RX2_CHFLT_COE2[7:0]
-        0x03_b,  // RX2_CHFLT_COE1[7:0]
-        0x00_b,  // RX2_CHFLT_COE0[7:0]
-        0x15_b,  // RX2_CHFLT_COE10[9:8]  | RX2_CHFLT_COE11[9:8]  | RX2_CHFLT_COE12[9:8] |
-                 // RX2_CHFLT_COE13[9:8]
-        0xFF_b,  // RX2_CHFLT_COE6[9:8]   | RX2_CHFLT_COE7[9:8]   | RX2_CHFLT_COE8[9:8]  |
-                 // RX2_CHFLT_COE9[9:8]
-        0x00_b,  // RX2_CHFLT_COE2[9:8]   | RX2_CHFLT_COE3[9:8]   | RX2_CHFLT_COE4[9:8]  |
-                 // RX2_CHFLT_COE5[9:8]
-        0x00_b   // 0 | 0 | 0 | 0         | RX2_CHFLT_COE0[9:8]   | RX2_CHFLT_COE1[9:8]  |
-    };
-    OUTCOME_TRY(SetProperties(PropertyGroup::modemChflt,
-                              iRxFilterCoefficientsBlock3,
-                              Span(rxFilterCoefficientsBlock3)));
-
     // RF PA mode
     static constexpr auto iPaMode = 0x00_b;
     // PA_MODE
@@ -1278,18 +1209,11 @@ auto SetConstantModemProperties() -> Result<void>
                               std::array{0x40_b,    // MODEM_DSA_CTRL1
                                          0x04_b})); // MODEM_DSA_CTRL2
 
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+    return SetProperties(PropertyGroup::modem,
                               0x5e_b,
                               std::array{0x78_b,    // MODEM_DSA_RSSI
-                                         0x20_b})); // MODEM_DSA_MISC
+                                         0x20_b}); // MODEM_DSA_MISC
 
-    OUTCOME_TRY(SetProperties(PropertyGroup::modemChflt,
-                              0x0e_b,
-                              std::array{0x15_b})); // MODEM_CHFLT_RX1_CHFLT_COE
-
-    return SetProperties(PropertyGroup::modemChflt,
-                         0x20_b,
-                         std::array{0x15_b});       // MODEM_CHFLT_RX2_CHFLT_COE
     // clang-format on
 }
 // NOLINTEND
