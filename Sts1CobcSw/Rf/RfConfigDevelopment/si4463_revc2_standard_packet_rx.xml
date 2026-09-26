@@ -10,7 +10,7 @@
           <Value>437.395</Value>
         </DataItem>
         <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudChannelSpacing">
-          <Value>0.00</Value>
+          <Value>0</Value>
         </DataItem>
       </grbFequencyControl>
       <grbCrystalControl Type="System.Windows.Forms.GroupBox">
@@ -18,13 +18,13 @@
           <Checked>True</Checked>
         </DataItem>
         <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalToleranceTX">
-          <Value>2.0</Value>
+          <Value>2</Value>
         </DataItem>
         <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalToleranceRX">
-          <Value>2.0</Value>
+          <Value>2</Value>
         </DataItem>
         <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalFrequency">
-          <Value>26.000</Value>
+          <Value>26</Value>
         </DataItem>
         <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudCrystalCapBank">
           <Value>0</Value>
@@ -42,13 +42,13 @@
     <tbpRfParameters Type="System.Windows.Forms.TabPage">
       <grbRfParameters Type="System.Windows.Forms.GroupBox">
         <DataItem Type="System.Windows.Forms.ComboBox" Name="cbbModulationType">
-          <SelectedIndex>1</SelectedIndex>
+          <SelectedIndex>2</SelectedIndex>
         </DataItem>
         <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudDataRate">
-          <Value>9.600</Value>
+          <Value>9.6</Value>
         </DataItem>
         <DataItem Type="System.Windows.Forms.NumericUpDown" Name="nudDeviation">
-          <Value>2.400</Value>
+          <Value>2.4</Value>
         </DataItem>
         <DataItem Type="System.Windows.Forms.CheckBox" Name="chbManualRxBandwidth">
           <Checked>False</Checked>
