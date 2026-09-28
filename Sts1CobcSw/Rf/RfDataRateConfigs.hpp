@@ -75,6 +75,7 @@ private:
 
 // clang-format off
 // NOLINTBEGIN(*identifier-naming, *magic-numbers)
+
 using MODEM_DATA_RATE_t             = Properties<PropertyGroup::modem,      0x03_b,  4>;
 using MODEM_FREQ_DEV_t              = Properties<PropertyGroup::modem,      0x0b_b,  2>;
 using MODEM_DECIMATION_CFG1_t       = Properties<PropertyGroup::modem,      0x1e_b,  3>;
@@ -89,15 +90,17 @@ using MODEM_CHFLT_RX1_CHFLT_COE_t   = Properties<PropertyGroup::modemChflt, 0x00
 using MODEM_CHFLT_RX1_CHFLT_COE_2_t = Properties<PropertyGroup::modemChflt, 0x0C_b, 12>;
 using MODEM_CHFLT_RX2_CHFLT_COE_t   = Properties<PropertyGroup::modemChflt, 0x18_b, 12>;
 using PREAMBLE_TX_LENGTH_t          = Properties<PropertyGroup::preamble,   0x00_b,  1>;
+
 // NOLINTEND(*identifier-naming, *magic-numbers)
 // clang-format on
 
 
 // NOLINTBEGIN(*identifier-naming)
+
 struct DataRateConfig
 {
     std::uint32_t dataRate = 0U;
-    MODEM_DATA_RATE_t MODEM_DATA_RATE;
+    MODEM_DATA_RATE_t MODEM_DATA_RATE; // index 0x03
     MODEM_FREQ_DEV_t MODEM_FREQ_DEV;
     MODEM_DECIMATION_CFG1_t MODEM_DECIMATION_CFG1;
     MODEM_BCR_OSR_t MODEM_BCR_OSR;
@@ -124,10 +127,10 @@ constexpr auto ComputePreambleLength(uint32_t dataRate) -> Byte
     return static_cast<Byte>((startupTimeUs * dataRate + divisor - 1) / divisor);
 }
 
+// clang-format off
 
 constexpr auto dataRateConfig1200 = DataRateConfig{
     1200,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x00_b, 0xBB_b, 0x80_b, 0x05_b}),
     MODEM_FREQ_DEV_t(std::array{             0x00_b, 0x30_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0xF0_b, 0x20_b, 0x0C_b}),
@@ -144,13 +147,11 @@ constexpr auto dataRateConfig1200 = DataRateConfig{
                                              0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
                                              0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(1200)}),
 };
 
 constexpr auto dataRateConfig2400 = DataRateConfig{
     2400,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x01_b, 0x77_b, 0x00_b, 0x05_b}),
     MODEM_FREQ_DEV_t(std::array{             0x00_b, 0x61_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0xF0_b, 0x20_b, 0x0C_b}),
@@ -167,13 +168,11 @@ constexpr auto dataRateConfig2400 = DataRateConfig{
                                              0xFF_b, 0xBA_b, 0x0F_b, 0x51_b, 0xCF_b, 0xA9_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xC9_b, 0xFC_b, 0x1B_b, 0x1E_b, 0x0F_b, 0x01_b,
                                              0xFC_b, 0xFD_b, 0x15_b, 0xFF_b, 0x00_b, 0x0F_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(2400)}),
 };
 
 constexpr auto dataRateConfig4800 = DataRateConfig{
     4800,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x02_b, 0xEE_b, 0x00_b, 0x05_b}),
     MODEM_FREQ_DEV_t(std::array{             0x00_b, 0xC2_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0xB0_b, 0x20_b, 0x0C_b}),
@@ -190,36 +189,83 @@ constexpr auto dataRateConfig4800 = DataRateConfig{
                                              0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
                                              0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(4800)}),
 };
 
 constexpr auto dataRateConfig9600 = DataRateConfig{
     9600,
-    // clang-format off
-    MODEM_DATA_RATE_t(std::array{            0x05_b, 0xDC_b, 0x00_b, 0x05_b}),
-    MODEM_FREQ_DEV_t(std::array{             0x01_b, 0x83_b}),
-    MODEM_DECIMATION_CFG1_t(std::array{      0x70_b, 0x20_b, 0x00_b}),
-    MODEM_BCR_OSR_t(std::array{              0x55_b, 0x06_b, 0x0C_b, 0xAB_b, 0x06_b, 0x06_b}),
-    MODEM_AFC_WAIT_t(std::array{             0x12_b, 0x80_b, 0x61_b, 0x01_b, 0xD5_b}),
-    MODEM_AGC_RFPD_DECAY_t(std::array{       0x13_b, 0x13_b}),
-    MODEM_OOK_PDTC_t(std::array{             0x28_b}),
-    MODEM_RAW_EYE_t(std::array{              0x00_b,0xF5_b}),
-    MODEM_SPIKE_DET_t(std::array{            0x03_b}),
-    MODEM_DSA_QUAL_t(std::array{             0x07_b}),
-    MODEM_CHFLT_RX1_CHFLT_COE_t(std::array{  0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b,
-                                             0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b}),
-    MODEM_CHFLT_RX1_CHFLT_COE_2_t(std::array{0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b,
-                                             0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
-    MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
-                                             0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
-    // clang-format on
+    MODEM_DATA_RATE_t(std::array{           0x05_b, 0xDC_b, 0x00_b, // MODEM_DATA_RATE _2, _1, _0,  index 0x03. 0x04, 0x05
+                                            0x05_b}),               // MODEM_TX_NCO_MODE _3         index 0x06
+
+    MODEM_FREQ_DEV_t(std::array{            0x01_b, 0x83_b}),       // MODEM_FREQ_DEV _1, _0,       index 0x0b, 0x0c
+
+    MODEM_DECIMATION_CFG1_t(std::array{     0x70_b,                 // MODEM_DECIMATION_CFG1
+                                            0x20_b,                 // MODEM_DECIMATION_CFG0
+                                            0x00_b}),               // MODEM_DECIMATION_CFG2
+
+    MODEM_BCR_OSR_t(std::array{             0x55_b,                 // MODEM_BCR_OSR _0             index 0x23
+                                            0x06_b, 0x0C_b, 0xAB_b, // MODEM_BCR_NCO_OFFSET _2, _01, _0,
+                                            0x06_b, 0x06_b}),       // MODEM_BCR_GAIN _1, _0
+
+    MODEM_AFC_WAIT_t(std::array{            0x12_b,                 // MODEM_AFC_WAIT
+                                            0x80_b, 0x61_b,         // MODEM_AFC_GAIN _1, _0
+                                            0x01_b, 0xD5_b}),       // MODEM_AFC_LIMITER _1, _0
+
+    MODEM_AGC_RFPD_DECAY_t(std::array{      0x13_b,                 // MODEM_AGC_RFPD_DECAY
+                                            0x13_b}),               // MODEM_AGC_IFPD_DECAY
+
+    MODEM_OOK_PDTC_t(std::array{            0x28_b}),               // MODEM_OOK_PDTC
+
+    MODEM_RAW_EYE_t(std::array{             0x00_b, 0xF5_b}),       // MODEM_RAW_EYE _1, _0
+
+    MODEM_SPIKE_DET_t(std::array{           0x03_b}),               // MODEM_SPIKE_DET
+
+    MODEM_DSA_QUAL_t(std::array{            0x07_b}),               // MODEM_DSA_QUAL
+
+    MODEM_CHFLT_RX1_CHFLT_COE_t(std::array{ 0xCC_b,     // MODEM_CHFLT_RX1_CHFLT_COE 13_7_0
+                                            0xA1_b,     // MODEM_CHFLT_RX1_CHFLT_COE 12_7_0
+                                            0x30_b,     // MODEM_CHFLT_RX1_CHFLT_COE 11_7_0
+                                            0xA0_b,     // MODEM_CHFLT_RX1_CHFLT_COE 10_7_0
+                                            0x21_b,     // MODEM_CHFLT_RX1_CHFLT_COE 9_7_0
+                                            0xD1_b,     // MODEM_CHFLT_RX1_CHFLT_COE 8_7_0
+                                            0xB9_b,     // MODEM_CHFLT_RX1_CHFLT_COE 7_7_0
+                                            0xC9_b,     // MODEM_CHFLT_RX1_CHFLT_COE 6_7_0
+                                            0xEA_b,     // MODEM_CHFLT_RX1_CHFLT_COE 5_7_0
+                                            0x05_b,     // MODEM_CHFLT_RX1_CHFLT_COE 4_7_0
+                                            0x12_b,     // MODEM_CHFLT_RX1_CHFLT_COE 3_7_0
+                                            0x11_b}),   // MODEM_CHFLT_RX1_CHFLT_COE 2_7_0
+
+    MODEM_CHFLT_RX1_CHFLT_COE_2_t(std::array{0x0A_b,    // MODEM_CHFLT_RX1_CHFLT_COE 1_7_0
+                                            0x04_b,     // MODEM_CHFLT_RX1_CHFLT_COE 0_7_0
+                                            0x15_b,     // MODEM_CHFLT_RX1_CHFLT_COE 0
+                                            0xFC_b,     // MODEM_CHFLT_RX1_CHFLT_COE 1
+                                            0x03_b,     // MODEM_CHFLT_RX1_CHFLT_COE 2
+                                            0x00_b,     // MODEM_CHFLT_RX1_CHFLT_COE 3
+                                            0xCC_b,     // MODEM_CHFLT_RX2_CHFLT_COE 13_7_0
+                                            0xA1_b,     // MODEM_CHFLT_RX2_CHFLT_COE 12_7_0
+                                            0x30_b,     // MODEM_CHFLT_RX2_CHFLT_COE 11_7_0
+                                            0xA0_b,     // MODEM_CHFLT_RX2_CHFLT_COE 10_7_0
+                                            0x21_b,     // MODEM_CHFLT_RX2_CHFLT_COE 9_7_0
+                                            0xD1_b}),   // MODEM_CHFLT_RX2_CHFLT_COE 8_7_0
+
+    MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,     // MODEM_CHFLT_RX2_CHFLT_COE 7_7_0
+                                            0xC9_b,     // MODEM_CHFLT_RX2_CHFLT_COE 6_7_0
+                                            0xEA_b,     // MODEM_CHFLT_RX2_CHFLT_COE 5_7_0
+                                            0x05_b,     // MODEM_CHFLT_RX2_CHFLT_COE 4_7_0
+                                            0x12_b,     // MODEM_CHFLT_RX2_CHFLT_COE 3_7_0
+                                            0x11_b,     // MODEM_CHFLT_RX2_CHFLT_COE 2_7_0
+                                            0x0A_b,     // MODEM_CHFLT_RX2_CHFLT_COE 1_7_0
+                                            0x04_b,     // MODEM_CHFLT_RX2_CHFLT_COE 0_7_0
+                                            0x15_b,     // MODEM_CHFLT_RX2_CHFLT_COE 0
+                                            0xFC_b,     // MODEM_CHFLT_RX2_CHFLT_COE 1
+                                            0x03_b,     // MODEM_CHFLT_RX2_CHFLT_COE 2
+                                            0x00_b}),   // MODEM_CHFLT_RX2_CHFLT_COE 3
+
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(9600)}),
 };
 
 constexpr auto dataRateConfig19200 = DataRateConfig{
     19'200,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x0B_b, 0xB8_b, 0x00_b, 0x05_b}),
     MODEM_FREQ_DEV_t(std::array{             0x03_b, 0x06_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0x30_b, 0x20_b, 0x00_b}),
@@ -236,13 +282,11 @@ constexpr auto dataRateConfig19200 = DataRateConfig{
                                              0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
                                              0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(19'200)}),
 };
 
 constexpr auto dataRateConfig38400 = DataRateConfig{
     38'400,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x0B_b, 0xB8_b, 0x00_b, 0x09_b}),
     MODEM_FREQ_DEV_t(std::array{             0x06_b, 0x0D_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0x20_b, 0x20_b, 0x00_b}),
@@ -259,13 +303,11 @@ constexpr auto dataRateConfig38400 = DataRateConfig{
                                              0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
                                              0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(38'400)}),
 };
 
 constexpr auto dataRateConfig57600 = DataRateConfig{
     57'600,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x11_b, 0x94_b, 0x00_b, 0x09_b}),
     MODEM_FREQ_DEV_t(std::array{             0x09_b, 0x13_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0x10_b, 0x10_b, 0x00_b}),
@@ -282,13 +324,11 @@ constexpr auto dataRateConfig57600 = DataRateConfig{
                                              0xFF_b, 0xC4_b, 0x30_b, 0x7F_b, 0xF5_b, 0xB5_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB8_b, 0xDE_b, 0x05_b, 0x17_b, 0x16_b, 0x0C_b,
                                              0x03_b, 0x00_b, 0x15_b, 0xFF_b, 0x00_b, 0x00_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(57'600)}),
 };
 
 constexpr auto dataRateConfig76800 = DataRateConfig{
     76'800,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x17_b, 0x70_b, 0x00_b, 0x09_b}),
     MODEM_FREQ_DEV_t(std::array{             0x0C_b, 0x19_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0x10_b, 0x20_b, 0x00_b}),
@@ -305,13 +345,11 @@ constexpr auto dataRateConfig76800 = DataRateConfig{
                                              0xCC_b, 0xA1_b, 0x30_b, 0xA0_b, 0x21_b, 0xD1_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB9_b, 0xC9_b, 0xEA_b, 0x05_b, 0x12_b, 0x11_b,
                                              0x0A_b, 0x04_b, 0x15_b, 0xFC_b, 0x03_b, 0x00_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(76'800)}),
 };
 
 constexpr auto dataRateConfig115200 = DataRateConfig{
     115'200,
-    // clang-format off
     MODEM_DATA_RATE_t(std::array{            0x23_b, 0x28_b, 0x00_b, 0x09_b}),
     MODEM_FREQ_DEV_t(std::array{             0x12_b, 0x26_b}),
     MODEM_DECIMATION_CFG1_t(std::array{      0x00_b, 0x10_b, 0x00_b}),
@@ -328,7 +366,9 @@ constexpr auto dataRateConfig115200 = DataRateConfig{
                                              0xFF_b, 0xC4_b, 0x30_b, 0x7F_b, 0xF5_b, 0xB5_b}),
     MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{  0xB8_b, 0xDE_b, 0x05_b, 0x17_b, 0x16_b, 0x0C_b,
                                              0x03_b, 0x00_b, 0x15_b, 0xFF_b, 0x00_b, 0x00_b}),
-    // clang-format on
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(115'200)}),
 };
+
+// clang-format on
+
 }
