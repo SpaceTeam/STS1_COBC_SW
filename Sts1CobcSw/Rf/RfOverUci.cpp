@@ -20,7 +20,11 @@
 #include <utility>
 
 
+#ifdef DYNAMIC_COMMUNICATION
+namespace sts1cobcsw::rf::hw_uci
+#else
 namespace sts1cobcsw::rf
+#endif
 {
 namespace
 {
