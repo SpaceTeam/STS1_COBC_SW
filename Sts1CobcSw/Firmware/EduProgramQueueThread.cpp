@@ -145,10 +145,11 @@ auto ProcessQueueEntry() -> Result<void>
     }
     if(CurrentRodosTime() > startTime + maxScheduleDelay)
     {
-        DEBUG_PRINT("Skipping EDU program %i because it is too late\n",
+        DEBUG_PRINT("EDU program %i start time is in the past, setting it to now\n",
                     static_cast<int>(value_of(queueEntry.programId)));
-        persistentVariables.Increment<"eduProgramQueueIndex">();
-        return outcome_v2::success();
+        queueEntry = edu::ProgramQueueEntry{.programId = queueEntry.programId,
+                                            .startTime = CurrentRealTime(),
+                                            .timeout = queueEntry.timeout};
     }
     DEBUG_PRINT("Executing EDU program: ID = %i, start time = %u, timeout = %i s\n",
                 static_cast<int>(value_of(queueEntry.programId)),
