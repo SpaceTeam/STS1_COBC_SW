@@ -23,7 +23,7 @@ RODOS::Subscriber eduIsAliveSubscriberForProgramTransfer(eduIsAliveTopic,
                                                          eduIsAliveBufferForProgramTransfer,
                                                          "eduIsAliveSubscriber");
 RODOS::Subscriber eduIsAliveSubscriberForTelemetry(eduIsAliveTopic,
-                                                   eduIsAliveBufferForListener,
+                                                   eduIsAliveBufferForTelemetry,
                                                    "eduIsAliveSubscriber");
 RODOS::Subscriber nextEduProgramStartTimeSubscriber(nextEduProgramStartTimeTopic,
                                                     nextEduProgramStartTimeBuffer,
