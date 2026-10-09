@@ -5,7 +5,7 @@
 
 namespace sts1cobcsw::rf
 {
-
+    
 namespace
 {
     // --- Private globals ---
@@ -20,89 +20,86 @@ namespace
 
 auto Initialize() -> Result<void>
 {
-    OUTCOME_TRY(hw_rf::Initialize());
-    OUTCOME_TRY(hw_uci::Initialize());
+    OUTCOME_TRY(rf::Initialize());
+    OUTCOME_TRY(uci::Initialize());
     return outcome_v2::success();
 }
 
-auto DynamicCommunicationManager::EnableTx() -> void
+auto EnableTx() -> void
 {
-    hw_rf::EnableTx();
-    hw_uci::EnableTx();
+    rf::EnableTx();
+    uci::EnableTx();
 }
 
-auto DynamicCommunicationManager::DisableTx() -> void
+auto DisableTx() -> void
 {
-    hw_rf::DisableTx();
-    hw_uci::DisableTx();
+    rf::DisableTx();
+    uci::DisableTx();
 }
 
 auto ReadPartNumber() -> std::uint16_t
 {
-    return hw_rf::ReadPartNumber();
+    return rf::ReadPartNumber();
 }
 
 auto EnterStandbyMode() -> void
 {
-    hw_rf::EnterStandbyMode();
-    // TODO: check with flo if this should always happen for uci, even when deactiveated or not
-    hw_uci::EnterStandbyMode();
+    rf::EnterStandbyMode();
+    // TODO: check if that works as expected
+    uci::EnterStandbyMode();
 }
 
 auto SetTxDataLength(std::uint16_t length) -> void
 {
-    hw_rf::SetTxDataRate(dataRate);
-    hw_uci::SetTxDataRate(dataRate);
+    rf::SetTxDataRate(dataRate);
+    uci::SetTxDataRate(dataRate);
 }
 
-auto DynamicCommunicationManager::SetTxDataRate(std::uint32_t dataRate) -> void
+auto SetTxDataRate(std::uint32_t dataRate) -> void
 {
-    hw_rf::SetTxDataRate(dataRate);
-    hw_uci::SetTxDataRate(dataRate);
+    rf::SetTxDataRate(dataRate);
+    uci::SetTxDataRate(dataRate);
 }
 
-auto DynamicCommunicationManager::SetRxDataRate(std::uint32_t dataRate) -> void
+auto SetRxDataRate(std::uint32_t dataRate) -> void
 {
-    hw_rf::SetRxDataRate(dataRate);
-    hw_uci::SetRxDataRate(dataRate);
+    rf::SetRxDataRate(dataRate);
+    uci::SetRxDataRate(dataRate);
 }
 
 auto GetTxDataRate() -> std::uint32_t
 {
-    return hw_rf::GetTxDataRate();
+    return rf::GetTxDataRate();
 }
 
 auto GetRxDataRate() -> std::uint32_t
 {
-    return hw_rf::GetRxDataRate();
+    return rf::GetRxDataRate();
 }
 
-auto DynamicCommunicationManager::SendAndWait(std::span<Byte const> data) -> void
+auto SendAndWait(std::span<Byte const> data) -> void
 {
-    hw_rf::SendAndWait(data);
+    rf::SendAndWait(data);
     if (uciEnabled) {
-        hw_uci::SendAndWait(data);
+        uci::SendAndWait(data);
     }
 }
 
-auto DynamicCommunicationManager::SendAndContinue(std::span<Byte const> data) -> void
+auto SendAndContinue(std::span<Byte const> data) -> void
 {
-    hw_rf::SendAndContinue(data);
+    rf::SendAndContinue(data);
     if (uciEnabled) {
-        hw_uci::SendAndContinue(data);
+        uci::SendAndContinue(data);
     }
 }
 
 auto SuspendUntilDataSent(Duration timeout) -> void
 {
-    // TODO: implement Suspend function ...
-    // TODO: think of a solution .... big problem i guess
-    
-    // TODO: does that work as expected since uci aint waiting, is this fine or not ask flo?!?
-    hw_rf::SuspendUntilDataSent(timeout);
+    // TODO: does that work as expected since uci aint waiting, is this fine or not?!?
+    rf::SuspendUntilDataSent(timeout);
 }
 
-auto DynamicCommunicationManager::Receive(std::span<Byte> data, Duration timeout) -> std::size_t
+auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 {
     auto deadline = CurrentRodosTime() + timeout;
     
@@ -123,21 +120,21 @@ auto DynamicCommunicationManager::Receive(std::span<Byte> data, Duration timeout
             // TODO: check about the slicing to listen to both devices
             auto pollSlice = std::min(pollingInterval, timeRemaining) / activeMediums;
         
-            auto bytesRf = hw_rf::Receive(data, pollSlice);
+            auto bytesRf = rf::Receive(data, pollSlice);
             if (bytesRf > 0) {
                 rfReservedWindows = 3;
                 return bytesRf;
             }
             
             if (uciEnabled) {
-                auto bytesUci = hw_uci::Receive(data, pollSlice);
+                auto bytesUci = uci::Receive(data, pollSlice);
                 if (bytesUci > 0) {
                     return bytesUci;
                 }
             }
         }
         else if (currentLock == LockedMedium::rf) {
-            auto bytesRf = hw_rf::Receive(data, timeRemaining); 
+            auto bytesRf = rf::Receive(data, timeRemaining); 
             if (bytesRf > 0) {
                 rfReservedWindows = 3;
                 return bytesRf;
@@ -147,14 +144,14 @@ auto DynamicCommunicationManager::Receive(std::span<Byte> data, Duration timeout
     return 0;
 }
 
-// TODO: change to system parameter via cmake variable
-auto DynamicCommunicationManager::SetUciEnabled(bool enabled) -> void
+// TODO: change to system parameter
+auto SetUciEnabled(bool enabled) -> void
 {
     uciEnabled = enabled;
 }
 
-// TODO: change to system parameter via cmake variable
-auto DynamicCommunicationManager::IsUciEnabled() const -> bool
+// TODO: change to system parameter
+auto IsUciEnabled() -> bool
 {
     return uciEnabled;
 }
