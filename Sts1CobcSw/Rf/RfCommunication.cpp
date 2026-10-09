@@ -39,11 +39,7 @@
 #include <utility>
 
 
-#ifdef DYNAMIC_COMMUNICATION
-namespace sts1cobcsw::rf::hw_rf
-#else
-namespace sts1cobcsw::rf
-#endif
+namespace sts1cobcsw::rf::rf
 {
 namespace
 {
