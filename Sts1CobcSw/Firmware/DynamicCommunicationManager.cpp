@@ -6,7 +6,19 @@
 namespace sts1cobcsw::rf
 {
 
-auto DynamicCommunicationManager::Initialize() -> Result<void>
+namespace
+{
+    // --- Private globals ---
+    // TODO: change to system parameter via cmake variable
+    bool uciEnabled = true;
+    
+    LockedMedium currentLock = LockedMedium::none;
+    int rfReservedWindows = 0;
+    constexpr Duration pollingInterval = 10 * ms;
+}
+
+
+auto Initialize() -> Result<void>
 {
     OUTCOME_TRY(hw_rf::Initialize());
     OUTCOME_TRY(hw_uci::Initialize());
