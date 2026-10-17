@@ -18,8 +18,42 @@ function(find_rodos)
         CACHE STRING "Name of the Rodos package used when calling find_package()"
     )
     find_package(${RODOS_PACKAGE_NAME} REQUIRED ${ARGN})
-    get_target_property(rodos_location rodos::rodos LOCATION)
-    message("Found rodos: ${rodos_location}")
+
+    find_library(RODOS_LIB_RELEASE NAMES rodos librodos.a PATHS /usr/local/stm32f411/lib/rodos)
+    find_library(
+        RODOS_LIB_DEBUG NAMES rodos_output librodos_output.a PATHS /usr/local/stm32f411/lib/rodos
+    )
+
+    if(NOT RODOS_LIB_DEBUG)
+        set(RODOS_LIB_DEBUG "${RODOS_LIB_RELEASE}")
+    endif()
+
+    if(TARGET rodos::rodos)
+        # Set configuration-dependent library paths
+        if(FORCE_ENABLE_RODOS_DEBUG_PRINT)
+            set_target_properties(
+                rodos::rodos
+                PROPERTIES IMPORTED_LOCATION "${RODOS_LIB_DEBUG}"
+                           IMPORTED_LOCATION_RELEASE "${RODOS_LIB_DEBUG}"
+                           IMPORTED_LOCATION_MINSIZEREL "${RODOS_LIB_DEBUG}"
+                           IMPORTED_LOCATION_RELWITHDEBINFO "${RODOS_LIB_DEBUG}"
+                           IMPORTED_LOCATION_DEBUG "${RODOS_LIB_DEBUG}"
+            )
+        else()
+            set_target_properties(
+                rodos::rodos
+                PROPERTIES IMPORTED_LOCATION "${RODOS_LIB_RELEASE}"
+                           IMPORTED_LOCATION_RELEASE "${RODOS_LIB_RELEASE}"
+                           IMPORTED_LOCATION_MINSIZEREL "${RODOS_LIB_RELEASE}"
+                           IMPORTED_LOCATION_RELWITHDEBINFO "${RODOS_LIB_RELEASE}"
+                           IMPORTED_LOCATION_DEBUG "${RODOS_LIB_DEBUG}"
+            )
+        endif()
+    endif()
+
+    # Debug log showing discovered paths
+    message(STATUS "Found RODOS Release: ${RODOS_LIB_RELEASE}")
+    message(STATUS "Found RODOS Debug:   ${RODOS_LIB_DEBUG}")
 endfunction()
 
 function(add_program program_name)
