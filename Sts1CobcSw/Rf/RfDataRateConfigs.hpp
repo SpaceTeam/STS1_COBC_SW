@@ -197,69 +197,69 @@ constexpr auto dataRateConfig9600 = DataRateConfig{
     MODEM_DATA_RATE_t(std::array{           0x05_b, 0xDC_b, 0x00_b, // MODEM_DATA_RATE _2, _1, _0,  index 0x03. 0x04, 0x05
                                             0x05_b}),               // MODEM_TX_NCO_MODE _3         index 0x06
 
-    MODEM_FREQ_DEV_t(std::array{            0x01_b, 0x83_b}),       // MODEM_FREQ_DEV _1, _0,       index 0x0b, 0x0c
+    MODEM_FREQ_DEV_t(std::array{            0x00_b, 0xC2_b}),       // MODEM_FREQ_DEV _1, _0,       index 0x0b, 0x0c
 
     MODEM_DECIMATION_CFG1_t(std::array{     0x70_b,                 // MODEM_DECIMATION_CFG1
                                             0x20_b,                 // MODEM_DECIMATION_CFG0
                                             0x00_b}),               // MODEM_DECIMATION_CFG2
 
     MODEM_BCR_OSR_t(std::array{             0x55_b,                 // MODEM_BCR_OSR _0             index 0x23
-                                            0x06_b, 0x0C_b, 0xAB_b, // MODEM_BCR_NCO_OFFSET _2, _01, _0,
-                                            0x06_b, 0x06_b}),       // MODEM_BCR_GAIN _1, _0
+                                            0x06_b, 0x0C_b, 0xAB_b, // MODEM_BCR_NCO_OFFSET _2, _1, _0,
+                                            0x07_b, 0xFF_b}),       // MODEM_BCR_GAIN _1, _0
 
     MODEM_AFC_WAIT_t(std::array{            0x12_b,                 // MODEM_AFC_WAIT
-                                            0x80_b, 0x61_b,         // MODEM_AFC_GAIN _1, _0
-                                            0x01_b, 0xD5_b}),       // MODEM_AFC_LIMITER _1, _0
+                                            0xC0_b, 0x61_b,         // MODEM_AFC_GAIN _1, _0
+                                            0x01_b, 0x53_b}),       // MODEM_AFC_LIMITER _1, _0
 
     MODEM_AGC_RFPD_DECAY_t(std::array{      0x13_b,                 // MODEM_AGC_RFPD_DECAY
                                             0x13_b}),               // MODEM_AGC_IFPD_DECAY
 
     MODEM_OOK_PDTC_t(std::array{            0x28_b}),               // MODEM_OOK_PDTC
 
-    MODEM_RAW_EYE_t(std::array{             0x00_b, 0xF5_b}),       // MODEM_RAW_EYE _1, _0
+    MODEM_RAW_EYE_t(std::array{             0x00_b, 0x7B_b}),       // MODEM_RAW_EYE _1, _0
 
     MODEM_SPIKE_DET_t(std::array{           0x03_b}),               // MODEM_SPIKE_DET
 
-    MODEM_DSA_QUAL_t(std::array{            0x07_b}),               // MODEM_DSA_QUAL
+    MODEM_DSA_QUAL_t(std::array{            0x04_b}),               // MODEM_DSA_QUAL
 
-    MODEM_CHFLT_RX1_CHFLT_COE_t(std::array{ 0xCC_b,     // MODEM_CHFLT_RX1_CHFLT_COE 13_7_0
-                                            0xA1_b,     // MODEM_CHFLT_RX1_CHFLT_COE 12_7_0
-                                            0x30_b,     // MODEM_CHFLT_RX1_CHFLT_COE 11_7_0
-                                            0xA0_b,     // MODEM_CHFLT_RX1_CHFLT_COE 10_7_0
-                                            0x21_b,     // MODEM_CHFLT_RX1_CHFLT_COE 9_7_0
-                                            0xD1_b,     // MODEM_CHFLT_RX1_CHFLT_COE 8_7_0
-                                            0xB9_b,     // MODEM_CHFLT_RX1_CHFLT_COE 7_7_0
-                                            0xC9_b,     // MODEM_CHFLT_RX1_CHFLT_COE 6_7_0
-                                            0xEA_b,     // MODEM_CHFLT_RX1_CHFLT_COE 5_7_0
-                                            0x05_b,     // MODEM_CHFLT_RX1_CHFLT_COE 4_7_0
-                                            0x12_b,     // MODEM_CHFLT_RX1_CHFLT_COE 3_7_0
-                                            0x11_b}),   // MODEM_CHFLT_RX1_CHFLT_COE 2_7_0
+    MODEM_CHFLT_RX1_CHFLT_COE_t(std::array{ 0x5B_b,     // MODEM_CHFLT_RX1_CHFLT_COE 13_7_0
+                                            0x47_b,     // MODEM_CHFLT_RX1_CHFLT_COE 12_7_0
+                                            0x0F_b,     // MODEM_CHFLT_RX1_CHFLT_COE 11_7_0
+                                            0xC0_b,     // MODEM_CHFLT_RX1_CHFLT_COE 10_7_0
+                                            0x6D_b,     // MODEM_CHFLT_RX1_CHFLT_COE 9_7_0
+                                            0x25_b,     // MODEM_CHFLT_RX1_CHFLT_COE 8_7_0
+                                            0xF4_b,     // MODEM_CHFLT_RX1_CHFLT_COE 7_7_0
+                                            0xDB_b,     // MODEM_CHFLT_RX1_CHFLT_COE 6_7_0
+                                            0xD6_b,     // MODEM_CHFLT_RX1_CHFLT_COE 5_7_0
+                                            0xDF_b,     // MODEM_CHFLT_RX1_CHFLT_COE 4_7_0
+                                            0xEC_b,     // MODEM_CHFLT_RX1_CHFLT_COE 3_7_0
+                                            0xF7_b}),   // MODEM_CHFLT_RX1_CHFLT_COE 2_7_0
 
-    MODEM_CHFLT_RX1_CHFLT_COE_2_t(std::array{0x0A_b,    // MODEM_CHFLT_RX1_CHFLT_COE 1_7_0
-                                            0x04_b,     // MODEM_CHFLT_RX1_CHFLT_COE 0_7_0
-                                            0x15_b,     // MODEM_CHFLT_RX1_CHFLT_COE 0
-                                            0xFC_b,     // MODEM_CHFLT_RX1_CHFLT_COE 1
-                                            0x03_b,     // MODEM_CHFLT_RX1_CHFLT_COE 2
-                                            0x00_b,     // MODEM_CHFLT_RX1_CHFLT_COE 3
-                                            0xCC_b,     // MODEM_CHFLT_RX2_CHFLT_COE 13_7_0
-                                            0xA1_b,     // MODEM_CHFLT_RX2_CHFLT_COE 12_7_0
-                                            0x30_b,     // MODEM_CHFLT_RX2_CHFLT_COE 11_7_0
-                                            0xA0_b,     // MODEM_CHFLT_RX2_CHFLT_COE 10_7_0
-                                            0x21_b,     // MODEM_CHFLT_RX2_CHFLT_COE 9_7_0
-                                            0xD1_b}),   // MODEM_CHFLT_RX2_CHFLT_COE 8_7_0
+    MODEM_CHFLT_RX1_CHFLT_COE_2_t(std::array{0xFE_b,    // MODEM_CHFLT_RX1_CHFLT_COE 1_7_0
+                                            0x01_b,     // MODEM_CHFLT_RX1_CHFLT_COE 0_7_0
+                                            0x15_b,     // MODEM_CHFLT_RX1_CHFLT_COEM 0
+                                            0xF0_b,     // MODEM_CHFLT_RX1_CHFLT_COEM 1
+                                            0xFF_b,     // MODEM_CHFLT_RX1_CHFLT_COEM 2
+                                            0x03_b,     // MODEM_CHFLT_RX1_CHFLT_COEM 3
+                                            0x5B_b,     // MODEM_CHFLT_RX2_CHFLT_COE 13_7_0
+                                            0x47_b,     // MODEM_CHFLT_RX2_CHFLT_COE 12_7_0
+                                            0x0F_b,     // MODEM_CHFLT_RX2_CHFLT_COE 11_7_0
+                                            0xC0_b,     // MODEM_CHFLT_RX2_CHFLT_COE 10_7_0
+                                            0x6D_b,     // MODEM_CHFLT_RX2_CHFLT_COE 9_7_0
+                                            0x25_b}),   // MODEM_CHFLT_RX2_CHFLT_COE 8_7_0
 
-    MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xB9_b,     // MODEM_CHFLT_RX2_CHFLT_COE 7_7_0
-                                            0xC9_b,     // MODEM_CHFLT_RX2_CHFLT_COE 6_7_0
-                                            0xEA_b,     // MODEM_CHFLT_RX2_CHFLT_COE 5_7_0
-                                            0x05_b,     // MODEM_CHFLT_RX2_CHFLT_COE 4_7_0
-                                            0x12_b,     // MODEM_CHFLT_RX2_CHFLT_COE 3_7_0
-                                            0x11_b,     // MODEM_CHFLT_RX2_CHFLT_COE 2_7_0
-                                            0x0A_b,     // MODEM_CHFLT_RX2_CHFLT_COE 1_7_0
-                                            0x04_b,     // MODEM_CHFLT_RX2_CHFLT_COE 0_7_0
-                                            0x15_b,     // MODEM_CHFLT_RX2_CHFLT_COE 0
-                                            0xFC_b,     // MODEM_CHFLT_RX2_CHFLT_COE 1
-                                            0x03_b,     // MODEM_CHFLT_RX2_CHFLT_COE 2
-                                            0x00_b}),   // MODEM_CHFLT_RX2_CHFLT_COE 3
+    MODEM_CHFLT_RX2_CHFLT_COE_t(std::array{ 0xF4_b,     // MODEM_CHFLT_RX2_CHFLT_COE 7_7_0
+                                            0xDB_b,     // MODEM_CHFLT_RX2_CHFLT_COE 6_7_0
+                                            0xD6_b,     // MODEM_CHFLT_RX2_CHFLT_COE 5_7_0
+                                            0xDF_b,     // MODEM_CHFLT_RX2_CHFLT_COE 4_7_0
+                                            0xEC_b,     // MODEM_CHFLT_RX2_CHFLT_COE 3_7_0
+                                            0xF7_b,     // MODEM_CHFLT_RX2_CHFLT_COE 2_7_0
+                                            0xFE_b,     // MODEM_CHFLT_RX2_CHFLT_COE 1_7_0
+                                            0x01_b,     // MODEM_CHFLT_RX2_CHFLT_COE 0_7_0
+                                            0x15_b,     // MODEM_CHFLT_RX2_CHFLT_COEM 0
+                                            0xF0_b,     // MODEM_CHFLT_RX2_CHFLT_COEM 1
+                                            0xFF_b,     // MODEM_CHFLT_RX2_CHFLT_COEM 2
+                                            0x03_b}),   // MODEM_CHFLT_RX2_CHFLT_COEM 3
 
     PREAMBLE_TX_LENGTH_t(std::array{ComputePreambleLength(9600)}),
 };

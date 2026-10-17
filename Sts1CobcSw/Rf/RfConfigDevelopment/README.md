@@ -4,6 +4,11 @@ Master Settings file for Si4463.
 
 This file contains Silabs WDS Tool Settings. These settings are used to generate configuration files for the Si4463 with the WDS Tool. The data from those files will be used in our own configuration.
 
+----
+Caution: On selecting a different "Select project" in WDS-Tool, Some settings reset and some settings don't reset. Some visible some internally. It is advised to immediately select the correct "Select project" after program start to avoid having random Stuff selected in the background. If you need to switch to a different "Select project" to close and reopen the WDS-Tool.
+
+Loading a correctly generated saved file after start of WDS-Tool works fine.
+
 ## 1. Select project
 
 

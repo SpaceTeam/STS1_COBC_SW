@@ -363,7 +363,7 @@ auto ReadPropertys(PropertyGroup propertyGroup, Byte startIndex, std::size_t nBy
     }
 
 
-    // --- Adapted from BusyWaitForAnswer()'s answer-reading tail: array -> runtime-sized etl::vector ---
+    // --- Adapted BusyWaitForAnswer() answer-reading tail: array -> runtime-sized etl::vector ---
     auto values = etl::vector<Byte, maxNProperties>();
     values.uninitialized_resize(nBytes);
     hal::ReadFrom(&rfSpi, std::span<Byte>(values), spiTimeout);
@@ -842,7 +842,7 @@ auto Configure() -> Result<void>
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
     // GLOBAL_XO_TUNE
-    static constexpr auto globalXoTune = 0x52_b;
+    static constexpr auto globalXoTune = 0x00_b;
     // GLOBAL_CLK_CFG
     static constexpr auto globalClkCfg = 0x00_b;
     OUTCOME_TRY(SetProperties(PropertyGroup::global,
@@ -852,8 +852,8 @@ auto Configure() -> Result<void>
     // Global config
     static constexpr auto iGlobalConfig = 0x03_b;
     // GLOBAL_CONFIG
-    // TODO: check if this is correct. Default is 0x20 but datasheet tells that 0x20 is not the recommendation
-    // High performance mode, generic packet format, split FIFO mode, fast sequencer mode
+    // Default: 0x20; datasheet tells 0x20 is not the recommendation.  RESERVED bit must also be set
+    // 0x60_b = 01100000 -> fast sequencer mode and RESERVED bit
     static constexpr auto globalConfig = 0x60_b;
     OUTCOME_TRY(SetProperties(PropertyGroup::global,
                               iGlobalConfig,
@@ -875,6 +875,20 @@ auto Configure() -> Result<void>
     OUTCOME_TRY(SetProperties(PropertyGroup::intCtl,
                               iIntCtlEnable,
                               Span({intCtlEnable, intPhEnable, intModemEnable, intChipEnable})));
+
+    // NOLINTBEGIN(*identifier-naming)
+
+    // Fast Response Register - turn all of them off
+    static constexpr auto iFrrCtl = 0x00_b;
+    static constexpr auto FRR_CTL_A_MODE = 0x00_b;
+    static constexpr auto FRR_CTL_B_MODE = 0x00_b;
+    static constexpr auto FRR_CTL_C_MODE = 0x00_b;
+    static constexpr auto FRR_CTL_D_MODE = 0x00_b;
+    OUTCOME_TRY(SetProperties(PropertyGroup::frrCtl,
+                            iFrrCtl,
+                            Span({FRR_CTL_A_MODE, FRR_CTL_B_MODE, FRR_CTL_C_MODE, FRR_CTL_D_MODE})));
+
+    // NOLINTEND(*identifier-naming)
 
     // Preamble
     static constexpr auto iPreambleTxLength = 0x00_b;
@@ -991,15 +1005,25 @@ auto Configure() -> Result<void>
     // PA_PWR_LVL
     // Enabled PA fingers (sets output power but not linearly; 10 µA bias current per enabled
     // finger, complementary drive signal with 50 % duty cycle)
-    static constexpr auto paPwrLvl = 0x2f_b;
+    static constexpr auto paPwrLvl = 0x2F_b;
     // PA_BIAS_CLKDUTY
     static constexpr auto paBiasClkduty = 0x00_b;
     // PA_TC
     // Ramping time constant = 0x1F (~56 µs to full - 0.5 dB), FSK modulation delay 30 µs
-    static constexpr auto paTc = 0xFF_b;
+    static constexpr auto paTc = 0x1F_b;
     OUTCOME_TRY(SetProperties(PropertyGroup::pa,
                               iPaMode,
                               Span({paMode, paPwrLvl, paBiasClkduty, paTc})));
+
+    // NOLINTBEGIN(*identifier-naming)
+
+    static constexpr auto iPaRampDownDelay = 0x05_b;
+    static constexpr auto PA_RAMP_DOWN_DELAY = 0x25_b;
+    OUTCOME_TRY(SetProperties(PropertyGroup::pa,
+                              iPaRampDownDelay,
+                              Span(PA_RAMP_DOWN_DELAY)));
+
+    // NOLINTEND(*identifier-naming)
 
     // RF synth feed forward charge pump current, integrated charge pump current, VCO gain scaling
     // factor, FF loop filter values
@@ -1030,46 +1054,47 @@ auto Configure() -> Result<void>
                                     synthLpfilt1,
                                     synthLpfilt0})));
 
-    // RF match mask
-    static constexpr auto iMatchValue1 = 0x00_b;
-    // MATCH_VALUE_1
-    static constexpr auto matchValue1 = 0x00_b;
-    // MATCH_MASK_1
-    static constexpr auto matchMask1 = 0x00_b;
-    // MATCH_CTRL_1
-    static constexpr auto matchCtrl1 = 0x00_b;
-    // MATCH_VALUE_2
-    static constexpr auto matchValue2 = 0x00_b;
-    // MATCH_MASK_2
-    static constexpr auto matchMask2 = 0x00_b;
-    // MATCH_CTRL_2
-    static constexpr auto matchCtrl2 = 0x00_b;
-    // MATCH_VALUE_3
-    static constexpr auto matchValue3 = 0x00_b;
-    // MATCH_MASK_3
-    static constexpr auto matchMask3 = 0x00_b;
-    // MATCH_CTRL_3
-    static constexpr auto matchCtrl3 = 0x00_b;
-    // MATCH_VALUE_4
-    static constexpr auto matchValue4 = 0x00_b;
-    // MATCH_MASK_4
-    static constexpr auto matchMask4 = 0x00_b;
-    // MATCH_CTRL_4
-    static constexpr auto matchCtrl4 = 0x00_b;
-    OUTCOME_TRY(SetProperties(PropertyGroup::match,
-                              iMatchValue1,
-                              Span({matchValue1,
-                                    matchMask1,
-                                    matchCtrl1,
-                                    matchValue2,
-                                    matchMask2,
-                                    matchCtrl2,
-                                    matchValue3,
-                                    matchMask3,
-                                    matchCtrl3,
-                                    matchValue4,
-                                    matchMask4,
-                                    matchCtrl4})));
+    // We don't use MATCH, so I commented it
+    // // RF match mask
+    // static constexpr auto iMatchValue1 = 0x00_b;
+    // // MATCH_VALUE_1
+    // static constexpr auto matchValue1 = 0x00_b;
+    // // MATCH_MASK_1
+    // static constexpr auto matchMask1 = 0x00_b;
+    // // MATCH_CTRL_1
+    // static constexpr auto matchCtrl1 = 0x00_b;
+    // // MATCH_VALUE_2
+    // static constexpr auto matchValue2 = 0x00_b;
+    // // MATCH_MASK_2
+    // static constexpr auto matchMask2 = 0x00_b;
+    // // MATCH_CTRL_2
+    // static constexpr auto matchCtrl2 = 0x00_b;
+    // // MATCH_VALUE_3
+    // static constexpr auto matchValue3 = 0x00_b;
+    // // MATCH_MASK_3
+    // static constexpr auto matchMask3 = 0x00_b;
+    // // MATCH_CTRL_3
+    // static constexpr auto matchCtrl3 = 0x00_b;
+    // // MATCH_VALUE_4
+    // static constexpr auto matchValue4 = 0x00_b;
+    // // MATCH_MASK_4
+    // static constexpr auto matchMask4 = 0x00_b;
+    // // MATCH_CTRL_4
+    // static constexpr auto matchCtrl4 = 0x00_b;
+    // OUTCOME_TRY(SetProperties(PropertyGroup::match,
+    //                           iMatchValue1,
+    //                           Span({matchValue1,
+    //                                 matchMask1,
+    //                                 matchCtrl1,
+    //                                 matchValue2,
+    //                                 matchMask2,
+    //                                 matchCtrl2,
+    //                                 matchValue3,
+    //                                 matchMask3,
+    //                                 matchCtrl3,
+    //                                 matchValue4,
+    //                                 matchMask4,
+    //                                 matchCtrl4})));
 
     // Frequency control
     static constexpr auto iFreqControlInte = 0x00_b;
@@ -1082,7 +1107,7 @@ auto Configure() -> Result<void>
     static constexpr auto freqControlFrac = std::array{0x0A_b, 0x55_b, 0x12_b};
     // FREQ_CONTROL_CHANNEL_STEP_SIZE
     // Channel step size = 0x4EC5
-    static constexpr auto freqControlChannelStepSize = std::array{0x4E_b, 0xC5_b};
+    static constexpr auto freqControlChannelStepSize = std::array{0x00_b, 0x00_b};
     // FREQ_CONTROL_W_SIZE
     // Window gating period (in number of crystal clock cycles) = 32
     static constexpr auto freqControlWSize = 0x20_b;
@@ -1130,20 +1155,20 @@ auto SetConstantModemProperties() -> Result<void>
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x07_b,
-                              std::array{0x8C_b, 0xBA_b, 0x80_b, // MODEM_TX_NCO_MODE index 0x06 is non constant
-                                         0x00_b})); // MODEM_FREQ_DEV
+                              std::array{0x8C_b, 0xBA_b, 0x80_b, // MODEM_TX_NCO_MODE _2, _1, _0,   index 0x07, 0x08, 0x09
+                                         0x00_b})); // MODEM_FREQ_DEV _2                            index 0x0a
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x18_b,
                               std::array{0x01_b,    // MODEM_TX_RAMP_DELAY
                                          0x00_b,    // MODEM_MDM_CTRL
                                          0x08_b,    // MODEM_IF_CONTROL
-                                         0x03_b, 0x80_b, 0x00_b})); // MODEM_IF_FREQ
+                                         0x03_b, 0x80_b, 0x00_b})); // MODEM_IF_FREQ _2, _1, _0
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x21_b,
                               std::array{0xE8_b,    // MODEM_IFPKD_THRESHOLDS
-                                         0x00_b})); // MODEM_BCR_OSR index 0x23 is non constant
+                                         0x00_b})); // MODEM_BCR_OSR _1,                            index 0x22
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x29_b,
@@ -1154,7 +1179,7 @@ auto SetConstantModemProperties() -> Result<void>
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x32_b,
-                              std::array{0xA0_b})); // MODEM_AFC_MISC
+                              std::array{0xE0_b})); // MODEM_AFC_MISC
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x35_b,
@@ -1168,7 +1193,7 @@ auto SetConstantModemProperties() -> Result<void>
                               0x3b_b,
                               std::array{0x80_b,    // MODEM_FSK4_GAIN1
                                          0x1A_b,    // MODEM_FSK4_GAIN0
-                                         0x40_b, 0x00_b, // MODEM_FSK4_TH
+                                         0x20_b, 0x00_b, // MODEM_FSK4_TH 1, 0
                                          0x00_b})); // MODEM_FSK4_MAP
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
@@ -1183,7 +1208,7 @@ auto SetConstantModemProperties() -> Result<void>
 
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x48_b,
-                              std::array{0x01_b,    // MODEM_ANT_DIV_MODE
+                              std::array{0x02_b,    // MODEM_ANT_DIV_MODE
                                          0x00_b,    // MODEM_ANT_DIV_CONTROL
                                          0xFF_b,    // MODEM_RSSI_THRESH
                                          0x06_b,    // MODEM_RSSI_JUMP_THRESH
