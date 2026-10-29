@@ -236,6 +236,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     )
     add_test(NAME Requests COMMAND Sts1CobcSwTests_Requests)
 
+    add_test_program(Scheduler)
+    target_link_libraries(
+        Sts1CobcSwTests_Scheduler
+        PRIVATE strong_type::strong_type
+                Sts1CobcSw_RodosTime
+                Sts1CobcSw_Scheduler
+                Sts1CobcSw_Vocabulary
+                Sts1CobcSwTests::CatchRodos
+    )
+    add_test(NAME Scheduler COMMAND Sts1CobcSwTests_Scheduler)
+
     add_test_program(Section)
     target_link_libraries(
         Sts1CobcSwTests_Section PRIVATE Catch2::Catch2WithMain strong_type::strong_type
