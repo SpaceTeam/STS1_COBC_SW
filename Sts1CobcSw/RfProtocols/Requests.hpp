@@ -202,6 +202,22 @@ struct CheckFirmwareIntegrityFunction
 };
 
 
+struct RequestFirmwareMetadataFunction
+{
+    static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
+    static constexpr auto functionId = FunctionId::requestFirmwareMetadata;
+    PartitionId partitionId;
+};
+
+//Same as RFProtocol/request? <= there is no new tc:messageIdfor report
+// struct ReportFirmwareMetadataReportFunction
+// {
+//     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
+//     static constexpr auto functionId = FunctionId::ReportFirmwareMetadataReport;
+//     PartitionId partitionId;
+// };
+
+
 [[nodiscard]] auto ParseAsRequest(std::span<Byte const> buffer) -> Result<Request>;
 
 [[nodiscard]] auto ParseAsLoadRawMemoryDataAreasRequest(std::span<Byte const> buffer)
@@ -242,6 +258,10 @@ struct CheckFirmwareIntegrityFunction
     -> Result<SetBackupFirmwareFunction>;
 [[nodiscard]] auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
     -> Result<CheckFirmwareIntegrityFunction>;
+[[nodiscard]] auto ParseAsRequestFirmwareMetadataFunction(std::span<Byte const> buffer)
+    -> Result<RequestFirmwareMetadataFunction>;
+// [[nodiscard]] auto ParseAsReportFirmwareMetadataReportFunction(std::span<Byte const> buffer)
+//     -> Result<ReportFirmwareMetadataReportFunction>;
 
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header)
@@ -254,5 +274,8 @@ template<std::endian endianness>
 template<std::endian endianness>
 [[nodiscard]] auto DeserializeFrom(void const * source,
                                    ReportHousekeepingParameterReportFunction * function)
+    -> void const *;
+template<std::endian endianness>
+[[nodiscard]] auto DeserializeFrom(void const * source, RequestFirmwareMetadataFunction * function)
     -> void const *;
 }

@@ -22,6 +22,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <system_error>
 #include <utility>
 
 
@@ -111,6 +112,26 @@ private:
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     static constexpr std::uint8_t structureId = 0;
     TelemetryRecord record_;
+
+    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+};
+
+
+class FirmwareMetadataReport : public Payload
+{
+public:
+    explicit FirmwareMetadataReport(
+        std::uintptr_t startAddress,
+        std::span<Byte> data,
+        ErrorCode * errorCode);  // we need start address, firmware data, error?
+
+private:
+    static constexpr auto messageTypeId = Make<tm::MessageTypeId, {6, 7}>();
+    mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
+    std::uintptr_t startAddress_;
+    std::span<Byte> data_;
+    ErrorCode * errorCode_;
 
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;

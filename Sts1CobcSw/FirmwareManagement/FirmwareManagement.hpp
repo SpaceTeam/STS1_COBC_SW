@@ -54,7 +54,7 @@ extern Partition const secondaryPartition2;
 [[nodiscard]] auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>;
 #endif
 auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * errorCode)
-    -> FirmwareChecksums;
+    -> Result<FirmwareChecksums>;
 [[nodiscard]] auto ReadFirmwareLength(std::uintptr_t startAddress) -> Result<std::uint32_t>;
 [[nodiscard]] auto ReadFirmwareCommitHash(std::uintptr_t startAddress, std::span<Byte> data)
     -> Result<void>;

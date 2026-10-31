@@ -422,6 +422,45 @@ auto ParseAsCheckFirmwareIntegrityFunction(std::span<Byte const> buffer)
 }
 
 
+auto ParseAsRequestFirmwareMetadataFunction(std::span<Byte const> buffer)
+    -> Result<RequestFirmwareMetadataFunction>
+{
+    if(buffer.size() != totalSerialSize<decltype(RequestFirmwareMetadataFunction::partitionId)>)
+    {
+        return ErrorCode::invalidDataLength;
+    }
+    auto function = RequestFirmwareMetadataFunction{};
+    (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function.partitionId);
+    if(function.partitionId != PartitionId::primary
+       && function.partitionId != PartitionId::secondary1
+       && function.partitionId != PartitionId::secondary2)
+    {
+        return ErrorCode::invalidPartitionId;
+    }
+    return function;
+}
+
+//Does repost function even go in RFProtcol/request
+// auto ParseAsReportFirmwareMetadataReportFunction(std::span<Byte const> buffer)
+//     -> Result<ReportFirmwareMetadataReportFunction>
+// {
+//     if(buffer.size()
+//        != totalSerialSize<decltype(ReportFirmwareMetadataReportFunction::firmwareLength),
+//                           decltype(ReportFirmwareMetadataReportFunction::Checksum),
+//                           decltype(ReportFirmwareMetadataReportFunction::commitHash)>)
+//     {
+//         return ErrorCode::invalidDataLength;
+//     }
+//     auto function = ReportFirmwareMetadataReportFunction{};
+//     (void)DeserializeFrom<sts1cobcsw::ccsdsEndianness>(buffer.data(), &function);
+//     if(function.firstReportIndex > function.lastReportIndex)
+//     {
+//         return ErrorCode::invalidApplicationData;
+//     }
+//     return function;
+// }
+
+
 template<std::endian endianness>
 auto DeserializeFrom(void const * source, LoadRawMemoryDataAreasRequest * header) -> void const *
 {

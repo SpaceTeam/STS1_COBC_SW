@@ -103,6 +103,35 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 }
 
 
+// here we write DoAdd and DoSize Function
+FirmwareMetadataReport::FirmwareMetadataReport(std::uintptr_t startAddress,
+                                               std::span<Byte> data,
+                                               ErrorCode * errorCode)
+    : startAddress_(startAddress), data_(data), errorCode_(errorCode)
+{}
+
+auto FirmwareMetadataReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    UpdateMessageTypeCounterAndTime(&secondaryHeader_);
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, startAddress_);
+    for(auto const & byte : data_)
+    {
+        cursor = SerializeTo<ccsdsEndianness>(cursor, byte);
+    }
+    (void)SerializeTo<ccsdsEndianness>(cursor, *errorCode_);
+}
+
+
+auto FirmwareMetadataReport::DoSize() const -> std::uint16_t
+{
+    return static_cast<std::uint16_t>(
+        totalSerialSize<decltype(secondaryHeader_), decltype(startAddress_), ErrorCode>
+        + data_.size());
+}
+
+
 ParameterValueReport::ParameterValueReport(Parameter::Id parameterId,
                                            Parameter::Value parameterValue)
     : nParameters_(1),

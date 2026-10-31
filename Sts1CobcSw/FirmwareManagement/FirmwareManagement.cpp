@@ -83,7 +83,7 @@ auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
     // We don't have (want) ErrorCode::noError, so we use eduIsNotAlive which is obviously not an
     // error code that ComputeAndReadFirmwareChecksums() would return
     auto errorCode = ErrorCode::eduIsNotAlive;
-    auto checksums = ComputeAndReadFirmwareChecksums(startAddress, &errorCode);
+    auto checksums = ComputeAndReadFirmwareChecksums(startAddress, &errorCode).value();
     if(errorCode != ErrorCode::eduIsNotAlive)
     {
         return errorCode;
@@ -102,12 +102,12 @@ auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
 // - Data
 // - Checksum: CRC-32 over length + data, in little endian
 auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * errorCode)
-    -> FirmwareChecksums
+    -> Result<FirmwareChecksums>
 {
     if((startAddress % sizeof(std::uint32_t)) != 0)
     {
         *errorCode = ErrorCode::misaligned;
-        return {.computed = 0U, .stored = ~0U};
+        return FirmwareChecksums{.computed = 0U, .stored = ~0U};
     }
     auto uint32Buffer = SerialBuffer<std::uint32_t>{};
     Read(startAddress, Span(&uint32Buffer));
@@ -120,7 +120,7 @@ auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * er
     if(not lengthIsValid)
     {
         *errorCode = ErrorCode::invalidLength;
-        return {.computed = 0U, .stored = ~0U};
+        return FirmwareChecksums{.computed = 0U, .stored = ~0U};
     }
 
     auto buffer = std::array<Byte, 128>{};  // NOLINT(*magic-numbers)

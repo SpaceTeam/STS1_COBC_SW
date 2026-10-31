@@ -69,6 +69,7 @@
 #include <cstdio>
 #include <iterator>
 #include <span>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 
@@ -139,6 +140,9 @@ auto Handle(UpdateEduQueueFunction const & function, RequestId const & requestId
 auto Handle(SetActiveFirmwareFunction const & function, RequestId const & requestId) -> void;
 auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void;
 auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & requestId) -> void;
+auto Handle(RequestFirmwareMetadataFunction const & function, RequestId const & requestId) -> void;
+// auto Handle(ReportFirmwareMetadataReportFunction const & function,
+//             RequestId const & requestId) -> void;
 
 [[nodiscard]] auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
 [[nodiscard]] auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
@@ -471,6 +475,9 @@ auto Handle(Request const & request, RequestId const & requestId) -> void
     {
         VerifyAndHandle<ParseAsDeleteAFileRequest>(request, requestId);
     }
+
+    // somewhere fit it here but I don't know where to put it and where does it goes in request and
+    // if it does there is only one function id for firmwaremetadata
     else if(messageTypeId == ReportTheAttributesOfAFileRequest::id)
     {
         VerifyAndHandle<ParseAsReportTheAttributesOfAFileRequest>(request, requestId);
@@ -575,6 +582,9 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
             return;
         case FunctionId::checkFirmwareIntegrity:
             VerifyAndHandle<ParseAsCheckFirmwareIntegrityFunction>(request, requestId);
+            return;
+        case FunctionId::requestFirmwareMetadata:
+            VerifyAndHandle<ParseAsRequestFirmwareMetadataFunction>(request, requestId);
             return;
     }
 }
@@ -884,6 +894,42 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
         return;
     }
 }
+
+
+auto Handle(RequestFirmwareMetadataFunction const & function, RequestId const & requestId) -> void
+{
+    auto errorCode = ErrorCode::eduIsNotAlive;
+    auto commitHash = std::array<Byte, fw::commitHashLength>{};  // not sure if this is correct
+    auto result = [&]() -> Result<void>
+    {
+        OUTCOME_TRY(fw::ReadFirmwareLength(fw::primaryPartition.startAddress));
+        DEBUG_PRINT("Successfully read firmware length for partition (0x%08X)\n",
+                    fw::primaryPartition.startAddress);
+        // or should partition id be like PartitionId::primaryPartition
+        OUTCOME_TRY(
+            fw::ComputeAndReadFirmwareChecksums(fw::secondaryPartition1.startAddress, &errorCode));
+        DEBUG_PRINT("Firmware checksum verification successful for partition (0x%08X)\n",
+                    fw::secondaryPartition1.startAddress);
+        OUTCOME_TRY(fw::ReadFirmwareCommitHash(fw::secondaryPartition2.startAddress, commitHash));
+        DEBUG_PRINT("Successfully read firmware commit hash for partition (0x%08X)\n",
+                    fw::secondaryPartition2.startAddress);
+        SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+        return outcome_v2::success();
+    }();
+    if(result.has_error())
+    {
+        DEBUG_PRINT("Failed to check firmware metadata: %s\n", ToCZString(result.error()));
+        SendAndWait(FailedCompletionOfExecutionVerificationReport(requestId, result.error()));
+        return;
+    }
+}
+
+
+// auto Handle(ReportFirmwareMetadataReportFunction const & function,
+//             [[maybe_unused]] RequestId const & requestId) -> void
+// {
+//     get firmware metadata report
+// }
 
 
 auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId
