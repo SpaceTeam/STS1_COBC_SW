@@ -3,10 +3,9 @@
 
 #include <Sts1CobcSw/ChannelCoding/External/ConvolutionalCoding.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/Rf/RfDataRateConfigs.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
-
-#include <Sts1CobcSw/Rf/RfDataRateConfigs.hpp>
 
 #include <cstddef>
 #include <cstdint>

@@ -28,7 +28,7 @@
 
 #include <rodos_no_using_namespace.h>
 
-#include <etl/vector.h>     // needed for ReadPropertys function
+#include <etl/vector.h>  // needed for ReadPropertys function
 
 #include <algorithm>
 #include <array>
@@ -211,11 +211,15 @@ template<std::size_t nProperties>
                                  Byte startIndex,
                                  std::span<Byte const, nProperties> propertyValues) -> Result<void>;
 
+// clang-format off
+
 template<std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte propertyStartIndex,
                                  std::array<Byte, nProperties> const & propertyValues) -> Result<void>;
+
+// clang-format on
 
 template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
 [[nodiscard]] auto SetProperties(
@@ -372,8 +376,6 @@ auto ReadPropertys(PropertyGroup propertyGroup, Byte startIndex, std::size_t nBy
 
     return values;
 }
-
-
 
 
 // --- Private function definitions ---
@@ -1590,7 +1592,8 @@ template<std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte propertyStartIndex,
-                                 std::array<Byte, nProperties> const & propertyValues) -> Result<void>
+                                 std::array<Byte, nProperties> const & propertyValues)
+    -> Result<void>
 {
     return SetProperties(propertyGroup, propertyStartIndex, Span(propertyValues));
 }

@@ -100,7 +100,7 @@ using PREAMBLE_TX_LENGTH_t          = Properties<PropertyGroup::preamble,   0x00
 struct DataRateConfig
 {
     std::uint32_t dataRate = 0U;
-    MODEM_DATA_RATE_t MODEM_DATA_RATE; // index 0x03
+    MODEM_DATA_RATE_t MODEM_DATA_RATE;  // index 0x03
     MODEM_FREQ_DEV_t MODEM_FREQ_DEV;
     MODEM_DECIMATION_CFG1_t MODEM_DECIMATION_CFG1;
     MODEM_BCR_OSR_t MODEM_BCR_OSR;

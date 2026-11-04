@@ -14,14 +14,12 @@ namespace rf = sts1cobcsw::rf;
 using sts1cobcsw::operator""_b;
 
 
-
 TEST_CASE("Rf Data Rate Config Compare")
 {
     // We need to initialize the FRAM too because the RF code uses persistent variables
     sts1cobcsw::fram::Initialize();
     auto initializeResult = rf::Initialize();
     REQUIRE(initializeResult.has_value());
-
 
 
     auto defaultDataRate = sts1cobcsw::rf::dataRateConfig9600;
