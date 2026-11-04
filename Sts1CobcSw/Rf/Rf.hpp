@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/ChannelCoding/External/ConvolutionalCoding.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
+#include <Sts1CobcSw/Rf/RfDataRateConfigs.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
 #include <Sts1CobcSw/Vocabulary/Time.hpp>
 
@@ -32,4 +33,9 @@ auto SendAndContinue(std::span<Byte const> data) -> void;
 auto SuspendUntilDataSent(Duration timeout) -> void;
 // Return the number of received bytes
 auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t;
+
+[[nodiscard]] auto ReadPropertys(PropertyGroup propertyGroup, Byte startIndex, std::size_t nBytes)
+    -> Result<etl::vector<Byte, maxNProperties>>;
+
+
 }

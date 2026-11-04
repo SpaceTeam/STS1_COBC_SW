@@ -28,6 +28,8 @@
 
 #include <rodos_no_using_namespace.h>
 
+#include <etl/vector.h>  // needed for ReadPropertys function
+
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -202,23 +204,32 @@ auto DeselectChip() -> void;
 template<std::size_t answerLength>
 [[nodiscard]] auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength>>;
 
-template<std::size_t extent>
-    requires(extent <= maxNProperties)
+
+template<std::size_t nProperties>
+    requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte startIndex,
-                                 std::span<Byte const, extent> propertyValues) -> Result<void>;
+                                 std::span<Byte const, nProperties> propertyValues) -> Result<void>;
+
+// clang-format off
+
 template<std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte propertyStartIndex,
-                                 std::array<Byte, nProperties> const & properties) -> Result<void>;
+                                 std::array<Byte, nProperties> const & propertyValues) -> Result<void>;
+
+// clang-format on
+
 template<PropertyGroup propertyGroup, sts1cobcsw::Byte propertyStartIndex, std::size_t nProperties>
 [[nodiscard]] auto SetProperties(
     Properties<propertyGroup, propertyStartIndex, nProperties> property) -> Result<void>;
+
 template<std::size_t size>
     requires(size <= maxNProperties)
 [[nodiscard]] auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
     -> Result<std::array<Byte, size>>;
+
 }
 
 
@@ -310,6 +321,60 @@ auto SuspendUntilDataSent(Duration timeout) -> void
 auto Receive(std::span<Byte> data, Duration timeout) -> std::size_t
 {
     return ExecuteWithRecovery<DoReceive>(data, timeout);
+}
+
+
+// For Debug: reads up to maxNProperties bytes. Should probably not be used in production code.
+// intentionally does not go through SendCommand()/BusyWaitForAnswer()/GetProperties() templates.
+// because they are fixed length at compile time.
+auto ReadPropertys(PropertyGroup propertyGroup, Byte startIndex, std::size_t nBytes)
+    -> Result<etl::vector<Byte, maxNProperties>>
+{
+    if(nBytes == 0 or nBytes > maxNProperties)
+    {
+        return ErrorCode::invalidLength;
+    }
+
+    // --- Copy of SendCommand()'s write phase (the part before BusyWaitForAnswer()) ---
+    auto command = std::array{
+        cmdGetProperty, static_cast<Byte>(propertyGroup), static_cast<Byte>(nBytes), startIndex};
+    SelectChip();
+    hal::WriteTo(&rfSpi, Span(command), spiTimeout);
+    DeselectChip();
+
+
+    // --- Copy of BusyWaitForAnswer<answerLength>()'s CTS-polling loop, verbatim ---
+    static constexpr auto dataIsReadyValue = 0xFF_b;
+    auto nextPollingTime = CurrentRodosTime();
+    auto deadline = nextPollingTime + ctsTimeout;
+    while(true)
+    {
+        SelectChip();
+        hal::WriteTo(&rfSpi, Span(cmdReadCmdBuff), spiTimeout);
+        auto cts = 0x00_b;
+        hal::ReadFrom(&rfSpi, Span(&cts), spiTimeout);
+        if(cts == dataIsReadyValue)
+        {
+            break;
+        }
+        DeselectChip();
+        nextPollingTime += pollingInterval;
+        BusyWaitUntil(nextPollingTime);
+        if(CurrentRodosTime() > deadline)
+        {
+            return ErrorCode::timeout;
+        }
+    }
+
+
+    // --- Adapted BusyWaitForAnswer() answer-reading tail: array -> runtime-sized etl::vector ---
+    auto values = etl::vector<Byte, maxNProperties>();
+    values.uninitialized_resize(nBytes);
+    hal::ReadFrom(&rfSpi, std::span<Byte>(values), spiTimeout);
+    DeselectChip();
+
+
+    return values;
 }
 
 
@@ -654,6 +719,9 @@ auto ApplyPatch() -> Result<void>
     // Every line of the patch array starts with a one-byte length and then as many data bytes. We
     // got the patch data from some configuration tool that Andriy found.
     //
+    // the data was generated in the WDS3 tool from silabs
+    // it is found in the generated file si446x_patch.h under the name SI446X_PATCH_CMDS
+    //
     // clang-format off
     static constexpr auto patch = std::to_array<Byte>({
         0x08_b, 0x04_b, 0x21_b, 0x71_b, 0x4B_b, 0x00_b, 0x00_b, 0xDC_b, 0x95_b,
@@ -747,6 +815,8 @@ auto PowerUp() -> Result<void>
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto Configure() -> Result<void>
 {
+    // clang-format off
+
     // Configure GPIO pins, NIRQ, and SDO
     // Weak pull-up enabled, no function (tristate)
     static constexpr auto gpio0Config = 0x41_b;
@@ -773,44 +843,75 @@ auto Configure() -> Result<void>
 
     // Crystal oscillator frequency and clock
     static constexpr auto iGlobalXoTune = 0x00_b;
-    static constexpr auto globalXoTune = 0x52_b;
+    // GLOBAL_XO_TUNE
+    static constexpr auto globalXoTune = 0x00_b;
+    // GLOBAL_CLK_CFG
     static constexpr auto globalClkCfg = 0x00_b;
-    OUTCOME_TRY(
-        SetProperties(PropertyGroup::global, iGlobalXoTune, Span({globalXoTune, globalClkCfg})));
+    OUTCOME_TRY(SetProperties(PropertyGroup::global,
+                              iGlobalXoTune,
+                              Span({globalXoTune, globalClkCfg})));
 
     // Global config
     static constexpr auto iGlobalConfig = 0x03_b;
-    // High performance mode, generic packet format, split FIFO mode, fast sequencer mode
+    // GLOBAL_CONFIG
+    // Default: 0x20; datasheet tells 0x20 is not the recommendation.  RESERVED bit must also be set
+    // 0x60_b = 01100000 -> fast sequencer mode and RESERVED bit
     static constexpr auto globalConfig = 0x60_b;
-    OUTCOME_TRY(SetProperties(PropertyGroup::global, iGlobalConfig, Span(globalConfig)));
+    OUTCOME_TRY(SetProperties(PropertyGroup::global,
+                              iGlobalConfig,
+                              Span(globalConfig)));
 
     // Interrupt
     static constexpr auto iIntCtlEnable = 0x00_b;
+    // INT_CTL_ENABLE
     // Enable all three general interrupt sources (chip, modem, packet handler)
     static constexpr auto intCtlEnable = 0x07_b;
+    // INT_CTL_PH_ENABLE
     // Disable all interrupts
     // TODO: We could enable the chip ready interrupt to potentially remove some hardcoded delays?
     static constexpr auto intPhEnable = 0x00_b;
+    // INT_CTL_MODEM_ENABLE
     static constexpr auto intModemEnable = 0x00_b;
+    // INT_CTL_CHIP_ENABLE
     static constexpr auto intChipEnable = 0x00_b;
     OUTCOME_TRY(SetProperties(PropertyGroup::intCtl,
                               iIntCtlEnable,
                               Span({intCtlEnable, intPhEnable, intModemEnable, intChipEnable})));
 
+    // NOLINTBEGIN(*identifier-naming)
+
+    // Fast Response Register - turn all of them off
+    static constexpr auto iFrrCtl = 0x00_b;
+    static constexpr auto FRR_CTL_A_MODE = 0x00_b;
+    static constexpr auto FRR_CTL_B_MODE = 0x00_b;
+    static constexpr auto FRR_CTL_C_MODE = 0x00_b;
+    static constexpr auto FRR_CTL_D_MODE = 0x00_b;
+    OUTCOME_TRY(SetProperties(PropertyGroup::frrCtl,
+                            iFrrCtl,
+                            Span({FRR_CTL_A_MODE, FRR_CTL_B_MODE, FRR_CTL_C_MODE, FRR_CTL_D_MODE})));
+
+    // NOLINTEND(*identifier-naming)
+
     // Preamble
     static constexpr auto iPreambleTxLength = 0x00_b;
+    // PREAMBLE_TX_LENGTH
     // Send 0 bytes preamble
     static constexpr auto preambleTxLength = 0x00_b;
+    // PREAMBLE_CONFIG_STD_1
     // Normal sync timeout, 20-bit preamble RX threshold
     static constexpr auto preambleConfigStd1 = 0x14_b;
+    // PREAMBLE_CONFIG_NSTD
     // No non-standard preamble pattern
     static constexpr auto preambleConfigNstd = 0x00_b;
+    // PREAMBLE_CONFIG_STD_2
     // No extended RX preamble timeout, 0x0F nibbles timeout until detected preamble is discarded as
     // invalid
     static constexpr auto preambleConfigStd2 = 0x0F_b;
+    // PREAMBLE_CONFIG
     // RX Standard preamble, first received preamble bit is 0, unit of preamble TX length is in
     // bytes, use standard preamble 0101 pattern
     static constexpr auto preambleConfig = 0b0001'0010_b;
+    // PREAMBLE_PATTERN
     // Non-standard pattern
     static constexpr auto preamblePattern = std::array<Byte, 4>{};
     OUTCOME_TRY(SetProperties(PropertyGroup::preamble,
@@ -824,8 +925,10 @@ auto Configure() -> Result<void>
 
     // Sync word
     static constexpr auto iSyncConfig = 0x00_b;
+    // SYNC_CONFIG
     // Do not transmit sync word, allow 4-bit sync word errors on receive, 4-byte sync word length
     static constexpr auto syncConfig = 0b1100'0011_b;
+    // SYNC_BITS
     // Valid CCSDS TM sync word for Reed-Solomon or convolutional coding. Be careful: Send order is
     // MSB-first but little endian so the lowest bit of the highest byte is transmitted first, which
     // is different to how the CCSDS spec annotates those bit patterns!
@@ -839,35 +942,50 @@ auto Configure() -> Result<void>
     // specifying the 4 bytes manually we should, serialize a 32-bit number.
     static constexpr auto syncBits =
         std::array{0b0101'1000_b, 0b1111'0011_b, 0b0011'1111_b, 0b1011'1000_b};
-    OUTCOME_TRY(
-        SetProperties(PropertyGroup::sync, iSyncConfig, Span(FlatArray(syncConfig, syncBits))));
+    OUTCOME_TRY(SetProperties(PropertyGroup::sync,
+                              iSyncConfig,
+                              Span(FlatArray(syncConfig, syncBits))));
 
     // CRC
     static constexpr auto iPktCrcConfig = 0x00_b;
+    // PKT_CRC_CONFIG
     // No CRC
     static constexpr auto pktCrcConfig = 0x00_b;
-    OUTCOME_TRY(SetProperties(PropertyGroup::pkt, iPktCrcConfig, Span({pktCrcConfig})));
+    OUTCOME_TRY(SetProperties(PropertyGroup::pkt,
+                              iPktCrcConfig,
+                              Span({pktCrcConfig})));
 
     // Packet Whitening and Config
     static constexpr auto iPktWhiteConfig = 0x05_b;
+    // PKT_WHT_BIT_NUM
     // No Whitening
     static constexpr auto pktWhiteConfig = 0x00_b;
+    // PKT_CONFIG1
     // Don't split RX and TX field information (length, ...), enable RX packet handler, use normal
     // (2)FSK, no Manchester coding, no CRC, data transmission with MSB first.
     static constexpr auto pktConfig1 = 0x00_b;
-    OUTCOME_TRY(
-        SetProperties(PropertyGroup::pkt, iPktWhiteConfig, Span({pktWhiteConfig, pktConfig1})));
+    OUTCOME_TRY(SetProperties(PropertyGroup::pkt,
+                              iPktWhiteConfig,
+                              Span({pktWhiteConfig, pktConfig1})));
 
     // Packet length
     static constexpr auto iPktLen = 0x08_b;
+    // PKT_LEN
     // Infinite receive, big endian (MSB first)
     static constexpr auto pktLen = 0x60_b;
+    // PKT_LEN_FIELD_SOURCE
     static constexpr auto pktLenFieldSource = 0x00_b;
+    // PKT_LEN_ADJUST
     static constexpr auto pktLenAdjust = 0x00_b;
+    // PKT_TX_THRESHOLD
     static constexpr auto pktTxThreshold = static_cast<Byte>(txFifoThreshold);
+    // PKT_RX_THRESHOLD
     static constexpr auto pktRxThreshold = static_cast<Byte>(rxFifoThreshold);
+    // PKT_FIELD_1_LENGTH
     static constexpr auto pktField1Length = std::array{0x00_b, 0x01_b};
+    // PKT_FIELD_1_CONFIG
     static constexpr auto pktField1Config = 0x00_b;
+    // PKT_FIELD_1_CRC_CONFIG
     static constexpr auto pktField1CrcConfig = 0x00_b;
     OUTCOME_TRY(SetProperties(PropertyGroup::pkt,
                               iPktLen,
@@ -880,89 +998,39 @@ auto Configure() -> Result<void>
                                              pktField1Config,
                                              pktField1CrcConfig))));
 
-    OUTCOME_TRY(SetConstantModemProperties());
-
-    // RX filter coefficients
-    // Block 1
-    static constexpr auto iRxFilterCoefficientsBlock1 = 0x00_b;
-    static constexpr auto rxFilterCoefficientsBlock1 = std::array{
-        0xFF_b,  // RX1_CHFLT_COE13[7:0]
-        0xC4_b,  // RX1_CHFLT_COE12[7:0]
-        0x30_b,  // RX1_CHFLT_COE11[7:0]
-        0x7F_b,  // RX1_CHFLT_COE10[7:0]
-        0xF5_b,  // RX1_CHFLT_COE9[7:0]
-        0xB5_b,  // RX1_CHFLT_COE8[7:0]
-        0xB8_b,  // RX1_CHFLT_COE7[7:0]
-        0xDE_b,  // RX1_CHFLT_COE6[7:0]
-        0x05_b,  // RX1_CHFLT_COE5[7:0]
-        0x17_b,  // RX1_CHFLT_COE4[7:0]
-        0x16_b,  // RX1_CHFLT_COE3[7:0]
-        0x0C_b   // RX1_CHFLT_COE2[7:0]
-    };
-    OUTCOME_TRY(SetProperties(
-        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock1, Span(rxFilterCoefficientsBlock1)));
-
-    // Block 2
-    static constexpr auto iRxFilterCoefficientsBlock2 = 0x0C_b;
-    static constexpr auto rxFilterCoefficientsBlock2 = std::array{
-        0x03_b,  // RX1_CHFLT_COE1[7:0]
-        0x00_b,  // RX1_CHFLT_COE0[7:0]
-        0x15_b,  // RX1_CHFLT_COE10[9:8]  | RX1_CHFLT_COE11[9:8]  | RX1_CHFLT_COE12[9:8]  |
-                 // RX1_CHFLT_COE13[9:8]
-        0xFF_b,  // RX1_CHFLT_COE6[9:8]   | RX1_CHFLT_COE7[9:8]   | RX1_CHFLT_COE8[9:8]   |
-                 // RX1_CHFLT_COE9[9:8]
-        0x00_b,  // RX1_CHFLT_COE2[9:8]   | RX1_CHFLT_COE3[9:8]   | RX1_CHFLT_COE4[9:8]   |
-                 // RX1_CHFLT_COE5[9:8]
-        0x00_b,  // 0 | 0 | 0 | 0         | RX1_CHFLT_COE0[9:8]   | RX1_CHFLT_COE1[9:8]
-        0xFF_b,  // RX2_CHFLT_COE13[7:0]
-        0xC4_b,  // RX2_CHFLT_COE12[7:0]
-        0x30_b,  // RX2_CHFLT_COE11[7:0]
-        0x7F_b,  // RX2_CHFLT_COE10[7:0]
-        0xF5_b,  // RX2_CHFLT_COE9[7:0]
-        0xB5_b   // RX2_CHFLT_COE8[7:0]
-    };
-    OUTCOME_TRY(SetProperties(
-        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock2, Span(rxFilterCoefficientsBlock2)));
-
-    // Block 3
-    static constexpr auto iRxFilterCoefficientsBlock3 = 0x18_b;
-    static constexpr auto rxFilterCoefficientsBlock3 = std::array{
-        0xB8_b,  // RX2_CHFLT_COE7[7:0]
-        0xDE_b,  // RX2_CHFLT_COE6[7:0]
-        0x05_b,  // RX2_CHFLT_COE5[7:0]
-        0x17_b,  // RX2_CHFLT_COE4[7:0]
-        0x16_b,  // RX2_CHFLT_COE3[7:0]
-        0x0C_b,  // RX2_CHFLT_COE2[7:0]
-        0x03_b,  // RX2_CHFLT_COE1[7:0]
-        0x00_b,  // RX2_CHFLT_COE0[7:0]
-        0x15_b,  // RX2_CHFLT_COE10[9:8]  | RX2_CHFLT_COE11[9:8]  | RX2_CHFLT_COE12[9:8] |
-                 // RX2_CHFLT_COE13[9:8]
-        0xFF_b,  // RX2_CHFLT_COE6[9:8]   | RX2_CHFLT_COE7[9:8]   | RX2_CHFLT_COE8[9:8]  |
-                 // RX2_CHFLT_COE9[9:8]
-        0x00_b,  // RX2_CHFLT_COE2[9:8]   | RX2_CHFLT_COE3[9:8]   | RX2_CHFLT_COE4[9:8]  |
-                 // RX2_CHFLT_COE5[9:8]
-        0x00_b   // 0 | 0 | 0 | 0         | RX2_CHFLT_COE0[9:8]   | RX2_CHFLT_COE1[9:8]  |
-    };
-    OUTCOME_TRY(SetProperties(
-        PropertyGroup::modemChflt, iRxFilterCoefficientsBlock3, Span(rxFilterCoefficientsBlock3)));
-
     // RF PA mode
     static constexpr auto iPaMode = 0x00_b;
+    // PA_MODE
     // PA switching amp mode, PA_SEL = HP_COARSE, disable power sequencing, disable external TX ramp
     // signal
     static constexpr auto paMode = 0x08_b;
+    // PA_PWR_LVL
     // Enabled PA fingers (sets output power but not linearly; 10 µA bias current per enabled
     // finger, complementary drive signal with 50 % duty cycle)
-    static constexpr auto paPwrLvl = 0x2f_b;
+    static constexpr auto paPwrLvl = 0x2F_b;
+    // PA_BIAS_CLKDUTY
     static constexpr auto paBiasClkduty = 0x00_b;
+    // PA_TC
     // Ramping time constant = 0x1F (~56 µs to full - 0.5 dB), FSK modulation delay 30 µs
-    static constexpr auto paTc = 0xFF_b;
-    OUTCOME_TRY(
-        SetProperties(PropertyGroup::pa, iPaMode, Span({paMode, paPwrLvl, paBiasClkduty, paTc})));
+    static constexpr auto paTc = 0x1F_b;
+    OUTCOME_TRY(SetProperties(PropertyGroup::pa,
+                              iPaMode,
+                              Span({paMode, paPwrLvl, paBiasClkduty, paTc})));
+
+    // NOLINTBEGIN(*identifier-naming)
+
+    static constexpr auto iPaRampDownDelay = 0x05_b;
+    static constexpr auto PA_RAMP_DOWN_DELAY = 0x25_b;
+    OUTCOME_TRY(SetProperties(PropertyGroup::pa,
+                              iPaRampDownDelay,
+                              Span(PA_RAMP_DOWN_DELAY)));
+
+    // NOLINTEND(*identifier-naming)
 
     // RF synth feed forward charge pump current, integrated charge pump current, VCO gain scaling
     // factor, FF loop filter values
     static constexpr auto iSynthPfdcpCpff = 0x00_b;
+    // SYNTH_PFDCP_CPFF
     // FF charge pump current = 60 µA
     static constexpr auto synthPfdcpCpff = 0x2C_b;
     // SYNTH_PFDCP_CPINT: Int charge pump current = 30 µA
@@ -988,46 +1056,64 @@ auto Configure() -> Result<void>
                                     synthLpfilt1,
                                     synthLpfilt0})));
 
-    // RF match mask
-    static constexpr auto iMatchValue1 = 0x00_b;
-    static constexpr auto matchValue1 = 0x00_b;
-    static constexpr auto matchMask1 = 0x00_b;
-    static constexpr auto matchCtrl1 = 0x00_b;
-    static constexpr auto matchValue2 = 0x00_b;
-    static constexpr auto matchMask2 = 0x00_b;
-    static constexpr auto matchCtrl2 = 0x00_b;
-    static constexpr auto matchValue3 = 0x00_b;
-    static constexpr auto matchMask3 = 0x00_b;
-    static constexpr auto matchCtrl3 = 0x00_b;
-    static constexpr auto matchValue4 = 0x00_b;
-    static constexpr auto matchMask4 = 0x00_b;
-    static constexpr auto matchCtrl4 = 0x00_b;
-    OUTCOME_TRY(SetProperties(PropertyGroup::match,
-                              iMatchValue1,
-                              Span({matchValue1,
-                                    matchMask1,
-                                    matchCtrl1,
-                                    matchValue2,
-                                    matchMask2,
-                                    matchCtrl2,
-                                    matchValue3,
-                                    matchMask3,
-                                    matchCtrl3,
-                                    matchValue4,
-                                    matchMask4,
-                                    matchCtrl4})));
+    // We don't use MATCH, so I commented it
+    // // RF match mask
+    // static constexpr auto iMatchValue1 = 0x00_b;
+    // // MATCH_VALUE_1
+    // static constexpr auto matchValue1 = 0x00_b;
+    // // MATCH_MASK_1
+    // static constexpr auto matchMask1 = 0x00_b;
+    // // MATCH_CTRL_1
+    // static constexpr auto matchCtrl1 = 0x00_b;
+    // // MATCH_VALUE_2
+    // static constexpr auto matchValue2 = 0x00_b;
+    // // MATCH_MASK_2
+    // static constexpr auto matchMask2 = 0x00_b;
+    // // MATCH_CTRL_2
+    // static constexpr auto matchCtrl2 = 0x00_b;
+    // // MATCH_VALUE_3
+    // static constexpr auto matchValue3 = 0x00_b;
+    // // MATCH_MASK_3
+    // static constexpr auto matchMask3 = 0x00_b;
+    // // MATCH_CTRL_3
+    // static constexpr auto matchCtrl3 = 0x00_b;
+    // // MATCH_VALUE_4
+    // static constexpr auto matchValue4 = 0x00_b;
+    // // MATCH_MASK_4
+    // static constexpr auto matchMask4 = 0x00_b;
+    // // MATCH_CTRL_4
+    // static constexpr auto matchCtrl4 = 0x00_b;
+    // OUTCOME_TRY(SetProperties(PropertyGroup::match,
+    //                           iMatchValue1,
+    //                           Span({matchValue1,
+    //                                 matchMask1,
+    //                                 matchCtrl1,
+    //                                 matchValue2,
+    //                                 matchMask2,
+    //                                 matchCtrl2,
+    //                                 matchValue3,
+    //                                 matchMask3,
+    //                                 matchCtrl3,
+    //                                 matchValue4,
+    //                                 matchMask4,
+    //                                 matchCtrl4})));
 
     // Frequency control
     static constexpr auto iFreqControlInte = 0x00_b;
+    // FREQ_CONTROL_INTE
     // FC_inte 0x41 = 533.5, 0x41 = 434.5, 0x42 = 437.395
     static constexpr auto freqControlInte = 0x42_b;
+    // FREQ_CONTROL_FRAC
     // FC_frac. 0xD89D9 = 433.5, 0xEC4EC = 434.5, 0xA5512 = 437.395, N_presc = 2, outdiv = 8, F_xo =
     // 26 MHz, RF_channel_Hz = (FC_inte + FC_frac / 2^19) * ((N_presc * F_xo) / outdiv)
     static constexpr auto freqControlFrac = std::array{0x0A_b, 0x55_b, 0x12_b};
+    // FREQ_CONTROL_CHANNEL_STEP_SIZE
     // Channel step size = 0x4EC5
-    static constexpr auto freqControlChannelStepSize = std::array{0x4E_b, 0xC5_b};
+    static constexpr auto freqControlChannelStepSize = std::array{0x00_b, 0x00_b};
+    // FREQ_CONTROL_W_SIZE
     // Window gating period (in number of crystal clock cycles) = 32
     static constexpr auto freqControlWSize = 0x20_b;
+    // FREQ_CONTROL_VCOCNT_RX_ADJ
     // Adjust target mode for VCO calibration in RX mode = 0xFE int8_t
     static constexpr auto freqControlVcontRxAdj = 0xFE_b;
     OUTCOME_TRY(SetProperties(PropertyGroup::freqControl,
@@ -1050,66 +1136,114 @@ auto Configure() -> Result<void>
     // static constexpr auto newGlobalConfig = 0x40_b;
     // SetProperties(PropertyGroup::global, iGlobalConfig, Span({newGlobalConfig}));
     return outcome_v2::success();
+
+    // clang-format on
 }
 
+// NOLINTBEGIN
 
 // Set modem properties that don't change for different data rates
-// NOLINTNEXTLINE(*cognitive-complexity)
 auto SetConstantModemProperties() -> Result<void>
 {
     // Values acquired by comparing 9 WDS data rate configurations. For some properties only parts
     // are here. The changing parts will be set per data rate.
     //
-    // NOLINTBEGIN(*magic-numbers)
-    //
-    // MODEM_MOD_TYPE, MODEM_MAP_CONTROL, MODEM_DSM_CTRL
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x00_b, std::array{0x03_b, 0x00_b, 0x07_b}));
-    // MODEM_TX_NCO_MODE, MODEM_FREQ_DEV (only LSB - other two bytes are non-constant)
-    OUTCOME_TRY(
-        SetProperties(PropertyGroup::modem, 0x07_b, std::array{0x8C_b, 0xBA_b, 0x80_b, 0x00_b}));
-    // MODEM_TX_RAMP_DELAY, MODEM_MDM_CTRL, MODEM_IF_CONTROL, MODEM_IF_FREQ
-    OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x18_b, std::array{0x01_b, 0x00_b, 0x08_b, 0x03_b, 0x80_b, 0x00_b}));
-    // MODEM_IFPKD_THRESHOLDS, MODEM_BCR_OSR (only LSB - other byte is non-constant)
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x21_b, std::array{0xE8_b, 0x00_b}));
-    // MODEM_BCR_GEAR, MODEM_BCR_MISC1, MODEM_BCR_MISC0, MODEM_AFC_GEAR
-    OUTCOME_TRY(
-        SetProperties(PropertyGroup::modem, 0x29_b, std::array{0x02_b, 0x00_b, 0x00_b, 0x00_b}));
-    // MODEM_AFC_MISC
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x32_b, std::array{0xA0_b}));
-    // MODEM_AGC_CONTROL
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x35_b, std::array{0xE0_b}));
-    // MODEM_AGC_WINDOW_SIZE
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x38_b, std::array{0x11_b}));
-    // MODEM_FSK4_GAIN1, MODEM_FSK4_GAIN0, MODEM_FSK4_TH, MODEM_FSK4_MAP
-    OUTCOME_TRY(SetProperties(
-        PropertyGroup::modem, 0x3b_b, std::array{0x80_b, 0x1A_b, 0x40_b, 0x00_b, 0x00_b}));
-    // MODEM_OOK_BLOPK, MODEM_OOK_CNT1, MODEM_OOK_MISC
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x41_b, std::array{0x0C_b, 0xA4_b, 0x23_b}));
-    // MODEM_RAW_CONTROL
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x45_b, std::array{0x03_b}));
-    // MODEM_ANT_DIV_MODE, MODEM_ANT_DIV_CONTROL, MODEM_RSSI_THRESH, MODEM_RSSI_JUMP_THRESH,
-    // MODEM_RSSI_CONTROL, MODEM_RSSI_CONTROL2, MODEM_RSSI_COMP
+    // clang-format off
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x00_b,
+                              std::array{0x03_b,    // MODEM_MOD_TYPE
+                                         0x00_b,    // MODEM_MAP_CONTROL
+                                         0x07_b})); // MODEM_DSM_CTRL
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x07_b,
+                              std::array{0x8C_b, 0xBA_b, 0x80_b, // MODEM_TX_NCO_MODE _2, _1, _0,   index 0x07, 0x08, 0x09
+                                         0x00_b})); // MODEM_FREQ_DEV _2                            index 0x0a
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x18_b,
+                              std::array{0x01_b,    // MODEM_TX_RAMP_DELAY
+                                         0x00_b,    // MODEM_MDM_CTRL
+                                         0x08_b,    // MODEM_IF_CONTROL
+                                         0x03_b, 0x80_b, 0x00_b})); // MODEM_IF_FREQ _2, _1, _0
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x21_b,
+                              std::array{0xE8_b,    // MODEM_IFPKD_THRESHOLDS
+                                         0x00_b})); // MODEM_BCR_OSR _1,                            index 0x22
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x29_b,
+                              std::array{0x02_b,    // MODEM_BCR_GEAR
+                                         0x00_b,    // MODEM_BCR_MISC1
+                                         0x00_b,    // MODEM_BCR_MISC0
+                                         0x00_b})); // MODEM_AFC_GEAR
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x32_b,
+                              std::array{0xE0_b})); // MODEM_AFC_MISC
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x35_b,
+                              std::array{0xE0_b})); // MODEM_AGC_CONTROL
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x38_b,
+                              std::array{0x11_b})); // MODEM_AGC_WINDOW_SIZE
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x3b_b,
+                              std::array{0x80_b,    // MODEM_FSK4_GAIN1
+                                         0x1A_b,    // MODEM_FSK4_GAIN0
+                                         0x20_b, 0x00_b, // MODEM_FSK4_TH 1, 0
+                                         0x00_b})); // MODEM_FSK4_MAP
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x41_b,
+                              std::array{0x0C_b,    // MODEM_OOK_BLOPK
+                                         0xA4_b,    // MODEM_OOK_CNT1
+                                         0x23_b})); // MODEM_OOK_MISC
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem, // MODEM_RAW_CONTROL
+                              0x45_b,
+                              std::array{0x03_b}));
+
     OUTCOME_TRY(SetProperties(PropertyGroup::modem,
                               0x48_b,
-                              std::array{0x01_b, 0x00_b, 0xFF_b, 0x06_b, 0x00_b, 0x18_b, 0x40_b}));
-    // MODEM_RAW_SEARCH2
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x50_b, std::array{0x84_b, 0x0A_b}));
-    // MODEM_ONE_SHOT_AFC
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x55_b, std::array{0x07_b}));
-    // MODEM_RSSI_MUTE
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x57_b, std::array{0x00_b}));
-    // MODEM_DSA_CTRL1, MODEM_DSA_CTRL2
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x5b_b, std::array{0x40_b, 0x04_b}));
-    // MODEM_DSA_RSSI, MODEM_DSA_MISC
-    OUTCOME_TRY(SetProperties(PropertyGroup::modem, 0x5e_b, std::array{0x78_b, 0x20_b}));
-    // MODEM_CHFLT_RX1_CHFLT_COE
-    OUTCOME_TRY(SetProperties(PropertyGroup::modemChflt, 0x0e_b, std::array{0x15_b}));
-    // MODEM_CHFLT_RX2_CHFLT_COE
-    return SetProperties(PropertyGroup::modemChflt, 0x20_b, std::array{0x15_b});
-    // NOLINTEND(*magic-numbers)
-}
+                              std::array{0x02_b,    // MODEM_ANT_DIV_MODE
+                                         0x00_b,    // MODEM_ANT_DIV_CONTROL
+                                         0xFF_b,    // MODEM_RSSI_THRESH
+                                         0x06_b,    // MODEM_RSSI_JUMP_THRESH
+                                         0x00_b,    // MODEM_RSSI_CONTROL
+                                         0x18_b,    // MODEM_RSSI_CONTROL2
+                                         0x40_b})); // MODEM_RSSI_COMP
 
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x50_b,
+                              std::array{0x84_b,    // MODEM_RAW_SEARCH2
+                                         0x0A_b})); // MODEM_CLKGEN_BAND
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x55_b,
+                              std::array{0x07_b})); // MODEM_ONE_SHOT_AFC
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x57_b,
+                              std::array{0x00_b})); // MODEM_RSSI_MUTE
+
+    OUTCOME_TRY(SetProperties(PropertyGroup::modem,
+                              0x5b_b,
+                              std::array{0x40_b,    // MODEM_DSA_CTRL1
+                                         0x04_b})); // MODEM_DSA_CTRL2
+
+    return SetProperties(PropertyGroup::modem,
+                              0x5e_b,
+                              std::array{0x78_b,    // MODEM_DSA_RSSI
+                                         0x20_b}); // MODEM_DSA_MISC
+
+    // clang-format on
+}
+// NOLINTEND
 
 auto GetDataRateConfig(std::uint32_t dataRate) -> DataRateConfig
 {
@@ -1440,15 +1574,15 @@ auto BusyWaitForAnswer(Duration timeout) -> Result<std::array<Byte, answerLength
 }
 
 
-template<std::size_t extent>
-    requires(extent <= maxNProperties)
+template<std::size_t nProperties>
+    requires(nProperties <= maxNProperties)
 inline auto SetProperties(PropertyGroup propertyGroup,
                           Byte startIndex,
-                          std::span<Byte const, extent> propertyValues) -> Result<void>
+                          std::span<Byte const, nProperties> propertyValues) -> Result<void>
 {
     return SendCommand(FlatArray(cmdSetProperty,
                                  static_cast<Byte>(propertyGroup),
-                                 static_cast<Byte>(extent),
+                                 static_cast<Byte>(nProperties),
                                  startIndex,
                                  propertyValues));
 }
@@ -1458,9 +1592,10 @@ template<std::size_t nProperties>
     requires(nProperties <= maxNProperties)
 [[nodiscard]] auto SetProperties(PropertyGroup propertyGroup,
                                  Byte propertyStartIndex,
-                                 std::array<Byte, nProperties> const & properties) -> Result<void>
+                                 std::array<Byte, nProperties> const & propertyValues)
+    -> Result<void>
 {
-    return SetProperties(propertyGroup, propertyStartIndex, Span(properties));
+    return SetProperties(propertyGroup, propertyStartIndex, Span(propertyValues));
 }
 
 
@@ -1480,5 +1615,6 @@ inline auto GetProperties(PropertyGroup propertyGroup, Byte startIndex)
     return SendCommand<size>(Span(
         {cmdGetProperty, static_cast<Byte>(propertyGroup), static_cast<Byte>(size), startIndex}));
 }
+
 }
 }
