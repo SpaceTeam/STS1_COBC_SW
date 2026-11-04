@@ -51,7 +51,7 @@ _Following configs are available ONLY for Direct TX_
 
 ### Power amplifier (PA)
 
-- PA mode: ClassE/Square W // codespell:ignore ClassE
+- PA mode: ClassE/Square W // codespell:ignore classe
 - PA Ramp TC: 31
 - PA bias (grayed out): 0x0
 - PA power level: 0x2F
