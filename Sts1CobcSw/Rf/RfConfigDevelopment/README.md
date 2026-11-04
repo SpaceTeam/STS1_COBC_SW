@@ -51,7 +51,7 @@ _Following configs are available ONLY for Direct TX_
 
 ### Power amplifier (PA)
 
-- PA mode: ClassE/Square W
+- PA mode: ClassE/Square W // codespell:ignore ClassE
 - PA Ramp TC: 31
 - PA bias (grayed out): 0x0
 - PA power level: 0x2F
@@ -87,7 +87,7 @@ Optimize RX performance:
 - Enable PPL AFC [y/n]: YES (TODO: Try if it is better or worse on flatsat)
 - Enable adaptive Ch. Fil. BW. [y/n]: YES (TODO: Try if it is better or worse on flatsat)
 - Enable antenna diversity [y/n]: NO
-- Enable IQ calibration [y/n]: NO (TODO: should be done for every cubesat and the values you get from that should be hardcoded for the speciffic sat)
+- Enable IQ calibration [y/n]: NO (TODO: should be done for every cubesat and the values you get from that should be hardcoded for the specific sat)
 
 ### RSSI
 
@@ -115,12 +115,12 @@ _Following configs are available for Direct TX & Direct RX_
 **GPIO 2:**
 
 - Enable pullup [y/n]: no
-- Pin configuration: RX_STATE - This output is set hight while in RX state and low otherwise
+- Pin configuration: RX_STATE - This output is set high while in RX state and low otherwise
 
 **GPIO 3:**
 
 - Enable pullup [y/n]: no
-- Pin configuration: TX_STATE - This output is set hight while in TX state and low otherwise
+- Pin configuration: TX_STATE - This output is set high while in TX state and low otherwise
 
 **NIRQ:**
 
