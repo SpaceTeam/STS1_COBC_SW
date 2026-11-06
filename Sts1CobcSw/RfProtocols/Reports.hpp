@@ -22,7 +22,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
-#include <system_error>
+#include <system_error> // @shivani: remove
 #include <utility>
 
 
@@ -125,6 +125,7 @@ public:
         std::uintptr_t startAddress,
         std::span<Byte> data,
         ErrorCode * errorCode);  // we need start address, firmware data, error?
+    // @shivani: you get as parameter etl::vector<PartitionInfo, numberOfPartitions> const & partitionInfo
 
 private:
     static constexpr auto messageTypeId = Make<tm::MessageTypeId, {6, 7}>();
@@ -132,7 +133,8 @@ private:
     std::uintptr_t startAddress_;
     std::span<Byte> data_;
     ErrorCode * errorCode_;
-
+        // @shivani: here you have a private member
+    // etl::vector<PartitionInfo, numberOfPartitions> partitionInfos_; instead of startAddress, data and errorCode
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };

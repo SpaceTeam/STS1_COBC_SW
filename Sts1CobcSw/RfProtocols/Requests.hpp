@@ -206,7 +206,7 @@ struct RequestFirmwareMetadataFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = FunctionId::requestFirmwareMetadata;
-    PartitionId partitionId;
+    PartitionId partitionId; // @shivani: remove partitionId, we send the data of all partitions
 };
 
 //Same as RFProtocol/request? <= there is no new tc:messageIdfor report
