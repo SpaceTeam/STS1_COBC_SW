@@ -50,6 +50,7 @@
       "cacheVariables": {
         "HSE_VALUE": "12000000",
         "HW_VERSION": "30",
+        "DYNAMIC_COMMUNICATION": "OFF",
         "REDIRECT_RF_OVER_UCI": "OFF",
         "USE_PUNCTURING": "OFF",
         "DISABLE_CHANNEL_CODING": "OFF",
