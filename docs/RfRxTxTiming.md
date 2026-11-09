@@ -4,6 +4,8 @@ This describes the COBC firmware schedule for the housekeeping beacon and the re
 
 The schedule is implemented in `RfCommunicationThread`. The beacon period is set in `TelemetryThread`.
 
+These timings exist because the link is half duplex. RX and TX use one frequency: the frequency-control registers in `DoInitialize` are a single setting (the comment there gives 437.395 MHz), and both `StartTx` and `StartRx` select channel 0. The modem is in transmit, in receive, or in standby, never both at once (`isInTxMode` in `Sts1CobcSw/Rf/Rf.cpp`). The cubesat and the ground station therefore have to agree on who is transmitting and who is listening. A transmission that overlaps the other side's transmission is lost, which is why the beacon, the receive windows, the 300 ms switch pause, and the CFDP retries are scheduled as they are.
+
 ## Summary
 
 | What | Value in code | Name |
