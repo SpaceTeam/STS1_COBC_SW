@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 580" role="img">
+  <title>TC_8_1_SYNCHRONIZE_TIME at the earliest instant COSMOS allows</title>
+  <rect width="1100" height="580" fill="#ffffff"/>
+
+  <g fill="none" stroke="#b45309" stroke-width="1.5">
+    <line x1="385.91" y1="28" x2="438.03" y2="28"/>
+    <polyline points="390.91,25 385.91,28 390.91,31"/>
+    <polyline points="433.03,25 438.03,28 433.03,31"/>
+  </g>
+  <text x="444" y="24" fill="#b45309" font-family="Segoe UI, sans-serif" font-size="12">Downlink 433 ms</text>
+
+  <text x="12" y="120" fill="#243140" font-family="Segoe UI, sans-serif" font-size="13">Satellite transmits</text>
+  <line x1="210" y1="186" x2="1070" y2="186" stroke="#c5ced6" stroke-width="1"/>
+  <g fill="#b45309" stroke="#b45309">
+    <rect x="224.03" y="46" width="52.12" height="140"/>
+    <rect x="385.91" y="46" width="52.12" height="140"/>
+    <rect x="528.24" y="46" width="52.12" height="140"/>
+  </g>
+  <g fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="11" text-anchor="middle">
+    <text transform="translate(250.09 116) rotate(-90)">TM_3_25_BEACON</text>
+    <text transform="translate(411.97 116) rotate(-90)">TM_1_1_ACK_ACCEPTANCE</text>
+    <text transform="translate(554.3 116) rotate(-90)">TM_1_7_ACK_EXECUTION</text>
+  </g>
+  <text x="489" y="120" text-anchor="middle" fill="#1f4e79" font-family="Segoe UI, sans-serif" font-size="11">store real_time</text>
+
+  <g fill="none" stroke="#1f4e79" stroke-width="1.5">
+    <line x1="349.83" y1="210" x2="385.91" y2="210"/>
+    <polyline points="354.83,207 349.83,210 354.83,213"/>
+    <polyline points="380.91,207 385.91,210 380.91,213"/>
+    <line x1="276.15" y1="232" x2="288.18" y2="232"/>
+    <polyline points="281.15,229 276.15,232 281.15,235"/>
+    <polyline points="283.18,229 288.18,232 283.18,235"/>
+    <line x1="438.03" y1="232" x2="450.06" y2="232"/>
+    <polyline points="443.03,229 438.03,232 443.03,235"/>
+    <polyline points="445.06,229 450.06,232 445.06,235"/>
+    <line x1="580.36" y1="232" x2="592.39" y2="232"/>
+    <polyline points="585.36,229 580.36,232 585.36,235"/>
+    <polyline points="587.39,229 592.39,232 587.39,235"/>
+    <line x1="288.18" y1="254" x2="889.58" y2="254"/>
+    <polyline points="293.18,251 288.18,254 293.18,257"/>
+    <polyline points="884.58,251 889.58,254 884.58,257"/>
+  </g>
+  <g fill="#1f4e79" font-family="Segoe UI, sans-serif" font-size="12">
+    <text x="392" y="206">rxToTxSwitchDuration 300 ms</text>
+    <text x="515.2" y="228" text-anchor="middle">postTxDelay 100 ms</text>
+    <text x="608" y="250">rxTimeoutAfterTelemetryRecord 5 s</text>
+  </g>
+
+  <text x="12" y="284" fill="#243140" font-family="Segoe UI, sans-serif" font-size="13">Satellite listens</text>
+  <line x1="210" y1="290" x2="1070" y2="290" stroke="#c5ced6" stroke-width="1"/>
+  <g fill="#d6e6f5" stroke="#1f4e79">
+    <rect x="288.18" y="272" width="97.73" height="18"/>
+    <rect x="450.06" y="272" width="78.18" height="18"/>
+    <rect x="592.39" y="272" width="297.19" height="18"/>
+  </g>
+  <g fill="#ffffff">
+    <rect x="385.91" y="272" width="64.15" height="18"/>
+    <rect x="528.24" y="272" width="64.15" height="18"/>
+  </g>
+  <g fill="none" stroke="#0f6e56" stroke-width="1.5">
+    <line x1="276.15" y1="314" x2="769.3" y2="314"/>
+    <polyline points="281.15,311 276.15,314 281.15,317"/>
+    <polyline points="764.3,311 769.3,314 764.3,317"/>
+    <line x1="276.15" y1="336" x2="324.27" y2="336"/>
+    <polyline points="281.15,333 276.15,336 281.15,339"/>
+    <polyline points="319.27,333 324.27,336 319.27,339"/>
+  </g>
+  <g fill="#0f6e56" font-family="Segoe UI, sans-serif" font-size="12">
+    <text x="522.7" y="310" text-anchor="middle">beacon_age_max1 4.1 s</text>
+    <text x="330" y="332">rx_tx_delay 0.4 s</text>
+  </g>
+
+  <text x="12" y="366" fill="#243140" font-family="Segoe UI, sans-serif" font-size="13">COSMOS may start</text>
+  <line x1="210" y1="372" x2="1070" y2="372" stroke="#c5ced6" stroke-width="1"/>
+  <rect x="324.27" y="354" width="445.03" height="18" fill="#d8efe8" stroke="#0f6e56"/>
+  <text x="546.8" y="367" text-anchor="middle" fill="#0f6e56" font-family="Segoe UI, sans-serif" font-size="11">beacon_age_max1 - rx_tx_delay</text>
+
+  <g fill="none" stroke="#0f6e56" stroke-width="1.5">
+    <line x1="349.83" y1="396" x2="590.38" y2="396"/>
+    <polyline points="354.83,393 349.83,396 354.83,399"/>
+    <polyline points="585.38,393 590.38,396 585.38,399"/>
+    <line x1="438.03" y1="418" x2="1039.43" y2="418"/>
+    <polyline points="443.03,415 438.03,418 443.03,421"/>
+    <polyline points="1034.43,415 1039.43,418 1034.43,421"/>
+  </g>
+  <g fill="#0f6e56" font-family="Segoe UI, sans-serif" font-size="12">
+    <text x="470.1" y="392" text-anchor="middle">ack_acceptance_timeout 2 s</text>
+    <text x="738.7" y="414" text-anchor="middle">ack_execution_timeout 5 s</text>
+  </g>
+
+  <g fill="none" stroke="#b45309" stroke-width="1.5">
+    <line x1="324.27" y1="440" x2="349.83" y2="440"/>
+    <polyline points="329.27,437 324.27,440 329.27,443"/>
+    <polyline points="344.83,437 349.83,440 344.83,443"/>
+  </g>
+  <text x="356" y="436" fill="#b45309" font-family="Segoe UI, sans-serif" font-size="12">Uplink 212.5 ms</text>
+
+  <text x="12" y="470" fill="#243140" font-family="Segoe UI, sans-serif" font-size="13">COSMOS transmits</text>
+  <line x1="210" y1="476" x2="1070" y2="476" stroke="#c5ced6" stroke-width="1"/>
+  <rect x="324.27" y="458" width="25.56" height="18" fill="#b45309" stroke="#b45309"/>
+  <text x="356" y="472" fill="#243140" font-family="Segoe UI, sans-serif" font-size="11">TC_8_1_SYNCHRONIZE_TIME</text>
+
+  <g fill="none" stroke="#111111" stroke-width="1.25" stroke-dasharray="3 2.5">
+    <line x1="349.83" y1="210" x2="349.83" y2="458"/>
+    <line x1="276.15" y1="194" x2="276.15" y2="336"/>
+    <line x1="438.03" y1="194" x2="438.03" y2="418"/>
+    <line x1="580.36" y1="194" x2="580.36" y2="232"/>
+    <line x1="288.18" y1="232" x2="288.18" y2="272"/>
+    <line x1="450.06" y1="232" x2="450.06" y2="272"/>
+    <line x1="592.39" y1="232" x2="592.39" y2="272"/>
+    <line x1="324.27" y1="336" x2="324.27" y2="458"/>
+    <line x1="769.3" y1="314" x2="769.3" y2="354"/>
+    <line x1="889.58" y1="254" x2="889.58" y2="272"/>
+    <line x1="385.91" y1="186" x2="385.91" y2="272"/>
+    <line x1="528.24" y1="186" x2="528.24" y2="272"/>
+  </g>
+
+  <g stroke="#5c6b7a" stroke-width="1">
+    <line x1="210" y1="500" x2="1070" y2="500"/>
+    <line x1="276.15" y1="500" x2="276.15" y2="504"/>
+    <line x1="396.43" y1="500" x2="396.43" y2="504"/>
+    <line x1="516.71" y1="500" x2="516.71" y2="504"/>
+    <line x1="636.99" y1="500" x2="636.99" y2="504"/>
+    <line x1="757.27" y1="500" x2="757.27" y2="504"/>
+    <line x1="877.55" y1="500" x2="877.55" y2="504"/>
+    <line x1="997.83" y1="500" x2="997.83" y2="504"/>
+  </g>
+  <g fill="#5c6b7a" font-family="Segoe UI, sans-serif" font-size="11" text-anchor="middle">
+    <text x="276.15" y="518">0</text>
+    <text x="396.43" y="518">1</text>
+    <text x="516.71" y="518">2</text>
+    <text x="636.99" y="518">3</text>
+    <text x="757.27" y="518">4</text>
+    <text x="877.55" y="518">5</text>
+    <text x="997.83" y="518">6</text>
+    <text x="1070" y="532" text-anchor="end">Time from the end of the beacon on the air (s)</text>
+  </g>
+
+  <g font-family="Segoe UI, sans-serif" font-size="12">
+    <rect x="210" y="536" width="14" height="14" fill="#1f4e79"/>
+    <text x="230" y="548" fill="#1f4e79">COBC parameter</text>
+    <rect x="380" y="536" width="14" height="14" fill="#0f6e56"/>
+    <text x="400" y="548" fill="#0f6e56">COSMOS parameter</text>
+    <rect x="580" y="536" width="14" height="14" fill="#b45309"/>
+    <text x="600" y="548" fill="#b45309">Calculated from bit rate and packet size</text>
+  </g>
+</svg>

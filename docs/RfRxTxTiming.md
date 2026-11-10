@@ -1,6 +1,6 @@
 # RF RX/TX timing
 
-This describes the COBC firmware schedule for the housekeeping beacon and the receive windows that follow it. The ground-station side (COSMOS) is not in this repository. The only ground-station timing stated in the firmware is the pause before switching from RX back to TX.
+This describes the COBC firmware schedule for the housekeeping beacon and the receive windows that follow it. The timing of one simple command, `TC_8_1_SYNCHRONIZE_TIME` at the earliest instant COSMOS allows, is shown in [rf-timing-simple-cmd.md](rf-timing-simple-cmd.md). The only ground-station timing stated in the firmware itself is the pause before switching from RX back to TX.
 
 The schedule is implemented in `RfCommunicationThread`. The beacon period is set in `TelemetryThread`.
 
