@@ -26,6 +26,21 @@ if(CMAKE_SYSTEM_NAME STREQUAL Generic)
     )
 endif()
 
+add_program(FileExplorer)
+    target_sources(Sts1CobcSwTests_FileExplorer PRIVATE FileExplorer.cpp)
+    target_link_libraries(
+        Sts1CobcSwTests_FileExplorer
+        PRIVATE etl::etl
+            rodos::rodos
+            Sts1CobcSw_FileSystem
+            Sts1CobcSw_Fram
+            Sts1CobcSw_FramSections
+            Sts1CobcSw_Outcome
+            Sts1CobcSw_Serial
+            Sts1CobcSw_Vocabulary
+            Sts1CobcSwTests::HardwareSetup
+    )
+
 get_property(
     support_program_targets DIRECTORY ${CMAKE_CURRENT_LIST_DIR} PROPERTY BUILDSYSTEM_TARGETS
 )
