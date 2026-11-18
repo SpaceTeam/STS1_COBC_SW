@@ -362,7 +362,9 @@ auto DoInitialize() -> Result<void>
     OUTCOME_TRY(Configure());
     OUTCOME_TRY(SetConstantModemProperties());
     OUTCOME_TRY(SetDataRate(txDataRateConfig));
-    persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
+    EnableTx();
+    // Ignore to be able to use cobc with broken eps that kills spi/fram
+    // persistentVariables.Load<"txIsOn">() ? EnableTx() : DisableTx();
     return outcome_v2::success();
 }
 
@@ -395,10 +397,11 @@ auto DoSetTxDataLength(std::uint16_t length) -> Result<void>
 
 auto DoSendAndWait(std::span<Byte const> data) -> Result<void>
 {
-    if(not persistentVariables.Load<"txIsOn">())
-    {
-        return outcome_v2::success();
-    }
+    // Ignore to be able to use cobc with broken eps that kills spi/fram
+    // if(not persistentVariables.Load<"txIsOn">())
+    // {
+    //     return outcome_v2::success();
+    // }
     OUTCOME_TRY(DoSetTxDataLength(static_cast<std::uint16_t>(data.size())));
     auto result = [&]() -> Result<void>
     {
@@ -419,10 +422,11 @@ auto DoSendAndWait(std::span<Byte const> data) -> Result<void>
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto DoSendAndContinue(std::span<Byte const> data) -> Result<void>
 {
-    if(not persistentVariables.Load<"txIsOn">())
-    {
-        return outcome_v2::success();
-    }
+    // Ignore to be able to use cobc with broken eps that kills spi/fram
+    // if(not persistentVariables.Load<"txIsOn">())
+    // {
+    //     return outcome_v2::success();
+    // }
     if(currentDataRate != txDataRateConfig.dataRate)
     {
         OUTCOME_TRY(SetDataRate(txDataRateConfig));
