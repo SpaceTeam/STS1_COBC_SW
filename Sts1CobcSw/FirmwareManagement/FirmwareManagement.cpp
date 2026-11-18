@@ -176,7 +176,7 @@ auto ReadFirmwareCommitHash(std::uintptr_t startAddress, std::span<Byte> data) -
     }
     // First 4 bytes are firmware length
     Read(startAddress + sizeof(std::uint32_t), data);
-    return outcome_v2::success();
+    return outcome_v2::success();   //TODO: ask - we only return success not the length?
 }
 
 

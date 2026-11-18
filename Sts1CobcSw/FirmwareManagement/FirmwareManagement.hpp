@@ -42,9 +42,16 @@ using ProgramResult = Result<std::uintptr_t>;
 
 inline constexpr auto partitionSize = 128 * 1024U;
 constexpr auto commitHashLength = 40U;
-// @shivani: add here a constexpr numberOfPartitions = 3U;
+constexpr auto numberOfPartitions = 3U;
+// @shivani: add here a constexpr numberOfPartitions = 3U; : Done
 
-// @shivani: add here new struct PartitionInfo that contains FirmwareChecksum checksum, std::uint32_t firmwareLength,  etl::vector<Byte, commitHashLength> commitHash
+
+// @shivani: add here new struct PartitionInfo that contains FirmwareChecksum checksum, std::uint32_t firmwareLength,  etl::vector<Byte, commitHashLength> commitHash : Done
+struct PartitionInfo {
+    FirmwareChecksums checksum;
+    std::uint32_t firmwareLength;
+    etl::vector<Byte, commitHashLength> commitHash;
+};
 
 extern Partition const primaryPartition;
 extern Partition const secondaryPartition1;

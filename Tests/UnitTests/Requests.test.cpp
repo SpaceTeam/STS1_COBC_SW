@@ -758,3 +758,20 @@ TEST_CASE("CheckFirmwareIntegrityFunction")
     CHECK(parseResult.has_error());
     CHECK(parseResult.error() == ErrorCode::invalidDataLength);
 }
+
+TEST_CASE("FimwareMetadataFunction")
+{
+    auto emptyBuffer = etl::vector<Byte, sts1cobcsw::tc::maxPacketLength>{};
+    //buffer size should be empty
+    emptyBuffer.resize(0);
+
+    auto parseResult = sts1cobcsw::ParseAsRequestFirmwareMetadataFunction(emptyBuffer);
+    CHECK(parseResult.has_value());
+
+    // buffer size is not empty
+    auto nonEmptyBuffer = etl::vector<Byte, 1>{};
+    nonEmptyBuffer.resize(1);
+    parseResult = sts1cobcsw::ParseAsRequestFirmwareMetadataFunction(nonEmptyBuffer);
+    CHECK(parseResult.has_error());
+    CHECK(parseResult.error() == ErrorCode::invalidDataLength);
+}

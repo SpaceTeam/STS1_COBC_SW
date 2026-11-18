@@ -2,6 +2,7 @@
 
 
 #include <Sts1CobcSw/FileSystem/FileSystem.hpp>
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp>
 #include <Sts1CobcSw/Fram/Fram.hpp>
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/RfProtocols/Configuration.hpp>
@@ -22,7 +23,6 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
-#include <system_error> // @shivani: remove
 #include <utility>
 
 
@@ -122,21 +122,17 @@ class FirmwareMetadataReport : public Payload
 {
 public:
     explicit FirmwareMetadataReport(
-        std::uintptr_t startAddress,
-        std::span<Byte> data,
-        ErrorCode * errorCode);  // we need start address, firmware data, error?
-    // @shivani: you get as parameter etl::vector<PartitionInfo, numberOfPartitions> const & partitionInfo
+        etl::vector<fw::PartitionInfo, fw::numberOfPartitions> const & partitionInfo);
+    // @shivani: you get as parameter etl::vector<PartitionInfo, numberOfPartitions> const & partitionInfo : done
 
 private:
     static constexpr auto messageTypeId = Make<tm::MessageTypeId, {6, 7}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
-    std::uintptr_t startAddress_;
-    std::span<Byte> data_;
-    ErrorCode * errorCode_;
+    etl::vector<fw::PartitionInfo, fw::numberOfPartitions> partitionInfo_;
         // @shivani: here you have a private member
-    // etl::vector<PartitionInfo, numberOfPartitions> partitionInfos_; instead of startAddress, data and errorCode
-    auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
-    [[nodiscard]] auto DoSize() const -> std::uint16_t override;
+    //  instead of startAddress, data and errorCode : done
+    // auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
+    // [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
 
 

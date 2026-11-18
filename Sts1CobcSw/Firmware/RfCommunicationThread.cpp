@@ -141,8 +141,6 @@ auto Handle(SetActiveFirmwareFunction const & function, RequestId const & reques
 auto Handle(SetBackupFirmwareFunction const & function, RequestId const & requestId) -> void;
 auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & requestId) -> void;
 auto Handle(RequestFirmwareMetadataFunction const & function, RequestId const & requestId) -> void;
-// auto Handle(ReportFirmwareMetadataReportFunction const & function,
-//             RequestId const & requestId) -> void;
 
 [[nodiscard]] auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId;
 [[nodiscard]] auto GetValue(Parameter::Id parameterId) -> Parameter::Value;
@@ -479,7 +477,7 @@ auto Handle(Request const & request, RequestId const & requestId) -> void
     // somewhere fit it here but I don't know where to put it and where does it goes in request and
     // if it does there is only one function id for firmwaremetadata
     // @shivani: dont add here the handling for fimrwaremetadata as firmwaremetadata is a function
-    // that is handled by PaseAsPerfomeAfunctionRequest
+    // that is handled by PaseAsPerfomeAfunctionRequest : Done
     else if(messageTypeId == ReportTheAttributesOfAFileRequest::id)
     {
         VerifyAndHandle<ParseAsReportTheAttributesOfAFileRequest>(request, requestId);
@@ -589,7 +587,7 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
             VerifyAndHandle<ParseAsRequestFirmwareMetadataFunction>(request, requestId);
             return;
             // @shivani: yes, here is the correct place to handle our function as functions are one
-            // level depper than the other requets
+            // level depper than the other requets :Done
     }
 }
 
@@ -900,33 +898,37 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
 }
 
 
-auto Handle(RequestFirmwareMetadataFunction const & function, RequestId const & requestId) -> void
+auto Handle(RequestFirmwareMetadataFunction [[maybe_unused]] const & function, RequestId const & requestId) -> void
 {
-    auto errorCode = ErrorCode::eduIsNotAlive;
-    auto commitHash = std::array<Byte, fw::commitHashLength>{};  // not sure if this is correct
-    // @shivani: create here a etl::vector<PartitionInfo, numberOfPartitions> parameterInfos
+    // @shivani: create here a etl::vector<PartitionInfo, numberOfPartitions> parameterInfos :done
 
     auto result = [&]() -> Result<void>
-    {
-        // @shivani: fill here the etl::vector<PartitionInfo, numberOfPartitions> parameterInfos for
-        // primary, secondary1 and secondary2
-        OUTCOME_TRY(fw::ReadFirmwareLength(fw::primaryPartition.startAddress));
-        DEBUG_PRINT("Successfully read firmware length for partition (0x%08X)\n",
-                    fw::primaryPartition.startAddress);
+    {   auto errorCode = ErrorCode::eduIsNotAlive;
+        auto parameterInfos = etl::vector<fw::PartitionInfo, fw::numberOfPartitions>
+        // @shivani: fill here the etl::vector<PartitionInfo, numberOfPartitions> parameterInfos for :done
+         
         // @shivani: PartitionId is used for request to tell which partition they mean,
         // fw::primaryPartition is correct here or should partition id be like
-        // PartitionId::primaryPartition
-        OUTCOME_TRY(
-            fw::ComputeAndReadFirmwareChecksums(fw::secondaryPartition1.startAddress, &errorCode));
-        DEBUG_PRINT("Firmware checksum verification successful for partition (0x%08X)\n",
-                    fw::secondaryPartition1.startAddress);
-        OUTCOME_TRY(fw::ReadFirmwareCommitHash(fw::secondaryPartition2.startAddress, commitHash));
-        DEBUG_PRINT("Successfully read firmware commit hash for partition (0x%08X)\n",
-                    fw::secondaryPartition2.startAddress);
+        // PartitionId::primaryPartition : done
+        for(auto const & partition : { fw::primaryPartition, fw::secondaryPartition1, fw::secondaryPartition2})
+        {
+            OUTCOME_TRY(auto firmwareLength,
+                fw::ReadFirmwareLength(partition.startAddress));
 
-        // @shivani: here we write SendAndWait(FirmwareMetadataReport(parameterInfos))
-        SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
-        return outcome_v2::success();
+            OUTCOME_TRY(auto checksum,
+                fw::ComputeAndReadFirmwareChecksums(partition.startAddress, &errorCode));
+        
+            auto & commitHash = parameterInfos.back().commitHash;
+
+            OUTCOME_TRY(fw::ReadFirmwareCommitHash(partition->startAddress, std::span<Byte>{commitHash.data(), commitHash.size()}));
+
+            parameterInfos.push_back(fw::PartitionInfo{checksum, firmwareLength, commitHash}); 
+
+            SendAndWait(FirmwareMetadataReport(parameterInfos));
+            // @shivani: here we write SendAndWait(FirmwareMetadataReport(parameterInfos)) : Done
+            // ask: Do we send verification report also ?SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+            return outcome_v2::success();
+        }
     }();
     if(result.has_error())
     {
@@ -935,14 +937,6 @@ auto Handle(RequestFirmwareMetadataFunction const & function, RequestId const & 
         return;
     }
 }
-
-
-// auto Handle(ReportFirmwareMetadataReportFunction const & function,
-//             [[maybe_unused]] RequestId const & requestId) -> void
-// {
-//     get firmware metadata report
-// }
-// @shivani: we dont need that
 
 
 auto ToRequestId(SpacePacketPrimaryHeader const & header) -> RequestId
