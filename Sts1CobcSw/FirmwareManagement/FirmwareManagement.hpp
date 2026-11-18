@@ -3,6 +3,7 @@
 
 #include <Sts1CobcSw/Outcome/Outcome.hpp>
 #include <Sts1CobcSw/Serial/Byte.hpp>
+#include <Sts1CobcSw/Serial/Serial.hpp>
 #include <Sts1CobcSw/Vocabulary/Ids.hpp>
 
 #include <strong_type/type.hpp>
@@ -11,8 +12,11 @@
 #include <span>
 
 
-namespace sts1cobcsw::fw
+namespace sts1cobcsw
 {
+namespace fw
+{
+
 struct Partition
 {
     std::uintptr_t startAddress = 0;
@@ -46,11 +50,13 @@ constexpr auto numberOfPartitions = 3U;
 // @shivani: add here a constexpr numberOfPartitions = 3U; : Done
 
 
-// @shivani: add here new struct PartitionInfo that contains FirmwareChecksum checksum, std::uint32_t firmwareLength,  etl::vector<Byte, commitHashLength> commitHash : Done
-struct PartitionInfo {
+// @shivani: add here new struct PartitionInfo that contains FirmwareChecksum checksum,
+// std::uint32_t firmwareLength,  etl::vector<Byte, commitHashLength> commitHash : Done
+struct PartitionInfo
+{
     FirmwareChecksums checksum;
     std::uint32_t firmwareLength;
-    etl::vector<Byte, commitHashLength> commitHash;
+    std::array<Byte, commitHashLength> commitHash;
 };
 
 extern Partition const primaryPartition;
@@ -75,4 +81,29 @@ auto ComputeAndReadFirmwareChecksums(std::uintptr_t startAddress, ErrorCode * er
 [[nodiscard]] auto Overwrite(DestinationPartition destination, SourcePartition source) -> bool;
 #endif
 auto Read(std::uintptr_t address, std::span<Byte> data) -> void;
+
 }
+
+
+template<>
+inline constexpr std::size_t serialSize<fw::FirmwareChecksums> =
+    totalSerialSize<decltype(fw::FirmwareChecksums::computed),
+                    decltype(fw::FirmwareChecksums::stored)>;
+
+template<>
+inline constexpr std::size_t serialSize<fw::PartitionInfo> =
+    totalSerialSize<decltype(fw::PartitionInfo::checksum),
+                    decltype(fw::PartitionInfo::firmwareLength),
+                    decltype(fw::PartitionInfo::commitHash)>;
+
+
+namespace fw
+{
+template<std::endian endianness>
+auto SerializeTo(void * destination, FirmwareChecksums const & data) -> void *;
+template<std::endian endianness>
+auto SerializeTo(void * destination, PartitionInfo const & data) -> void *;
+}
+}
+
+#include <Sts1CobcSw/FirmwareManagement/FirmwareManagement.ipp>

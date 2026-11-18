@@ -898,37 +898,37 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
 }
 
 
-auto Handle(RequestFirmwareMetadataFunction [[maybe_unused]] const & function, RequestId const & requestId) -> void
+auto Handle([[maybe_unused]] RequestFirmwareMetadataFunction const & function,
+            RequestId const & requestId) -> void
 {
     // @shivani: create here a etl::vector<PartitionInfo, numberOfPartitions> parameterInfos :done
 
     auto result = [&]() -> Result<void>
-    {   auto errorCode = ErrorCode::eduIsNotAlive;
-        auto parameterInfos = etl::vector<fw::PartitionInfo, fw::numberOfPartitions>
-        // @shivani: fill here the etl::vector<PartitionInfo, numberOfPartitions> parameterInfos for :done
-         
+    {
+        auto errorCode = ErrorCode::eduIsNotAlive;
+        auto parameterInfos = std::array<fw::PartitionInfo, fw::numberOfPartitions>{};
+        // @shivani: fill here the etl::vector<PartitionInfo, numberOfPartitions> parameterInfos
+        // for :done
+
         // @shivani: PartitionId is used for request to tell which partition they mean,
         // fw::primaryPartition is correct here or should partition id be like
         // PartitionId::primaryPartition : done
-        for(auto const & partition : { fw::primaryPartition, fw::secondaryPartition1, fw::secondaryPartition2})
-        {
-            OUTCOME_TRY(auto firmwareLength,
-                fw::ReadFirmwareLength(partition.startAddress));
 
-            OUTCOME_TRY(auto checksum,
-                fw::ComputeAndReadFirmwareChecksums(partition.startAddress, &errorCode));
-        
-            auto & commitHash = parameterInfos.back().commitHash;
 
-            OUTCOME_TRY(fw::ReadFirmwareCommitHash(partition->startAddress, std::span<Byte>{commitHash.data(), commitHash.size()}));
+        auto partition = fw::primaryPartition;
+        OUTCOME_TRY(parameterInfos[0].firmwareLength,
+                    fw::ReadFirmwareLength(partition.startAddress));
+        OUTCOME_TRY(parameterInfos[0].checksum,
+                    fw::ComputeAndReadFirmwareChecksums(partition.startAddress, &errorCode));
+        OUTCOME_TRY(
+            fw::ReadFirmwareCommitHash(partition.startAddress, parameterInfos[0].commitHash));
 
-            parameterInfos.push_back(fw::PartitionInfo{checksum, firmwareLength, commitHash}); 
 
-            SendAndWait(FirmwareMetadataReport(parameterInfos));
-            // @shivani: here we write SendAndWait(FirmwareMetadataReport(parameterInfos)) : Done
-            // ask: Do we send verification report also ?SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
-            return outcome_v2::success();
-        }
+        SendAndWait(FirmwareMetadataReport(parameterInfos));
+        // @shivani: here we write SendAndWait(FirmwareMetadataReport(parameterInfos)) : Done
+        // ask: Do we send verification report also
+        // ?SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
+        return outcome_v2::success();
     }();
     if(result.has_error())
     {

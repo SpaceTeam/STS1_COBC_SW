@@ -7,6 +7,7 @@
 #include <Sts1CobcSw/Vocabulary/MessageTypeIdFields.hpp>
 
 #include <algorithm>
+
 #include "Sts1CobcSw/FirmwareManagement/FirmwareManagement.hpp"
 #include "Sts1CobcSw/Serial/Serial.hpp"
 
@@ -106,24 +107,29 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 
 
 // here we write DoAdd and DoSize Function
-FirmwareMetadataReport::FirmwareMetadataReport(const etl::vector<fw::PartitionInfo, fw::numberOfPartitions> & partitionInfo) : partitionInfo_(partitionInfo)
+FirmwareMetadataReport::FirmwareMetadataReport(
+    std::array<fw::PartitionInfo, fw::numberOfPartitions> const & partitionInfo)
+    : partitionInfo_(partitionInfo)
 {}
 
-// auto FirmwareMetadataReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
-// {
-//     UpdateMessageTypeCounterAndTime(&secondaryHeader_);
-//     auto oldSize = IncreaseSize(dataField, DoSize());
-//     auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
-//     cursor = SerializeTo<ccsdsEndianness>(cursor, partitionInfo_);
-// }
+
+auto FirmwareMetadataReport::DoAddTo(etl::ivector<Byte> * dataField) const -> void
+{
+    UpdateMessageTypeCounterAndTime(&secondaryHeader_);
+    auto oldSize = IncreaseSize(dataField, DoSize());
+    auto * cursor = SerializeTo<ccsdsEndianness>(dataField->data() + oldSize, secondaryHeader_);
+    cursor = SerializeTo<ccsdsEndianness>(cursor, partitionInfo_);
+}
 
 
-// auto FirmwareMetadataReport::DoSize() const -> std::uint16_t
-// {
-//       return static_cast<std::uint16_t>(
-//         totalSerialSize<decltype(secondaryHeader_)> +
-//         partitionInfo_.size() * totalSerialSize<fw::PartitionInfo>);
-// }
+auto FirmwareMetadataReport::DoSize() const -> std::uint16_t
+{
+    // return static_cast<std::uint16_t>(
+    //     totalSerialSize<decltype(secondaryHeader_), decltype(nParameters_)>
+    //     + nParameters_ * totalSerialSize<Parameter::Id, Parameter::Value>);
+    return static_cast<std::uint16_t>(totalSerialSize<decltype(secondaryHeader_)>
+                                      + totalSerialSize<decltype(partitionInfo_)>);
+}
 
 
 ParameterValueReport::ParameterValueReport(Parameter::Id parameterId,
