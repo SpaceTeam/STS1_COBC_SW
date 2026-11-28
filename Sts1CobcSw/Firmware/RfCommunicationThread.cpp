@@ -69,7 +69,6 @@
 #include <cstdio>
 #include <iterator>
 #include <span>
-#include <system_error>  // @shivani: please remove
 #include <type_traits>
 #include <utility>
 
@@ -473,11 +472,6 @@ auto Handle(Request const & request, RequestId const & requestId) -> void
     {
         VerifyAndHandle<ParseAsDeleteAFileRequest>(request, requestId);
     }
-
-    // somewhere fit it here but I don't know where to put it and where does it goes in request and
-    // if it does there is only one function id for firmwaremetadata
-    // @shivani: dont add here the handling for fimrwaremetadata as firmwaremetadata is a function
-    // that is handled by PaseAsPerfomeAfunctionRequest : Done
     else if(messageTypeId == ReportTheAttributesOfAFileRequest::id)
     {
         VerifyAndHandle<ParseAsReportTheAttributesOfAFileRequest>(request, requestId);
@@ -586,8 +580,6 @@ auto Handle(PerformAFunctionRequest const & request, RequestId const & requestId
         case FunctionId::requestFirmwareMetadata:
             VerifyAndHandle<ParseAsRequestFirmwareMetadataFunction>(request, requestId);
             return;
-            // @shivani: yes, here is the correct place to handle our function as functions are one
-            // level depper than the other requets :Done
     }
 }
 
@@ -901,8 +893,6 @@ auto Handle(CheckFirmwareIntegrityFunction const & function, RequestId const & r
 auto Handle([[maybe_unused]] RequestFirmwareMetadataFunction const & function,
             RequestId const & requestId) -> void
 {
-    // @shivani: create here a etl::vector<PartitionInfo, numberOfPartitions> parameterInfos :done
-
     auto result = [&]() -> Result<void>
     {
         auto errorCode = ErrorCode::eduIsNotAlive;
@@ -918,9 +908,6 @@ auto Handle([[maybe_unused]] RequestFirmwareMetadataFunction const & function,
         }
 
         SendAndWait(FirmwareMetadataReport(parameterInfos));
-        // @shivani: here we write SendAndWait(FirmwareMetadataReport(parameterInfos)) : Done
-        // ask: Do we send verification report also
-        // ?SendAndWait(SuccessfulCompletionOfExecutionVerificationReport(requestId));
         return outcome_v2::success();
     }();
     if(result.has_error())

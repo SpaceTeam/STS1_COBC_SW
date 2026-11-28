@@ -430,7 +430,6 @@ auto ParseAsRequestFirmwareMetadataFunction(std::span<Byte const> buffer)
         return ErrorCode::invalidDataLength;
     }
     auto function = RequestFirmwareMetadataFunction{};
-    // we do not have a partition Id anymore :done
     return function;
 }
 

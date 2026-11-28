@@ -206,7 +206,6 @@ struct RequestFirmwareMetadataFunction
 {
     static constexpr auto id = Make<tc::MessageTypeId, {8, 1}>();
     static constexpr auto functionId = FunctionId::requestFirmwareMetadata;
-    // @shivani: remove partitionId, we send the data of all partitions : Done
 };
 
 

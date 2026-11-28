@@ -106,7 +106,6 @@ auto HousekeepingParameterReport::DoSize() const -> std::uint16_t
 }
 
 
-// here we write DoAdd and DoSize Function
 FirmwareMetadataReport::FirmwareMetadataReport(
     std::array<fw::PartitionInfo, fw::numberOfPartitions> const & partitionInfo)
     : partitionInfo_(partitionInfo)
@@ -124,9 +123,6 @@ auto FirmwareMetadataReport::DoAddTo(etl::ivector<Byte> * dataField) const -> vo
 
 auto FirmwareMetadataReport::DoSize() const -> std::uint16_t
 {
-    // return static_cast<std::uint16_t>(
-    //     totalSerialSize<decltype(secondaryHeader_), decltype(nParameters_)>
-    //     + nParameters_ * totalSerialSize<Parameter::Id, Parameter::Value>);
     return static_cast<std::uint16_t>(totalSerialSize<decltype(secondaryHeader_)>
                                       + totalSerialSize<decltype(partitionInfo_)>);
 }

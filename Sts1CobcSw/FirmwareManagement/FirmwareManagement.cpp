@@ -84,7 +84,7 @@ auto CheckFirmwareIntegrity(std::uintptr_t startAddress) -> Result<void>
     // error code that ComputeAndReadFirmwareChecksums() would return
     auto errorCode = ErrorCode::eduIsNotAlive;
     auto checksums = ComputeAndReadFirmwareChecksums(startAddress, &errorCode)
-                         .value();  // @shivani: add this as seperate commit please
+                         .value();
     if(errorCode != ErrorCode::eduIsNotAlive)
     {
         return errorCode;

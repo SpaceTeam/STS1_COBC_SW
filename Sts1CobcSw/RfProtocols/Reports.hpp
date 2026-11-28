@@ -123,15 +123,11 @@ class FirmwareMetadataReport : public Payload
 public:
     explicit FirmwareMetadataReport(
         std::array<fw::PartitionInfo, fw::numberOfPartitions> const & partitionInfo);
-    // @shivani: you get as parameter etl::vector<PartitionInfo, numberOfPartitions> const &
-    // partitionInfo : done
 
 private:
     static constexpr auto messageTypeId = Make<tm::MessageTypeId, {6, 7}>();
     mutable tm::SpacePacketSecondaryHeader<messageTypeId> secondaryHeader_;
     std::array<fw::PartitionInfo, fw::numberOfPartitions> partitionInfo_;
-    // @shivani: here you have a private member
-    //  instead of startAddress, data and errorCode : done
     auto DoAddTo(etl::ivector<Byte> * dataField) const -> void override;
     [[nodiscard]] auto DoSize() const -> std::uint16_t override;
 };
