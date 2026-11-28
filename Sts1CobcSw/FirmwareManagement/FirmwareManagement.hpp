@@ -63,6 +63,9 @@ extern Partition const primaryPartition;
 extern Partition const secondaryPartition1;
 extern Partition const secondaryPartition2;
 
+inline std::array<Partition const, numberOfPartitions> const partitions{
+    primaryPartition, secondaryPartition1, secondaryPartition2};
+
 
 [[nodiscard]] auto GetPartition(PartitionId partitionId) -> Partition;
 

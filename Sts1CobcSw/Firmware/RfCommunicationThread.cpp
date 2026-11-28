@@ -907,22 +907,15 @@ auto Handle([[maybe_unused]] RequestFirmwareMetadataFunction const & function,
     {
         auto errorCode = ErrorCode::eduIsNotAlive;
         auto parameterInfos = std::array<fw::PartitionInfo, fw::numberOfPartitions>{};
-        // @shivani: fill here the etl::vector<PartitionInfo, numberOfPartitions> parameterInfos
-        // for :done
 
-        // @shivani: PartitionId is used for request to tell which partition they mean,
-        // fw::primaryPartition is correct here or should partition id be like
-        // PartitionId::primaryPartition : done
-
-
-        auto partition = fw::primaryPartition;
-        OUTCOME_TRY(parameterInfos[0].firmwareLength,
-                    fw::ReadFirmwareLength(partition.startAddress));
-        OUTCOME_TRY(parameterInfos[0].checksum,
-                    fw::ComputeAndReadFirmwareChecksums(partition.startAddress, &errorCode));
-        OUTCOME_TRY(
-            fw::ReadFirmwareCommitHash(partition.startAddress, parameterInfos[0].commitHash));
-
+        for(std::size_t i = 0; i< fw::numberOfPartitions; ++i) {
+            OUTCOME_TRY(parameterInfos[i].firmwareLength,
+                        fw::ReadFirmwareLength(fw::partitions[i].startAddress));
+            OUTCOME_TRY(parameterInfos[i].checksum,
+                        fw::ComputeAndReadFirmwareChecksums(fw::partitions[i].startAddress, &errorCode));
+            OUTCOME_TRY(
+                fw::ReadFirmwareCommitHash(fw::partitions[i].startAddress, parameterInfos[i].commitHash));
+        }
 
         SendAndWait(FirmwareMetadataReport(parameterInfos));
         // @shivani: here we write SendAndWait(FirmwareMetadataReport(parameterInfos)) : Done
